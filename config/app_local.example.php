@@ -67,15 +67,15 @@ return [
         /*
          * The test connection is used during the test suite.
          */
-        'test' => [
-            'host' => 'localhost',
-            //'port' => 'non_standard_port_number',
-            'username' => 'my_app',
-            'password' => 'secret',
-            'database' => 'test_myapp',
-            //'schema' => 'myapp',
-            'url' => env('DATABASE_TEST_URL', 'sqlite://127.0.0.1/tmp/tests.sqlite'),
-        ],
+        // 'test' => [
+        //     'host' => 'localhost',
+        //     //'port' => 'non_standard_port_number',
+        //     'username' => 'my_app',
+        //     'password' => 'secret',
+        //     'database' => 'test_myapp',
+        //     //'schema' => 'myapp',
+        //     'url' => env('DATABASE_TEST_URL', 'sqlite://127.0.0.1/tmp/tests.sqlite'),
+        // ],
     ],
 
     /*
@@ -85,14 +85,14 @@ return [
      *
      * See app.php for more configuration options.
      */
-    'EmailTransport' => [
-        'default' => [
-            'host' => 'localhost',
-            'port' => 25,
-            'username' => null,
-            'password' => null,
-            'client' => null,
-            'url' => env('EMAIL_TRANSPORT_DEFAULT_URL', null),
-        ],
-    ],
+    // 'EmailTransport' => [
+    //     'default' => [
+    //         'host' => 'localhost',
+    //         'port' => 25,
+    //         'username' => null,
+    //         'password' => null,
+    //         'client' => null,
+    //         'url' => env('EMAIL_TRANSPORT_DEFAULT_URL', null),
+    //     ],
+    // ],
 ];
