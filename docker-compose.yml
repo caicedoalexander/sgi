@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    container_name: sgrh-app
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+    volumes:
+      - app_files:/var/www/html/webroot/files
+
+volumes:
+  app_files:

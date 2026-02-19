@@ -1,0 +1,14 @@
+.git
+vendor/
+tmp/
+logs/
+tests/
+.env
+.env.example
+docker-compose.yml
+*.md
+.github/
+.editorconfig
+phpunit.xml
+phpcs.xml
+phpstan.neon
