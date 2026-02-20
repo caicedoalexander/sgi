@@ -9,7 +9,8 @@
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SGI - <?= $this->fetch('title') ?></title>
-    <?= $this->Html->meta('icon') ?>
+    <link rel="icon" type="image/svg+xml" href="<?= $this->Url->build('/favicon.svg') ?>">
+    <link rel="icon" type="image/x-icon" href="<?= $this->Url->build('/favicon.ico') ?>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <?= $this->Html->css('styles') ?>
