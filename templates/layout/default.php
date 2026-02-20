@@ -8,6 +8,7 @@
 $sidebarCounters = $sidebarCounters ?? [];
 $currentUser = $currentUser ?? null;
 $userPermissions = $userPermissions ?? [];
+$currentController = $this->request->getParam('controller');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -16,10 +17,11 @@ $userPermissions = $userPermissions ?? [];
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SGI - <?= $this->fetch('title') ?></title>
     <?= $this->Html->meta('icon') ?>
-    <?= $this->Html->css('styles') ?>
+    <!-- Bootstrap primero, luego nuestros estilos para poder sobreescribir -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <?= $this->Html->css('styles') ?>
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
     <style>
@@ -33,36 +35,12 @@ $userPermissions = $userPermissions ?? [];
             display: flex;
             flex-direction: column;
         }
-        .sidebar .nav-link { color: rgba(255,255,255,.75); border-radius: .375rem; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            color: #fff;
-            background-color: rgba(255,255,255,.1);
-        }
-        .sidebar .nav-heading {
-            color: rgba(255,255,255,.4);
-            font-size: .7rem;
-            text-transform: uppercase;
-            letter-spacing: .08em;
-            padding: .4rem 1rem;
-            margin-top: .5rem;
-        }
-        .sidebar-badge {
-            font-size: .75rem;
-            padding: .25em .5em;
-        }
         .content-wrapper {
             margin-left: var(--sidebar-width);
             min-height: 100vh;
         }
-        .sidebar-footer {
-            margin-top: 1rem;
-            border-top: 1px solid rgba(255,255,255,.1);
-            padding: .75rem 0;
-        }
-        /* Row click */
         tr.clickable-row { cursor: pointer; transition: background .15s ease; }
-        tr.clickable-row:hover { background-color: rgba(13,110,253,.08) !important; }
-        /* Flatpickr override */
+        tr.clickable-row:hover { background-color: rgba(70,157,97,.06) !important; }
         .flatpickr-input { background: #fff !important; }
     </style>
 </head>
@@ -70,28 +48,41 @@ $userPermissions = $userPermissions ?? [];
     <div class="d-flex">
         <!-- Sidebar -->
         <nav class="sidebar d-flex flex-column flex-shrink-0 p-3 bg-dark">
-            <a href="<?= $this->Url->build('/') ?>" class="d-flex align-items-center justify-content-center mb-2 text-white text-decoration-none">
-                <div class="rounded-circle d-flex align-items-center justify-content-center me-2" style="width:42px;height:42px;flex-shrink:0;background-color:#469D61;">
-                    <i class="bi bi-building fs-4"></i>
+
+            <!-- Logo -->
+            <a href="<?= $this->Url->build('/') ?>" class="d-flex align-items-center mb-3 text-white text-decoration-none">
+                <div class="d-flex align-items-center justify-content-center me-2"
+                     style="width:36px;height:36px;background-color:var(--primary-color);flex-shrink:0;">
+                    <i class="bi bi-building text-white" style="font-size:1rem;"></i>
                 </div>
-                <span class="fs-2 fw-bold">SGI</span>
+                <div>
+                    <div class="fw-bold text-white lh-1" style="font-size:1.05rem;letter-spacing:-.02em;">SGI</div>
+                    <div style="font-size:.55rem;letter-spacing:.1em;color:rgba(255,255,255,.3);text-transform:uppercase;margin-top:3px;">Sistema de Gestión Interna</div>
+                </div>
             </a>
-            <hr class="text-secondary my-1">
+
+            <!-- Divisor -->
+            <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:.75rem;"></div>
+
             <?php
             $canView = function (string $module) use ($userPermissions): bool {
                 return !empty($userPermissions[$module]['can_view']);
             };
+            $navLink = function (string $controller) use ($currentController): string {
+                return 'nav-link' . ($currentController === $controller ? ' active' : '');
+            };
             ?>
-            <ul class="nav nav-pills flex-column">
+
+            <ul class="nav nav-pills flex-column mb-3">
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-house-door me-2"></i>Inicio',
                         ['controller' => 'Dashboard', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('Dashboard'), 'escape' => false]
                     ) ?>
                 </li>
+
                 <?php
-                // Facturación section
                 $facturacionItems = array_filter([
                     $canView('invoices') ? 'invoices' : null,
                     $canView('approvers') ? 'approvers' : null,
@@ -104,7 +95,7 @@ $userPermissions = $userPermissions ?? [];
                         '<i class="bi bi-receipt me-2"></i>Facturas' .
                         (!empty($sidebarCounters) ? ' <span class="badge bg-success sidebar-badge ms-auto">' . array_sum($sidebarCounters) . '</span>' : ''),
                         ['controller' => 'Invoices', 'action' => 'index'],
-                        ['class' => 'nav-link d-flex align-items-center', 'escape' => false]
+                        ['class' => $navLink('Invoices') . ' d-flex align-items-center', 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -113,14 +104,13 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-person-check me-2"></i>Aprobadores',
                         ['controller' => 'Approvers', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('Approvers'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
                 <?php endif; ?>
 
                 <?php
-                // RRHH section
                 $rrhhItems = array_filter([
                     $canView('employees') ? 'employees' : null,
                 ]);
@@ -131,14 +121,13 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-people-fill me-2"></i>Empleados',
                         ['controller' => 'Employees', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('Employees'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
                 <?php endif; ?>
 
                 <?php
-                // Catálogos section
                 $catalogoItems = array_filter([
                     $canView('providers') ? 'providers' : null,
                     $canView('operation_centers') ? 'operation_centers' : null,
@@ -157,7 +146,7 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-truck me-2"></i>Proveedores',
                         ['controller' => 'Providers', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('Providers'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -166,7 +155,7 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-geo-alt me-2"></i>Centros de Operación',
                         ['controller' => 'OperationCenters', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('OperationCenters'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -175,7 +164,7 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-tags me-2"></i>Tipos de Gasto',
                         ['controller' => 'ExpenseTypes', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('ExpenseTypes'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -184,7 +173,7 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-diagram-3 me-2"></i>Centros de Costos',
                         ['controller' => 'CostCenters', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('CostCenters'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -193,7 +182,7 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-briefcase me-2"></i>Cargos',
                         ['controller' => 'Positions', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('Positions'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -202,7 +191,7 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-card-checklist me-2"></i>Estados de Empleado',
                         ['controller' => 'EmployeeStatuses', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('EmployeeStatuses'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -211,7 +200,7 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-heart me-2"></i>Estados Civiles',
                         ['controller' => 'MaritalStatuses', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('MaritalStatuses'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -220,7 +209,7 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-mortarboard me-2"></i>Niveles Educativos',
                         ['controller' => 'EducationLevels', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('EducationLevels'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -229,14 +218,13 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-folder me-2"></i>Carpetas por Defecto',
                         ['controller' => 'DefaultFolders', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('DefaultFolders'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
                 <?php endif; ?>
 
                 <?php
-                // Administración section
                 $adminItems = array_filter([
                     $canView('users') ? 'users' : null,
                     $canView('roles') ? 'roles' : null,
@@ -248,7 +236,7 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-people me-2"></i>Usuarios',
                         ['controller' => 'Users', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('Users'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -257,38 +245,39 @@ $userPermissions = $userPermissions ?? [];
                     <?= $this->Html->link(
                         '<i class="bi bi-shield-lock me-2"></i>Roles',
                         ['controller' => 'Roles', 'action' => 'index'],
-                        ['class' => 'nav-link', 'escape' => false]
+                        ['class' => $navLink('Roles'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
                 <?php endif; ?>
             </ul>
 
-            <!-- User info footer -->
+            <!-- Footer de usuario -->
             <div class="sidebar-footer d-flex align-items-center justify-content-between">
                 <?php if ($currentUser): ?>
-                    <div class="d-flex align-items-center text-white-50">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center me-2" style="width:36px;height:36px;flex-shrink:0;background-color:#469D61;">
-                            <i class="bi bi-person text-white" style="font-size:1.1rem;"></i>
+                    <div class="d-flex align-items-center" style="min-width:0;">
+                        <div class="d-flex align-items-center justify-content-center me-2"
+                             style="width:32px;height:32px;background-color:var(--primary-color);flex-shrink:0;">
+                            <i class="bi bi-person text-white" style="font-size:.95rem;"></i>
                         </div>
                         <div class="overflow-hidden">
-                            <div class="text-white small fw-semibold text-truncate"><?= h($currentUser->full_name) ?></div>
-                            <div class="text-white-50" style="font-size:.8rem;"><?= h($currentUser->role->name ?? '') ?></div>
+                            <div class="text-white fw-medium text-truncate" style="font-size:.82rem;"><?= h($currentUser->full_name) ?></div>
+                            <div style="font-size:.7rem;color:rgba(255,255,255,.35);"><?= h($currentUser->role->name ?? '') ?></div>
                         </div>
                     </div>
                     <?= $this->Html->link(
                         '<i class="bi bi-box-arrow-right"></i>',
                         ['controller' => 'Users', 'action' => 'logout'],
-                        ['class' => 'btn btn-outline-secondary btn-sm', 'escape' => false]
+                        ['class' => 'sgi-sidebar-logout', 'escape' => false]
                     ) ?>
                 <?php endif; ?>
             </div>
         </nav>
 
-        <!-- Content -->
+        <!-- Contenido -->
         <div class="content-wrapper flex-grow-1 bg-light">
-            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-4 sticky-top">
-                <span class="navbar-text fw-semibold"><?= $this->fetch('title') ?></span>
+            <nav class="sgi-topbar sticky-top d-flex align-items-center px-4">
+                <span class="sgi-topbar-title"><?= $this->fetch('title') ?></span>
             </nav>
             <main class="p-4">
                 <?= $this->Flash->render() ?>
