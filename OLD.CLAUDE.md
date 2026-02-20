@@ -2,88 +2,81 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Descripción del Proyecto
+## Project Overview
 
-Sistema de Gestión Interna (SGI) para la Compañía Operadora Portuaria Cafetera S.A. Automatiza procesos de recursos humanos y contabilidad. Stack: CakePHP 5, Bootstrap 5, JS.
+SGI (Sistema de Gestión Interna) — CakePHP 5.3 invoice management system for Compañía Operadora Portuaria Cafetera S.A. Invoices flow through a role-based pipeline: **revision → area_approved → accrued → treasury → paid**. Each role controls specific pipeline states and field editability.
 
-## Módulos Principales
-
-### Control de Facturas
-Campos: fecha registro, fecha emisión, fecha vencimiento, tipo documento (Factura/Nota Debito/Caja menor/Tarjeta de Crédito/Reintegro/Legalización/Recibo/Anticipo), orden de compra, NIT, proveedor_id, centro de operación, detalle, valor (COP), tipo de gasto, centro de costos.
-
-**Pipeline de conciliación:** Revisión → Área Aprobada → Causada → Tesorería → Pagada
-
-- **Revisión:** Confirmación (usuario asignado), Aprobada Área (Aprobada/Rechazada/Pendiente), fecha aprobación, Validado DIAN (Pendiente/Aprobada/Rechazado)
-- **Contabilidad:** Causada (Si/No), fecha causación, Lista para Pago (Si/No/Anticipo Empleado/Anticipo Proveedor/Pago prioritario/Pago PSE/No Legalización/Reintegro)
-- **Tesorería:** Estado Pago (Pago total/Pago Parcial), fecha pago
-
-Incluye campo de observaciones por área e historial de cambios en la conciliación.
-
-### Tablas relacionadas
-- Proveedores (vinculado con NIT)
-- Centros de Operación
-- Tipos de Gasto
-- Usuarios, Roles, Empleados
-
-### Gestión de Personal (por definir)
-Módulo de empleados y documentos — pendiente de especificación.
-
-## Sistema de Roles
-Usuarios divididos por roles que controlan acceso a módulos y permisos (ej: Aux. Personal → módulo Empleados).
-
-## Comandos de Desarrollo
+## Commands
 
 ```bash
-# Servidor de desarrollo
-bin/cake server
+# Dev server
+bin/cake server -p 8765
+
+# Migrations
+bin/cake migrations migrate
+bin/cake migrations create NombreMigracion   # generates Migrations\BaseMigration (NOT AbstractMigration)
+bin/cake migrations rollback
+
+# Code style (CakePHP ruleset via phpcs.xml)
+composer cs-check          # phpcs --colors -p
+composer cs-fix            # phpcbf --colors -p
 
 # Tests
-vendor/bin/phpunit                          # todos los tests
-vendor/bin/phpunit tests/TestCase/Controller/PagesControllerTest.php  # test individual
+composer test                                                    # all tests
+vendor/bin/phpunit tests/TestCase/Controller/InvoicesControllerTest.php  # single test
 
-# Code style
-vendor/bin/phpcs --colors -p                # verificar
-vendor/bin/phpcbf --colors -p               # corregir
+# Bake
+bin/cake bake controller Name
+bin/cake bake model Name
+bin/cake bake template Name
 
-# Migraciones
-bin/cake migrations migrate                 # ejecutar migraciones
-bin/cake migrations create NombreMigracion  # crear migración
-
-# Bake (generador de código)
-bin/cake bake controller NombreController
-bin/cake bake model NombreModelo
-bin/cake bake template NombreTemplate
+# Docker (production)
+docker-compose up --build   # PHP 8.4-FPM + Nginx on port 80
 ```
 
-## Arquitectura
+## Architecture
 
-```
-src/
-├── Controller/          # Manejan peticiones HTTP (delegando lógica a Services)
-├── Service/             # Lógica de negocio (crear este directorio)
-├── Model/
-│   ├── Entity/          # Entidades ORM
-│   ├── Table/           # Clases Table (queries, validaciones, asociaciones)
-│   └── Behavior/        # Comportamientos reutilizables
-├── View/                # Helpers y vistas
-├── Middleware/           # Middleware HTTP
-└── Application.php      # Bootstrap, middleware stack, container DI
+### Request Lifecycle
+`Application.php` middleware stack: ErrorHandler → HostHeader → Asset → Routing → **Authentication** → BodyParser → CSRF → Controller
 
-config/
-├── app.php              # Configuración principal
-├── app_local.php        # Overrides locales (DB, debug, etc.)
-├── routes.php           # Definición de rutas (usa DashedRoute)
-└── bootstrap.php        # Bootstrap del framework
+### Authentication (`cakephp/authentication:^3.0`)
+- Session + Form authenticators configured in `Application::getAuthenticationService()`
+- `UsersTable::findAuth()` custom finder: filters `active=true`, contains `Roles`
+- Routes: `/login` → `Users::login`, `/logout` → `Users::logout`
+- No authorization plugin — permissions are checked manually via `AppController::_checkPermission()`
 
-templates/               # Vistas PHP (layouts, elements, páginas)
-webroot/                 # Assets públicos (CSS, JS, imágenes)
-```
+### Authorization System
+`AuthorizationService` checks the `permissions` table (role_id × module × CRUD). Admin role bypasses all checks. Each controller action calls `_checkPermission(module, action)` from `AppController`.
 
-**Patrón obligatorio:** Controladores solo manejan peticiones; la lógica de negocio va en `src/Service/`.
+### Invoice Pipeline (core business logic)
+`InvoicePipelineService` defines:
+- `STATUSES` — ordered pipeline states
+- `TRANSITIONS` — which state follows which (`revision→area_approved→accrued→treasury→paid`)
+- `EDITABLE_FIELDS` — per-role, per-status field access control
+- `filterEntityData()` — strips fields the current role cannot edit
+- Advance route: `POST /invoices/advance-status/{id}`
 
-## Configuración
+`InvoiceHistoryService` tracks field-level changes in `invoice_histories` (field_changed, old_value, new_value).
 
-- Base de datos configurada vía `DATABASE_URL` en `.env` (MySQL/MariaDB)
-- La conexión se resuelve en `config/app_local.php` usando `env('DATABASE_URL')`
-- CSRF habilitado en middleware stack
-- PHP >= 8.2 requerido
+### Roles (DB IDs)
+| ID | Name | Visible Pipeline States |
+|----|------|------------------------|
+| 1 | Admin | All states |
+| 2 | Contabilidad | area_approved, accrued |
+| 3 | Tesorería | treasury |
+| 5 | Registro/Revisión | revision |
+
+### Key Patterns & Gotchas
+- **Custom finders**: Never override `findList()` (signature mismatch in CakePHP 5). Use custom finders like `findCodeList()` with `formatResults` + `combine`
+- **Sidebar counters**: `AppController::_setSidebarCounters()` runs on every request for logged-in users
+- **Migration base class**: Always use `Migrations\BaseMigration`, not `AbstractMigration`
+- **FK columns**: Must match types exactly (signed/unsigned) with referenced tables
+- **Views**: Plain PHP templates in `templates/`. Layouts: `default.php`, `login.php`
+- **Frontend libs** (CDN in default layout): Flatpickr (`.flatpickr-date`), AutoNumeric (`.currency-input`), Bootstrap Icons
+- **JS**: `webroot/js/sgi-common.js` — clickable table rows (`.clickable-row[data-href]`), date pickers, currency formatting
+
+### Configuration
+- `.env` in project root (not `config/`), loaded in `config/bootstrap.php`
+- Database via `DATABASE_URL` env var (MySQL/MariaDB)
+- `config/app_local.php` for local overrides (DB, debug)
+- Root route `/` maps to `Invoices::index`

@@ -25,8 +25,7 @@ class InvoicesController extends AppController
 
     private function _getRoleName(): string
     {
-        $user = $this->_getCurrentUser();
-        return $user->role->name ?? 'Admin';
+        return $this->_getUserRoleName($this->_getCurrentUser());
     }
 
     public function index()

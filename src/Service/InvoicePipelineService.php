@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\RoleConstants;
+
 class InvoicePipelineService
 {
     // Pipeline statuses in order
@@ -26,15 +28,25 @@ class InvoicePipelineService
 
     // Which statuses each role can see/work with
     private const ROLE_VISIBLE_STATUSES = [
-        'Registro/Revisión' => ['revision'],
-        'Contabilidad'      => ['area_approved', 'accrued'],
-        'Tesorería'         => ['treasury'],
-        'Admin'             => ['revision', 'area_approved', 'accrued', 'treasury', 'paid'],
+        RoleConstants::REGISTRO_REVISION => ['revision'],
+        RoleConstants::CONTABILIDAD      => ['area_approved', 'accrued'],
+        RoleConstants::TESORERIA         => ['treasury'],
+        RoleConstants::ADMIN             => ['revision', 'area_approved', 'accrued', 'treasury', 'paid'],
+    ];
+
+    // All fields available for Admin in any status
+    private const ALL_FIELDS = [
+        'invoice_number', 'registration_date', 'issue_date', 'due_date',
+        'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
+        'detail', 'amount', 'expense_type_id', 'cost_center_id',
+        'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
+        'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
+        'payment_status', 'payment_date', 'pipeline_status', 'observations',
     ];
 
     // Fields editable by role in each status
     private const EDITABLE_FIELDS = [
-        'Registro/Revisión' => [
+        RoleConstants::REGISTRO_REVISION => [
             'revision' => [
                 'invoice_number', 'registration_date', 'issue_date', 'due_date',
                 'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
@@ -43,7 +55,7 @@ class InvoicePipelineService
                 'dian_validation', 'observations',
             ],
         ],
-        'Contabilidad' => [
+        RoleConstants::CONTABILIDAD => [
             'area_approved' => [
                 'accrued', 'accrual_date', 'ready_for_payment', 'observations',
             ],
@@ -51,60 +63,18 @@ class InvoicePipelineService
                 'accrued', 'accrual_date', 'ready_for_payment', 'observations',
             ],
         ],
-        'Tesorería' => [
+        RoleConstants::TESORERIA => [
             'treasury' => [
                 'payment_status', 'payment_date', 'observations',
-            ],
-        ],
-        'Admin' => [
-            'revision' => [
-                'invoice_number', 'registration_date', 'issue_date', 'due_date',
-                'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
-                'detail', 'amount', 'expense_type_id', 'cost_center_id',
-                'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
-                'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
-                'payment_status', 'payment_date', 'pipeline_status', 'observations',
-            ],
-            'area_approved' => [
-                'invoice_number', 'registration_date', 'issue_date', 'due_date',
-                'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
-                'detail', 'amount', 'expense_type_id', 'cost_center_id',
-                'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
-                'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
-                'payment_status', 'payment_date', 'pipeline_status', 'observations',
-            ],
-            'accrued' => [
-                'invoice_number', 'registration_date', 'issue_date', 'due_date',
-                'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
-                'detail', 'amount', 'expense_type_id', 'cost_center_id',
-                'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
-                'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
-                'payment_status', 'payment_date', 'pipeline_status', 'observations',
-            ],
-            'treasury' => [
-                'invoice_number', 'registration_date', 'issue_date', 'due_date',
-                'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
-                'detail', 'amount', 'expense_type_id', 'cost_center_id',
-                'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
-                'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
-                'payment_status', 'payment_date', 'pipeline_status', 'observations',
-            ],
-            'paid' => [
-                'invoice_number', 'registration_date', 'issue_date', 'due_date',
-                'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
-                'detail', 'amount', 'expense_type_id', 'cost_center_id',
-                'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
-                'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
-                'payment_status', 'payment_date', 'pipeline_status', 'observations',
             ],
         ],
     ];
 
     // Sections visible per role (non-Admin roles have fixed sections)
     private const VISIBLE_SECTIONS_BY_ROLE = [
-        'Registro/Revisión' => ['general', 'dates', 'classification', 'revision'],
-        'Contabilidad'      => ['general', 'dates', 'classification', 'accounting'],
-        'Tesorería'         => ['general', 'treasury'],
+        RoleConstants::REGISTRO_REVISION => ['general', 'dates', 'classification', 'revision'],
+        RoleConstants::CONTABILIDAD      => ['general', 'dates', 'classification', 'accounting'],
+        RoleConstants::TESORERIA         => ['general', 'treasury'],
     ];
 
     // Fields required before advancing from each status
@@ -170,6 +140,10 @@ class InvoicePipelineService
 
     public function getEditableFields(string $roleName, string $status): array
     {
+        if ($roleName === RoleConstants::ADMIN) {
+            return self::ALL_FIELDS;
+        }
+
         return self::EDITABLE_FIELDS[$roleName][$status] ?? [];
     }
 
@@ -180,7 +154,7 @@ class InvoicePipelineService
      */
     public function getVisibleSections(string $roleName, string $status): array
     {
-        if ($roleName !== 'Admin') {
+        if ($roleName !== RoleConstants::ADMIN) {
             return self::VISIBLE_SECTIONS_BY_ROLE[$roleName] ?? ['general'];
         }
 
@@ -188,11 +162,9 @@ class InvoicePipelineService
         $statusIndex = $this->getStatusIndex($status);
         $sections = ['general', 'dates', 'classification', 'revision'];
         if ($statusIndex >= 1) {
-            // area_approved and beyond: show accounting section
             $sections[] = 'accounting';
         }
         if ($statusIndex >= 3) {
-            // treasury and beyond: show treasury section
             $sections[] = 'treasury';
         }
 
@@ -245,7 +217,7 @@ class InvoicePipelineService
 
     public function canAdvance(string $roleName, string $currentStatus): bool
     {
-        if ($roleName === 'Admin') {
+        if ($roleName === RoleConstants::ADMIN) {
             return self::TRANSITIONS[$currentStatus] !== null;
         }
 
@@ -264,7 +236,7 @@ class InvoicePipelineService
 
     public function filterEntityData(array $data, string $roleName, string $status): array
     {
-        if ($roleName === 'Admin') {
+        if ($roleName === RoleConstants::ADMIN) {
             return $data;
         }
 

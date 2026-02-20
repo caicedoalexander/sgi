@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\RoleConstants;
 use App\Service\AuthorizationService;
 use Cake\Controller\Controller;
 use Cake\ORM\TableRegistry;
@@ -74,7 +75,7 @@ class AppController extends Controller
      */
     protected function _setUserPermissions(object $user): void
     {
-        $roleName = $user->role->name ?? '';
+        $roleName = $this->_getUserRoleName($user);
 
         if ($roleName === AuthorizationService::ROLE_ADMIN) {
             // Admin sees everything
@@ -122,11 +123,19 @@ class AppController extends Controller
         }
     }
 
+    /**
+     * Get the role name for a user from session/entity data.
+     */
+    protected function _getUserRoleName(object $user): string
+    {
+        return $user?->role?->name ?? '';
+    }
+
     protected function _setSidebarCounters(object $user): void
     {
         try {
             $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-            $roleName = $user->role->name ?? '';
+            $roleName = $this->_getUserRoleName($user);
 
             $authService = new AuthorizationService();
             $visibleStatuses = $this->_getVisibleStatuses($roleName);
@@ -147,10 +156,10 @@ class AppController extends Controller
     protected function _getVisibleStatuses(string $roleName): array
     {
         return match ($roleName) {
-            'Registro/Revisión' => ['revision'],
-            'Contabilidad' => ['area_approved', 'accrued'],
-            'Tesorería' => ['treasury'],
-            'Admin' => ['revision', 'area_approved', 'accrued', 'treasury', 'paid'],
+            RoleConstants::REGISTRO_REVISION => ['revision'],
+            RoleConstants::CONTABILIDAD => ['area_approved', 'accrued'],
+            RoleConstants::TESORERIA => ['treasury'],
+            RoleConstants::ADMIN => ['revision', 'area_approved', 'accrued', 'treasury', 'paid'],
             default => [],
         };
     }
@@ -172,7 +181,7 @@ class AppController extends Controller
         }
 
         $user = $identity->getOriginalData();
-        $roleName = $user->role->name ?? '';
+        $roleName = $this->_getUserRoleName($user);
 
         // Admin always allowed
         if ($roleName === AuthorizationService::ROLE_ADMIN) {

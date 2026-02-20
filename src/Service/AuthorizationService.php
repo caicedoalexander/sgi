@@ -3,12 +3,13 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\RoleConstants;
 use Cake\ORM\TableRegistry;
 
 class AuthorizationService
 {
-    // Role name constants
-    public const ROLE_ADMIN = 'Admin';
+    // Role name constants — reference centralized constants
+    public const ROLE_ADMIN = RoleConstants::ADMIN;
 
     // Module constants (matching PermissionsTable::MODULES)
     public const MODULES = [
