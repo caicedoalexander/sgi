@@ -8,6 +8,10 @@
  * @var string $currentStatus
  * @var string[] $pipelineStatuses
  * @var string[] $pipelineLabels
+ * @var string[] $visibleSections
+ * @var bool $isRejected
+ * @var string[] $advanceErrors
+ * @var string|null $nextStatus
  */
 $this->assign('title', 'Editar Factura #' . $invoice->id);
 
@@ -36,50 +40,65 @@ $readyForPaymentOptions = [
 ];
 $paymentStatusOptions = ['' => '-- Seleccione --', 'Pago total' => 'Pago total', 'Pago Parcial' => 'Pago Parcial'];
 
-// Helper: check if a field is editable for this role/status
+// Helper: is a field editable for this role/status?
 $canEdit = fn(string $field): bool => in_array($field, $editableFields, true);
-$disabledIf = fn(string $field): array => $canEdit($field) ? [] : ['disabled' => true, 'class' => 'form-control bg-light'];
-$disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabled' => true, 'class' => 'form-select bg-light'];
+
+// Determine submit button label
+if ($isRejected) {
+    $btnLabel = '<i class="bi bi-save me-1"></i>Guardar Cambios';
+    $btnClass = 'btn btn-warning';
+} elseif ($canAdvance && empty($advanceErrors) && $nextStatus) {
+    $nextLabel = $pipelineLabels[$nextStatus] ?? $nextStatus;
+    $btnLabel  = '<i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar a: ' . h($nextLabel);
+    $btnClass  = 'btn btn-success';
+} elseif ($canAdvance && !empty($advanceErrors)) {
+    $btnLabel = '<i class="bi bi-save me-1"></i>Guardar Cambios';
+    $btnClass = 'btn btn-warning';
+} else {
+    $btnLabel = '<i class="bi bi-save me-1"></i>Guardar Cambios';
+    $btnClass = 'btn btn-warning';
+}
+
+$pipelineBadges = [
+    'revision'     => 'bg-secondary',
+    'area_approved' => 'bg-info text-dark',
+    'accrued'      => 'bg-primary',
+    'treasury'     => 'bg-warning text-dark',
+    'paid'         => 'bg-success',
+];
 ?>
 <div class="mb-4 d-flex gap-2 align-items-center flex-wrap">
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-secondary btn-sm', 'escape' => false]) ?>
     <?= $this->Html->link('<i class="bi bi-eye me-1"></i>Ver', ['action' => 'view', $invoice->id], ['class' => 'btn btn-outline-info btn-sm', 'escape' => false]) ?>
-
-    <?php if ($canAdvance): ?>
-        <?php
-            $nextLabel = $pipelineLabels[\App\Service\InvoicePipelineService::TRANSITIONS[$currentStatus] ?? ''] ?? '';
-            $advanceLabel = ($currentStatus === 'treasury')
-                ? '<i class="bi bi-cash-coin me-1"></i>Marcar como Pagada'
-                : '<i class="bi bi-arrow-right-circle me-1"></i>Avanzar a: ' . h($nextLabel);
-        ?>
-        <?= $this->Form->postLink(
-            $advanceLabel,
-            ['action' => 'advanceStatus', $invoice->id],
-            ['class' => 'btn btn-success btn-sm', 'escape' => false,
-             'confirm' => '¿Confirma avanzar esta factura al siguiente estado?']
-        ) ?>
-    <?php endif; ?>
-
     <span class="ms-auto text-muted small">
         Rol: <strong><?= h($roleName) ?></strong>
     </span>
 </div>
 
 <!-- Pipeline visual -->
-<?= $this->element('pipeline_progress', compact('currentStatus', 'pipelineStatuses', 'pipelineLabels')) ?>
+<?= $this->element('pipeline_progress', [
+    'currentStatus'  => $currentStatus,
+    'pipelineStatuses' => $pipelineStatuses,
+    'pipelineLabels' => $pipelineLabels,
+    'isRejected'     => $isRejected,
+    'paymentStatus'  => $invoice->payment_status,
+]) ?>
+
+<?php if ($canAdvance && !$isRejected && !empty($advanceErrors)): ?>
+<div class="alert alert-warning py-2 mb-3">
+    <i class="bi bi-exclamation-triangle me-1"></i>
+    <strong>Para avanzar al siguiente estado complete:</strong>
+    <ul class="mb-0 mt-1">
+        <?php foreach ($advanceErrors as $err): ?>
+            <li><?= h($err) ?></li>
+        <?php endforeach; ?>
+    </ul>
+</div>
+<?php endif; ?>
 
 <div class="card shadow-sm mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Factura #<?= $invoice->id ?></h5>
-        <?php
-            $pipelineBadges = [
-                'revision'     => 'bg-secondary',
-                'area_approved' => 'bg-info text-dark',
-                'accrued'      => 'bg-primary',
-                'treasury'     => 'bg-warning text-dark',
-                'paid'         => 'bg-success',
-            ];
-        ?>
         <span class="badge <?= $pipelineBadges[$currentStatus] ?? 'bg-dark' ?> fs-6">
             <?= h($pipelineLabels[$currentStatus] ?? $currentStatus) ?>
         </span>
@@ -87,6 +106,7 @@ $disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabl
     <div class="card-body">
         <?= $this->Form->create($invoice) ?>
 
+        <?php if (in_array('general', $visibleSections)): ?>
         <!-- Información del Documento -->
         <h6 class="text-muted mb-3 mt-2">
             <i class="bi bi-file-text me-1"></i>Información del Documento
@@ -121,7 +141,9 @@ $disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabl
                 )) ?>
             </div>
         </div>
+        <?php endif; ?>
 
+        <?php if (in_array('dates', $visibleSections)): ?>
         <!-- Fechas -->
         <h6 class="text-muted mb-3">
             <i class="bi bi-calendar3 me-1"></i>Fechas
@@ -135,13 +157,15 @@ $disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabl
                            value="<?= h($invoice->$field?->format('Y-m-d') ?? '') ?>">
                 <?php else: ?>
                     <input type="text" class="form-control bg-light"
-                           value="<?= h($invoice->$field?->format('d/m/Y') ?? '') ?>" disabled>
+                           value="<?= h($invoice->$field ? $this->formatDateEs($invoice->$field) : '') ?>" disabled>
                     <input type="hidden" name="<?= $field ?>" value="<?= h($invoice->$field?->format('Y-m-d') ?? '') ?>">
                 <?php endif; ?>
             </div>
             <?php endforeach; ?>
         </div>
+        <?php endif; ?>
 
+        <?php if (in_array('classification', $visibleSections)): ?>
         <!-- Clasificación y Valor -->
         <h6 class="text-muted mb-3">
             <i class="bi bi-tags me-1"></i>Clasificación y Valor
@@ -187,9 +211,10 @@ $disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabl
                 $canEdit('detail') ? ['class' => 'form-control'] : ['class' => 'form-control bg-light', 'disabled' => true]
             )) ?>
         </div>
+        <?php endif; ?>
 
+        <?php if (in_array('revision', $visibleSections)): ?>
         <hr>
-
         <!-- Revisión -->
         <h6 class="text-muted mb-3">
             <i class="bi bi-search me-1"></i>Revisión
@@ -216,7 +241,7 @@ $disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabl
                            value="<?= h($invoice->area_approval_date?->format('Y-m-d') ?? '') ?>">
                 <?php else: ?>
                     <input type="text" class="form-control bg-light"
-                           value="<?= h($invoice->area_approval_date?->format('d/m/Y') ?? '') ?>" disabled>
+                           value="<?= h($invoice->area_approval_date ? $this->formatDateEs($invoice->area_approval_date) : '') ?>" disabled>
                 <?php endif; ?>
             </div>
         </div>
@@ -229,9 +254,10 @@ $disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabl
                 )) ?>
             </div>
         </div>
+        <?php endif; ?>
 
+        <?php if (in_array('accounting', $visibleSections)): ?>
         <hr>
-
         <!-- Contabilidad -->
         <h6 class="text-muted mb-3">
             <i class="bi bi-calculator me-1"></i>Contabilidad
@@ -254,7 +280,7 @@ $disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabl
                            value="<?= h($invoice->accrual_date?->format('Y-m-d') ?? '') ?>">
                 <?php else: ?>
                     <input type="text" class="form-control bg-light"
-                           value="<?= h($invoice->accrual_date?->format('d/m/Y') ?? '') ?>" disabled>
+                           value="<?= h($invoice->accrual_date ? $this->formatDateEs($invoice->accrual_date) : '') ?>" disabled>
                 <?php endif; ?>
             </div>
             <div class="col-md-4 mb-3">
@@ -265,9 +291,10 @@ $disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabl
                 )) ?>
             </div>
         </div>
+        <?php endif; ?>
 
+        <?php if (in_array('treasury', $visibleSections)): ?>
         <hr>
-
         <!-- Tesorería -->
         <h6 class="text-muted mb-3">
             <i class="bi bi-bank me-1"></i>Tesorería
@@ -287,13 +314,14 @@ $disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabl
                            value="<?= h($invoice->payment_date?->format('Y-m-d') ?? '') ?>">
                 <?php else: ?>
                     <input type="text" class="form-control bg-light"
-                           value="<?= h($invoice->payment_date?->format('d/m/Y') ?? '') ?>" disabled>
+                           value="<?= h($invoice->payment_date ? $this->formatDateEs($invoice->payment_date) : '') ?>" disabled>
                 <?php endif; ?>
             </div>
         </div>
+        <?php endif; ?>
 
         <hr>
-        <div class="mb-3">
+        <div class="mb-4">
             <label class="form-label">Observaciones</label>
             <?= $this->Form->control('observations', array_merge(
                 ['label' => false, 'type' => 'textarea', 'rows' => 2],
@@ -302,8 +330,8 @@ $disabledSelectIf = fn(string $field): array => $canEdit($field) ? [] : ['disabl
         </div>
 
         <?php if (!empty($editableFields)): ?>
-            <button type="submit" class="btn btn-warning">
-                <i class="bi bi-save me-1"></i>Guardar Cambios
+            <button type="submit" class="<?= $btnClass ?>">
+                <?= $btnLabel ?>
             </button>
         <?php else: ?>
             <div class="alert alert-info">

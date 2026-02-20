@@ -29,14 +29,37 @@ class AppView extends View
 {
     /**
      * Initialization hook method.
-     *
-     * Use this method to add common initialization code like adding helpers.
-     *
-     * e.g. `$this->addHelper('Html');`
-     *
-     * @return void
      */
     public function initialize(): void
     {
+    }
+
+    /**
+     * Format a date in long Spanish format: "Lunes, 17 Febrero 2026".
+     * Returns '—' if $date is null.
+     *
+     * @param \DateTimeInterface|\Cake\I18n\Date|\Cake\I18n\DateTime|null $date
+     */
+    public function formatDateEs($date): string
+    {
+        if (!$date) {
+            return '—';
+        }
+
+        $days = [
+            'Domingo', 'Lunes', 'Martes', 'Miércoles',
+            'Jueves', 'Viernes', 'Sábado',
+        ];
+        $months = [
+            '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+        ];
+
+        $dayName = $days[(int)$date->format('w')];
+        $day     = $date->format('j');
+        $month   = $months[(int)$date->format('n')];
+        $year    = $date->format('Y');
+
+        return "{$dayName}, {$day} {$month} {$year}";
     }
 }

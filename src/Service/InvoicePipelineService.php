@@ -100,6 +100,60 @@ class InvoicePipelineService
         ],
     ];
 
+    // Sections visible per role (non-Admin roles have fixed sections)
+    private const VISIBLE_SECTIONS_BY_ROLE = [
+        'Registro/Revisión' => ['general', 'dates', 'classification', 'revision'],
+        'Contabilidad'      => ['general', 'dates', 'classification', 'accounting'],
+        'Tesorería'         => ['general', 'treasury'],
+    ];
+
+    // Fields required before advancing from each status
+    private const TRANSITION_REQUIREMENTS = [
+        'revision' => [
+            [
+                'field' => 'area_approval',
+                'value' => 'Aprobada',
+                'label' => 'Aprobación de Área debe ser "Aprobada"',
+            ],
+            [
+                'field' => 'dian_validation',
+                'value' => 'Aprobada',
+                'label' => 'Validación DIAN debe ser "Aprobada"',
+            ],
+        ],
+        'area_approved' => [
+            [
+                'field' => 'accrued',
+                'value' => true,
+                'label' => 'La factura debe estar marcada como Causada',
+            ],
+            [
+                'field' => 'accrual_date',
+                'not_empty' => true,
+                'label' => 'Fecha de Causación es requerida',
+            ],
+        ],
+        'accrued' => [
+            [
+                'field' => 'ready_for_payment',
+                'not_empty' => true,
+                'label' => 'Campo "Lista para Pago" es requerido',
+            ],
+        ],
+        'treasury' => [
+            [
+                'field' => 'payment_status',
+                'value' => 'Pago total',
+                'label' => 'Estado de Pago debe ser "Pago total" para marcar como Pagada',
+            ],
+            [
+                'field' => 'payment_date',
+                'not_empty' => true,
+                'label' => 'Fecha de Pago es requerida',
+            ],
+        ],
+    ];
+
     // Next status transitions
     public const TRANSITIONS = [
         'revision'     => 'area_approved',
@@ -117,6 +171,76 @@ class InvoicePipelineService
     public function getEditableFields(string $roleName, string $status): array
     {
         return self::EDITABLE_FIELDS[$roleName][$status] ?? [];
+    }
+
+    /**
+     * Returns sections visible in the edit form for the given role and current status.
+     * For non-Admin roles: fixed sections regardless of status.
+     * For Admin: sections depend on how far the invoice has progressed.
+     */
+    public function getVisibleSections(string $roleName, string $status): array
+    {
+        if ($roleName !== 'Admin') {
+            return self::VISIBLE_SECTIONS_BY_ROLE[$roleName] ?? ['general'];
+        }
+
+        // Admin: show sections up to the current state
+        $statusIndex = $this->getStatusIndex($status);
+        $sections = ['general', 'dates', 'classification', 'revision'];
+        if ($statusIndex >= 1) {
+            // area_approved and beyond: show accounting section
+            $sections[] = 'accounting';
+        }
+        if ($statusIndex >= 3) {
+            // treasury and beyond: show treasury section
+            $sections[] = 'treasury';
+        }
+
+        return $sections;
+    }
+
+    /**
+     * Returns true if the invoice has been rejected in the revision step.
+     */
+    public function isRejected(object $invoice): bool
+    {
+        return ($invoice->area_approval ?? '') === 'Rechazada';
+    }
+
+    /**
+     * Validates whether all requirements are met to advance from $fromStatus.
+     * Returns an array of error messages (empty = can advance).
+     */
+    public function validateTransitionRequirements(object $invoice, string $fromStatus): array
+    {
+        // Rejection at revision blocks all advancement
+        if ($fromStatus === 'revision' && $this->isRejected($invoice)) {
+            return ['La factura fue rechazada en Revisión. El flujo ha terminado.'];
+        }
+
+        $errors = [];
+        foreach (self::TRANSITION_REQUIREMENTS[$fromStatus] ?? [] as $rule) {
+            $field = $rule['field'];
+            $value = $invoice->$field ?? null;
+
+            if (isset($rule['value'])) {
+                $expected = $rule['value'];
+                if (is_bool($expected)) {
+                    $actual = (bool)$value;
+                } else {
+                    $actual = $value;
+                }
+                if ($actual !== $expected) {
+                    $errors[] = $rule['label'];
+                }
+            } elseif (!empty($rule['not_empty'])) {
+                if ($value === null || $value === '' || $value === false) {
+                    $errors[] = $rule['label'];
+                }
+            }
+        }
+
+        return $errors;
     }
 
     public function canAdvance(string $roleName, string $currentStatus): bool

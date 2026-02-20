@@ -41,6 +41,7 @@ class InvoicesController extends AppController
             $query->where(['pipeline_status IN' => $visibleStatuses]);
         }
 
+        $this->paginate = ['limit' => 15, 'maxLimit' => 15];
         $invoices = $this->paginate($query);
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
@@ -59,7 +60,12 @@ class InvoicesController extends AppController
             'InvoiceHistories' => ['Users'],
         ]);
 
-        $this->set(compact('invoice'));
+        $roleName = $this->_getRoleName();
+        $isRejected = $this->pipeline->isRejected($invoice);
+        $pipelineStatuses = InvoicePipelineService::STATUSES;
+        $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
+
+        $this->set(compact('invoice', 'roleName', 'isRejected', 'pipelineStatuses', 'pipelineLabels'));
     }
 
     public function add()
@@ -95,22 +101,80 @@ class InvoicesController extends AppController
 
         $editableFields = $this->pipeline->getEditableFields($roleName, $currentStatus);
         $canAdvance = $this->pipeline->canAdvance($roleName, $currentStatus);
+        $visibleSections = $this->pipeline->getVisibleSections($roleName, $currentStatus);
+        $isRejected = $this->pipeline->isRejected($invoice);
+
+        // Pre-compute advance errors for GET (to show in button label / UI hints)
+        $advanceErrors = [];
+        $nextStatus = null;
+        if ($canAdvance && !$isRejected) {
+            $advanceErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
+            if (empty($advanceErrors)) {
+                $nextStatus = $this->pipeline->getNextStatus($currentStatus);
+            }
+        }
 
         if ($this->request->is(['patch', 'post', 'put'])) {
             $user = $this->_getCurrentUser();
-            $originalInvoice = clone $invoice;
             $data = $this->request->getData();
 
-            // Filter data to only editable fields for this role
+            // Only allow fields this role can edit in current status
             $filteredData = $this->pipeline->filterEntityData($data, $roleName, $currentStatus);
-            $invoice = $this->Invoices->patchEntity($invoice, $filteredData);
 
-            if ($this->Invoices->save($invoice)) {
-                $this->historyService->recordChanges($originalInvoice, $invoice, $user->id);
-                $this->Flash->success(__('La factura ha sido actualizada.'));
+            // Re-evaluate advancement with submitted data
+            $advanceNextStatus = null;
+            $postAdvanceErrors = [];
+            if ($canAdvance && !$isRejected) {
+                $testEntity = $this->Invoices->patchEntity(clone $invoice, $filteredData);
+                $postAdvanceErrors = $this->pipeline->validateTransitionRequirements($testEntity, $currentStatus);
+                if (empty($postAdvanceErrors)) {
+                    $advanceNextStatus = $this->pipeline->getNextStatus($currentStatus);
+                }
+            }
+
+            $original = clone $invoice;
+
+            $saved = $this->Invoices->getConnection()->transactional(
+                function () use (&$invoice, $filteredData, $advanceNextStatus, $currentStatus, $user, $original) {
+                    $invoice = $this->Invoices->patchEntity($invoice, $filteredData);
+
+                    if (!$this->Invoices->save($invoice)) {
+                        return false;
+                    }
+
+                    $this->historyService->recordChanges($original, $invoice, $user->id);
+
+                    if ($advanceNextStatus) {
+                        $invoice->pipeline_status = $advanceNextStatus;
+                        if (!$this->Invoices->save($invoice)) {
+                            return false;
+                        }
+                        $this->historyService->recordStatusChange(
+                            $invoice->id,
+                            $currentStatus,
+                            $advanceNextStatus,
+                            $user->id
+                        );
+                    }
+
+                    return true;
+                }
+            );
+
+            if ($saved) {
+                if ($advanceNextStatus) {
+                    $nextLabel = InvoicePipelineService::STATUS_LABELS[$advanceNextStatus] ?? $advanceNextStatus;
+                    $this->Flash->success(sprintf('Factura guardada y avanzada a: %s', $nextLabel));
+                } else {
+                    $this->Flash->success('La factura ha sido actualizada.');
+                    foreach ($postAdvanceErrors as $err) {
+                        $this->Flash->warning($err);
+                    }
+                }
                 return $this->redirect(['action' => 'index']);
             }
-            $this->Flash->error(__('No se pudo actualizar la factura. Intente de nuevo.'));
+
+            $this->Flash->error('No se pudo guardar la factura. Verifique los datos e intente de nuevo.');
         }
 
         $providers = $this->Invoices->Providers->find('list', limit: 200)->all();
@@ -125,10 +189,15 @@ class InvoicesController extends AppController
         $this->set(compact(
             'invoice', 'providers', 'operationCenters', 'expenseTypes', 'costCenters',
             'approvers', 'editableFields', 'canAdvance', 'roleName',
-            'pipelineStatuses', 'pipelineLabels', 'currentStatus'
+            'pipelineStatuses', 'pipelineLabels', 'currentStatus',
+            'visibleSections', 'isRejected', 'advanceErrors', 'nextStatus'
         ));
     }
 
+    /**
+     * Kept for backward compatibility with existing route.
+     * The unified edit action now handles save+advance.
+     */
     public function advanceStatus($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -139,6 +208,19 @@ class InvoicesController extends AppController
 
         if (!$this->pipeline->canAdvance($roleName, $currentStatus)) {
             $this->Flash->error('No tiene permisos para avanzar esta factura.');
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        if ($this->pipeline->isRejected($invoice)) {
+            $this->Flash->error('La factura fue rechazada. El flujo ha terminado.');
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        $errors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
+        if (!empty($errors)) {
+            foreach ($errors as $err) {
+                $this->Flash->error($err);
+            }
             return $this->redirect(['action' => 'edit', $id]);
         }
 

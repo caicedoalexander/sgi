@@ -2,46 +2,41 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Invoice $invoice
+ * @var string $roleName
+ * @var bool $isRejected
+ * @var string[] $pipelineStatuses
+ * @var string[] $pipelineLabels
  */
 $this->assign('title', 'Factura #' . $invoice->id);
 
-$pipelineLabels = [
-    'revision' => ['Revisión', 'bg-secondary'],
-    'area_approved' => ['Área Aprobada', 'bg-info'],
-    'accrued' => ['Causada', 'bg-primary'],
-    'treasury' => ['Tesorería', 'bg-warning text-dark'],
-    'paid' => ['Pagada', 'bg-success'],
+$pipelineBadgeMap = [
+    'revision'     => ['Revisión', 'bg-secondary'],
+    'area_approved' => ['Área Aprobada', 'bg-info text-dark'],
+    'accrued'      => ['Causada', 'bg-primary'],
+    'treasury'     => ['Tesorería', 'bg-warning text-dark'],
+    'paid'         => ['Pagada', 'bg-success'],
 ];
-$ps = $pipelineLabels[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
+$ps = $pipelineBadgeMap[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
 ?>
-<div class="mb-4">
+<div class="mb-4 d-flex gap-2 align-items-center flex-wrap">
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-secondary btn-sm', 'escape' => false]) ?>
     <?= $this->Html->link('<i class="bi bi-pencil me-1"></i>Editar', ['action' => 'edit', $invoice->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
+    <span class="ms-2">
+        <span class="badge <?= $ps[1] ?> fs-6"><?= $ps[0] ?></span>
+        <?php if ($invoice->pipeline_status === 'treasury' && $invoice->payment_status === 'Pago Parcial'): ?>
+            <span class="badge bg-warning text-dark fs-6">Pago Parcial</span>
+        <?php endif; ?>
+    </span>
 </div>
 
-<!-- Pipeline Status Bar -->
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-            <?php
-            $steps = ['revision' => 'Revisión', 'area_approved' => 'Área Aprobada', 'accrued' => 'Causada', 'treasury' => 'Tesorería', 'paid' => 'Pagada'];
-            $stepKeys = array_keys($steps);
-            $currentIndex = array_search($invoice->pipeline_status, $stepKeys);
-            foreach ($steps as $key => $label):
-                $index = array_search($key, $stepKeys);
-                $isActive = $index <= $currentIndex;
-                $isCurrent = $key === $invoice->pipeline_status;
-            ?>
-            <div class="text-center flex-fill">
-                <div class="rounded-circle d-inline-flex align-items-center justify-content-center <?= $isActive ? 'bg-primary text-white' : 'bg-light text-muted border' ?>" style="width: 36px; height: 36px;">
-                    <?= $isActive ? '<i class="bi bi-check-lg"></i>' : ($index + 1) ?>
-                </div>
-                <div class="small mt-1 <?= $isCurrent ? 'fw-bold' : 'text-muted' ?>"><?= $label ?></div>
-            </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</div>
+<!-- Pipeline visual mejorado -->
+<?= $this->element('pipeline_progress', [
+    'currentStatus'    => $invoice->pipeline_status,
+    'pipelineStatuses' => $pipelineStatuses,
+    'pipelineLabels'   => $pipelineLabels,
+    'isRejected'       => $isRejected,
+    'paymentStatus'    => $invoice->payment_status,
+]) ?>
 
 <div class="row">
     <!-- Datos Generales -->
@@ -67,11 +62,11 @@ $ps = $pipelineLabels[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
                     <div class="col-md-6">
                         <dl class="row mb-0">
                             <dt class="col-sm-5">Fecha Registro</dt>
-                            <dd class="col-sm-7"><?= $invoice->registration_date?->format('d/m/Y') ?></dd>
+                            <dd class="col-sm-7"><?= $this->formatDateEs($invoice->registration_date) ?></dd>
                             <dt class="col-sm-5">Fecha Emisión</dt>
-                            <dd class="col-sm-7"><?= $invoice->issue_date?->format('d/m/Y') ?></dd>
+                            <dd class="col-sm-7"><?= $this->formatDateEs($invoice->issue_date) ?></dd>
                             <dt class="col-sm-5">Fecha Vencimiento</dt>
-                            <dd class="col-sm-7"><?= $invoice->due_date?->format('d/m/Y') ?></dd>
+                            <dd class="col-sm-7"><?= $this->formatDateEs($invoice->due_date) ?></dd>
                             <dt class="col-sm-5">Valor</dt>
                             <dd class="col-sm-7 fw-bold text-success">$ <?= $this->Number->format($invoice->amount, ['places' => 2]) ?></dd>
                         </dl>
@@ -116,7 +111,7 @@ $ps = $pipelineLabels[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
                     <tbody>
                         <?php foreach ($invoice->invoice_histories as $history): ?>
                         <tr>
-                            <td><?= $history->created?->format('d/m/Y H:i') ?></td>
+                            <td><?= $this->formatDateEs($history->created) ?></td>
                             <td><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
                             <td><code><?= h($history->field_changed) ?></code></td>
                             <td class="text-muted"><?= h($history->old_value) ?: '—' ?></td>
@@ -130,14 +125,17 @@ $ps = $pipelineLabels[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
         <?php endif; ?>
     </div>
 
-    <!-- Panel Lateral: Conciliación -->
+    <!-- Panel Lateral -->
     <div class="col-lg-4">
+        <!-- Revisión -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-secondary text-white"><h6 class="mb-0">Revisión</h6></div>
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-6">Confirmado por</dt>
                     <dd class="col-6"><?= $invoice->hasValue('confirmed_by_user') ? h($invoice->confirmed_by_user->full_name) : '<span class="text-muted">—</span>' ?></dd>
+                    <dt class="col-6">Aprobador</dt>
+                    <dd class="col-6"><?= $invoice->hasValue('approver_user') ? h($invoice->approver_user->full_name) : '<span class="text-muted">—</span>' ?></dd>
                     <dt class="col-6">Aprobación Área</dt>
                     <dd class="col-6">
                         <?php
@@ -147,10 +145,10 @@ $ps = $pipelineLabels[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
                             default => 'bg-secondary',
                         };
                         ?>
-                        <span class="badge <?= $approvalClass ?>"><?= h($invoice->area_approval) ?></span>
+                        <span class="badge <?= $approvalClass ?>"><?= h($invoice->area_approval ?? 'Pendiente') ?></span>
                     </dd>
                     <dt class="col-6">Fecha Aprobación</dt>
-                    <dd class="col-6"><?= $invoice->area_approval_date?->format('d/m/Y') ?: '—' ?></dd>
+                    <dd class="col-6"><?= $this->formatDateEs($invoice->area_approval_date) ?></dd>
                     <dt class="col-6">Validación DIAN</dt>
                     <dd class="col-6">
                         <?php
@@ -160,12 +158,13 @@ $ps = $pipelineLabels[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
                             default => 'bg-secondary',
                         };
                         ?>
-                        <span class="badge <?= $dianClass ?>"><?= h($invoice->dian_validation) ?></span>
+                        <span class="badge <?= $dianClass ?>"><?= h($invoice->dian_validation ?? 'Pendiente') ?></span>
                     </dd>
                 </dl>
             </div>
         </div>
 
+        <!-- Contabilidad -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-primary text-white"><h6 class="mb-0">Contabilidad</h6></div>
             <div class="card-body">
@@ -173,25 +172,35 @@ $ps = $pipelineLabels[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
                     <dt class="col-6">Causada</dt>
                     <dd class="col-6"><?= $invoice->accrued ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>' ?></dd>
                     <dt class="col-6">Fecha Causación</dt>
-                    <dd class="col-6"><?= $invoice->accrual_date?->format('d/m/Y') ?: '—' ?></dd>
+                    <dd class="col-6"><?= $this->formatDateEs($invoice->accrual_date) ?></dd>
                     <dt class="col-6">Lista para Pago</dt>
                     <dd class="col-6"><?= h($invoice->ready_for_payment) ?: '—' ?></dd>
                 </dl>
             </div>
         </div>
 
+        <!-- Tesorería -->
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-success text-white"><h6 class="mb-0">Tesorería</h6></div>
+            <div class="card-header bg-warning text-dark"><h6 class="mb-0">Tesorería</h6></div>
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-6">Estado Pago</dt>
-                    <dd class="col-6"><?= h($invoice->payment_status) ?: '—' ?></dd>
+                    <dd class="col-6">
+                        <?php if ($invoice->payment_status === 'Pago Parcial'): ?>
+                            <span class="badge bg-warning text-dark"><?= h($invoice->payment_status) ?></span>
+                        <?php elseif ($invoice->payment_status === 'Pago total'): ?>
+                            <span class="badge bg-success"><?= h($invoice->payment_status) ?></span>
+                        <?php else: ?>
+                            <span class="text-muted">—</span>
+                        <?php endif; ?>
+                    </dd>
                     <dt class="col-6">Fecha Pago</dt>
-                    <dd class="col-6"><?= $invoice->payment_date?->format('d/m/Y') ?: '—' ?></dd>
+                    <dd class="col-6"><?= $this->formatDateEs($invoice->payment_date) ?></dd>
                 </dl>
             </div>
         </div>
 
+        <!-- Registro -->
         <div class="card shadow-sm">
             <div class="card-header"><h6 class="mb-0">Registro</h6></div>
             <div class="card-body">
@@ -199,9 +208,9 @@ $ps = $pipelineLabels[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
                     <dt class="col-6">Registrado por</dt>
                     <dd class="col-6"><?= $invoice->hasValue('registered_by_user') ? h($invoice->registered_by_user->full_name) : '' ?></dd>
                     <dt class="col-6">Creado</dt>
-                    <dd class="col-6"><?= $invoice->created?->format('d/m/Y H:i') ?></dd>
+                    <dd class="col-6"><?= $this->formatDateEs($invoice->created) ?></dd>
                     <dt class="col-6">Modificado</dt>
-                    <dd class="col-6"><?= $invoice->modified?->format('d/m/Y H:i') ?></dd>
+                    <dd class="col-6"><?= $this->formatDateEs($invoice->modified) ?></dd>
                 </dl>
             </div>
         </div>

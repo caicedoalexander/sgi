@@ -63,7 +63,7 @@ class RolesController extends AppController
 
         $authService = new AuthorizationService();
         $modules = AuthorizationService::MODULES;
-        $permissionsMatrix = $authService->getPermissionsForRoleAsMatrix($id);
+        $permissionsMatrix = $authService->getPermissionsForRoleAsMatrix((int)$id);
 
         $this->set(compact('role', 'modules', 'permissionsMatrix'));
     }

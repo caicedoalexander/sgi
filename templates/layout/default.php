@@ -3,9 +3,11 @@
  * @var \App\View\AppView $this
  * @var object|null $currentUser
  * @var array $sidebarCounters
+ * @var array $userPermissions
  */
 $sidebarCounters = $sidebarCounters ?? [];
 $currentUser = $currentUser ?? null;
+$userPermissions = $userPermissions ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -75,8 +77,21 @@ $currentUser = $currentUser ?? null;
                 <span class="fs-2 fw-bold">SGI</span>
             </a>
             <hr class="text-secondary my-1">
+            <?php
+            $canView = function (string $module) use ($userPermissions): bool {
+                return !empty($userPermissions[$module]['can_view']);
+            };
+            ?>
             <ul class="nav nav-pills flex-column">
+                <?php
+                // Facturación section
+                $facturacionItems = array_filter([
+                    $canView('invoices') ? 'invoices' : null,
+                    $canView('approvers') ? 'approvers' : null,
+                ]);
+                if (!empty($facturacionItems)): ?>
                 <li class="nav-heading">Facturación</li>
+                <?php if ($canView('invoices')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-receipt me-2"></i>Facturas' .
@@ -85,6 +100,8 @@ $currentUser = $currentUser ?? null;
                         ['class' => 'nav-link d-flex align-items-center', 'escape' => false]
                     ) ?>
                 </li>
+                <?php endif; ?>
+                <?php if ($canView('approvers')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-person-check me-2"></i>Aprobadores',
@@ -92,7 +109,20 @@ $currentUser = $currentUser ?? null;
                         ['class' => 'nav-link', 'escape' => false]
                     ) ?>
                 </li>
+                <?php endif; ?>
+                <?php endif; ?>
+
+                <?php
+                // Catálogos section
+                $catalogoItems = array_filter([
+                    $canView('providers') ? 'providers' : null,
+                    $canView('operation_centers') ? 'operation_centers' : null,
+                    $canView('expense_types') ? 'expense_types' : null,
+                    $canView('cost_centers') ? 'cost_centers' : null,
+                ]);
+                if (!empty($catalogoItems)): ?>
                 <li class="nav-heading">Catálogos</li>
+                <?php if ($canView('providers')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-truck me-2"></i>Proveedores',
@@ -100,6 +130,8 @@ $currentUser = $currentUser ?? null;
                         ['class' => 'nav-link', 'escape' => false]
                     ) ?>
                 </li>
+                <?php endif; ?>
+                <?php if ($canView('operation_centers')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-geo-alt me-2"></i>Centros de Operación',
@@ -107,6 +139,8 @@ $currentUser = $currentUser ?? null;
                         ['class' => 'nav-link', 'escape' => false]
                     ) ?>
                 </li>
+                <?php endif; ?>
+                <?php if ($canView('expense_types')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-tags me-2"></i>Tipos de Gasto',
@@ -114,6 +148,8 @@ $currentUser = $currentUser ?? null;
                         ['class' => 'nav-link', 'escape' => false]
                     ) ?>
                 </li>
+                <?php endif; ?>
+                <?php if ($canView('cost_centers')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-diagram-3 me-2"></i>Centros de Costos',
@@ -121,7 +157,18 @@ $currentUser = $currentUser ?? null;
                         ['class' => 'nav-link', 'escape' => false]
                     ) ?>
                 </li>
+                <?php endif; ?>
+                <?php endif; ?>
+
+                <?php
+                // Administración section
+                $adminItems = array_filter([
+                    $canView('users') ? 'users' : null,
+                    $canView('roles') ? 'roles' : null,
+                ]);
+                if (!empty($adminItems)): ?>
                 <li class="nav-heading">Administración</li>
+                <?php if ($canView('users')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-people me-2"></i>Usuarios',
@@ -129,6 +176,8 @@ $currentUser = $currentUser ?? null;
                         ['class' => 'nav-link', 'escape' => false]
                     ) ?>
                 </li>
+                <?php endif; ?>
+                <?php if ($canView('roles')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-shield-lock me-2"></i>Roles',
@@ -136,6 +185,8 @@ $currentUser = $currentUser ?? null;
                         ['class' => 'nav-link', 'escape' => false]
                     ) ?>
                 </li>
+                <?php endif; ?>
+                <?php endif; ?>
             </ul>
 
             <!-- User info footer -->

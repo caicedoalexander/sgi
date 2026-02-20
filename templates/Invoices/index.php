@@ -14,6 +14,14 @@ $pipelineBadges = [
     'paid'         => ['Pagada', 'bg-success'],
 ];
 ?>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Facturas</h1>
+    <?= $this->Html->link(
+        '<i class="bi bi-plus-lg me-1"></i>Nueva Factura',
+        ['action' => 'add'],
+        ['class' => 'btn btn-primary', 'escape' => false]
+    ) ?>
+</div>
 
 <div class="card border-0">
     <div class="table-responsive border-0">

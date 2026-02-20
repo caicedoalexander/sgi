@@ -17,6 +17,35 @@ class AppController extends Controller
         $this->loadComponent('Authentication.Authentication');
     }
 
+    /**
+     * Map controller names to module keys used in permissions table.
+     */
+    protected array $controllerModuleMap = [
+        'Invoices' => 'invoices',
+        'Providers' => 'providers',
+        'OperationCenters' => 'operation_centers',
+        'ExpenseTypes' => 'expense_types',
+        'CostCenters' => 'cost_centers',
+        'Users' => 'users',
+        'Roles' => 'roles',
+        'Approvers' => 'approvers',
+        'InvoiceHistories' => 'invoices',
+    ];
+
+    /**
+     * Map CakePHP action names to permission actions.
+     */
+    protected function _actionToPermission(string $action): string
+    {
+        return match ($action) {
+            'index', 'view' => 'view',
+            'add' => 'add',
+            'edit', 'advanceStatus' => 'edit',
+            'delete' => 'delete',
+            default => 'view',
+        };
+    }
+
     public function beforeFilter(\Cake\Event\EventInterface $event): void
     {
         parent::beforeFilter($event);
@@ -26,9 +55,64 @@ class AppController extends Controller
         // Pass current user to all views
         $this->set('currentUser', $identity?->getOriginalData());
 
-        // Set sidebar counters
         if ($identity) {
-            $this->_setSidebarCounters($identity->getOriginalData());
+            $user = $identity->getOriginalData();
+            $this->_setSidebarCounters($user);
+            $this->_setUserPermissions($user);
+            $this->_enforcePermission($user);
+        }
+    }
+
+    /**
+     * Calculate and pass user permissions to all views for sidebar filtering.
+     */
+    protected function _setUserPermissions(object $user): void
+    {
+        $roleName = $user->role->name ?? '';
+
+        if ($roleName === AuthorizationService::ROLE_ADMIN) {
+            // Admin sees everything
+            $perms = [];
+            foreach (array_keys(AuthorizationService::MODULES) as $module) {
+                $perms[$module] = ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => true];
+            }
+            $this->set('userPermissions', $perms);
+            return;
+        }
+
+        $authService = new AuthorizationService();
+        $this->set('userPermissions', $authService->getPermissionsForRoleAsMatrix((int)$user->role_id));
+    }
+
+    /**
+     * Automatically enforce permissions based on current controller/action.
+     */
+    protected function _enforcePermission(object $user): void
+    {
+        $controllerName = $this->request->getParam('controller');
+        $action = $this->request->getParam('action');
+
+        // Skip controllers not in the permission map (Pages, Error, etc.)
+        if (!isset($this->controllerModuleMap[$controllerName])) {
+            return;
+        }
+
+        // Skip login/logout actions
+        if ($controllerName === 'Users' && in_array($action, ['login', 'logout'])) {
+            return;
+        }
+
+        $module = $this->controllerModuleMap[$controllerName];
+        $permAction = $this->_actionToPermission($action);
+
+        if (!$this->_checkPermission($module, $permAction)) {
+            $this->Flash->error('No tiene permisos para acceder a esta función.');
+            // Avoid redirect loop: if already on invoices/index, redirect to dashboard/login
+            if ($controllerName === 'Invoices' && $action === 'index') {
+                $this->redirect(['controller' => 'Users', 'action' => 'login']);
+            } else {
+                $this->redirect($this->request->referer() ?: ['controller' => 'Invoices', 'action' => 'index']);
+            }
         }
     }
 
@@ -90,6 +174,6 @@ class AppController extends Controller
         }
 
         $authService = new AuthorizationService();
-        return $authService->isAllowed($user->role_id, $roleName, $module, $action);
+        return $authService->isAllowed((int)$user->role_id, $roleName, $module, $action);
     }
 }
