@@ -5,6 +5,9 @@ $this->assign('title', 'Carpetas por Defecto');
     <span class="sgi-page-title">Carpetas por Defecto</span>
     <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nueva Carpeta por Defecto', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
 </div>
+
+<?= $this->element('catalog_excel_buttons') ?>
+
 <div class="card shadow-sm">
     <div class="table-responsive">
         <table class="table table-hover mb-0">

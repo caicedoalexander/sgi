@@ -53,6 +53,9 @@ class InvoicesTable extends Table
         $this->hasMany('InvoiceHistories', [
             'foreignKey' => 'invoice_id',
         ]);
+        $this->hasMany('InvoiceObservations', [
+            'foreignKey' => 'invoice_id',
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator
@@ -140,7 +143,7 @@ class InvoicesTable extends Table
 
         $validator
             ->scalar('pipeline_status')
-            ->inList('pipeline_status', ['revision', 'area_approved', 'accrued', 'treasury', 'paid']);
+            ->inList('pipeline_status', ['registro', 'aprobacion', 'contabilidad', 'tesoreria', 'pagada']);
 
         $validator
             ->scalar('ready_for_payment')
@@ -169,10 +172,6 @@ class InvoicesTable extends Table
         $validator
             ->date('payment_date')
             ->allowEmptyDate('payment_date');
-
-        $validator
-            ->scalar('observations')
-            ->allowEmptyString('observations');
 
         $validator
             ->integer('confirmed_by')

@@ -10,11 +10,11 @@
 $this->assign('title', 'Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
 $pipelineBadgeMap = [
-    'revision'      => ['Revisión',      'bg-secondary'],
-    'area_approved' => ['Área Aprobada', 'bg-info text-dark'],
-    'accrued'       => ['Causada',       'bg-primary'],
-    'treasury'      => ['Tesorería',     'bg-warning text-dark'],
-    'paid'          => ['Pagada',        'bg-success'],
+    'registro'      => ['Registro',      'bg-secondary'],
+    'aprobacion'    => ['Aprobación',    'bg-info text-dark'],
+    'contabilidad'  => ['Contabilidad',  'bg-primary'],
+    'tesoreria'     => ['Tesorería',     'bg-warning text-dark'],
+    'pagada'        => ['Pagada',        'bg-success'],
 ];
 $ps = $pipelineBadgeMap[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
 
@@ -34,6 +34,12 @@ $dianClass = match($invoice->dian_validation ?? '') {
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Ver Factura</span>
     <div class="d-flex gap-2">
+        <?= $this->Form->postLink(
+            '<i class="bi bi-link-45deg me-1"></i>Enlace Aprobación',
+            ['action' => 'generateApprovalLink', $invoice->id],
+            ['class' => 'btn btn-outline-primary btn-sm', 'escape' => false,
+             'confirm' => '¿Generar enlace de aprobación externa (válido 48h)?']
+        ) ?>
         <?= $this->Html->link(
             '<i class="bi bi-arrow-left me-1"></i>Volver',
             ['action' => 'index'],
@@ -70,7 +76,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
                     <?php if ($isRejected): ?>
                         <span class="badge bg-danger">Rechazada</span>
                     <?php endif; ?>
-                    <?php if ($invoice->pipeline_status === 'treasury' && $invoice->payment_status === 'Pago Parcial'): ?>
+                    <?php if ($invoice->pipeline_status === 'tesoreria' && $invoice->payment_status === 'Pago Parcial'): ?>
                         <span class="badge bg-warning text-dark">Pago Parcial</span>
                     <?php endif; ?>
                 </div>
@@ -154,12 +160,35 @@ $dianClass = match($invoice->dian_validation ?? '') {
     </div>
     <?php endif; ?>
 
-    <!-- Sección: Observaciones -->
-    <?php if ($invoice->observations): ?>
+    <!-- Sección: Observaciones (chat) -->
+    <?php if (!empty($invoice->invoice_observations)): ?>
     <div style="border-bottom:1px solid var(--border-color);">
         <div class="sgi-section-title">Observaciones</div>
-        <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:#555;line-height:1.65;font-style:italic;">
-            <?= nl2br(h($invoice->observations)) ?>
+        <div style="padding:.5rem 1.25rem .875rem;max-height:400px;overflow-y:auto;">
+            <?php foreach ($invoice->invoice_observations as $obs): ?>
+            <div class="d-flex align-items-start gap-2 mb-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:32px;height:32px;background:var(--primary-color);color:#fff;font-size:.7rem;font-weight:700;">
+                    <?php
+                    $names = explode(' ', $obs->user->full_name ?? '');
+                    echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
+                    ?>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-size:.8rem;font-weight:600;color:#222;">
+                            <?= h($obs->user->full_name ?? '') ?>
+                        </span>
+                        <span style="font-size:.7rem;color:#aaa;">
+                            <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
+                        </span>
+                    </div>
+                    <div style="font-size:.84rem;color:#444;line-height:1.5;margin-top:.15rem;">
+                        <?= nl2br(h($obs->message)) ?>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
         </div>
     </div>
     <?php endif; ?>
@@ -282,7 +311,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
             <tbody>
                 <?php foreach ($invoice->invoice_histories as $history): ?>
                 <tr>
-                    <td><?= $this->formatDateEs($history->created) ?></td>
+                    <td><?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?></td>
                     <td><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
                     <td><code><?= h($history->field_changed) ?></code></td>
                     <td class="text-muted"><?= h($history->old_value) ?: '—' ?></td>

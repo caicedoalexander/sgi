@@ -16,7 +16,7 @@ class InvoiceHistoryService
             'detail', 'amount', 'expense_type_id', 'cost_center_id',
             'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
             'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
-            'payment_status', 'payment_date', 'pipeline_status', 'observations',
+            'payment_status', 'payment_date', 'pipeline_status',
         ];
 
         $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');

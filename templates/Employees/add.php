@@ -9,7 +9,7 @@ $this->assign('title', 'Nuevo Empleado');
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
-<?= $this->Form->create($employee) ?>
+<?= $this->Form->create($employee, ['type' => 'file']) ?>
 
 <!-- Datos Personales -->
 <div class="card shadow-sm mb-4">
@@ -113,10 +113,15 @@ $this->assign('title', 'Nuevo Empleado');
     </div>
 </div>
 
-<!-- Observaciones -->
+<!-- Imagen de Perfil y Observaciones -->
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Imagen de Perfil</label>
+                <input type="file" name="profile_image_file" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp">
+                <small class="text-muted">Max 2MB. JPEG, PNG, GIF o WebP</small>
+            </div>
             <div class="col-md-9 mb-3">
                 <?= $this->Form->control('notes', ['class' => 'form-control', 'label' => ['text' => 'Observaciones', 'class' => 'form-label'], 'rows' => 3]) ?>
             </div>

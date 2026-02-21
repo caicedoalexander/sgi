@@ -56,11 +56,11 @@ if ($isRejected) {
 }
 
 $pipelineBadgeMap = [
-    'revision'      => ['Revisión',      'bg-secondary'],
-    'area_approved' => ['Área Aprobada', 'bg-info text-dark'],
-    'accrued'       => ['Causada',       'bg-primary'],
-    'treasury'      => ['Tesorería',     'bg-warning text-dark'],
-    'paid'          => ['Pagada',        'bg-success'],
+    'registro'      => ['Registro',      'bg-secondary'],
+    'aprobacion'    => ['Aprobación',    'bg-info text-dark'],
+    'contabilidad'  => ['Contabilidad',  'bg-primary'],
+    'tesoreria'     => ['Tesorería',     'bg-warning text-dark'],
+    'pagada'        => ['Pagada',        'bg-success'],
 ];
 $ps = $pipelineBadgeMap[$currentStatus] ?? ['Desconocido', 'bg-dark'];
 ?>
@@ -410,19 +410,41 @@ $ps = $pipelineBadgeMap[$currentStatus] ?? ['Desconocido', 'bg-dark'];
         </div>
         <?php endif; ?>
 
-        <!-- ── Observaciones (siempre visible) ── -->
+        <!-- ── Observaciones (chat) ── -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">Observaciones</span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
-            <?= $this->Form->control('observations', array_merge(
-                ['label' => false, 'type' => 'textarea', 'rows' => 2],
-                $canEdit('observations')
-                    ? ['class' => 'form-control']
-                    : ['class' => 'form-control', 'disabled' => true]
-            )) ?>
+            <?php if (!empty($invoice->invoice_observations)): ?>
+            <div style="max-height:300px;overflow-y:auto;margin-bottom:1rem;padding:.5rem;border:1px solid var(--border-color);">
+                <?php foreach ($invoice->invoice_observations as $obs): ?>
+                <div class="d-flex align-items-start gap-2 mb-3">
+                    <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width:28px;height:28px;background:var(--primary-color);color:#fff;font-size:.6rem;font-weight:700;">
+                        <?php
+                        $names = explode(' ', $obs->user->full_name ?? '');
+                        echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
+                        ?>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="font-size:.75rem;font-weight:600;color:#222;">
+                                <?= h($obs->user->full_name ?? '') ?>
+                            </span>
+                            <span style="font-size:.65rem;color:#aaa;">
+                                <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
+                            </span>
+                        </div>
+                        <div style="font-size:.8rem;color:#444;line-height:1.4;margin-top:.1rem;">
+                            <?= nl2br(h($obs->message)) ?>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
         </div>
 
         <!-- Botones de acción -->
@@ -444,6 +466,25 @@ $ps = $pipelineBadgeMap[$currentStatus] ?? ['Desconocido', 'bg-dark'];
         </div>
         <?php endif; ?>
 
+        <?= $this->Form->end() ?>
+    </div>
+</div>
+
+<!-- Agregar Observación -->
+<div class="card card-primary">
+    <div class="card-header d-flex align-items-center gap-3">
+        <i class="bi bi-chat-dots" style="font-size:.9rem;color:var(--primary-color);"></i>
+        <span style="font-size:.85rem;font-weight:600;">Agregar Observación</span>
+    </div>
+    <div class="card-body p-3">
+        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $invoice->id]]) ?>
+        <div class="d-flex gap-2">
+            <textarea name="message" class="form-control" rows="2"
+                      placeholder="Escriba una observación..." required></textarea>
+            <button type="submit" class="btn btn-primary align-self-end flex-shrink-0">
+                <i class="bi bi-send me-1"></i>Enviar
+            </button>
+        </div>
         <?= $this->Form->end() ?>
     </div>
 </div>

@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Trait\ExcelCatalogTrait;
+
 class EmployeeStatusesController extends AppController
 {
+    use ExcelCatalogTrait;
     public function index()
     {
         $employeeStatuses = $this->paginate($this->EmployeeStatuses);

@@ -54,6 +54,7 @@ class EmployeesController extends AppController
         if ($this->request->is('post')) {
             $employee = $this->Employees->patchEntity($employee, $this->request->getData());
             if ($this->Employees->save($employee)) {
+                $this->_handleProfileImage($employee);
                 $this->_createDefaultFolders($employee->id);
                 $this->Flash->success(__('El empleado ha sido guardado.'));
 
@@ -72,6 +73,7 @@ class EmployeesController extends AppController
         if ($this->request->is(['patch', 'post', 'put'])) {
             $employee = $this->Employees->patchEntity($employee, $this->request->getData());
             if ($this->Employees->save($employee)) {
+                $this->_handleProfileImage($employee);
                 $this->Flash->success(__('El empleado ha sido actualizado.'));
 
                 return $this->redirect(['action' => 'view', $employee->id]);
@@ -216,6 +218,51 @@ class EmployeesController extends AppController
         }
 
         return $this->redirect(['action' => 'view', $employeeId]);
+    }
+
+    protected function _handleProfileImage(object $employee): void
+    {
+        $file = $this->request->getUploadedFile('profile_image_file');
+        if (!$file || $file->getError() !== UPLOAD_ERR_OK) {
+            return;
+        }
+
+        // Validate size (2MB max)
+        if ($file->getSize() > 2 * 1024 * 1024) {
+            $this->Flash->warning(__('La imagen de perfil excede el tamaño máximo de 2MB.'));
+            return;
+        }
+
+        // Validate MIME type
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $mimeType = $file->getClientMediaType();
+        if (!in_array($mimeType, $allowedMimes)) {
+            $this->Flash->warning(__('Tipo de imagen no permitido. Use JPEG, PNG, GIF o WebP.'));
+            return;
+        }
+
+        $uploadDir = WWW_ROOT . 'uploads' . DS . 'employees' . DS . $employee->id;
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $extension = pathinfo($file->getClientFilename(), PATHINFO_EXTENSION);
+        $fileName = 'profile.' . $extension;
+        $filePath = $uploadDir . DS . $fileName;
+
+        // Remove old profile image if exists
+        if ($employee->profile_image) {
+            $oldPath = WWW_ROOT . $employee->profile_image;
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
+        }
+
+        $file->moveTo($filePath);
+
+        $relativePath = 'uploads/employees/' . $employee->id . '/' . $fileName;
+        $employee->profile_image = $relativePath;
+        $this->Employees->save($employee);
     }
 
     protected function _createDefaultFolders(int $employeeId): void

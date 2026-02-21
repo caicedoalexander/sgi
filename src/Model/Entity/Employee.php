@@ -33,6 +33,7 @@ class Employee extends Entity
         'arl' => true,
         'severance_fund' => true,
         'notes' => true,
+        'profile_image' => true,
         'active' => true,
     ];
 

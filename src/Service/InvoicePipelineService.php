@@ -8,30 +8,30 @@ use App\Constants\RoleConstants;
 class InvoicePipelineService
 {
     // Pipeline statuses in order
-    public const STATUSES = ['revision', 'area_approved', 'accrued', 'treasury', 'paid'];
+    public const STATUSES = ['registro', 'aprobacion', 'contabilidad', 'tesoreria', 'pagada'];
 
     public const STATUS_LABELS = [
-        'revision' => 'Revisión',
-        'area_approved' => 'Área Aprobada',
-        'accrued' => 'Causada',
-        'treasury' => 'Tesorería',
-        'paid' => 'Pagada',
+        'registro' => 'Registro',
+        'aprobacion' => 'Aprobación',
+        'contabilidad' => 'Contabilidad',
+        'tesoreria' => 'Tesorería',
+        'pagada' => 'Pagada',
     ];
 
     public const STATUS_ICONS = [
-        'revision' => 'bi-search',
-        'area_approved' => 'bi-check-circle',
-        'accrued' => 'bi-calculator',
-        'treasury' => 'bi-bank',
-        'paid' => 'bi-cash-coin',
+        'registro' => 'bi-search',
+        'aprobacion' => 'bi-check-circle',
+        'contabilidad' => 'bi-calculator',
+        'tesoreria' => 'bi-bank',
+        'pagada' => 'bi-cash-coin',
     ];
 
     // Which statuses each role can see/work with
     private const ROLE_VISIBLE_STATUSES = [
-        RoleConstants::REGISTRO_REVISION => ['revision'],
-        RoleConstants::CONTABILIDAD      => ['area_approved', 'accrued'],
-        RoleConstants::TESORERIA         => ['treasury'],
-        RoleConstants::ADMIN             => ['revision', 'area_approved', 'accrued', 'treasury', 'paid'],
+        RoleConstants::REGISTRO_REVISION => ['registro'],
+        RoleConstants::CONTABILIDAD      => ['aprobacion', 'contabilidad'],
+        RoleConstants::TESORERIA         => ['tesoreria'],
+        RoleConstants::ADMIN             => ['registro', 'aprobacion', 'contabilidad', 'tesoreria', 'pagada'],
     ];
 
     // All fields available for Admin in any status
@@ -41,31 +41,31 @@ class InvoicePipelineService
         'detail', 'amount', 'expense_type_id', 'cost_center_id',
         'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
         'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
-        'payment_status', 'payment_date', 'pipeline_status', 'observations',
+        'payment_status', 'payment_date', 'pipeline_status',
     ];
 
     // Fields editable by role in each status
     private const EDITABLE_FIELDS = [
         RoleConstants::REGISTRO_REVISION => [
-            'revision' => [
+            'registro' => [
                 'invoice_number', 'registration_date', 'issue_date', 'due_date',
                 'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
                 'detail', 'amount', 'expense_type_id', 'cost_center_id',
                 'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
-                'dian_validation', 'observations',
+                'dian_validation',
             ],
         ],
         RoleConstants::CONTABILIDAD => [
-            'area_approved' => [
-                'accrued', 'accrual_date', 'ready_for_payment', 'observations',
+            'aprobacion' => [
+                'accrued', 'accrual_date', 'ready_for_payment',
             ],
-            'accrued' => [
-                'accrued', 'accrual_date', 'ready_for_payment', 'observations',
+            'contabilidad' => [
+                'accrued', 'accrual_date', 'ready_for_payment',
             ],
         ],
         RoleConstants::TESORERIA => [
-            'treasury' => [
-                'payment_status', 'payment_date', 'observations',
+            'tesoreria' => [
+                'payment_status', 'payment_date',
             ],
         ],
     ];
@@ -79,7 +79,7 @@ class InvoicePipelineService
 
     // Fields required before advancing from each status
     private const TRANSITION_REQUIREMENTS = [
-        'revision' => [
+        'registro' => [
             [
                 'field' => 'area_approval',
                 'value' => 'Aprobada',
@@ -91,7 +91,7 @@ class InvoicePipelineService
                 'label' => 'Validación DIAN debe ser "Aprobada"',
             ],
         ],
-        'area_approved' => [
+        'aprobacion' => [
             [
                 'field' => 'accrued',
                 'value' => true,
@@ -103,14 +103,14 @@ class InvoicePipelineService
                 'label' => 'Fecha de Causación es requerida',
             ],
         ],
-        'accrued' => [
+        'contabilidad' => [
             [
                 'field' => 'ready_for_payment',
                 'not_empty' => true,
                 'label' => 'Campo "Lista para Pago" es requerido',
             ],
         ],
-        'treasury' => [
+        'tesoreria' => [
             [
                 'field' => 'payment_status',
                 'value' => 'Pago total',
@@ -126,11 +126,11 @@ class InvoicePipelineService
 
     // Next status transitions
     public const TRANSITIONS = [
-        'revision'     => 'area_approved',
-        'area_approved' => 'accrued',
-        'accrued'      => 'treasury',
-        'treasury'     => 'paid',
-        'paid'         => null,
+        'registro'      => 'aprobacion',
+        'aprobacion'    => 'contabilidad',
+        'contabilidad'  => 'tesoreria',
+        'tesoreria'     => 'pagada',
+        'pagada'        => null,
     ];
 
     public function getVisibleStatuses(string $roleName): array
@@ -185,9 +185,9 @@ class InvoicePipelineService
      */
     public function validateTransitionRequirements(object $invoice, string $fromStatus): array
     {
-        // Rejection at revision blocks all advancement
-        if ($fromStatus === 'revision' && $this->isRejected($invoice)) {
-            return ['La factura fue rechazada en Revisión. El flujo ha terminado.'];
+        // Rejection at registro blocks all advancement
+        if ($fromStatus === 'registro' && $this->isRejected($invoice)) {
+            return ['La factura fue rechazada en Registro. El flujo ha terminado.'];
         }
 
         $errors = [];

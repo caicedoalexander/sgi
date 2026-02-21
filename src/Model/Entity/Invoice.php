@@ -31,7 +31,6 @@ class Invoice extends Entity
         'payment_status' => true,
         'payment_date' => true,
         'pipeline_status' => true,
-        'observations' => true,
         'registered_by' => true,
     ];
 }

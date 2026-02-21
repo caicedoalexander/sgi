@@ -37,6 +37,9 @@ class AppController extends Controller
         'EducationLevels' => 'education_levels',
         'Positions' => 'positions',
         'DefaultFolders' => 'default_folders',
+        'SystemSettings' => 'system_settings',
+        'EmployeeLeaves' => 'employee_leaves',
+        'LeaveTypes' => 'leave_types',
     ];
 
     /**
@@ -45,9 +48,9 @@ class AppController extends Controller
     protected function _actionToPermission(string $action): string
     {
         return match ($action) {
-            'index', 'view' => 'view',
-            'add', 'addFolder', 'uploadDocument' => 'add',
-            'edit', 'advanceStatus' => 'edit',
+            'index', 'view', 'export' => 'view',
+            'add', 'addFolder', 'uploadDocument', 'import' => 'add',
+            'edit', 'advanceStatus', 'addObservation', 'testSmtp', 'approve', 'reject', 'generateApprovalLink' => 'edit',
             'delete', 'deleteDocument' => 'delete',
             default => 'view',
         };
@@ -156,10 +159,10 @@ class AppController extends Controller
     protected function _getVisibleStatuses(string $roleName): array
     {
         return match ($roleName) {
-            RoleConstants::REGISTRO_REVISION => ['revision'],
-            RoleConstants::CONTABILIDAD => ['area_approved', 'accrued'],
-            RoleConstants::TESORERIA => ['treasury'],
-            RoleConstants::ADMIN => ['revision', 'area_approved', 'accrued', 'treasury', 'paid'],
+            RoleConstants::REGISTRO_REVISION => ['registro'],
+            RoleConstants::CONTABILIDAD => ['aprobacion', 'contabilidad'],
+            RoleConstants::TESORERIA => ['tesoreria'],
+            RoleConstants::ADMIN => ['registro', 'aprobacion', 'contabilidad', 'tesoreria', 'pagada'],
             default => [],
         };
     }

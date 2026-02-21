@@ -112,6 +112,7 @@ $currentController = $this->request->getParam('controller');
                 <?php
                 $rrhhItems = array_filter([
                     $canView('employees') ? 'employees' : null,
+                    $canView('employee_leaves') ? 'employee_leaves' : null,
                 ]);
                 if (!empty($rrhhItems)): ?>
                 <li class="nav-heading">RRHH</li>
@@ -121,6 +122,15 @@ $currentController = $this->request->getParam('controller');
                         '<i class="bi bi-people-fill me-2"></i>Empleados',
                         ['controller' => 'Employees', 'action' => 'index'],
                         ['class' => $navLink('Employees'), 'escape' => false]
+                    ) ?>
+                </li>
+                <?php endif; ?>
+                <?php if ($canView('employee_leaves')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-calendar-check me-2"></i>Permisos',
+                        ['controller' => 'EmployeeLeaves', 'action' => 'index'],
+                        ['class' => $navLink('EmployeeLeaves'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -137,6 +147,7 @@ $currentController = $this->request->getParam('controller');
                     $canView('marital_statuses') ? 'marital_statuses' : null,
                     $canView('education_levels') ? 'education_levels' : null,
                     $canView('default_folders') ? 'default_folders' : null,
+                    $canView('leave_types') ? 'leave_types' : null,
                 ]);
                 if (!empty($catalogoItems)): ?>
                 <li class="nav-heading">Catálogos</li>
@@ -221,12 +232,22 @@ $currentController = $this->request->getParam('controller');
                     ) ?>
                 </li>
                 <?php endif; ?>
+                <?php if ($canView('leave_types')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-list-check me-2"></i>Tipos de Permiso',
+                        ['controller' => 'LeaveTypes', 'action' => 'index'],
+                        ['class' => $navLink('LeaveTypes'), 'escape' => false]
+                    ) ?>
+                </li>
+                <?php endif; ?>
                 <?php endif; ?>
 
                 <?php
                 $adminItems = array_filter([
                     $canView('users') ? 'users' : null,
                     $canView('roles') ? 'roles' : null,
+                    $canView('system_settings') ? 'system_settings' : null,
                 ]);
                 if (!empty($adminItems)): ?>
                 <li class="nav-heading">Administración</li>
@@ -245,6 +266,15 @@ $currentController = $this->request->getParam('controller');
                         '<i class="bi bi-shield-lock me-2"></i>Roles',
                         ['controller' => 'Roles', 'action' => 'index'],
                         ['class' => $navLink('Roles'), 'escape' => false]
+                    ) ?>
+                </li>
+                <?php endif; ?>
+                <?php if ($canView('system_settings')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-gear me-2"></i>Configuración',
+                        ['controller' => 'SystemSettings', 'action' => 'index'],
+                        ['class' => $navLink('SystemSettings'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>

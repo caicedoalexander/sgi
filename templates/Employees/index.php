@@ -41,7 +41,14 @@ $this->assign('title', 'Empleados');
 
             <!-- Cabecera: avatar + nombre + documento -->
             <div class="card-body d-flex align-items-start gap-3 pb-2">
-                <div class="sgi-emp-avatar"><?= h($initials) ?></div>
+                <?php if ($employee->profile_image): ?>
+                    <img src="<?= $this->Url->build('/' . $employee->profile_image) ?>"
+                         alt="<?= h($employee->full_name) ?>"
+                         class="sgi-emp-avatar"
+                         style="object-fit:cover;">
+                <?php else: ?>
+                    <div class="sgi-emp-avatar"><?= h($initials) ?></div>
+                <?php endif; ?>
                 <div style="min-width:0">
                     <div class="sgi-emp-name"><?= h($employee->full_name) ?></div>
                     <div class="sgi-emp-doc"><?= h($employee->document_type . ' ' . $employee->document_number) ?></div>

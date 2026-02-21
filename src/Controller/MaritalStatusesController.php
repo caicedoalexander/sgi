@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Trait\ExcelCatalogTrait;
+
 class MaritalStatusesController extends AppController
 {
+    use ExcelCatalogTrait;
     public function index()
     {
         $maritalStatuses = $this->paginate($this->MaritalStatuses);

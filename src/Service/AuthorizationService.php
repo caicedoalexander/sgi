@@ -27,6 +27,9 @@ class AuthorizationService
         'education_levels' => 'Niveles Educativos',
         'positions' => 'Cargos',
         'default_folders' => 'Carpetas por Defecto',
+        'system_settings' => 'Configuración del Sistema',
+        'employee_leaves' => 'Permisos de Empleados',
+        'leave_types' => 'Tipos de Permiso',
     ];
 
     private array $cache = [];

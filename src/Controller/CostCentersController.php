@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Trait\ExcelCatalogTrait;
+
 class CostCentersController extends AppController
 {
+    use ExcelCatalogTrait;
     public function index()
     {
         $costCenters = $this->paginate($this->CostCenters);

@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Service\ApprovalTokenService;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePipelineService;
+use App\Service\NotificationService;
 
 class InvoicesController extends AppController
 {
@@ -57,6 +59,10 @@ class InvoicesController extends AppController
             'RegisteredByUsers',
             'ApproverUsers',
             'InvoiceHistories' => ['Users'],
+            'InvoiceObservations' => [
+                'Users',
+                'sort' => ['InvoiceObservations.created' => 'ASC'],
+            ],
         ]);
 
         $roleName = $this->_getRoleName();
@@ -74,7 +80,7 @@ class InvoicesController extends AppController
             $user = $this->_getCurrentUser();
             $data = $this->request->getData();
             $data['registered_by'] = $user->id;
-            $data['pipeline_status'] = $data['pipeline_status'] ?? 'revision';
+            $data['pipeline_status'] = $data['pipeline_status'] ?? 'registro';
 
             $invoice = $this->Invoices->patchEntity($invoice, $data);
             if ($this->Invoices->save($invoice)) {
@@ -94,7 +100,14 @@ class InvoicesController extends AppController
 
     public function edit($id = null)
     {
-        $invoice = $this->Invoices->get($id, contain: ['Providers', 'OperationCenters']);
+        $invoice = $this->Invoices->get($id, contain: [
+            'Providers',
+            'OperationCenters',
+            'InvoiceObservations' => [
+                'Users',
+                'sort' => ['InvoiceObservations.created' => 'ASC'],
+            ],
+        ]);
         $roleName = $this->_getRoleName();
         $currentStatus = $invoice->pipeline_status;
 
@@ -164,6 +177,14 @@ class InvoicesController extends AppController
                 if ($advanceNextStatus) {
                     $nextLabel = InvoicePipelineService::STATUS_LABELS[$advanceNextStatus] ?? $advanceNextStatus;
                     $this->Flash->success(sprintf('Factura guardada y avanzada a: %s', $nextLabel));
+
+                    // Send email notification
+                    try {
+                        $notificationService = new NotificationService();
+                        $notificationService->sendStatusChangeNotification($invoice, $currentStatus, $advanceNextStatus);
+                    } catch (\Exception $e) {
+                        // Don't block on email failures
+                    }
                 } else {
                     $this->Flash->success('La factura ha sido actualizada.');
                     foreach ($postAdvanceErrors as $err) {
@@ -243,11 +264,54 @@ class InvoicesController extends AppController
                 'Factura avanzada a: %s',
                 InvoicePipelineService::STATUS_LABELS[$nextStatus]
             ));
+
+            try {
+                $notificationService = new NotificationService();
+                $notificationService->sendStatusChangeNotification($invoice, $currentStatus, $nextStatus);
+            } catch (\Exception $e) {
+                // Don't block on email failures
+            }
         } else {
             $this->Flash->error('No se pudo avanzar el estado.');
         }
 
         return $this->redirect(['action' => 'index']);
+    }
+
+    public function generateApprovalLink($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($id);
+        $user = $this->_getCurrentUser();
+
+        $tokenService = new ApprovalTokenService();
+        $token = $tokenService->generateToken('invoices', $invoice->id, $user->id);
+
+        $url = $this->request->scheme() . '://' . $this->request->host() . '/approve/' . $token;
+
+        $this->Flash->success('Enlace de aprobación generado (válido por 48h): ' . $url);
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    public function addObservation($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $user = $this->_getCurrentUser();
+
+        $observationsTable = $this->fetchTable('InvoiceObservations');
+        $observation = $observationsTable->newEntity([
+            'invoice_id' => $id,
+            'user_id' => $user->id,
+            'message' => $this->request->getData('message'),
+        ]);
+
+        if ($observationsTable->save($observation)) {
+            $this->Flash->success('Observación agregada.');
+        } else {
+            $this->Flash->error('No se pudo agregar la observación.');
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
     public function delete($id = null)

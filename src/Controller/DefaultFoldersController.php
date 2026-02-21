@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Controller\Trait\ExcelCatalogTrait;
+
 class DefaultFoldersController extends AppController
 {
+    use ExcelCatalogTrait;
     public function index()
     {
         $defaultFolders = $this->paginate($this->DefaultFolders, ['order' => ['sort_order' => 'ASC']]);

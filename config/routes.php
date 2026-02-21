@@ -63,6 +63,50 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']]
         );
 
+        // System settings SMTP test
+        $builder->connect(
+            '/system-settings/test-smtp',
+            ['controller' => 'SystemSettings', 'action' => 'testSmtp']
+        );
+
+        // Invoice observation
+        $builder->connect(
+            '/invoices/add-observation/{id}',
+            ['controller' => 'Invoices', 'action' => 'addObservation'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+
+        // External approval tokens
+        $builder->connect(
+            '/approve/{token}',
+            ['controller' => 'ExternalApprovals', 'action' => 'review'],
+            ['token' => '[a-f0-9]{64}', 'pass' => ['token']]
+        );
+        $builder->connect(
+            '/approve/{token}/process',
+            ['controller' => 'ExternalApprovals', 'action' => 'process'],
+            ['token' => '[a-f0-9]{64}', 'pass' => ['token']]
+        );
+
+        // Invoice generate approval link
+        $builder->connect(
+            '/invoices/generate-approval-link/{id}',
+            ['controller' => 'Invoices', 'action' => 'generateApprovalLink'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+
+        // Employee leave approve/reject
+        $builder->connect(
+            '/employee-leaves/approve/{id}',
+            ['controller' => 'EmployeeLeaves', 'action' => 'approve'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/employee-leaves/reject/{id}',
+            ['controller' => 'EmployeeLeaves', 'action' => 'reject'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+
         // Employee document management routes
         $builder->connect(
             '/employees/add-folder/{employeeId}',

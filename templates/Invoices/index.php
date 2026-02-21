@@ -8,11 +8,11 @@
 $this->assign('title', 'Facturas');
 
 $pipelineBadges = [
-    'revision'      => ['Revisión',      'bg-secondary'],
-    'area_approved' => ['Área Aprobada', 'bg-info text-dark'],
-    'accrued'       => ['Causada',       'bg-primary'],
-    'treasury'      => ['Tesorería',     'bg-warning text-dark'],
-    'paid'          => ['Pagada',        'bg-success'],
+    'registro'      => ['Registro',      'bg-secondary'],
+    'aprobacion'    => ['Aprobación',    'bg-info text-dark'],
+    'contabilidad'  => ['Contabilidad',  'bg-primary'],
+    'tesoreria'     => ['Tesorería',     'bg-warning text-dark'],
+    'pagada'        => ['Pagada',        'bg-success'],
 ];
 ?>
 
@@ -42,8 +42,8 @@ $pipelineBadges = [
                 <?php foreach ($invoices as $invoice):
                     $ps             = $pipelineBadges[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
                     $isRejected     = ($invoice->area_approval === 'Rechazada');
-                    $isPartialPay   = ($invoice->pipeline_status === 'treasury' && $invoice->payment_status === 'Pago Parcial');
-                    $isPaid         = ($invoice->pipeline_status === 'paid');
+                    $isPartialPay   = ($invoice->pipeline_status === 'tesoreria' && $invoice->payment_status === 'Pago Parcial');
+                    $isPaid         = ($invoice->pipeline_status === 'pagada');
                 ?>
                 <tr class="clickable-row<?= $isRejected ? ' table-danger' : '' ?>"
                     data-href="<?= $this->Url->build(['action' => 'edit', $invoice->id]) ?>">

@@ -70,7 +70,14 @@ foreach ($folders as $folder) {
 
     <!-- Encabezado: identidad -->
     <div class="d-flex align-items-start gap-3 p-4">
-        <div class="sgi-profile-avatar"><?= h($initials) ?></div>
+        <?php if ($employee->profile_image): ?>
+            <img src="<?= $this->Url->build('/' . $employee->profile_image) ?>"
+                 alt="<?= h($employee->full_name) ?>"
+                 class="sgi-profile-avatar"
+                 style="object-fit:cover;">
+        <?php else: ?>
+            <div class="sgi-profile-avatar"><?= h($initials) ?></div>
+        <?php endif; ?>
         <div style="min-width:0">
             <div class="sgi-profile-name"><?= h($employee->full_name) ?></div>
             <div class="sgi-profile-doc"><?= h($employee->document_type) ?> · <?= h($employee->document_number) ?></div>

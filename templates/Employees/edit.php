@@ -9,7 +9,7 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'view', $employee->id], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
-<?= $this->Form->create($employee) ?>
+<?= $this->Form->create($employee, ['type' => 'file']) ?>
 
 <!-- Datos Personales -->
 <div class="card shadow-sm mb-4">
@@ -113,10 +113,21 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
     </div>
 </div>
 
-<!-- Observaciones -->
+<!-- Imagen de Perfil y Observaciones -->
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label">Imagen de Perfil</label>
+                <?php if ($employee->profile_image): ?>
+                    <div class="mb-2">
+                        <img src="<?= $this->Url->build('/' . $employee->profile_image) ?>"
+                             alt="Perfil" style="width:80px;height:80px;object-fit:cover;">
+                    </div>
+                <?php endif; ?>
+                <input type="file" name="profile_image_file" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp">
+                <small class="text-muted">Max 2MB. JPEG, PNG, GIF o WebP</small>
+            </div>
             <div class="col-md-9 mb-3">
                 <?= $this->Form->control('notes', ['class' => 'form-control', 'label' => ['text' => 'Observaciones', 'class' => 'form-label'], 'rows' => 3]) ?>
             </div>

@@ -5,6 +5,9 @@ $this->assign('title', 'Estados de Empleado');
     <span class="sgi-page-title">Estados de Empleado</span>
     <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Estado de Empleado', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
 </div>
+
+<?= $this->element('catalog_excel_buttons') ?>
+
 <div class="card shadow-sm">
     <div class="table-responsive">
         <table class="table table-hover mb-0">
