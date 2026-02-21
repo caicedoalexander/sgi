@@ -1257,6 +1257,128 @@ textarea.form-control {
 }
 
 /* =============================================
+   Dropdowns — Personalización Bootstrap
+   ============================================= */
+
+/* Dropdown menu */
+.dropdown-menu {
+    border-radius: 0;
+    border: 1px solid var(--border-color);
+    border-top: 2px solid var(--primary-color);
+    box-shadow: none;
+    padding: .5rem 0;
+    font-size: .875rem;
+    min-width: 12rem;
+}
+
+/* Dropdown items */
+.dropdown-item {
+    padding: .5rem 1rem;
+    color: #333;
+    font-size: .875rem;
+    transition: background-color .15s ease, color .15s ease;
+}
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: rgba(70, 157, 97, 0.08);
+    color: var(--primary-color);
+}
+
+/* Dropdown item activo */
+.dropdown-item.active {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+/* Dropdown item disabled */
+.dropdown-item:disabled,
+.dropdown-item.disabled {
+    color: #aaa;
+    background-color: transparent;
+    opacity: 0.6;
+}
+
+/* Dropdown header */
+.dropdown-header {
+    padding: .5rem 1rem;
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #666;
+}
+
+/* Dropdown divider */
+.dropdown-divider {
+    margin: .5rem 0;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Dropdown text */
+.dropdown-item-text {
+    padding: .5rem 1rem;
+    color: #666;
+    font-size: .875rem;
+}
+
+/* Dropdown toggle (botón con flecha) */
+.dropdown-toggle::after {
+    margin-left: .5rem;
+    vertical-align: middle;
+}
+
+/* Dropdown en navbar/topbar */
+.navbar .dropdown-menu,
+.sgi-topbar .dropdown-menu {
+    margin-top: .25rem;
+}
+
+/* Dropdown con iconos en items */
+.dropdown-item i,
+.dropdown-item .bi {
+    margin-right: .5rem;
+    opacity: 0.7;
+    width: 1rem;
+    text-align: center;
+}
+.dropdown-item:hover i,
+.dropdown-item:hover .bi,
+.dropdown-item.active i,
+.dropdown-item.active .bi {
+    opacity: 1;
+}
+
+/* Variante dark del dropdown */
+.dropdown-menu.dropdown-menu-dark {
+    background-color: var(--bg-dark);
+    border-color: rgba(255, 255, 255, 0.1);
+    border-top-color: var(--primary-color);
+}
+.dropdown-menu.dropdown-menu-dark .dropdown-item {
+    color: rgba(255, 255, 255, 0.75);
+}
+.dropdown-menu.dropdown-menu-dark .dropdown-item:hover,
+.dropdown-menu.dropdown-menu-dark .dropdown-item:focus {
+    background-color: rgba(70, 157, 97, 0.2);
+    color: #fff;
+}
+.dropdown-menu.dropdown-menu-dark .dropdown-item.active {
+    background-color: var(--primary-color);
+}
+.dropdown-menu.dropdown-menu-dark .dropdown-divider {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+.dropdown-menu.dropdown-menu-dark .dropdown-header {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Alineación end (derecha) */
+.dropdown-menu.dropdown-menu-end {
+    right: 0;
+    left: auto;
+}
+
+/* =============================================
    Breadcrumbs — Personalización Bootstrap
    ============================================= */
 
