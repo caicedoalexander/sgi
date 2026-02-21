@@ -443,6 +443,124 @@ body {
 }
 
 /* =============================================
+   Alerts — Personalización Bootstrap
+   ============================================= */
+
+/* Base de todos los alerts */
+.alert {
+    border-radius: 0;
+    border: 1px solid transparent;
+    border-left: 2px solid transparent;
+    font-size: .875rem;
+    padding: .75rem 1rem;
+}
+
+/* Alert primary (verde corporativo) */
+.alert-primary {
+    background-color: rgba(70, 157, 97, 0.1);
+    border-color: rgba(70, 157, 97, 0.2);
+    border-left-color: var(--primary-color);
+    color: #2d6e42;
+}
+.alert-primary .alert-link {
+    color: #2d6e42;
+    font-weight: 600;
+}
+
+/* Alert secondary (naranja) */
+.alert-secondary {
+    background-color: rgba(205, 106, 21, 0.1);
+    border-color: rgba(205, 106, 21, 0.2);
+    border-left-color: var(--secondary-color);
+    color: #9a5011;
+}
+.alert-secondary .alert-link {
+    color: #9a5011;
+    font-weight: 600;
+}
+
+/* Alert success (verde corporativo) */
+.alert-success {
+    background-color: rgba(70, 157, 97, 0.1);
+    border-color: rgba(70, 157, 97, 0.2);
+    border-left-color: var(--primary-color);
+    color: #2d6e42;
+}
+.alert-success .alert-link {
+    color: #2d6e42;
+    font-weight: 600;
+}
+
+/* Alert danger */
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.2);
+    border-left-color: #dc3545;
+    color: #842029;
+}
+.alert-danger .alert-link {
+    color: #842029;
+    font-weight: 600;
+}
+
+/* Alert warning */
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.2);
+    border-left-color: #ffc107;
+    color: #997404;
+}
+.alert-warning .alert-link {
+    color: #997404;
+    font-weight: 600;
+}
+
+/* Alert info */
+.alert-info {
+    background-color: rgba(13, 202, 240, 0.1);
+    border-color: rgba(13, 202, 240, 0.2);
+    border-left-color: #0dcaf0;
+    color: #055160;
+}
+.alert-info .alert-link {
+    color: #055160;
+    font-weight: 600;
+}
+
+/* Alert dark */
+.alert-dark {
+    background-color: rgba(33, 37, 41, 0.1);
+    border-color: rgba(33, 37, 41, 0.2);
+    border-left-color: var(--bg-dark);
+    color: #141619;
+}
+.alert-dark .alert-link {
+    color: #141619;
+    font-weight: 600;
+}
+
+/* Alert light */
+.alert-light {
+    background-color: #fcfcfd;
+    border-color: var(--border-color);
+    border-left-color: #d3d3d4;
+    color: #636464;
+}
+.alert-light .alert-link {
+    color: #636464;
+    font-weight: 600;
+}
+
+/* Botón de cerrar en alerts */
+.alert .btn-close {
+    opacity: .5;
+    transition: opacity .15s ease;
+}
+.alert .btn-close:hover {
+    opacity: .75;
+}
+
+/* =============================================
    Input group con foco en borde
    ============================================= */
 .sgi-input-group {
