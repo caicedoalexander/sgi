@@ -561,6 +561,175 @@ body {
 }
 
 /* =============================================
+   Cards — Personalización Bootstrap
+   ============================================= */
+
+/* Base de todas las cards */
+.card {
+    border-radius: 0;
+    border: 1px solid var(--border-color);
+    border-top: 2px solid var(--border-color);
+    box-shadow: none;
+    transition: border-color .2s ease, border-top-color .2s ease;
+}
+
+/* Card header */
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    font-weight: 600;
+    font-size: .875rem;
+    padding: .75rem 1rem;
+    color: #333;
+}
+.card-header:first-child {
+    border-radius: 0;
+}
+
+/* Card body */
+.card-body {
+    padding: 1rem;
+}
+
+/* Card footer */
+.card-footer {
+    background-color: #fafafa;
+    border-top: 1px solid var(--border-color);
+    border-radius: 0;
+    padding: .75rem 1rem;
+}
+.card-footer:last-child {
+    border-radius: 0;
+}
+
+/* Card title */
+.card-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: .5rem;
+    color: #111;
+}
+
+/* Card subtitle */
+.card-subtitle {
+    font-size: .75rem;
+    font-weight: 500;
+    color: #666;
+    margin-top: -.25rem;
+    margin-bottom: .5rem;
+}
+
+/* Card con hover (interactivas) */
+.card.card-hover {
+    cursor: pointer;
+}
+.card.card-hover:hover {
+    border-color: var(--primary-color);
+    border-top-color: var(--primary-color);
+}
+
+/* Variantes de color con borde superior */
+.card.card-primary {
+    border-top-color: var(--primary-color);
+}
+.card.card-primary:hover {
+    border-color: var(--primary-color);
+}
+
+.card.card-secondary {
+    border-top-color: var(--secondary-color);
+}
+.card.card-secondary:hover {
+    border-color: var(--secondary-color);
+}
+
+.card.card-success {
+    border-top-color: var(--primary-color);
+}
+.card.card-success:hover {
+    border-color: var(--primary-color);
+}
+
+.card.card-danger {
+    border-top-color: #dc3545;
+}
+.card.card-danger:hover {
+    border-color: #dc3545;
+}
+
+.card.card-warning {
+    border-top-color: #ffc107;
+}
+.card.card-warning:hover {
+    border-color: #ffc107;
+}
+
+.card.card-info {
+    border-top-color: #0dcaf0;
+}
+.card.card-info:hover {
+    border-color: #0dcaf0;
+}
+
+.card.card-dark {
+    border-top-color: var(--bg-dark);
+}
+.card.card-dark:hover {
+    border-color: var(--bg-dark);
+}
+
+/* Cards con fondo de color completo */
+.card.bg-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    border-top-color: #3a8752;
+    color: #fff;
+}
+.card.bg-primary .card-header,
+.card.bg-primary .card-footer {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.card.bg-secondary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    border-top-color: #b35f13;
+    color: #fff;
+}
+.card.bg-secondary .card-header,
+.card.bg-secondary .card-footer {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.card.bg-dark {
+    background-color: var(--bg-dark);
+    border-color: var(--bg-dark);
+    border-top-color: #1a1e21;
+    color: #fff;
+}
+.card.bg-dark .card-header,
+.card.bg-dark .card-footer {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* Card list group (sin bordes adicionales) */
+.card > .list-group:first-child .list-group-item:first-child {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+.card > .list-group:last-child .list-group-item:last-child {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* =============================================
    Input group con foco en borde
    ============================================= */
 .sgi-input-group {
