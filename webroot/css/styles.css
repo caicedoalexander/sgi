@@ -1071,43 +1071,134 @@ textarea.form-control {
     margin-top: .25rem;
 }
 
-/* Form check (checkboxes y radios) */
-.form-check-input {
-    border-radius: 0;
+/* Form check (checkboxes tipo toggle/slide) */
+.form-check-input[type="checkbox"] {
+    position: relative;
+    width: 2.5rem;
+    height: 1.25rem;
+    border-radius: 1rem;
     border: 1px solid var(--border-color);
+    background-color: #e9ecef;
+    cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease;
+    box-shadow: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+/* Círculo deslizante del toggle */
+.form-check-input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background-color: #fff;
+    transition: transform .2s ease, box-shadow .2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.form-check-input[type="checkbox"]:focus {
+    border-color: var(--primary-color);
+    box-shadow: none;
+    outline: 0;
+}
+
+/* Estado checked (activado) */
+.form-check-input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.form-check-input[type="checkbox"]:checked::before {
+    transform: translateX(1.2rem);
+}
+
+/* Estado disabled */
+.form-check-input[type="checkbox"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Radios mantienen estilo circular tradicional */
+.form-check-input[type="radio"] {
     width: 1.125rem;
     height: 1.125rem;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
     transition: background-color .15s ease, border-color .15s ease;
     box-shadow: none;
 }
-.form-check-input:focus {
+.form-check-input[type="radio"]:focus {
     border-color: var(--primary-color);
     box-shadow: none;
 }
-.form-check-input:checked {
+.form-check-input[type="radio"]:checked {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
 }
-.form-check-input[type="radio"] {
-    border-radius: 50%;
-}
+
+/* Labels */
 .form-check-label {
     font-size: .875rem;
     color: #333;
-    margin-left: .375rem;
+    margin-left: .5rem;
+    cursor: pointer;
+    user-select: none;
 }
 
-/* Form switch */
+/* Form switch (variante más grande) */
 .form-switch .form-check-input {
-    border-radius: 1rem;
-    width: 2rem;
-    height: 1.125rem;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(0,0,0,0.25)'/%3e%3c/svg%3e");
+    width: 3rem;
+    height: 1.5rem;
 }
-.form-switch .form-check-input:checked {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,1.0)'/%3e%3c/svg%3e");
+.form-switch .form-check-input::before {
+    width: 1.25rem;
+    height: 1.25rem;
+    top: 1px;
+    left: 2px;
+}
+.form-switch .form-check-input:checked::before {
+    transform: translateX(1.45rem);
+}
+
+/* Variante small (checkbox pequeño) */
+.form-check-sm .form-check-input[type="checkbox"] {
+    width: 2rem;
+    height: 1rem;
+}
+.form-check-sm .form-check-input[type="checkbox"]::before {
+    width: .75rem;
+    height: .75rem;
+    top: 1px;
+    left: 2px;
+}
+.form-check-sm .form-check-input[type="checkbox"]:checked::before {
+    transform: translateX(1rem);
+}
+.form-check-sm .form-check-label {
+    font-size: .8125rem;
+}
+
+/* Variante large (checkbox grande) */
+.form-check-lg .form-check-input[type="checkbox"] {
+    width: 3.5rem;
+    height: 1.75rem;
+}
+.form-check-lg .form-check-input[type="checkbox"]::before {
+    width: 1.5rem;
+    height: 1.5rem;
+    top: 1px;
+    left: 2px;
+}
+.form-check-lg .form-check-input[type="checkbox"]:checked::before {
+    transform: translateX(1.7rem);
+}
+.form-check-lg .form-check-label {
+    font-size: .9375rem;
 }
 
 /* Input group */
