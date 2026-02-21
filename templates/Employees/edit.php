@@ -113,36 +113,12 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
     </div>
 </div>
 
-<!-- Seguridad Social -->
-<div class="card shadow-sm mb-4">
-    <div class="card-header"><h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Seguridad Social</h5></div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-3 mb-3">
-                <?= $this->Form->control('eps', ['class' => 'form-control', 'label' => ['text' => 'EPS', 'class' => 'form-label']]) ?>
-            </div>
-            <div class="col-md-3 mb-3">
-                <?= $this->Form->control('pension_fund', ['class' => 'form-control', 'label' => ['text' => 'Fondo de Pensiones', 'class' => 'form-label']]) ?>
-            </div>
-            <div class="col-md-3 mb-3">
-                <?= $this->Form->control('arl', ['class' => 'form-control', 'label' => ['text' => 'ARL', 'class' => 'form-label']]) ?>
-            </div>
-            <div class="col-md-3 mb-3">
-                <?= $this->Form->control('severance_fund', ['class' => 'form-control', 'label' => ['text' => 'Fondo de Cesantías', 'class' => 'form-label']]) ?>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Observaciones -->
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <div class="row">
             <div class="col-md-9 mb-3">
                 <?= $this->Form->control('notes', ['class' => 'form-control', 'label' => ['text' => 'Observaciones', 'class' => 'form-label'], 'rows' => 3]) ?>
-            </div>
-            <div class="col-md-3 mb-3 d-flex align-items-end">
-                <?= $this->Form->control('active', ['class' => 'form-check-input', 'label' => ['text' => 'Activo', 'class' => 'form-check-label'], 'type' => 'checkbox']) ?>
             </div>
         </div>
     </div>

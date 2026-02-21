@@ -4,8 +4,8 @@
  */
 $this->assign('title', 'Aprobadores');
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Aprobadores</h1>
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Aprobadores</span>
     <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Aprobador', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
 </div>
 

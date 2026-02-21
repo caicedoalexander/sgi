@@ -5,8 +5,8 @@
  */
 $this->assign('title', 'Roles');
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Roles</h1>
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Roles</span>
     <?= $this->Html->link(
         '<i class="bi bi-plus-lg me-1"></i>Nuevo Rol',
         ['action' => 'add'],

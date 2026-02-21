@@ -1,8 +1,8 @@
 <?php
 $this->assign('title', 'Carpetas por Defecto');
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Carpetas por Defecto</h1>
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Carpetas por Defecto</span>
     <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nueva Carpeta por Defecto', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
 </div>
 <div class="card shadow-sm">

@@ -1665,12 +1665,19 @@ textarea.form-control {
 }
 
 /* =============================================
+   Content wrapper
+   ============================================= */
+.content-wrapper {
+    background-color: var(--background-color);
+}
+
+/* =============================================
    Navbar superior
    ============================================= */
 .sgi-topbar {
     background: #fff;
     border-bottom: 1px solid var(--border-color);
-    min-height: 52px;
+    min-height: 56px;
 }
 .sgi-topbar-title {
     font-size: .875rem;
@@ -1679,6 +1686,12 @@ textarea.form-control {
     color: #111;
     border-left: 2px solid var(--primary-color);
     padding-left: .6rem;
+}
+.sgi-topbar-date {
+    font-size: .75rem;
+    color: #aaa;
+    font-weight: 500;
+    letter-spacing: -.01em;
 }
 
 /* =============================================
@@ -2118,6 +2131,264 @@ textarea.form-control {
 
 /* Input cuando está activo */
 .flatpickr-input { background: #fff !important; }
+
+/* =============================================
+   Page Header — Encabezado de página estándar
+   ============================================= */
+.sgi-page-header {
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.sgi-page-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -.03em;
+    color: #111;
+    line-height: 1.2;
+    margin: 0;
+}
+
+/* =============================================
+   Employee Profile — Vista documento
+   ============================================= */
+.sgi-profile-avatar {
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+    background-color: var(--primary-color);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+.sgi-profile-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -.03em;
+    color: #111;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+.sgi-profile-doc {
+    font-size: .72rem;
+    font-family: monospace;
+    color: #bbb;
+    margin-top: .2rem;
+    letter-spacing: .06em;
+}
+.sgi-profile-sub {
+    font-size: .8rem;
+    color: #777;
+    margin-top: .3rem;
+    font-weight: 500;
+}
+.sgi-section-title {
+    font-size: .58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: #bbb;
+    padding: .75rem 1.25rem .5rem;
+}
+.sgi-data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: .45rem 1.25rem;
+    border-top: 1px solid rgba(0,0,0,.04);
+    font-size: .8125rem;
+}
+.sgi-data-label {
+    color: #aaa;
+    font-size: .75rem;
+    font-weight: 500;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.sgi-data-value {
+    color: #222;
+    font-weight: 500;
+    text-align: right;
+}
+.sgi-contact-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: .875rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+    background: #fafafa;
+}
+.sgi-contact-item {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .8rem;
+    color: #444;
+    font-weight: 500;
+}
+.sgi-contact-item .bi {
+    color: #bbb;
+    font-size: .9rem;
+    flex-shrink: 0;
+}
+
+/* =============================================
+   Employee Cards — Index de empleados
+   ============================================= */
+.sgi-employee-card {
+    border-top: 2px solid var(--border-color);
+    transition: border-color .15s ease, border-top-color .15s ease;
+}
+.sgi-employee-card:hover {
+    border-color: var(--primary-color);
+    border-top-color: var(--primary-color);
+}
+.sgi-emp-avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    background-color: var(--primary-color);
+    color: #fff;
+    font-weight: 700;
+    font-size: .875rem;
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sgi-emp-name {
+    font-size: .9375rem;
+    font-weight: 600;
+    color: #111;
+    letter-spacing: -.02em;
+    line-height: 1.25;
+}
+.sgi-emp-doc {
+    font-size: .7rem;
+    color: #aaa;
+    font-family: monospace;
+    letter-spacing: .02em;
+    margin-top: .1rem;
+}
+.sgi-emp-meta-label {
+    font-size: .58rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #bbb;
+    margin-bottom: .1rem;
+}
+.sgi-emp-meta-value {
+    font-size: .8125rem;
+    color: #444;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =============================================
+   Accordion — Personalización Bootstrap
+   ============================================= */
+.accordion-item {
+    border-radius: 0;
+}
+.accordion-button {
+    border-radius: 0 !important;
+    font-size: .875rem;
+    font-weight: 500;
+    color: #333;
+    background-color: #fafafa;
+    box-shadow: none;
+    padding: .75rem 1rem;
+    transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.accordion-button:hover {
+    background-color: rgba(70, 157, 97, .04);
+    color: #111;
+}
+.accordion-button:not(.collapsed) {
+    background-color: rgba(70, 157, 97, .06);
+    color: var(--primary-color);
+    box-shadow: inset 2px 0 0 var(--primary-color) !important;
+}
+.accordion-button:focus {
+    box-shadow: none;
+    outline: 0;
+}
+.accordion-body {
+    padding: 0;
+}
+
+/* =============================================
+   Gestión Documental — Componentes
+   ============================================= */
+.sgi-doc-empty {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: #bbb;
+}
+.sgi-doc-empty-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: .5rem;
+    opacity: .35;
+}
+.sgi-doc-empty-sm {
+    padding: .875rem 1.25rem;
+    font-size: .8125rem;
+    color: #bbb;
+    font-style: italic;
+}
+.sgi-folder-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.08);
+    color: #555;
+    font-size: .6rem;
+    font-weight: 700;
+    padding: .15em .5em;
+    border-radius: 10px;
+    min-width: 1.5em;
+    line-height: 1.6;
+    vertical-align: middle;
+    letter-spacing: .02em;
+}
+.accordion-button:not(.collapsed) .sgi-folder-count {
+    background: rgba(70, 157, 97, .15);
+    color: var(--primary-color);
+}
+.sgi-subfolder-section {
+    background: #fafafa;
+    border-top: 1px solid var(--border-color);
+    padding: .875rem 1rem;
+}
+.sgi-subfolder-item {
+    border: 1px solid var(--border-color);
+    border-left: 2px solid var(--border-color);
+    margin-bottom: .625rem;
+    transition: border-left-color .15s ease;
+}
+.sgi-subfolder-item:last-child { margin-bottom: 0; }
+.sgi-subfolder-item:hover { border-left-color: var(--primary-color); }
+.sgi-subfolder-header {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .5rem .875rem;
+    background: #f2f3f4;
+    border-bottom: 1px solid var(--border-color);
+    font-size: .75rem;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
 
 /* =============================================
    Scrollbar global personalizado

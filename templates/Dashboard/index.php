@@ -26,9 +26,9 @@ $fecha  = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[
        style="font-size:.65rem;letter-spacing:.14em;color:var(--primary-color);">
         Compañía Operadora Portuaria Cafetera S.A.
     </p>
-    <h1 class="fw-bold mb-1" style="font-size:1.8rem;letter-spacing:-.03em;color:#111;">
+    <span class="sgi-page-title" style="font-size:1.8rem">
         <?= $currentUser ? 'Bienvenido, ' . h($currentUser->full_name) : 'Bienvenido' ?>
-    </h1>
+    </span>
     <p class="mb-0 text-muted" style="font-size:.82rem;"><?= $fecha ?></p>
 </div>
 

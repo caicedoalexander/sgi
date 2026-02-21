@@ -5,8 +5,8 @@
  */
 $this->assign('title', 'Usuarios');
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Usuarios</h1>
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Usuarios</span>
     <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Usuario', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
 </div>
 

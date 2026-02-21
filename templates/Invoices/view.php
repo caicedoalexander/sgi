@@ -7,212 +7,290 @@
  * @var string[] $pipelineStatuses
  * @var string[] $pipelineLabels
  */
-$this->assign('title', 'Factura #' . $invoice->id);
+$this->assign('title', 'Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
 $pipelineBadgeMap = [
-    'revision'     => ['Revisión', 'bg-secondary'],
+    'revision'      => ['Revisión',      'bg-secondary'],
     'area_approved' => ['Área Aprobada', 'bg-info text-dark'],
-    'accrued'      => ['Causada', 'bg-primary'],
-    'treasury'     => ['Tesorería', 'bg-warning text-dark'],
-    'paid'         => ['Pagada', 'bg-success'],
+    'accrued'       => ['Causada',       'bg-primary'],
+    'treasury'      => ['Tesorería',     'bg-warning text-dark'],
+    'paid'          => ['Pagada',        'bg-success'],
 ];
 $ps = $pipelineBadgeMap[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
+
+$approvalClass = match($invoice->area_approval ?? '') {
+    'Aprobada'  => 'bg-success',
+    'Rechazada' => 'bg-danger',
+    default     => 'bg-secondary',
+};
+$dianClass = match($invoice->dian_validation ?? '') {
+    'Aprobada'  => 'bg-success',
+    'Rechazado' => 'bg-danger',
+    default     => 'bg-secondary',
+};
 ?>
-<div class="mb-4 d-flex gap-2 align-items-center flex-wrap">
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-secondary btn-sm', 'escape' => false]) ?>
-    <?= $this->Html->link('<i class="bi bi-pencil me-1"></i>Editar', ['action' => 'edit', $invoice->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
-    <span class="ms-2">
-        <span class="badge <?= $ps[1] ?> fs-6"><?= $ps[0] ?></span>
-        <?php if ($invoice->pipeline_status === 'treasury' && $invoice->payment_status === 'Pago Parcial'): ?>
-            <span class="badge bg-warning text-dark fs-6">Pago Parcial</span>
-        <?php endif; ?>
-    </span>
+
+<!-- Encabezado de página -->
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Ver Factura</span>
+    <div class="d-flex gap-2">
+        <?= $this->Html->link(
+            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            ['action' => 'index'],
+            ['class' => 'btn btn-outline-secondary btn-sm', 'escape' => false]
+        ) ?>
+        <?= $this->Html->link(
+            '<i class="bi bi-pencil me-1"></i>Editar',
+            ['action' => 'edit', $invoice->id],
+            ['class' => 'btn btn-warning btn-sm', 'escape' => false]
+        ) ?>
+    </div>
 </div>
 
-<!-- Pipeline visual mejorado -->
-<?= $this->element('pipeline_progress', [
-    'currentStatus'    => $invoice->pipeline_status,
-    'pipelineStatuses' => $pipelineStatuses,
-    'pipelineLabels'   => $pipelineLabels,
-    'isRejected'       => $isRejected,
-    'paymentStatus'    => $invoice->payment_status,
-]) ?>
+<!-- Tarjeta principal del documento -->
+<div class="card card-primary mb-4">
 
-<div class="row">
-    <!-- Datos Generales -->
-    <div class="col-lg-8">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header"><h5 class="mb-0">Datos del Documento</h5></div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <dl class="row mb-0">
-                            <dt class="col-sm-5">No. Factura</dt>
-                            <dd class="col-sm-7"><strong><?= h($invoice->invoice_number ?? '—') ?></strong></dd>
-                            <dt class="col-sm-5">Tipo Documento</dt>
-                            <dd class="col-sm-7"><?= h($invoice->document_type) ?></dd>
-                            <dt class="col-sm-5">Proveedor</dt>
-                            <dd class="col-sm-7"><?= $invoice->hasValue('provider') ? h($invoice->provider->name) : '' ?></dd>
-                            <dt class="col-sm-5">Orden de Compra</dt>
-                            <dd class="col-sm-7"><?= h($invoice->purchase_order) ?: '—' ?></dd>
-                            <dt class="col-sm-5">Centro Operación</dt>
-                            <dd class="col-sm-7"><?= $invoice->hasValue('operation_center') ? h($invoice->operation_center->name) : '' ?></dd>
-                        </dl>
-                    </div>
-                    <div class="col-md-6">
-                        <dl class="row mb-0">
-                            <dt class="col-sm-5">Fecha Registro</dt>
-                            <dd class="col-sm-7"><?= $this->formatDateEs($invoice->registration_date) ?></dd>
-                            <dt class="col-sm-5">Fecha Emisión</dt>
-                            <dd class="col-sm-7"><?= $this->formatDateEs($invoice->issue_date) ?></dd>
-                            <dt class="col-sm-5">Fecha Vencimiento</dt>
-                            <dd class="col-sm-7"><?= $this->formatDateEs($invoice->due_date) ?></dd>
-                            <dt class="col-sm-5">Valor</dt>
-                            <dd class="col-sm-7 fw-bold text-success">$ <?= $this->Number->format($invoice->amount, ['places' => 2]) ?></dd>
-                        </dl>
-                    </div>
+    <!-- Cabecera: número + monto -->
+    <div class="card-header d-flex align-items-start justify-content-between gap-3"
+         style="padding:1rem 1.25rem;">
+        <div class="d-flex align-items-start gap-3">
+            <!-- Ícono -->
+            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                 style="width:52px;height:52px;background:var(--primary-color);color:#fff;font-size:1.35rem;">
+                <i class="bi bi-receipt"></i>
+            </div>
+            <!-- Número, tipo y badges -->
+            <div>
+                <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;font-family:monospace;">
+                    <?= h($invoice->invoice_number ?? ('# ' . $invoice->id)) ?>
                 </div>
-                <hr>
-                <dl class="row mb-0">
-                    <dt class="col-sm-3">Tipo de Gasto</dt>
-                    <dd class="col-sm-3"><?= $invoice->hasValue('expense_type') ? h($invoice->expense_type->name) : '' ?></dd>
-                    <dt class="col-sm-3">Centro de Costos</dt>
-                    <dd class="col-sm-3"><?= $invoice->hasValue('cost_center') ? h($invoice->cost_center->name) : '' ?></dd>
-                </dl>
-                <hr>
-                <dt>Detalle</dt>
-                <dd class="mt-1"><?= h($invoice->detail) ?></dd>
+                <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge bg-secondary"><?= h($invoice->document_type) ?></span>
+                    <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
+                    <?php if ($isRejected): ?>
+                        <span class="badge bg-danger">Rechazada</span>
+                    <?php endif; ?>
+                    <?php if ($invoice->pipeline_status === 'treasury' && $invoice->payment_status === 'Pago Parcial'): ?>
+                        <span class="badge bg-warning text-dark">Pago Parcial</span>
+                    <?php endif; ?>
+                </div>
+                <div class="mt-1" style="font-size:.8rem;color:#777;font-weight:500;">
+                    <?= $invoice->hasValue('provider') ? h($invoice->provider->name) : '<span class="text-muted">—</span>' ?>
+                    <?php if ($invoice->hasValue('operation_center')): ?>
+                        <span style="color:#ccc;margin:0 .35rem;">·</span><?= h($invoice->operation_center->name) ?>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
+        <!-- Monto destacado -->
+        <div class="text-end flex-shrink-0">
+            <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#bbb;margin-bottom:.2rem;">Valor</div>
+            <div style="font-size:1.55rem;font-weight:700;letter-spacing:-.04em;color:var(--primary-color);line-height:1;white-space:nowrap;">
+                $ <?= $this->Number->format($invoice->amount, ['places' => 2]) ?>
+            </div>
+        </div>
+    </div>
 
-        <!-- Observaciones -->
-        <?php if ($invoice->observations): ?>
-        <div class="card shadow-sm mb-4">
-            <div class="card-header"><h5 class="mb-0">Observaciones</h5></div>
-            <div class="card-body"><?= h($invoice->observations) ?></div>
+    <!-- Pipeline progress -->
+    <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+        <?= $this->element('pipeline_progress', [
+            'currentStatus'    => $invoice->pipeline_status,
+            'pipelineStatuses' => $pipelineStatuses,
+            'pipelineLabels'   => $pipelineLabels,
+            'isRejected'       => $isRejected,
+            'paymentStatus'    => $invoice->payment_status,
+        ]) ?>
+    </div>
+
+    <!-- Sección: Documento + Clasificación (dos columnas) -->
+    <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
+        <div class="col-md-6" style="border-right:1px solid var(--border-color);">
+            <div class="sgi-section-title">Documento</div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Fecha Registro</span>
+                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->registration_date) ?: '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Fecha Emisión</span>
+                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->issue_date) ?: '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Fecha Vencimiento</span>
+                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->due_date) ?: '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Orden de Compra</span>
+                <span class="sgi-data-value"><?= h($invoice->purchase_order) ?: '—' ?></span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="sgi-section-title">Clasificación</div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Proveedor</span>
+                <span class="sgi-data-value"><?= $invoice->hasValue('provider') ? h($invoice->provider->name) : '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Tipo de Gasto</span>
+                <span class="sgi-data-value"><?= $invoice->hasValue('expense_type') ? h($invoice->expense_type->name) : '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Centro de Costos</span>
+                <span class="sgi-data-value"><?= $invoice->hasValue('cost_center') ? h($invoice->cost_center->name) : '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Centro Operación</span>
+                <span class="sgi-data-value"><?= $invoice->hasValue('operation_center') ? h($invoice->operation_center->name) : '—' ?></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección: Detalle -->
+    <?php if ($invoice->detail): ?>
+    <div style="border-bottom:1px solid var(--border-color);">
+        <div class="sgi-section-title">Detalle</div>
+        <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:#333;line-height:1.65;">
+            <?= nl2br(h($invoice->detail)) ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Sección: Observaciones -->
+    <?php if ($invoice->observations): ?>
+    <div style="border-bottom:1px solid var(--border-color);">
+        <div class="sgi-section-title">Observaciones</div>
+        <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:#555;line-height:1.65;font-style:italic;">
+            <?= nl2br(h($invoice->observations)) ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Sección: Revisión | Contabilidad | Tesorería -->
+    <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
+        <!-- Revisión -->
+        <div class="col-md-4" style="border-right:1px solid var(--border-color);">
+            <div class="sgi-section-title">Revisión</div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Confirmado por</span>
+                <span class="sgi-data-value">
+                    <?= $invoice->hasValue('confirmed_by_user') ? h($invoice->confirmed_by_user->full_name) : '—' ?>
+                </span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Aprobador</span>
+                <span class="sgi-data-value">
+                    <?= $invoice->hasValue('approver_user') ? h($invoice->approver_user->full_name) : '—' ?>
+                </span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Aprobación Área</span>
+                <span class="sgi-data-value">
+                    <span class="badge <?= $approvalClass ?>"><?= h($invoice->area_approval ?? 'Pendiente') ?></span>
+                </span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Fecha Aprobación</span>
+                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->area_approval_date) ?: '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Validación DIAN</span>
+                <span class="sgi-data-value">
+                    <span class="badge <?= $dianClass ?>"><?= h($invoice->dian_validation ?? 'Pendiente') ?></span>
+                </span>
+            </div>
+        </div>
+        <!-- Contabilidad -->
+        <div class="col-md-4" style="border-right:1px solid var(--border-color);">
+            <div class="sgi-section-title">Contabilidad</div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Causada</span>
+                <span class="sgi-data-value">
+                    <?= $invoice->accrued
+                        ? '<span class="badge bg-success">Sí</span>'
+                        : '<span class="badge bg-secondary">No</span>' ?>
+                </span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Fecha Causación</span>
+                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->accrual_date) ?: '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Lista para Pago</span>
+                <span class="sgi-data-value"><?= h($invoice->ready_for_payment) ?: '—' ?></span>
+            </div>
+        </div>
+        <!-- Tesorería -->
+        <div class="col-md-4">
+            <div class="sgi-section-title">Tesorería</div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Estado Pago</span>
+                <span class="sgi-data-value">
+                    <?php if ($invoice->payment_status === 'Pago Parcial'): ?>
+                        <span class="badge bg-warning text-dark"><?= h($invoice->payment_status) ?></span>
+                    <?php elseif ($invoice->payment_status === 'Pago total'): ?>
+                        <span class="badge bg-success"><?= h($invoice->payment_status) ?></span>
+                    <?php else: ?>
+                        —
+                    <?php endif; ?>
+                </span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Fecha Pago</span>
+                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->payment_date) ?: '—' ?></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de registro -->
+    <div class="sgi-contact-bar">
+        <?php if ($invoice->hasValue('registered_by_user')): ?>
+        <div class="sgi-contact-item">
+            <i class="bi bi-person"></i>
+            <span>Registrado por <?= h($invoice->registered_by_user->full_name) ?></span>
         </div>
         <?php endif; ?>
-
-        <!-- Historial -->
-        <?php if (!empty($invoice->invoice_histories)): ?>
-        <div class="card shadow-sm mb-4">
-            <div class="card-header"><h5 class="mb-0">Historial de Cambios</h5></div>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Usuario</th>
-                            <th>Campo</th>
-                            <th>Valor Anterior</th>
-                            <th>Valor Nuevo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($invoice->invoice_histories as $history): ?>
-                        <tr>
-                            <td><?= $this->formatDateEs($history->created) ?></td>
-                            <td><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
-                            <td><code><?= h($history->field_changed) ?></code></td>
-                            <td class="text-muted"><?= h($history->old_value) ?: '—' ?></td>
-                            <td class="fw-semibold"><?= h($history->new_value) ?: '—' ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+        <?php if ($invoice->created): ?>
+        <div class="sgi-contact-item">
+            <i class="bi bi-calendar3"></i>
+            <span>Creado: <?= $this->formatDateEs($invoice->created) ?></span>
+        </div>
+        <?php endif; ?>
+        <?php if ($invoice->modified): ?>
+        <div class="sgi-contact-item">
+            <i class="bi bi-pencil-square"></i>
+            <span>Modificado: <?= $this->formatDateEs($invoice->modified) ?></span>
         </div>
         <?php endif; ?>
     </div>
 
-    <!-- Panel Lateral -->
-    <div class="col-lg-4">
-        <!-- Revisión -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-secondary text-white"><h6 class="mb-0">Revisión</h6></div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-6">Confirmado por</dt>
-                    <dd class="col-6"><?= $invoice->hasValue('confirmed_by_user') ? h($invoice->confirmed_by_user->full_name) : '<span class="text-muted">—</span>' ?></dd>
-                    <dt class="col-6">Aprobador</dt>
-                    <dd class="col-6"><?= $invoice->hasValue('approver_user') ? h($invoice->approver_user->full_name) : '<span class="text-muted">—</span>' ?></dd>
-                    <dt class="col-6">Aprobación Área</dt>
-                    <dd class="col-6">
-                        <?php
-                        $approvalClass = match($invoice->area_approval) {
-                            'Aprobada' => 'bg-success',
-                            'Rechazada' => 'bg-danger',
-                            default => 'bg-secondary',
-                        };
-                        ?>
-                        <span class="badge <?= $approvalClass ?>"><?= h($invoice->area_approval ?? 'Pendiente') ?></span>
-                    </dd>
-                    <dt class="col-6">Fecha Aprobación</dt>
-                    <dd class="col-6"><?= $this->formatDateEs($invoice->area_approval_date) ?></dd>
-                    <dt class="col-6">Validación DIAN</dt>
-                    <dd class="col-6">
-                        <?php
-                        $dianClass = match($invoice->dian_validation) {
-                            'Aprobada' => 'bg-success',
-                            'Rechazado' => 'bg-danger',
-                            default => 'bg-secondary',
-                        };
-                        ?>
-                        <span class="badge <?= $dianClass ?>"><?= h($invoice->dian_validation ?? 'Pendiente') ?></span>
-                    </dd>
-                </dl>
-            </div>
-        </div>
+</div>
 
-        <!-- Contabilidad -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white"><h6 class="mb-0">Contabilidad</h6></div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-6">Causada</dt>
-                    <dd class="col-6"><?= $invoice->accrued ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>' ?></dd>
-                    <dt class="col-6">Fecha Causación</dt>
-                    <dd class="col-6"><?= $this->formatDateEs($invoice->accrual_date) ?></dd>
-                    <dt class="col-6">Lista para Pago</dt>
-                    <dd class="col-6"><?= h($invoice->ready_for_payment) ?: '—' ?></dd>
-                </dl>
-            </div>
-        </div>
-
-        <!-- Tesorería -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-warning text-dark"><h6 class="mb-0">Tesorería</h6></div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-6">Estado Pago</dt>
-                    <dd class="col-6">
-                        <?php if ($invoice->payment_status === 'Pago Parcial'): ?>
-                            <span class="badge bg-warning text-dark"><?= h($invoice->payment_status) ?></span>
-                        <?php elseif ($invoice->payment_status === 'Pago total'): ?>
-                            <span class="badge bg-success"><?= h($invoice->payment_status) ?></span>
-                        <?php else: ?>
-                            <span class="text-muted">—</span>
-                        <?php endif; ?>
-                    </dd>
-                    <dt class="col-6">Fecha Pago</dt>
-                    <dd class="col-6"><?= $this->formatDateEs($invoice->payment_date) ?></dd>
-                </dl>
-            </div>
-        </div>
-
-        <!-- Registro -->
-        <div class="card shadow-sm">
-            <div class="card-header"><h6 class="mb-0">Registro</h6></div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-6">Registrado por</dt>
-                    <dd class="col-6"><?= $invoice->hasValue('registered_by_user') ? h($invoice->registered_by_user->full_name) : '' ?></dd>
-                    <dt class="col-6">Creado</dt>
-                    <dd class="col-6"><?= $this->formatDateEs($invoice->created) ?></dd>
-                    <dt class="col-6">Modificado</dt>
-                    <dd class="col-6"><?= $this->formatDateEs($invoice->modified) ?></dd>
-                </dl>
-            </div>
-        </div>
+<!-- Historial de cambios -->
+<?php if (!empty($invoice->invoice_histories)): ?>
+<div class="card">
+    <div class="card-header">Historial de Cambios</div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Campo</th>
+                    <th>Valor Anterior</th>
+                    <th>Valor Nuevo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($invoice->invoice_histories as $history): ?>
+                <tr>
+                    <td><?= $this->formatDateEs($history->created) ?></td>
+                    <td><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
+                    <td><code><?= h($history->field_changed) ?></code></td>
+                    <td class="text-muted"><?= h($history->old_value) ?: '—' ?></td>
+                    <td class="fw-semibold"><?= h($history->new_value) ?: '—' ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 </div>
+<?php endif; ?>

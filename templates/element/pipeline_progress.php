@@ -20,7 +20,7 @@ $statusIcons = [
 $currentIndex = array_search($currentStatus, $pipelineStatuses);
 $isPartialPayment = ($currentStatus === 'treasury' && $paymentStatus === 'Pago Parcial');
 ?>
-<div class="pipeline-progress mb-4">
+<div class="pipeline-progress">
     <div class="d-flex align-items-center justify-content-between position-relative">
         <!-- Connector line base -->
         <div class="pipeline-line position-absolute"

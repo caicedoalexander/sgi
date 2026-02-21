@@ -6,5 +6,5 @@
  * @var \App\View\AppView $this
  */
 ?>
-<h1>SGI - Sistema de Gestión Interna</h1>
+<span class="sgi-page-title">SGI - Sistema de Gestión Interna</span>
 <p>Compañía Operadora Portuaria Cafetera S.A.</p>

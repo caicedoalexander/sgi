@@ -66,9 +66,9 @@
                        style="font-size:.6rem;letter-spacing:.14em;color:var(--primary-color);">
                         Acceso al sistema
                     </p>
-                    <h1 class="fw-bold mb-0" style="font-size:1.5rem;letter-spacing:-.03em;color:#111;">
+                    <span class="sgi-page-title">
                         Iniciar sesión
-                    </h1>
+                    </span>
                 </div>
 
                 <?= $this->Flash->render() ?>

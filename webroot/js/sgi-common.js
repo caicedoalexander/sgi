@@ -43,20 +43,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Select2 para todos los selects del sistema ──────────────────────────
     if (typeof $ !== 'undefined' && $.fn && $.fn.select2) {
-        $('select.form-select').select2({
-            width: '100%',
-            language: 'es',
-            minimumResultsForSearch: 7,
+        $('select.form-select').each(function () {
+            var $modal = $(this).closest('.modal');
+            $(this).select2({
+                width: '100%',
+                language: 'es',
+                minimumResultsForSearch: 7,
+                dropdownParent: $modal.length ? $modal : $(document.body),
+            });
         });
     }
 
-    // ── Click en fila de tabla para editar ──────────────────────────────────
-    document.querySelectorAll('tr.clickable-row').forEach(function (row) {
-        row.addEventListener('click', function () {
+    // ── Click en fila/card para navegar ─────────────────────────────────────
+    document.querySelectorAll('.clickable-row').forEach(function (el) {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', function (e) {
+            if (e.target.closest('a, button, form')) return;
             var href = this.dataset.href;
-            if (href) {
-                window.location.href = href;
-            }
+            if (href) window.location.href = href;
         });
     });
 

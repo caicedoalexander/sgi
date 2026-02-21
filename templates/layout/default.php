@@ -41,8 +41,6 @@ $currentController = $this->request->getParam('controller');
             margin-left: var(--sidebar-width);
             min-height: 100vh;
         }
-        tr.clickable-row { cursor: pointer; transition: background .15s ease; }
-        tr.clickable-row:hover { background-color: rgba(70,157,97,.06) !important; }
     </style>
 </head>
 <body>
@@ -276,9 +274,19 @@ $currentController = $this->request->getParam('controller');
         </nav>
 
         <!-- Contenido -->
-        <div class="content-wrapper flex-grow-1 bg-light">
-            <nav class="sgi-topbar sticky-top d-flex align-items-center px-4">
+        <?php
+        $meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        $dias  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        $now   = new \DateTime();
+        $topbarDate = $dias[(int)$now->format('w')] . ' ' . $now->format('d') . ' ' . $meses[(int)$now->format('n')] . ' ' . $now->format('Y');
+        ?>
+        <div class="content-wrapper flex-grow-1">
+            <nav class="sgi-topbar sticky-top d-flex align-items-center justify-content-between px-4">
                 <span class="sgi-topbar-title"><?= $this->fetch('title') ?></span>
+                <div class="sgi-topbar-date d-none d-md-flex align-items-center gap-2">
+                    <i class="bi bi-calendar3" style="font-size:.75rem"></i>
+                    <?= $topbarDate ?>
+                </div>
             </nav>
             <main class="p-4">
                 <?= $this->fetch('content') ?>

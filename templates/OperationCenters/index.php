@@ -5,8 +5,8 @@
  */
 $this->assign('title', 'Centros de Operación');
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Centros de Operación</h1>
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Centros de Operación</span>
     <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Centro', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
 </div>
 
