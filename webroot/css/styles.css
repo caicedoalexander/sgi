@@ -323,6 +323,126 @@ body {
 }
 
 /* =============================================
+   Badges — Personalización Bootstrap
+   ============================================= */
+
+/* Base de todos los badges */
+.badge {
+    border-radius: 2px;
+    font-weight: 600;
+    font-size: .65rem;
+    padding: .25em .5em;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+/* Badge primary (verde corporativo) */
+.badge-primary,
+.bg-primary.badge {
+    background-color: var(--primary-color) !important;
+    color: #fff;
+}
+
+/* Badge secondary (naranja) */
+.badge-secondary,
+.bg-secondary.badge {
+    background-color: var(--secondary-color) !important;
+    color: #fff;
+}
+
+/* Badge success (verde corporativo) */
+.badge-success,
+.bg-success.badge {
+    background-color: var(--primary-color) !important;
+    color: #fff;
+}
+
+/* Badge danger */
+.badge-danger,
+.bg-danger.badge {
+    background-color: #dc3545 !important;
+    color: #fff;
+}
+
+/* Badge warning */
+.badge-warning,
+.bg-warning.badge {
+    background-color: #ffc107 !important;
+    color: #000;
+}
+
+/* Badge info */
+.badge-info,
+.bg-info.badge {
+    background-color: #0dcaf0 !important;
+    color: #000;
+}
+
+/* Badge dark */
+.badge-dark,
+.bg-dark.badge {
+    background-color: var(--bg-dark) !important;
+    color: #fff;
+}
+
+/* Badge light */
+.badge-light,
+.bg-light.badge {
+    background-color: #f8f9fa !important;
+    border: 1px solid var(--border-color);
+    color: #212529;
+}
+
+/* Badge outline variants */
+.badge-outline-primary {
+    background-color: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.badge-outline-secondary {
+    background-color: transparent;
+    border: 1px solid var(--secondary-color);
+    color: var(--secondary-color);
+}
+
+.badge-outline-success {
+    background-color: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.badge-outline-danger {
+    background-color: transparent;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+}
+
+.badge-outline-warning {
+    background-color: transparent;
+    border: 1px solid #ffc107;
+    color: #ffc107;
+}
+
+.badge-outline-info {
+    background-color: transparent;
+    border: 1px solid #0dcaf0;
+    color: #0dcaf0;
+}
+
+.badge-outline-dark {
+    background-color: transparent;
+    border: 1px solid var(--bg-dark);
+    color: var(--bg-dark);
+}
+
+.badge-outline-light {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: #6c757d;
+}
+
+/* =============================================
    Input group con foco en borde
    ============================================= */
 .sgi-input-group {
