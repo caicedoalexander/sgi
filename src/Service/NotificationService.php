@@ -26,7 +26,13 @@ class NotificationService
             return;
         }
 
-        $recipients = $this->getRecipientsForStatus($toStatus);
+        // When advancing to 'aprobacion', notify the assigned approver
+        if ($toStatus === 'aprobacion' && !empty($invoice->approver_id)) {
+            $recipients = $this->getApproverRecipient($invoice->approver_id);
+        } else {
+            $recipients = $this->getRecipientsForStatus($toStatus);
+        }
+
         if (empty($recipients)) {
             return;
         }
@@ -90,6 +96,16 @@ class NotificationService
             TransportFactory::drop('sgi_dynamic');
         }
         TransportFactory::setConfig('sgi_dynamic', $config);
+    }
+
+    private function getApproverRecipient(int $approverId): array
+    {
+        $usersTable = TableRegistry::getTableLocator()->get('Users');
+        $approver = $usersTable->find()
+            ->where(['Users.id' => $approverId, 'Users.active' => true])
+            ->first();
+
+        return $approver ? [$approver] : [];
     }
 
     private function getRecipientsForStatus(string $toStatus): array

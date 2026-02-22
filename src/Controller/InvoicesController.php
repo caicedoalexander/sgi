@@ -287,7 +287,8 @@ class InvoicesController extends AppController
         $tokenService = new ApprovalTokenService();
         $token = $tokenService->generateToken('invoices', $invoice->id, $user->id);
 
-        $url = $this->request->scheme() . '://' . $this->request->host() . '/approve/' . $token;
+        $scheme = $this->request->getHeaderLine('X-Forwarded-Proto') ?: $this->request->scheme();
+        $url = $scheme . '://' . $this->request->host() . '/approve/' . $token;
 
         $this->Flash->success('Enlace de aprobación generado (válido por 48h): ' . $url);
         return $this->redirect(['action' => 'view', $id]);
