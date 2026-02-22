@@ -4,6 +4,9 @@
  * @var iterable<\App\Model\Entity\Invoice> $invoices
  * @var string $roleName
  * @var string[] $visibleStatuses
+ * @var \Cake\ORM\ResultSet $providers
+ * @var \Cake\ORM\ResultSet $operationCenters
+ * @var \Cake\ORM\ResultSet $expenseTypes
  */
 $this->assign('title', 'Facturas');
 
@@ -14,6 +17,16 @@ $pipelineBadges = [
     'tesoreria'     => ['Tesorería',     'bg-warning text-dark'],
     'pagada'        => ['Pagada',        'bg-success'],
 ];
+
+$query = $this->request->getQueryParams();
+$hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
+$pipelineOptions = [
+    'registro' => 'Registro',
+    'aprobacion' => 'Aprobación',
+    'contabilidad' => 'Contabilidad',
+    'tesoreria' => 'Tesorería',
+    'pagada' => 'Pagada',
+];
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
@@ -23,6 +36,89 @@ $pipelineBadges = [
         ['action' => 'add'],
         ['class' => 'btn btn-primary', 'escape' => false]
     ) ?>
+</div>
+
+<!-- Search & Filters -->
+<div class="sgi-search-bar mb-3">
+    <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
+    <div class="d-flex gap-2">
+        <div class="flex-grow-1">
+            <?= $this->Form->control('search', [
+                'label' => false,
+                'type' => 'text',
+                'class' => 'form-control',
+                'placeholder' => 'Buscar por número, orden de compra, detalle o proveedor…',
+                'value' => $this->request->getQuery('search', ''),
+            ]) ?>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+        <button type="button" class="btn btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#invoiceFilters" title="Filtros avanzados">
+            <i class="bi bi-funnel"></i>
+        </button>
+        <?php if ($hasFilters): ?>
+            <?= $this->Html->link(
+                '<i class="bi bi-x-lg"></i> Limpiar',
+                ['action' => 'index'],
+                ['class' => 'btn btn-outline-danger', 'escape' => false]
+            ) ?>
+        <?php endif; ?>
+    </div>
+
+    <div class="collapse <?= $hasFilters ? 'show' : '' ?>" id="invoiceFilters">
+        <div class="sgi-filters-section mt-2">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="sgi-filter-label">Proveedor</label>
+                    <?= $this->Form->select('provider_id', $providers, [
+                        'empty' => 'Todos',
+                        'class' => 'form-select form-select-sm',
+                        'value' => $this->request->getQuery('provider_id', ''),
+                    ]) ?>
+                </div>
+                <div class="col-md-2">
+                    <label class="sgi-filter-label">Centro Op.</label>
+                    <?= $this->Form->select('operation_center_id', $operationCenters, [
+                        'empty' => 'Todos',
+                        'class' => 'form-select form-select-sm',
+                        'value' => $this->request->getQuery('operation_center_id', ''),
+                    ]) ?>
+                </div>
+                <div class="col-md-2">
+                    <label class="sgi-filter-label">Tipo Gasto</label>
+                    <?= $this->Form->select('expense_type_id', $expenseTypes, [
+                        'empty' => 'Todos',
+                        'class' => 'form-select form-select-sm',
+                        'value' => $this->request->getQuery('expense_type_id', ''),
+                    ]) ?>
+                </div>
+                <div class="col-md-2">
+                    <label class="sgi-filter-label">Estado</label>
+                    <?= $this->Form->select('pipeline_status', $pipelineOptions, [
+                        'empty' => 'Todos',
+                        'class' => 'form-select form-select-sm',
+                        'value' => $this->request->getQuery('pipeline_status', ''),
+                    ]) ?>
+                </div>
+                <div class="col-md-3">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="sgi-filter-label">Desde</label>
+                            <input type="text" name="date_from" class="form-control form-control-sm flatpickr-date"
+                                   value="<?= h($this->request->getQuery('date_from', '')) ?>"
+                                   placeholder="Fecha desde">
+                        </div>
+                        <div class="col-6">
+                            <label class="sgi-filter-label">Hasta</label>
+                            <input type="text" name="date_to" class="form-control form-control-sm flatpickr-date"
+                                   value="<?= h($this->request->getQuery('date_to', '')) ?>"
+                                   placeholder="Fecha hasta">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?= $this->Form->end() ?>
 </div>
 
 <div class="card card-primary">

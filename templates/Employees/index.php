@@ -2,8 +2,14 @@
 /**
  * @var \App\View\AppView $this
  * @var iterable<\App\Model\Entity\Employee> $employees
+ * @var \Cake\ORM\ResultSet $positions
+ * @var \Cake\ORM\ResultSet $operationCenters
+ * @var \Cake\ORM\ResultSet $employeeStatuses
  */
 $this->assign('title', 'Empleados');
+
+$query = $this->request->getQueryParams();
+$hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Empleados</span>
@@ -12,6 +18,65 @@ $this->assign('title', 'Empleados');
         ['action' => 'add'],
         ['class' => 'btn btn-primary', 'escape' => false]
     ) ?>
+</div>
+
+<!-- Search & Filters -->
+<div class="sgi-search-bar mb-3">
+    <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
+    <div class="d-flex gap-2">
+        <div class="flex-grow-1">
+            <?= $this->Form->control('search', [
+                'label' => false,
+                'type' => 'text',
+                'class' => 'form-control',
+                'placeholder' => 'Buscar por nombre, documento o correo…',
+                'value' => $this->request->getQuery('search', ''),
+            ]) ?>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+        <button type="button" class="btn btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#employeeFilters" title="Filtros avanzados">
+            <i class="bi bi-funnel"></i>
+        </button>
+        <?php if ($hasFilters): ?>
+            <?= $this->Html->link(
+                '<i class="bi bi-x-lg"></i> Limpiar',
+                ['action' => 'index'],
+                ['class' => 'btn btn-outline-danger', 'escape' => false]
+            ) ?>
+        <?php endif; ?>
+    </div>
+
+    <div class="collapse <?= $hasFilters ? 'show' : '' ?>" id="employeeFilters">
+        <div class="sgi-filters-section mt-2">
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <label class="sgi-filter-label">Cargo</label>
+                    <?= $this->Form->select('position_id', $positions, [
+                        'empty' => 'Todos',
+                        'class' => 'form-select form-select-sm',
+                        'value' => $this->request->getQuery('position_id', ''),
+                    ]) ?>
+                </div>
+                <div class="col-md-4">
+                    <label class="sgi-filter-label">Centro de Operación</label>
+                    <?= $this->Form->select('operation_center_id', $operationCenters, [
+                        'empty' => 'Todos',
+                        'class' => 'form-select form-select-sm',
+                        'value' => $this->request->getQuery('operation_center_id', ''),
+                    ]) ?>
+                </div>
+                <div class="col-md-4">
+                    <label class="sgi-filter-label">Estado</label>
+                    <?= $this->Form->select('employee_status_id', $employeeStatuses, [
+                        'empty' => 'Todos',
+                        'class' => 'form-select form-select-sm',
+                        'value' => $this->request->getQuery('employee_status_id', ''),
+                    ]) ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?= $this->Form->end() ?>
 </div>
 
 <?php $employeeList = iterator_to_array($employees); ?>

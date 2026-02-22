@@ -15,9 +15,43 @@ class EmployeesController extends AppController
             ->contain(['EmployeeStatuses', 'Positions', 'OperationCenters'])
             ->order(['Employees.last_name' => 'ASC']);
 
+        // Text search
+        $search = $this->request->getQuery('search');
+        if ($search !== null && $search !== '') {
+            $like = '%' . $search . '%';
+            $query->where([
+                'OR' => [
+                    'Employees.first_name LIKE' => $like,
+                    'Employees.last_name LIKE' => $like,
+                    'Employees.document_number LIKE' => $like,
+                    'Employees.email LIKE' => $like,
+                ],
+            ]);
+        }
+
+        // Exact filters
+        $positionId = $this->request->getQuery('position_id');
+        if ($positionId !== null && $positionId !== '') {
+            $query->where(['Employees.position_id' => $positionId]);
+        }
+
+        $operationCenterId = $this->request->getQuery('operation_center_id');
+        if ($operationCenterId !== null && $operationCenterId !== '') {
+            $query->where(['Employees.operation_center_id' => $operationCenterId]);
+        }
+
+        $employeeStatusId = $this->request->getQuery('employee_status_id');
+        if ($employeeStatusId !== null && $employeeStatusId !== '') {
+            $query->where(['Employees.employee_status_id' => $employeeStatusId]);
+        }
+
         $employees = $this->paginate($query);
 
-        $this->set(compact('employees'));
+        $positions = $this->Employees->Positions->find('codeList')->all();
+        $operationCenters = $this->Employees->OperationCenters->find('codeList')->all();
+        $employeeStatuses = $this->Employees->EmployeeStatuses->find('codeList')->all();
+
+        $this->set(compact('employees', 'positions', 'operationCenters', 'employeeStatuses'));
     }
 
     public function view($id = null)

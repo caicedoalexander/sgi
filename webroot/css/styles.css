@@ -2241,6 +2241,29 @@ textarea.form-control {
 }
 
 /* =============================================
+   Search Bar & Filters
+   ============================================= */
+.sgi-search-bar {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-top: 2px solid var(--primary-color);
+    padding: .75rem;
+}
+.sgi-filters-section {
+    border-top: 1px solid var(--border-color);
+    padding-top: .75rem;
+}
+.sgi-filter-label {
+    font-size: .58rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #999;
+    margin-bottom: .25rem;
+    display: block;
+}
+
+/* =============================================
    Employee Cards — Index de empleados
    ============================================= */
 .sgi-employee-card {

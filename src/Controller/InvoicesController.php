@@ -39,13 +39,63 @@ class InvoicesController extends AppController
             ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers']);
 
         if (!empty($visibleStatuses)) {
-            $query->where(['pipeline_status IN' => $visibleStatuses]);
+            $query->where(['Invoices.pipeline_status IN' => $visibleStatuses]);
+        }
+
+        // Text search
+        $search = $this->request->getQuery('search');
+        if ($search !== null && $search !== '') {
+            $like = '%' . $search . '%';
+            $query->where([
+                'OR' => [
+                    'Invoices.invoice_number LIKE' => $like,
+                    'Invoices.purchase_order LIKE' => $like,
+                    'Invoices.detail LIKE' => $like,
+                    'Providers.name LIKE' => $like,
+                ],
+            ]);
+        }
+
+        // Exact filters
+        $providerId = $this->request->getQuery('provider_id');
+        if ($providerId !== null && $providerId !== '') {
+            $query->where(['Invoices.provider_id' => $providerId]);
+        }
+
+        $operationCenterId = $this->request->getQuery('operation_center_id');
+        if ($operationCenterId !== null && $operationCenterId !== '') {
+            $query->where(['Invoices.operation_center_id' => $operationCenterId]);
+        }
+
+        $expenseTypeId = $this->request->getQuery('expense_type_id');
+        if ($expenseTypeId !== null && $expenseTypeId !== '') {
+            $query->where(['Invoices.expense_type_id' => $expenseTypeId]);
+        }
+
+        $pipelineStatus = $this->request->getQuery('pipeline_status');
+        if ($pipelineStatus !== null && $pipelineStatus !== '') {
+            $query->where(['Invoices.pipeline_status' => $pipelineStatus]);
+        }
+
+        // Date range
+        $dateFrom = $this->request->getQuery('date_from');
+        if ($dateFrom !== null && $dateFrom !== '') {
+            $query->where(['Invoices.issue_date >=' => $dateFrom]);
+        }
+
+        $dateTo = $this->request->getQuery('date_to');
+        if ($dateTo !== null && $dateTo !== '') {
+            $query->where(['Invoices.issue_date <=' => $dateTo]);
         }
 
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
         $invoices = $this->paginate($query);
 
-        $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
+        $providers = $this->Invoices->Providers->find('list', limit: 200)->all();
+        $operationCenters = $this->Invoices->OperationCenters->find('codeList')->all();
+        $expenseTypes = $this->Invoices->ExpenseTypes->find('list', limit: 200)->all();
+
+        $this->set(compact('invoices', 'visibleStatuses', 'roleName', 'providers', 'operationCenters', 'expenseTypes'));
     }
 
     public function view($id = null)
