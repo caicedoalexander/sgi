@@ -31,8 +31,9 @@ class ExcelService
             $firstRow = $results[0]->toArray();
             $headers = array_keys($firstRow);
             foreach ($headers as $col => $header) {
-                $sheet->setCellValueByColumnAndRow($col + 1, 1, $header);
-                $sheet->getStyleByColumnAndRow($col + 1, 1)->getFont()->setBold(true);
+                $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 1) . '1';
+                $sheet->setCellValue($cell, $header);
+                $sheet->getStyle($cell)->getFont()->setBold(true);
             }
 
             // Data rows
@@ -43,13 +44,15 @@ class ExcelService
                     if ($value instanceof \DateTimeInterface) {
                         $value = $value->format('Y-m-d H:i:s');
                     }
-                    $sheet->setCellValueByColumnAndRow($col + 1, $rowNum + 2, $value);
+                    $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 1) . ($rowNum + 2);
+                    $sheet->setCellValue($cell, $value);
                 }
             }
 
             // Auto-size columns
             foreach ($headers as $col => $header) {
-                $sheet->getColumnDimensionByColumn($col + 1)->setAutoSize(true);
+                $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 1);
+                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
             }
         }
 
