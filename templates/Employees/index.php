@@ -191,9 +191,6 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
                     <?php if ($employee->has('employee_status') && $employee->employee_status): ?>
                         <span class="badge bg-info"><?= h($employee->employee_status->name) ?></span>
                     <?php endif; ?>
-                    <?php if ($employee->has('active_novedad') && $employee->active_novedad): ?>
-                        <span class="badge bg-warning text-dark"><?= h($employee->active_novedad->novedad_type) ?></span>
-                    <?php endif; ?>
                 </div>
                 <div class="d-flex gap-1">
                     <?php if (!empty($userPermissions['employees']['can_edit'])): ?>

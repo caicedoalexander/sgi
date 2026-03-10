@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\EmployeeStatusConstants;
 use App\Service\EmployeeDocumentService;
 use App\Service\EmployeeFilterService;
 use App\Service\ExcelService;
@@ -27,7 +28,7 @@ class EmployeesController extends AppController
     public function index()
     {
         $query = $this->Employees->find()
-            ->contain(['EmployeeStatuses', 'Positions', 'OperationCenters', 'ActiveNovedad'])
+            ->contain(['EmployeeStatuses', 'Positions', 'OperationCenters'])
             ->order(['Employees.last_name' => 'ASC']);
 
         $this->filterService->apply($query, $this->request->getQueryParams());
@@ -51,11 +52,11 @@ class EmployeesController extends AppController
             'SupervisorPositions',
             'OperationCenters',
             'CostCenters',
-            'OrganizacionesTemporales',
-            'ActiveNovedad',
-            'EmployeeNovedades' => [
-                'sort' => ['EmployeeNovedades.created' => 'DESC'],
-                'CreatedByUsers',
+            'TemporaryOrganizations',
+            'EmployeeNovelties' => [
+                'sort' => ['EmployeeNovelties.created' => 'DESC'],
+                'NoveltyTypes',
+                'RegisteredByUsers',
             ],
             'EmployeeFolders' => [
                 'sort' => ['EmployeeFolders.name' => 'ASC'],
@@ -106,14 +107,7 @@ class EmployeesController extends AppController
         if ($this->request->is(['patch', 'post', 'put'])) {
             $employee = $this->Employees->patchEntity($employee, $this->request->getData());
             if ($this->Employees->save($employee)) {
-                // If changed to "Retirado" (id=2), deactivate active novedad
-                if ($employee->employee_status_id === 2) {
-                    $novedadesTable = TableRegistry::getTableLocator()->get('EmployeeNovedades');
-                    $novedadesTable->updateAll(
-                        ['active' => false, 'end_date' => Date::now()],
-                        ['employee_id' => $employee->id, 'active' => true],
-                    );
-                }
+                // No additional logic needed for retired employees
                 $warning = $this->documentService->handleProfileImage(
                     $employee,
                     $this->request->getUploadedFile('profile_image_file'),
@@ -221,7 +215,7 @@ class EmployeesController extends AppController
                 'CostCenters',
                 'MaritalStatuses',
                 'EducationLevels',
-                'OrganizacionesTemporales',
+                'TemporaryOrganizations',
             ])
             ->order(['Employees.last_name' => 'ASC'])
             ->formatResults(function ($results) {
@@ -244,9 +238,9 @@ class EmployeesController extends AppController
                         'pension_fund' => $employee->pension_fund,
                         'arl' => $employee->arl,
                         'severance_fund' => $employee->severance_fund,
-                        'tipo_contrato' => $employee->tipo_contrato,
-                        'organizacion_temporal' => $employee->organizacion_temporal->name ?? '',
-                        'chaleco' => $employee->chaleco,
+                        'contract_type' => $employee->contract_type,
+                        'temporary_organization' => $employee->temporary_organization->name ?? '',
+                        'vest_number' => $employee->vest_number,
                         'notes' => $employee->notes,
                         'active' => $employee->active,
                         'position_id' => $employee->position_id,
@@ -311,7 +305,7 @@ class EmployeesController extends AppController
                 'employee_status',
                 'marital_status',
                 'education_level',
-                'organizacion_temporal',
+                'temporary_organization',
             ],
         );
 
@@ -332,8 +326,8 @@ class EmployeesController extends AppController
         $positions = $this->Employees->Positions->find('codeList')->all();
         $operationCenters = $this->Employees->OperationCenters->find('codeList')->all();
         $costCenters = $this->Employees->CostCenters->find('codeList')->all();
-        $organizacionesTemporales = $this->Employees->OrganizacionesTemporales->find('codeList')
-            ->where(['OrganizacionesTemporales.active' => true])
+        $temporaryOrganizations = $this->Employees->TemporaryOrganizations->find('codeList')
+            ->where(['TemporaryOrganizations.active' => true])
             ->all();
 
         $this->set(compact(
@@ -343,7 +337,7 @@ class EmployeesController extends AppController
             'positions',
             'operationCenters',
             'costCenters',
-            'organizacionesTemporales',
+            'temporaryOrganizations',
         ));
     }
 }

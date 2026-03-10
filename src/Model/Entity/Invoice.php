@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Entity;
 
+use App\Constants\InvoiceConstants;
 use Cake\ORM\Entity;
 
 class Invoice extends Entity
@@ -33,4 +34,19 @@ class Invoice extends Entity
         'pipeline_status' => true,
         'registered_by' => true,
     ];
+
+    public function isRejected(): bool
+    {
+        return ($this->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED;
+    }
+
+    public function isApproved(): bool
+    {
+        return ($this->area_approval ?? '') === InvoiceConstants::APPROVAL_APPROVED;
+    }
+
+    public function isPaid(): bool
+    {
+        return ($this->pipeline_status ?? '') === 'pagada';
+    }
 }

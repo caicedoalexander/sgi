@@ -118,15 +118,15 @@ $dianClass = match($invoice->dian_validation ?? '') {
             <div class="sgi-section-title">Documento</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Fecha Registro</span>
-                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->registration_date) ?: '—' ?></span>
+                <span class="sgi-data-value"><?= $invoice->registration_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Fecha Emisión</span>
-                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->issue_date) ?: '—' ?></span>
+                <span class="sgi-data-value"><?= $invoice->issue_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Fecha Vencimiento</span>
-                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->due_date) ?: '—' ?></span>
+                <span class="sgi-data-value"><?= $invoice->due_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Orden de Compra</span>
@@ -222,7 +222,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Fecha Aprobación</span>
-                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->area_approval_date) ?: '—' ?></span>
+                <span class="sgi-data-value"><?= $invoice->area_approval_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Validación DIAN</span>
@@ -244,7 +244,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Fecha Causación</span>
-                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->accrual_date) ?: '—' ?></span>
+                <span class="sgi-data-value"><?= $invoice->accrual_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Lista para Pago</span>
@@ -268,7 +268,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Fecha Pago</span>
-                <span class="sgi-data-value"><?= $this->formatDateEs($invoice->payment_date) ?: '—' ?></span>
+                <span class="sgi-data-value"><?= $invoice->payment_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
         </div>
     </div>
@@ -284,13 +284,13 @@ $dianClass = match($invoice->dian_validation ?? '') {
         <?php if ($invoice->created): ?>
         <div class="sgi-contact-item">
             <i class="bi bi-calendar3"></i>
-            <span>Creado: <?= $this->formatDateEs($invoice->created) ?></span>
+            <span>Creado: <?= $invoice->created?->format('d/m/Y') ?? '' ?></span>
         </div>
         <?php endif; ?>
         <?php if ($invoice->modified): ?>
         <div class="sgi-contact-item">
             <i class="bi bi-pencil-square"></i>
-            <span>Modificado: <?= $this->formatDateEs($invoice->modified) ?></span>
+            <span>Modificado: <?= $invoice->modified?->format('d/m/Y') ?? '' ?></span>
         </div>
         <?php endif; ?>
     </div>

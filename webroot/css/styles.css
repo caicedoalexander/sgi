@@ -1961,7 +1961,8 @@ textarea.form-control {
     box-shadow: none;
     font-family: 'Inter', system-ui, sans-serif;
     font-size: .875rem;
-    width: 280px;
+    width: auto;
+    min-width: 308px;
 }
 
 /* Ocultar la flecha (no encaja con el diseño de bordes rectos) */

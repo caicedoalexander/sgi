@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Constants\ContractTypeConstants;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -41,23 +42,18 @@ class EmployeesTable extends Table
         $this->belongsTo('CostCenters', [
             'foreignKey' => 'cost_center_id',
         ]);
-        $this->belongsTo('OrganizacionesTemporales', [
-            'foreignKey' => 'organizacion_temporal_id',
+        $this->belongsTo('TemporaryOrganizations', [
+            'foreignKey' => 'temporary_organization_id',
         ]);
         $this->hasMany('EmployeeFolders', [
             'foreignKey' => 'employee_id',
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
-        $this->hasMany('EmployeeNovedades', [
+        $this->hasMany('EmployeeNovelties', [
             'foreignKey' => 'employee_id',
             'dependent' => true,
             'cascadeCallbacks' => true,
-        ]);
-        $this->hasOne('ActiveNovedad', [
-            'className' => 'EmployeeNovedades',
-            'foreignKey' => 'employee_id',
-            'conditions' => ['ActiveNovedad.active' => true],
         ]);
     }
 
@@ -117,14 +113,14 @@ class EmployeesTable extends Table
             ->allowEmptyString('salary');
 
         $validator
-            ->scalar('tipo_contrato')
-            ->inList('tipo_contrato', ['Fijo', 'Indefinido', 'Temporal'], 'Tipo de contrato inválido.')
-            ->allowEmptyString('tipo_contrato');
+            ->scalar('contract_type')
+            ->inList('contract_type', ContractTypeConstants::ALL, 'Tipo de contrato inválido.')
+            ->allowEmptyString('contract_type');
 
         $validator
-            ->scalar('chaleco')
-            ->maxLength('chaleco', 20)
-            ->allowEmptyString('chaleco');
+            ->scalar('vest_number')
+            ->maxLength('vest_number', 20)
+            ->allowEmptyString('vest_number');
 
         return $validator;
     }
@@ -141,17 +137,17 @@ class EmployeesTable extends Table
         $rules->add($rules->existsIn('supervisor_position_id', 'SupervisorPositions'), ['errorField' => 'supervisor_position_id', 'allowNullableNulls' => true]);
         $rules->add($rules->existsIn('operation_center_id', 'OperationCenters'), ['errorField' => 'operation_center_id', 'allowNullableNulls' => true]);
         $rules->add($rules->existsIn('cost_center_id', 'CostCenters'), ['errorField' => 'cost_center_id', 'allowNullableNulls' => true]);
-        $rules->add($rules->existsIn('organizacion_temporal_id', 'OrganizacionesTemporales'), ['errorField' => 'organizacion_temporal_id', 'allowNullableNulls' => true]);
+        $rules->add($rules->existsIn('temporary_organization_id', 'TemporaryOrganizations'), ['errorField' => 'temporary_organization_id', 'allowNullableNulls' => true]);
 
         $rules->add(function ($entity) {
-            if ($entity->tipo_contrato === 'Temporal' && empty($entity->organizacion_temporal_id)) {
+            if ($entity->contract_type === ContractTypeConstants::OBRA_LABOR && empty($entity->temporary_organization_id)) {
                 return false;
             }
 
             return true;
         }, 'requireOrgTemporal', [
-            'errorField' => 'organizacion_temporal_id',
-            'message' => 'Debe seleccionar una organización temporal cuando el tipo de contrato es Temporal.',
+            'errorField' => 'temporary_organization_id',
+            'message' => 'Debe seleccionar una organización temporal cuando el tipo de contrato es OBRA O LABOR DETERMINADA.',
         ]);
 
         return $rules;

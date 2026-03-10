@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\InvoiceConstants;
 use App\Service\ExcelService;
 use App\Service\InvoiceDocumentService;
 use App\Service\InvoiceFilterService;
@@ -15,12 +16,14 @@ class InvoicesController extends AppController
 {
     private InvoicePipelineService $pipeline;
     private InvoiceFilterService $filterService;
+    private InvoiceDocumentService $documentService;
 
     public function initialize(): void
     {
         parent::initialize();
         $this->pipeline = new InvoicePipelineService();
         $this->filterService = new InvoiceFilterService();
+        $this->documentService = new InvoiceDocumentService();
     }
 
     private function _getCurrentUser(): object
@@ -38,17 +41,12 @@ class InvoicesController extends AppController
         $roleName = $this->_getRoleName();
         $visibleStatuses = $this->pipeline->getVisibleStatuses($roleName);
 
-        $query = $this->Invoices->find()
-            ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers']);
-
-        if (!empty($visibleStatuses)) {
-            $query->where(['Invoices.pipeline_status IN' => $visibleStatuses]);
-        }
-
-        $this->filterService->apply($query, $this->request->getQueryParams());
+        $conditions = !empty($visibleStatuses)
+            ? ['Invoices.pipeline_status IN' => $visibleStatuses]
+            : [];
 
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $invoices = $this->paginate($query);
+        $invoices = $this->paginate($this->_buildInvoiceQuery($conditions));
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
         $this->set($this->_getFilterDropdowns());
@@ -58,13 +56,8 @@ class InvoicesController extends AppController
     {
         $roleName = $this->_getRoleName();
 
-        $query = $this->Invoices->find()
-            ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers']);
-
-        $this->filterService->apply($query, $this->request->getQueryParams());
-
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $invoices = $this->paginate($query);
+        $invoices = $this->paginate($this->_buildInvoiceQuery());
         $visibleStatuses = [];
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
@@ -75,13 +68,11 @@ class InvoicesController extends AppController
     public function rejected(): void
     {
         $roleName = $this->_getRoleName();
-        $query = $this->Invoices->find()
-            ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers'])
-            ->where(['Invoices.area_approval' => 'Rechazada']);
 
-        $this->filterService->apply($query, $this->request->getQueryParams());
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $invoices = $this->paginate($query);
+        $invoices = $this->paginate($this->_buildInvoiceQuery([
+            'Invoices.area_approval' => InvoiceConstants::APPROVAL_REJECTED,
+        ]));
         $visibleStatuses = [];
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
@@ -132,6 +123,7 @@ class InvoicesController extends AppController
             $data = $this->request->getData();
             $data['registered_by'] = $user->id;
             $data['pipeline_status'] = 'aprobacion';
+            $data['registration_date'] = date('Y-m-d');
 
             $invoice = $this->Invoices->patchEntity($invoice, $data);
             if ($this->Invoices->save($invoice)) {
@@ -378,6 +370,20 @@ class InvoicesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    private function _buildInvoiceQuery(array $conditions = []): \Cake\ORM\Query\SelectQuery
+    {
+        $query = $this->Invoices->find()
+            ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers']);
+
+        if (!empty($conditions)) {
+            $query->where($conditions);
+        }
+
+        $this->filterService->apply($query, $this->request->getQueryParams());
+
+        return $query;
+    }
+
     private function _getFilterDropdowns(): array
     {
         return [
@@ -419,8 +425,7 @@ class InvoicesController extends AppController
         }
 
         $identity = $this->Authentication->getIdentity();
-        $documentService = new InvoiceDocumentService();
-        $result = $documentService->uploadDocument(
+        $result = $this->documentService->uploadDocument(
             (int)$invoiceId,
             $invoice->pipeline_status,
             $file,
@@ -442,17 +447,16 @@ class InvoicesController extends AppController
         $this->request->allowMethod(['post', 'delete']);
         $invoice = $this->Invoices->get($invoiceId);
 
-        $documentService = new InvoiceDocumentService();
         $documentsTable = TableRegistry::getTableLocator()->get('InvoiceDocuments');
         $document = $documentsTable->get($documentId);
 
-        if (!$documentService->canDeleteDocument($document, $invoice->pipeline_status)) {
+        if (!$this->documentService->canDeleteDocument($document, $invoice->pipeline_status)) {
             $this->Flash->error(__('No se puede eliminar un soporte de un estado anterior.'));
 
             return $this->redirect(['action' => 'view', $invoiceId]);
         }
 
-        if ($documentService->deleteDocument((int)$documentId)) {
+        if ($this->documentService->deleteDocument((int)$documentId)) {
             $this->Flash->success(__('El soporte ha sido eliminado.'));
         } else {
             $this->Flash->error(__('No se pudo eliminar el soporte.'));

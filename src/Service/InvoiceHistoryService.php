@@ -51,7 +51,29 @@ class InvoiceHistoryService
             $oldVal = $original->get($field);
             $newVal = $modified->get($field);
 
-            if ($oldVal != $newVal) {
+            // Normalizar DateTime a string para comparacion
+            if ($oldVal instanceof \DateTimeInterface) {
+                $oldVal = $oldVal->format('Y-m-d');
+            }
+            if ($newVal instanceof \DateTimeInterface) {
+                $newVal = $newVal->format('Y-m-d');
+            }
+
+            // Normalizar booleanos
+            if (is_bool($oldVal) || is_bool($newVal)) {
+                $oldVal = (bool)$oldVal;
+                $newVal = (bool)$newVal;
+            }
+
+            // Normalizar null y string vacio
+            if ($oldVal === '') {
+                $oldVal = null;
+            }
+            if ($newVal === '') {
+                $newVal = null;
+            }
+
+            if ($oldVal !== $newVal) {
                 $history = $historiesTable->newEntity([
                     'invoice_id' => $original->id,
                     'user_id' => $userId,

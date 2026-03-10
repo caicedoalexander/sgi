@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Constants\InvoiceConstants;
+use App\Service\InvoicePipelineService;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -72,8 +74,7 @@ class InvoicesTable extends Table
 
         $validator
             ->date('registration_date')
-            ->requirePresence('registration_date', 'create')
-            ->notEmptyDate('registration_date');
+            ->allowEmptyDate('registration_date');
 
         $validator
             ->date('issue_date')
@@ -90,10 +91,7 @@ class InvoicesTable extends Table
             ->maxLength('document_type', 50)
             ->requirePresence('document_type', 'create')
             ->notEmptyString('document_type')
-            ->inList('document_type', [
-                'Factura', 'Nota Debito', 'Caja menor', 'Tarjeta de Crédito',
-                'Reintegro', 'Legalización', 'Recibo', 'Anticipo',
-            ]);
+            ->inList('document_type', InvoiceConstants::DOCUMENT_TYPES);
 
         $validator
             ->scalar('purchase_order')
@@ -140,28 +138,25 @@ class InvoicesTable extends Table
 
         $validator
             ->scalar('area_approval')
-            ->inList('area_approval', ['Pendiente', 'Aprobada', 'Rechazada']);
+            ->inList('area_approval', InvoiceConstants::APPROVAL_STATUSES);
 
         $validator
             ->scalar('dian_validation')
-            ->inList('dian_validation', ['Pendiente', 'Aprobada', 'Rechazado']);
+            ->inList('dian_validation', InvoiceConstants::DIAN_STATUSES);
 
         $validator
             ->scalar('pipeline_status')
-            ->inList('pipeline_status', ['aprobacion', 'contabilidad', 'tesoreria', 'pagada']);
+            ->inList('pipeline_status', InvoicePipelineService::STATUSES);
 
         $validator
             ->scalar('ready_for_payment')
             ->allowEmptyString('ready_for_payment')
-            ->inList('ready_for_payment', [
-                'Si', 'No', 'Anticipo Empleado', 'Anticipo Proveedor',
-                'Pago prioritario', 'Pago PSE', 'No Legalización', 'Reintegro',
-            ]);
+            ->inList('ready_for_payment', InvoiceConstants::READY_FOR_PAYMENT_OPTIONS);
 
         $validator
             ->scalar('payment_status')
             ->allowEmptyString('payment_status')
-            ->inList('payment_status', ['Pago total', 'Pago Parcial']);
+            ->inList('payment_status', InvoiceConstants::PAYMENT_STATUSES);
 
         $validator
             ->date('area_approval_date')

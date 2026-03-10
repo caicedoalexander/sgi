@@ -230,10 +230,16 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
             <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Fecha de Registro</label>
+                    <input type="text" class="form-control" disabled
+                           value="<?= h($invoice->registration_date?->format('d/m/Y') ?? '') ?>">
+                    <input type="hidden" name="registration_date"
+                           value="<?= h($invoice->registration_date?->format('Y-m-d') ?? '') ?>">
+                </div>
                 <?php foreach ([
-                    'registration_date' => 'Fecha de Registro',
-                    'issue_date'        => 'Fecha de Emisión',
-                    'due_date'          => 'Fecha de Vencimiento',
+                    'issue_date' => 'Fecha de Emisión',
+                    'due_date'   => 'Fecha de Vencimiento',
                 ] as $field => $label): ?>
                 <div class="col-md-4">
                     <label class="form-label"><?= $label ?></label>
@@ -242,7 +248,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                                value="<?= h($invoice->$field?->format('Y-m-d') ?? '') ?>">
                     <?php else: ?>
                         <input type="text" class="form-control" disabled
-                               value="<?= h($invoice->$field ? $this->formatDateEs($invoice->$field) : '') ?>">
+                               value="<?= h($invoice->$field?->format('d/m/Y') ?? '') ?>">
                         <input type="hidden" name="<?= $field ?>"
                                value="<?= h($invoice->$field?->format('Y-m-d') ?? '') ?>">
                     <?php endif; ?>
@@ -347,7 +353,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 <div class="col-md-4">
                     <label class="form-label">Fecha Aprobación</label>
                     <input type="text" class="form-control" disabled
-                           value="<?= h($this->formatDateEs($invoice->area_approval_date)) ?>">
+                           value="<?= h($invoice->area_approval_date?->format('d/m/Y') ?? '') ?>">
                 </div>
                 <?php endif; ?>
                 <div class="col-md-4">
@@ -387,13 +393,8 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Fecha de Causación</label>
-                    <?php if ($canEdit('accrual_date')): ?>
-                        <input type="text" name="accrual_date" class="form-control flatpickr-date"
-                               value="<?= h($invoice->accrual_date?->format('Y-m-d') ?? '') ?>">
-                    <?php else: ?>
-                        <input type="text" class="form-control" disabled
-                               value="<?= h($invoice->accrual_date ? $this->formatDateEs($invoice->accrual_date) : '') ?>">
-                    <?php endif; ?>
+                    <input type="text" class="form-control" disabled
+                           value="<?= h($invoice->accrual_date?->format('d/m/Y') ?? '') ?>">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Lista para Pago</label>
@@ -435,7 +436,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                                value="<?= h($invoice->payment_date?->format('Y-m-d') ?? '') ?>">
                     <?php else: ?>
                         <input type="text" class="form-control" disabled
-                               value="<?= h($invoice->payment_date ? $this->formatDateEs($invoice->payment_date) : '') ?>">
+                               value="<?= h($invoice->payment_date?->format('d/m/Y') ?? '') ?>">
                     <?php endif; ?>
                 </div>
             </div>

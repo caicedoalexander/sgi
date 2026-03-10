@@ -15,10 +15,7 @@ declare(strict_types=1);
  */
 namespace App\View;
 
-use Cake\I18n\Date;
-use Cake\I18n\DateTime;
 use Cake\View\View;
-use DateTimeInterface;
 
 /**
  * Application View
@@ -35,34 +32,5 @@ class AppView extends View
      */
     public function initialize(): void
     {
-    }
-
-    /**
-     * Format a date in long Spanish format: "Lunes, 17 Febrero 2026".
-     * Returns '—' if $date is null.
-     *
-     * @param \DateTimeInterface|\Cake\I18n\Date|\Cake\I18n\DateTime|null $date
-     */
-    public function formatDateEs(DateTimeInterface|Date|DateTime|null $date): string
-    {
-        if (!$date) {
-            return '—';
-        }
-
-        $days = [
-            'Domingo', 'Lunes', 'Martes', 'Miércoles',
-            'Jueves', 'Viernes', 'Sábado',
-        ];
-        $months = [
-            '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-        ];
-
-        $dayName = $days[(int)$date->format('w')];
-        $day     = $date->format('j');
-        $month   = $months[(int)$date->format('n')];
-        $year    = $date->format('Y');
-
-        return "{$dayName}, {$day} {$month} {$year}";
     }
 }

@@ -32,7 +32,7 @@ class LeaveSignatureService
 
         $dir = $this->ensureDir($leaveId);
         $ext = $mime === 'image/png' ? 'png' : 'jpg';
-        $fileName = "firma_{$userId}_" . time() . ".{$ext}";
+        $fileName = "signature_{$userId}_" . time() . ".{$ext}";
         $filePath = $dir . DS . $fileName;
 
         $file->moveTo($filePath);
@@ -59,7 +59,7 @@ class LeaveSignatureService
         }
 
         $dir = $this->ensureDir($leaveId);
-        $fileName = "firma_{$userId}_" . time() . ".{$ext}";
+        $fileName = "signature_{$userId}_" . time() . ".{$ext}";
         $filePath = $dir . DS . $fileName;
 
         file_put_contents($filePath, $data);

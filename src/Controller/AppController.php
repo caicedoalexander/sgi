@@ -40,12 +40,11 @@ class AppController extends Controller
         'Positions' => 'positions',
         'DefaultFolders' => 'default_folders',
         'SystemSettings' => 'system_settings',
-        'EmployeeLeaves' => 'employee_leaves',
-        'LeaveTypes' => 'leave_types',
-        'OrganizacionesTemporales' => 'organizaciones_temporales',
-        'EmployeeNovedades' => 'employee_novedades',
+        'TemporaryOrganizations' => 'temporary_organizations',
         'DianCrosschecks' => 'dian_crosschecks',
-        'LeaveDocumentTemplates' => 'leave_types',
+        'EmployeeNovelties' => 'employee_novelties',
+        'NoveltyTypes' => 'novelty_types',
+        'LeaveDocumentTemplates' => 'novelty_types',
     ];
 
     /**

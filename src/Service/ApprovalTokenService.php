@@ -3,13 +3,27 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\InvoiceConstants;
+use App\Constants\NoveltyConstants;
+use App\Constants\RoleConstants;
 use Cake\ORM\TableRegistry;
 use DateTime;
 use Exception;
 
 class ApprovalTokenService
 {
-    public function generateToken(string $entityType, int $entityId, int $createdBy, int $hoursValid = 48): string
+    private InvoiceHistoryService $historyService;
+    private NotificationService $notificationService;
+
+    public function __construct(
+        ?InvoiceHistoryService $historyService = null,
+        ?NotificationService $notificationService = null,
+    ) {
+        $this->historyService = $historyService ?? new InvoiceHistoryService();
+        $this->notificationService = $notificationService ?? new NotificationService();
+    }
+
+    public function generateToken(string $entityType, int $entityId, int $createdBy, int $hoursValid = InvoiceConstants::APPROVAL_TOKEN_HOURS): string
     {
         $token = bin2hex(random_bytes(32));
         $expiresAt = new DateTime("+{$hoursValid} hours");
@@ -90,8 +104,8 @@ class ApprovalTokenService
         switch ($entityType) {
             case 'invoices':
                 return $this->applyInvoiceAction($entityId, $action, $observations, $createdBy, $approvalDate);
-            case 'employee_leaves':
-                return $this->applyLeaveAction($entityId, $action);
+            case 'employee_novelties':
+                return $this->applyNoveltyAction($entityId, $action);
             default:
                 return false;
         }
@@ -102,58 +116,38 @@ class ApprovalTokenService
         $table = TableRegistry::getTableLocator()->get('Invoices');
         $invoice = $table->get($invoiceId, contain: ['Providers']);
 
-        $historyService = new InvoiceHistoryService();
         $userId = $createdBy ?? 0;
         $parsedDate = !empty($approvalDate) ? new DateTime($approvalDate) : new DateTime();
 
         if ($action === 'approve') {
-            $originalStatus = $invoice->pipeline_status;
-            $invoice->area_approval = 'Aprobada';
-            $invoice->area_approval_date = $parsedDate;
+            // Delegate to pipeline: save approval fields + auto-advance + history + notification
+            $pipeline = new InvoicePipelineService($this->historyService, $this->notificationService);
+            $result = $pipeline->saveAndAdvance(
+                $invoice,
+                [
+                    'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
+                    'area_approval_date' => $parsedDate,
+                ],
+                RoleConstants::ADMIN,
+                $userId,
+            );
 
-            $pipeline = new InvoicePipelineService();
-            $nextStatus = $pipeline->getNextStatus($invoice->pipeline_status);
-            if ($nextStatus) {
-                $invoice->pipeline_status = $nextStatus;
-            }
-
-            if (!$table->save($invoice)) {
-                return false;
-            }
-
-            // Record history
-            $historyService->recordFieldChange($invoiceId, 'area_approval', 'Pendiente', 'Aprobada', $userId);
-            if ($nextStatus) {
-                $historyService->recordStatusChange($invoiceId, $originalStatus, $nextStatus, $userId);
-            }
-
-            // Save observations as invoice_observation
-            if (!empty($observations)) {
+            if ($result['saved'] && !empty($observations)) {
                 $this->saveInvoiceObservation($invoiceId, $observations, $userId);
             }
 
-            // Send notification to Contabilidad
-            if ($nextStatus) {
-                try {
-                    $notificationService = new NotificationService();
-                    $notificationService->sendStatusChangeNotification($invoice, $originalStatus, $nextStatus);
-                } catch (Exception $e) {
-                    // Don't block on email failures
-                }
-            }
-
-            return true;
+            return $result['saved'];
         }
 
         if ($action === 'reject') {
-            $invoice->area_approval = 'Rechazada';
+            $invoice->area_approval = InvoiceConstants::APPROVAL_REJECTED;
             $invoice->area_approval_date = $parsedDate;
 
             if (!$table->save($invoice)) {
                 return false;
             }
 
-            $historyService->recordFieldChange($invoiceId, 'area_approval', 'Pendiente', 'Rechazada', $userId);
+            $this->historyService->recordFieldChange($invoiceId, 'area_approval', InvoiceConstants::APPROVAL_PENDING, InvoiceConstants::APPROVAL_REJECTED, $userId);
 
             if (!empty($observations)) {
                 $this->saveInvoiceObservation($invoiceId, $observations, $userId);
@@ -176,27 +170,27 @@ class ApprovalTokenService
         $observationsTable->save($observation);
     }
 
-    private function applyLeaveAction(int $leaveId, string $action): bool
+    private function applyNoveltyAction(int $noveltyId, string $action): bool
     {
-        $table = TableRegistry::getTableLocator()->get('EmployeeLeaves');
-        $leave = $table->get($leaveId);
+        $table = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+        $novelty = $table->get($noveltyId);
 
         if ($action === 'approve') {
-            $leave->status = 'aprobado';
-            $leave->approved_at = new DateTime();
+            $novelty->status = NoveltyConstants::STATUS_APPROVED;
+            $novelty->approved_at = new DateTime();
         } elseif ($action === 'reject') {
-            $leave->status = 'rechazado';
-            $leave->approved_at = new DateTime();
+            $novelty->status = NoveltyConstants::STATUS_REJECTED;
+            $novelty->approved_at = new DateTime();
         }
 
-        return (bool)$table->save($leave);
+        return (bool)$table->save($novelty);
     }
 
     public function getEntity(string $entityType, int $entityId): ?object
     {
         $tableMap = [
             'invoices' => 'Invoices',
-            'employee_leaves' => 'EmployeeLeaves',
+            'employee_novelties' => 'EmployeeNovelties',
         ];
 
         $tableName = $tableMap[$entityType] ?? null;
@@ -210,8 +204,8 @@ class ApprovalTokenService
             $contain = [];
             if ($entityType === 'invoices') {
                 $contain = ['Providers', 'InvoiceDocuments'];
-            } elseif ($entityType === 'employee_leaves') {
-                $contain = ['Employees', 'LeaveTypes'];
+            } elseif ($entityType === 'employee_novelties') {
+                $contain = ['Employees', 'NoveltyTypes'];
             }
 
             return $table->get($entityId, contain: $contain);

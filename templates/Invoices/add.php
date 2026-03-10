@@ -88,21 +88,14 @@ $documentTypes = [
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
             <div class="row g-3">
-                <div class="col-md-4">
-                    <?= $this->Form->control('registration_date', [
-                        'type'  => 'text',
-                        'class' => 'form-control flatpickr-date',
-                        'label' => ['text' => 'Fecha de Registro', 'class' => 'form-label'],
-                    ]) ?>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <?= $this->Form->control('issue_date', [
                         'type'  => 'text',
                         'class' => 'form-control flatpickr-date',
                         'label' => ['text' => 'Fecha de Emisión', 'class' => 'form-label'],
                     ]) ?>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <?= $this->Form->control('due_date', [
                         'type'  => 'text',
                         'class' => 'form-control flatpickr-date',

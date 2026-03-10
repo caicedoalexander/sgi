@@ -113,31 +113,20 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']]
         );
 
-        // Employee leave approve/reject
+        // Employee novelties approve/reject/export
         $builder->connect(
-            '/employee-leaves/approve/{id}',
-            ['controller' => 'EmployeeLeaves', 'action' => 'approve'],
+            '/employee-novelties/approve/{id}',
+            ['controller' => 'EmployeeNovelties', 'action' => 'approve'],
             ['id' => '\d+', 'pass' => ['id']]
         );
         $builder->connect(
-            '/employee-leaves/reject/{id}',
-            ['controller' => 'EmployeeLeaves', 'action' => 'reject'],
+            '/employee-novelties/reject/{id}',
+            ['controller' => 'EmployeeNovelties', 'action' => 'reject'],
             ['id' => '\d+', 'pass' => ['id']]
         );
-
-        // Employee novedades routes
         $builder->connect(
-            '/employee-novedades',
-            ['controller' => 'EmployeeNovedades', 'action' => 'index']
-        );
-        $builder->connect(
-            '/employees/{employeeId}/novedades/add',
-            ['controller' => 'EmployeeNovedades', 'action' => 'add'],
-            ['employeeId' => '\d+', 'pass' => ['employeeId']]
-        );
-        $builder->connect(
-            '/employee-novedades/deactivate/{id}',
-            ['controller' => 'EmployeeNovedades', 'action' => 'deactivate'],
+            '/employee-novelties/export-pdf/{id}',
+            ['controller' => 'EmployeeNovelties', 'action' => 'exportPdf'],
             ['id' => '\d+', 'pass' => ['id']]
         );
 
@@ -150,13 +139,6 @@ return function (RouteBuilder $routes): void {
         $builder->connect(
             '/leave-document-templates/preview/{id}',
             ['controller' => 'LeaveDocumentTemplates', 'action' => 'preview'],
-            ['id' => '\d+', 'pass' => ['id']]
-        );
-
-        // Employee leave PDF export
-        $builder->connect(
-            '/employee-leaves/export-pdf/{id}',
-            ['controller' => 'EmployeeLeaves', 'action' => 'exportPdf'],
             ['id' => '\d+', 'pass' => ['id']]
         );
 

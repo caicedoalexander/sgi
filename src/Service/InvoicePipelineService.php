@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\Invoice;
 use Cake\Log\Log;
@@ -11,6 +12,20 @@ use Exception;
 
 class InvoicePipelineService
 {
+    private InvoiceHistoryService $historyService;
+    private NotificationService $notificationService;
+    private ApprovalTokenService $tokenService;
+
+    public function __construct(
+        ?InvoiceHistoryService $historyService = null,
+        ?NotificationService $notificationService = null,
+        ?ApprovalTokenService $tokenService = null,
+    ) {
+        $this->historyService = $historyService ?? new InvoiceHistoryService();
+        $this->notificationService = $notificationService ?? new NotificationService();
+        $this->tokenService = $tokenService ?? new ApprovalTokenService();
+    }
+
     // Pipeline statuses in order
     public const STATUSES = ['aprobacion', 'contabilidad', 'tesoreria', 'pagada'];
 
@@ -38,11 +53,11 @@ class InvoicePipelineService
 
     // All fields available for Admin in any status
     private const ALL_FIELDS = [
-        'invoice_number', 'registration_date', 'issue_date', 'due_date',
+        'invoice_number', 'issue_date', 'due_date',
         'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
         'detail', 'amount', 'expense_type_id', 'cost_center_id',
         'confirmed_by', 'approver_id', 'area_approval',
-        'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
+        'dian_validation', 'accrued', 'ready_for_payment',
         'payment_status', 'payment_date', 'pipeline_status',
     ];
 
@@ -50,7 +65,7 @@ class InvoicePipelineService
     private const EDITABLE_FIELDS = [
         RoleConstants::REGISTRO_REVISION => [
             'aprobacion' => [
-                'invoice_number', 'registration_date', 'issue_date', 'due_date',
+                'invoice_number', 'issue_date', 'due_date',
                 'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
                 'detail', 'amount', 'expense_type_id', 'cost_center_id',
                 'confirmed_by', 'approver_id',
@@ -59,7 +74,7 @@ class InvoicePipelineService
         ],
         RoleConstants::CONTABILIDAD => [
             'contabilidad' => [
-                'accrued', 'accrual_date', 'ready_for_payment',
+                'accrued', 'ready_for_payment',
             ],
         ],
         RoleConstants::TESORERIA => [
@@ -86,7 +101,7 @@ class InvoicePipelineService
             ],
             [
                 'field' => 'dian_validation',
-                'value' => 'Aprobada',
+                'value' => InvoiceConstants::DIAN_APPROVED,
                 'label' => 'Validación DIAN debe ser "Aprobada"',
             ],
         ],
@@ -110,7 +125,7 @@ class InvoicePipelineService
         'tesoreria' => [
             [
                 'field' => 'payment_status',
-                'value' => 'Pago total',
+                'value' => InvoiceConstants::PAYMENT_FULL,
                 'label' => 'Estado de Pago debe ser "Pago total" para marcar como Pagada',
             ],
             [
@@ -173,7 +188,11 @@ class InvoicePipelineService
      */
     public function isRejected(object $invoice): bool
     {
-        return ($invoice->area_approval ?? '') === 'Rechazada';
+        if ($invoice instanceof Invoice) {
+            return $invoice->isRejected();
+        }
+
+        return ($invoice->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED;
     }
 
     /**
@@ -268,10 +287,19 @@ class InvoicePipelineService
         ?string $baseUrl = null,
     ): array {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $historyService = new InvoiceHistoryService();
 
         $currentStatus = $invoice->pipeline_status;
         $filteredData = $this->filterEntityData($data, $roleName, $currentStatus);
+
+        // Auto-set accrual_date when marking as accrued, clear it when unchecking
+        if (array_key_exists('accrued', $filteredData)) {
+            if (!empty($filteredData['accrued']) && empty($invoice->accrual_date)) {
+                $filteredData['accrual_date'] = date('Y-m-d');
+            } elseif (empty($filteredData['accrued'])) {
+                $filteredData['accrual_date'] = null;
+            }
+        }
+
         $canAdvance = $this->canAdvance($roleName, $currentStatus);
         $isRejected = $this->isRejected($invoice);
 
@@ -291,21 +319,21 @@ class InvoicePipelineService
         $original = clone $invoice;
 
         $saved = $invoicesTable->getConnection()->transactional(
-            function () use ($invoicesTable, $historyService, &$invoice, $filteredData, $advanceNextStatus, $currentStatus, $userId, $original) {
+            function () use ($invoicesTable, &$invoice, $filteredData, $advanceNextStatus, $currentStatus, $userId, $original) {
                 $invoice = $invoicesTable->patchEntity($invoice, $filteredData);
 
                 if (!$invoicesTable->save($invoice)) {
                     return false;
                 }
 
-                $historyService->recordChanges($original, $invoice, $userId);
+                $this->historyService->recordChanges($original, $invoice, $userId);
 
                 if ($advanceNextStatus) {
                     $invoice->pipeline_status = $advanceNextStatus;
                     if (!$invoicesTable->save($invoice)) {
                         return false;
                     }
-                    $historyService->recordStatusChange(
+                    $this->historyService->recordStatusChange(
                         $invoice->id,
                         $currentStatus,
                         $advanceNextStatus,
@@ -392,8 +420,7 @@ class InvoicePipelineService
             return ['success' => false, 'error' => 'No se pudo avanzar el estado.', 'nextStatus' => null];
         }
 
-        $historyService = new InvoiceHistoryService();
-        $historyService->recordStatusChange($invoice->id, $currentStatus, $nextStatus, $userId);
+        $this->historyService->recordStatusChange($invoice->id, $currentStatus, $nextStatus, $userId);
 
         $notifResult = $this->trySendNotification($invoice, $currentStatus, $nextStatus);
 
@@ -410,8 +437,7 @@ class InvoicePipelineService
      */
     public function generateApprovalLink(int $invoiceId, int $userId, string $baseUrl): string
     {
-        $tokenService = new ApprovalTokenService();
-        $token = $tokenService->generateToken('invoices', $invoiceId, $userId);
+        $token = $this->tokenService->generateToken('invoices', $invoiceId, $userId);
 
         return $baseUrl . '/approve/' . $token;
     }
@@ -427,8 +453,7 @@ class InvoicePipelineService
                 return ['success' => false, 'error' => 'No hay aprobador asignado.', 'url' => null];
             }
 
-            $tokenService = new ApprovalTokenService();
-            $token = $tokenService->generateToken('invoices', $invoice->id, $userId);
+            $token = $this->tokenService->generateToken('invoices', $invoice->id, $userId);
             $approvalUrl = $baseUrl . '/approve/' . $token;
 
             // Ensure invoice has provider loaded for the email template
@@ -437,8 +462,7 @@ class InvoicePipelineService
                 $invoice = $invoicesTable->get($invoice->id, contain: ['Providers']);
             }
 
-            $notificationService = new NotificationService();
-            $notificationService->sendApprovalLinkNotification($invoice, $approvalUrl);
+            $this->notificationService->sendApprovalLinkNotification($invoice, $approvalUrl);
 
             return ['success' => true, 'error' => null, 'url' => $approvalUrl];
         } catch (Exception $e) {
@@ -455,8 +479,7 @@ class InvoicePipelineService
     private function trySendNotification(Invoice $invoice, string $fromStatus, string $toStatus): array
     {
         try {
-            $notificationService = new NotificationService();
-            $notificationService->sendStatusChangeNotification($invoice, $fromStatus, $toStatus);
+            $this->notificationService->sendStatusChangeNotification($invoice, $fromStatus, $toStatus);
 
             return ['success' => true, 'error' => null];
         } catch (Exception $e) {

@@ -112,32 +112,32 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
         </div>
         <div class="row">
             <div class="col-md-3 mb-3">
-                <?= $this->Form->control('tipo_contrato', [
+                <?= $this->Form->control('contract_type', [
                     'class' => 'form-select',
                     'label' => ['text' => 'Tipo de Contrato', 'class' => 'form-label'],
                     'type' => 'select',
-                    'options' => ['Fijo' => 'Fijo', 'Indefinido' => 'Indefinido', 'Temporal' => 'Temporal'],
+                    'options' => ['FIJO' => 'FIJO', 'INDEFINIDO' => 'INDEFINIDO', 'OBRA O LABOR DETERMINADA' => 'OBRA O LABOR DETERMINADA'],
                     'empty' => '-- Seleccione --',
-                    'id' => 'tipo-contrato',
+                    'id' => 'contract-type',
                 ]) ?>
             </div>
-            <div class="col-md-3 mb-3" id="org-temporal-wrapper" style="<?= ($employee->tipo_contrato ?? '') !== 'Temporal' ? 'display:none' : '' ?>">
-                <?= $this->Form->control('organizacion_temporal_id', ['class' => 'form-select', 'label' => ['text' => 'Organización Temporal', 'class' => 'form-label'], 'empty' => '-- Seleccione --', 'options' => $organizacionesTemporales]) ?>
+            <div class="col-md-3 mb-3" id="org-temporal-wrapper" style="<?= ($employee->contract_type ?? '') !== 'OBRA O LABOR DETERMINADA' ? 'display:none' : '' ?>">
+                <?= $this->Form->control('temporary_organization_id', ['class' => 'form-select', 'label' => ['text' => 'Organización Temporal', 'class' => 'form-label'], 'empty' => '-- Seleccione --', 'options' => $temporaryOrganizations]) ?>
             </div>
             <div class="col-md-3 mb-3">
-                <?= $this->Form->control('chaleco', ['class' => 'form-control', 'label' => ['text' => 'Chaleco', 'class' => 'form-label'], 'maxlength' => 20]) ?>
+                <?= $this->Form->control('vest_number', ['class' => 'form-control', 'label' => ['text' => 'N. Chaleco', 'class' => 'form-label'], 'maxlength' => 20]) ?>
             </div>
         </div>
     </div>
 </div>
 <?php $this->Html->scriptStart(['block' => true]); ?>
 document.addEventListener('DOMContentLoaded', function() {
-    var tipoContrato = document.getElementById('tipo-contrato');
+    var contractType = document.getElementById('contract-type');
     var orgWrapper = document.getElementById('org-temporal-wrapper');
     function toggleOrg() {
-        orgWrapper.style.display = tipoContrato.value === 'Temporal' ? '' : 'none';
+        orgWrapper.style.display = contractType.value === 'OBRA O LABOR DETERMINADA' ? '' : 'none';
     }
-    tipoContrato.addEventListener('change', toggleOrg);
+    contractType.addEventListener('change', toggleOrg);
     toggleOrg();
 });
 <?php $this->Html->scriptEnd(); ?>

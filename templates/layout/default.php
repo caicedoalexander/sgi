@@ -135,8 +135,8 @@ $currentController = $this->request->getParam('controller');
                 <?php
                 $rrhhItems = array_filter([
                     $canView('employees') ? 'employees' : null,
-                    $canView('employee_leaves') ? 'employee_leaves' : null,
-                    $canView('leave_types') ? 'leave_types_templates' : null,
+                    $canView('employee_novelties') ? 'employee_novelties' : null,
+                    $canView('novelty_types') ? 'novelty_types_templates' : null,
                 ]);
                 if (!empty($rrhhItems)): ?>
                 <li class="nav-heading">RRHH</li>
@@ -149,16 +149,16 @@ $currentController = $this->request->getParam('controller');
                     ) ?>
                 </li>
                 <?php endif; ?>
-                <?php if ($canView('employee_leaves')): ?>
+                <?php if ($canView('employee_novelties')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
-                        '<i class="bi bi-calendar-check me-2"></i>Permisos',
-                        ['controller' => 'EmployeeLeaves', 'action' => 'index'],
-                        ['class' => $navLink('EmployeeLeaves'), 'escape' => false]
+                        '<i class="bi bi-journal-text me-2"></i>Novedades',
+                        ['controller' => 'EmployeeNovelties', 'action' => 'index'],
+                        ['class' => $navLink('EmployeeNovelties'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
-                <?php if ($canView('leave_types')): ?>
+                <?php if ($canView('novelty_types')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-file-earmark-ruled me-2"></i>Plantillas Documento',
@@ -180,8 +180,8 @@ $currentController = $this->request->getParam('controller');
                     $canView('marital_statuses') ? 'marital_statuses' : null,
                     $canView('education_levels') ? 'education_levels' : null,
                     $canView('default_folders') ? 'default_folders' : null,
-                    $canView('leave_types') ? 'leave_types' : null,
-                    $canView('organizaciones_temporales') ? 'organizaciones_temporales' : null,
+                    $canView('novelty_types') ? 'novelty_types' : null,
+                    $canView('temporary_organizations') ? 'temporary_organizations' : null,
                 ]);
                 if (!empty($catalogoItems)): ?>
                 <li class="nav-heading">Catálogos</li>
@@ -266,21 +266,21 @@ $currentController = $this->request->getParam('controller');
                     ) ?>
                 </li>
                 <?php endif; ?>
-                <?php if ($canView('leave_types')): ?>
+                <?php if ($canView('novelty_types')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
-                        '<i class="bi bi-list-check me-2"></i>Tipos de Permiso',
-                        ['controller' => 'LeaveTypes', 'action' => 'index'],
-                        ['class' => $navLink('LeaveTypes'), 'escape' => false]
+                        '<i class="bi bi-list-check me-2"></i>Tipos de Novedad',
+                        ['controller' => 'NoveltyTypes', 'action' => 'index'],
+                        ['class' => $navLink('NoveltyTypes'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
-                <?php if ($canView('organizaciones_temporales')): ?>
+                <?php if ($canView('temporary_organizations')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
                         '<i class="bi bi-building-gear me-2"></i>Org. Temporales',
-                        ['controller' => 'OrganizacionesTemporales', 'action' => 'index'],
-                        ['class' => $navLink('OrganizacionesTemporales'), 'escape' => false]
+                        ['controller' => 'TemporaryOrganizations', 'action' => 'index'],
+                        ['class' => $navLink('TemporaryOrganizations'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>

@@ -3,10 +3,11 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\ContractTypeConstants;
 use Cake\ORM\TableRegistry;
+use Exception;
 use Laminas\Diactoros\UploadedFile;
 use setasign\Fpdi\Tcpdf\Fpdi;
-use TCPDF;
 
 class LeaveDocumentService
 {
@@ -25,34 +26,73 @@ class LeaveDocumentService
         'employee.position_name' => ['label' => 'Cargo', 'type' => 'text', 'group' => 'Empleado'],
         'employee.operation_center_name' => ['label' => 'Centro de Operación', 'type' => 'text', 'group' => 'Empleado'],
 
-        // Permiso
-        'leave_type.name' => ['label' => 'Tipo de Permiso', 'type' => 'text', 'group' => 'Permiso'],
-        'leave_type.code' => ['label' => 'Código Tipo Permiso', 'type' => 'text', 'group' => 'Permiso'],
-        'observations' => ['label' => 'Observaciones / Justificación', 'type' => 'text', 'group' => 'Permiso'],
+        // Novedad
+        'novelty_type.name' => ['label' => 'Tipo de Novedad', 'type' => 'text', 'group' => 'Novedad'],
+        'reason' => ['label' => 'Motivo', 'type' => 'text', 'group' => 'Novedad'],
+        'observations' => ['label' => 'Observaciones', 'type' => 'text', 'group' => 'Novedad'],
 
-        // Fechas y horario
+        // Fechas y horarios
         'start_date' => ['label' => 'Fecha Inicio', 'type' => 'date', 'group' => 'Fechas'],
         'end_date' => ['label' => 'Fecha Fin', 'type' => 'date', 'group' => 'Fechas'],
-        'fecha_permiso' => ['label' => 'Fecha del Permiso', 'type' => 'date', 'group' => 'Fechas'],
-        'fecha_diligenciamiento' => ['label' => 'Fecha Diligenciamiento', 'type' => 'date', 'group' => 'Fechas'],
-        'horario' => ['label' => 'Horario', 'type' => 'text', 'group' => 'Fechas'],
-        'hora_salida' => ['label' => 'Hora Salida', 'type' => 'time', 'group' => 'Fechas'],
-        'hora_entrada' => ['label' => 'Hora Entrada', 'type' => 'time', 'group' => 'Fechas'],
-        'cantidad_dias' => ['label' => 'Cantidad Días', 'type' => 'text', 'group' => 'Fechas'],
+        'permission_date' => ['label' => 'Fecha del Permiso', 'type' => 'date', 'group' => 'Fechas'],
+        'filing_date' => ['label' => 'Fecha Diligenciamiento', 'type' => 'date', 'group' => 'Fechas'],
+        'schedule_type' => ['label' => 'Horario', 'type' => 'text', 'group' => 'Fechas'],
+        'start_time' => ['label' => 'Hora Salida', 'type' => 'time', 'group' => 'Fechas'],
+        'end_time' => ['label' => 'Hora Entrada', 'type' => 'time', 'group' => 'Fechas'],
 
         // Clasificación
-        'remunerado_si' => ['label' => 'Remunerado (X)', 'type' => 'check', 'group' => 'Clasificación'],
-        'remunerado_no' => ['label' => 'No Remunerado (X)', 'type' => 'check', 'group' => 'Clasificación'],
+        'paid_yes' => ['label' => 'Remunerado (X)', 'type' => 'check', 'group' => 'Clasificación'],
+        'paid_no' => ['label' => 'No Remunerado (X)', 'type' => 'check', 'group' => 'Clasificación'],
         'status' => ['label' => 'Estado', 'type' => 'text', 'group' => 'Clasificación'],
 
         // Gestión
-        'requested_by_user.full_name' => ['label' => 'Solicitado Por', 'type' => 'text', 'group' => 'Gestión'],
+        'registered_by_user.full_name' => ['label' => 'Registrado Por', 'type' => 'text', 'group' => 'Gestión'],
         'approved_by_user.full_name' => ['label' => 'Aprobado Por', 'type' => 'text', 'group' => 'Gestión'],
         'approved_at' => ['label' => 'Fecha Aprobación', 'type' => 'date', 'group' => 'Gestión'],
 
-        // Firma
-        'firma_path' => ['label' => 'Firma Solicitante', 'type' => 'image', 'group' => 'Firma'],
+        // Firmas
+        'employee_signature' => ['label' => 'Firma Funcionario', 'type' => 'image', 'group' => 'Firma'],
+        'coordinator_signature' => ['label' => 'Firma Coordinador', 'type' => 'image', 'group' => 'Firma'],
     ];
+
+    public function resolveTemplate(int $noveltyTypeId, ?string $contractType, ?int $temporaryOrgId): ?object
+    {
+        $table = TableRegistry::getTableLocator()->get('NoveltyTypeContractTemplates');
+
+        // Try exact match (with org for OBRA O LABOR DETERMINADA)
+        if ($contractType === ContractTypeConstants::OBRA_LABOR && $temporaryOrgId) {
+            $match = $table->find()
+                ->contain(['LeaveDocumentTemplates'])
+                ->where([
+                    'NoveltyTypeContractTemplates.novelty_type_id' => $noveltyTypeId,
+                    'NoveltyTypeContractTemplates.contract_type' => $contractType,
+                    'NoveltyTypeContractTemplates.temporary_organization_id' => $temporaryOrgId,
+                ])
+                ->first();
+
+            if ($match && $match->leave_document_template) {
+                return $match->leave_document_template;
+            }
+        }
+
+        // Try match by contract type only (org IS NULL)
+        if ($contractType) {
+            $match = $table->find()
+                ->contain(['LeaveDocumentTemplates'])
+                ->where([
+                    'NoveltyTypeContractTemplates.novelty_type_id' => $noveltyTypeId,
+                    'NoveltyTypeContractTemplates.contract_type' => $contractType,
+                    'NoveltyTypeContractTemplates.temporary_organization_id IS' => null,
+                ])
+                ->first();
+
+            if ($match && $match->leave_document_template) {
+                return $match->leave_document_template;
+            }
+        }
+
+        return null;
+    }
 
     public function uploadTemplate(UploadedFile $file): array
     {
@@ -145,24 +185,24 @@ class LeaveDocumentService
         $mark = $format ?: 'X';
 
         switch ($fieldKey) {
-            case 'remunerado_si':
-                return !empty($leave->remunerado) ? $mark : '';
-            case 'remunerado_no':
-                return empty($leave->remunerado) ? $mark : '';
+            case 'paid_yes':
+                return !empty($leave->is_paid) ? $mark : '';
+            case 'paid_no':
+                return empty($leave->is_paid) ? $mark : '';
             default:
                 return '';
         }
     }
 
-    public function generatePdf(int $leaveId, int $templateId): string
+    public function generatePdf(int $noveltyId, int $templateId): string
     {
-        $leavesTable = TableRegistry::getTableLocator()->get('EmployeeLeaves');
-        $leave = $leavesTable->get($leaveId, contain: [
+        $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+        $leave = $noveltiesTable->get($noveltyId, contain: [
             'Employees.Positions',
             'Employees.OperationCenters',
-            'LeaveTypes',
+            'NoveltyTypes',
             'ApprovedByUsers',
-            'RequestedByUsers',
+            'RegisteredByUsers',
         ]);
 
         $templatesTable = TableRegistry::getTableLocator()->get('LeaveDocumentTemplates');
@@ -218,24 +258,24 @@ class LeaveDocumentService
             'employee.identification_number' => '1.234.567.890',
             'employee.position_name' => 'Analista de Sistemas',
             'employee.operation_center_name' => 'Sede Principal',
-            'leave_type.name' => 'Permiso Personal',
-            'leave_type.code' => 'PP',
-            'observations' => 'Cita médica programada',
+            'novelty_type.name' => 'Permiso Personal',
+            'reason' => 'Cita médica programada',
+            'observations' => 'Sin observaciones',
             'start_date' => '28/02/2026',
             'end_date' => '01/03/2026',
-            'fecha_permiso' => '28/02/2026',
-            'fecha_diligenciamiento' => '27/02/2026',
-            'horario' => 'Por horas',
-            'hora_salida' => '10:00',
-            'hora_entrada' => '14:00',
-            'cantidad_dias' => '1',
-            'remunerado_si' => 'X',
-            'remunerado_no' => '',
+            'permission_date' => '28/02/2026',
+            'filing_date' => '27/02/2026',
+            'schedule_type' => 'Por horas',
+            'start_time' => '10:00',
+            'end_time' => '14:00',
+            'paid_yes' => 'X',
+            'paid_no' => '',
             'status' => 'Aprobado',
-            'requested_by_user.full_name' => 'María García',
+            'registered_by_user.full_name' => 'María García',
             'approved_by_user.full_name' => 'Carlos Rodríguez',
             'approved_at' => '28/02/2026 09:30',
-            'firma_path' => '',
+            'employee_signature' => '',
+            'coordinator_signature' => '',
         ];
 
         foreach ($template->leave_template_fields as $field) {
@@ -318,7 +358,7 @@ class LeaveDocumentService
                     'width' => round((float)$size['width'], 2),
                     'height' => round((float)$size['height'], 2),
                 ];
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 return ['width' => $defaultW, 'height' => $defaultH];
             }
         }
