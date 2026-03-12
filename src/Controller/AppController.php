@@ -158,11 +158,20 @@ class AppController extends Controller
             }
 
             $this->set('sidebarCounters', $counters);
-            $this->set('totalInvoicesCount', $invoicesTable->find()
+            $this->set('totalInvoicesCount', $invoicesTable->find()->count());
+            $this->set('rejectedInvoicesCount', $invoicesTable->find()
+                ->where(['area_approval' => 'Rechazada'])
+                ->count());
+
+            $pettyCashTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
+            $this->set('pettyCashCount', $pettyCashTable->find()
+                ->where(['status !=' => 'pagado'])
                 ->count());
         } catch (Exception $e) {
             $this->set('sidebarCounters', []);
             $this->set('totalInvoicesCount', 0);
+            $this->set('rejectedInvoicesCount', 0);
+            $this->set('pettyCashCount', 0);
         }
     }
 

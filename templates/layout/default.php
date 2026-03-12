@@ -9,6 +9,8 @@ $sidebarCounters = $sidebarCounters ?? [];
 $currentUser = $currentUser ?? null;
 $userPermissions = $userPermissions ?? [];
 $currentController = $this->request->getParam('controller');
+$rejectedInvoicesCount = $rejectedInvoicesCount ?? 0;
+$pettyCashCount = $pettyCashCount ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -116,7 +118,8 @@ $currentController = $this->request->getParam('controller');
                 </li>
                 <li class="nav-item">
                     <?= $this->Html->link(
-                        '<i class="bi bi-x-circle me-2"></i>Facturas Rechazadas',
+                        '<i class="bi bi-x-circle me-2"></i>Facturas Rechazadas' .
+                        ($rejectedInvoicesCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $rejectedInvoicesCount . '</span>' : ''),
                         ['controller' => 'Invoices', 'action' => 'rejected'],
                         ['class' => $navLink('Invoices', 'rejected') . ' d-flex align-items-center', 'escape' => false]
                     ) ?>
@@ -134,9 +137,10 @@ $currentController = $this->request->getParam('controller');
                 <?php if ($canView('petty_cash')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
-                        '<i class="bi bi-wallet2 me-2"></i>Caja Menor',
+                        '<i class="bi bi-wallet2 me-2"></i>Caja Menor' .
+                        ($pettyCashCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $pettyCashCount . '</span>' : ''),
                         ['controller' => 'PettyCashRecords', 'action' => 'index'],
-                        ['class' => $navLink('PettyCashRecords'), 'escape' => false]
+                        ['class' => $navLink('PettyCashRecords') . ' d-flex align-items-center', 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
