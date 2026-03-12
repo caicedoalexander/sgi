@@ -63,6 +63,10 @@ class InvoicesTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->belongsTo('PettyCashRecords', [
+            'foreignKey' => 'petty_cash_record_id',
+            'joinType' => 'LEFT',
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator

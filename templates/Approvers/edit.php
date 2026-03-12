@@ -32,11 +32,8 @@ $this->assign('title', 'Editar Aprobador');
         </div>
         <div class="mb-3">
             <div class="form-check">
-                <?= $this->Form->control('active', [
-                    'type' => 'checkbox',
-                    'class' => 'form-check-input',
-                    'label' => ['text' => 'Activo', 'class' => 'form-check-label'],
-                ]) ?>
+                <?= $this->Form->checkbox('active', ['class' => 'form-check-input']) ?>
+                <?= $this->Form->label('active', 'Activo', ['class' => 'form-check-label']) ?>
             </div>
         </div>
 

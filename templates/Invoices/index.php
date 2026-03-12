@@ -169,13 +169,23 @@ $pipelineOptions = [
                     $readyForPay    = (!empty($invoice->ready_for_payment) && $invoice->ready_for_payment !== 'No');
                 ?>
                 <tr class="clickable-row<?= $isRejected ? ' table-danger' : '' ?>"
-                    data-href="<?= $this->Url->build(['action' => 'edit', $invoice->id]) ?>">
+                    data-href="<?= $this->Url->build(['action' => $isAllView ? 'view' : 'edit', $invoice->id]) ?>">
 
                     <!-- Número de factura + tipo -->
                     <td>
-                        <div class="fw-semibold"
-                             style="font-family:monospace;font-size:.8rem;color:#111;letter-spacing:-.01em;">
-                            <?= h($invoice->invoice_number ?: '—') ?>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="fw-semibold"
+                                 style="font-family:monospace;font-size:.8rem;color:#111;letter-spacing:-.01em;">
+                                <?= h($invoice->invoice_number ?: '—') ?>
+                            </div>
+                            <?php $unread = (int)($invoice->unread_observations ?? 0); ?>
+                            <?php if ($unread > 0): ?>
+                            <span class="badge rounded-pill bg-danger"
+                                  title="<?= $unread ?> observación<?= $unread > 1 ? 'es' : '' ?> sin leer"
+                                  style="font-size:.65rem;padding:.2em .45em;">
+                                <?= $unread ?>
+                            </span>
+                            <?php endif; ?>
                         </div>
                         <div style="font-size:.7rem;color:#bbb;margin-top:.1rem;text-transform:uppercase;letter-spacing:.04em;">
                             <?= h($invoice->document_type) ?>

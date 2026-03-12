@@ -45,6 +45,7 @@ class AppController extends Controller
         'EmployeeNovelties' => 'employee_novelties',
         'NoveltyTypes' => 'novelty_types',
         'LeaveDocumentTemplates' => 'novelty_types',
+        'PettyCashRecords' => 'petty_cash',
     ];
 
     /**
@@ -55,7 +56,7 @@ class AppController extends Controller
         return match ($action) {
             'index', 'view', 'export', 'all', 'rejected', 'exportPdf', 'preview' => 'view',
             'add', 'addFolder', 'uploadDocument', 'import' => 'add',
-            'edit', 'advanceStatus', 'addObservation', 'testSmtp', 'approve', 'reject', 'generateApprovalLink', 'deactivate', 'saveFields' => 'edit',
+            'edit', 'advanceStatus', 'addObservation', 'testSmtp', 'approve', 'reject', 'generateApprovalLink', 'deactivate', 'saveFields', 'removeInvoice' => 'edit',
             'delete', 'deleteDocument' => 'delete',
             default => 'view',
         };
@@ -157,7 +158,8 @@ class AppController extends Controller
             }
 
             $this->set('sidebarCounters', $counters);
-            $this->set('totalInvoicesCount', $invoicesTable->find()->count());
+            $this->set('totalInvoicesCount', $invoicesTable->find()
+                ->count());
         } catch (Exception $e) {
             $this->set('sidebarCounters', []);
             $this->set('totalInvoicesCount', 0);

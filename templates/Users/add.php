@@ -34,8 +34,11 @@ $this->assign('title', 'Nuevo Usuario');
             <div class="col-md-6 mb-3">
                 <?= $this->Form->control('role_id', ['class' => 'form-select', 'label' => ['text' => 'Rol', 'class' => 'form-label'], 'options' => $roles, 'empty' => '-- Seleccione --']) ?>
             </div>
-            <div class="col-md-6 mb-3">
-                <?= $this->Form->control('active', ['class' => 'form-check-input', 'label' => ['text' => 'Activo', 'class' => 'form-check-label'], 'type' => 'checkbox']) ?>
+            <div class="col-md-6 mb-3 d-flex align-items-end">
+                <div class="form-check">
+                    <?= $this->Form->checkbox('active', ['class' => 'form-check-input']) ?>
+                    <?= $this->Form->label('active', 'Activo', ['class' => 'form-check-label']) ?>
+                </div>
             </div>
         </div>
         <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Guardar</button>

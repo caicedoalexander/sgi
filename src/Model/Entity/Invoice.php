@@ -33,7 +33,13 @@ class Invoice extends Entity
         'payment_date' => true,
         'pipeline_status' => true,
         'registered_by' => true,
+        'petty_cash_record_id' => true,
     ];
+
+    public function isInPettyCash(): bool
+    {
+        return !empty($this->petty_cash_record_id);
+    }
 
     public function isRejected(): bool
     {

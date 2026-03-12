@@ -33,12 +33,8 @@ $this->assign('title', 'Nuevo Aprobador');
         </div>
         <div class="mb-3">
             <div class="form-check">
-                <?= $this->Form->control('active', [
-                    'type' => 'checkbox',
-                    'class' => 'form-check-input',
-                    'label' => ['text' => 'Activo', 'class' => 'form-check-label'],
-                    'checked' => true,
-                ]) ?>
+                <?= $this->Form->checkbox('active', ['class' => 'form-check-input', 'checked' => true]) ?>
+                <?= $this->Form->label('active', 'Activo', ['class' => 'form-check-label']) ?>
             </div>
         </div>
 

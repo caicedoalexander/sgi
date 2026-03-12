@@ -32,6 +32,7 @@ class AuthorizationService
         'dian_crosschecks' => 'Cruce DIAN',
         'employee_novelties' => 'Novedades de Empleados',
         'novelty_types' => 'Tipos de Novedad',
+        'petty_cash' => 'Caja Menor',
     ];
 
     private array $cache = [];

@@ -100,6 +100,11 @@ class InvoicePipelineService
                 'label' => 'Debe seleccionar un Aprobador',
             ],
             [
+                'field' => 'area_approval',
+                'value' => InvoiceConstants::APPROVAL_APPROVED,
+                'label' => 'Aprobación del Área debe ser "Aprobada"',
+            ],
+            [
                 'field' => 'dian_validation',
                 'value' => InvoiceConstants::DIAN_APPROVED,
                 'label' => 'Validación DIAN debe ser "Aprobada"',

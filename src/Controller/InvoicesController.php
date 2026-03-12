@@ -40,13 +40,14 @@ class InvoicesController extends AppController
     {
         $roleName = $this->_getRoleName();
         $visibleStatuses = $this->pipeline->getVisibleStatuses($roleName);
+        $userId = (int)$this->_getCurrentUser()->id;
 
         $conditions = !empty($visibleStatuses)
             ? ['Invoices.pipeline_status IN' => $visibleStatuses]
             : [];
 
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $invoices = $this->paginate($this->_buildInvoiceQuery($conditions));
+        $invoices = $this->paginate($this->_buildInvoiceQuery($conditions, $userId));
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
         $this->set($this->_getFilterDropdowns());
@@ -55,9 +56,10 @@ class InvoicesController extends AppController
     public function all()
     {
         $roleName = $this->_getRoleName();
+        $userId = (int)$this->_getCurrentUser()->id;
 
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $invoices = $this->paginate($this->_buildInvoiceQuery());
+        $invoices = $this->paginate($this->_buildInvoiceQuery([], $userId));
         $visibleStatuses = [];
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
@@ -68,11 +70,12 @@ class InvoicesController extends AppController
     public function rejected(): void
     {
         $roleName = $this->_getRoleName();
+        $userId = (int)$this->_getCurrentUser()->id;
 
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
         $invoices = $this->paginate($this->_buildInvoiceQuery([
             'Invoices.area_approval' => InvoiceConstants::APPROVAL_REJECTED,
-        ]));
+        ], $userId));
         $visibleStatuses = [];
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
@@ -82,6 +85,8 @@ class InvoicesController extends AppController
 
     public function view($id = null)
     {
+        $this->fetchTable('InvoiceReads')->markAsRead((int)$id, (int)$this->_getCurrentUser()->id);
+
         $invoice = $this->Invoices->get($id, contain: [
             'Providers',
             'OperationCenters',
@@ -90,6 +95,7 @@ class InvoicesController extends AppController
             'ConfirmedByUsers',
             'RegisteredByUsers',
             'ApproverUsers',
+            'PettyCashRecords',
             'InvoiceHistories' => ['Users'],
             'InvoiceObservations' => [
                 'Users',
@@ -140,9 +146,12 @@ class InvoicesController extends AppController
 
     public function edit($id = null)
     {
+        $this->fetchTable('InvoiceReads')->markAsRead((int)$id, (int)$this->_getCurrentUser()->id);
+
         $invoice = $this->Invoices->get($id, contain: [
             'Providers',
             'OperationCenters',
+            'PettyCashRecords',
             'InvoiceObservations' => [
                 'Users',
                 'sort' => ['InvoiceObservations.created' => 'ASC'],
@@ -152,6 +161,14 @@ class InvoicesController extends AppController
                 'sort' => ['InvoiceDocuments.created' => 'DESC'],
             ],
         ]);
+
+        if ($invoice->isInPettyCash()) {
+            $this->Flash->warning(sprintf(
+                'Esta factura pertenece al registro de Caja Menor %s. Los cambios de estado se gestionan desde allí.',
+                $invoice->petty_cash_record->code ?? '#' . $invoice->petty_cash_record_id,
+            ));
+        }
+
         $roleName = $this->_getRoleName();
         $currentStatus = $invoice->pipeline_status;
 
@@ -230,6 +247,13 @@ class InvoicesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->Invoices->get($id);
+
+        if ($invoice->isInPettyCash()) {
+            $this->Flash->error('No se puede avanzar individualmente una factura agrupada en Caja Menor.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
         $user = $this->_getCurrentUser();
 
         $result = $this->pipeline->advance($invoice, $this->_getRoleName(), $user->id);
@@ -370,13 +394,27 @@ class InvoicesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
-    private function _buildInvoiceQuery(array $conditions = []): \Cake\ORM\Query\SelectQuery
+    private function _buildInvoiceQuery(array $conditions = [], ?int $userId = null): \Cake\ORM\Query\SelectQuery
     {
         $query = $this->Invoices->find()
             ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers']);
 
         if (!empty($conditions)) {
             $query->where($conditions);
+        }
+
+        if ($userId !== null) {
+            $query->selectAlso([
+                'unread_observations' => "(
+                    SELECT COUNT(*)
+                    FROM invoice_observations io
+                    LEFT JOIN invoice_reads ir
+                        ON ir.invoice_id = io.invoice_id AND ir.user_id = $userId
+                    WHERE io.invoice_id = Invoices.id
+                      AND io.user_id != $userId
+                      AND (ir.last_visited_at IS NULL OR io.created > ir.last_visited_at)
+                )",
+            ]);
         }
 
         $this->filterService->apply($query, $this->request->getQueryParams());

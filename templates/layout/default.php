@@ -93,6 +93,7 @@ $currentController = $this->request->getParam('controller');
                 $facturacionItems = array_filter([
                     $canView('invoices') ? 'invoices' : null,
                     $canView('approvers') ? 'approvers' : null,
+                    $canView('petty_cash') ? 'petty_cash' : null,
                 ]);
                 if (!empty($facturacionItems)): ?>
                 <li class="nav-heading">Facturación</li>
@@ -127,6 +128,15 @@ $currentController = $this->request->getParam('controller');
                         '<i class="bi bi-person-check me-2"></i>Aprobadores',
                         ['controller' => 'Approvers', 'action' => 'index'],
                         ['class' => $navLink('Approvers'), 'escape' => false]
+                    ) ?>
+                </li>
+                <?php endif; ?>
+                <?php if ($canView('petty_cash')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-wallet2 me-2"></i>Caja Menor',
+                        ['controller' => 'PettyCashRecords', 'action' => 'index'],
+                        ['class' => $navLink('PettyCashRecords'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>

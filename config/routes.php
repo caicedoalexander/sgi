@@ -159,6 +159,33 @@ return function (RouteBuilder $routes): void {
             ['employeeId' => '\d+', 'documentId' => '\d+', 'pass' => ['employeeId', 'documentId']]
         );
 
+        // Petty Cash Records (Caja Menor)
+        $builder->connect(
+            '/petty-cash-records/advance-status/{id}',
+            ['controller' => 'PettyCashRecords', 'action' => 'advanceStatus'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/petty-cash-records/upload-document/{id}',
+            ['controller' => 'PettyCashRecords', 'action' => 'uploadDocument'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/petty-cash-records/delete-document/{recordId}/{documentId}',
+            ['controller' => 'PettyCashRecords', 'action' => 'deleteDocument'],
+            ['recordId' => '\d+', 'documentId' => '\d+', 'pass' => ['recordId', 'documentId']]
+        );
+        $builder->connect(
+            '/petty-cash-records/remove-invoice/{recordId}/{invoiceId}',
+            ['controller' => 'PettyCashRecords', 'action' => 'removeInvoice'],
+            ['recordId' => '\d+', 'invoiceId' => '\d+', 'pass' => ['recordId', 'invoiceId']]
+        );
+        $builder->connect(
+            '/petty-cash-records/add-observation/{id}',
+            ['controller' => 'PettyCashRecords', 'action' => 'addObservation'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+
         $builder->fallbacks();
     });
 

@@ -57,6 +57,21 @@ $dianClass = match($invoice->dian_validation ?? '') {
     </div>
 </div>
 
+<?php if ($invoice->isInPettyCash()): ?>
+<div class="alert alert-info d-flex align-items-center gap-2 mb-4">
+    <i class="bi bi-wallet2 fs-5"></i>
+    <div>
+        Esta factura pertenece al registro de Caja Menor
+        <strong><?= $this->Html->link(
+            h($invoice->petty_cash_record->code ?? '#' . $invoice->petty_cash_record_id),
+            ['controller' => 'PettyCashRecords', 'action' => 'view', $invoice->petty_cash_record_id],
+            ['class' => 'alert-link']
+        ) ?></strong>.
+        Los cambios de estado se gestionan desde allí.
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Tarjeta principal del documento -->
 <div class="card card-primary mb-4">
 

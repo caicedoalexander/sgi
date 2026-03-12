@@ -81,6 +81,21 @@ $ps = $pipelineBadgeMap[$currentStatus] ?? ['Desconocido', 'bg-dark'];
     </div>
 </div>
 
+<?php if ($invoice->isInPettyCash()): ?>
+<div class="alert alert-info d-flex align-items-center gap-2 mb-4">
+    <i class="bi bi-wallet2 fs-5"></i>
+    <div>
+        Esta factura pertenece al registro de Caja Menor
+        <strong><?= $this->Html->link(
+            h($invoice->petty_cash_record->code ?? '#' . $invoice->petty_cash_record_id),
+            ['controller' => 'PettyCashRecords', 'action' => 'edit', $invoice->petty_cash_record_id],
+            ['class' => 'alert-link']
+        ) ?></strong>.
+        Los cambios de estado se gestionan desde allí.
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Alerta de avance pendiente -->
 <?php if ($canAdvance && !$isRejected && !empty($advanceErrors)): ?>
 <div class="alert alert-warning mb-4">
@@ -383,12 +398,11 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 <div class="col-md-4">
                     <label class="form-label d-block">Causada</label>
                     <div class="form-check">
-                        <?= $this->Form->control('accrued', array_merge(
-                            ['type' => 'checkbox', 'label' => 'Marcar como causada'],
-                            $canEdit('accrued')
-                                ? ['class' => 'form-check-input']
-                                : ['class' => 'form-check-input', 'disabled' => true]
+                        <?= $this->Form->checkbox('accrued', array_merge(
+                            ['class' => 'form-check-input'],
+                            $canEdit('accrued') ? [] : ['disabled' => true]
                         )) ?>
+                        <?= $this->Form->label('accrued', 'Marcar como causada', ['class' => 'form-check-label']) ?>
                     </div>
                 </div>
                 <div class="col-md-4">

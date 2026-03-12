@@ -22,7 +22,10 @@ $this->assign('title', 'Nuevo Proveedor');
             </div>
         </div>
         <div class="mb-3">
-            <?= $this->Form->control('active', ['class' => 'form-check-input', 'label' => ['text' => 'Activo', 'class' => 'form-check-label'], 'type' => 'checkbox', 'checked' => true]) ?>
+            <div class="form-check">
+                <?= $this->Form->checkbox('active', ['class' => 'form-check-input', 'checked' => true]) ?>
+                <?= $this->Form->label('active', 'Activo', ['class' => 'form-check-label']) ?>
+            </div>
         </div>
         <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Guardar</button>
         <?= $this->Form->end() ?>
