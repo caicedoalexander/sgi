@@ -158,6 +158,7 @@ $pipelineOptions = [
                     <th style="width:120px;"><?= $this->Paginator->sort('due_date', 'Vencimiento') ?></th>
                     <th style="width:140px;" class="text-end"><?= $this->Paginator->sort('amount', 'Valor') ?></th>
                     <th style="width:180px;">Estado</th>
+                    <th style="width:1%;white-space:nowrap;"><i class="bi bi-chat-left-text" title="Observaciones"></i></th>
                 </tr>
             </thead>
             <tbody>
@@ -173,19 +174,9 @@ $pipelineOptions = [
 
                     <!-- Número de factura + tipo -->
                     <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="fw-semibold"
-                                 style="font-family:monospace;font-size:.8rem;color:#111;letter-spacing:-.01em;">
-                                <?= h($invoice->invoice_number ?: '—') ?>
-                            </div>
-                            <?php $unread = (int)($invoice->unread_observations ?? 0); ?>
-                            <?php if ($unread > 0): ?>
-                            <span class="badge rounded-pill bg-danger"
-                                  title="<?= $unread ?> observación<?= $unread > 1 ? 'es' : '' ?> sin leer"
-                                  style="font-size:.65rem;padding:.2em .45em;">
-                                <?= $unread ?>
-                            </span>
-                            <?php endif; ?>
+                        <div class="fw-semibold"
+                             style="font-family:monospace;font-size:.8rem;color:#111;letter-spacing:-.01em;">
+                            <?= h($invoice->invoice_number ?: '—') ?>
                         </div>
                         <div style="font-size:.7rem;color:#bbb;margin-top:.1rem;text-transform:uppercase;letter-spacing:.04em;">
                             <?= h($invoice->document_type) ?>
@@ -247,12 +238,25 @@ $pipelineOptions = [
                             <?php endif; ?>
                         </div>
                     </td>
+
+                    <!-- Observaciones sin leer -->
+                    <?php $unread = (int)($invoice->unread_observations ?? 0); ?>
+                    <td class="text-center" style="white-space:nowrap;">
+                        <?php if ($unread > 0): ?>
+                            <span class="badge bg-danger"
+                                  title="<?= $unread ?> observación<?= $unread > 1 ? 'es' : '' ?> sin leer">
+                                <i class="bi bi-chat-left-text-fill me-1" style="font-size:.65rem;"></i><?= $unread ?>
+                            </span>
+                        <?php else: ?>
+                            <i class="bi bi-chat-left-text" style="color:#dee2e6;font-size:.85rem;" title="Sin observaciones nuevas"></i>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
 
                 <?php if (empty($invoices->toArray())): ?>
                 <tr>
-                    <td colspan="6">
+                    <td colspan="7">
                         <div class="sgi-doc-empty">
                             <i class="bi bi-inbox sgi-doc-empty-icon"></i>
                             No hay facturas en tu bandeja actual.

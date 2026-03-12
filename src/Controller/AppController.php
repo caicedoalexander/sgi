@@ -167,11 +167,17 @@ class AppController extends Controller
             $this->set('pettyCashCount', $pettyCashTable->find()
                 ->where(['status !=' => 'pagado'])
                 ->count());
+
+            $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+            $this->set('noveltiesCount', $noveltiesTable->find()
+                ->where(['status' => 'pendiente'])
+                ->count());
         } catch (Exception $e) {
             $this->set('sidebarCounters', []);
             $this->set('totalInvoicesCount', 0);
             $this->set('rejectedInvoicesCount', 0);
             $this->set('pettyCashCount', 0);
+            $this->set('noveltiesCount', 0);
         }
     }
 

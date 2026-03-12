@@ -11,6 +11,7 @@ $userPermissions = $userPermissions ?? [];
 $currentController = $this->request->getParam('controller');
 $rejectedInvoicesCount = $rejectedInvoicesCount ?? 0;
 $pettyCashCount = $pettyCashCount ?? 0;
+$noveltiesCount = $noveltiesCount ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -166,9 +167,10 @@ $pettyCashCount = $pettyCashCount ?? 0;
                 <?php if ($canView('employee_novelties')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
-                        '<i class="bi bi-journal-text me-2"></i>Novedades',
+                        '<i class="bi bi-journal-text me-2"></i>Novedades' .
+                        ($noveltiesCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $noveltiesCount . '</span>' : ''),
                         ['controller' => 'EmployeeNovelties', 'action' => 'index'],
-                        ['class' => $navLink('EmployeeNovelties'), 'escape' => false]
+                        ['class' => $navLink('EmployeeNovelties') . ' d-flex align-items-center', 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
