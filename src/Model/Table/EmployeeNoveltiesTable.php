@@ -27,7 +27,7 @@ class EmployeeNoveltiesTable extends Table
 
         $this->belongsTo('Employees', [
             'foreignKey' => 'employee_id',
-            'joinType' => 'INNER',
+            'joinType' => 'LEFT',
         ]);
         $this->belongsTo('NoveltyTypes', [
             'foreignKey' => 'novelty_type_id',
@@ -43,6 +43,30 @@ class EmployeeNoveltiesTable extends Table
             'foreignKey' => 'registered_by',
             'joinType' => 'INNER',
         ]);
+        $this->belongsTo('NoveltyLiquidationDocs', [
+            'foreignKey' => 'liquidation_doc_id',
+            'joinType' => 'LEFT',
+        ]);
+        $this->belongsTo('RrhhByUsers', [
+            'className' => 'Users',
+            'foreignKey' => 'rrhh_by',
+            'joinType' => 'LEFT',
+        ]);
+        $this->hasMany('NoveltyMassiveEmployees', [
+            'foreignKey' => 'novelty_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
+        $this->hasMany('NoveltyObservations', [
+            'foreignKey' => 'novelty_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
+        $this->hasMany('NoveltyDocuments', [
+            'foreignKey' => 'novelty_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
     }
 
     /**
@@ -52,8 +76,7 @@ class EmployeeNoveltiesTable extends Table
     {
         $validator
             ->integer('employee_id')
-            ->requirePresence('employee_id', 'create')
-            ->notEmptyString('employee_id');
+            ->allowEmptyString('employee_id');
 
         $validator
             ->integer('novelty_type_id')
@@ -67,14 +90,12 @@ class EmployeeNoveltiesTable extends Table
 
         $validator
             ->date('permission_date')
-            ->requirePresence('permission_date', 'create')
-            ->notEmptyDate('permission_date');
+            ->allowEmptyDate('permission_date');
 
         $validator
             ->scalar('schedule_type')
             ->inList('schedule_type', NoveltyConstants::SCHEDULE_TYPES)
-            ->requirePresence('schedule_type', 'create')
-            ->notEmptyString('schedule_type');
+            ->allowEmptyString('schedule_type');
 
         $validator
             ->date('start_date')
@@ -98,12 +119,11 @@ class EmployeeNoveltiesTable extends Table
 
         $validator
             ->scalar('reason')
-            ->requirePresence('reason', 'create')
-            ->notEmptyString('reason');
+            ->allowEmptyString('reason');
 
         $validator
-            ->scalar('status')
-            ->inList('status', NoveltyConstants::STATUSES);
+            ->scalar('pipeline_status')
+            ->inList('pipeline_status', NoveltyConstants::ALL_STATUSES);
 
         $validator
             ->scalar('observations')
@@ -133,7 +153,10 @@ class EmployeeNoveltiesTable extends Table
      */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->existsIn('employee_id', 'Employees'), ['errorField' => 'employee_id']);
+        $rules->add($rules->existsIn('employee_id', 'Employees'), [
+            'errorField' => 'employee_id',
+            'allowNullableNulls' => true,
+        ]);
         $rules->add($rules->existsIn('novelty_type_id', 'NoveltyTypes'), ['errorField' => 'novelty_type_id']);
         $rules->add($rules->existsIn('approved_by', 'ApprovedByUsers'), [
             'errorField' => 'approved_by',

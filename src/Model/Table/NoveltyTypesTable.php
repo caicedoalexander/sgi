@@ -58,6 +58,17 @@ class NoveltyTypesTable extends Table
             ->integer('parent_id')
             ->allowEmptyString('parent_id');
 
+        $validator->boolean('requires_rrhh');
+        $validator->boolean('requires_firmas');
+        $validator->boolean('requires_gdp');
+        $validator->boolean('requires_tesoreria');
+        $validator->boolean('show_start_date');
+        $validator->boolean('show_end_date');
+        $validator->boolean('show_permission_date');
+        $validator->boolean('show_schedule_type');
+        $validator->boolean('uses_custom_name');
+        $validator->boolean('is_massive');
+
         return $validator;
     }
 

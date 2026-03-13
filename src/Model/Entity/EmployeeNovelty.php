@@ -20,42 +20,31 @@ class EmployeeNovelty extends Entity
         'end_time' => true,
         'is_paid' => true,
         'reason' => true,
-        'status' => true,
+        'pipeline_status' => true,
         'approved_by' => true,
         'approved_at' => true,
         'registered_by' => true,
         'employee_signature' => true,
         'coordinator_signature' => true,
         'observations' => true,
+        'passes_payroll' => true,
+        'rrhh_by' => true,
+        'liquidation_doc_id' => true,
+        'custom_name' => true,
     ];
 
-    /**
-     * Check if novelty is pending.
-     *
-     * @return bool
-     */
-    public function isPending(): bool
-    {
-        return $this->status === NoveltyConstants::STATUS_PENDING;
-    }
-
-    /**
-     * Check if novelty is approved.
-     *
-     * @return bool
-     */
-    public function isApproved(): bool
-    {
-        return $this->status === NoveltyConstants::STATUS_APPROVED;
-    }
-
-    /**
-     * Check if novelty is rejected.
-     *
-     * @return bool
-     */
     public function isRejected(): bool
     {
-        return $this->status === NoveltyConstants::STATUS_REJECTED;
+        return $this->pipeline_status === NoveltyConstants::STATUS_RECHAZADA;
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->pipeline_status === NoveltyConstants::STATUS_PAGADA;
+    }
+
+    public function isGrouped(): bool
+    {
+        return $this->liquidation_doc_id !== null;
     }
 }
