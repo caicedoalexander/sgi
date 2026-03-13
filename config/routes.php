@@ -113,10 +113,10 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']]
         );
 
-        // Employee novelties approve/reject/export
+        // Employee novelties pipeline
         $builder->connect(
-            '/employee-novelties/approve/{id}',
-            ['controller' => 'EmployeeNovelties', 'action' => 'approve'],
+            '/employee-novelties/advance/{id}',
+            ['controller' => 'EmployeeNovelties', 'action' => 'advance'],
             ['id' => '\d+', 'pass' => ['id']]
         );
         $builder->connect(
@@ -127,6 +127,60 @@ return function (RouteBuilder $routes): void {
         $builder->connect(
             '/employee-novelties/export-pdf/{id}',
             ['controller' => 'EmployeeNovelties', 'action' => 'exportPdf'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/employee-novelties/assign-liquidation/{id}',
+            ['controller' => 'EmployeeNovelties', 'action' => 'assignLiquidation'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/employee-novelties/add-observation/{id}',
+            ['controller' => 'EmployeeNovelties', 'action' => 'addObservation'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/employee-novelties/upload-document/{id}',
+            ['controller' => 'EmployeeNovelties', 'action' => 'uploadDocument'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/employee-novelties/delete-document/{noveltyId}/{documentId}',
+            ['controller' => 'EmployeeNovelties', 'action' => 'deleteDocument'],
+            ['noveltyId' => '\d+', 'documentId' => '\d+', 'pass' => ['noveltyId', 'documentId']]
+        );
+
+        // Novelty Liquidation Docs
+        $builder->connect(
+            '/novelty-liquidation-docs/advance-group/{id}',
+            ['controller' => 'NoveltyLiquidationDocs', 'action' => 'advanceGroup'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/novelty-liquidation-docs/add-signature/{id}',
+            ['controller' => 'NoveltyLiquidationDocs', 'action' => 'addSignature'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/novelty-liquidation-docs/upload-document/{id}',
+            ['controller' => 'NoveltyLiquidationDocs', 'action' => 'uploadDocument'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/novelty-liquidation-docs/delete-document/{id}/{documentId}',
+            ['controller' => 'NoveltyLiquidationDocs', 'action' => 'deleteDocument'],
+            ['id' => '\d+', 'documentId' => '\d+', 'pass' => ['id', 'documentId']]
+        );
+        $builder->connect(
+            '/novelty-liquidation-docs/add-observation/{id}',
+            ['controller' => 'NoveltyLiquidationDocs', 'action' => 'addObservation'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+
+        // Novelty Types AJAX flags
+        $builder->connect(
+            '/novelty-types/get-flags/{id}',
+            ['controller' => 'NoveltyTypes', 'action' => 'getFlags'],
             ['id' => '\d+', 'pass' => ['id']]
         );
 

@@ -11,11 +11,17 @@ use App\Constants\NoveltyConstants;
 $this->assign('title', 'Novedades de Empleados');
 
 $statusBadges = [
-    'pendiente' => 'bg-warning text-dark',
-    'aprobado' => 'bg-success',
-    'rechazado' => 'bg-danger',
+    'registro' => 'bg-secondary',
+    'rrhh' => 'bg-info text-dark',
+    'contabilidad' => 'bg-primary',
+    'firmas_aprobacion' => 'bg-warning text-dark',
+    'gdp' => 'bg-dark',
+    'tesoreria' => 'bg-info',
+    'pagada' => 'bg-success',
+    'rechazada' => 'bg-danger',
 ];
 $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
+$statusLabels = NoveltyConstants::STATUS_LABELS;
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
@@ -33,10 +39,10 @@ $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
 <div class="card card-primary mb-3">
     <div class="card-body py-2 px-3">
         <form method="get" class="d-flex gap-3 align-items-center flex-wrap">
-            <select name="status" class="form-select form-select-sm" style="max-width:160px;" onchange="this.form.submit()">
+            <select name="pipeline_status" class="form-select form-select-sm" style="max-width:200px;" onchange="this.form.submit()">
                 <option value="">Estado: Todos</option>
-                <?php foreach (NoveltyConstants::STATUSES as $s): ?>
-                <option value="<?= $s ?>" <?= ($statusFilter ?? '') === $s ? 'selected' : '' ?>><?= ucfirst($s) ?></option>
+                <?php foreach (NoveltyConstants::ALL_STATUSES as $s): ?>
+                <option value="<?= $s ?>" <?= ($statusFilter ?? '') === $s ? 'selected' : '' ?>><?= $statusLabels[$s] ?? ucfirst($s) ?></option>
                 <?php endforeach; ?>
             </select>
             <select name="novelty_type_id" class="form-select form-select-sm" style="max-width:200px;" onchange="this.form.submit()">
@@ -69,10 +75,10 @@ $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
             <tbody>
                 <?php foreach ($novelties as $novelty): ?>
                 <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'view', $novelty->id]) ?>">
-                    <td><?= h($novelty->employee->full_name ?? '—') ?></td>
+                    <td><?= h($novelty->custom_name ?? $novelty->employee->full_name ?? '—') ?></td>
                     <td><?= h($novelty->novelty_type->name ?? '—') ?></td>
                     <td><?= $novelty->permission_date?->format('d/m/Y') ?: '—' ?></td>
-                    <td><?= $scheduleLabels[$novelty->schedule_type] ?? h($novelty->schedule_type) ?></td>
+                    <td><?= $scheduleLabels[$novelty->schedule_type] ?? '—' ?></td>
                     <td>
                         <?php if ($novelty->is_paid): ?>
                             <span class="badge bg-success">Sí</span>
@@ -80,7 +86,7 @@ $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
                             <span class="badge bg-secondary">No</span>
                         <?php endif; ?>
                     </td>
-                    <td><span class="badge <?= $statusBadges[$novelty->status] ?? 'bg-secondary' ?>"><?= ucfirst(h($novelty->status)) ?></span></td>
+                    <td><span class="badge <?= $statusBadges[$novelty->pipeline_status] ?? 'bg-secondary' ?>"><?= $statusLabels[$novelty->pipeline_status] ?? ucfirst(h($novelty->pipeline_status)) ?></span></td>
                     <td style="font-size:.8125rem;color:#888"><?= h($novelty->registered_by_user->full_name ?? '—') ?></td>
                 </tr>
                 <?php endforeach; ?>

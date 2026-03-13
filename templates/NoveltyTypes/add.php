@@ -40,6 +40,59 @@ $this->assign('title', $preselectedParent ? 'Nuevo Subtipo de Novedad' : 'Nuevo 
             </div>
         </div>
 
+        <!-- Pipeline Configuration -->
+        <div class="mt-4 pt-3" style="border-top:1px solid var(--border-color);">
+            <label class="sgi-section-label">Configuración del Pipeline</label>
+            <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                    <p class="text-muted small mb-2">Etapas requeridas</p>
+                    <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('requires_rrhh', ['class' => 'form-check-input', 'id' => 'requires-rrhh', 'checked' => true]) ?>
+                        <label class="form-check-label" for="requires-rrhh">Requiere etapa RRHH</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('requires_firmas', ['class' => 'form-check-input', 'id' => 'requires-firmas', 'checked' => true]) ?>
+                        <label class="form-check-label" for="requires-firmas">Requiere Firmas y Aprobación</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('requires_gdp', ['class' => 'form-check-input', 'id' => 'requires-gdp', 'checked' => true]) ?>
+                        <label class="form-check-label" for="requires-gdp">Requiere etapa GDP</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('requires_tesoreria', ['class' => 'form-check-input', 'id' => 'requires-tesoreria', 'checked' => true]) ?>
+                        <label class="form-check-label" for="requires-tesoreria">Requiere etapa Tesorería</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <p class="text-muted small mb-2">Campos visibles en formulario</p>
+                    <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('show_start_date', ['class' => 'form-check-input', 'id' => 'show-start-date', 'checked' => true]) ?>
+                        <label class="form-check-label" for="show-start-date">Mostrar Fecha Inicio</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('show_end_date', ['class' => 'form-check-input', 'id' => 'show-end-date', 'checked' => true]) ?>
+                        <label class="form-check-label" for="show-end-date">Mostrar Fecha Fin</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('show_permission_date', ['class' => 'form-check-input', 'id' => 'show-permission-date', 'checked' => true]) ?>
+                        <label class="form-check-label" for="show-permission-date">Mostrar Fecha de Permiso</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('show_schedule_type', ['class' => 'form-check-input', 'id' => 'show-schedule-type', 'checked' => true]) ?>
+                        <label class="form-check-label" for="show-schedule-type">Mostrar Tipo de Horario</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('uses_custom_name', ['class' => 'form-check-input', 'id' => 'uses-custom-name']) ?>
+                        <label class="form-check-label" for="uses-custom-name">Usa Nombre Libre (en vez de select de empleado)</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('is_massive', ['class' => 'form-check-input', 'id' => 'is-massive']) ?>
+                        <label class="form-check-label" for="is-massive">Novedad Masiva (multi-selección de empleados)</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Contract Template Assignments -->
         <div class="mt-4 pt-3" style="border-top:1px solid var(--border-color);">
             <label class="sgi-section-label">Asignación de plantillas por tipo de contrato</label>

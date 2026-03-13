@@ -26,7 +26,8 @@ $this->assign('title', 'Nueva Novedad');
         <input type="hidden" name="filing_date" value="<?= date('Y-m-d') ?>">
 
         <div class="row g-3">
-            <div class="col-md-6">
+            <!-- Employee select (single) -->
+            <div class="col-md-6" id="employee-single-group">
                 <label class="form-label">Empleado</label>
                 <?= $this->Form->control('employee_id', [
                     'label' => false,
@@ -36,6 +37,23 @@ $this->assign('title', 'Nueva Novedad');
                     'value' => $preselectedEmployee,
                 ]) ?>
             </div>
+
+            <!-- Employee multi-select (massive) -->
+            <div class="col-md-6" id="employee-massive-group" style="display:none;">
+                <label class="form-label">Empleados (Masiva)</label>
+                <select name="massive_employee_ids[]" id="massive-employees" class="form-select select2-enable" multiple>
+                    <?php foreach ($employees as $empId => $empName): ?>
+                    <option value="<?= $empId ?>"><?= h($empName) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Custom name input -->
+            <div class="col-md-6" id="custom-name-group" style="display:none;">
+                <label class="form-label">Nombre</label>
+                <input type="text" name="custom_name" class="form-control" placeholder="Nombre libre">
+            </div>
+
             <div class="col-md-6">
                 <label class="form-label">Tipo de Novedad</label>
                 <?= $this->Form->control('novelty_type_id', [
@@ -43,14 +61,17 @@ $this->assign('title', 'Nueva Novedad');
                     'options' => $noveltyTypes,
                     'empty' => '-- Seleccione --',
                     'class' => 'form-select',
+                    'id' => 'novelty-type-select',
                 ]) ?>
             </div>
-            <div class="col-md-4">
+
+            <!-- Conditional fields -->
+            <div class="col-md-4" id="permission-date-group">
                 <label class="form-label">Fecha del Permiso</label>
                 <input type="text" name="permission_date" class="form-control flatpickr-date"
                        value="<?= h($novelty->permission_date?->format('Y-m-d') ?? '') ?>">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4" id="schedule-type-group">
                 <label class="form-label">Horario</label>
                 <select name="schedule_type" id="schedule-type-select" class="form-select">
                     <option value="">-- Seleccione --</option>
@@ -152,6 +173,50 @@ $this->assign('title', 'Nueva Novedad');
     }
     scheduleSelect.addEventListener('change', toggleScheduleFields);
     toggleScheduleFields();
+
+    // Dynamic type flags
+    var typeSelect = document.getElementById('novelty-type-select');
+    var singleGroup = document.getElementById('employee-single-group');
+    var massiveGroup = document.getElementById('employee-massive-group');
+    var customNameGroup = document.getElementById('custom-name-group');
+    var permissionDateGroup = document.getElementById('permission-date-group');
+    var scheduleTypeGroup = document.getElementById('schedule-type-group');
+
+    typeSelect.addEventListener('change', function() {
+        var typeId = this.value;
+        if (!typeId) return;
+
+        fetch('/novelty-types/get-flags/' + typeId)
+            .then(function(r) { return r.json(); })
+            .then(function(flags) {
+                // Employee mode
+                singleGroup.style.display = (!flags.uses_custom_name && !flags.is_massive) ? '' : 'none';
+                massiveGroup.style.display = flags.is_massive ? '' : 'none';
+                customNameGroup.style.display = (flags.uses_custom_name && !flags.is_massive) ? '' : 'none';
+
+                // Conditional fields
+                permissionDateGroup.style.display = flags.show_permission_date ? '' : 'none';
+                scheduleTypeGroup.style.display = flags.show_schedule_type ? '' : 'none';
+
+                if (!flags.show_schedule_type) {
+                    startDateGroup.style.display = flags.show_start_date ? '' : 'none';
+                    endDateGroup.style.display = flags.show_end_date ? '' : 'none';
+                    startTimeGroup.style.display = 'none';
+                    endTimeGroup.style.display = 'none';
+                } else {
+                    toggleScheduleFields();
+                }
+
+                // Re-init Select2 for massive if shown
+                if (flags.is_massive && typeof jQuery !== 'undefined') {
+                    jQuery('#massive-employees').select2({
+                        placeholder: 'Seleccione empleados...',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                }
+            });
+    });
 
     // Signature canvas
     var canvas = document.getElementById('signature-canvas');

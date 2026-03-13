@@ -46,6 +46,7 @@ class AppController extends Controller
         'NoveltyTypes' => 'novelty_types',
         'LeaveDocumentTemplates' => 'novelty_types',
         'PettyCashRecords' => 'petty_cash',
+        'NoveltyLiquidationDocs' => 'novelty_liquidation_docs',
     ];
 
     /**
@@ -56,7 +57,7 @@ class AppController extends Controller
         return match ($action) {
             'index', 'view', 'export', 'all', 'rejected', 'exportPdf', 'preview' => 'view',
             'add', 'addFolder', 'uploadDocument', 'import' => 'add',
-            'edit', 'advanceStatus', 'addObservation', 'testSmtp', 'approve', 'reject', 'generateApprovalLink', 'deactivate', 'saveFields', 'removeInvoice' => 'edit',
+            'edit', 'advanceStatus', 'addObservation', 'testSmtp', 'approve', 'reject', 'generateApprovalLink', 'deactivate', 'saveFields', 'removeInvoice', 'advance', 'advanceGroup', 'addSignature', 'assignLiquidation', 'getFlags' => 'edit',
             'delete', 'deleteDocument' => 'delete',
             default => 'view',
         };
@@ -170,7 +171,7 @@ class AppController extends Controller
 
             $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
             $this->set('noveltiesCount', $noveltiesTable->find()
-                ->where(['status' => 'pendiente'])
+                ->where(['pipeline_status NOT IN' => ['pagada', 'rechazada']])
                 ->count());
         } catch (Exception $e) {
             $this->set('sidebarCounters', []);

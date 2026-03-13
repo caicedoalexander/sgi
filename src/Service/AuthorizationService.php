@@ -33,6 +33,7 @@ class AuthorizationService
         'employee_novelties' => 'Novedades de Empleados',
         'novelty_types' => 'Tipos de Novedad',
         'petty_cash' => 'Caja Menor',
+        'novelty_liquidation_docs' => 'Documentos de Liquidación',
     ];
 
     private array $cache = [];
