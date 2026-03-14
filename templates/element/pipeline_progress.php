@@ -10,7 +10,7 @@
 $isRejected   = $isRejected ?? false;
 $paymentStatus = $paymentStatus ?? null;
 
-$statusIcons = [
+$statusIcons = $statusIcons ?? [
     'aprobacion'    => 'bi-check-circle',
     'contabilidad'  => 'bi-calculator',
     'tesoreria'     => 'bi-bank',
@@ -93,7 +93,7 @@ $progressColor = $isRejected ? '#dc3545' : 'var(--primary-color)';
     <?php if ($isRejected): ?>
     <div class="alert alert-danger mt-3 py-2 mb-0 d-flex align-items-center gap-2">
         <i class="bi bi-x-circle-fill fs-5"></i>
-        <span><strong>Flujo terminado:</strong> Esta factura fue rechazada y no puede avanzar.</span>
+        <span><strong>Flujo terminado:</strong> Este registro fue rechazado y no puede avanzar.</span>
     </div>
     <?php endif; ?>
 </div>

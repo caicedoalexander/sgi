@@ -79,6 +79,29 @@ class NoveltyTypesController extends AppController
         $this->set(compact('noveltyType', 'parentTypes'));
     }
 
+    public function getFlags($id = null)
+    {
+        $this->request->allowMethod(['get']);
+        $this->autoRender = false;
+
+        $noveltyType = $this->NoveltyTypes->get($id);
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode([
+                'requires_rrhh' => (bool)$noveltyType->requires_rrhh,
+                'requires_firmas' => (bool)$noveltyType->requires_firmas,
+                'requires_gdp' => (bool)$noveltyType->requires_gdp,
+                'requires_tesoreria' => (bool)$noveltyType->requires_tesoreria,
+                'show_start_date' => (bool)$noveltyType->show_start_date,
+                'show_end_date' => (bool)$noveltyType->show_end_date,
+                'show_permission_date' => (bool)$noveltyType->show_permission_date,
+                'show_schedule_type' => (bool)$noveltyType->show_schedule_type,
+                'uses_custom_name' => (bool)$noveltyType->uses_custom_name,
+                'is_massive' => (bool)$noveltyType->is_massive,
+            ]));
+    }
+
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

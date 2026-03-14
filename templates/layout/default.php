@@ -151,6 +151,7 @@ $noveltiesCount = $noveltiesCount ?? 0;
                 $rrhhItems = array_filter([
                     $canView('employees') ? 'employees' : null,
                     $canView('employee_novelties') ? 'employee_novelties' : null,
+                    $canView('novelty_liquidation_docs') ? 'novelty_liquidation_docs' : null,
                     $canView('novelty_types') ? 'novelty_types_templates' : null,
                 ]);
                 if (!empty($rrhhItems)): ?>
@@ -171,6 +172,15 @@ $noveltiesCount = $noveltiesCount ?? 0;
                         ($noveltiesCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $noveltiesCount . '</span>' : ''),
                         ['controller' => 'EmployeeNovelties', 'action' => 'index'],
                         ['class' => $navLink('EmployeeNovelties') . ' d-flex align-items-center', 'escape' => false]
+                    ) ?>
+                </li>
+                <?php endif; ?>
+                <?php if ($canView('novelty_liquidation_docs')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-file-earmark-text me-2"></i>Docs. Liquidación',
+                        ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index'],
+                        ['class' => $navLink('NoveltyLiquidationDocs') . ' d-flex align-items-center', 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
