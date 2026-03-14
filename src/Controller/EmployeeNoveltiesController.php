@@ -21,6 +21,9 @@ class EmployeeNoveltiesController extends AppController
     private NoveltyDocumentService $documentService;
     private NoveltyObservationService $observationService;
 
+    /**
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
@@ -29,6 +32,9 @@ class EmployeeNoveltiesController extends AppController
         $this->observationService = new NoveltyObservationService();
     }
 
+    /**
+     * @return \Cake\Http\Response|null|void
+     */
     public function index()
     {
         $user = $this->Authentication->getIdentity()->getOriginalData();
@@ -66,7 +72,11 @@ class EmployeeNoveltiesController extends AppController
         $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes'));
     }
 
-    public function view($id = null)
+    /**
+     * @param string|null $id Novelty ID.
+     * @return \Cake\Http\Response|null|void
+     */
+    public function view(?string $id = null)
     {
         $novelty = $this->EmployeeNovelties->get($id, contain: [
             'Employees',
@@ -130,7 +140,11 @@ class EmployeeNoveltiesController extends AppController
         ));
     }
 
-    public function exportPdf($id = null): ?Response
+    /**
+     * @param string|null $id Novelty ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function exportPdf(?string $id = null): ?Response
     {
         $this->autoRender = false;
 
@@ -161,6 +175,9 @@ class EmployeeNoveltiesController extends AppController
             ->withStringBody($pdfContent);
     }
 
+    /**
+     * @return \Cake\Http\Response|null|void
+     */
     public function add()
     {
         $novelty = $this->EmployeeNovelties->newEmptyEntity();
@@ -200,13 +217,23 @@ class EmployeeNoveltiesController extends AppController
 
                 $signatureFile = $this->request->getUploadedFile('signature_file');
                 if ($signatureFile && $signatureFile->getError() === UPLOAD_ERR_OK) {
-                    $signaturePath = $signatureService->saveFromUpload($novelty->id, $signatureFile, $user->id, 'employee');
+                    $signaturePath = $signatureService->saveFromUpload(
+                        $novelty->id,
+                        $signatureFile,
+                        $user->id,
+                        'employee',
+                    );
                 }
 
                 if (!$signaturePath) {
                     $signatureBase64 = $this->request->getData('signature_base64');
                     if (!empty($signatureBase64)) {
-                        $signaturePath = $signatureService->saveFromBase64($novelty->id, $signatureBase64, $user->id, 'employee');
+                        $signaturePath = $signatureService->saveFromBase64(
+                            $novelty->id,
+                            $signatureBase64,
+                            $user->id,
+                            'employee',
+                        );
                     }
                 }
 
@@ -234,7 +261,11 @@ class EmployeeNoveltiesController extends AppController
         $this->set(compact('novelty', 'employees', 'noveltyTypes', 'preselectedEmployee'));
     }
 
-    public function advance($id = null)
+    /**
+     * @param string|null $id Novelty ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function advance(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $novelty = $this->EmployeeNovelties->get($id, contain: ['NoveltyTypes']);
@@ -258,7 +289,11 @@ class EmployeeNoveltiesController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
-    public function reject($id = null)
+    /**
+     * @param string|null $id Novelty ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function reject(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $novelty = $this->EmployeeNovelties->get($id, contain: ['NoveltyTypes']);
@@ -276,7 +311,11 @@ class EmployeeNoveltiesController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
-    public function assignLiquidation($id = null)
+    /**
+     * @param string|null $id Novelty ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function assignLiquidation(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $novelty = $this->EmployeeNovelties->get($id, contain: ['NoveltyTypes']);
@@ -312,7 +351,11 @@ class EmployeeNoveltiesController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
-    public function addObservation($id = null)
+    /**
+     * @param string|null $id Novelty ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function addObservation(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $user = $this->Authentication->getIdentity()->getOriginalData();
@@ -329,7 +372,11 @@ class EmployeeNoveltiesController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
-    public function uploadDocument($id = null)
+    /**
+     * @param string|null $id Novelty ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function uploadDocument(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $novelty = $this->EmployeeNovelties->get($id);
@@ -353,7 +400,12 @@ class EmployeeNoveltiesController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
-    public function deleteDocument($noveltyId = null, $documentId = null)
+    /**
+     * @param string|null $noveltyId Novelty ID.
+     * @param string|null $documentId Document ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function deleteDocument(?string $noveltyId = null, ?string $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $novelty = $this->EmployeeNovelties->get($noveltyId);
@@ -376,6 +428,9 @@ class EmployeeNoveltiesController extends AppController
         return $this->redirect(['action' => 'view', $noveltyId]);
     }
 
+    /**
+     * @return array
+     */
     private function _getNoveltyTypesGrouped(): array
     {
         $types = $this->EmployeeNovelties->NoveltyTypes->find()
@@ -400,6 +455,10 @@ class EmployeeNoveltiesController extends AppController
         return $grouped;
     }
 
+    /**
+     * @param object $user Current user.
+     * @return array
+     */
     private function _getSubordinateEmployeeIds(object $user): array
     {
         $employeesTable = TableRegistry::getTableLocator()->get('Employees');

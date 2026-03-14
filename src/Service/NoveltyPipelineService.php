@@ -6,6 +6,7 @@ namespace App\Service;
 use App\Constants\NoveltyConstants;
 use App\Model\Entity\EmployeeNovelty;
 use Cake\ORM\TableRegistry;
+use DateTime;
 
 class NoveltyPipelineService
 {
@@ -16,7 +17,10 @@ class NoveltyPipelineService
     {
         $currentStatus = $novelty->pipeline_status;
 
-        if ($currentStatus === NoveltyConstants::STATUS_RECHAZADA || $currentStatus === NoveltyConstants::STATUS_PAGADA) {
+        if (
+            $currentStatus === NoveltyConstants::STATUS_RECHAZADA
+            || $currentStatus === NoveltyConstants::STATUS_PAGADA
+        ) {
             return null;
         }
 
@@ -74,7 +78,10 @@ class NoveltyPipelineService
     public function advance(EmployeeNovelty $novelty, int $userId): array
     {
         if ($novelty->isGrouped()) {
-            return ['success' => false, 'error' => 'Esta novedad pertenece a un documento de liquidación. Debe avanzar desde el documento grupal.'];
+            return [
+                'success' => false,
+                'error' => 'Esta novedad pertenece a un documento de liquidación. Debe avanzar desde el documento grupal.',
+            ];
         }
 
         if ($novelty->isRejected()) {
@@ -167,7 +174,7 @@ class NoveltyPipelineService
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
         $novelty->pipeline_status = NoveltyConstants::STATUS_RECHAZADA;
         $novelty->approved_by = $userId;
-        $novelty->approved_at = new \DateTime();
+        $novelty->approved_at = new DateTime();
 
         if ($observations) {
             $novelty->observations = $observations;
@@ -241,7 +248,10 @@ class NoveltyPipelineService
                 if (empty($liquidationDoc->payment_status)) {
                     $errors[] = 'Estado de pago es requerido.';
                 }
-                if ($liquidationDoc->payment_status === NoveltyConstants::PAYMENT_PAGADO && empty($liquidationDoc->payment_date)) {
+                if (
+                    $liquidationDoc->payment_status === NoveltyConstants::PAYMENT_PAGADO
+                    && empty($liquidationDoc->payment_date)
+                ) {
                     $errors[] = 'Fecha de pago es requerida cuando el estado es "Pagado".';
                 }
                 break;

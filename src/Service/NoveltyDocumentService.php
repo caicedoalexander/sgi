@@ -19,6 +19,13 @@ class NoveltyDocumentService
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ];
 
+    /**
+     * @param int $noveltyId Novelty ID.
+     * @param string $pipelineStatus Current pipeline status.
+     * @param \Laminas\Diactoros\UploadedFile $file Uploaded file.
+     * @param int|null $uploadedBy User ID.
+     * @return object|string
+     */
     public function uploadForNovelty(
         int $noveltyId,
         string $pipelineStatus,
@@ -30,6 +37,13 @@ class NoveltyDocumentService
         ]);
     }
 
+    /**
+     * @param int $liquidationDocId Liquidation document ID.
+     * @param string $pipelineStatus Current pipeline status.
+     * @param \Laminas\Diactoros\UploadedFile $file Uploaded file.
+     * @param int|null $uploadedBy User ID.
+     * @return object|string
+     */
     public function uploadForGroup(
         int $liquidationDocId,
         string $pipelineStatus,
@@ -41,6 +55,14 @@ class NoveltyDocumentService
         ]);
     }
 
+    /**
+     * @param \Laminas\Diactoros\UploadedFile $file Uploaded file.
+     * @param string $pipelineStatus Pipeline status.
+     * @param int|null $uploadedBy User ID.
+     * @param string $subDir Upload subdirectory.
+     * @param array $extraFields Extra entity fields.
+     * @return object|string
+     */
     private function upload(
         UploadedFile $file,
         string $pipelineStatus,
@@ -94,6 +116,10 @@ class NoveltyDocumentService
         return $document;
     }
 
+    /**
+     * @param int $documentId Document ID.
+     * @return bool
+     */
     public function deleteDocument(int $documentId): bool
     {
         $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
@@ -107,11 +133,20 @@ class NoveltyDocumentService
         return $documentsTable->delete($document);
     }
 
+    /**
+     * @param object $document Document entity.
+     * @param string $currentPipelineStatus Current pipeline status.
+     * @return bool
+     */
     public function canDeleteDocument(object $document, string $currentPipelineStatus): bool
     {
         return $document->pipeline_status === $currentPipelineStatus;
     }
 
+    /**
+     * @param int $noveltyId Novelty ID.
+     * @return array<string, array>
+     */
     public function getDocumentsByStatus(int $noveltyId): array
     {
         $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
@@ -129,6 +164,10 @@ class NoveltyDocumentService
         return $grouped;
     }
 
+    /**
+     * @param int $liquidationDocId Liquidation document ID.
+     * @return array<string, array>
+     */
     public function getGroupDocumentsByStatus(int $liquidationDocId): array
     {
         $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');

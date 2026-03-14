@@ -8,6 +8,7 @@ use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
 use App\Service\NoveltySignatureService;
+use DateTime;
 
 class NoveltyLiquidationDocsController extends AppController
 {
@@ -17,6 +18,9 @@ class NoveltyLiquidationDocsController extends AppController
     private NoveltyDocumentService $documentService;
     private NoveltyObservationService $observationService;
 
+    /**
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
@@ -25,6 +29,9 @@ class NoveltyLiquidationDocsController extends AppController
         $this->observationService = new NoveltyObservationService();
     }
 
+    /**
+     * @return \Cake\Http\Response|null|void
+     */
     public function index()
     {
         $query = $this->NoveltyLiquidationDocs->find()
@@ -40,7 +47,11 @@ class NoveltyLiquidationDocsController extends AppController
         $this->set(compact('liquidationDocs', 'statusFilter'));
     }
 
-    public function view($id = null)
+    /**
+     * @param string|null $id Document ID.
+     * @return \Cake\Http\Response|null|void
+     */
+    public function view(?string $id = null)
     {
         $doc = $this->NoveltyLiquidationDocs->get($id, contain: [
             'PerformedByUsers',
@@ -68,7 +79,11 @@ class NoveltyLiquidationDocsController extends AppController
         $this->set(compact('doc', 'groupErrors', 'effectiveStatuses', 'documentsByStatus'));
     }
 
-    public function advanceGroup($id = null)
+    /**
+     * @param string|null $id Document ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function advanceGroup(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
@@ -84,7 +99,8 @@ class NoveltyLiquidationDocsController extends AppController
         $result = $this->pipelineService->advanceGroup($doc, $user->id);
 
         if ($result['success']) {
-            $this->Flash->success('Documento de liquidación avanzado a: ' . NoveltyConstants::STATUS_LABELS[$result['nextStatus']]);
+            $label = NoveltyConstants::STATUS_LABELS[$result['nextStatus']];
+            $this->Flash->success('Documento de liquidación avanzado a: ' . $label);
         } else {
             foreach ($result['errors'] as $error) {
                 $this->Flash->error($error);
@@ -94,7 +110,11 @@ class NoveltyLiquidationDocsController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
-    public function addSignature($id = null)
+    /**
+     * @param string|null $id Document ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function addSignature(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $signerType = $this->request->getData('signer_type');
@@ -123,7 +143,7 @@ class NoveltyLiquidationDocsController extends AppController
             if ($path) {
                 $signature->signature_path = $path;
                 $signature->signed_by = $user->id;
-                $signature->approved_at = new \DateTime();
+                $signature->approved_at = new DateTime();
                 $signaturesTable->save($signature);
                 $this->Flash->success('Firma registrada.');
             }
@@ -132,7 +152,11 @@ class NoveltyLiquidationDocsController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
-    public function uploadDocument($id = null)
+    /**
+     * @param string|null $id Document ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function uploadDocument(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
@@ -156,7 +180,12 @@ class NoveltyLiquidationDocsController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
-    public function deleteDocument($id = null, $documentId = null)
+    /**
+     * @param string|null $id Document ID.
+     * @param string|null $documentId Document attachment ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function deleteDocument(?string $id = null, ?string $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
@@ -179,7 +208,11 @@ class NoveltyLiquidationDocsController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
-    public function addObservation($id = null)
+    /**
+     * @param string|null $id Document ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function addObservation(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $user = $this->Authentication->getIdentity()->getOriginalData();
