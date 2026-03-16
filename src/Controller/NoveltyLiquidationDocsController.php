@@ -7,6 +7,7 @@ use App\Constants\NoveltyConstants;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
+use App\Service\NoveltyHistoryService;
 use App\Service\NoveltySignatureService;
 use DateTime;
 
@@ -76,7 +77,28 @@ class NoveltyLiquidationDocsController extends AppController
 
         $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($doc->id);
 
-        $this->set(compact('doc', 'groupErrors', 'effectiveStatuses', 'documentsByStatus'));
+        // Aggregate change history from all novelties in this group
+        $noveltyIds = array_map(fn($n) => $n->id, $doc->employee_novelties);
+        $groupHistories = [];
+        $fieldLabels = NoveltyHistoryService::FIELD_LABELS;
+        if (!empty($noveltyIds)) {
+            $historiesTable = $this->fetchTable('NoveltyHistories');
+            $groupHistories = $historiesTable->find()
+                ->contain(['Users', 'EmployeeNovelties'])
+                ->where(['NoveltyHistories.novelty_id IN' => $noveltyIds])
+                ->order(['NoveltyHistories.created' => 'DESC'])
+                ->all()
+                ->toArray();
+        }
+
+        $this->set(compact(
+            'doc',
+            'groupErrors',
+            'effectiveStatuses',
+            'documentsByStatus',
+            'groupHistories',
+            'fieldLabels',
+        ));
     }
 
     /**
