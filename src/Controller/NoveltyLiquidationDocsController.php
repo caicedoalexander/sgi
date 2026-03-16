@@ -5,9 +5,9 @@ namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
 use App\Service\NoveltyDocumentService;
+use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
-use App\Service\NoveltyHistoryService;
 use App\Service\NoveltySignatureService;
 use DateTime;
 
