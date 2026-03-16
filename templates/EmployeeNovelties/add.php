@@ -124,12 +124,12 @@ $this->assign('title', 'Nueva Novedad');
 
             <!-- Firma del Funcionario -->
             <div class="col-12">
-                <label class="form-label">Firma del Funcionario</label>
+                <label class="form-label">Firma del Funcionario <span class="text-muted fw-normal" style="font-size:.78rem;">(Opcional)</span></label>
                 <div class="d-flex gap-3 align-items-start mb-2">
                     <div>
                         <input type="file" name="signature_file" id="signature-file" class="form-control form-control-sm"
                                accept="image/png,image/jpeg" style="max-width:300px;">
-                        <div class="form-text">O haga clic en el recuadro para dibujar su firma</div>
+                        <div class="form-text">Suba una imagen o haga clic en el recuadro para dibujar su firma</div>
                     </div>
                 </div>
                 <div class="sgi-signature-pad" data-target="#signature-base64"

@@ -6,6 +6,7 @@
  * @var array $effectiveStatuses
  * @var array $documentsByStatus
  * @var \App\Model\Entity\User $currentUser
+ * @var array $existingWorkerSignatures
  */
 use App\Constants\NoveltyConstants;
 
@@ -219,6 +220,32 @@ $badgeColors = [
                             <span class="badge bg-success mt-1">Firmado</span>
                         <?php else: ?>
                             <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_FIRMAS_APROBACION): ?>
+
+                            <?php
+                            // For "trabajador" signer, check if linked novelties have an employee signature
+                            $hasExistingSig = ($sig->signer_type === NoveltyConstants::SIGNER_TRABAJADOR && !empty($existingWorkerSignatures));
+                            ?>
+
+                            <?php if ($hasExistingSig): ?>
+                            <!-- Option to use existing employee signature from novelty -->
+                            <div class="mb-2">
+                                <div style="font-size:.68rem;color:#888;margin-bottom:.35rem;">Firma existente de la novedad:</div>
+                                <?php $ws = $existingWorkerSignatures[0]; ?>
+                                <img src="<?= $this->Url->build('/' . $ws['path']) ?>" alt="Firma"
+                                     style="max-width:100%;max-height:80px;border:1px solid var(--border-color);border-radius:4px;background:#fff;">
+                                <div style="font-size:.65rem;color:#aaa;margin-top:.2rem;"><?= h($ws['name']) ?></div>
+                                <?= $this->Form->create(null, ['url' => ['action' => 'addSignature', $doc->id], 'class' => 'd-inline']) ?>
+                                <input type="hidden" name="signer_type" value="<?= h($sig->signer_type) ?>">
+                                <input type="hidden" name="use_existing_path" value="<?= h($ws['path']) ?>">
+                                <button type="submit" class="btn btn-sm btn-outline-primary mt-1">
+                                    <i class="bi bi-link-45deg me-1"></i>Usar esta firma
+                                </button>
+                                <?= $this->Form->end() ?>
+                            </div>
+                            <div style="font-size:.65rem;color:#bbb;margin-bottom:.35rem;text-align:center;">— o firmar de nuevo —</div>
+                            <?php endif; ?>
+
+                            <!-- Manual signature pad -->
                             <?= $this->Form->create(null, ['url' => ['action' => 'addSignature', $doc->id], 'class' => 'sig-form']) ?>
                             <input type="hidden" name="signer_type" value="<?= h($sig->signer_type) ?>">
                             <input type="hidden" name="signature_base64" class="sig-base64">
@@ -229,6 +256,7 @@ $badgeColors = [
                                 <i class="bi bi-check-lg me-1"></i>Firmar
                             </button>
                             <?= $this->Form->end() ?>
+
                             <?php else: ?>
                             <span class="badge bg-secondary mt-2">Pendiente</span>
                             <?php endif; ?>
