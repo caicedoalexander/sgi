@@ -445,7 +445,7 @@ class EmployeeNoveltiesController extends AppController
         $user = $this->Authentication->getIdentity()->getOriginalData();
         $message = $this->request->getData('message');
 
-        $result = $this->observationService->addToNovelty($id, $user->id, $message);
+        $result = $this->observationService->addToNovelty((int)$id, $user->id, $message);
 
         if (is_string($result)) {
             $this->Flash->error($result);
