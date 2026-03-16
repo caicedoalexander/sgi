@@ -218,7 +218,7 @@ class NoveltyLiquidationDocsController extends AppController
             $this->Flash->success('Firma vinculada desde la novedad.');
         } elseif (!empty($signatureBase64)) {
             $path = $signatureService->saveFromBase64(
-                $id,
+                (int)$id,
                 $signatureBase64,
                 $user->id,
                 'liquidation_' . $signerType,
