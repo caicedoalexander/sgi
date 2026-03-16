@@ -80,6 +80,40 @@ class NoveltyLiquidationDocsController extends AppController
     }
 
     /**
+     * Edit/advance a liquidation document.
+     *
+     * @param string|null $id Document ID.
+     * @return \Cake\Http\Response|null|void
+     */
+    public function edit(?string $id = null)
+    {
+        $doc = $this->NoveltyLiquidationDocs->get($id, contain: [
+            'PerformedByUsers',
+            'CreatedByUsers',
+            'EmployeeNovelties' => ['Employees', 'NoveltyTypes'],
+            'NoveltyLiquidationSignatures' => ['SignedByUsers'],
+            'NoveltyObservations' => [
+                'Users',
+                'sort' => ['NoveltyObservations.created' => 'ASC'],
+            ],
+            'NoveltyDocuments' => [
+                'UploadedByUsers',
+                'sort' => ['NoveltyDocuments.created' => 'DESC'],
+            ],
+        ]);
+
+        $user = $this->Authentication->getIdentity()->getOriginalData();
+        $this->observationService->markAsRead($user->id, liquidationDocId: $doc->id);
+
+        $groupErrors = $this->pipelineService->validateGroupTransition($doc);
+        $effectiveStatuses = $this->pipelineService->getEffectiveStatuses();
+        $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($doc->id);
+
+        $currentUser = $user;
+        $this->set(compact('doc', 'groupErrors', 'effectiveStatuses', 'documentsByStatus', 'currentUser'));
+    }
+
+    /**
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
@@ -107,7 +141,7 @@ class NoveltyLiquidationDocsController extends AppController
             }
         }
 
-        return $this->redirect(['action' => 'view', $id]);
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
     /**
@@ -129,7 +163,7 @@ class NoveltyLiquidationDocsController extends AppController
         if (!$signature) {
             $this->Flash->error('Firma no encontrada.');
 
-            return $this->redirect(['action' => 'view', $id]);
+            return $this->redirect(['action' => 'edit', $id]);
         }
 
         $signatureBase64 = $this->request->getData('signature_base64');
@@ -149,7 +183,7 @@ class NoveltyLiquidationDocsController extends AppController
             }
         }
 
-        return $this->redirect(['action' => 'view', $id]);
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
     /**
@@ -166,7 +200,7 @@ class NoveltyLiquidationDocsController extends AppController
         if (!$file) {
             $this->Flash->error('No se seleccionó ningún archivo.');
 
-            return $this->redirect(['action' => 'view', $id]);
+            return $this->redirect(['action' => 'edit', $id]);
         }
 
         $result = $this->documentService->uploadForGroup($doc->id, $doc->pipeline_status, $file, $user->id);
@@ -177,7 +211,7 @@ class NoveltyLiquidationDocsController extends AppController
             $this->Flash->success('Documento subido exitosamente.');
         }
 
-        return $this->redirect(['action' => 'view', $id]);
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
     /**
@@ -196,7 +230,7 @@ class NoveltyLiquidationDocsController extends AppController
         if (!$this->documentService->canDeleteDocument($document, $doc->pipeline_status)) {
             $this->Flash->error('Solo puede eliminar documentos de la etapa actual.');
 
-            return $this->redirect(['action' => 'view', $id]);
+            return $this->redirect(['action' => 'edit', $id]);
         }
 
         if ($this->documentService->deleteDocument($documentId)) {
@@ -205,7 +239,7 @@ class NoveltyLiquidationDocsController extends AppController
             $this->Flash->error('No se pudo eliminar el documento.');
         }
 
-        return $this->redirect(['action' => 'view', $id]);
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
     /**
@@ -226,6 +260,6 @@ class NoveltyLiquidationDocsController extends AppController
             $this->Flash->success('Observación agregada.');
         }
 
-        return $this->redirect(['action' => 'view', $id]);
+        return $this->redirect(['action' => 'edit', $id]);
     }
 }
