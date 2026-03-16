@@ -56,7 +56,7 @@ $periodLabels = NoveltyConstants::PERIOD_LABELS;
             </thead>
             <tbody>
                 <?php foreach ($liquidationDocs as $doc): ?>
-                <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'view', $doc->id]) ?>">
+                <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'edit', $doc->id]) ?>">
                     <td><strong><?= h($doc->liquidation_number) ?></strong></td>
                     <td><?= $periodLabels[$doc->period] ?? h($doc->period) ?></td>
                     <td><span class="badge <?= $statusBadges[$doc->pipeline_status] ?? 'bg-secondary' ?>"><?= $statusLabels[$doc->pipeline_status] ?? ucfirst(h($doc->pipeline_status)) ?></span></td>
