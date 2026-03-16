@@ -219,17 +219,15 @@ $badgeColors = [
                             <span class="badge bg-success mt-1">Firmado</span>
                         <?php else: ?>
                             <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_FIRMAS_APROBACION): ?>
-                            <div style="border:1px solid var(--border-color);display:inline-block;" class="mb-2">
-                                <canvas class="sig-canvas" data-signer="<?= h($sig->signer_type) ?>" width="250" height="100"
-                                        style="cursor:crosshair;display:block;"></canvas>
-                            </div>
                             <?= $this->Form->create(null, ['url' => ['action' => 'addSignature', $doc->id], 'class' => 'sig-form']) ?>
                             <input type="hidden" name="signer_type" value="<?= h($sig->signer_type) ?>">
                             <input type="hidden" name="signature_base64" class="sig-base64">
-                            <div class="d-flex gap-1 justify-content-center">
-                                <button type="button" class="btn btn-sm btn-outline-secondary sig-clear">Limpiar</button>
-                                <button type="submit" class="btn btn-sm btn-primary sig-save">Firmar</button>
-                            </div>
+                            <div class="sgi-signature-pad" data-target=".sig-base64"
+                                 data-signer-label="<?= h($signerLabels[$sig->signer_type] ?? $sig->signer_type) ?>"
+                                 style="width:100%;height:90px;margin-bottom:.5rem;"></div>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>Firmar
+                            </button>
                             <?= $this->Form->end() ?>
                             <?php else: ?>
                             <span class="badge bg-secondary mt-2">Pendiente</span>
@@ -486,56 +484,7 @@ $badgeColors = [
 </div>
 <?php endif; ?>
 
-<!-- Signature canvas JS -->
-<script>
-(function() {
-    document.querySelectorAll('.sig-canvas').forEach(function(canvas) {
-        var ctx = canvas.getContext('2d');
-        var drawing = false;
-        var hasDrawn = false;
-        var form = canvas.closest('.col-md-6, .col-lg-3').querySelector('.sig-form');
-        var base64Input = form ? form.querySelector('.sig-base64') : null;
-
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-
-        function getPos(e) {
-            var rect = canvas.getBoundingClientRect();
-            var cx = e.touches ? e.touches[0].clientX : e.clientX;
-            var cy = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: cx - rect.left, y: cy - rect.top };
-        }
-
-        canvas.addEventListener('mousedown', function(e) { drawing = true; var p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-        canvas.addEventListener('mousemove', function(e) { if (!drawing) return; hasDrawn = true; var p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
-        canvas.addEventListener('mouseup', function() { drawing = false; });
-        canvas.addEventListener('mouseleave', function() { drawing = false; });
-        canvas.addEventListener('touchstart', function(e) { e.preventDefault(); drawing = true; var p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-        canvas.addEventListener('touchmove', function(e) { e.preventDefault(); if (!drawing) return; hasDrawn = true; var p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
-        canvas.addEventListener('touchend', function() { drawing = false; });
-
-        var clearBtn = canvas.closest('.col-md-6, .col-lg-3').querySelector('.sig-clear');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function() {
-                ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                hasDrawn = false;
-                if (base64Input) base64Input.value = '';
-            });
-        }
-
-        if (form) {
-            form.addEventListener('submit', function() {
-                if (hasDrawn && base64Input) {
-                    base64Input.value = canvas.toDataURL('image/png');
-                }
-            });
-        }
-    });
-})();
-</script>
+<?= $this->Html->script('sgi-signature') ?>
 
 <?php $this->append('script') ?>
 <script>

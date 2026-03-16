@@ -125,22 +125,17 @@ $this->assign('title', 'Nueva Novedad');
             <!-- Firma del Funcionario -->
             <div class="col-12">
                 <label class="form-label">Firma del Funcionario</label>
-                <div class="d-flex gap-3 align-items-start">
+                <div class="d-flex gap-3 align-items-start mb-2">
                     <div>
                         <input type="file" name="signature_file" id="signature-file" class="form-control form-control-sm"
                                accept="image/png,image/jpeg" style="max-width:300px;">
-                        <div class="form-text">O dibuje su firma abajo</div>
+                        <div class="form-text">O haga clic en el recuadro para dibujar su firma</div>
                     </div>
                 </div>
-                <div class="mt-2" style="border:1px solid var(--border-color);display:inline-block;">
-                    <canvas id="signature-canvas" width="400" height="150" style="cursor:crosshair;display:block;"></canvas>
-                </div>
+                <div class="sgi-signature-pad" data-target="#signature-base64"
+                     data-signer-label="Firma del Funcionario"
+                     style="width:320px;height:120px;"></div>
                 <input type="hidden" name="signature_base64" id="signature-base64">
-                <div class="mt-1">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="signature-clear">
-                        <i class="bi bi-eraser me-1"></i>Limpiar Firma
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -218,51 +213,6 @@ $this->assign('title', 'Nueva Novedad');
             });
     });
 
-    // Signature canvas
-    var canvas = document.getElementById('signature-canvas');
-    var ctx = canvas.getContext('2d');
-    var drawing = false;
-    var hasDrawn = false;
-
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-
-    function getPos(e) {
-        var rect = canvas.getBoundingClientRect();
-        var clientX, clientY;
-        if (e.touches && e.touches.length > 0) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else {
-            clientX = e.clientX;
-            clientY = e.clientY;
-        }
-        return { x: clientX - rect.left, y: clientY - rect.top };
-    }
-
-    canvas.addEventListener('mousedown', function(e) { drawing = true; var pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); });
-    canvas.addEventListener('mousemove', function(e) { if (!drawing) return; hasDrawn = true; var pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); });
-    canvas.addEventListener('mouseup', function() { drawing = false; });
-    canvas.addEventListener('mouseleave', function() { drawing = false; });
-
-    canvas.addEventListener('touchstart', function(e) { e.preventDefault(); drawing = true; var pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); });
-    canvas.addEventListener('touchmove', function(e) { e.preventDefault(); if (!drawing) return; hasDrawn = true; var pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); });
-    canvas.addEventListener('touchend', function() { drawing = false; });
-
-    document.getElementById('signature-clear').addEventListener('click', function() {
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        hasDrawn = false;
-        document.getElementById('signature-base64').value = '';
-    });
-
-    document.getElementById('btn-submit').closest('form').addEventListener('submit', function() {
-        if (hasDrawn) {
-            document.getElementById('signature-base64').value = canvas.toDataURL('image/png');
-        }
-    });
 })();
 </script>
+<?= $this->Html->script('sgi-signature') ?>
