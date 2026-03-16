@@ -57,6 +57,11 @@ class LeaveDocumentService
 
     public function resolveTemplate(int $noveltyTypeId, ?string $contractType, ?int $temporaryOrgId): ?object
     {
+        // If this is a subtype, resolve using the parent's templates
+        $noveltyTypesTable = TableRegistry::getTableLocator()->get('NoveltyTypes');
+        $noveltyType = $noveltyTypesTable->get($noveltyTypeId);
+        $lookupTypeId = $noveltyType->parent_id ?? $noveltyTypeId;
+
         $table = TableRegistry::getTableLocator()->get('NoveltyTypeContractTemplates');
 
         // Try exact match (with org for OBRA O LABOR DETERMINADA)
@@ -64,7 +69,7 @@ class LeaveDocumentService
             $match = $table->find()
                 ->contain(['LeaveDocumentTemplates'])
                 ->where([
-                    'NoveltyTypeContractTemplates.novelty_type_id' => $noveltyTypeId,
+                    'NoveltyTypeContractTemplates.novelty_type_id' => $lookupTypeId,
                     'NoveltyTypeContractTemplates.contract_type' => $contractType,
                     'NoveltyTypeContractTemplates.temporary_organization_id' => $temporaryOrgId,
                 ])
@@ -80,7 +85,7 @@ class LeaveDocumentService
             $match = $table->find()
                 ->contain(['LeaveDocumentTemplates'])
                 ->where([
-                    'NoveltyTypeContractTemplates.novelty_type_id' => $noveltyTypeId,
+                    'NoveltyTypeContractTemplates.novelty_type_id' => $lookupTypeId,
                     'NoveltyTypeContractTemplates.contract_type' => $contractType,
                     'NoveltyTypeContractTemplates.temporary_organization_id IS' => null,
                 ])

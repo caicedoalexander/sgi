@@ -49,9 +49,11 @@ class NoveltyPipelineService
     {
         return match ($status) {
             NoveltyConstants::STATUS_RRHH => !$noveltyType->requires_rrhh,
+            NoveltyConstants::STATUS_CONTABILIDAD => !$noveltyType->requires_contabilidad,
             NoveltyConstants::STATUS_FIRMAS_APROBACION => !$noveltyType->requires_firmas,
             NoveltyConstants::STATUS_GDP => !$noveltyType->requires_gdp,
             NoveltyConstants::STATUS_TESORERIA => !$noveltyType->requires_tesoreria,
+            NoveltyConstants::STATUS_PAGADA => !$noveltyType->requires_tesoreria,
             default => false,
         };
     }

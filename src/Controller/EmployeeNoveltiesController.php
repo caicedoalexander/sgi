@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Constants\NoveltyConstants;
 use App\Service\LeaveDocumentService;
 use App\Service\NoveltyDocumentService;
+use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
 use App\Service\NoveltySignatureService;
@@ -20,6 +21,7 @@ class EmployeeNoveltiesController extends AppController
     private NoveltyPipelineService $pipelineService;
     private NoveltyDocumentService $documentService;
     private NoveltyObservationService $observationService;
+    private NoveltyHistoryService $historyService;
 
     /**
      * @return void
@@ -30,6 +32,7 @@ class EmployeeNoveltiesController extends AppController
         $this->pipelineService = new NoveltyPipelineService();
         $this->documentService = new NoveltyDocumentService();
         $this->observationService = new NoveltyObservationService();
+        $this->historyService = new NoveltyHistoryService();
     }
 
     /**
@@ -73,10 +76,12 @@ class EmployeeNoveltiesController extends AppController
     }
 
     /**
+     * Edit action — main working view (like invoices/edit).
+     *
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null|void
      */
-    public function view(?string $id = null)
+    public function edit(?string $id = null)
     {
         $novelty = $this->EmployeeNovelties->get($id, contain: [
             'Employees',
@@ -104,23 +109,19 @@ class EmployeeNoveltiesController extends AppController
         $effectiveStatuses = $this->pipelineService->getEffectiveStatuses($novelty->novelty_type);
         $nextStatus = $this->pipelineService->getNextStatus($novelty);
         $transitionErrors = $this->pipelineService->validateTransition($novelty, $novelty->pipeline_status);
-        $canAdvance = !$novelty->isRejected() && !$novelty->isPaid() && !$novelty->isGrouped() && $nextStatus !== null;
+        $canAdvance = !$novelty->isRejected()
+            && !$novelty->isPaid()
+            && !$novelty->isGrouped()
+            && $nextStatus !== null;
 
         $documentsByStatus = $this->documentService->getDocumentsByStatus($novelty->id);
 
-        // PDF template check
-        $service = new LeaveDocumentService();
-        $employee = $novelty->employee;
-        $template = $employee ? $service->resolveTemplate(
-            (int)$novelty->novelty_type_id,
-            $employee->contract_type ?? null,
-            $employee->temporary_organization_id ?? null,
-        ) : null;
-        $hasActiveTemplate = $template && $template->is_active;
-
         // Existing liquidation docs for assignment dropdown
         $liquidationDocs = [];
-        if ($novelty->pipeline_status === NoveltyConstants::STATUS_CONTABILIDAD && !$novelty->isGrouped()) {
+        if (
+            $novelty->pipeline_status === NoveltyConstants::STATUS_CONTABILIDAD
+            && !$novelty->isGrouped()
+        ) {
             $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
             $liquidationDocs = $liquidationDocsTable->find('list', [
                 'keyField' => 'id',
@@ -135,8 +136,62 @@ class EmployeeNoveltiesController extends AppController
             'transitionErrors',
             'canAdvance',
             'documentsByStatus',
-            'hasActiveTemplate',
             'liquidationDocs',
+        ));
+    }
+
+    /**
+     * View action — read-only detail with PDF export and history.
+     *
+     * @param string|null $id Novelty ID.
+     * @return \Cake\Http\Response|null|void
+     */
+    public function view(?string $id = null)
+    {
+        $novelty = $this->EmployeeNovelties->get($id, contain: [
+            'Employees',
+            'NoveltyTypes',
+            'ApprovedByUsers',
+            'RegisteredByUsers',
+            'RrhhByUsers',
+            'NoveltyLiquidationDocs',
+            'NoveltyObservations' => [
+                'Users',
+                'sort' => ['NoveltyObservations.created' => 'ASC'],
+            ],
+            'NoveltyDocuments' => [
+                'UploadedByUsers',
+                'sort' => ['NoveltyDocuments.created' => 'DESC'],
+            ],
+            'NoveltyMassiveEmployees' => ['Employees'],
+            'NoveltyHistories' => [
+                'Users',
+                'sort' => ['NoveltyHistories.created' => 'DESC'],
+            ],
+        ]);
+
+        $effectiveStatuses = $this->pipelineService->getEffectiveStatuses($novelty->novelty_type);
+
+        $documentsByStatus = $this->documentService->getDocumentsByStatus($novelty->id);
+
+        // PDF template check
+        $service = new LeaveDocumentService();
+        $employee = $novelty->employee;
+        $template = $employee ? $service->resolveTemplate(
+            (int)$novelty->novelty_type_id,
+            $employee->contract_type ?? null,
+            $employee->temporary_organization_id ?? null,
+        ) : null;
+        $hasActiveTemplate = $template && $template->is_active;
+
+        $fieldLabels = NoveltyHistoryService::FIELD_LABELS;
+
+        $this->set(compact(
+            'novelty',
+            'effectiveStatuses',
+            'documentsByStatus',
+            'hasActiveTemplate',
+            'fieldLabels',
         ));
     }
 
@@ -164,7 +219,7 @@ class EmployeeNoveltiesController extends AppController
         if (!$template || !$template->is_active) {
             $this->Flash->error('No hay plantilla de documento configurada para el tipo de contrato de este empleado.');
 
-            return $this->redirect(['action' => 'view', $id]);
+            return $this->redirect(['action' => 'edit', $id]);
         }
 
         $pdfContent = $service->generatePdf((int)$id, (int)$template->id);
@@ -186,8 +241,21 @@ class EmployeeNoveltiesController extends AppController
             $user = $this->Authentication->getIdentity()->getOriginalData();
             $data = $this->request->getData();
             $data['registered_by'] = $user->id;
-            $data['pipeline_status'] = NoveltyConstants::STATUS_REGISTRO;
             $data['filing_date'] = Date::now()->format('Y-m-d');
+
+            // Determine initial status: first active pipeline stage for this type
+            $initialStatus = NoveltyConstants::STATUS_RRHH;
+            if (!empty($data['novelty_type_id'])) {
+                $noveltyType = $this->EmployeeNovelties->NoveltyTypes->get($data['novelty_type_id']);
+                $effectiveStatuses = $this->pipelineService->getEffectiveStatuses($noveltyType);
+                $initialStatus = $effectiveStatuses[0] ?? NoveltyConstants::STATUS_RRHH;
+            }
+            $data['pipeline_status'] = $initialStatus;
+
+            // Normalize empty strings to null for optional fields
+            if (isset($data['custom_name']) && $data['custom_name'] === '') {
+                $data['custom_name'] = null;
+            }
 
             // Handle massive novelties
             $massiveEmployeeIds = [];
@@ -270,23 +338,32 @@ class EmployeeNoveltiesController extends AppController
         $this->request->allowMethod(['post']);
         $novelty = $this->EmployeeNovelties->get($id, contain: ['NoveltyTypes']);
         $user = $this->Authentication->getIdentity()->getOriginalData();
+        $originalStatus = $novelty->pipeline_status;
 
         // Save editable fields for current stage before advancing
         $data = $this->request->getData();
+        $original = clone $novelty;
         if (!empty($data)) {
             $novelty = $this->EmployeeNovelties->patchEntity($novelty, $data);
             $this->EmployeeNovelties->save($novelty);
+            $this->historyService->recordChanges($original, $novelty, $user->id);
         }
 
         $result = $this->pipelineService->advance($novelty, $user->id);
 
         if ($result['success']) {
+            $this->historyService->recordStatusChange(
+                (int)$novelty->id,
+                $originalStatus,
+                $result['nextStatus'],
+                $user->id,
+            );
             $this->Flash->success('Novedad avanzada a: ' . NoveltyConstants::STATUS_LABELS[$result['nextStatus']]);
         } else {
             $this->Flash->error($result['error']);
         }
 
-        return $this->redirect(['action' => 'view', $id]);
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
     /**
@@ -298,17 +375,24 @@ class EmployeeNoveltiesController extends AppController
         $this->request->allowMethod(['post']);
         $novelty = $this->EmployeeNovelties->get($id, contain: ['NoveltyTypes']);
         $user = $this->Authentication->getIdentity()->getOriginalData();
+        $originalStatus = $novelty->pipeline_status;
 
         $observations = $this->request->getData('observations');
         $result = $this->pipelineService->reject($novelty, $user->id, $observations);
 
         if ($result['success']) {
+            $this->historyService->recordStatusChange(
+                (int)$novelty->id,
+                $originalStatus,
+                NoveltyConstants::STATUS_RECHAZADA,
+                $user->id,
+            );
             $this->Flash->success('Novedad rechazada.');
         } else {
             $this->Flash->error($result['error']);
         }
 
-        return $this->redirect(['action' => 'view', $id]);
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
     /**
@@ -348,7 +432,7 @@ class EmployeeNoveltiesController extends AppController
             $this->Flash->error('Debe indicar un número de liquidación o seleccionar un documento existente.');
         }
 
-        return $this->redirect(['action' => 'view', $id]);
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
     /**
@@ -369,7 +453,7 @@ class EmployeeNoveltiesController extends AppController
             $this->Flash->success('Observación agregada.');
         }
 
-        return $this->redirect(['action' => 'view', $id]);
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
     /**
@@ -386,7 +470,7 @@ class EmployeeNoveltiesController extends AppController
         if (!$file) {
             $this->Flash->error('No se seleccionó ningún archivo.');
 
-            return $this->redirect(['action' => 'view', $id]);
+            return $this->redirect(['action' => 'edit', $id]);
         }
 
         $result = $this->documentService->uploadForNovelty($novelty->id, $novelty->pipeline_status, $file, $user->id);
@@ -397,7 +481,7 @@ class EmployeeNoveltiesController extends AppController
             $this->Flash->success('Documento subido exitosamente.');
         }
 
-        return $this->redirect(['action' => 'view', $id]);
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
     /**
@@ -416,7 +500,7 @@ class EmployeeNoveltiesController extends AppController
         if (!$this->documentService->canDeleteDocument($document, $novelty->pipeline_status)) {
             $this->Flash->error('Solo puede eliminar documentos de la etapa actual.');
 
-            return $this->redirect(['action' => 'view', $noveltyId]);
+            return $this->redirect(['action' => 'edit', $noveltyId]);
         }
 
         if ($this->documentService->deleteDocument($documentId)) {
@@ -425,7 +509,7 @@ class EmployeeNoveltiesController extends AppController
             $this->Flash->error('No se pudo eliminar el documento.');
         }
 
-        return $this->redirect(['action' => 'view', $noveltyId]);
+        return $this->redirect(['action' => 'edit', $noveltyId]);
     }
 
     /**

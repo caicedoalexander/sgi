@@ -59,6 +59,7 @@ class NoveltyTypesTable extends Table
             ->allowEmptyString('parent_id');
 
         $validator->boolean('requires_rrhh');
+        $validator->boolean('requires_contabilidad');
         $validator->boolean('requires_firmas');
         $validator->boolean('requires_gdp');
         $validator->boolean('requires_tesoreria');

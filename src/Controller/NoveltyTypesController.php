@@ -90,6 +90,7 @@ class NoveltyTypesController extends AppController
             ->withType('application/json')
             ->withStringBody(json_encode([
                 'requires_rrhh' => (bool)$noveltyType->requires_rrhh,
+                'requires_contabilidad' => (bool)$noveltyType->requires_contabilidad,
                 'requires_firmas' => (bool)$noveltyType->requires_firmas,
                 'requires_gdp' => (bool)$noveltyType->requires_gdp,
                 'requires_tesoreria' => (bool)$noveltyType->requires_tesoreria,

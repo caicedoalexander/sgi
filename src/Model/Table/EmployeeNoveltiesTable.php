@@ -67,6 +67,11 @@ class EmployeeNoveltiesTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->hasMany('NoveltyHistories', [
+            'foreignKey' => 'novelty_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
     }
 
     /**

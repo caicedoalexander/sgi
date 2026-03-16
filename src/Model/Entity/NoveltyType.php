@@ -11,6 +11,7 @@ class NoveltyType extends Entity
         'name' => true,
         'parent_id' => true,
         'requires_rrhh' => true,
+        'requires_contabilidad' => true,
         'requires_firmas' => true,
         'requires_gdp' => true,
         'requires_tesoreria' => true,

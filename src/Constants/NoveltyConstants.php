@@ -16,7 +16,6 @@ final class NoveltyConstants
     public const STATUS_RECHAZADA = 'rechazada';
 
     public const PIPELINE_STATUSES = [
-        self::STATUS_REGISTRO,
         self::STATUS_RRHH,
         self::STATUS_CONTABILIDAD,
         self::STATUS_FIRMAS_APROBACION,
@@ -59,7 +58,6 @@ final class NoveltyConstants
 
     // Linear transitions
     public const TRANSITIONS = [
-        self::STATUS_REGISTRO => self::STATUS_RRHH,
         self::STATUS_RRHH => self::STATUS_CONTABILIDAD,
         self::STATUS_CONTABILIDAD => self::STATUS_FIRMAS_APROBACION,
         self::STATUS_FIRMAS_APROBACION => self::STATUS_GDP,

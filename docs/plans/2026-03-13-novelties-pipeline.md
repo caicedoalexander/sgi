@@ -1,27 +1,21 @@
-# Novelties Pipeline — Implementation Plan
+# Novelties Pipeline Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Reemplazar el modelo simple pendiente/aprobado/rechazado de novedades por un pipeline de 6 etapas (registro → rrhh → contabilidad → firmas_aprobacion → gdp → tesoreria → pagada) con agrupación de novedades bajo un Documento de Liquidación a partir de Contabilidad.
+**Goal:** Replace the simple 3-state approval system (pendiente/aprobado/rechazado) with a 6-stage pipeline (registro → rrhh → contabilidad → firmas_aprobacion → gdp → tesoreria → pagada), with grouping under Liquidation Documents from Contabilidad onwards.
 
-**Architecture:** `employee_novelties.pipeline_status` rastrea el estado de cada novedad. A partir de contabilidad, las novedades comparten un `novelty_liquidation_docs` que almacena datos de etapas 3–6. El avance desde contabilidad en adelante es siempre grupal. Un `NoveltyPipelineService` análogo a `InvoicePipelineService` maneja toda la lógica de transiciones, leyendo flags de `novelty_types` para saltar etapas que no aplican.
+**Architecture:** Extends the existing `EmployeeNovelties` module with a pipeline service analogous to `InvoicePipelineService`. New tables for liquidation docs, observations, documents, signatures, and massive employees. NoveltyType flags control which stages are skipped. Individual advancement in registro/rrhh; group advancement via `NoveltyLiquidationDocs` from contabilidad onwards.
 
-**Tech Stack:** CakePHP 5.3 · PHP 8.2+ · MariaDB · Bootstrap 5 · Phinx migrations (BaseMigration)
-
-**Design doc:** `docs/plans/2026-03-13-novelties-pipeline-design.md`
+**Tech Stack:** CakePHP 5.3 · PHP 8.2 · MariaDB · Bootstrap 5 · Existing pipeline_progress element pattern
 
 ---
 
-## Phase 1: Constants & Migrations
-
----
-
-### Task 1: Actualizar NoveltyConstants
+## Task 1: Update NoveltyConstants
 
 **Files:**
 - Modify: `src/Constants/NoveltyConstants.php`
 
-**Step 1: Reemplazar el contenido completo**
+**Step 1: Replace constants with pipeline values**
 
 ```php
 <?php
@@ -31,17 +25,27 @@ namespace App\Constants;
 
 final class NoveltyConstants
 {
-    // Pipeline statuses
-    public const STATUS_REGISTRO           = 'registro';
-    public const STATUS_RRHH               = 'rrhh';
-    public const STATUS_CONTABILIDAD       = 'contabilidad';
-    public const STATUS_FIRMAS_APROBACION  = 'firmas_aprobacion';
-    public const STATUS_GDP                = 'gdp';
-    public const STATUS_TESORERIA          = 'tesoreria';
-    public const STATUS_PAGADA             = 'pagada';
-    public const STATUS_RECHAZADA          = 'rechazada';
+    // Pipeline statuses (ordered)
+    public const STATUS_REGISTRO = 'registro';
+    public const STATUS_RRHH = 'rrhh';
+    public const STATUS_CONTABILIDAD = 'contabilidad';
+    public const STATUS_FIRMAS_APROBACION = 'firmas_aprobacion';
+    public const STATUS_GDP = 'gdp';
+    public const STATUS_TESORERIA = 'tesoreria';
+    public const STATUS_PAGADA = 'pagada';
+    public const STATUS_RECHAZADA = 'rechazada';
 
     public const PIPELINE_STATUSES = [
+        self::STATUS_REGISTRO,
+        self::STATUS_RRHH,
+        self::STATUS_CONTABILIDAD,
+        self::STATUS_FIRMAS_APROBACION,
+        self::STATUS_GDP,
+        self::STATUS_TESORERIA,
+        self::STATUS_PAGADA,
+    ];
+
+    public const ALL_STATUSES = [
         self::STATUS_REGISTRO,
         self::STATUS_RRHH,
         self::STATUS_CONTABILIDAD,
@@ -53,115 +57,117 @@ final class NoveltyConstants
     ];
 
     public const STATUS_LABELS = [
-        self::STATUS_REGISTRO          => 'Registro',
-        self::STATUS_RRHH              => 'RRHH',
-        self::STATUS_CONTABILIDAD      => 'Contabilidad',
+        self::STATUS_REGISTRO => 'Registro',
+        self::STATUS_RRHH => 'RRHH',
+        self::STATUS_CONTABILIDAD => 'Contabilidad',
         self::STATUS_FIRMAS_APROBACION => 'Firmas y Aprobación',
-        self::STATUS_GDP               => 'GDP',
-        self::STATUS_TESORERIA         => 'Tesorería',
-        self::STATUS_PAGADA            => 'Pagada',
-        self::STATUS_RECHAZADA         => 'Rechazada',
+        self::STATUS_GDP => 'GDP',
+        self::STATUS_TESORERIA => 'Tesorería',
+        self::STATUS_PAGADA => 'Pagada',
+        self::STATUS_RECHAZADA => 'Rechazada',
     ];
 
     public const STATUS_ICONS = [
-        self::STATUS_REGISTRO          => 'bi-pencil-square',
-        self::STATUS_RRHH              => 'bi-people',
-        self::STATUS_CONTABILIDAD      => 'bi-calculator',
+        self::STATUS_REGISTRO => 'bi-pencil-square',
+        self::STATUS_RRHH => 'bi-people',
+        self::STATUS_CONTABILIDAD => 'bi-calculator',
         self::STATUS_FIRMAS_APROBACION => 'bi-pen',
-        self::STATUS_GDP               => 'bi-clipboard-check',
-        self::STATUS_TESORERIA         => 'bi-bank',
-        self::STATUS_PAGADA            => 'bi-cash-coin',
-        self::STATUS_RECHAZADA         => 'bi-x-circle',
+        self::STATUS_GDP => 'bi-clipboard-check',
+        self::STATUS_TESORERIA => 'bi-bank',
+        self::STATUS_PAGADA => 'bi-cash-coin',
     ];
 
-    // Period options for liquidation docs
-    public const PERIOD_PRIMERA_QUINCENA  = 'primera_quincena';
-    public const PERIOD_SEGUNDA_QUINCENA  = 'segunda_quincena';
-    public const PERIOD_CIERRE_NOMINA     = 'cierre_nomina';
+    // Linear transitions
+    public const TRANSITIONS = [
+        self::STATUS_REGISTRO => self::STATUS_RRHH,
+        self::STATUS_RRHH => self::STATUS_CONTABILIDAD,
+        self::STATUS_CONTABILIDAD => self::STATUS_FIRMAS_APROBACION,
+        self::STATUS_FIRMAS_APROBACION => self::STATUS_GDP,
+        self::STATUS_GDP => self::STATUS_TESORERIA,
+        self::STATUS_TESORERIA => self::STATUS_PAGADA,
+        self::STATUS_PAGADA => null,
+    ];
 
+    // Schedule types
+    public const SCHEDULE_DAYS = 'days';
+    public const SCHEDULE_HOURS = 'hours';
+    public const SCHEDULE_TYPES = [self::SCHEDULE_DAYS, self::SCHEDULE_HOURS];
+    public const SCHEDULE_LABELS = [
+        self::SCHEDULE_DAYS => 'Por días',
+        self::SCHEDULE_HOURS => 'Por horas',
+    ];
+
+    // Period options (for liquidation docs)
+    public const PERIOD_PRIMERA_QUINCENA = 'primera_quincena';
+    public const PERIOD_SEGUNDA_QUINCENA = 'segunda_quincena';
+    public const PERIOD_CIERRE_NOMINA = 'cierre_nomina';
     public const PERIODS = [
         self::PERIOD_PRIMERA_QUINCENA,
         self::PERIOD_SEGUNDA_QUINCENA,
         self::PERIOD_CIERRE_NOMINA,
     ];
-
     public const PERIOD_LABELS = [
-        self::PERIOD_PRIMERA_QUINCENA => '1ra Quincena',
-        self::PERIOD_SEGUNDA_QUINCENA => '2da Quincena',
-        self::PERIOD_CIERRE_NOMINA    => 'Cierre de Nómina',
+        self::PERIOD_PRIMERA_QUINCENA => 'Primera Quincena',
+        self::PERIOD_SEGUNDA_QUINCENA => 'Segunda Quincena',
+        self::PERIOD_CIERRE_NOMINA => 'Cierre de Nómina',
     ];
 
-    // Payment statuses (tesoreria)
-    public const PAYMENT_PAGADO    = 'pagado';
+    // Payment statuses (for liquidation docs)
+    public const PAYMENT_PAGADO = 'pagado';
     public const PAYMENT_PENDIENTE = 'pendiente';
-    public const PAYMENT_NA        = 'na';
-
+    public const PAYMENT_NA = 'na';
     public const PAYMENT_STATUSES = [
         self::PAYMENT_PAGADO,
         self::PAYMENT_PENDIENTE,
         self::PAYMENT_NA,
     ];
-
     public const PAYMENT_LABELS = [
-        self::PAYMENT_PAGADO    => 'Pagado',
+        self::PAYMENT_PAGADO => 'Pagado',
         self::PAYMENT_PENDIENTE => 'Pendiente',
-        self::PAYMENT_NA        => 'N/A',
+        self::PAYMENT_NA => 'N/A',
     ];
 
-    // Signer types for firmas_aprobacion
-    public const SIGNER_CONTADOR          = 'contador';
+    // Signer types (for liquidation doc signatures)
+    public const SIGNER_CONTADOR = 'contador';
     public const SIGNER_COORDINADOR_ADMIN = 'coordinador_admin';
-    public const SIGNER_JEFE_INMEDIATO    = 'jefe_inmediato';
-    public const SIGNER_TRABAJADOR        = 'trabajador';
-
+    public const SIGNER_JEFE_INMEDIATO = 'jefe_inmediato';
+    public const SIGNER_TRABAJADOR = 'trabajador';
     public const SIGNER_TYPES = [
         self::SIGNER_CONTADOR,
         self::SIGNER_COORDINADOR_ADMIN,
         self::SIGNER_JEFE_INMEDIATO,
         self::SIGNER_TRABAJADOR,
     ];
-
     public const SIGNER_LABELS = [
-        self::SIGNER_CONTADOR          => 'Contador',
+        self::SIGNER_CONTADOR => 'Contador',
         self::SIGNER_COORDINADOR_ADMIN => 'Coordinador Administrativo',
-        self::SIGNER_JEFE_INMEDIATO    => 'Jefe Inmediato',
-        self::SIGNER_TRABAJADOR        => 'Trabajador',
+        self::SIGNER_JEFE_INMEDIATO => 'Jefe Inmediato',
+        self::SIGNER_TRABAJADOR => 'Trabajador',
     ];
 
-    // Schedule types (existing, kept for compatibility)
-    public const SCHEDULE_DAYS  = 'days';
-    public const SCHEDULE_HOURS = 'hours';
-    public const SCHEDULE_TYPES = [self::SCHEDULE_DAYS, self::SCHEDULE_HOURS];
-
-    public const SCHEDULE_LABELS = [
-        self::SCHEDULE_DAYS  => 'Por días',
-        self::SCHEDULE_HOURS => 'Por horas',
-    ];
+    // Backward compat — old statuses mapping
+    public const STATUS_PENDING = self::STATUS_REGISTRO;
+    public const STATUS_APPROVED = self::STATUS_PAGADA;
+    public const STATUS_REJECTED = self::STATUS_RECHAZADA;
+    public const STATUSES = self::ALL_STATUSES;
 }
 ```
 
-**Step 2: Verificar que el archivo compila**
-
-```bash
-composer cs-check src/Constants/NoveltyConstants.php
-```
-Expected: No errors.
-
-**Step 3: Commit**
+**Step 2: Commit**
 
 ```bash
 git add src/Constants/NoveltyConstants.php
-git commit -m "feat(novelties): expand NoveltyConstants with full pipeline statuses, periods, payments, signers"
+git commit -m "feat(novelties): update NoveltyConstants with pipeline statuses and liquidation constants"
 ```
 
 ---
 
-### Task 2: Migración — columnas de configuración en novelty_types
+## Task 2: Database Migrations — NoveltyTypes Config Columns
 
 **Files:**
-- Create: `config/Migrations/20260313000001_AddConfigColumnsToNoveltyTypes.php`
+- Create: `config/Migrations/20260313000001_AddPipelineFlagsToNoveltyTypes.php`
 
-**Step 1: Crear la migración**
+**Step 1: Create migration**
 
 ```php
 <?php
@@ -169,22 +175,22 @@ declare(strict_types=1);
 
 use Migrations\BaseMigration;
 
-class AddConfigColumnsToNoveltyTypes extends BaseMigration
+class AddPipelineFlagsToNoveltyTypes extends BaseMigration
 {
     public function up(): void
     {
         $table = $this->table('novelty_types');
         $table
-            ->addColumn('requires_rrhh', 'boolean', ['null' => false, 'default' => true, 'after' => 'parent_id'])
-            ->addColumn('requires_firmas', 'boolean', ['null' => false, 'default' => true, 'after' => 'requires_rrhh'])
-            ->addColumn('requires_gdp', 'boolean', ['null' => false, 'default' => true, 'after' => 'requires_firmas'])
-            ->addColumn('requires_tesoreria', 'boolean', ['null' => false, 'default' => true, 'after' => 'requires_gdp'])
-            ->addColumn('show_start_date', 'boolean', ['null' => false, 'default' => true, 'after' => 'requires_tesoreria'])
-            ->addColumn('show_end_date', 'boolean', ['null' => false, 'default' => true, 'after' => 'show_start_date'])
-            ->addColumn('show_permission_date', 'boolean', ['null' => false, 'default' => true, 'after' => 'show_end_date'])
-            ->addColumn('show_schedule_type', 'boolean', ['null' => false, 'default' => true, 'after' => 'show_permission_date'])
-            ->addColumn('uses_custom_name', 'boolean', ['null' => false, 'default' => false, 'after' => 'show_schedule_type'])
-            ->addColumn('is_massive', 'boolean', ['null' => false, 'default' => false, 'after' => 'uses_custom_name'])
+            ->addColumn('requires_rrhh', 'boolean', ['default' => true, 'null' => false, 'after' => 'parent_id'])
+            ->addColumn('requires_firmas', 'boolean', ['default' => true, 'null' => false, 'after' => 'requires_rrhh'])
+            ->addColumn('requires_gdp', 'boolean', ['default' => true, 'null' => false, 'after' => 'requires_firmas'])
+            ->addColumn('requires_tesoreria', 'boolean', ['default' => true, 'null' => false, 'after' => 'requires_gdp'])
+            ->addColumn('show_start_date', 'boolean', ['default' => true, 'null' => false, 'after' => 'requires_tesoreria'])
+            ->addColumn('show_end_date', 'boolean', ['default' => true, 'null' => false, 'after' => 'show_start_date'])
+            ->addColumn('show_permission_date', 'boolean', ['default' => true, 'null' => false, 'after' => 'show_end_date'])
+            ->addColumn('show_schedule_type', 'boolean', ['default' => true, 'null' => false, 'after' => 'show_permission_date'])
+            ->addColumn('uses_custom_name', 'boolean', ['default' => false, 'null' => false, 'after' => 'show_schedule_type'])
+            ->addColumn('is_massive', 'boolean', ['default' => false, 'null' => false, 'after' => 'uses_custom_name'])
             ->update();
     }
 
@@ -207,28 +213,33 @@ class AddConfigColumnsToNoveltyTypes extends BaseMigration
 }
 ```
 
-**Step 2: Aplicar la migración**
+**Step 2: Run migration**
 
 ```bash
 bin/cake migrations migrate
 ```
-Expected: `== 20260313000001 AddConfigColumnsToNoveltyTypes: migrated`
+Expected: Migration applied successfully.
 
 **Step 3: Commit**
 
 ```bash
-git add config/Migrations/20260313000001_AddConfigColumnsToNoveltyTypes.php
-git commit -m "feat(novelties): add pipeline config columns to novelty_types"
+git add config/Migrations/20260313000001_AddPipelineFlagsToNoveltyTypes.php
+git commit -m "feat(novelties): add pipeline configuration flags to novelty_types"
 ```
 
 ---
 
-### Task 3: Migración — modificar employee_novelties
+## Task 3: Database Migrations — Modify employee_novelties + Create new tables
 
 **Files:**
-- Create: `config/Migrations/20260313000002_UpdateEmployeeNoveltiesForPipeline.php`
+- Create: `config/Migrations/20260313000002_ModifyEmployeeNoveltiesForPipeline.php`
+- Create: `config/Migrations/20260313000003_CreateNoveltyLiquidationDocs.php`
+- Create: `config/Migrations/20260313000004_CreateNoveltyLiquidationSignatures.php`
+- Create: `config/Migrations/20260313000005_CreateNoveltyMassiveEmployees.php`
+- Create: `config/Migrations/20260313000006_CreateNoveltyObservations.php`
+- Create: `config/Migrations/20260313000007_CreateNoveltyDocuments.php`
 
-**Step 1: Crear la migración**
+**Step 1: Migration — Modify employee_novelties**
 
 ```php
 <?php
@@ -236,84 +247,62 @@ declare(strict_types=1);
 
 use Migrations\BaseMigration;
 
-class UpdateEmployeeNoveltiesForPipeline extends BaseMigration
+class ModifyEmployeeNoveltiesForPipeline extends BaseMigration
 {
     public function up(): void
     {
-        $table = $this->table('employee_novelties');
+        // Rename status → pipeline_status and widen
+        $this->execute("ALTER TABLE employee_novelties CHANGE COLUMN `status` `pipeline_status` VARCHAR(30) NOT NULL DEFAULT 'registro'");
+
+        // Migrate old values
+        $this->execute("UPDATE employee_novelties SET pipeline_status = 'registro' WHERE pipeline_status = 'pendiente'");
+        $this->execute("UPDATE employee_novelties SET pipeline_status = 'pagada' WHERE pipeline_status = 'aprobado'");
+        $this->execute("UPDATE employee_novelties SET pipeline_status = 'rechazada' WHERE pipeline_status = 'rechazado'");
+
+        // Make employee_id nullable (for massive novelties)
+        $this->execute("ALTER TABLE employee_novelties MODIFY COLUMN employee_id INTEGER NULL DEFAULT NULL");
 
         // Add new columns
+        $table = $this->table('employee_novelties');
         $table
-            ->addColumn('pipeline_status', 'string', ['limit' => 30, 'null' => false, 'default' => 'registro', 'after' => 'observations'])
-            ->addColumn('passes_payroll', 'boolean', ['null' => true, 'default' => null, 'after' => 'pipeline_status'])
+            ->addColumn('passes_payroll', 'boolean', ['null' => true, 'default' => null, 'after' => 'observations'])
             ->addColumn('rrhh_by', 'integer', ['null' => true, 'default' => null, 'after' => 'passes_payroll'])
             ->addColumn('liquidation_doc_id', 'integer', ['null' => true, 'default' => null, 'after' => 'rrhh_by'])
             ->addColumn('custom_name', 'string', ['limit' => 255, 'null' => true, 'default' => null, 'after' => 'liquidation_doc_id'])
-            ->update();
-
-        // Make employee_id nullable for massive novelties
-        $this->table('employee_novelties')
-            ->changeColumn('employee_id', 'integer', ['null' => true, 'default' => null])
-            ->update();
-
-        // Migrate existing status values to pipeline_status
-        $this->execute("UPDATE employee_novelties SET pipeline_status = CASE
-            WHEN status = 'rechazado' THEN 'rechazada'
-            WHEN status = 'aprobado' THEN 'pagada'
-            ELSE 'registro'
-        END");
-
-        // Add FK for rrhh_by and liquidation_doc_id (after table is created in task 4)
-        // rrhh_by FK added here since users table exists
-        $this->table('employee_novelties')
             ->addForeignKey('rrhh_by', 'users', 'id', ['delete' => 'SET_NULL', 'update' => 'NO_ACTION'])
             ->update();
+
+        // Note: liquidation_doc_id FK added after creating novelty_liquidation_docs table
     }
 
     public function down(): void
     {
-        $this->table('employee_novelties')
-            ->dropForeignKey('rrhh_by')
-            ->update();
-
         $table = $this->table('employee_novelties');
+
+        // Remove FK first if exists
+        try {
+            $table->dropForeignKey('rrhh_by')->update();
+        } catch (\Exception $e) {
+            // FK may not exist
+        }
+
         $table
-            ->removeColumn('pipeline_status')
             ->removeColumn('passes_payroll')
             ->removeColumn('rrhh_by')
             ->removeColumn('liquidation_doc_id')
             ->removeColumn('custom_name')
             ->update();
 
-        $this->table('employee_novelties')
-            ->changeColumn('employee_id', 'integer', ['null' => false])
-            ->update();
+        $this->execute("ALTER TABLE employee_novelties MODIFY COLUMN employee_id INTEGER NOT NULL");
+        $this->execute("UPDATE employee_novelties SET pipeline_status = 'pendiente' WHERE pipeline_status = 'registro'");
+        $this->execute("UPDATE employee_novelties SET pipeline_status = 'aprobado' WHERE pipeline_status = 'pagada'");
+        $this->execute("UPDATE employee_novelties SET pipeline_status = 'rechazado' WHERE pipeline_status = 'rechazada'");
+        $this->execute("ALTER TABLE employee_novelties CHANGE COLUMN `pipeline_status` `status` VARCHAR(20) NOT NULL DEFAULT 'pendiente'");
     }
 }
 ```
 
-**Step 2: Aplicar**
-
-```bash
-bin/cake migrations migrate
-```
-Expected: `== 20260313000002 UpdateEmployeeNoveltiesForPipeline: migrated`
-
-**Step 3: Commit**
-
-```bash
-git add config/Migrations/20260313000002_UpdateEmployeeNoveltiesForPipeline.php
-git commit -m "feat(novelties): add pipeline_status, rrhh fields, custom_name and liquidation FK to employee_novelties"
-```
-
----
-
-### Task 4: Migración — crear novelty_liquidation_docs
-
-**Files:**
-- Create: `config/Migrations/20260313000003_CreateNoveltyLiquidationDocs.php`
-
-**Step 1: Crear la migración**
+**Step 2: Migration — Create novelty_liquidation_docs**
 
 ```php
 <?php
@@ -328,9 +317,10 @@ class CreateNoveltyLiquidationDocs extends BaseMigration
         if (!$this->hasTable('novelty_liquidation_docs')) {
             $this->table('novelty_liquidation_docs')
                 ->addColumn('liquidation_number', 'string', ['limit' => 50, 'null' => false])
-                ->addColumn('period', 'string', ['limit' => 30, 'null' => true, 'default' => null])
-                ->addColumn('document_date', 'date', ['null' => true, 'default' => null])
-                ->addColumn('performed_by', 'integer', ['null' => true, 'default' => null])
+                ->addColumn('period', 'string', ['limit' => 30, 'null' => false])
+                ->addColumn('pipeline_status', 'string', ['limit' => 30, 'null' => false, 'default' => 'contabilidad'])
+                ->addColumn('document_date', 'date', ['null' => false])
+                ->addColumn('performed_by', 'integer', ['null' => false])
                 ->addColumn('passes_for_payment', 'boolean', ['null' => true, 'default' => null])
                 ->addColumn('payment_status', 'string', ['limit' => 20, 'null' => true, 'default' => null])
                 ->addColumn('payment_date', 'date', ['null' => true, 'default' => null])
@@ -338,23 +328,27 @@ class CreateNoveltyLiquidationDocs extends BaseMigration
                 ->addColumn('created', 'datetime', ['null' => true])
                 ->addColumn('modified', 'datetime', ['null' => true])
                 ->addIndex(['liquidation_number'], ['unique' => true])
-                ->addForeignKey('performed_by', 'users', 'id', ['delete' => 'SET_NULL', 'update' => 'NO_ACTION'])
+                ->addForeignKey('performed_by', 'users', 'id', ['delete' => 'RESTRICT', 'update' => 'NO_ACTION'])
                 ->addForeignKey('created_by', 'users', 'id', ['delete' => 'RESTRICT', 'update' => 'NO_ACTION'])
                 ->create();
         }
 
-        // Now add FK from employee_novelties to novelty_liquidation_docs
+        // Now add FK from employee_novelties → novelty_liquidation_docs
         $this->table('employee_novelties')
-            ->addForeignKey('liquidation_doc_id', 'novelty_liquidation_docs', 'id', ['delete' => 'SET_NULL', 'update' => 'NO_ACTION'])
+            ->addForeignKey('liquidation_doc_id', 'novelty_liquidation_docs', 'id', [
+                'delete' => 'SET_NULL',
+                'update' => 'NO_ACTION',
+            ])
             ->update();
     }
 
     public function down(): void
     {
-        $this->table('employee_novelties')
-            ->dropForeignKey('liquidation_doc_id')
-            ->update();
-
+        try {
+            $this->table('employee_novelties')->dropForeignKey('liquidation_doc_id')->update();
+        } catch (\Exception $e) {
+            // FK may not exist
+        }
         if ($this->hasTable('novelty_liquidation_docs')) {
             $this->table('novelty_liquidation_docs')->drop()->save();
         }
@@ -362,28 +356,7 @@ class CreateNoveltyLiquidationDocs extends BaseMigration
 }
 ```
 
-**Step 2: Aplicar**
-
-```bash
-bin/cake migrations migrate
-```
-Expected: `== 20260313000003 CreateNoveltyLiquidationDocs: migrated`
-
-**Step 3: Commit**
-
-```bash
-git add config/Migrations/20260313000003_CreateNoveltyLiquidationDocs.php
-git commit -m "feat(novelties): create novelty_liquidation_docs table and FK from employee_novelties"
-```
-
----
-
-### Task 5: Migraciones — tablas auxiliares (massive_employees, signatures, observations, documents)
-
-**Files:**
-- Create: `config/Migrations/20260313000004_CreateNoveltyAuxiliaryTables.php`
-
-**Step 1: Crear la migración**
+**Step 3: Migration — Create novelty_liquidation_signatures**
 
 ```php
 <?php
@@ -391,11 +364,44 @@ declare(strict_types=1);
 
 use Migrations\BaseMigration;
 
-class CreateNoveltyAuxiliaryTables extends BaseMigration
+class CreateNoveltyLiquidationSignatures extends BaseMigration
 {
     public function up(): void
     {
-        // novelty_massive_employees
+        if (!$this->hasTable('novelty_liquidation_signatures')) {
+            $this->table('novelty_liquidation_signatures')
+                ->addColumn('liquidation_doc_id', 'integer', ['null' => false])
+                ->addColumn('signer_type', 'string', ['limit' => 30, 'null' => false])
+                ->addColumn('signature_path', 'string', ['limit' => 255, 'null' => true, 'default' => null])
+                ->addColumn('signed_by', 'integer', ['null' => true, 'default' => null])
+                ->addColumn('approved_at', 'datetime', ['null' => true, 'default' => null])
+                ->addForeignKey('liquidation_doc_id', 'novelty_liquidation_docs', 'id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
+                ->addForeignKey('signed_by', 'users', 'id', ['delete' => 'SET_NULL', 'update' => 'NO_ACTION'])
+                ->create();
+        }
+    }
+
+    public function down(): void
+    {
+        if ($this->hasTable('novelty_liquidation_signatures')) {
+            $this->table('novelty_liquidation_signatures')->drop()->save();
+        }
+    }
+}
+```
+
+**Step 4: Migration — Create novelty_massive_employees**
+
+```php
+<?php
+declare(strict_types=1);
+
+use Migrations\BaseMigration;
+
+class CreateNoveltyMassiveEmployees extends BaseMigration
+{
+    public function up(): void
+    {
         if (!$this->hasTable('novelty_massive_employees')) {
             $this->table('novelty_massive_employees')
                 ->addColumn('novelty_id', 'integer', ['null' => false])
@@ -404,22 +410,29 @@ class CreateNoveltyAuxiliaryTables extends BaseMigration
                 ->addForeignKey('employee_id', 'employees', 'id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
                 ->create();
         }
+    }
 
-        // novelty_liquidation_signatures
-        if (!$this->hasTable('novelty_liquidation_signatures')) {
-            $this->table('novelty_liquidation_signatures')
-                ->addColumn('liquidation_doc_id', 'integer', ['null' => false])
-                ->addColumn('signer_type', 'string', ['limit' => 30, 'null' => false])
-                ->addColumn('signature_path', 'string', ['limit' => 255, 'null' => true, 'default' => null])
-                ->addColumn('signed_by', 'integer', ['null' => true, 'default' => null])
-                ->addColumn('approved_at', 'datetime', ['null' => true, 'default' => null])
-                ->addColumn('created', 'datetime', ['null' => true])
-                ->addForeignKey('liquidation_doc_id', 'novelty_liquidation_docs', 'id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
-                ->addForeignKey('signed_by', 'users', 'id', ['delete' => 'SET_NULL', 'update' => 'NO_ACTION'])
-                ->create();
+    public function down(): void
+    {
+        if ($this->hasTable('novelty_massive_employees')) {
+            $this->table('novelty_massive_employees')->drop()->save();
         }
+    }
+}
+```
 
-        // novelty_observations
+**Step 5: Migration — Create novelty_observations**
+
+```php
+<?php
+declare(strict_types=1);
+
+use Migrations\BaseMigration;
+
+class CreateNoveltyObservations extends BaseMigration
+{
+    public function up(): void
+    {
         if (!$this->hasTable('novelty_observations')) {
             $this->table('novelty_observations')
                 ->addColumn('novelty_id', 'integer', ['null' => true, 'default' => null])
@@ -433,8 +446,29 @@ class CreateNoveltyAuxiliaryTables extends BaseMigration
                 ->addForeignKey('user_id', 'users', 'id', ['delete' => 'RESTRICT', 'update' => 'NO_ACTION'])
                 ->create();
         }
+    }
 
-        // novelty_documents
+    public function down(): void
+    {
+        if ($this->hasTable('novelty_observations')) {
+            $this->table('novelty_observations')->drop()->save();
+        }
+    }
+}
+```
+
+**Step 6: Migration — Create novelty_documents**
+
+```php
+<?php
+declare(strict_types=1);
+
+use Migrations\BaseMigration;
+
+class CreateNoveltyDocuments extends BaseMigration
+{
+    public function up(): void
+    {
         if (!$this->hasTable('novelty_documents')) {
             $this->table('novelty_documents')
                 ->addColumn('novelty_id', 'integer', ['null' => true, 'default' => null])
@@ -442,8 +476,8 @@ class CreateNoveltyAuxiliaryTables extends BaseMigration
                 ->addColumn('pipeline_status', 'string', ['limit' => 30, 'null' => false])
                 ->addColumn('file_path', 'string', ['limit' => 255, 'null' => false])
                 ->addColumn('file_name', 'string', ['limit' => 255, 'null' => false])
-                ->addColumn('file_size', 'integer', ['null' => true, 'default' => null])
-                ->addColumn('mime_type', 'string', ['limit' => 100, 'null' => true, 'default' => null])
+                ->addColumn('file_size', 'integer', ['null' => false])
+                ->addColumn('mime_type', 'string', ['limit' => 100, 'null' => false])
                 ->addColumn('uploaded_by', 'integer', ['null' => true, 'default' => null])
                 ->addColumn('created', 'datetime', ['null' => true])
                 ->addForeignKey('novelty_id', 'employee_novelties', 'id', ['delete' => 'CASCADE', 'update' => 'NO_ACTION'])
@@ -455,167 +489,55 @@ class CreateNoveltyAuxiliaryTables extends BaseMigration
 
     public function down(): void
     {
-        foreach (['novelty_documents', 'novelty_observations', 'novelty_liquidation_signatures', 'novelty_massive_employees'] as $table) {
-            if ($this->hasTable($table)) {
-                $this->table($table)->drop()->save();
-            }
+        if ($this->hasTable('novelty_documents')) {
+            $this->table('novelty_documents')->drop()->save();
         }
     }
 }
 ```
 
-**Step 2: Aplicar**
+**Step 7: Run all migrations**
 
 ```bash
 bin/cake migrations migrate
 ```
-Expected: `== 20260313000004 CreateNoveltyAuxiliaryTables: migrated`
+Expected: All 7 migrations applied successfully.
 
-**Step 3: Commit**
+**Step 8: Commit**
 
 ```bash
-git add config/Migrations/20260313000004_CreateNoveltyAuxiliaryTables.php
-git commit -m "feat(novelties): create auxiliary tables: massive_employees, signatures, observations, documents"
+git add config/Migrations/20260313000002_ModifyEmployeeNoveltiesForPipeline.php \
+        config/Migrations/20260313000003_CreateNoveltyLiquidationDocs.php \
+        config/Migrations/20260313000004_CreateNoveltyLiquidationSignatures.php \
+        config/Migrations/20260313000005_CreateNoveltyMassiveEmployees.php \
+        config/Migrations/20260313000006_CreateNoveltyObservations.php \
+        config/Migrations/20260313000007_CreateNoveltyDocuments.php
+git commit -m "feat(novelties): create pipeline database schema (liquidation docs, signatures, observations, documents, massive employees)"
 ```
 
 ---
 
-### Task 6: Migración — permisos para novelty_liquidation_docs
-
-**Files:**
-- Create: `config/Migrations/20260313000005_AddNoveltyLiquidationPermissions.php`
-
-**Step 1: Crear la migración**
-
-```php
-<?php
-declare(strict_types=1);
-
-use Migrations\BaseMigration;
-
-class AddNoveltyLiquidationPermissions extends BaseMigration
-{
-    public function up(): void
-    {
-        $rolesTable = $this->table('roles');
-        $roles = $this->fetchAll('SELECT id, name FROM roles');
-        $roleMap = array_column($roles, 'id', 'name');
-
-        $permissions = [];
-        foreach ($roles as $role) {
-            $isAdmin = $role['name'] === 'Administrador';
-            $permissions[] = [
-                'role_id'    => $role['id'],
-                'module'     => 'novelty_liquidation_docs',
-                'can_view'   => 1,
-                'can_create' => $isAdmin ? 1 : 0,
-                'can_edit'   => 1,
-                'can_delete' => $isAdmin ? 1 : 0,
-            ];
-        }
-
-        $this->table('permissions')->insert($permissions)->saveData();
-    }
-
-    public function down(): void
-    {
-        $this->execute("DELETE FROM permissions WHERE module = 'novelty_liquidation_docs'");
-    }
-}
-```
-
-**Step 2: Aplicar**
-
-```bash
-bin/cake migrations migrate
-```
-Expected: `== 20260313000005 AddNoveltyLiquidationPermissions: migrated`
-
-**Step 3: Commit**
-
-```bash
-git add config/Migrations/20260313000005_AddNoveltyLiquidationPermissions.php
-git commit -m "feat(novelties): add permissions for novelty_liquidation_docs module"
-```
-
----
-
-## Phase 2: Models
-
----
-
-### Task 7: Actualizar NoveltyType entity + NoveltyTypesTable
-
-**Files:**
-- Modify: `src/Model/Entity/NoveltyType.php`
-- Modify: `src/Model/Table/NoveltyTypesTable.php`
-
-**Step 1: Actualizar entity**
-
-```php
-<?php
-declare(strict_types=1);
-
-namespace App\Model\Entity;
-
-use Cake\ORM\Entity;
-
-class NoveltyType extends Entity
-{
-    protected array $_accessible = [
-        'name'                => true,
-        'parent_id'           => true,
-        'requires_rrhh'       => true,
-        'requires_firmas'     => true,
-        'requires_gdp'        => true,
-        'requires_tesoreria'  => true,
-        'show_start_date'     => true,
-        'show_end_date'       => true,
-        'show_permission_date'=> true,
-        'show_schedule_type'  => true,
-        'uses_custom_name'    => true,
-        'is_massive'          => true,
-        'novelty_type_contract_templates' => true,
-    ];
-}
-```
-
-**Step 2: Actualizar NoveltyTypesTable — agregar validaciones para los nuevos campos**
-
-En `validationDefault()` agregar después de la validación de `parent_id`:
-
-```php
-foreach ([
-    'requires_rrhh', 'requires_firmas', 'requires_gdp', 'requires_tesoreria',
-    'show_start_date', 'show_end_date', 'show_permission_date', 'show_schedule_type',
-    'uses_custom_name', 'is_massive',
-] as $boolField) {
-    $validator->boolean($boolField)->notEmptyString($boolField);
-}
-```
-
-**Step 3: Verificar estilo**
-
-```bash
-composer cs-check src/Model/Entity/NoveltyType.php src/Model/Table/NoveltyTypesTable.php
-```
-
-**Step 4: Commit**
-
-```bash
-git add src/Model/Entity/NoveltyType.php src/Model/Table/NoveltyTypesTable.php
-git commit -m "feat(novelties): update NoveltyType entity and table with pipeline config fields"
-```
-
----
-
-### Task 8: Actualizar EmployeeNovelty entity + EmployeeNoveltiesTable
+## Task 4: Models — Entities and Tables for New Tables
 
 **Files:**
 - Modify: `src/Model/Entity/EmployeeNovelty.php`
+- Modify: `src/Model/Entity/NoveltyType.php`
 - Modify: `src/Model/Table/EmployeeNoveltiesTable.php`
+- Modify: `src/Model/Table/NoveltyTypesTable.php`
+- Create: `src/Model/Entity/NoveltyLiquidationDoc.php`
+- Create: `src/Model/Table/NoveltyLiquidationDocsTable.php`
+- Create: `src/Model/Entity/NoveltyLiquidationSignature.php`
+- Create: `src/Model/Table/NoveltyLiquidationSignaturesTable.php`
+- Create: `src/Model/Entity/NoveltyMassiveEmployee.php`
+- Create: `src/Model/Table/NoveltyMassiveEmployeesTable.php`
+- Create: `src/Model/Entity/NoveltyObservation.php`
+- Create: `src/Model/Table/NoveltyObservationsTable.php`
+- Create: `src/Model/Entity/NoveltyDocument.php`
+- Create: `src/Model/Table/NoveltyDocumentsTable.php`
 
-**Step 1: Actualizar entity — agregar campos nuevos a `$_accessible` y helpers de estado**
+**Step 1: Update EmployeeNovelty entity**
+
+Replace `src/Model/Entity/EmployeeNovelty.php` with:
 
 ```php
 <?php
@@ -629,93 +551,50 @@ use Cake\ORM\Entity;
 class EmployeeNovelty extends Entity
 {
     protected array $_accessible = [
-        'employee_id'         => true,
-        'novelty_type_id'     => true,
-        'filing_date'         => true,
-        'permission_date'     => true,
-        'schedule_type'       => true,
-        'start_date'          => true,
-        'end_date'            => true,
-        'start_time'          => true,
-        'end_time'            => true,
-        'is_paid'             => true,
-        'reason'              => true,
-        'pipeline_status'     => true,
-        'passes_payroll'      => true,
-        'rrhh_by'             => true,
-        'liquidation_doc_id'  => true,
-        'custom_name'         => true,
-        'registered_by'       => true,
-        'employee_signature'  => true,
+        'employee_id' => true,
+        'novelty_type_id' => true,
+        'filing_date' => true,
+        'permission_date' => true,
+        'schedule_type' => true,
+        'start_date' => true,
+        'end_date' => true,
+        'start_time' => true,
+        'end_time' => true,
+        'is_paid' => true,
+        'reason' => true,
+        'pipeline_status' => true,
+        'approved_by' => true,
+        'approved_at' => true,
+        'registered_by' => true,
+        'employee_signature' => true,
         'coordinator_signature' => true,
-        'observations'        => true,
+        'observations' => true,
+        'passes_payroll' => true,
+        'rrhh_by' => true,
+        'liquidation_doc_id' => true,
+        'custom_name' => true,
     ];
 
-    public function isRechazada(): bool
+    public function isRejected(): bool
     {
         return $this->pipeline_status === NoveltyConstants::STATUS_RECHAZADA;
     }
 
-    public function isPagada(): bool
+    public function isPaid(): bool
     {
         return $this->pipeline_status === NoveltyConstants::STATUS_PAGADA;
     }
 
     public function isGrouped(): bool
     {
-        return !empty($this->liquidation_doc_id);
-    }
-
-    public function isAtStage(string $status): bool
-    {
-        return $this->pipeline_status === $status;
+        return $this->liquidation_doc_id !== null;
     }
 }
 ```
 
-**Step 2: Actualizar EmployeeNoveltiesTable**
+**Step 2: Update NoveltyType entity**
 
-- Agregar asociación `belongsTo('RrhhByUsers', ['className' => 'Users', 'foreignKey' => 'rrhh_by', 'joinType' => 'LEFT'])`
-- Agregar asociación `belongsTo('NoveltyLiquidationDocs', ['foreignKey' => 'liquidation_doc_id', 'joinType' => 'LEFT'])`
-- Agregar asociación `hasMany('NoveltyMassiveEmployees', ['foreignKey' => 'novelty_id', 'dependent' => true])`
-- Agregar asociación `hasMany('NoveltyObservations', ['foreignKey' => 'novelty_id', 'dependent' => true])`
-- Agregar asociación `hasMany('NoveltyDocuments', ['foreignKey' => 'novelty_id', 'dependent' => true])`
-- En `validationDefault()`: cambiar `'status'` por `'pipeline_status'` con `inList('pipeline_status', NoveltyConstants::PIPELINE_STATUSES)`
-- Hacer `employee_id` opcional: cambiar `requirePresence` por `allowEmptyString`
-- Hacer `permission_date`, `schedule_type` opcionales (allowEmpty)
-- Agregar `passes_payroll` como `boolean()->allowEmptyString()`
-- Agregar `custom_name` como `scalar()->allowEmptyString()`
-
-**Step 3: Verificar**
-
-```bash
-composer cs-check src/Model/Entity/EmployeeNovelty.php src/Model/Table/EmployeeNoveltiesTable.php
-```
-
-**Step 4: Commit**
-
-```bash
-git add src/Model/Entity/EmployeeNovelty.php src/Model/Table/EmployeeNoveltiesTable.php
-git commit -m "feat(novelties): update EmployeeNovelty entity and table for pipeline"
-```
-
----
-
-### Task 9: Crear modelos de tablas nuevas
-
-**Files:**
-- Create: `src/Model/Entity/NoveltyLiquidationDoc.php`
-- Create: `src/Model/Table/NoveltyLiquidationDocsTable.php`
-- Create: `src/Model/Entity/NoveltyLiquidationSignature.php`
-- Create: `src/Model/Table/NoveltyLiquidationSignaturesTable.php`
-- Create: `src/Model/Entity/NoveltyObservation.php`
-- Create: `src/Model/Table/NoveltyObservationsTable.php`
-- Create: `src/Model/Entity/NoveltyDocument.php`
-- Create: `src/Model/Table/NoveltyDocumentsTable.php`
-- Create: `src/Model/Entity/NoveltyMassiveEmployee.php`
-- Create: `src/Model/Table/NoveltyMassiveEmployeesTable.php`
-
-**Step 1: NoveltyLiquidationDoc entity**
+Replace `src/Model/Entity/NoveltyType.php` with:
 
 ```php
 <?php
@@ -723,31 +602,117 @@ declare(strict_types=1);
 
 namespace App\Model\Entity;
 
-use App\Constants\NoveltyConstants;
+use Cake\ORM\Entity;
+
+class NoveltyType extends Entity
+{
+    protected array $_accessible = [
+        'name' => true,
+        'parent_id' => true,
+        'requires_rrhh' => true,
+        'requires_firmas' => true,
+        'requires_gdp' => true,
+        'requires_tesoreria' => true,
+        'show_start_date' => true,
+        'show_end_date' => true,
+        'show_permission_date' => true,
+        'show_schedule_type' => true,
+        'uses_custom_name' => true,
+        'is_massive' => true,
+        'novelty_type_contract_templates' => true,
+    ];
+}
+```
+
+**Step 3: Update EmployeeNoveltiesTable — add new associations, update validation**
+
+In `src/Model/Table/EmployeeNoveltiesTable.php`, update `initialize()` to add:
+
+```php
+// Existing associations stay. Add these new ones:
+$this->belongsTo('NoveltyLiquidationDocs', [
+    'foreignKey' => 'liquidation_doc_id',
+    'joinType' => 'LEFT',
+]);
+$this->belongsTo('RrhhByUsers', [
+    'className' => 'Users',
+    'foreignKey' => 'rrhh_by',
+    'joinType' => 'LEFT',
+]);
+$this->hasMany('NoveltyMassiveEmployees', [
+    'foreignKey' => 'novelty_id',
+    'dependent' => true,
+    'cascadeCallbacks' => true,
+]);
+$this->hasMany('NoveltyObservations', [
+    'foreignKey' => 'novelty_id',
+    'dependent' => true,
+    'cascadeCallbacks' => true,
+]);
+$this->hasMany('NoveltyDocuments', [
+    'foreignKey' => 'novelty_id',
+    'dependent' => true,
+    'cascadeCallbacks' => true,
+]);
+```
+
+Update `validationDefault()`:
+- Change `'status'` validator to `'pipeline_status'` with `inList(NoveltyConstants::ALL_STATUSES)`
+- Make `employee_id` not required on create (allow null for massive)
+- Make `permission_date` allowEmptyDate (conditional per type flags)
+- Make `schedule_type` allowEmptyString (conditional per type flags)
+- Make `reason` allowEmptyString
+
+Update `Employees` belongsTo to `'joinType' => 'LEFT'` (nullable for massive).
+
+**Step 4: Update NoveltyTypesTable — add validation for new flags**
+
+In `src/Model/Table/NoveltyTypesTable.php`, add boolean validation for each new flag in `validationDefault()`:
+
+```php
+$validator->boolean('requires_rrhh');
+$validator->boolean('requires_firmas');
+$validator->boolean('requires_gdp');
+$validator->boolean('requires_tesoreria');
+$validator->boolean('show_start_date');
+$validator->boolean('show_end_date');
+$validator->boolean('show_permission_date');
+$validator->boolean('show_schedule_type');
+$validator->boolean('uses_custom_name');
+$validator->boolean('is_massive');
+```
+
+**Step 5: Create NoveltyLiquidationDoc entity**
+
+File: `src/Model/Entity/NoveltyLiquidationDoc.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Entity;
+
 use Cake\ORM\Entity;
 
 class NoveltyLiquidationDoc extends Entity
 {
     protected array $_accessible = [
-        'liquidation_number'  => true,
-        'period'              => true,
-        'document_date'       => true,
-        'performed_by'        => true,
-        'passes_for_payment'  => true,
-        'payment_status'      => true,
-        'payment_date'        => true,
-        'created_by'          => true,
+        'liquidation_number' => true,
+        'period' => true,
+        'pipeline_status' => true,
+        'document_date' => true,
+        'performed_by' => true,
+        'passes_for_payment' => true,
+        'payment_status' => true,
+        'payment_date' => true,
+        'created_by' => true,
     ];
-
-    public function isPagada(): bool
-    {
-        // A doc is considered paid when all its novelties are pagada
-        return $this->payment_status === NoveltyConstants::PAYMENT_PAGADO;
-    }
 }
 ```
 
-**Step 2: NoveltyLiquidationDocsTable**
+**Step 6: Create NoveltyLiquidationDocsTable**
+
+File: `src/Model/Table/NoveltyLiquidationDocsTable.php`
 
 ```php
 <?php
@@ -773,31 +738,33 @@ class NoveltyLiquidationDocsTable extends Table
         $this->addBehavior('Timestamp');
 
         $this->belongsTo('PerformedByUsers', [
-            'className'  => 'Users',
+            'className' => 'Users',
             'foreignKey' => 'performed_by',
-            'joinType'   => 'LEFT',
+            'joinType' => 'INNER',
         ]);
         $this->belongsTo('CreatedByUsers', [
-            'className'  => 'Users',
+            'className' => 'Users',
             'foreignKey' => 'created_by',
-            'joinType'   => 'INNER',
+            'joinType' => 'INNER',
         ]);
         $this->hasMany('EmployeeNovelties', [
             'foreignKey' => 'liquidation_doc_id',
-            'dependent'  => false,
+            'dependent' => false,
         ]);
         $this->hasMany('NoveltyLiquidationSignatures', [
             'foreignKey' => 'liquidation_doc_id',
-            'dependent'  => true,
+            'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
         $this->hasMany('NoveltyObservations', [
             'foreignKey' => 'liquidation_doc_id',
-            'dependent'  => true,
+            'dependent' => true,
+            'cascadeCallbacks' => true,
         ]);
         $this->hasMany('NoveltyDocuments', [
             'foreignKey' => 'liquidation_doc_id',
-            'dependent'  => true,
+            'dependent' => true,
+            'cascadeCallbacks' => true,
         ]);
     }
 
@@ -812,15 +779,22 @@ class NoveltyLiquidationDocsTable extends Table
         $validator
             ->scalar('period')
             ->inList('period', NoveltyConstants::PERIODS)
-            ->allowEmptyString('period');
+            ->requirePresence('period', 'create')
+            ->notEmptyString('period');
+
+        $validator
+            ->scalar('pipeline_status')
+            ->inList('pipeline_status', NoveltyConstants::ALL_STATUSES);
 
         $validator
             ->date('document_date')
-            ->allowEmptyDate('document_date');
+            ->requirePresence('document_date', 'create')
+            ->notEmptyDate('document_date');
 
         $validator
             ->integer('performed_by')
-            ->allowEmptyString('performed_by');
+            ->requirePresence('performed_by', 'create')
+            ->notEmptyString('performed_by');
 
         $validator
             ->boolean('passes_for_payment')
@@ -840,11 +814,11 @@ class NoveltyLiquidationDocsTable extends Table
 
     public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $rules->add($rules->isUnique(['liquidation_number']), ['errorField' => 'liquidation_number']);
-        $rules->add($rules->existsIn('performed_by', 'PerformedByUsers'), [
-            'errorField' => 'performed_by',
-            'allowNullableNulls' => true,
+        $rules->add($rules->isUnique(['liquidation_number']), [
+            'errorField' => 'liquidation_number',
+            'message' => 'Este número de liquidación ya existe.',
         ]);
+        $rules->add($rules->existsIn('performed_by', 'PerformedByUsers'), ['errorField' => 'performed_by']);
         $rules->add($rules->existsIn('created_by', 'CreatedByUsers'), ['errorField' => 'created_by']);
 
         return $rules;
@@ -852,128 +826,389 @@ class NoveltyLiquidationDocsTable extends Table
 }
 ```
 
-**Step 3: Entidades y tablas restantes (crear cada una)**
+**Step 7: Create remaining entities and tables**
 
-`NoveltyLiquidationSignature` entity — `$_accessible`: liquidation_doc_id, signer_type, signature_path, signed_by, approved_at
-
-`NoveltyLiquidationSignaturesTable` — belongsTo LiquidationDoc, belongsTo SignedByUsers (Users). Validation: signer_type inList(NoveltyConstants::SIGNER_TYPES).
-
-`NoveltyObservation` entity — `$_accessible`: novelty_id, liquidation_doc_id, user_id, message, is_read
-
-`NoveltyObservationsTable` — belongsTo EmployeeNovelties, belongsTo NoveltyLiquidationDocs, belongsTo Users. Validation: message notEmpty.
-
-`NoveltyDocument` entity — `$_accessible`: novelty_id, liquidation_doc_id, pipeline_status, file_path, file_name, file_size, mime_type, uploaded_by
-
-`NoveltyDocumentsTable` — belongsTo EmployeeNovelties, belongsTo NoveltyLiquidationDocs, belongsTo UploadedByUsers. Validation: pipeline_status inList, file_path/file_name notEmpty.
-
-`NoveltyMassiveEmployee` entity — `$_accessible`: novelty_id, employee_id
-
-`NoveltyMassiveEmployeesTable` — belongsTo EmployeeNovelties, belongsTo Employees.
-
-**Step 4: Verificar estilo**
-
-```bash
-composer cs-check src/Model/
-```
-
-**Step 5: Commit**
-
-```bash
-git add src/Model/
-git commit -m "feat(novelties): create all new entity and table classes for pipeline"
-```
-
----
-
-## Phase 3: Services
-
----
-
-### Task 10: Crear NoveltyPipelineService
-
-**Files:**
-- Create: `src/Service/NoveltyPipelineService.php`
-- Create: `tests/TestCase/Service/NoveltyPipelineServiceTest.php`
-
-**Step 1: Escribir el test primero**
+File: `src/Model/Entity/NoveltyLiquidationSignature.php`
 
 ```php
 <?php
 declare(strict_types=1);
 
-namespace App\Test\TestCase\Service;
+namespace App\Model\Entity;
+
+use Cake\ORM\Entity;
+
+class NoveltyLiquidationSignature extends Entity
+{
+    protected array $_accessible = [
+        'liquidation_doc_id' => true,
+        'signer_type' => true,
+        'signature_path' => true,
+        'signed_by' => true,
+        'approved_at' => true,
+    ];
+}
+```
+
+File: `src/Model/Table/NoveltyLiquidationSignaturesTable.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Table;
 
 use App\Constants\NoveltyConstants;
-use App\Service\NoveltyPipelineService;
-use Cake\TestSuite\TestCase;
+use Cake\ORM\RulesChecker;
+use Cake\ORM\Table;
+use Cake\Validation\Validator;
 
-class NoveltyPipelineServiceTest extends TestCase
+class NoveltyLiquidationSignaturesTable extends Table
 {
-    private NoveltyPipelineService $service;
-
-    public function setUp(): void
+    public function initialize(array $config): void
     {
-        parent::setUp();
-        $this->service = new NoveltyPipelineService();
+        parent::initialize($config);
+
+        $this->setTable('novelty_liquidation_signatures');
+        $this->setDisplayField('id');
+        $this->setPrimaryKey('id');
+
+        $this->belongsTo('NoveltyLiquidationDocs', [
+            'foreignKey' => 'liquidation_doc_id',
+            'joinType' => 'INNER',
+        ]);
+        $this->belongsTo('SignedByUsers', [
+            'className' => 'Users',
+            'foreignKey' => 'signed_by',
+            'joinType' => 'LEFT',
+        ]);
     }
 
-    // Test: tipo que requiere todas las etapas avanza paso a paso
-    public function testGetNextStatusFullPipeline(): void
+    public function validationDefault(Validator $validator): Validator
     {
-        $type = $this->_makeType(true, true, true, true);
-        $this->assertSame(NoveltyConstants::STATUS_RRHH, $this->service->getNextStatus(NoveltyConstants::STATUS_REGISTRO, $type));
-        $this->assertSame(NoveltyConstants::STATUS_CONTABILIDAD, $this->service->getNextStatus(NoveltyConstants::STATUS_RRHH, $type));
-        $this->assertSame(NoveltyConstants::STATUS_FIRMAS_APROBACION, $this->service->getNextStatus(NoveltyConstants::STATUS_CONTABILIDAD, $type));
-        $this->assertSame(NoveltyConstants::STATUS_GDP, $this->service->getNextStatus(NoveltyConstants::STATUS_FIRMAS_APROBACION, $type));
-        $this->assertSame(NoveltyConstants::STATUS_TESORERIA, $this->service->getNextStatus(NoveltyConstants::STATUS_GDP, $type));
-        $this->assertSame(NoveltyConstants::STATUS_PAGADA, $this->service->getNextStatus(NoveltyConstants::STATUS_TESORERIA, $type));
-        $this->assertNull($this->service->getNextStatus(NoveltyConstants::STATUS_PAGADA, $type));
+        $validator
+            ->integer('liquidation_doc_id')
+            ->requirePresence('liquidation_doc_id', 'create')
+            ->notEmptyString('liquidation_doc_id');
+
+        $validator
+            ->scalar('signer_type')
+            ->inList('signer_type', NoveltyConstants::SIGNER_TYPES)
+            ->requirePresence('signer_type', 'create')
+            ->notEmptyString('signer_type');
+
+        return $validator;
     }
 
-    // Test: tipo que no requiere rrhh ni firmas ni gdp
-    public function testGetNextStatusSkipsOptionalStages(): void
+    public function buildRules(RulesChecker $rules): RulesChecker
     {
-        $type = $this->_makeType(false, false, false, true); // solo tesoreria
-        $this->assertSame(NoveltyConstants::STATUS_CONTABILIDAD, $this->service->getNextStatus(NoveltyConstants::STATUS_REGISTRO, $type));
-        $this->assertSame(NoveltyConstants::STATUS_TESORERIA, $this->service->getNextStatus(NoveltyConstants::STATUS_CONTABILIDAD, $type));
-        $this->assertSame(NoveltyConstants::STATUS_PAGADA, $this->service->getNextStatus(NoveltyConstants::STATUS_TESORERIA, $type));
-    }
+        $rules->add($rules->existsIn('liquidation_doc_id', 'NoveltyLiquidationDocs'), ['errorField' => 'liquidation_doc_id']);
+        $rules->add($rules->existsIn('signed_by', 'SignedByUsers'), [
+            'errorField' => 'signed_by',
+            'allowNullableNulls' => true,
+        ]);
 
-    // Test: novedad agrupada no puede avanzar individualmente
-    public function testCannotAdvanceIndividuallyWhenGrouped(): void
-    {
-        $novelty = new \stdClass();
-        $novelty->liquidation_doc_id = 5;
-        $this->assertFalse($this->service->canAdvanceIndividually($novelty));
-    }
-
-    public function testCanAdvanceIndividuallyWhenNotGrouped(): void
-    {
-        $novelty = new \stdClass();
-        $novelty->liquidation_doc_id = null;
-        $this->assertTrue($this->service->canAdvanceIndividually($novelty));
-    }
-
-    private function _makeType(bool $rrhh, bool $firmas, bool $gdp, bool $tesoreria): object
-    {
-        $type = new \stdClass();
-        $type->requires_rrhh      = $rrhh;
-        $type->requires_firmas    = $firmas;
-        $type->requires_gdp       = $gdp;
-        $type->requires_tesoreria = $tesoreria;
-        return $type;
+        return $rules;
     }
 }
 ```
 
-**Step 2: Correr el test — debe fallar**
+File: `src/Model/Entity/NoveltyMassiveEmployee.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Entity;
+
+use Cake\ORM\Entity;
+
+class NoveltyMassiveEmployee extends Entity
+{
+    protected array $_accessible = [
+        'novelty_id' => true,
+        'employee_id' => true,
+    ];
+}
+```
+
+File: `src/Model/Table/NoveltyMassiveEmployeesTable.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Table;
+
+use Cake\ORM\RulesChecker;
+use Cake\ORM\Table;
+use Cake\Validation\Validator;
+
+class NoveltyMassiveEmployeesTable extends Table
+{
+    public function initialize(array $config): void
+    {
+        parent::initialize($config);
+
+        $this->setTable('novelty_massive_employees');
+        $this->setDisplayField('id');
+        $this->setPrimaryKey('id');
+
+        $this->belongsTo('EmployeeNovelties', [
+            'foreignKey' => 'novelty_id',
+            'joinType' => 'INNER',
+        ]);
+        $this->belongsTo('Employees', [
+            'foreignKey' => 'employee_id',
+            'joinType' => 'INNER',
+        ]);
+    }
+
+    public function validationDefault(Validator $validator): Validator
+    {
+        $validator->integer('novelty_id')->requirePresence('novelty_id', 'create')->notEmptyString('novelty_id');
+        $validator->integer('employee_id')->requirePresence('employee_id', 'create')->notEmptyString('employee_id');
+
+        return $validator;
+    }
+
+    public function buildRules(RulesChecker $rules): RulesChecker
+    {
+        $rules->add($rules->existsIn('novelty_id', 'EmployeeNovelties'), ['errorField' => 'novelty_id']);
+        $rules->add($rules->existsIn('employee_id', 'Employees'), ['errorField' => 'employee_id']);
+
+        return $rules;
+    }
+}
+```
+
+File: `src/Model/Entity/NoveltyObservation.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Entity;
+
+use Cake\ORM\Entity;
+
+class NoveltyObservation extends Entity
+{
+    protected array $_accessible = [
+        'novelty_id' => true,
+        'liquidation_doc_id' => true,
+        'user_id' => true,
+        'message' => true,
+        'is_read' => true,
+    ];
+}
+```
+
+File: `src/Model/Table/NoveltyObservationsTable.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Table;
+
+use Cake\ORM\RulesChecker;
+use Cake\ORM\Table;
+use Cake\Validation\Validator;
+
+class NoveltyObservationsTable extends Table
+{
+    public function initialize(array $config): void
+    {
+        parent::initialize($config);
+
+        $this->setTable('novelty_observations');
+        $this->setDisplayField('id');
+        $this->setPrimaryKey('id');
+
+        $this->addBehavior('Timestamp', [
+            'events' => [
+                'Model.beforeSave' => [
+                    'created' => 'new',
+                ],
+            ],
+        ]);
+
+        $this->belongsTo('EmployeeNovelties', [
+            'foreignKey' => 'novelty_id',
+            'joinType' => 'LEFT',
+        ]);
+        $this->belongsTo('NoveltyLiquidationDocs', [
+            'foreignKey' => 'liquidation_doc_id',
+            'joinType' => 'LEFT',
+        ]);
+        $this->belongsTo('Users', [
+            'foreignKey' => 'user_id',
+            'joinType' => 'INNER',
+        ]);
+    }
+
+    public function validationDefault(Validator $validator): Validator
+    {
+        $validator
+            ->integer('user_id')
+            ->requirePresence('user_id', 'create')
+            ->notEmptyString('user_id');
+
+        $validator
+            ->scalar('message')
+            ->requirePresence('message', 'create')
+            ->notEmptyString('message', 'La observación no puede estar vacía.');
+
+        return $validator;
+    }
+
+    public function buildRules(RulesChecker $rules): RulesChecker
+    {
+        $rules->add($rules->existsIn('user_id', 'Users'), ['errorField' => 'user_id']);
+        $rules->add($rules->existsIn('novelty_id', 'EmployeeNovelties'), [
+            'errorField' => 'novelty_id',
+            'allowNullableNulls' => true,
+        ]);
+        $rules->add($rules->existsIn('liquidation_doc_id', 'NoveltyLiquidationDocs'), [
+            'errorField' => 'liquidation_doc_id',
+            'allowNullableNulls' => true,
+        ]);
+
+        return $rules;
+    }
+}
+```
+
+File: `src/Model/Entity/NoveltyDocument.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Entity;
+
+use Cake\ORM\Entity;
+
+class NoveltyDocument extends Entity
+{
+    protected array $_accessible = [
+        'novelty_id' => true,
+        'liquidation_doc_id' => true,
+        'pipeline_status' => true,
+        'file_path' => true,
+        'file_name' => true,
+        'file_size' => true,
+        'mime_type' => true,
+        'uploaded_by' => true,
+    ];
+}
+```
+
+File: `src/Model/Table/NoveltyDocumentsTable.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Table;
+
+use Cake\ORM\RulesChecker;
+use Cake\ORM\Table;
+use Cake\Validation\Validator;
+
+class NoveltyDocumentsTable extends Table
+{
+    public function initialize(array $config): void
+    {
+        parent::initialize($config);
+
+        $this->setTable('novelty_documents');
+        $this->setDisplayField('file_name');
+        $this->setPrimaryKey('id');
+
+        $this->addBehavior('Timestamp', [
+            'events' => [
+                'Model.beforeSave' => [
+                    'created' => 'new',
+                ],
+            ],
+        ]);
+
+        $this->belongsTo('EmployeeNovelties', [
+            'foreignKey' => 'novelty_id',
+            'joinType' => 'LEFT',
+        ]);
+        $this->belongsTo('NoveltyLiquidationDocs', [
+            'foreignKey' => 'liquidation_doc_id',
+            'joinType' => 'LEFT',
+        ]);
+        $this->belongsTo('UploadedByUsers', [
+            'className' => 'Users',
+            'foreignKey' => 'uploaded_by',
+            'joinType' => 'LEFT',
+        ]);
+    }
+
+    public function validationDefault(Validator $validator): Validator
+    {
+        $validator->scalar('pipeline_status')->requirePresence('pipeline_status', 'create')->notEmptyString('pipeline_status');
+        $validator->scalar('file_path')->requirePresence('file_path', 'create')->notEmptyString('file_path');
+        $validator->scalar('file_name')->requirePresence('file_name', 'create')->notEmptyString('file_name');
+        $validator->integer('file_size')->requirePresence('file_size', 'create');
+        $validator->scalar('mime_type')->requirePresence('mime_type', 'create')->notEmptyString('mime_type');
+
+        return $validator;
+    }
+
+    public function buildRules(RulesChecker $rules): RulesChecker
+    {
+        $rules->add($rules->existsIn('novelty_id', 'EmployeeNovelties'), [
+            'errorField' => 'novelty_id',
+            'allowNullableNulls' => true,
+        ]);
+        $rules->add($rules->existsIn('liquidation_doc_id', 'NoveltyLiquidationDocs'), [
+            'errorField' => 'liquidation_doc_id',
+            'allowNullableNulls' => true,
+        ]);
+        $rules->add($rules->existsIn('uploaded_by', 'UploadedByUsers'), [
+            'errorField' => 'uploaded_by',
+            'allowNullableNulls' => true,
+        ]);
+
+        return $rules;
+    }
+}
+```
+
+**Step 8: Commit**
 
 ```bash
-composer test -- tests/TestCase/Service/NoveltyPipelineServiceTest.php
+git add src/Model/Entity/EmployeeNovelty.php \
+        src/Model/Entity/NoveltyType.php \
+        src/Model/Entity/NoveltyLiquidationDoc.php \
+        src/Model/Entity/NoveltyLiquidationSignature.php \
+        src/Model/Entity/NoveltyMassiveEmployee.php \
+        src/Model/Entity/NoveltyObservation.php \
+        src/Model/Entity/NoveltyDocument.php \
+        src/Model/Table/EmployeeNoveltiesTable.php \
+        src/Model/Table/NoveltyTypesTable.php \
+        src/Model/Table/NoveltyLiquidationDocsTable.php \
+        src/Model/Table/NoveltyLiquidationSignaturesTable.php \
+        src/Model/Table/NoveltyMassiveEmployeesTable.php \
+        src/Model/Table/NoveltyObservationsTable.php \
+        src/Model/Table/NoveltyDocumentsTable.php
+git commit -m "feat(novelties): add entities and tables for pipeline models"
 ```
-Expected: FAIL — class not found.
 
-**Step 3: Implementar NoveltyPipelineService**
+---
+
+## Task 5: NoveltyPipelineService
+
+**Files:**
+- Create: `src/Service/NoveltyPipelineService.php`
+
+**Step 1: Create the service**
 
 ```php
 <?php
@@ -982,108 +1217,206 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\NoveltyConstants;
+use App\Constants\RoleConstants;
+use App\Model\Entity\EmployeeNovelty;
 use Cake\ORM\TableRegistry;
 
 class NoveltyPipelineService
 {
-    // Ordered pipeline stages (excluding rechazada)
-    public const ORDERED_STATUSES = [
-        NoveltyConstants::STATUS_REGISTRO,
-        NoveltyConstants::STATUS_RRHH,
-        NoveltyConstants::STATUS_CONTABILIDAD,
-        NoveltyConstants::STATUS_FIRMAS_APROBACION,
-        NoveltyConstants::STATUS_GDP,
-        NoveltyConstants::STATUS_TESORERIA,
-        NoveltyConstants::STATUS_PAGADA,
-    ];
-
-    public const STATUS_LABELS = NoveltyConstants::STATUS_LABELS;
-    public const STATUS_ICONS  = NoveltyConstants::STATUS_ICONS;
-
     /**
-     * Get next pipeline status for a novelty type, skipping disabled stages.
+     * Get the next status for a novelty, skipping stages disabled by type flags.
      */
-    public function getNextStatus(string $currentStatus, object $noveltyType): ?string
+    public function getNextStatus(object $novelty, ?object $noveltyType = null): ?string
     {
-        $ordered = $this->_buildOrderedPipeline($noveltyType);
-        $idx = array_search($currentStatus, $ordered);
-        if ($idx === false) {
+        $currentStatus = $novelty->pipeline_status;
+
+        if ($currentStatus === NoveltyConstants::STATUS_RECHAZADA || $currentStatus === NoveltyConstants::STATUS_PAGADA) {
             return null;
         }
-        return $ordered[$idx + 1] ?? null;
+
+        if (!$noveltyType && !empty($novelty->novelty_type)) {
+            $noveltyType = $novelty->novelty_type;
+        }
+        if (!$noveltyType && !empty($novelty->novelty_type_id)) {
+            $noveltyType = TableRegistry::getTableLocator()->get('NoveltyTypes')
+                ->get($novelty->novelty_type_id);
+        }
+
+        $nextStatus = NoveltyConstants::TRANSITIONS[$currentStatus] ?? null;
+
+        // Skip stages that are disabled by type flags
+        while ($nextStatus && $noveltyType && $this->shouldSkipStage($nextStatus, $noveltyType)) {
+            $nextStatus = NoveltyConstants::TRANSITIONS[$nextStatus] ?? null;
+        }
+
+        return $nextStatus;
     }
 
     /**
-     * Build ordered pipeline for a novelty type (only enabled stages).
+     * Check if a pipeline stage should be skipped based on type flags.
      */
-    private function _buildOrderedPipeline(object $noveltyType): array
+    private function shouldSkipStage(string $status, object $noveltyType): bool
     {
-        $pipeline = [NoveltyConstants::STATUS_REGISTRO];
-
-        if ($noveltyType->requires_rrhh ?? true) {
-            $pipeline[] = NoveltyConstants::STATUS_RRHH;
-        }
-
-        $pipeline[] = NoveltyConstants::STATUS_CONTABILIDAD;
-
-        if ($noveltyType->requires_firmas ?? true) {
-            $pipeline[] = NoveltyConstants::STATUS_FIRMAS_APROBACION;
-        }
-
-        if ($noveltyType->requires_gdp ?? true) {
-            $pipeline[] = NoveltyConstants::STATUS_GDP;
-        }
-
-        if ($noveltyType->requires_tesoreria ?? true) {
-            $pipeline[] = NoveltyConstants::STATUS_TESORERIA;
-        }
-
-        $pipeline[] = NoveltyConstants::STATUS_PAGADA;
-
-        return $pipeline;
+        return match ($status) {
+            NoveltyConstants::STATUS_RRHH => !$noveltyType->requires_rrhh,
+            NoveltyConstants::STATUS_FIRMAS_APROBACION => !$noveltyType->requires_firmas,
+            NoveltyConstants::STATUS_GDP => !$noveltyType->requires_gdp,
+            NoveltyConstants::STATUS_TESORERIA => !$noveltyType->requires_tesoreria,
+            default => false,
+        };
     }
 
     /**
-     * Returns true if the novelty can be advanced individually (not grouped).
+     * Get the effective pipeline statuses for a novelty type (excluding skipped stages).
      */
-    public function canAdvanceIndividually(object $novelty): bool
+    public function getEffectiveStatuses(?object $noveltyType = null): array
     {
-        return empty($novelty->liquidation_doc_id);
+        if (!$noveltyType) {
+            return NoveltyConstants::PIPELINE_STATUSES;
+        }
+
+        return array_values(array_filter(
+            NoveltyConstants::PIPELINE_STATUSES,
+            fn(string $status) => !$this->shouldSkipStage($status, $noveltyType),
+        ));
     }
 
     /**
-     * Validate transition requirements before advancing a novelty.
-     * Returns array of error messages (empty = OK).
+     * Advance a single novelty individually.
+     * Blocked if novelty has a liquidation_doc_id.
+     */
+    public function advance(EmployeeNovelty $novelty, int $userId): array
+    {
+        if ($novelty->isGrouped()) {
+            return ['success' => false, 'error' => 'Esta novedad pertenece a un documento de liquidación. Debe avanzar desde el documento grupal.'];
+        }
+
+        if ($novelty->isRejected()) {
+            return ['success' => false, 'error' => 'La novedad fue rechazada. El flujo ha terminado.'];
+        }
+
+        $errors = $this->validateTransition($novelty, $novelty->pipeline_status);
+        if (!empty($errors)) {
+            return ['success' => false, 'error' => implode(' ', $errors)];
+        }
+
+        $nextStatus = $this->getNextStatus($novelty);
+        if (!$nextStatus) {
+            return ['success' => false, 'error' => 'Esta novedad ya está en el estado final.'];
+        }
+
+        $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+        $novelty->pipeline_status = $nextStatus;
+
+        if (!$noveltiesTable->save($novelty)) {
+            return ['success' => false, 'error' => 'No se pudo avanzar el estado.'];
+        }
+
+        return ['success' => true, 'error' => null, 'nextStatus' => $nextStatus];
+    }
+
+    /**
+     * Advance all novelties in a liquidation document group.
+     */
+    public function advanceGroup(object $liquidationDoc, int $userId): array
+    {
+        $errors = $this->validateGroupTransition($liquidationDoc);
+        if (!empty($errors)) {
+            return ['success' => false, 'errors' => $errors];
+        }
+
+        $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+        $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
+
+        $members = $noveltiesTable->find()
+            ->contain(['NoveltyTypes'])
+            ->where(['liquidation_doc_id' => $liquidationDoc->id])
+            ->all();
+
+        $currentGroupStatus = $liquidationDoc->pipeline_status;
+
+        // Calculate next status using first member's type (all should advance to same group status)
+        $firstMember = $members->first();
+        if (!$firstMember) {
+            return ['success' => false, 'errors' => ['No hay novedades en este documento de liquidación.']];
+        }
+
+        $nextGroupStatus = $this->getNextStatus($firstMember, $firstMember->novelty_type);
+        if (!$nextGroupStatus) {
+            return ['success' => false, 'errors' => ['El documento ya está en el estado final.']];
+        }
+
+        $saved = $noveltiesTable->getConnection()->transactional(
+            function () use ($noveltiesTable, $liquidationDocsTable, $members, $liquidationDoc, $nextGroupStatus) {
+                foreach ($members as $member) {
+                    $member->pipeline_status = $nextGroupStatus;
+                    if (!$noveltiesTable->save($member)) {
+                        return false;
+                    }
+                }
+
+                $liquidationDoc->pipeline_status = $nextGroupStatus;
+                if (!$liquidationDocsTable->save($liquidationDoc)) {
+                    return false;
+                }
+
+                return true;
+            },
+        );
+
+        if (!$saved) {
+            return ['success' => false, 'errors' => ['No se pudo avanzar el grupo.']];
+        }
+
+        return ['success' => true, 'errors' => [], 'nextStatus' => $nextGroupStatus];
+    }
+
+    /**
+     * Reject a novelty (from any stage).
+     */
+    public function reject(EmployeeNovelty $novelty, int $userId, ?string $observations = null): array
+    {
+        if ($novelty->isRejected()) {
+            return ['success' => false, 'error' => 'La novedad ya está rechazada.'];
+        }
+
+        $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+        $novelty->pipeline_status = NoveltyConstants::STATUS_RECHAZADA;
+        $novelty->approved_by = $userId;
+        $novelty->approved_at = new \DateTime();
+
+        if ($observations) {
+            $novelty->observations = $observations;
+        }
+
+        if (!$noveltiesTable->save($novelty)) {
+            return ['success' => false, 'error' => 'No se pudo rechazar la novedad.'];
+        }
+
+        return ['success' => true, 'error' => null];
+    }
+
+    /**
+     * Validate transition requirements for a single novelty.
      */
     public function validateTransition(object $novelty, string $fromStatus): array
     {
+        if ($novelty->isRejected()) {
+            return ['La novedad fue rechazada. El flujo ha terminado.'];
+        }
+
         $errors = [];
 
         switch ($fromStatus) {
             case NoveltyConstants::STATUS_RRHH:
                 if ($novelty->passes_payroll === null) {
-                    $errors[] = 'Debe indicar si pasa a nómina antes de avanzar.';
+                    $errors[] = 'Debe indicar si "Pasa a Nómina".';
                 }
                 break;
 
             case NoveltyConstants::STATUS_CONTABILIDAD:
                 if (empty($novelty->liquidation_doc_id)) {
-                    $errors[] = 'Debe asignar un Documento de Liquidación antes de avanzar.';
-                }
-                break;
-
-            case NoveltyConstants::STATUS_GDP:
-                if ($novelty->passes_for_payment === null) {
-                    $errors[] = 'Debe indicar si pasa para pago antes de avanzar.';
-                }
-                break;
-
-            case NoveltyConstants::STATUS_TESORERIA:
-                if (empty($novelty->payment_status)) {
-                    $errors[] = 'Debe indicar el estado de pago.';
-                }
-                if ($novelty->payment_status === NoveltyConstants::PAYMENT_PAGADO && empty($novelty->payment_date)) {
-                    $errors[] = 'La fecha de pago es requerida cuando el estado es Pagado.';
+                    $errors[] = 'La novedad debe estar asignada a un documento de liquidación.';
                 }
                 break;
         }
@@ -1092,42 +1425,40 @@ class NoveltyPipelineService
     }
 
     /**
-     * Validate group transition (liquidation doc level).
+     * Validate transition requirements for a liquidation document group.
      */
-    public function validateGroupTransition(object $liquidationDoc, string $fromStatus): array
+    public function validateGroupTransition(object $liquidationDoc): array
     {
         $errors = [];
+        $currentStatus = $liquidationDoc->pipeline_status;
 
-        switch ($fromStatus) {
-            case NoveltyConstants::STATUS_CONTABILIDAD:
-                if (empty($liquidationDoc->period)) {
-                    $errors[] = 'El período es requerido.';
-                }
-                if (empty($liquidationDoc->document_date)) {
-                    $errors[] = 'La fecha del documento es requerida.';
-                }
-                if (empty($liquidationDoc->performed_by)) {
-                    $errors[] = 'Debe indicar quién realizó el documento.';
-                }
-                break;
-
+        switch ($currentStatus) {
             case NoveltyConstants::STATUS_FIRMAS_APROBACION:
-                // Check that all required signatures are present
-                // (caller must pass signatures count or the doc with signatures loaded)
+                $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
+                $signedCount = $signaturesTable->find()
+                    ->where([
+                        'liquidation_doc_id' => $liquidationDoc->id,
+                        'signature_path IS NOT' => null,
+                    ])
+                    ->count();
+
+                if ($signedCount < count(NoveltyConstants::SIGNER_TYPES)) {
+                    $errors[] = 'Todas las firmas requeridas deben estar presentes para avanzar.';
+                }
                 break;
 
             case NoveltyConstants::STATUS_GDP:
                 if ($liquidationDoc->passes_for_payment === null) {
-                    $errors[] = 'Debe indicar si pasa para pago.';
+                    $errors[] = 'Debe indicar si "Pasa para Pago".';
                 }
                 break;
 
             case NoveltyConstants::STATUS_TESORERIA:
                 if (empty($liquidationDoc->payment_status)) {
-                    $errors[] = 'El estado de pago es requerido.';
+                    $errors[] = 'Estado de pago es requerido.';
                 }
                 if ($liquidationDoc->payment_status === NoveltyConstants::PAYMENT_PAGADO && empty($liquidationDoc->payment_date)) {
-                    $errors[] = 'La fecha de pago es requerida cuando el estado es Pagado.';
+                    $errors[] = 'Fecha de pago es requerida cuando el estado es "Pagado".';
                 }
                 break;
         }
@@ -1136,151 +1467,113 @@ class NoveltyPipelineService
     }
 
     /**
-     * Advance a group (liquidation doc) and all its member novelties atomically.
-     * Returns array of errors or empty array on success.
+     * Check if a novelty can advance individually (not grouped).
      */
-    public function advanceGroup(object $liquidationDoc, object $user): array
+    public function canAdvanceIndividually(object $novelty): bool
     {
-        $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
-        $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
-
-        $currentStatus = $this->_getCurrentGroupStatus($liquidationDoc);
-        $errors = $this->validateGroupTransition($liquidationDoc, $currentStatus);
-
-        if (!empty($errors)) {
-            return $errors;
-        }
-
-        // Load all member novelties with their types
-        $novelties = $noveltiesTable->find()
-            ->contain(['NoveltyTypes'])
-            ->where(['liquidation_doc_id' => $liquidationDoc->id])
-            ->all();
-
-        $connection = $noveltiesTable->getConnection();
-
-        try {
-            $connection->begin();
-
-            foreach ($novelties as $novelty) {
-                $nextStatus = $this->getNextStatus($novelty->pipeline_status, $novelty->novelty_type);
-                if ($nextStatus !== null) {
-                    $novelty->pipeline_status = $nextStatus;
-                    if (!$noveltiesTable->save($novelty)) {
-                        $connection->rollback();
-                        return ['Error al avanzar la novedad #' . $novelty->id];
-                    }
-                }
-            }
-
-            $connection->commit();
-
-            return [];
-        } catch (\Exception $e) {
-            $connection->rollback();
-            return ['Error inesperado al avanzar el grupo: ' . $e->getMessage()];
-        }
+        return !$novelty->isGrouped();
     }
 
     /**
-     * Get current group status (derived from member novelties — uses the first one).
+     * Assign a novelty to a liquidation document.
+     * Creates the document if it doesn't exist yet.
      */
-    private function _getCurrentGroupStatus(object $liquidationDoc): string
-    {
-        $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
-        $first = $noveltiesTable->find()
-            ->where(['liquidation_doc_id' => $liquidationDoc->id])
-            ->select(['pipeline_status'])
-            ->first();
-
-        return $first ? $first->pipeline_status : NoveltyConstants::STATUS_CONTABILIDAD;
-    }
-
-    /**
-     * Assign novelty to a liquidation doc, creating it if the number doesn't exist.
-     * Changes novelty pipeline_status to contabilidad.
-     * Returns the liquidation doc or array of errors.
-     */
-    public function assignToLiquidationDoc(object $novelty, string $liquidationNumber, array $data, object $user): object|array
-    {
+    public function assignToLiquidationDoc(
+        EmployeeNovelty $novelty,
+        string $liquidationNumber,
+        array $data,
+        int $userId,
+    ): object|array {
         $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
 
-        // Find or create liquidation doc
-        $liquidationDoc = $liquidationDocsTable->find()
+        $doc = $liquidationDocsTable->find()
             ->where(['liquidation_number' => $liquidationNumber])
             ->first();
 
-        if (!$liquidationDoc) {
-            $liquidationDoc = $liquidationDocsTable->newEntity(array_merge($data, [
+        if (!$doc) {
+            $doc = $liquidationDocsTable->newEntity([
                 'liquidation_number' => $liquidationNumber,
-                'created_by'         => $user->id,
-            ]));
-            if (!$liquidationDocsTable->save($liquidationDoc)) {
-                return ['No se pudo crear el Documento de Liquidación.'];
+                'period' => $data['period'] ?? NoveltyConstants::PERIOD_PRIMERA_QUINCENA,
+                'pipeline_status' => NoveltyConstants::STATUS_CONTABILIDAD,
+                'document_date' => $data['document_date'] ?? date('Y-m-d'),
+                'performed_by' => $userId,
+                'created_by' => $userId,
+            ]);
+
+            if (!$liquidationDocsTable->save($doc)) {
+                return ['No se pudo crear el documento de liquidación.'];
+            }
+
+            // Create signature slots
+            $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
+            foreach (NoveltyConstants::SIGNER_TYPES as $signerType) {
+                $sig = $signaturesTable->newEntity([
+                    'liquidation_doc_id' => $doc->id,
+                    'signer_type' => $signerType,
+                ]);
+                $signaturesTable->save($sig);
             }
         }
 
-        // Link novelty
-        $novelty->liquidation_doc_id = $liquidationDoc->id;
-        $novelty->pipeline_status    = NoveltyConstants::STATUS_CONTABILIDAD;
-
+        $novelty->liquidation_doc_id = $doc->id;
+        $novelty->pipeline_status = NoveltyConstants::STATUS_CONTABILIDAD;
         if (!$noveltiesTable->save($novelty)) {
-            return ['No se pudo vincular la novedad al documento de liquidación.'];
+            return ['No se pudo asignar la novedad al documento de liquidación.'];
         }
 
-        return $liquidationDoc;
+        return $doc;
     }
 
     /**
-     * Get visible fields for a novelty type at a given stage.
+     * Get visible fields for a novelty type in a given pipeline stage.
      */
     public function getVisibleFields(object $noveltyType, string $pipelineStatus): array
     {
-        $base = [
-            'show_start_date'      => $noveltyType->show_start_date ?? true,
-            'show_end_date'        => $noveltyType->show_end_date ?? true,
-            'show_permission_date' => $noveltyType->show_permission_date ?? true,
-            'show_schedule_type'   => $noveltyType->show_schedule_type ?? true,
-            'uses_custom_name'     => $noveltyType->uses_custom_name ?? false,
-            'is_massive'           => $noveltyType->is_massive ?? false,
-        ];
+        $fields = ['novelty_type_id', 'filing_date', 'reason', 'is_paid'];
 
-        return $base;
-    }
+        if ($noveltyType->show_permission_date) {
+            $fields[] = 'permission_date';
+        }
+        if ($noveltyType->show_schedule_type) {
+            $fields[] = 'schedule_type';
+        }
+        if ($noveltyType->show_start_date) {
+            $fields[] = 'start_date';
+        }
+        if ($noveltyType->show_end_date) {
+            $fields[] = 'end_date';
+        }
+        if ($noveltyType->uses_custom_name) {
+            $fields[] = 'custom_name';
+        } else {
+            $fields[] = 'employee_id';
+        }
 
-    /**
-     * Get the effective pipeline (ordered statuses) for a novelty type.
-     */
-    public function getPipelineForType(object $noveltyType): array
-    {
-        return $this->_buildOrderedPipeline($noveltyType);
+        if (in_array($pipelineStatus, [NoveltyConstants::STATUS_RRHH, NoveltyConstants::STATUS_CONTABILIDAD])) {
+            $fields[] = 'passes_payroll';
+        }
+
+        return $fields;
     }
 }
 ```
 
-**Step 4: Correr los tests — deben pasar**
+**Step 2: Commit**
 
 ```bash
-composer test -- tests/TestCase/Service/NoveltyPipelineServiceTest.php
-```
-Expected: All tests PASS.
-
-**Step 5: Commit**
-
-```bash
-git add src/Service/NoveltyPipelineService.php tests/TestCase/Service/NoveltyPipelineServiceTest.php
-git commit -m "feat(novelties): implement NoveltyPipelineService with tests"
+git add src/Service/NoveltyPipelineService.php
+git commit -m "feat(novelties): create NoveltyPipelineService with pipeline logic, group advancement, and type-based stage skipping"
 ```
 
 ---
 
-### Task 11: Crear NoveltyDocumentService
+## Task 6: NoveltyDocumentService
 
 **Files:**
 - Create: `src/Service/NoveltyDocumentService.php`
 
-**Step 1: Implementar el servicio (patrón de InvoiceDocumentService)**
+**Step 1: Create service (clone of InvoiceDocumentService)**
 
 ```php
 <?php
@@ -1304,68 +1597,92 @@ class NoveltyDocumentService
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ];
 
-    public function uploadForNovelty(int $noveltyId, string $pipelineStatus, UploadedFile $file, ?int $uploadedBy): object|string
-    {
-        return $this->_upload('novelty_id', $noveltyId, 'novelties', $noveltyId, $pipelineStatus, $file, $uploadedBy);
+    public function uploadForNovelty(
+        int $noveltyId,
+        string $pipelineStatus,
+        UploadedFile $file,
+        ?int $uploadedBy,
+    ): object|string {
+        return $this->upload($file, $pipelineStatus, $uploadedBy, 'novelties/' . $noveltyId, [
+            'novelty_id' => $noveltyId,
+        ]);
     }
 
-    public function uploadForGroup(int $liquidationDocId, string $pipelineStatus, UploadedFile $file, ?int $uploadedBy): object|string
-    {
-        return $this->_upload('liquidation_doc_id', $liquidationDocId, 'novelty-liquidations', $liquidationDocId, $pipelineStatus, $file, $uploadedBy);
+    public function uploadForGroup(
+        int $liquidationDocId,
+        string $pipelineStatus,
+        UploadedFile $file,
+        ?int $uploadedBy,
+    ): object|string {
+        return $this->upload($file, $pipelineStatus, $uploadedBy, 'novelty_liquidations/' . $liquidationDocId, [
+            'liquidation_doc_id' => $liquidationDocId,
+        ]);
     }
 
-    private function _upload(string $fkField, int $fkValue, string $subDir, int $entityId, string $pipelineStatus, UploadedFile $file, ?int $uploadedBy): object|string
-    {
+    private function upload(
+        UploadedFile $file,
+        string $pipelineStatus,
+        ?int $uploadedBy,
+        string $subDir,
+        array $extraFields,
+    ): object|string {
         if ($file->getError() !== UPLOAD_ERR_OK) {
             return 'No se recibió ningún archivo válido.';
         }
+
         if ($file->getSize() > self::MAX_DOC_SIZE) {
             return 'El archivo excede el tamaño máximo de 10MB.';
         }
-        if (!in_array($file->getClientMediaType(), self::ALLOWED_DOC_MIMES)) {
+
+        $mimeType = $file->getClientMediaType();
+        if (!in_array($mimeType, self::ALLOWED_DOC_MIMES)) {
             return 'Tipo de archivo no permitido. Use PDF, imágenes, Word o Excel.';
         }
 
-        $uploadDir = WWW_ROOT . 'uploads' . DS . $subDir . DS . $entityId;
+        $uploadDir = WWW_ROOT . 'uploads' . DS . $subDir;
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
 
-        $ext = pathinfo($file->getClientFilename(), PATHINFO_EXTENSION);
-        $uniqueName = uniqid('nov_') . '.' . $ext;
+        $originalName = $file->getClientFilename();
+        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+        $uniqueName = uniqid('nov_') . '.' . $extension;
         $filePath = $uploadDir . DS . $uniqueName;
+
         $file->moveTo($filePath);
 
-        $table = TableRegistry::getTableLocator()->get('NoveltyDocuments');
-        $doc = $table->newEntity([
-            $fkField          => $fkValue,
+        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
+        $document = $documentsTable->newEntity(array_merge($extraFields, [
             'pipeline_status' => $pipelineStatus,
-            'file_path'       => 'uploads/' . $subDir . '/' . $entityId . '/' . $uniqueName,
-            'file_name'       => $file->getClientFilename(),
-            'file_size'       => $file->getSize(),
-            'mime_type'       => $file->getClientMediaType(),
-            'uploaded_by'     => $uploadedBy,
-        ]);
+            'file_path' => 'uploads/' . $subDir . '/' . $uniqueName,
+            'file_name' => $originalName,
+            'file_size' => $file->getSize(),
+            'mime_type' => $mimeType,
+            'uploaded_by' => $uploadedBy,
+        ]));
 
-        if (!$table->save($doc)) {
+        if (!$documentsTable->save($document)) {
             if (file_exists($filePath)) {
                 unlink($filePath);
             }
+
             return 'No se pudo guardar el documento.';
         }
 
-        return $doc;
+        return $document;
     }
 
     public function deleteDocument(int $documentId): bool
     {
-        $table = TableRegistry::getTableLocator()->get('NoveltyDocuments');
-        $doc = $table->get($documentId);
-        $filePath = WWW_ROOT . $doc->file_path;
+        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
+        $document = $documentsTable->get($documentId);
+
+        $filePath = WWW_ROOT . $document->file_path;
         if (file_exists($filePath)) {
             unlink($filePath);
         }
-        return $table->delete($doc);
+
+        return $documentsTable->delete($document);
     }
 
     public function canDeleteDocument(object $document, string $currentPipelineStatus): bool
@@ -1375,57 +1692,55 @@ class NoveltyDocumentService
 
     public function getDocumentsByStatus(int $noveltyId): array
     {
-        $docs = TableRegistry::getTableLocator()->get('NoveltyDocuments')->find()
+        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
+        $documents = $documentsTable->find()
             ->where(['novelty_id' => $noveltyId])
             ->contain(['UploadedByUsers'])
             ->order(['NoveltyDocuments.created' => 'DESC'])
             ->all();
 
         $grouped = [];
-        foreach ($docs as $doc) {
+        foreach ($documents as $doc) {
             $grouped[$doc->pipeline_status][] = $doc;
         }
+
         return $grouped;
     }
 
     public function getGroupDocumentsByStatus(int $liquidationDocId): array
     {
-        $docs = TableRegistry::getTableLocator()->get('NoveltyDocuments')->find()
+        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
+        $documents = $documentsTable->find()
             ->where(['liquidation_doc_id' => $liquidationDocId])
             ->contain(['UploadedByUsers'])
             ->order(['NoveltyDocuments.created' => 'DESC'])
             ->all();
 
         $grouped = [];
-        foreach ($docs as $doc) {
+        foreach ($documents as $doc) {
             $grouped[$doc->pipeline_status][] = $doc;
         }
+
         return $grouped;
     }
 }
 ```
 
-**Step 2: Verificar estilo**
-
-```bash
-composer cs-check src/Service/NoveltyDocumentService.php
-```
-
-**Step 3: Commit**
+**Step 2: Commit**
 
 ```bash
 git add src/Service/NoveltyDocumentService.php
-git commit -m "feat(novelties): implement NoveltyDocumentService"
+git commit -m "feat(novelties): create NoveltyDocumentService for novelty and group document uploads"
 ```
 
 ---
 
-### Task 12: Crear NoveltyObservationService
+## Task 7: NoveltyObservationService
 
 **Files:**
 - Create: `src/Service/NoveltyObservationService.php`
 
-**Step 1: Implementar**
+**Step 1: Create service**
 
 ```php
 <?php
@@ -1437,60 +1752,68 @@ use Cake\ORM\TableRegistry;
 
 class NoveltyObservationService
 {
-    public function addToNovelty(int $noveltyId, int $userId, string $message): object|false
+    public function addToNovelty(int $noveltyId, int $userId, string $message): object|string
     {
         $table = TableRegistry::getTableLocator()->get('NoveltyObservations');
-        $obs = $table->newEntity([
+        $observation = $table->newEntity([
             'novelty_id' => $noveltyId,
-            'user_id'    => $userId,
-            'message'    => $message,
-            'is_read'    => false,
+            'user_id' => $userId,
+            'message' => $message,
         ]);
-        return $table->save($obs) ? $obs : false;
+
+        if (!$table->save($observation)) {
+            return 'No se pudo guardar la observación.';
+        }
+
+        return $observation;
     }
 
-    public function addToGroup(int $liquidationDocId, int $userId, string $message): object|false
+    public function addToGroup(int $liquidationDocId, int $userId, string $message): object|string
     {
         $table = TableRegistry::getTableLocator()->get('NoveltyObservations');
-        $obs = $table->newEntity([
+        $observation = $table->newEntity([
             'liquidation_doc_id' => $liquidationDocId,
-            'user_id'            => $userId,
-            'message'            => $message,
-            'is_read'            => false,
+            'user_id' => $userId,
+            'message' => $message,
         ]);
-        return $table->save($obs) ? $obs : false;
+
+        if (!$table->save($observation)) {
+            return 'No se pudo guardar la observación.';
+        }
+
+        return $observation;
     }
 
-    public function markNoveltyObservationsRead(int $noveltyId, int $userId): void
+    public function markAsRead(int $userId, ?int $noveltyId = null, ?int $liquidationDocId = null): void
     {
         $table = TableRegistry::getTableLocator()->get('NoveltyObservations');
-        $table->updateAll(
-            ['is_read' => true],
-            ['novelty_id' => $noveltyId, 'user_id !=' => $userId, 'is_read' => false]
-        );
+        $conditions = ['user_id !=' => $userId, 'is_read' => false];
+
+        if ($noveltyId) {
+            $conditions['novelty_id'] = $noveltyId;
+        } elseif ($liquidationDocId) {
+            $conditions['liquidation_doc_id'] = $liquidationDocId;
+        } else {
+            return;
+        }
+
+        $table->updateAll(['is_read' => true], $conditions);
     }
 
-    public function markGroupObservationsRead(int $liquidationDocId, int $userId): void
+    public function getUnreadCount(int $userId, ?int $noveltyId = null, ?int $liquidationDocId = null): int
     {
         $table = TableRegistry::getTableLocator()->get('NoveltyObservations');
-        $table->updateAll(
-            ['is_read' => true],
-            ['liquidation_doc_id' => $liquidationDocId, 'user_id !=' => $userId, 'is_read' => false]
-        );
-    }
+        $conditions = ['user_id !=' => $userId, 'is_read' => false];
 
-    public function getUnreadCountForNovelty(int $noveltyId, int $userId): int
-    {
-        return TableRegistry::getTableLocator()->get('NoveltyObservations')->find()
-            ->where(['novelty_id' => $noveltyId, 'user_id !=' => $userId, 'is_read' => false])
-            ->count();
-    }
+        if ($noveltyId) {
+            $conditions['novelty_id'] = $noveltyId;
+        } elseif ($liquidationDocId) {
+            $conditions['liquidation_doc_id'] = $liquidationDocId;
+        } else {
+            return 0;
+        }
 
-    public function getUnreadCountForGroup(int $liquidationDocId, int $userId): int
-    {
-        return TableRegistry::getTableLocator()->get('NoveltyObservations')->find()
-            ->where(['liquidation_doc_id' => $liquidationDocId, 'user_id !=' => $userId, 'is_read' => false])
-            ->count();
+        return $table->find()->where($conditions)->count();
     }
 }
 ```
@@ -1499,126 +1822,80 @@ class NoveltyObservationService
 
 ```bash
 git add src/Service/NoveltyObservationService.php
-git commit -m "feat(novelties): implement NoveltyObservationService"
+git commit -m "feat(novelties): create NoveltyObservationService for novelty and group observations"
 ```
 
 ---
 
-## Phase 4: Controllers
-
----
-
-### Task 13: Actualizar EmployeeNoveltiesController
+## Task 8: Update EmployeeNoveltiesController
 
 **Files:**
 - Modify: `src/Controller/EmployeeNoveltiesController.php`
 
-**Step 1: Reescribir el controlador con el nuevo pipeline**
+**Step 1: Rewrite controller with pipeline support**
 
-El controlador debe:
-- Inyectar `NoveltyPipelineService`, `NoveltyDocumentService`, `NoveltyObservationService` en `initialize()`
-- `index()`: filtrar por `pipeline_status` y `novelty_type_id`, mostrar badge de estado
-- `add()`: manejar `is_massive` (guardar en `novelty_massive_employees`), `uses_custom_name` (usar `custom_name` en vez de `employee_id`), iniciar `pipeline_status = 'registro'`
-- `view($id)`: cargar novedad con todas las asociaciones, marcar observaciones como leídas, pasar docs agrupados por estado
-- `advance($id)`: verificar que no esté agrupada (`canAdvanceIndividually`), validar transición, avanzar estado
-- `reject($id)`: marcar como `rechazada`
-- `addObservation($id)`: agregar observación a novedad individual
-- `uploadDocument($id)`: subir soporte para etapa actual (etapas registro/rrhh)
-- `deleteDocument($documentId)`: borrar soporte
+The controller needs these changes:
+- Inject `NoveltyPipelineService`, `NoveltyDocumentService`, `NoveltyObservationService`
+- Update `index()` to filter by `pipeline_status` instead of `status`
+- Update `view()` to show pipeline progress, observations, documents
+- Update `add()` to set `pipeline_status = 'registro'` instead of `status = 'pendiente'`, handle massive/custom_name
+- Replace `approve()` with `advance()` using pipeline service
+- Keep `reject()` but use pipeline service
+- Add `addObservation()`, `uploadDocument()`, `deleteDocument()` actions
+- Add `edit()` for RRHH stage editing (passes_payroll, etc.)
 
-Estructura básica:
-
+Key changes for `index()`:
 ```php
-public function initialize(): void
-{
-    parent::initialize();
-    $this->pipelineService     = new NoveltyPipelineService();
-    $this->documentService     = new NoveltyDocumentService();
-    $this->observationService  = new NoveltyObservationService();
+$statusFilter = $this->request->getQuery('pipeline_status');
+if ($statusFilter) {
+    $query->where(['EmployeeNovelties.pipeline_status' => $statusFilter]);
 }
+```
 
+Key changes for `add()`:
+```php
+$data['pipeline_status'] = NoveltyConstants::STATUS_REGISTRO;
+// Handle massive: save multiple employees in novelty_massive_employees
+// Handle custom_name: store text instead of employee_id
+```
+
+New `advance()` action:
+```php
 public function advance($id = null)
 {
     $this->request->allowMethod(['post']);
     $novelty = $this->EmployeeNovelties->get($id, contain: ['NoveltyTypes']);
-    $user    = $this->Authentication->getIdentity()->getOriginalData();
+    $user = $this->Authentication->getIdentity()->getOriginalData();
 
-    if (!$this->pipelineService->canAdvanceIndividually($novelty)) {
-        $this->Flash->error('Esta novedad está agrupada. Avanzar desde el Documento de Liquidación.');
-        return $this->redirect(['action' => 'view', $id]);
-    }
+    $result = $this->pipelineService->advance($novelty, $user->id);
 
-    $errors = $this->pipelineService->validateTransition($novelty, $novelty->pipeline_status);
-    if (!empty($errors)) {
-        foreach ($errors as $error) {
-            $this->Flash->error($error);
-        }
-        return $this->redirect(['action' => 'view', $id]);
-    }
-
-    $nextStatus = $this->pipelineService->getNextStatus($novelty->pipeline_status, $novelty->novelty_type);
-    if ($nextStatus === null) {
-        $this->Flash->warning('Esta novedad ya se encuentra en el estado final.');
-        return $this->redirect(['action' => 'view', $id]);
-    }
-
-    $novelty->pipeline_status = $nextStatus;
-    if ($this->EmployeeNovelties->save($novelty)) {
-        $this->Flash->success('Novedad avanzada a: ' . NoveltyConstants::STATUS_LABELS[$nextStatus]);
+    if ($result['success']) {
+        $this->Flash->success('Novedad avanzada a: ' . NoveltyConstants::STATUS_LABELS[$result['nextStatus']]);
     } else {
-        $this->Flash->error('No se pudo avanzar la novedad.');
+        $this->Flash->error($result['error']);
     }
 
     return $this->redirect(['action' => 'view', $id]);
 }
 ```
 
-**Step 2: Asegurarse que el `add()` maneja masivo**
-
-```php
-// Dentro de add() al guardar:
-if ($novelty->novelty_type->is_massive) {
-    $employeeIds = $this->request->getData('employee_ids', []);
-    foreach ($employeeIds as $empId) {
-        $massiveEntry = $this->EmployeeNovelties->NoveltyMassiveEmployees->newEntity([
-            'novelty_id'  => $novelty->id,
-            'employee_id' => $empId,
-        ]);
-        $this->EmployeeNovelties->NoveltyMassiveEmployees->save($massiveEntry);
-    }
-}
-```
-
-**Step 3: Agregar action mappings en AppController**
-
-En `_actionToPermission()` agregar: `'advance', 'addObservation', 'uploadDocument'` → `'edit'`, `'deleteDocument'` → `'delete'`.
-
-También agregar en `$controllerModuleMap`:
-```php
-'NoveltyLiquidationDocs' => 'novelty_liquidation_docs',
-```
-
-**Step 4: Verificar estilo**
+**Step 2: Commit**
 
 ```bash
-composer cs-check src/Controller/EmployeeNoveltiesController.php src/Controller/AppController.php
-```
-
-**Step 5: Commit**
-
-```bash
-git add src/Controller/EmployeeNoveltiesController.php src/Controller/AppController.php
-git commit -m "feat(novelties): update EmployeeNoveltiesController with pipeline advance, docs, observations"
+git add src/Controller/EmployeeNoveltiesController.php
+git commit -m "feat(novelties): update EmployeeNoveltiesController with pipeline support, observations, documents"
 ```
 
 ---
 
-### Task 14: Crear NoveltyLiquidationDocsController
+## Task 9: Create NoveltyLiquidationDocsController
 
 **Files:**
 - Create: `src/Controller/NoveltyLiquidationDocsController.php`
 
-**Step 1: Implementar el controlador**
+**Step 1: Create controller**
+
+Actions: `index`, `view`, `advanceGroup`, `addSignature`, `uploadDocument`, `deleteDocument`, `addObservation`
 
 ```php
 <?php
@@ -1630,6 +1907,7 @@ use App\Constants\NoveltyConstants;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
+use App\Service\NoveltySignatureService;
 
 class NoveltyLiquidationDocsController extends AppController
 {
@@ -1642,35 +1920,24 @@ class NoveltyLiquidationDocsController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->pipelineService    = new NoveltyPipelineService();
-        $this->documentService    = new NoveltyDocumentService();
+        $this->pipelineService = new NoveltyPipelineService();
+        $this->documentService = new NoveltyDocumentService();
         $this->observationService = new NoveltyObservationService();
     }
 
     public function index()
     {
         $query = $this->NoveltyLiquidationDocs->find()
-            ->contain(['CreatedByUsers', 'PerformedByUsers'])
-            ->withCount(['EmployeeNovelties'])
+            ->contain(['PerformedByUsers', 'EmployeeNovelties'])
             ->order(['NoveltyLiquidationDocs.created' => 'DESC']);
 
-        $statusFilter = $this->request->getQuery('status');
+        $statusFilter = $this->request->getQuery('pipeline_status');
         if ($statusFilter) {
-            // Filter by current group status = first member novelty pipeline_status
-            $noveltyIds = $this->NoveltyLiquidationDocs->EmployeeNovelties->find()
-                ->where(['pipeline_status' => $statusFilter])
-                ->select(['liquidation_doc_id'])
-                ->distinct(['liquidation_doc_id'])
-                ->all()
-                ->map(fn($n) => $n->liquidation_doc_id)
-                ->toArray();
-            $query->where(['NoveltyLiquidationDocs.id IN' => $noveltyIds ?: [0]]);
+            $query->where(['NoveltyLiquidationDocs.pipeline_status' => $statusFilter]);
         }
 
-        $docs = $this->paginate($query);
-        $statusLabels = NoveltyConstants::STATUS_LABELS;
-
-        $this->set(compact('docs', 'statusFilter', 'statusLabels'));
+        $liquidationDocs = $this->paginate($query);
+        $this->set(compact('liquidationDocs', 'statusFilter'));
     }
 
     public function view($id = null)
@@ -1679,46 +1946,49 @@ class NoveltyLiquidationDocsController extends AppController
             'PerformedByUsers',
             'CreatedByUsers',
             'EmployeeNovelties' => ['Employees', 'NoveltyTypes'],
-            'NoveltyLiquidationSignatures',
-            'NoveltyObservations' => ['Users'],
+            'NoveltyLiquidationSignatures' => ['SignedByUsers'],
+            'NoveltyObservations' => [
+                'Users',
+                'sort' => ['NoveltyObservations.created' => 'ASC'],
+            ],
+            'NoveltyDocuments' => [
+                'UploadedByUsers',
+                'sort' => ['NoveltyDocuments.created' => 'DESC'],
+            ],
         ]);
 
         $user = $this->Authentication->getIdentity()->getOriginalData();
-        $this->observationService->markGroupObservationsRead($id, $user->id);
+        $this->observationService->markAsRead($user->id, liquidationDocId: $doc->id);
 
-        $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($id);
-        $accountingUsers   = $this->NoveltyLiquidationDocs->PerformedByUsers->find('list', [
-            'keyField'   => 'id',
-            'valueField' => 'username',
-        ])->all();
+        $groupErrors = $this->pipelineService->validateGroupTransition($doc);
+        $effectiveStatuses = $this->pipelineService->getEffectiveStatuses();
 
-        // Current group status = derived from first member novelty
-        $currentStatus = $doc->employee_novelties[0]->pipeline_status ?? NoveltyConstants::STATUS_CONTABILIDAD;
-        $canAdvance    = !in_array($currentStatus, [NoveltyConstants::STATUS_PAGADA, NoveltyConstants::STATUS_RECHAZADA]);
+        $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($doc->id);
 
-        $this->set(compact('doc', 'documentsByStatus', 'accountingUsers', 'currentStatus', 'canAdvance'));
+        $this->set(compact('doc', 'groupErrors', 'effectiveStatuses', 'documentsByStatus'));
     }
 
     public function advanceGroup($id = null)
     {
         $this->request->allowMethod(['post']);
-        $doc  = $this->NoveltyLiquidationDocs->get($id, contain: ['EmployeeNovelties' => ['NoveltyTypes']]);
+        $doc = $this->NoveltyLiquidationDocs->get($id);
         $user = $this->Authentication->getIdentity()->getOriginalData();
 
-        // Save any submitted group-level fields first
+        // Save editable fields for current stage before advancing
         $data = $this->request->getData();
         if (!empty($data)) {
-            $this->NoveltyLiquidationDocs->patchEntity($doc, $data);
+            $doc = $this->NoveltyLiquidationDocs->patchEntity($doc, $data);
             $this->NoveltyLiquidationDocs->save($doc);
         }
 
-        $errors = $this->pipelineService->advanceGroup($doc, $user);
-        if (!empty($errors)) {
-            foreach ($errors as $error) {
+        $result = $this->pipelineService->advanceGroup($doc, $user->id);
+
+        if ($result['success']) {
+            $this->Flash->success('Documento de liquidación avanzado a: ' . NoveltyConstants::STATUS_LABELS[$result['nextStatus']]);
+        } else {
+            foreach ($result['errors'] as $error) {
                 $this->Flash->error($error);
             }
-        } else {
-            $this->Flash->success('Grupo avanzado exitosamente.');
         }
 
         return $this->redirect(['action' => 'view', $id]);
@@ -1727,57 +1997,37 @@ class NoveltyLiquidationDocsController extends AppController
     public function addSignature($id = null)
     {
         $this->request->allowMethod(['post']);
-        $doc  = $this->NoveltyLiquidationDocs->get($id);
-        $user = $this->Authentication->getIdentity()->getOriginalData();
 
         $signerType = $this->request->getData('signer_type');
-        $base64     = $this->request->getData('signature_base64');
+        $signatureService = new NoveltySignatureService();
+        $user = $this->Authentication->getIdentity()->getOriginalData();
 
-        if (!in_array($signerType, NoveltyConstants::SIGNER_TYPES)) {
-            $this->Flash->error('Tipo de firmante inválido.');
-            return $this->redirect(['action' => 'view', $id]);
-        }
-
-        $signaturesTable = $this->NoveltyLiquidationDocs->NoveltyLiquidationSignatures;
-
-        // Upsert: find existing or create new
-        $existing = $signaturesTable->find()
+        $signaturesTable = $this->fetchTable('NoveltyLiquidationSignatures');
+        $signature = $signaturesTable->find()
             ->where(['liquidation_doc_id' => $id, 'signer_type' => $signerType])
             ->first();
 
-        $signature = $existing ?? $signaturesTable->newEmptyEntity();
+        if (!$signature) {
+            $this->Flash->error('Firma no encontrada.');
 
-        if (!empty($base64)) {
-            $uploadDir = WWW_ROOT . 'uploads' . DS . 'novelty-signatures' . DS . $id;
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
-            $imgData  = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64));
-            $fileName = uniqid($signerType . '_') . '.png';
-            file_put_contents($uploadDir . DS . $fileName, $imgData);
-
-            $signature = $signaturesTable->patchEntity($signature, [
-                'liquidation_doc_id' => $id,
-                'signer_type'        => $signerType,
-                'signature_path'     => 'uploads/novelty-signatures/' . $id . '/' . $fileName,
-                'signed_by'          => $user->id,
-                'approved_at'        => date('Y-m-d H:i:s'),
-            ]);
-            $signaturesTable->save($signature);
+            return $this->redirect(['action' => 'view', $id]);
         }
 
-        $this->Flash->success('Firma registrada.');
-        return $this->redirect(['action' => 'view', $id]);
-    }
-
-    public function addObservation($id = null)
-    {
-        $this->request->allowMethod(['post']);
-        $user    = $this->Authentication->getIdentity()->getOriginalData();
-        $message = $this->request->getData('message');
-
-        if (!empty($message)) {
-            $this->observationService->addToGroup((int)$id, $user->id, $message);
+        $signatureBase64 = $this->request->getData('signature_base64');
+        if (!empty($signatureBase64)) {
+            $path = $signatureService->saveFromBase64(
+                $id,
+                $signatureBase64,
+                $user->id,
+                'liquidation_' . $signerType,
+            );
+            if ($path) {
+                $signature->signature_path = $path;
+                $signature->signed_by = $user->id;
+                $signature->approved_at = new \DateTime();
+                $signaturesTable->save($signature);
+                $this->Flash->success('Firma registrada.');
+            }
         }
 
         return $this->redirect(['action' => 'view', $id]);
@@ -1786,401 +2036,537 @@ class NoveltyLiquidationDocsController extends AppController
     public function uploadDocument($id = null)
     {
         $this->request->allowMethod(['post']);
-        $doc    = $this->NoveltyLiquidationDocs->get($id, contain: ['EmployeeNovelties']);
-        $user   = $this->Authentication->getIdentity()->getOriginalData();
-        $status = $doc->employee_novelties[0]->pipeline_status ?? NoveltyConstants::STATUS_CONTABILIDAD;
-        $file   = $this->request->getUploadedFile('document_file');
+        $doc = $this->NoveltyLiquidationDocs->get($id);
+        $user = $this->Authentication->getIdentity()->getOriginalData();
+        $file = $this->request->getUploadedFile('document');
 
-        if ($file) {
-            $result = $this->documentService->uploadForGroup((int)$id, $status, $file, $user->id);
-            if (is_string($result)) {
-                $this->Flash->error($result);
-            } else {
-                $this->Flash->success('Documento subido.');
-            }
+        if (!$file) {
+            $this->Flash->error('No se seleccionó ningún archivo.');
+
+            return $this->redirect(['action' => 'view', $id]);
+        }
+
+        $result = $this->documentService->uploadForGroup($doc->id, $doc->pipeline_status, $file, $user->id);
+
+        if (is_string($result)) {
+            $this->Flash->error($result);
+        } else {
+            $this->Flash->success('Documento subido exitosamente.');
         }
 
         return $this->redirect(['action' => 'view', $id]);
     }
 
-    public function deleteDocument($documentId = null)
+    public function deleteDocument($id = null, $documentId = null)
     {
-        $this->request->allowMethod(['post']);
-        $docRecord = TableRegistry::getTableLocator()->get('NoveltyDocuments')->get($documentId);
-        $liquidationId = $docRecord->liquidation_doc_id;
+        $this->request->allowMethod(['post', 'delete']);
+        $doc = $this->NoveltyLiquidationDocs->get($id);
 
-        if ($this->documentService->deleteDocument((int)$documentId)) {
+        $documentsTable = $this->fetchTable('NoveltyDocuments');
+        $document = $documentsTable->get($documentId);
+
+        if (!$this->documentService->canDeleteDocument($document, $doc->pipeline_status)) {
+            $this->Flash->error('Solo puede eliminar documentos de la etapa actual.');
+
+            return $this->redirect(['action' => 'view', $id]);
+        }
+
+        if ($this->documentService->deleteDocument($documentId)) {
             $this->Flash->success('Documento eliminado.');
         } else {
             $this->Flash->error('No se pudo eliminar el documento.');
         }
 
-        return $this->redirect(['action' => 'view', $liquidationId]);
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    public function addObservation($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $user = $this->Authentication->getIdentity()->getOriginalData();
+        $message = $this->request->getData('message');
+
+        $result = $this->observationService->addToGroup($id, $user->id, $message);
+
+        if (is_string($result)) {
+            $this->Flash->error($result);
+        } else {
+            $this->Flash->success('Observación agregada.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
     }
 }
-```
-
-**Step 2: Agregar `use Cake\ORM\TableRegistry;` al inicio del archivo si se usa.**
-
-**Step 3: Verificar estilo**
-
-```bash
-composer cs-check src/Controller/NoveltyLiquidationDocsController.php
-```
-
-**Step 4: Commit**
-
-```bash
-git add src/Controller/NoveltyLiquidationDocsController.php
-git commit -m "feat(novelties): create NoveltyLiquidationDocsController"
-```
-
----
-
-## Phase 5: Views
-
----
-
-### Task 15: Actualizar NoveltyTypes/edit — sección de configuración de pipeline
-
-**Files:**
-- Modify: `templates/NoveltyTypes/edit.php`
-
-**Step 1: Agregar sección de configuración al final del formulario, antes del botón submit**
-
-```php
-<hr class="my-4">
-<div class="mb-3">
-    <span class="sgi-section-label">Configuración del Pipeline</span>
-</div>
-<div class="row g-3">
-    <div class="col-md-6">
-        <div class="form-label mb-2">Etapas requeridas</div>
-        <?= $this->Form->control('requires_rrhh', ['type' => 'checkbox', 'label' => 'Requiere etapa RRHH', 'class' => 'form-check-input']) ?>
-        <?= $this->Form->control('requires_firmas', ['type' => 'checkbox', 'label' => 'Requiere Firmas y Aprobación', 'class' => 'form-check-input']) ?>
-        <?= $this->Form->control('requires_gdp', ['type' => 'checkbox', 'label' => 'Requiere etapa GDP', 'class' => 'form-check-input']) ?>
-        <?= $this->Form->control('requires_tesoreria', ['type' => 'checkbox', 'label' => 'Requiere etapa Tesorería', 'class' => 'form-check-input']) ?>
-    </div>
-    <div class="col-md-6">
-        <div class="form-label mb-2">Campos del formulario</div>
-        <?= $this->Form->control('show_start_date', ['type' => 'checkbox', 'label' => 'Mostrar fecha de inicio', 'class' => 'form-check-input']) ?>
-        <?= $this->Form->control('show_end_date', ['type' => 'checkbox', 'label' => 'Mostrar fecha de fin', 'class' => 'form-check-input']) ?>
-        <?= $this->Form->control('show_permission_date', ['type' => 'checkbox', 'label' => 'Mostrar fecha de permiso', 'class' => 'form-check-input']) ?>
-        <?= $this->Form->control('show_schedule_type', ['type' => 'checkbox', 'label' => 'Mostrar tipo de horario', 'class' => 'form-check-input']) ?>
-        <?= $this->Form->control('uses_custom_name', ['type' => 'checkbox', 'label' => 'Usar campo de nombre libre (en vez de selección de empleado)', 'class' => 'form-check-input']) ?>
-        <?= $this->Form->control('is_massive', ['type' => 'checkbox', 'label' => 'Permite múltiples empleados (masivo)', 'class' => 'form-check-input']) ?>
-    </div>
-</div>
 ```
 
 **Step 2: Commit**
 
 ```bash
-git add templates/NoveltyTypes/edit.php
-git commit -m "feat(novelties): add pipeline config section to NoveltyType edit form"
+git add src/Controller/NoveltyLiquidationDocsController.php
+git commit -m "feat(novelties): create NoveltyLiquidationDocsController for group management"
 ```
 
 ---
 
-### Task 16: Actualizar EmployeeNovelties/add
+## Task 10: Update Routes, AppController, AuthorizationService
 
 **Files:**
-- Modify: `templates/EmployeeNovelties/add.php`
+- Modify: `config/routes.php`
+- Modify: `src/Controller/AppController.php`
+- Modify: `src/Service/AuthorizationService.php`
 
-**Step 1: Reescribir el campo de empleado para soportar masivo y custom_name**
-
-El campo de empleado debe ser condicional. Agregar un data attribute al select de tipo para que JS reactive los campos:
+**Step 1: Add routes** (before `$builder->fallbacks()`)
 
 ```php
-<!-- Campo de empleado — se muestra/oculta según el tipo seleccionado -->
-<div id="employee-field" class="col-md-6">
-    <label class="form-label">Empleado</label>
-    <?= $this->Form->control('employee_id', [
-        'label' => false,
-        'class' => 'form-control select2',
-        'empty' => '-- Seleccionar empleado --',
-        'options' => $employees,
-    ]) ?>
-</div>
+// Employee novelties pipeline
+$builder->connect(
+    '/employee-novelties/advance/{id}',
+    ['controller' => 'EmployeeNovelties', 'action' => 'advance'],
+    ['id' => '\d+', 'pass' => ['id']]
+);
+$builder->connect(
+    '/employee-novelties/add-observation/{id}',
+    ['controller' => 'EmployeeNovelties', 'action' => 'addObservation'],
+    ['id' => '\d+', 'pass' => ['id']]
+);
+$builder->connect(
+    '/employee-novelties/upload-document/{id}',
+    ['controller' => 'EmployeeNovelties', 'action' => 'uploadDocument'],
+    ['id' => '\d+', 'pass' => ['id']]
+);
+$builder->connect(
+    '/employee-novelties/delete-document/{noveltyId}/{documentId}',
+    ['controller' => 'EmployeeNovelties', 'action' => 'deleteDocument'],
+    ['noveltyId' => '\d+', 'documentId' => '\d+', 'pass' => ['noveltyId', 'documentId']]
+);
 
-<div id="custom-name-field" class="col-md-6" style="display:none">
-    <label class="form-label">Nombre / Descripción</label>
-    <?= $this->Form->control('custom_name', ['label' => false, 'class' => 'form-control', 'placeholder' => 'Ej: Bonificación especial equipo ventas']) ?>
-</div>
-
-<div id="massive-employees-field" class="col-md-12" style="display:none">
-    <label class="form-label">Empleados (selección múltiple)</label>
-    <?= $this->Form->control('employee_ids[]', [
-        'label'    => false,
-        'type'     => 'select',
-        'multiple' => true,
-        'class'    => 'form-control select2',
-        'options'  => $employees,
-    ]) ?>
-</div>
+// Novelty Liquidation Docs
+$builder->connect(
+    '/novelty-liquidation-docs/advance-group/{id}',
+    ['controller' => 'NoveltyLiquidationDocs', 'action' => 'advanceGroup'],
+    ['id' => '\d+', 'pass' => ['id']]
+);
+$builder->connect(
+    '/novelty-liquidation-docs/add-signature/{id}',
+    ['controller' => 'NoveltyLiquidationDocs', 'action' => 'addSignature'],
+    ['id' => '\d+', 'pass' => ['id']]
+);
+$builder->connect(
+    '/novelty-liquidation-docs/upload-document/{id}',
+    ['controller' => 'NoveltyLiquidationDocs', 'action' => 'uploadDocument'],
+    ['id' => '\d+', 'pass' => ['id']]
+);
+$builder->connect(
+    '/novelty-liquidation-docs/delete-document/{id}/{documentId}',
+    ['controller' => 'NoveltyLiquidationDocs', 'action' => 'deleteDocument'],
+    ['id' => '\d+', 'documentId' => '\d+', 'pass' => ['id', 'documentId']]
+);
+$builder->connect(
+    '/novelty-liquidation-docs/add-observation/{id}',
+    ['controller' => 'NoveltyLiquidationDocs', 'action' => 'addObservation'],
+    ['id' => '\d+', 'pass' => ['id']]
+);
 ```
 
-**Step 2: Agregar el JS de tipo que reactive los campos**
+**Step 2: Update AppController**
 
-Al final del add.php:
+In `$controllerModuleMap` add:
+```php
+'NoveltyLiquidationDocs' => 'novelty_liquidation_docs',
+```
 
-```html
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const noveltyTypeData = <?= json_encode($noveltyTypeConfig) ?>;
+In `_setSidebarCounters()`, update the novelties counter:
+```php
+$noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+$this->set('noveltiesCount', $noveltiesTable->find()
+    ->where(['pipeline_status NOT IN' => ['pagada', 'rechazada']])
+    ->count());
+```
 
-    function updateFieldVisibility(typeId) {
-        const config = noveltyTypeData[typeId] || {};
-        document.getElementById('employee-field').style.display =
-            (!config.uses_custom_name && !config.is_massive) ? '' : 'none';
-        document.getElementById('custom-name-field').style.display =
-            config.uses_custom_name ? '' : 'none';
-        document.getElementById('massive-employees-field').style.display =
-            config.is_massive ? '' : 'none';
+**Step 3: Update AuthorizationService**
 
-        // Conditional date/schedule fields
-        const fieldMap = {
-            'start-date-field':      config.show_start_date,
-            'end-date-field':        config.show_end_date,
-            'permission-date-field': config.show_permission_date,
-            'schedule-type-field':   config.show_schedule_type,
-        };
-        for (const [id, show] of Object.entries(fieldMap)) {
-            const el = document.getElementById(id);
-            if (el) el.style.display = show ? '' : 'none';
+Add to `MODULES`:
+```php
+'novelty_liquidation_docs' => 'Documentos de Liquidación',
+```
+
+**Step 4: Create permissions migration**
+
+File: `config/Migrations/20260313000008_AddNoveltyLiquidationDocsPermissions.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+use Migrations\BaseMigration;
+
+class AddNoveltyLiquidationDocsPermissions extends BaseMigration
+{
+    public function up(): void
+    {
+        // Get all role IDs
+        $roles = $this->fetchAll('SELECT id FROM roles');
+        foreach ($roles as $role) {
+            $this->execute(sprintf(
+                "INSERT INTO permissions (role_id, module, can_view, can_create, can_edit, can_delete) VALUES (%d, 'novelty_liquidation_docs', 1, 1, 1, 0)",
+                $role['id']
+            ));
         }
     }
 
-    const typeSelect = document.querySelector('[name="novelty_type_id"]');
-    if (typeSelect) {
-        typeSelect.addEventListener('change', function () {
-            updateFieldVisibility(this.value);
-        });
-        updateFieldVisibility(typeSelect.value);
+    public function down(): void
+    {
+        $this->execute("DELETE FROM permissions WHERE module = 'novelty_liquidation_docs'");
     }
-});
-</script>
-```
-
-**Step 3: En el EmployeeNoveltiesController::add() agregar `$noveltyTypeConfig`**
-
-```php
-// Cargar configuración de tipos para JS
-$allTypes = $this->EmployeeNovelties->NoveltyTypes->find()->all();
-$noveltyTypeConfig = [];
-foreach ($allTypes as $t) {
-    $noveltyTypeConfig[$t->id] = [
-        'uses_custom_name'     => (bool)$t->uses_custom_name,
-        'is_massive'           => (bool)$t->is_massive,
-        'show_start_date'      => (bool)$t->show_start_date,
-        'show_end_date'        => (bool)$t->show_end_date,
-        'show_permission_date' => (bool)$t->show_permission_date,
-        'show_schedule_type'   => (bool)$t->show_schedule_type,
-    ];
 }
-$this->set(compact('noveltyTypeConfig'));
 ```
 
-**Step 4: Commit**
+**Step 5: Run migration and commit**
 
 ```bash
-git add templates/EmployeeNovelties/add.php src/Controller/EmployeeNoveltiesController.php
-git commit -m "feat(novelties): update add form with conditional fields for custom_name and massive types"
+bin/cake migrations migrate
+git add config/routes.php \
+        src/Controller/AppController.php \
+        src/Service/AuthorizationService.php \
+        config/Migrations/20260313000008_AddNoveltyLiquidationDocsPermissions.php
+git commit -m "feat(novelties): add routes, permissions, and sidebar counters for pipeline"
 ```
 
 ---
 
-### Task 17: Actualizar EmployeeNovelties/index y view
+## Task 11: Update NoveltyTypes Edit View — Pipeline Config Toggles
+
+**Files:**
+- Modify: `templates/NoveltyTypes/edit.php`
+- Modify: `templates/NoveltyTypes/add.php`
+
+**Step 1: Add pipeline configuration section**
+
+Add a card section after existing fields with toggle switches for:
+- `requires_rrhh` — "Requiere etapa RRHH"
+- `requires_firmas` — "Requiere Firmas y Aprobación"
+- `requires_gdp` — "Requiere etapa GDP"
+- `requires_tesoreria` — "Requiere etapa Tesorería"
+- `show_start_date` — "Mostrar Fecha Inicio"
+- `show_end_date` — "Mostrar Fecha Fin"
+- `show_permission_date` — "Mostrar Fecha de Permiso"
+- `show_schedule_type` — "Mostrar Tipo de Horario"
+- `uses_custom_name` — "Usa Nombre Libre (en vez de select de empleado)"
+- `is_massive` — "Novedad Masiva (multi-selección de empleados)"
+
+Use Bootstrap `form-check form-switch` pattern for each toggle.
+
+**Step 2: Commit**
+
+```bash
+git add templates/NoveltyTypes/edit.php templates/NoveltyTypes/add.php
+git commit -m "feat(novelties): add pipeline configuration toggles to NoveltyTypes edit/add views"
+```
+
+---
+
+## Task 12: EmployeeNovelties Templates — Index, View, Add
 
 **Files:**
 - Modify: `templates/EmployeeNovelties/index.php`
 - Modify: `templates/EmployeeNovelties/view.php`
+- Modify: `templates/EmployeeNovelties/add.php`
 
-**Step 1: index.php — actualizar badge de estado**
+**Step 1: Update index.php**
 
-Cambiar la columna `status` por `pipeline_status` con badge de color. Agregar filtro por `pipeline_status`:
+- Replace `status` filter with `pipeline_status` dropdown using `NoveltyConstants::STATUS_LABELS`
+- Show pipeline status as colored badge (use `STATUS_LABELS` for display)
+- Show `custom_name` or employee name depending on type
+- Add column for unread observation count badge
 
-```php
-<?php
-$statusColors = [
-    'registro'           => 'secondary',
-    'rrhh'               => 'info',
-    'contabilidad'       => 'primary',
-    'firmas_aprobacion'  => 'warning',
-    'gdp'                => 'dark',
-    'tesoreria'          => 'success',
-    'pagada'             => 'success',
-    'rechazada'          => 'danger',
-];
-// En la columna de estado:
-$color = $statusColors[$novelty->pipeline_status] ?? 'secondary';
-$label = \App\Constants\NoveltyConstants::STATUS_LABELS[$novelty->pipeline_status] ?? $novelty->pipeline_status;
-echo "<span class=\"badge bg-{$color}\">{$label}</span>";
-```
+**Step 2: Update view.php**
 
-**Step 2: view.php — agregar barra de progreso, botón avanzar, sección de soportes y observaciones**
+- Add pipeline progress bar using `pipeline_progress.php` element with novelty-specific statuses/labels/icons
+- Show RRHH fields (passes_payroll) when in RRHH stage
+- Show "Asignar a Documento de Liquidación" form when in contabilidad stage (if not yet grouped)
+- If grouped: show link to liquidation doc, hide individual advance button
+- Add documents section grouped by pipeline stage
+- Add observations chat section
+- Show advance/reject buttons based on current stage and role
 
-La vista debe incluir:
-- Barra de progreso usando `$pipeline` (array de etapas del tipo) y `$currentStatus`
-- Sección de campos editables según etapa actual
-- Si está agrupada: mensaje con link al doc de liquidación en vez de botón avanzar
-- Sección de soportes (collapsible por etapa, upload form)
-- Chat de observaciones (igual al de facturas)
-- Botón Avanzar / Rechazar (solo si no está agrupada y el rol lo permite)
+**Step 3: Update add.php**
 
-En el controlador `view()`, pasar:
-```php
-$pipeline = $this->pipelineService->getPipelineForType($novelty->novelty_type);
-$documentsByStatus = $this->documentService->getDocumentsByStatus($id);
-$observations = $this->EmployeeNovelties->NoveltyObservations->find()
-    ->contain(['Users'])
-    ->where(['novelty_id' => $id])
-    ->order(['created' => 'ASC'])
-    ->all();
-$this->set(compact('novelty', 'pipeline', 'documentsByStatus', 'observations'));
-```
+- Load novelty type flags via AJAX or data attributes to show/hide fields dynamically
+- If `is_massive`: show multi-select Select2 for employees instead of single select
+- If `uses_custom_name`: show text input instead of employee select
+- Show/hide date fields based on type flags (`show_start_date`, `show_end_date`, etc.)
+- Show/hide schedule_type and permission_date based on type flags
 
-**Step 3: Commit**
+**Step 4: Commit**
 
 ```bash
-git add templates/EmployeeNovelties/index.php templates/EmployeeNovelties/view.php
-git commit -m "feat(novelties): update novelty index and view for pipeline UI"
+git add templates/EmployeeNovelties/index.php \
+        templates/EmployeeNovelties/view.php \
+        templates/EmployeeNovelties/add.php
+git commit -m "feat(novelties): update EmployeeNovelties templates with pipeline UI, observations, documents"
 ```
 
 ---
 
-### Task 18: Crear vistas de NoveltyLiquidationDocs
+## Task 13: NoveltyLiquidationDocs Templates — Index, View
 
 **Files:**
 - Create: `templates/NoveltyLiquidationDocs/index.php`
 - Create: `templates/NoveltyLiquidationDocs/view.php`
 
-**Step 1: index.php**
+**Step 1: Create index.php**
 
-Tabla con columnas: Número de liquidación, Período, Estado actual (badge), Nº de novedades, Fecha, acciones.
+- Table with columns: Número de Liquidación, Período (label from PERIOD_LABELS), Estado (badge), Novedades (count), Fecha
+- Filter dropdown by `pipeline_status`
+- Clickable rows with `data-href`
+- Pagination element
 
-Filtro por estado (igual a otros índices del sistema).
+**Step 2: Create view.php**
 
-**Step 2: view.php**
-
-Secciones:
-1. Encabezado: número, período, fecha doc, realizado por
-2. Barra de progreso de pipeline (etapas contabilidad → pagada)
-3. Lista de novedades miembro (tabla compacta con link a cada una)
-4. Sección campos del grupo por etapa (colapsable):
-   - Contabilidad: período, fecha, realizado por (form inline)
-   - Firmas y Aprobación: canvas por firmante + badge "Firmado" / "Pendiente"
-   - GDP: pasa para pago (radio Si/No)
-   - Tesorería: estado de pago, fecha de pago
-5. Botón "Avanzar grupo" → POST a `advanceGroup`
-6. Soportes por estado
-7. Chat de observaciones del grupo
+- Header card with: liquidation_number, period label, document_date, performed_by user name
+- Pipeline progress bar (starting from contabilidad stage)
+- Compact list of member novelties with links to each
+- Signatures section (visible in `firmas_aprobacion` stage):
+  - 4 signer slots with canvas and completion badge
+  - Form to add each signature via base64
+- GDP section (visible in `gdp` stage): passes_for_payment toggle
+- Treasury section (visible in `tesoreria` stage): payment_status select, payment_date
+- Documents section grouped by pipeline stage
+- Observations chat
+- "Avanzar Grupo" button
 
 **Step 3: Commit**
 
 ```bash
-git add templates/NoveltyLiquidationDocs/
-git commit -m "feat(novelties): create NoveltyLiquidationDocs index and view templates"
+git add templates/NoveltyLiquidationDocs/index.php \
+        templates/NoveltyLiquidationDocs/view.php
+git commit -m "feat(novelties): create NoveltyLiquidationDocs templates (index, view with signatures and group actions)"
 ```
 
 ---
 
-## Phase 6: Wiring
-
----
-
-### Task 19: Rutas, AuthorizationService, sidebar
+## Task 14: Update Sidebar in Layout
 
 **Files:**
-- Modify: `config/routes.php`
-- Modify: `src/Service/AuthorizationService.php`
+- Modify: `templates/layout/default.php`
 
-**Step 1: Agregar rutas en routes.php (antes de `$builder->fallbacks()`)**
+**Step 1: Add sidebar entry for Liquidation Docs**
 
-```php
-$routes->connect('/novelty-liquidation-docs/advance-group/{id}', [
-    'controller' => 'NoveltyLiquidationDocs',
-    'action'     => 'advanceGroup',
-], ['id' => '\d+', 'pass' => ['id']]);
-
-$routes->connect('/novelty-liquidation-docs/add-signature/{id}', [
-    'controller' => 'NoveltyLiquidationDocs',
-    'action'     => 'addSignature',
-], ['id' => '\d+', 'pass' => ['id']]);
-
-$routes->connect('/novelty-liquidation-docs/add-observation/{id}', [
-    'controller' => 'NoveltyLiquidationDocs',
-    'action'     => 'addObservation',
-], ['id' => '\d+', 'pass' => ['id']]);
-
-$routes->connect('/employee-novelties/advance/{id}', [
-    'controller' => 'EmployeeNovelties',
-    'action'     => 'advance',
-], ['id' => '\d+', 'pass' => ['id']]);
-
-$routes->connect('/employee-novelties/add-observation/{id}', [
-    'controller' => 'EmployeeNovelties',
-    'action'     => 'addObservation',
-], ['id' => '\d+', 'pass' => ['id']]);
-```
-
-**Step 2: Agregar módulo en AuthorizationService::MODULES**
+Add a "Documentos de Liquidación" link in the sidebar under the existing "Novedades" section:
 
 ```php
-'novelty_liquidation_docs' => 'Documentos de Liquidación',
+<a class="nav-link" href="<?= $this->Url->build(['controller' => 'NoveltyLiquidationDocs', 'action' => 'index']) ?>">
+    <i class="bi bi-file-earmark-text"></i> Documentos de Liquidación
+</a>
 ```
 
-**Step 3: Agregar acciones en AppController::_actionToPermission()**
-
-```php
-'advanceGroup', 'addSignature', 'addObservation', 'advance', 'uploadDocument' => 'edit',
-```
-
-**Step 4: Commit**
+**Step 2: Commit**
 
 ```bash
-git add config/routes.php src/Service/AuthorizationService.php src/Controller/AppController.php
-git commit -m "feat(novelties): wire up routes, permissions and module map for pipeline"
+git add templates/layout/default.php
+git commit -m "feat(novelties): add Liquidation Documents link to sidebar"
 ```
 
 ---
 
-### Task 20: Smoke test y verificación final
+## Task 15: Pipeline Progress Element — Support Dynamic Statuses
 
-**Step 1: Correr todos los tests**
+**Files:**
+- Modify: `templates/element/pipeline_progress.php`
+
+**Step 1: Make element generic**
+
+The existing element already accepts `$pipelineStatuses`, `$pipelineLabels`, `$currentStatus`, `$isRejected` as variables. It should work without changes since the novelty views will pass novelty-specific statuses/labels. However, the `$statusIcons` array is hardcoded for invoices.
+
+Update the element to accept an optional `$statusIcons` variable:
+```php
+$statusIcons = $statusIcons ?? [
+    'aprobacion'    => 'bi-check-circle',
+    'contabilidad'  => 'bi-calculator',
+    'tesoreria'     => 'bi-bank',
+    'pagada'        => 'bi-cash-coin',
+];
+```
+
+This makes it backwards compatible with invoices while allowing novelties to pass their own icons.
+
+**Step 2: Commit**
+
+```bash
+git add templates/element/pipeline_progress.php
+git commit -m "feat: make pipeline_progress element accept custom status icons"
+```
+
+---
+
+## Task 16: Add Novelty Type Flags Endpoint (AJAX)
+
+**Files:**
+- Modify: `src/Controller/NoveltyTypesController.php`
+- Modify: `config/routes.php`
+
+**Step 1: Add getFlags action**
+
+```php
+public function getFlags($id = null)
+{
+    $this->request->allowMethod(['get']);
+    $this->autoRender = false;
+
+    $noveltyType = $this->NoveltyTypes->get($id);
+
+    return $this->response
+        ->withType('application/json')
+        ->withStringBody(json_encode([
+            'requires_rrhh' => $noveltyType->requires_rrhh,
+            'requires_firmas' => $noveltyType->requires_firmas,
+            'requires_gdp' => $noveltyType->requires_gdp,
+            'requires_tesoreria' => $noveltyType->requires_tesoreria,
+            'show_start_date' => $noveltyType->show_start_date,
+            'show_end_date' => $noveltyType->show_end_date,
+            'show_permission_date' => $noveltyType->show_permission_date,
+            'show_schedule_type' => $noveltyType->show_schedule_type,
+            'uses_custom_name' => $noveltyType->uses_custom_name,
+            'is_massive' => $noveltyType->is_massive,
+        ]));
+}
+```
+
+**Step 2: Add route**
+
+```php
+$builder->connect(
+    '/novelty-types/get-flags/{id}',
+    ['controller' => 'NoveltyTypes', 'action' => 'getFlags'],
+    ['id' => '\d+', 'pass' => ['id']]
+);
+```
+
+**Step 3: Commit**
+
+```bash
+git add src/Controller/NoveltyTypesController.php config/routes.php
+git commit -m "feat(novelties): add AJAX endpoint for novelty type flags"
+```
+
+---
+
+## Task 17: Frontend JS for Dynamic Add Form
+
+**Files:**
+- Create: `webroot/js/novelty-add.js`
+
+**Step 1: Create JS for dynamic form behavior**
+
+When novelty_type_id select changes:
+1. Fetch flags from `/novelty-types/get-flags/{id}`
+2. Show/hide fields based on flags:
+   - `show_permission_date` → toggle permission_date field
+   - `show_schedule_type` → toggle schedule_type field
+   - `show_start_date` → toggle start_date field
+   - `show_end_date` → toggle end_date field
+   - `uses_custom_name` → toggle between employee select and text input
+   - `is_massive` → toggle between single select and multi-select Select2
+
+**Step 2: Include in add.php template**
+
+```php
+<?= $this->Html->script('novelty-add') ?>
+```
+
+**Step 3: Commit**
+
+```bash
+git add webroot/js/novelty-add.js
+git commit -m "feat(novelties): add JS for dynamic novelty add form based on type flags"
+```
+
+---
+
+## Task 18: Final Integration & Verification
+
+**Step 1: Run code style check**
+
+```bash
+composer cs-check
+```
+Fix any issues found.
+
+**Step 2: Run tests**
 
 ```bash
 composer test
 ```
-Expected: All tests pass (no regressions).
+Fix any failures.
 
-**Step 2: Verificar estilo completo**
-
-```bash
-composer cs-check src/
-```
-Expected: No errors.
-
-**Step 3: Verificar migraciones aplicadas**
+**Step 3: Verify migrations**
 
 ```bash
 bin/cake migrations status
 ```
-Expected: All migrations `up`.
+All migrations should be "up".
 
-**Step 4: Smoke test manual**
+**Step 4: Manual smoke test**
 
-- Crear una novedad de tipo simple → verificar que inicia en `registro`
-- Avanzar a RRHH → completar campos RRHH → avanzar a Contabilidad
-- Asignar número de liquidación → verificar que queda agrupada
-- Desde NoveltyLiquidationDocs → avanzar el grupo a Firmas → GDP → Tesorería → Pagada
-- Intentar avanzar individualmente una novedad agrupada → debe mostrar error
-- Crear novedad de tipo masivo → verificar multi-select de empleados
-- Crear novedad con `uses_custom_name` → verificar campo de texto libre
-- Verificar que tipos con etapas desactivadas las saltan correctamente
+1. Visit `/novelty-types` — verify pipeline config toggles appear in edit form
+2. Visit `/employee-novelties` — verify pipeline_status filter and badges work
+3. Create a new novelty — verify dynamic form shows/hides fields
+4. View a novelty — verify pipeline progress bar shows
+5. Advance a novelty from registro → rrhh → contabilidad
+6. In contabilidad, assign to a liquidation doc
+7. Visit `/novelty-liquidation-docs` — verify index shows the doc
+8. View liquidation doc — verify member list, signatures, advance group
 
-**Step 5: Commit final**
+**Step 5: Final commit**
 
 ```bash
-git commit --allow-empty -m "feat(novelties): complete pipeline implementation - smoke tested"
+git add -A
+git commit -m "feat(novelties): complete pipeline implementation with all views and services"
 ```
+
+---
+
+## Summary of All Files
+
+### New Files (18)
+| File | Purpose |
+|------|---------|
+| `config/Migrations/20260313000001_*` through `20260313000008_*` | 8 migrations |
+| `src/Service/NoveltyPipelineService.php` | Pipeline orchestration |
+| `src/Service/NoveltyDocumentService.php` | File uploads for novelties & groups |
+| `src/Service/NoveltyObservationService.php` | Observation chat |
+| `src/Controller/NoveltyLiquidationDocsController.php` | Group management |
+| `src/Model/Entity/NoveltyLiquidationDoc.php` | Entity |
+| `src/Model/Table/NoveltyLiquidationDocsTable.php` | Table |
+| `src/Model/Entity/NoveltyLiquidationSignature.php` | Entity |
+| `src/Model/Table/NoveltyLiquidationSignaturesTable.php` | Table |
+| `src/Model/Entity/NoveltyMassiveEmployee.php` | Entity |
+| `src/Model/Table/NoveltyMassiveEmployeesTable.php` | Table |
+| `src/Model/Entity/NoveltyObservation.php` | Entity |
+| `src/Model/Table/NoveltyObservationsTable.php` | Table |
+| `src/Model/Entity/NoveltyDocument.php` | Entity |
+| `src/Model/Table/NoveltyDocumentsTable.php` | Table |
+| `templates/NoveltyLiquidationDocs/index.php` | Group list view |
+| `templates/NoveltyLiquidationDocs/view.php` | Group detail view |
+| `webroot/js/novelty-add.js` | Dynamic form JS |
+
+### Modified Files (12)
+| File | Change |
+|------|--------|
+| `src/Constants/NoveltyConstants.php` | Pipeline statuses, periods, payments, signers |
+| `src/Model/Entity/EmployeeNovelty.php` | New fields, domain helpers |
+| `src/Model/Entity/NoveltyType.php` | Pipeline config flags |
+| `src/Model/Table/EmployeeNoveltiesTable.php` | New associations, validation updates |
+| `src/Model/Table/NoveltyTypesTable.php` | Boolean flag validation |
+| `src/Controller/EmployeeNoveltiesController.php` | Pipeline actions |
+| `src/Controller/NoveltyTypesController.php` | getFlags AJAX endpoint |
+| `src/Controller/AppController.php` | Module map, sidebar counter |
+| `src/Service/AuthorizationService.php` | New module |
+| `config/routes.php` | Pipeline routes |
+| `templates/element/pipeline_progress.php` | Custom icons support |
+| `templates/layout/default.php` | Sidebar link |
+| `templates/EmployeeNovelties/index.php` | Pipeline status filter/badges |
+| `templates/EmployeeNovelties/view.php` | Pipeline UI, docs, observations |
+| `templates/EmployeeNovelties/add.php` | Dynamic form with type flags |
+| `templates/NoveltyTypes/edit.php` | Pipeline config toggles |
+| `templates/NoveltyTypes/add.php` | Pipeline config toggles |

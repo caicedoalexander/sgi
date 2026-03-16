@@ -49,6 +49,10 @@ $this->assign('title', 'Editar Tipo de Novedad');
                         <label class="form-check-label" for="requires-rrhh">Requiere etapa RRHH</label>
                     </div>
                     <div class="form-check form-switch mb-2">
+                        <?= $this->Form->checkbox('requires_contabilidad', ['class' => 'form-check-input', 'id' => 'requires-contabilidad']) ?>
+                        <label class="form-check-label" for="requires-contabilidad">Requiere etapa Contabilidad</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
                         <?= $this->Form->checkbox('requires_firmas', ['class' => 'form-check-input', 'id' => 'requires-firmas']) ?>
                         <label class="form-check-label" for="requires-firmas">Requiere Firmas y Aprobación</label>
                     </div>
@@ -91,24 +95,29 @@ $this->assign('title', 'Editar Tipo de Novedad');
             </div>
         </div>
 
-        <!-- Contract Template Assignments -->
-        <div class="mt-4 pt-3" style="border-top:1px solid var(--border-color);">
+        <!-- Contract Template Assignments (only for parent types) -->
+        <div class="mt-4 pt-3" style="border-top:1px solid var(--border-color);" id="contract-templates-section">
             <label class="sgi-section-label">Asignación de plantillas por tipo de contrato</label>
-            <table class="table table-sm align-middle mb-2" id="contract-templates-table">
-                <thead>
-                    <tr>
-                        <th>Tipo de Contrato</th>
-                        <th>Organización Temporal</th>
-                        <th>Plantilla</th>
-                        <th style="width:50px;"></th>
-                    </tr>
-                </thead>
-                <tbody id="contract-templates-body">
-                </tbody>
-            </table>
-            <button type="button" class="btn btn-outline-dark btn-sm" id="add-contract-template-row">
-                <i class="bi bi-plus-lg me-1"></i>Agregar asignación
-            </button>
+            <p class="text-muted small mb-2" id="subtype-templates-notice" style="display:none;">
+                <i class="bi bi-info-circle me-1"></i>Los subtipos heredan las plantillas asignadas al tipo padre.
+            </p>
+            <div id="contract-templates-fields">
+                <table class="table table-sm align-middle mb-2" id="contract-templates-table">
+                    <thead>
+                        <tr>
+                            <th>Tipo de Contrato</th>
+                            <th>Organización Temporal</th>
+                            <th>Plantilla</th>
+                            <th style="width:50px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="contract-templates-body">
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-outline-dark btn-sm" id="add-contract-template-row">
+                    <i class="bi bi-plus-lg me-1"></i>Agregar asignación
+                </button>
+            </div>
         </div>
 
         <div class="d-flex gap-2 pt-3 mt-3" style="border-top:1px solid var(--border-color);">
@@ -204,5 +213,21 @@ if (!empty($noveltyType->novelty_type_contract_templates)) {
     existingRows.forEach(function(row) { addRow(row); });
 
     document.getElementById('add-contract-template-row').addEventListener('click', function() { addRow(); });
+
+    // Hide template section for subtypes
+    var parentSelect = document.getElementById('parent-id');
+    var templateFields = document.getElementById('contract-templates-fields');
+    var subtypeNotice = document.getElementById('subtype-templates-notice');
+
+    function toggleTemplateSection() {
+        var isSubtype = parentSelect && parentSelect.value !== '';
+        templateFields.style.display = isSubtype ? 'none' : '';
+        subtypeNotice.style.display = isSubtype ? '' : 'none';
+    }
+
+    if (parentSelect) {
+        parentSelect.addEventListener('change', toggleTemplateSection);
+        toggleTemplateSection();
+    }
 })();
 <?php $this->Html->scriptEnd(); ?>

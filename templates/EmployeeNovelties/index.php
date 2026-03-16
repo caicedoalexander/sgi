@@ -74,8 +74,8 @@ $statusLabels = NoveltyConstants::STATUS_LABELS;
             </thead>
             <tbody>
                 <?php foreach ($novelties as $novelty): ?>
-                <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'view', $novelty->id]) ?>">
-                    <td><?= h($novelty->custom_name ?? $novelty->employee->full_name ?? '—') ?></td>
+                <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'edit', $novelty->id]) ?>">
+                    <td><?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?></td>
                     <td><?= h($novelty->novelty_type->name ?? '—') ?></td>
                     <td><?= $novelty->permission_date?->format('d/m/Y') ?: '—' ?></td>
                     <td><?= $scheduleLabels[$novelty->schedule_type] ?? '—' ?></td>

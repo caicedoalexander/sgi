@@ -3,25 +3,56 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\EmployeeNovelty $novelty
  * @var array $effectiveStatuses
- * @var string|null $nextStatus
- * @var array $transitionErrors
- * @var bool $canAdvance
  * @var array $documentsByStatus
  * @var bool $hasActiveTemplate
- * @var array $liquidationDocs
+ * @var array $fieldLabels
  */
 use App\Constants\NoveltyConstants;
 
-$this->assign('title', 'Detalle de Novedad');
+$this->assign('title', 'Novedad #' . $novelty->id);
 
 $statusLabels = NoveltyConstants::STATUS_LABELS;
 $statusIcons = NoveltyConstants::STATUS_ICONS;
 $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
 $isRejected = $novelty->isRejected();
+$currentStatus = $novelty->pipeline_status;
+
+$statusBadgeMap = [
+    'registro' => 'bg-secondary',
+    'rrhh' => 'bg-info text-dark',
+    'contabilidad' => 'bg-primary',
+    'firmas_aprobacion' => 'bg-warning text-dark',
+    'gdp' => 'bg-dark',
+    'tesoreria' => 'bg-info',
+    'pagada' => 'bg-success',
+    'rechazada' => 'bg-danger',
+];
+
+// Documents prep
+$docIcon = fn(?string $mime): string => match(true) {
+    str_contains($mime ?? '', 'pdf') => 'bi-file-earmark-pdf',
+    str_contains($mime ?? '', 'image') => 'bi-file-earmark-image',
+    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => 'bi-file-earmark-word',
+    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'bi-file-earmark-excel',
+    default => 'bi-file-earmark',
+};
+$docIconColor = fn(?string $mime): string => match(true) {
+    str_contains($mime ?? '', 'pdf') => '#dc3545',
+    str_contains($mime ?? '', 'image') => '#0dcaf0',
+    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => '#0d6efd',
+    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'var(--primary-color)',
+    default => '#aaa',
+};
+$totalDocs = array_sum(array_map('count', $documentsByStatus));
+$badgeColors = [
+    'registro' => 'bg-secondary', 'rrhh' => 'bg-info text-dark', 'contabilidad' => 'bg-primary',
+    'firmas_aprobacion' => 'bg-warning text-dark', 'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'pagada' => 'bg-success',
+];
 ?>
 
+<!-- Page header -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Detalle de Novedad</span>
+    <span class="sgi-page-title">Ver Novedad</span>
     <div class="d-flex gap-2">
         <?php if (!empty($hasActiveTemplate)): ?>
         <?= $this->Html->link(
@@ -35,40 +66,61 @@ $isRejected = $novelty->isRejected();
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
+        <?php if (!empty($userPermissions['employee_novelties']['can_edit'])): ?>
+        <?= $this->Html->link(
+            '<i class="bi bi-pencil me-1"></i>Editar',
+            ['action' => 'edit', $novelty->id],
+            ['class' => 'btn btn-warning btn-sm', 'escape' => false]
+        ) ?>
+        <?php endif; ?>
     </div>
 </div>
 
-<!-- Pipeline Progress -->
-<?= $this->element('pipeline_progress', [
-    'pipelineStatuses' => $effectiveStatuses,
-    'pipelineLabels' => $statusLabels,
-    'currentStatus' => $novelty->pipeline_status,
-    'isRejected' => $isRejected,
-    'statusIcons' => $statusIcons,
-]) ?>
-
+<!-- Main card -->
 <div class="card card-primary mb-4">
-    <div class="card-header d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-3">
+
+    <!-- Header -->
+    <div class="card-header d-flex align-items-start justify-content-between gap-3" style="padding:1rem 1.25rem;">
+        <div class="d-flex align-items-start gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
+                 style="width:52px;height:52px;background:var(--primary-color);color:#fff;font-size:1.35rem;">
                 <i class="bi bi-calendar-check"></i>
             </div>
             <div>
-                <div style="font-size:.95rem;font-weight:700;color:#111;">
-                    <?= h($novelty->custom_name ?? $novelty->employee->full_name ?? '—') ?>
+                <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;">
+                    <?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?>
                 </div>
-                <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
-                    <?= h($novelty->novelty_type->name ?? '') ?>
+                <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge bg-secondary"><?= h($novelty->novelty_type->name ?? '') ?></span>
+                    <span class="badge <?= $statusBadgeMap[$currentStatus] ?? 'bg-dark' ?>">
+                        <?= $statusLabels[$currentStatus] ?? ucfirst($currentStatus) ?>
+                    </span>
+                    <?php if ($isRejected): ?>
+                        <span class="badge bg-danger">Rechazada</span>
+                    <?php endif; ?>
                 </div>
+                <?php if (!empty($novelty->novelty_massive_employees)): ?>
+                <div class="mt-1" style="font-size:.8rem;color:#777;font-weight:500;">
+                    Masiva: <?= count($novelty->novelty_massive_employees) ?> empleados
+                </div>
+                <?php endif; ?>
             </div>
         </div>
-        <span class="badge bg-<?= $isRejected ? 'danger' : 'primary' ?>">
-            <?= $statusLabels[$novelty->pipeline_status] ?? ucfirst(h($novelty->pipeline_status)) ?>
-        </span>
     </div>
 
-    <div class="row g-0" style="border-top:1px solid var(--border-color);">
+    <!-- Pipeline progress -->
+    <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+        <?= $this->element('pipeline_progress', [
+            'pipelineStatuses' => $effectiveStatuses,
+            'pipelineLabels' => $statusLabels,
+            'currentStatus' => $currentStatus,
+            'isRejected' => $isRejected,
+            'statusIcons' => $statusIcons,
+        ]) ?>
+    </div>
+
+    <!-- Two-column data: Información | Gestión -->
+    <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
         <div class="col-md-6" style="border-right:1px solid var(--border-color);">
             <div class="sgi-section-title">Información de la Novedad</div>
             <?php if ($novelty->employee): ?>
@@ -83,7 +135,6 @@ $isRejected = $novelty->isRejected();
             </div>
             <?php endif; ?>
 
-            <!-- Massive employees -->
             <?php if (!empty($novelty->novelty_massive_employees)): ?>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Empleados (Masiva)</span>
@@ -144,6 +195,7 @@ $isRejected = $novelty->isRejected();
             </div>
             <?php endif; ?>
         </div>
+
         <div class="col-md-6">
             <div class="sgi-section-title">Gestión</div>
             <div class="sgi-data-row">
@@ -176,14 +228,10 @@ $isRejected = $novelty->isRejected();
                 <span class="sgi-data-value"><?= $novelty->approved_at->format('d/m/Y H:i') ?></span>
             </div>
             <?php endif; ?>
-            <?php if ($novelty->filing_date): ?>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Fecha Diligenciamiento</span>
-                <span class="sgi-data-value"><?= $novelty->filing_date->format('d/m/Y') ?></span>
+                <span class="sgi-data-value"><?= $novelty->filing_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
-            <?php endif; ?>
-
-            <!-- Liquidation doc link -->
             <?php if ($novelty->isGrouped()): ?>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Documento de Liquidación</span>
@@ -200,245 +248,186 @@ $isRejected = $novelty->isRejected();
     </div>
 
     <!-- Signatures -->
-    <?php if ($novelty->employee_signature): ?>
-    <div style="border-top:1px solid var(--border-color);">
-        <div class="sgi-section-title">Firma del Funcionario</div>
-        <div style="padding:.25rem 1.25rem .875rem;">
-            <img src="<?= $this->Url->build('/' . $novelty->employee_signature) ?>" alt="Firma Funcionario"
-                 style="max-width:400px;max-height:150px;border:1px solid var(--border-color);">
+    <?php if ($novelty->employee_signature || $novelty->coordinator_signature): ?>
+    <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
+        <?php if ($novelty->employee_signature): ?>
+        <div class="<?= $novelty->coordinator_signature ? 'col-md-6' : 'col-12' ?>" style="<?= $novelty->coordinator_signature ? 'border-right:1px solid var(--border-color);' : '' ?>">
+            <div class="sgi-section-title">Firma del Funcionario</div>
+            <div style="padding:.25rem 1.25rem .875rem;">
+                <img src="<?= $this->Url->build('/' . $novelty->employee_signature) ?>" alt="Firma Funcionario"
+                     style="max-width:400px;max-height:150px;border:1px solid var(--border-color);">
+            </div>
+        </div>
+        <?php endif; ?>
+        <?php if ($novelty->coordinator_signature): ?>
+        <div class="<?= $novelty->employee_signature ? 'col-md-6' : 'col-12' ?>">
+            <div class="sgi-section-title">Firma del Coordinador</div>
+            <div style="padding:.25rem 1.25rem .875rem;">
+                <img src="<?= $this->Url->build('/' . $novelty->coordinator_signature) ?>" alt="Firma Coordinador"
+                     style="max-width:400px;max-height:150px;border:1px solid var(--border-color);">
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
+    <!-- Observations (read-only, like invoices/view) -->
+    <?php if (!empty($novelty->novelty_observations)): ?>
+    <div style="border-bottom:1px solid var(--border-color);">
+        <div class="sgi-section-title">Observaciones</div>
+        <div style="padding:.5rem 1.25rem .875rem;max-height:400px;overflow-y:auto;">
+            <?php foreach ($novelty->novelty_observations as $obs): ?>
+            <div class="d-flex align-items-start gap-2 mb-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:32px;height:32px;background:var(--primary-color);color:#fff;font-size:.7rem;font-weight:700;">
+                    <?php
+                    $names = explode(' ', $obs->user->full_name ?? '');
+                    echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
+                    ?>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-size:.8rem;font-weight:600;color:#222;">
+                            <?= h($obs->user->full_name ?? '') ?>
+                        </span>
+                        <span style="font-size:.7rem;color:#aaa;">
+                            <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
+                        </span>
+                    </div>
+                    <div style="font-size:.84rem;color:#444;line-height:1.5;margin-top:.15rem;">
+                        <?= nl2br(h($obs->message)) ?>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
         </div>
     </div>
     <?php endif; ?>
 
-    <?php if ($novelty->coordinator_signature): ?>
-    <div style="border-top:1px solid var(--border-color);">
-        <div class="sgi-section-title">Firma del Coordinador</div>
-        <div style="padding:.25rem 1.25rem .875rem;">
-            <img src="<?= $this->Url->build('/' . $novelty->coordinator_signature) ?>" alt="Firma Coordinador"
-                 style="max-width:400px;max-height:150px;border:1px solid var(--border-color);">
-        </div>
-    </div>
-    <?php endif; ?>
-
+    <!-- General observations (legacy field) -->
     <?php if ($novelty->observations): ?>
-    <div style="border-top:1px solid var(--border-color);">
-        <div class="sgi-section-title">Observaciones Generales</div>
+    <div style="border-bottom:1px solid var(--border-color);">
+        <div class="sgi-section-title">Observaciones de Rechazo</div>
         <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:#555;line-height:1.65;">
             <?= nl2br(h($novelty->observations)) ?>
         </div>
     </div>
     <?php endif; ?>
 
-    <!-- RRHH Stage: Edit passes_payroll -->
-    <?php if ($novelty->pipeline_status === NoveltyConstants::STATUS_RRHH && !$isRejected): ?>
-    <div style="border-top:1px solid var(--border-color);padding:1.25rem;">
-        <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id]]) ?>
-        <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label">Pasa a Nómina</label>
-                <select name="passes_payroll" class="form-select" required>
-                    <option value="">-- Seleccione --</option>
-                    <option value="1" <?= $novelty->passes_payroll === true ? 'selected' : '' ?>>Sí</option>
-                    <option value="0" <?= $novelty->passes_payroll === false ? 'selected' : '' ?>>No</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-arrow-right me-1"></i>Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
-                </button>
-            </div>
+    <!-- Contact bar -->
+    <div class="sgi-contact-bar">
+        <?php if ($novelty->registered_by_user): ?>
+        <div class="sgi-contact-item">
+            <i class="bi bi-person"></i>
+            <span>Registrado por <?= h($novelty->registered_by_user->full_name) ?></span>
         </div>
-        <?= $this->Form->end() ?>
-    </div>
-    <?php endif; ?>
-
-    <!-- Contabilidad Stage: Assign to liquidation doc -->
-    <?php if ($novelty->pipeline_status === NoveltyConstants::STATUS_CONTABILIDAD && !$novelty->isGrouped() && !$isRejected): ?>
-    <div style="border-top:1px solid var(--border-color);padding:1.25rem;">
-        <div class="sgi-section-title" style="padding:0 0 .5rem;">Asignar a Documento de Liquidación</div>
-        <?= $this->Form->create(null, ['url' => ['action' => 'assignLiquidation', $novelty->id]]) ?>
-        <div class="row g-3 align-items-end">
-            <?php if (!empty($liquidationDocs)): ?>
-            <div class="col-md-4">
-                <label class="form-label">Documento existente</label>
-                <select name="existing_doc_id" class="form-select">
-                    <option value="">-- Crear nuevo --</option>
-                    <?php foreach ($liquidationDocs as $docId => $docNumber): ?>
-                    <option value="<?= $docId ?>"><?= h($docNumber) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-1 text-center pt-4"><strong>o</strong></div>
-            <?php endif; ?>
-            <div class="col-md-3">
-                <label class="form-label">Nuevo No. Liquidación</label>
-                <input type="text" name="liquidation_number" class="form-control" placeholder="LIQ-001">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Período</label>
-                <select name="period" class="form-select">
-                    <?php foreach (NoveltyConstants::PERIOD_LABELS as $val => $label): ?>
-                    <option value="<?= $val ?>"><?= $label ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-link-45deg me-1"></i>Asignar
-                </button>
-            </div>
+        <?php endif; ?>
+        <?php if ($novelty->created): ?>
+        <div class="sgi-contact-item">
+            <i class="bi bi-calendar3"></i>
+            <span>Creado: <?= $novelty->created->format('d/m/Y') ?></span>
         </div>
-        <?= $this->Form->end() ?>
-    </div>
-    <?php endif; ?>
-
-    <!-- Advance/Reject buttons (for non-RRHH stages, non-grouped) -->
-    <?php if ($canAdvance && $novelty->pipeline_status !== NoveltyConstants::STATUS_RRHH): ?>
-    <div style="border-top:1px solid var(--border-color);padding:1.25rem;">
-        <div class="d-flex gap-2">
-            <?php if (empty($transitionErrors)): ?>
-            <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id], 'class' => 'd-inline']) ?>
-            <button type="submit" class="btn btn-success">
-                <i class="bi bi-arrow-right me-1"></i>Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
-            </button>
-            <?= $this->Form->end() ?>
-            <?php else: ?>
-            <div class="text-warning small">
-                <i class="bi bi-exclamation-triangle me-1"></i>
-                <?= implode('<br>', array_map('h', $transitionErrors)) ?>
-            </div>
-            <?php endif; ?>
-
-            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
-                <i class="bi bi-x-lg me-1"></i>Rechazar
-            </button>
+        <?php endif; ?>
+        <?php if ($novelty->modified): ?>
+        <div class="sgi-contact-item">
+            <i class="bi bi-pencil-square"></i>
+            <span>Modificado: <?= $novelty->modified->format('d/m/Y') ?></span>
         </div>
+        <?php endif; ?>
     </div>
-    <?php endif; ?>
-
-    <!-- Reject-only button for grouped novelties -->
-    <?php if (!$isRejected && !$novelty->isPaid() && $novelty->isGrouped()): ?>
-    <div style="border-top:1px solid var(--border-color);padding:1.25rem;">
-        <div class="text-muted small mb-2">
-            <i class="bi bi-info-circle me-1"></i>Esta novedad avanza desde su documento de liquidación.
-        </div>
-        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">
-            <i class="bi bi-x-lg me-1"></i>Rechazar Individualmente
-        </button>
-    </div>
-    <?php endif; ?>
 </div>
 
-<!-- Documents Section -->
+<!-- Documents (read-only, grid layout like invoices/view) -->
 <div class="card card-primary mb-4">
     <div class="card-header">
-        <strong>Documentos</strong>
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-paperclip"></i>
+            Soportes
+            <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
+        </span>
     </div>
-    <div class="card-body">
-        <?php if (!empty($documentsByStatus)): ?>
-            <?php foreach ($documentsByStatus as $stage => $docs): ?>
-            <div class="mb-3">
-                <span class="sgi-section-label"><?= $statusLabels[$stage] ?? ucfirst($stage) ?></span>
-                <ul class="list-group list-group-flush mt-1">
+
+    <?php if (empty($documentsByStatus)): ?>
+        <div class="p-3 text-center text-muted" style="font-size:.875rem">
+            <i class="bi bi-file-earmark-x me-1"></i>Sin soportes adjuntos
+        </div>
+    <?php else: ?>
+        <div class="p-3">
+            <div class="row row-cols-1 row-cols-md-3 g-3">
+                <?php foreach ($documentsByStatus as $status => $docs): ?>
                     <?php foreach ($docs as $doc): ?>
-                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-0">
-                        <div>
-                            <a href="<?= $this->Url->build('/' . $doc->file_path) ?>" target="_blank" class="text-decoration-none">
-                                <i class="bi bi-file-earmark me-1"></i><?= h($doc->file_name) ?>
-                            </a>
-                            <small class="text-muted ms-2"><?= h($doc->uploaded_by_user->full_name ?? '') ?></small>
+                    <div class="col">
+                        <div style="border:1px solid var(--border-color);height:100%;display:flex;flex-direction:column;">
+                            <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:#fafafa;display:flex;align-items:center;gap:.5rem;min-width:0;">
+                                <i class="bi <?= $docIcon($doc->mime_type) ?> flex-shrink-0"
+                                   style="color:<?= $docIconColor($doc->mime_type) ?>;font-size:1.1rem;"></i>
+                                <div style="min-width:0;flex:1;overflow:hidden;">
+                                    <span style="font-size:.78rem;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($doc->file_name) ?>">
+                                        <?= h($doc->file_name) ?>
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
+                                <div>
+                                    <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
+                                        <?= $statusLabels[$status] ?? $status ?>
+                                    </span>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:.35rem;color:#666;">
+                                    <i class="bi bi-person" style="font-size:.8rem;"></i>
+                                    <span><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></span>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:.35rem;color:#888;">
+                                    <i class="bi bi-clock" style="font-size:.75rem;"></i>
+                                    <span><?= $doc->created?->format('d/m/Y H:i') ?></span>
+                                </div>
+                                <?php if ($doc->file_size): ?>
+                                <div style="color:#aaa;font-size:.72rem;"><?= $this->Number->toReadableSize($doc->file_size) ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <div style="padding:.5rem .875rem;border-top:1px solid var(--border-color);text-align:right;">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-box-arrow-up-right me-1"></i>Abrir',
+                                    '/' . $doc->file_path,
+                                    ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank']
+                                ) ?>
+                            </div>
                         </div>
-                        <?php if ($doc->pipeline_status === $novelty->pipeline_status): ?>
-                        <?= $this->Form->postLink(
-                            '<i class="bi bi-trash"></i>',
-                            ['action' => 'deleteDocument', $novelty->id, $doc->id],
-                            ['escape' => false, 'class' => 'btn btn-sm btn-outline-danger', 'confirm' => 'Eliminar este documento?']
-                        ) ?>
-                        <?php endif; ?>
-                    </li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <p class="text-muted small mb-0">No hay documentos adjuntos.</p>
-        <?php endif; ?>
-
-        <?php if (!$isRejected && !$novelty->isPaid()): ?>
-        <div class="mt-3 pt-3" style="border-top:1px solid var(--border-color);">
-            <?= $this->Form->create(null, ['url' => ['action' => 'uploadDocument', $novelty->id], 'type' => 'file', 'class' => 'd-flex gap-2 align-items-end']) ?>
-            <div>
-                <label class="form-label small">Adjuntar documento</label>
-                <input type="file" name="document" class="form-control form-control-sm" required style="max-width:300px;">
-            </div>
-            <button type="submit" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-upload me-1"></i>Subir
-            </button>
-            <?= $this->Form->end() ?>
-        </div>
-        <?php endif; ?>
-    </div>
-</div>
-
-<!-- Observations Chat -->
-<div class="card card-primary mb-4">
-    <div class="card-header">
-        <strong>Observaciones</strong>
-    </div>
-    <div class="card-body">
-        <?php if (!empty($novelty->novelty_observations)): ?>
-        <div style="max-height:400px;overflow-y:auto;" class="mb-3">
-            <?php foreach ($novelty->novelty_observations as $obs): ?>
-            <div class="d-flex gap-2 mb-3">
-                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:32px;height:32px;background:#e9ecef;border-radius:50%;font-size:.75rem;font-weight:600;">
-                    <?= strtoupper(substr($obs->user->full_name ?? '?', 0, 1)) ?>
-                </div>
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between">
-                        <strong style="font-size:.8125rem;"><?= h($obs->user->full_name ?? '') ?></strong>
-                        <small class="text-muted"><?= $obs->created?->format('d/m/Y H:i') ?></small>
                     </div>
-                    <div style="font-size:.875rem;color:#333;margin-top:.15rem;"><?= nl2br(h($obs->message)) ?></div>
-                </div>
+                    <?php endforeach; ?>
+                <?php endforeach; ?>
             </div>
-            <?php endforeach; ?>
         </div>
-        <?php else: ?>
-        <p class="text-muted small mb-3">No hay observaciones.</p>
-        <?php endif; ?>
-
-        <?php if (!$isRejected && !$novelty->isPaid()): ?>
-        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $novelty->id], 'class' => 'd-flex gap-2']) ?>
-        <input type="text" name="message" class="form-control form-control-sm" placeholder="Escribir observación..." required>
-        <button type="submit" class="btn btn-sm btn-primary flex-shrink-0">
-            <i class="bi bi-send me-1"></i>Enviar
-        </button>
-        <?= $this->Form->end() ?>
-        <?php endif; ?>
-    </div>
+    <?php endif; ?>
 </div>
 
-<!-- Reject modal -->
-<?php if (!$isRejected && !$novelty->isPaid()): ?>
-<div class="modal fade" id="rejectModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <?= $this->Form->create(null, ['url' => ['action' => 'reject', $novelty->id]]) ?>
-            <div class="modal-header">
-                <h5 class="modal-title">Rechazar Novedad</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <label class="form-label">Motivo del rechazo</label>
-                <textarea name="observations" class="form-control" rows="3"></textarea>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-danger">Rechazar</button>
-            </div>
-            <?= $this->Form->end() ?>
-        </div>
+<!-- Change History -->
+<?php if (!empty($novelty->novelty_histories)): ?>
+<div class="card">
+    <div class="card-header">Historial de Cambios</div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Campo</th>
+                    <th>Valor Anterior</th>
+                    <th>Valor Nuevo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($novelty->novelty_histories as $history): ?>
+                <tr>
+                    <td><?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?></td>
+                    <td><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
+                    <td><?= h($fieldLabels[$history->field_changed] ?? $history->field_changed) ?></td>
+                    <td class="text-muted"><?= h($history->old_value) ?: '—' ?></td>
+                    <td class="fw-semibold"><?= h($history->new_value) ?: '—' ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 <?php endif; ?>

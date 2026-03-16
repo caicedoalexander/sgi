@@ -293,7 +293,7 @@ $novedades = $employee->employee_novelties ?? [];
             </thead>
             <tbody>
                 <?php foreach ($novedades as $nov): ?>
-                <tr class="clickable-row" data-href="<?= $this->Url->build(['controller' => 'EmployeeNovelties', 'action' => 'view', $nov->id]) ?>">
+                <tr class="clickable-row" data-href="<?= $this->Url->build(['controller' => 'EmployeeNovelties', 'action' => 'edit', $nov->id]) ?>">
                     <td><?= h($nov->novelty_type->name ?? '—') ?></td>
                     <td><?= $nov->permission_date?->format('d/m/Y') ?: '—' ?></td>
                     <td><?= $scheduleLabels[$nov->schedule_type] ?? h($nov->schedule_type) ?></td>
