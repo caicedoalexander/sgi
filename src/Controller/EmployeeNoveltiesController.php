@@ -503,7 +503,7 @@ class EmployeeNoveltiesController extends AppController
             return $this->redirect(['action' => 'edit', $noveltyId]);
         }
 
-        if ($this->documentService->deleteDocument($documentId)) {
+        if ($this->documentService->deleteDocument((int)$documentId)) {
             $this->Flash->success('Documento eliminado.');
         } else {
             $this->Flash->error('No se pudo eliminar el documento.');
