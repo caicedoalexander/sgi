@@ -9,6 +9,8 @@ class EducationLevelsController extends AppController
 {
     use ExcelCatalogTrait;
 
+    protected string $importKeyField = 'name';
+
     public function index()
     {
         $educationLevels = $this->paginate($this->EducationLevels);

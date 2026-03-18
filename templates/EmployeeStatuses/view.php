@@ -10,8 +10,6 @@ $this->assign('title', 'Estado de Empleado: ' . $employeeStatus->name);
         <dl class="row mb-0">
             <dt class="col-sm-3">ID</dt>
             <dd class="col-sm-9"><?= $this->Number->format($employeeStatus->id) ?></dd>
-            <dt class="col-sm-3">Código</dt>
-            <dd class="col-sm-9"><code><?= h($employeeStatus->code) ?></code></dd>
             <dt class="col-sm-3">Nombre</dt>
             <dd class="col-sm-9"><?= h($employeeStatus->name) ?></dd>
             <dt class="col-sm-3">Creado</dt>

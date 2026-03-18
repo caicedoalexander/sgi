@@ -10,8 +10,6 @@ $this->assign('title', 'Carpeta por Defecto: ' . $defaultFolder->name);
         <dl class="row mb-0">
             <dt class="col-sm-3">ID</dt>
             <dd class="col-sm-9"><?= $this->Number->format($defaultFolder->id) ?></dd>
-            <dt class="col-sm-3">Código</dt>
-            <dd class="col-sm-9"><code><?= h($defaultFolder->code) ?></code></dd>
             <dt class="col-sm-3">Nombre</dt>
             <dd class="col-sm-9"><?= h($defaultFolder->name) ?></dd>
             <dt class="col-sm-3">Orden</dt>

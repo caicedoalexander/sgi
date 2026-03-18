@@ -9,9 +9,6 @@ $this->assign('title', 'Nuevo Estado de Empleado');
     <div class="card-body">
         <?= $this->Form->create($employeeStatus) ?>
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <?= $this->Form->control('code', ['class' => 'form-control', 'label' => ['text' => 'Código', 'class' => 'form-label']]) ?>
-            </div>
             <div class="col-md-8 mb-3">
                 <?= $this->Form->control('name', ['class' => 'form-control', 'label' => ['text' => 'Nombre', 'class' => 'form-label']]) ?>
             </div>

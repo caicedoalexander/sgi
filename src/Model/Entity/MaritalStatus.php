@@ -8,7 +8,6 @@ use Cake\ORM\Entity;
 class MaritalStatus extends Entity
 {
     protected array $_accessible = [
-        'code' => true,
         'name' => true,
     ];
 }

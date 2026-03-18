@@ -54,7 +54,7 @@ class EmployeesController extends AppController
 
         $positions = $this->Employees->Positions->find('codeList')->all();
         $operationCenters = $this->Employees->OperationCenters->find('codeList')->all();
-        $employeeStatuses = $this->Employees->EmployeeStatuses->find('codeList')->all();
+        $employeeStatuses = $this->Employees->EmployeeStatuses->find('list')->all();
 
         $this->set(compact('employees', 'positions', 'operationCenters', 'employeeStatuses'));
     }
@@ -291,9 +291,9 @@ class EmployeesController extends AppController
                         'supervisor_position_id' => ['rel' => 'supervisor_position', 'code' => 'code'],
                         'operation_center_id' => ['rel' => 'operation_center', 'code' => 'code'],
                         'cost_center_id' => ['rel' => 'cost_center', 'code' => 'code'],
-                        'employee_status_id' => ['rel' => 'employee_status', 'code' => 'code'],
-                        'marital_status_id' => ['rel' => 'marital_status', 'code' => 'code'],
-                        'education_level_id' => ['rel' => 'education_level', 'code' => 'code'],
+                        'employee_status_id' => ['rel' => 'employee_status', 'code' => 'name'],
+                        'marital_status_id' => ['rel' => 'marital_status', 'code' => 'name'],
+                        'education_level_id' => ['rel' => 'education_level', 'code' => 'name'],
                         'temporary_organization_id' => ['rel' => 'temporary_organization', 'code' => 'nit'],
                     ];
 
@@ -445,9 +445,9 @@ class EmployeesController extends AppController
 
     protected function _setFormDropdowns(): void
     {
-        $employeeStatuses = $this->Employees->EmployeeStatuses->find('codeList')->all();
-        $maritalStatuses = $this->Employees->MaritalStatuses->find('codeList')->all();
-        $educationLevels = $this->Employees->EducationLevels->find('codeList')->all();
+        $employeeStatuses = $this->Employees->EmployeeStatuses->find('list')->all();
+        $maritalStatuses = $this->Employees->MaritalStatuses->find('list')->all();
+        $educationLevels = $this->Employees->EducationLevels->find('list')->all();
         $positions = $this->Employees->Positions->find('codeList')->all();
         $operationCenters = $this->Employees->OperationCenters->find('codeList')->all();
         $costCenters = $this->Employees->CostCenters->find('codeList')->all();

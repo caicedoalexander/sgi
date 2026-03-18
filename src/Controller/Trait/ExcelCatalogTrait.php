@@ -43,8 +43,9 @@ trait ExcelCatalogTrait
         }
 
         $modelName = $this->fetchTable()->getAlias();
+        $keyField = $this->importKeyField ?? 'code';
         $excelService = new ExcelService();
-        $result = $excelService->importCatalog($modelName, $file);
+        $result = $excelService->importCatalog($modelName, $file, $keyField);
 
         $this->Flash->success($result->getSummary());
 

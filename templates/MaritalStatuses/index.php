@@ -17,7 +17,6 @@ $this->assign('title', 'Estados Civiles');
             <thead class="table-light">
                 <tr>
                     <th><?= $this->Paginator->sort('id', '#') ?></th>
-                    <th><?= $this->Paginator->sort('code', 'Código') ?></th>
                     <th><?= $this->Paginator->sort('name', 'Nombre') ?></th>
                     <th class="text-end">Acciones</th>
                 </tr>
@@ -26,7 +25,6 @@ $this->assign('title', 'Estados Civiles');
                 <?php foreach ($maritalStatuses as $maritalStatus): ?>
                 <tr>
                     <td><?= $this->Number->format($maritalStatus->id) ?></td>
-                    <td><code><?= h($maritalStatus->code) ?></code></td>
                     <td><?= h($maritalStatus->name) ?></td>
                     <td class="text-end">
                         <?= $this->Html->link('<i class="bi bi-eye"></i>', ['action' => 'view', $maritalStatus->id], ['class' => 'btn btn-sm btn-outline-info', 'escape' => false, 'title' => 'Ver']) ?>

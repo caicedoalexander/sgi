@@ -17,7 +17,6 @@ $this->assign('title', 'Carpetas por Defecto');
             <thead class="table-light">
                 <tr>
                     <th><?= $this->Paginator->sort('id', '#') ?></th>
-                    <th><?= $this->Paginator->sort('code', 'Código') ?></th>
                     <th><?= $this->Paginator->sort('name', 'Nombre') ?></th>
                     <th><?= $this->Paginator->sort('sort_order', 'Orden') ?></th>
                     <th class="text-end">Acciones</th>
@@ -27,7 +26,6 @@ $this->assign('title', 'Carpetas por Defecto');
                 <?php foreach ($defaultFolders as $defaultFolder): ?>
                 <tr>
                     <td><?= $this->Number->format($defaultFolder->id) ?></td>
-                    <td><code><?= h($defaultFolder->code) ?></code></td>
                     <td><?= h($defaultFolder->name) ?></td>
                     <td><?= $this->Number->format($defaultFolder->sort_order) ?></td>
                     <td class="text-end">

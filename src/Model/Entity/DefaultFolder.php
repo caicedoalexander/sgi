@@ -8,7 +8,6 @@ use Cake\ORM\Entity;
 class DefaultFolder extends Entity
 {
     protected array $_accessible = [
-        'code' => true,
         'name' => true,
         'sort_order' => true,
     ];

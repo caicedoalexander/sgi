@@ -9,6 +9,8 @@ class MaritalStatusesController extends AppController
 {
     use ExcelCatalogTrait;
 
+    protected string $importKeyField = 'name';
+
     public function index()
     {
         $maritalStatuses = $this->paginate($this->MaritalStatuses);

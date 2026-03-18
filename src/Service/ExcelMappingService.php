@@ -79,16 +79,16 @@ final class ExcelMappingService
                 'aliases' => ['id ccosto'],
             ],
             'employee_status_id' => [
-                'label' => 'Código Estado', 'type' => 'string',
-                'fk' => true, 'fk_table' => 'EmployeeStatuses', 'fk_code' => 'code',
+                'label' => 'Estado empleado', 'type' => 'string',
+                'fk' => true, 'fk_table' => 'EmployeeStatuses', 'fk_code' => 'name',
             ],
             'marital_status_id' => [
-                'label' => 'Código Estado civil', 'type' => 'string',
-                'fk' => true, 'fk_table' => 'MaritalStatuses', 'fk_code' => 'code',
+                'label' => 'Estado civil', 'type' => 'string',
+                'fk' => true, 'fk_table' => 'MaritalStatuses', 'fk_code' => 'name',
             ],
             'education_level_id' => [
-                'label' => 'Código Nivel educativo', 'type' => 'string',
-                'fk' => true, 'fk_table' => 'EducationLevels', 'fk_code' => 'code',
+                'label' => 'Nivel educativo', 'type' => 'string',
+                'fk' => true, 'fk_table' => 'EducationLevels', 'fk_code' => 'name',
             ],
             'temporary_organization_id' => [
                 'label' => 'NIT Temporal', 'type' => 'string',

@@ -9,6 +9,8 @@ class DefaultFoldersController extends AppController
 {
     use ExcelCatalogTrait;
 
+    protected string $importKeyField = 'name';
+
     public function index()
     {
         $defaultFolders = $this->paginate($this->DefaultFolders, ['order' => ['sort_order' => 'ASC']]);
