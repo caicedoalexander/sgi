@@ -204,7 +204,7 @@ $statusBadge = [
                     <?php foreach ($recentNovelties as $novelty): ?>
                     <tr class="clickable-row" data-href="<?= $this->Url->build(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]) ?>">
                         <td class="px-3 py-2" style="border-color:var(--border-color);font-weight:500;">
-                            <?= h(trim(($novelty->employee->first_name ?? '') . ' ' . ($novelty->employee->last_name ?? ''))) ?>
+                            <?= h($novelty->employee->full_name ?? '') ?>
                         </td>
                         <td class="px-3 py-2" style="border-color:var(--border-color);color:#495057;">
                             <?= h($novelty->novelty_type->name ?? '—') ?>

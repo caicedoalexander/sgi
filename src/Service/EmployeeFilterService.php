@@ -34,7 +34,8 @@ class EmployeeFilterService
         $query->where([
             'OR' => [
                 'Employees.first_name LIKE' => $like,
-                'Employees.last_name LIKE' => $like,
+                'Employees.last_name1 LIKE' => $like,
+                'Employees.last_name2 LIKE' => $like,
                 'Employees.document_number LIKE' => $like,
                 'Employees.email LIKE' => $like,
             ],

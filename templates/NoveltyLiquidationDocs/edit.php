@@ -23,12 +23,13 @@ $isFinal = $isRejected || $isPaid;
 $currentStatus = $doc->pipeline_status;
 
 $statusBadgeMap = [
-    'contabilidad' => 'bg-primary',
-    'firmas_aprobacion' => 'bg-warning text-dark',
-    'gdp' => 'bg-dark',
-    'tesoreria' => 'bg-info',
-    'pagada' => 'bg-success',
-    'rechazada' => 'bg-danger',
+    'rrhh'             => 'bg-secondary',
+    'contabilidad'     => 'bg-primary',
+    'firmas_aprobacion'=> 'bg-warning text-dark',
+    'gdp'              => 'bg-dark',
+    'tesoreria'        => 'bg-info',
+    'pagada'           => 'bg-success',
+    'rechazada'        => 'bg-danger',
 ];
 $ps = [$statusLabels[$currentStatus] ?? 'Desconocido', $statusBadgeMap[$currentStatus] ?? 'bg-dark'];
 
@@ -50,9 +51,11 @@ $docIconColor = fn(?string $mime): string => match(true) {
 };
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
 $badgeColors = [
-    'contabilidad' => 'bg-primary', 'firmas_aprobacion' => 'bg-warning text-dark',
+    'rrhh' => 'bg-secondary', 'contabilidad' => 'bg-primary',
+    'firmas_aprobacion' => 'bg-warning text-dark',
     'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'pagada' => 'bg-success',
 ];
+$noveltyCount = count($doc->employee_novelties);
 ?>
 
 <!-- Page header -->
@@ -89,11 +92,11 @@ $badgeColors = [
 </div>
 <?php endif; ?>
 
-<!-- Two-column layout -->
-<div style="display:flex;gap:1.5rem;align-items:flex-start;">
+<!-- Two-column responsive layout -->
+<div class="sgi-invoice-layout">
 
 <!-- Left column: main content -->
-<div style="flex:1;min-width:0;">
+<div class="sgi-invoice-form">
 <div class="card card-primary mb-4">
 
     <!-- Card header -->
@@ -104,8 +107,12 @@ $badgeColors = [
                 <i class="bi bi-file-earmark-text"></i>
             </div>
             <div>
-                <div style="font-size:.95rem;font-weight:700;color:#111;"><?= h($doc->liquidation_number) ?></div>
-                <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;"><?= $periodLabels[$doc->period] ?? h($doc->period) ?></div>
+                <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
+                    <?= h($doc->liquidation_number) ?>
+                </div>
+                <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+                    <?= $periodLabels[$doc->period] ?? h($doc->period) ?>
+                </div>
             </div>
         </div>
         <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
@@ -115,56 +122,73 @@ $badgeColors = [
     <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
         <?= $this->element('pipeline_progress', [
             'pipelineStatuses' => $effectiveStatuses,
-            'pipelineLabels' => $statusLabels,
-            'currentStatus' => $currentStatus,
-            'isRejected' => $isRejected,
-            'statusIcons' => $statusIcons,
+            'pipelineLabels'   => $statusLabels,
+            'currentStatus'    => $currentStatus,
+            'isRejected'       => $isRejected,
+            'statusIcons'      => $statusIcons,
         ]) ?>
     </div>
 
-    <div class="card-body p-4">
-
-        <!-- Section: Información del Documento -->
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-file-text me-1"></i>Información
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+    <!-- ── Ficha resumen (ledger) ── -->
+    <div style="padding:1rem 1.5rem .75rem;">
+        <div class="sgi-ledger">
+            <!-- Fila 1: No. Liquidación + Período + Novedades -->
+            <div class="sgi-ledger-item" style="grid-column:span 2;">
+                <div class="sgi-ledger-label">No. Liquidación</div>
+                <div class="sgi-ledger-value" style="font-family:monospace;"><?= h($doc->liquidation_number) ?></div>
             </div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">No. Liquidación</label>
-                    <input type="text" class="form-control" disabled value="<?= h($doc->liquidation_number) ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Período</label>
-                    <input type="text" class="form-control" disabled value="<?= $periodLabels[$doc->period] ?? h($doc->period) ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Fecha Documento</label>
-                    <input type="text" class="form-control" disabled value="<?= $doc->document_date?->format('d/m/Y') ?: '—' ?>">
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Período</div>
+                <div class="sgi-ledger-value"><?= h($periodLabels[$doc->period] ?? $doc->period) ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Novedades</div>
+                <div class="sgi-ledger-value --amount"><?= $noveltyCount ?></div>
+            </div>
+            <!-- Fila 2: Elaborado por + Fecha Documento + Pasa para Pago + Estado Pago -->
+            <div class="sgi-ledger-item" style="grid-column:span 2;">
+                <div class="sgi-ledger-label">Elaborado por</div>
+                <div class="sgi-ledger-value"><?= h($doc->performed_by_user->full_name ?? '—') ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Fecha Documento</div>
+                <div class="sgi-ledger-value"><?= $doc->document_date?->format('d/m/Y') ?: '—' ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Pasa para Pago</div>
+                <div class="sgi-ledger-value">
+                    <?php if ($doc->passes_for_payment === true): ?>
+                        <span style="color:var(--primary-color);font-weight:600;">Sí</span>
+                    <?php elseif ($doc->passes_for_payment === false): ?>
+                        <span style="color:#aaa;">No</span>
+                    <?php else: ?>
+                        <span class="--muted">—</span>
+                    <?php endif; ?>
                 </div>
             </div>
-            <div class="row g-3 mt-1">
-                <div class="col-md-4">
-                    <label class="form-label">Elaborado por</label>
-                    <input type="text" class="form-control" disabled value="<?= h($doc->performed_by_user->full_name ?? '—') ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Creado por</label>
-                    <input type="text" class="form-control" disabled value="<?= h($doc->created_by_user->full_name ?? '—') ?>">
-                </div>
+            <?php if ($doc->payment_status): ?>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Estado de Pago</div>
+                <div class="sgi-ledger-value"><?= h($paymentLabels[$doc->payment_status] ?? $doc->payment_status) ?></div>
             </div>
+            <?php endif; ?>
+            <?php if ($doc->payment_date): ?>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Fecha de Pago</div>
+                <div class="sgi-ledger-value"><?= $doc->payment_date->format('d/m/Y') ?></div>
+            </div>
+            <?php endif; ?>
         </div>
+    </div>
+
+    <div class="card-body p-4" style="padding-top:0 !important;">
 
         <!-- Section: Novedades Asociadas -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-people me-1"></i>Novedades Asociadas (<?= count($doc->employee_novelties) ?>)
+                    <i class="bi bi-people me-1"></i>Novedades Asociadas (<?= $noveltyCount ?>)
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -193,7 +217,7 @@ $badgeColors = [
             <?php endif; ?>
         </div>
 
-        <!-- Signatures Section (in firmas_aprobacion stage) -->
+        <!-- Signatures Section (in firmas_aprobacion stage or if signatures exist) -->
         <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_FIRMAS_APROBACION || !empty($doc->novelty_liquidation_signatures)): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
@@ -206,7 +230,7 @@ $badgeColors = [
             <div class="row g-3">
                 <?php foreach ($doc->novelty_liquidation_signatures as $sig): ?>
                 <div class="col-md-6 col-lg-3">
-                    <div class="border rounded p-3 text-center h-100">
+                    <div class="border p-3 text-center h-100" style="border-radius:2px;">
                         <div class="fw-bold small mb-2"><?= $signerLabels[$sig->signer_type] ?? h($sig->signer_type) ?></div>
                         <?php if ($sig->signature_path): ?>
                             <img src="<?= $this->Url->build('/' . $sig->signature_path) ?>" alt="Firma"
@@ -222,7 +246,6 @@ $badgeColors = [
                             <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_FIRMAS_APROBACION): ?>
 
                             <?php
-                            // For "trabajador" signer, check if linked novelties have an employee signature
                             $hasExistingSig = ($sig->signer_type === NoveltyConstants::SIGNER_TRABAJADOR && !empty($existingWorkerSignatures));
                             ?>
 
@@ -268,14 +291,14 @@ $badgeColors = [
         </div>
         <?php endif; ?>
 
-        <!-- Stage-specific action forms -->
+        <!-- Stage-specific action forms (sticky) -->
         <?php if (!$isFinal): ?>
-        <div class="pt-3" style="border-top:1px solid var(--border-color);">
+        <div class="sgi-sticky-actions">
 
             <?php if ($currentStatus === NoveltyConstants::STATUS_GDP): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id]]) ?>
-            <div class="row g-3 align-items-end">
-                <div class="col-md-4">
+            <div class="d-flex flex-wrap gap-3 align-items-end">
+                <div style="min-width:200px;">
                     <label class="form-label">Pasa para Pago</label>
                     <select name="passes_for_payment" class="form-select" required>
                         <option value="">-- Seleccione --</option>
@@ -283,18 +306,16 @@ $badgeColors = [
                         <option value="0" <?= $doc->passes_for_payment === false ? 'selected' : '' ?>>No</option>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
-                    </button>
-                </div>
+                <button type="submit" class="btn btn-success flex-shrink-0">
+                    <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
+                </button>
             </div>
             <?= $this->Form->end() ?>
 
             <?php elseif ($currentStatus === NoveltyConstants::STATUS_TESORERIA): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id]]) ?>
-            <div class="row g-3 align-items-end">
-                <div class="col-md-3">
+            <div class="d-flex flex-wrap gap-3 align-items-end">
+                <div style="min-width:180px;">
                     <label class="form-label">Estado de Pago</label>
                     <select name="payment_status" class="form-select" required>
                         <option value="">-- Seleccione --</option>
@@ -303,16 +324,14 @@ $badgeColors = [
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div style="min-width:160px;">
                     <label class="form-label">Fecha de Pago</label>
                     <input type="text" name="payment_date" class="form-control flatpickr-date"
                            value="<?= h($doc->payment_date?->format('Y-m-d') ?? '') ?>">
                 </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
-                    </button>
-                </div>
+                <button type="submit" class="btn btn-success flex-shrink-0">
+                    <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
+                </button>
             </div>
             <?= $this->Form->end() ?>
 
@@ -332,6 +351,13 @@ $badgeColors = [
                 <?= $this->Form->end() ?>
                 <?php endif; ?>
 
+            <?php elseif ($currentStatus === NoveltyConstants::STATUS_RRHH): ?>
+            <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'class' => 'd-inline']) ?>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-arrow-right-circle me-1"></i>Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_CONTABILIDAD] ?? 'Contabilidad' ?>
+            </button>
+            <?= $this->Form->end() ?>
+
             <?php endif; ?>
         </div>
         <?php endif; ?>
@@ -341,7 +367,7 @@ $badgeColors = [
 </div><!-- /left column -->
 
 <!-- Right column: documents + observations -->
-<div style="width:380px;flex-shrink:0;display:flex;flex-direction:column;gap:1rem;">
+<div class="sgi-invoice-sidebar">
 
 <!-- Documents panel -->
 <div class="card card-primary">
@@ -440,8 +466,6 @@ $badgeColors = [
         <?php else: ?>
         <?php foreach ($doc->novelty_observations as $obs):
             $isMine = $currentUser && $obs->user_id === $currentUser->id;
-            $names = explode(' ', trim($obs->user->full_name ?? ''));
-            $initials = strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[array_key_last($names)] ?? '', 0, 1));
         ?>
         <div style="display:flex;flex-direction:column;align-items:<?= $isMine ? 'flex-end' : 'flex-start' ?>;gap:.2rem;">
             <div style="font-size:.63rem;color:#aaa;font-weight:500;letter-spacing:.01em;

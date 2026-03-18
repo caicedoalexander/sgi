@@ -77,10 +77,15 @@ class EmployeesTable extends Table
             ->notEmptyString('first_name');
 
         $validator
-            ->scalar('last_name')
-            ->maxLength('last_name', 100)
-            ->requirePresence('last_name', 'create')
-            ->notEmptyString('last_name');
+            ->scalar('last_name1')
+            ->maxLength('last_name1', 100)
+            ->requirePresence('last_name1', 'create')
+            ->notEmptyString('last_name1');
+
+        $validator
+            ->scalar('last_name2')
+            ->maxLength('last_name2', 100)
+            ->allowEmptyString('last_name2');
 
         $validator
             ->date('birth_date')

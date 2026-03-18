@@ -172,8 +172,9 @@ class InvoicesController extends AppController
         $roleName = $this->_getRoleName();
         $currentStatus = $invoice->pipeline_status;
 
-        $editableFields = $this->pipeline->getEditableFields($roleName, $currentStatus);
-        $canAdvance = $this->pipeline->canAdvance($roleName, $currentStatus);
+        // Block editing when invoice belongs to a Petty Cash record
+        $editableFields = $invoice->isInPettyCash() ? [] : $this->pipeline->getEditableFields($roleName, $currentStatus);
+        $canAdvance = $invoice->isInPettyCash() ? false : $this->pipeline->canAdvance($roleName, $currentStatus);
         $visibleSections = $this->pipeline->getVisibleSections($roleName, $currentStatus);
         $isRejected = $this->pipeline->isRejected($invoice);
 
@@ -188,6 +189,11 @@ class InvoicesController extends AppController
         }
 
         if ($this->request->is(['patch', 'post', 'put'])) {
+            if ($invoice->isInPettyCash()) {
+                $this->Flash->error('No se puede editar una factura agrupada en Caja Menor.');
+
+                return $this->redirect(['action' => 'edit', $id]);
+            }
             $user = $this->_getCurrentUser();
             $result = $this->pipeline->saveAndAdvance(
                 $invoice,

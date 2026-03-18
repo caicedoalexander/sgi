@@ -55,7 +55,7 @@ class DashboardController extends AppController
                         ->find()
                         ->select(['id', 'employee_id', 'novelty_type_id', 'created'])
                         ->contain([
-                            'Employees'    => ['fields' => ['id', 'first_name', 'last_name']],
+                            'Employees'    => ['fields' => ['id', 'first_name', 'last_name1', 'last_name2']],
                             'NoveltyTypes' => ['fields' => ['id', 'name']],
                         ])
                         ->orderByDesc('created')

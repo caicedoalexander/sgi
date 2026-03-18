@@ -62,6 +62,30 @@ $pipelineBadgeMap = [
     'pagada'        => ['Pagada',        'bg-success'],
 ];
 $ps = $pipelineBadgeMap[$currentStatus] ?? ['Desconocido', 'bg-dark'];
+
+// ── Ledger lookup arrays (ResultSet → array for bracket access) ──
+$expenseTypesArr = is_array($expenseTypes) ? $expenseTypes : (method_exists($expenseTypes, 'toArray') ? $expenseTypes->toArray() : []);
+
+// ── Compute section render order: editable first, read-only after ──
+$sectionFieldMap = [
+    'general'        => ['invoice_number', 'document_type', 'purchase_order', 'provider_id'],
+    'dates'          => ['issue_date', 'due_date'],
+    'classification' => ['operation_center_id', 'expense_type_id', 'cost_center_id', 'amount', 'detail'],
+    'revision'       => ['approver_id', 'dian_validation'],
+    'accounting'     => ['accrued', 'ready_for_payment'],
+    'treasury'       => ['payment_status', 'payment_date'],
+];
+$editableSectionKeys = [];
+$readOnlySectionKeys = [];
+foreach ($visibleSections as $s) {
+    if (!empty(array_intersect($sectionFieldMap[$s] ?? [], $editableFields))) {
+        $editableSectionKeys[] = $s;
+    } else {
+        $readOnlySectionKeys[] = $s;
+    }
+}
+$renderOrder = array_merge($editableSectionKeys, $readOnlySectionKeys);
+$isReadOnlySection = fn(string $s): bool => in_array($s, $readOnlySectionKeys, true);
 ?>
 
 <!-- Encabezado de página -->
@@ -81,8 +105,9 @@ $ps = $pipelineBadgeMap[$currentStatus] ?? ['Desconocido', 'bg-dark'];
     </div>
 </div>
 
-<?php if ($invoice->isInPettyCash()): ?>
-<div class="alert alert-info d-flex align-items-center gap-2 mb-4">
+<?php $inPettyCash = $invoice->isInPettyCash(); ?>
+<?php if ($inPettyCash): ?>
+<div class="alert alert-info d-flex align-items-center gap-2 mb-4" style="border-left:3px solid #0dcaf0;">
     <i class="bi bi-wallet2 fs-5"></i>
     <div>
         Esta factura pertenece al registro de Caja Menor
@@ -144,10 +169,10 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
 ?>
 
 <!-- Layout: formulario izquierda + soportes derecha -->
-<div style="display:flex;gap:1.5rem;align-items:flex-start;">
+<div class="sgi-invoice-layout">
 
 <!-- ── Columna izquierda: formulario ── -->
-<div style="flex:1;min-width:0;">
+<div class="sgi-invoice-form">
 <div class="card card-primary mb-4">
 
     <!-- Cabecera: identificador + rol + estado -->
@@ -180,12 +205,93 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         ]) ?>
     </div>
 
-    <div class="card-body p-4">
+    <!-- ── Ficha resumen (ledger) ── -->
+    <?php
+    $costCentersArr = is_array($costCenters) ? $costCenters : (method_exists($costCenters, 'toArray') ? $costCenters->toArray() : []);
+    ?>
+    <div style="padding:1rem 1.5rem .75rem;">
+        <div class="sgi-ledger">
+            <!-- Fila 1: Proveedor + NIT + Valor -->
+            <div class="sgi-ledger-item" style="grid-column:span 2;">
+                <div class="sgi-ledger-label">Proveedor</div>
+                <div class="sgi-ledger-value" title="<?= h($invoice->provider->name ?? '') ?>">
+                    <?= h($invoice->provider->name ?? '—') ?>
+                </div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">NIT</div>
+                <div class="sgi-ledger-value"><?= h($invoice->provider->nit ?? '—') ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Valor</div>
+                <div class="sgi-ledger-value --amount">
+                    <?php if ($invoice->amount): ?>
+                        $ <?= number_format((float)$invoice->amount, 0, ',', '.') ?>
+                    <?php else: ?>
+                        <span class="--muted">—</span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <!-- Fila 2: Tipo Doc + Centro Op. + Tipo Gasto + Centro Costos -->
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Tipo Documento</div>
+                <div class="sgi-ledger-value"><?= h($invoice->document_type ?? '—') ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Centro de Operación</div>
+                <div class="sgi-ledger-value" title="<?= h($invoice->operation_center->name ?? '') ?>">
+                    <?php if ($invoice->operation_center): ?>
+                        <?= h($invoice->operation_center->code . ' - ' . $invoice->operation_center->name) ?>
+                    <?php else: ?>
+                        —
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Tipo de Gasto</div>
+                <div class="sgi-ledger-value"><?= h($expenseTypesArr[$invoice->expense_type_id] ?? '—') ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Centro de Costos</div>
+                <div class="sgi-ledger-value"><?= h($costCentersArr[$invoice->cost_center_id] ?? '—') ?></div>
+            </div>
+            <!-- Fila 3: Fechas + Orden de Compra + Detalle -->
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Emisión</div>
+                <div class="sgi-ledger-value"><?= $invoice->issue_date ? h($invoice->issue_date->format('d/m/Y')) : '—' ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Vencimiento</div>
+                <div class="sgi-ledger-value"><?= $invoice->due_date ? h($invoice->due_date->format('d/m/Y')) : '—' ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Registro</div>
+                <div class="sgi-ledger-value"><?= $invoice->registration_date ? h($invoice->registration_date->format('d/m/Y')) : '—' ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Orden de Compra</div>
+                <div class="sgi-ledger-value"><?= h($invoice->purchase_order ?: '—') ?></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body p-4" style="padding-top:0 !important;">
+        <?php if (!$inPettyCash): ?>
         <?= $this->Form->create($invoice) ?>
 
+        <div class="sgi-form-sections">
+
+        <?php
+        foreach ($renderOrder as $sectionName):
+            $sectionIsReadOnly = $isReadOnlySection($sectionName);
+
+            // Skip read-only sections — the ledger summary already shows reference data
+            if ($sectionIsReadOnly) { continue; }
+        ?>
+
+        <?php if ($sectionName === 'general' && in_array('general', $visibleSections)): ?>
         <!-- ── Sección: Información del Documento ── -->
-        <?php if (in_array('general', $visibleSections)): ?>
-        <div class="mb-4">
+        <div class="mb-4 ">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
@@ -234,9 +340,9 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         </div>
         <?php endif; ?>
 
+        <?php if ($sectionName === 'dates' && in_array('dates', $visibleSections)): ?>
         <!-- ── Sección: Fechas ── -->
-        <?php if (in_array('dates', $visibleSections)): ?>
-        <div class="mb-4">
+        <div class="mb-4 ">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
@@ -273,9 +379,9 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         </div>
         <?php endif; ?>
 
+        <?php if ($sectionName === 'classification' && in_array('classification', $visibleSections)): ?>
         <!-- ── Sección: Clasificación y Valor ── -->
-        <?php if (in_array('classification', $visibleSections)): ?>
-        <div class="mb-4">
+        <div class="mb-4 ">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
@@ -334,9 +440,9 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         </div>
         <?php endif; ?>
 
+        <?php if ($sectionName === 'revision' && in_array('revision', $visibleSections)): ?>
         <!-- ── Sección: Revisión ── -->
-        <?php if (in_array('revision', $visibleSections)): ?>
-        <div class="mb-4">
+        <div class="mb-4 ">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
@@ -384,9 +490,9 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         </div>
         <?php endif; ?>
 
+        <?php if ($sectionName === 'accounting' && in_array('accounting', $visibleSections)): ?>
         <!-- ── Sección: Contabilidad ── -->
-        <?php if (in_array('accounting', $visibleSections)): ?>
-        <div class="mb-4">
+        <div class="mb-4 ">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
@@ -423,9 +529,9 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         </div>
         <?php endif; ?>
 
+        <?php if ($sectionName === 'treasury' && in_array('treasury', $visibleSections)): ?>
         <!-- ── Sección: Tesorería ── -->
-        <?php if (in_array('treasury', $visibleSections)): ?>
-        <div class="mb-4">
+        <div class="mb-4 ">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
@@ -457,9 +563,13 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         </div>
         <?php endif; ?>
 
-        <!-- Botones de acción -->
+        <?php endforeach; ?>
+
+        </div><!-- /sgi-form-sections -->
+
+        <!-- Botones de acción (sticky) -->
         <?php if (!empty($editableFields)): ?>
-        <div class="d-flex gap-2 pt-2" style="border-top:1px solid var(--border-color);">
+        <div class="sgi-sticky-actions">
             <button type="submit" class="<?= $btnClass ?>">
                 <?= $btnLabel ?>
             </button>
@@ -477,12 +587,19 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         <?php endif; ?>
 
         <?= $this->Form->end() ?>
+        <?php else: ?>
+        <!-- Factura en Caja Menor: solo lectura -->
+        <div class="text-center py-4" style="color:#aaa;">
+            <i class="bi bi-lock d-block mb-2" style="font-size:1.5rem;"></i>
+            <span style="font-size:.82rem;">Los campos de esta factura se gestionan desde el registro de Caja Menor.</span>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 </div><!-- /columna izquierda -->
 
 <!-- ── Columna derecha: soportes + observaciones ── -->
-<div style="width:380px;flex-shrink:0;display:flex;flex-direction:column;gap:1rem;">
+<div class="sgi-invoice-sidebar">
 
 <?php if ($hasSoportes): ?>
 <div class="card card-primary">
@@ -674,8 +791,6 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
     if (chat) chat.scrollTop = chat.scrollHeight;
 
     // Auto-resize textareas
-    // Con box-sizing:border-box de Bootstrap: height='0' fuerza recálculo correcto,
-    // +2 compensa los bordes (1px top + 1px bottom) que scrollHeight excluye.
     function syncHeight(el) {
         el.style.height = '0px';
         el.style.height = (el.scrollHeight + 2) + 'px';
@@ -690,4 +805,3 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
 })();
 </script>
 <?php $this->end() ?>
-

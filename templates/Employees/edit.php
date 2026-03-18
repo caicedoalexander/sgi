@@ -31,7 +31,12 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
                 <?= $this->Form->control('first_name', ['class' => 'form-control', 'label' => ['text' => 'Nombres', 'class' => 'form-label']]) ?>
             </div>
             <div class="col-md-3 mb-3">
-                <?= $this->Form->control('last_name', ['class' => 'form-control', 'label' => ['text' => 'Apellidos', 'class' => 'form-label']]) ?>
+                <?= $this->Form->control('last_name1', ['class' => 'form-control', 'label' => ['text' => 'Primer Apellido', 'class' => 'form-label']]) ?>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <?= $this->Form->control('last_name2', ['class' => 'form-control', 'label' => ['text' => 'Segundo Apellido', 'class' => 'form-label']]) ?>
             </div>
         </div>
         <div class="row">

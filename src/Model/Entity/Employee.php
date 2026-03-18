@@ -13,7 +13,8 @@ class Employee extends Entity
         'document_type' => true,
         'document_number' => true,
         'first_name' => true,
-        'last_name' => true,
+        'last_name1' => true,
+        'last_name2' => true,
         'birth_date' => true,
         'gender' => true,
         'marital_status_id' => true,
@@ -44,7 +45,7 @@ class Employee extends Entity
 
     protected function _getFullName(): string
     {
-        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+        return trim(($this->first_name ?? '') . ' ' . ($this->last_name1 ?? '') . ' ' . ($this->last_name2 ?? ''));
     }
 
     protected function _getAge(): ?int

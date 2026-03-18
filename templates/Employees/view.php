@@ -9,7 +9,7 @@ $this->assign('title', 'Empleado: ' . $employee->full_name);
 // Iniciales para avatar
 $initials = mb_strtoupper(
     mb_substr($employee->first_name ?? '', 0, 1) .
-    mb_substr($employee->last_name  ?? '', 0, 1)
+    mb_substr($employee->last_name1  ?? '', 0, 1)
 );
 
 // Helpers para tipo de documento

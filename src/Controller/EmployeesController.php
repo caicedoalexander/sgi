@@ -3,13 +3,15 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Constants\EmployeeStatusConstants;
 use App\Service\EmployeeDocumentService;
 use App\Service\EmployeeFilterService;
+use App\Service\ExcelImportService;
+use App\Service\ExcelMappingService;
 use App\Service\ExcelService;
 use ArrayObject;
-use Cake\I18n\Date;
+use Cake\Http\Response;
 use Cake\ORM\TableRegistry;
+use Exception;
 
 class EmployeesController extends AppController
 {
@@ -25,11 +27,26 @@ class EmployeesController extends AppController
         $this->documentService = new EmployeeDocumentService();
     }
 
+    /**
+     * Return exportable fields as JSON for the export modal.
+     */
+    public function exportConfig(): void
+    {
+        $this->request->allowMethod(['get']);
+        $this->viewBuilder()->setClassName('Json');
+
+        $mappingService = new ExcelMappingService();
+        $fields = $mappingService->getExportableFields('Employees');
+
+        $this->set('fields', $fields);
+        $this->viewBuilder()->setOption('serialize', ['fields']);
+    }
+
     public function index()
     {
         $query = $this->Employees->find()
             ->contain(['EmployeeStatuses', 'Positions', 'OperationCenters'])
-            ->order(['Employees.last_name' => 'ASC']);
+            ->order(['Employees.last_name1' => 'ASC', 'Employees.last_name2' => 'ASC']);
 
         $this->filterService->apply($query, $this->request->getQueryParams());
 
@@ -204,8 +221,44 @@ class EmployeesController extends AppController
         return $this->redirect(['action' => 'view', $employeeId]);
     }
 
-    public function export()
+    /**
+     * Export employees to XLSX with user-selected fields via AJAX POST.
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function export(): ?Response
     {
+        $this->request->allowMethod(['post']);
+
+        $requestFields = $this->request->getData('fields');
+        if (empty($requestFields) || !is_array($requestFields)) {
+            $this->response = $this->response->withStatus(400);
+            $this->viewBuilder()->setClassName('Json');
+            $this->set('error', 'No se seleccionaron campos para exportar.');
+            $this->viewBuilder()->setOption('serialize', ['error']);
+
+            return null;
+        }
+
+        $mappingService = new ExcelMappingService();
+        $labelMap = $mappingService->getLabelMap('Employees');
+
+        // Filter to only valid fields
+        $allDefinitions = $mappingService->getFieldDefinitions('Employees');
+        $validFields = array_filter($requestFields, fn($f) => isset($allDefinitions[$f]));
+        if (empty($validFields)) {
+            $this->response = $this->response->withStatus(400);
+            $this->viewBuilder()->setClassName('Json');
+            $this->set('error', 'Ningún campo válido seleccionado.');
+            $this->viewBuilder()->setOption('serialize', ['error']);
+
+            return null;
+        }
+
+        // Re-index to ensure sequential keys
+        $validFields = array_values($validFields);
+
+        // Build query with contains for display_only fields
         $query = $this->Employees->find()
             ->contain([
                 'EmployeeStatuses',
@@ -217,61 +270,59 @@ class EmployeesController extends AppController
                 'EducationLevels',
                 'TemporaryOrganizations',
             ])
-            ->order(['Employees.last_name' => 'ASC'])
-            ->formatResults(function ($results) {
-                return $results->map(function ($employee) {
-                    $data = [
-                        'document_type' => $employee->document_type,
-                        'document_number' => $employee->document_number,
-                        'first_name' => $employee->first_name,
-                        'last_name' => $employee->last_name,
-                        'birth_date' => $employee->birth_date,
-                        'gender' => $employee->gender,
-                        'email' => $employee->email,
-                        'phone' => $employee->phone,
-                        'address' => $employee->address,
-                        'city' => $employee->city,
-                        'hire_date' => $employee->hire_date,
-                        'termination_date' => $employee->termination_date,
-                        'salary' => $employee->salary,
-                        'eps' => $employee->eps,
-                        'pension_fund' => $employee->pension_fund,
-                        'arl' => $employee->arl,
-                        'severance_fund' => $employee->severance_fund,
-                        'contract_type' => $employee->contract_type,
-                        'temporary_organization' => $employee->temporary_organization->name ?? '',
-                        'vest_number' => $employee->vest_number,
-                        'notes' => $employee->notes,
-                        'active' => $employee->active,
-                        'position_id' => $employee->position_id,
-                        'position' => $employee->position->name ?? '',
-                        'supervisor_position_id' => $employee->supervisor_position_id,
-                        'supervisor_position' => $employee->supervisor_position->name ?? '',
-                        'operation_center_id' => $employee->operation_center_id,
-                        'operation_center' => $employee->operation_center->name ?? '',
-                        'cost_center_id' => $employee->cost_center_id,
-                        'cost_center' => $employee->cost_center->name ?? '',
-                        'employee_status_id' => $employee->employee_status_id,
-                        'employee_status' => $employee->employee_status->name ?? '',
-                        'marital_status_id' => $employee->marital_status_id,
-                        'marital_status' => $employee->marital_status->name ?? '',
-                        'education_level_id' => $employee->education_level_id,
-                        'education_level' => $employee->education_level->name ?? '',
+            ->order(['Employees.last_name1' => 'ASC', 'Employees.last_name2' => 'ASC'])
+            ->formatResults(function ($results) use ($validFields, $allDefinitions) {
+                return $results->map(function ($employee) use ($validFields, $allDefinitions) {
+                    $data = [];
+                    // display_only fields: show related entity name
+                    $relationNameMap = [
+                        'position' => 'position',
+                        'supervisor_position' => 'supervisor_position',
+                        'operation_center' => 'operation_center',
+                        'cost_center' => 'cost_center',
+                        'employee_status' => 'employee_status',
+                        'marital_status' => 'marital_status',
+                        'education_level' => 'education_level',
+                        'temporary_organization' => 'temporary_organization',
                     ];
+                    // FK fields: show related entity code instead of numeric ID
+                    $relationCodeMap = [
+                        'position_id' => ['rel' => 'position', 'code' => 'code'],
+                        'supervisor_position_id' => ['rel' => 'supervisor_position', 'code' => 'code'],
+                        'operation_center_id' => ['rel' => 'operation_center', 'code' => 'code'],
+                        'cost_center_id' => ['rel' => 'cost_center', 'code' => 'code'],
+                        'employee_status_id' => ['rel' => 'employee_status', 'code' => 'code'],
+                        'marital_status_id' => ['rel' => 'marital_status', 'code' => 'code'],
+                        'education_level_id' => ['rel' => 'education_level', 'code' => 'code'],
+                        'temporary_organization_id' => ['rel' => 'temporary_organization', 'code' => 'nit'],
+                    ];
+
+                    foreach ($validFields as $field) {
+                        if (isset($relationNameMap[$field])) {
+                            $rel = $relationNameMap[$field];
+                            $data[$field] = $employee->{$rel}->name ?? '';
+                        } elseif (isset($relationCodeMap[$field])) {
+                            $info = $relationCodeMap[$field];
+                            $related = $employee->{$info['rel']} ?? null;
+                            $data[$field] = $related ? ($related->{$info['code']} ?? '') : '';
+                        } else {
+                            $data[$field] = $employee->{$field} ?? '';
+                        }
+                    }
 
                     return new ArrayObject($data);
                 });
             });
 
         $excelService = new ExcelService();
-        $filePath = $excelService->exportCatalog('Empleados', $query);
+        $filePath = $excelService->exportWithLabels('Empleados', $query, $validFields, $labelMap);
 
         $response = $this->response->withFile($filePath, [
             'download' => true,
             'name' => 'empleados_' . date('Y-m-d') . '.xlsx',
         ]);
 
-        register_shutdown_function(function () use ($filePath) {
+        register_shutdown_function(function () use ($filePath): void {
             if (file_exists($filePath)) {
                 unlink($filePath);
             }
@@ -280,42 +331,116 @@ class EmployeesController extends AppController
         return $response;
     }
 
-    public function import()
+    /**
+     * Upload Excel file, read headers, and return auto-mapping as JSON.
+     *
+     * @return void
+     */
+    public function importUpload(): void
     {
         $this->request->allowMethod(['post']);
+        $this->viewBuilder()->setClassName('Json');
 
         $file = $this->request->getUploadedFile('excel_file');
         if (!$file || $file->getError() !== UPLOAD_ERR_OK) {
-            $this->Flash->error('No se recibió un archivo válido.');
+            $this->response = $this->response->withStatus(400);
+            $this->set('error', 'No se recibió un archivo válido.');
+            $this->viewBuilder()->setOption('serialize', ['error']);
 
-            return $this->redirect(['action' => 'index']);
+            return;
         }
 
-        $excelService = new ExcelService();
-        $result = $excelService->importCatalog(
-            'Employees',
-            $file,
-            'document_number',
-            [
-                'profile_image',
-                'position',
-                'supervisor_position',
-                'operation_center',
-                'cost_center',
-                'employee_status',
-                'marital_status',
-                'education_level',
-                'temporary_organization',
-            ],
-        );
+        // Save temp file
+        $tempName = 'sgi_import_' . bin2hex(random_bytes(8));
+        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $tempName . '.xlsx';
+        $file->moveTo($tempPath);
 
-        $this->Flash->success($result->getSummary());
+        try {
+            $importService = new ExcelImportService();
+            $headers = $importService->readHeaders($tempPath);
 
-        foreach ($result->errors as $error) {
-            $this->Flash->warning($error);
+            $mappingService = new ExcelMappingService();
+            $autoMapping = $mappingService->autoMapColumns($headers, 'Employees');
+            $systemFields = $mappingService->getImportableFields('Employees');
+
+            $this->set(compact('tempName', 'headers', 'autoMapping', 'systemFields'));
+            $this->viewBuilder()->setOption('serialize', ['tempName', 'headers', 'autoMapping', 'systemFields']);
+        } catch (Exception $e) {
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+            }
+            $this->response = $this->response->withStatus(400);
+            $this->set('error', $e->getMessage());
+            $this->viewBuilder()->setOption('serialize', ['error']);
+        }
+    }
+
+    /**
+     * Process import with user-defined column mapping via AJAX POST.
+     *
+     * @return void
+     */
+    public function importProcess(): void
+    {
+        $this->request->allowMethod(['post']);
+        $this->viewBuilder()->setClassName('Json');
+
+        $tempName = $this->request->getData('temp_file');
+        $mapping = $this->request->getData('mapping');
+        $enabledHeaders = $this->request->getData('enabled');
+
+        if (!$tempName || !$mapping || !$enabledHeaders) {
+            $this->response = $this->response->withStatus(400);
+            $this->set('error', 'Datos de importación incompletos.');
+            $this->viewBuilder()->setOption('serialize', ['error']);
+
+            return;
         }
 
-        return $this->redirect(['action' => 'index']);
+        // Validate temp file name (prevent path traversal)
+        if (!preg_match('/^sgi_import_[a-f0-9]{16}$/', $tempName)) {
+            $this->response = $this->response->withStatus(400);
+            $this->set('error', 'Referencia de archivo inválida.');
+            $this->viewBuilder()->setOption('serialize', ['error']);
+
+            return;
+        }
+
+        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $tempName . '.xlsx';
+        if (!file_exists($tempPath)) {
+            $this->response = $this->response->withStatus(400);
+            $this->set('error', 'El archivo temporal ha expirado. Por favor, suba el archivo nuevamente.');
+            $this->viewBuilder()->setOption('serialize', ['error']);
+
+            return;
+        }
+
+        try {
+            $importService = new ExcelImportService();
+            $result = $importService->processImport(
+                $tempPath,
+                'Employees',
+                'Employees',
+                $mapping,
+                $enabledHeaders,
+            );
+
+            $this->set([
+                'success' => empty($result->errors) || $result->created > 0 || $result->updated > 0,
+                'created' => $result->created,
+                'updated' => $result->updated,
+                'skipped' => $result->skipped,
+                'errors' => $result->errors,
+                'summary' => $result->getSummary(),
+            ]);
+            $this->viewBuilder()->setOption('serialize', [
+                'success', 'created', 'updated', 'skipped', 'errors', 'summary',
+            ]);
+        } finally {
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+            }
+        }
     }
 
     protected function _setFormDropdowns(): void

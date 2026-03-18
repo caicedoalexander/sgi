@@ -80,6 +80,9 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
     $btnLabel = '<i class="bi bi-save me-1"></i>Guardar Cambios';
     $btnClass = 'btn btn-primary';
 }
+
+// Compute invoice count and total for ledger
+$invoiceCount = count($record->invoices ?? []);
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
@@ -98,11 +101,28 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
     </div>
 </div>
 
+<!-- Alerta de avance pendiente -->
+<?php if ($canAdvance && !empty($advanceErrors)): ?>
+<div class="alert alert-warning mb-4">
+    <div class="d-flex align-items-start gap-2">
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+        <div>
+            <strong>Para avanzar al siguiente estado complete:</strong>
+            <ul class="mb-0 mt-1 ps-3">
+                <?php foreach ($advanceErrors as $err): ?>
+                    <li><?= h($err) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Layout dos columnas -->
-<div style="display:flex;gap:1.5rem;align-items:flex-start;">
+<div class="sgi-invoice-layout">
 
 <!-- Columna izquierda: formulario -->
-<div style="flex:1;min-width:0;">
+<div class="sgi-invoice-form">
 <div class="card card-primary mb-4">
     <!-- Header -->
     <div class="card-header d-flex align-items-center justify-content-between gap-3">
@@ -130,22 +150,76 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
         <?= $this->element('petty_cash_progress', ['status' => $record->status]) ?>
     </div>
 
-    <div class="card-body p-4">
+    <!-- ── Ficha resumen (ledger) ── -->
+    <div style="padding:1rem 1.5rem .75rem;">
+        <div class="sgi-ledger">
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Código</div>
+                <div class="sgi-ledger-value" style="font-family:monospace;"><?= h($record->code) ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Facturas</div>
+                <div class="sgi-ledger-value"><?= $invoiceCount ?> factura<?= $invoiceCount !== 1 ? 's' : '' ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Total</div>
+                <div class="sgi-ledger-value --amount">$ <?= number_format((float)$record->total_amount, 0, ',', '.') ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Creado</div>
+                <div class="sgi-ledger-value"><?= $record->created ? h($record->created->format('d/m/Y')) : '—' ?></div>
+            </div>
+            <?php if ($record->notes && !$record->isAgrupacion() && !$record->isContabilidad()): ?>
+            <div class="sgi-ledger-item" style="grid-column:span 4;">
+                <div class="sgi-ledger-label">Notas</div>
+                <div class="sgi-ledger-value" style="white-space:normal;font-weight:400;font-size:.8rem;color:#555;"><?= nl2br(h($record->notes)) ?></div>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <div class="card-body p-4" style="padding-top:0 !important;">
         <?= $this->Form->create($record) ?>
 
+        <div class="sgi-form-sections">
+
+        <?php
+        // ── Section reordering: editable sections first ──
+        $sections = [];
+
+        // Notes section (editable in agrupacion & contabilidad)
+        if ($record->isAgrupacion() || $record->isContabilidad()) {
+            $sections[] = ['key' => 'notes', 'editable' => true];
+        }
+
+        // Invoices section (always visible, editable only in agrupacion)
+        $sections[] = ['key' => 'invoices', 'editable' => $record->isAgrupacion()];
+
+        // Accounting section (visible in contabilidad+)
+        if ($showAccounting) {
+            $sections[] = ['key' => 'accounting', 'editable' => $canEditAccounting];
+        }
+
+        // Treasury section (visible in tesoreria+)
+        if ($showTreasury) {
+            $sections[] = ['key' => 'treasury', 'editable' => $canEditTreasury];
+        }
+
+        // Sort: editable first
+        usort($sections, fn($a, $b) => $b['editable'] <=> $a['editable']);
+
+        foreach ($sections as $section):
+        ?>
+
+        <?php if ($section['key'] === 'notes'): ?>
         <!-- Notas -->
-        <?php if ($record->isAgrupacion() || $record->isContabilidad()): ?>
         <div class="mb-4">
             <label class="form-label">Notas</label>
             <textarea name="notes" class="form-control auto-resize" rows="2"><?= h($record->notes ?? '') ?></textarea>
         </div>
-        <?php else: ?>
-        <div class="mb-4">
-            <label class="form-label">Notas</label>
-            <div style="font-size:.875rem;color:#333;padding:.5rem 0;"><?= $record->notes ? nl2br(h($record->notes)) : '<span class="text-muted">Sin notas</span>' ?></div>
-        </div>
         <?php endif; ?>
 
+        <?php if ($section['key'] === 'invoices'): ?>
         <!-- Facturas agrupadas -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
@@ -154,7 +228,7 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
                     <i class="bi bi-receipt me-1"></i>Facturas Agrupadas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
-                <span class="sgi-folder-count"><?= count($record->invoices ?? []) ?></span>
+                <span class="sgi-folder-count"><?= $invoiceCount ?></span>
             </div>
 
             <?php if (!empty($record->invoices)): ?>
@@ -269,9 +343,10 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
             </div>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
 
+        <?php if ($section['key'] === 'accounting'): ?>
         <!-- ── Sección: Contabilidad ── -->
-        <?php if ($showAccounting): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -316,8 +391,8 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
         </div>
         <?php endif; ?>
 
+        <?php if ($section['key'] === 'treasury'): ?>
         <!-- ── Sección: Tesorería ── -->
-        <?php if ($showTreasury): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -353,26 +428,13 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
         </div>
         <?php endif; ?>
 
-        <!-- Alerta de avance pendiente -->
-        <?php if ($canAdvance && !empty($advanceErrors)): ?>
-        <div class="alert alert-warning mb-3">
-            <div class="d-flex align-items-start gap-2">
-                <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
-                <div>
-                    <strong>Para avanzar al siguiente estado complete:</strong>
-                    <ul class="mb-0 mt-1 ps-3">
-                        <?php foreach ($advanceErrors as $err): ?>
-                            <li><?= h($err) ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
+        <?php endforeach; ?>
 
-        <!-- Botones de acción -->
+        </div><!-- /sgi-form-sections -->
+
+        <!-- Botones de acción (sticky) -->
         <?php if ($canSave): ?>
-        <div class="d-flex gap-2 pt-2" style="border-top:1px solid var(--border-color);">
+        <div class="sgi-sticky-actions">
             <button type="submit" class="<?= $btnClass ?>">
                 <?= $btnLabel ?>
             </button>
@@ -388,7 +450,7 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
             <?= $this->Html->link('Cancelar', ['action' => 'view', $record->id], ['class' => 'btn btn-outline-secondary']) ?>
         </div>
         <?php else: ?>
-        <div class="d-flex gap-2 pt-2" style="border-top:1px solid var(--border-color);">
+        <div class="sgi-sticky-actions">
             <?= $this->Html->link('Volver', ['action' => 'view', $record->id], ['class' => 'btn btn-outline-secondary']) ?>
         </div>
         <?php endif; ?>
@@ -399,7 +461,7 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
 </div><!-- /columna izquierda -->
 
 <!-- Columna derecha: soportes + observaciones -->
-<div style="width:380px;flex-shrink:0;display:flex;flex-direction:column;gap:1rem;">
+<div class="sgi-invoice-sidebar">
 
 <?php $docs = $record->petty_cash_documents ?? []; ?>
 <div class="card card-primary">
@@ -493,12 +555,10 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
             $initials = strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[array_key_last($names)] ?? '', 0, 1));
         ?>
         <div style="display:flex;flex-direction:column;align-items:<?= $isMine ? 'flex-end' : 'flex-start' ?>;gap:.2rem;">
-            <!-- Nombre -->
             <div style="font-size:.63rem;color:#aaa;font-weight:500;letter-spacing:.01em;
                         <?= $isMine ? 'padding-right:.3rem' : 'padding-left:.3rem' ?>">
                 <?= $isMine ? 'Tú' : h($obs->user->full_name ?? '') ?>
             </div>
-            <!-- Burbuja -->
             <div style="max-width:92%;padding:.55rem .8rem;font-size:.81rem;line-height:1.5;word-break:break-word;
                         background:<?= $isMine ? 'var(--primary-color)' : '#fff' ?>;
                         color:<?= $isMine ? '#fff' : '#2d2d2d' ?>;
@@ -506,7 +566,6 @@ if ($canAdvance && empty($advanceErrors) && $nextStatus) {
                         border-radius:<?= $isMine ? '10px 10px 2px 10px' : '10px 10px 10px 2px' ?>;">
                 <?= nl2br(h($obs->message)) ?>
             </div>
-            <!-- Hora -->
             <div style="font-size:.61rem;color:#c0c0c0;
                         <?= $isMine ? 'padding-right:.3rem' : 'padding-left:.3rem' ?>">
                 <?= $obs->created?->format('d/m/Y H:i') ?>

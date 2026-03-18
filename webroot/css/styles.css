@@ -2522,3 +2522,183 @@ textarea.form-control {
 .template-field.selected .template-field-close {
     display: block;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Invoice Edit — layout, ledger summary, responsive, sticky
+   ══════════════════════════════════════════════════════════════ */
+
+/* Two-column layout */
+.sgi-invoice-layout {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+.sgi-invoice-form {
+    flex: 1;
+    min-width: 0;
+}
+.sgi-invoice-sidebar {
+    width: 380px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Ledger summary grid */
+.sgi-ledger {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-top: 2px solid var(--primary-color);
+}
+.sgi-ledger-item {
+    padding: .6rem .85rem;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    min-width: 0;
+}
+.sgi-ledger-item:nth-child(4n) {
+    border-right: none;
+}
+.sgi-ledger-label {
+    font-size: .55rem;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: #aaa;
+    font-weight: 600;
+    margin-bottom: .2rem;
+    white-space: nowrap;
+}
+.sgi-ledger-value {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.35;
+}
+.sgi-ledger-value.--amount {
+    font-family: 'Courier New', monospace;
+    font-size: .88rem;
+    color: var(--primary-color);
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+.sgi-ledger-value.--muted {
+    color: #bbb;
+    font-weight: 400;
+    font-style: italic;
+}
+
+/* Form sections flex container for reordering */
+.sgi-form-sections {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Read-only section treatment */
+.sgi-section-readonly {
+    background: #fafafa;
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+    padding: 1rem 1.5rem .5rem;
+    border-top: 1px solid var(--border-color);
+}
+.sgi-section-readonly .form-control:disabled,
+.sgi-section-readonly .form-select:disabled {
+    background: #f5f5f5;
+    color: #999;
+    border-color: #eee;
+}
+
+/* Read-only group separator */
+.sgi-readonly-separator {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin: .5rem -1.5rem 0;
+    padding: .6rem 1.5rem 0;
+    border-top: 1px solid var(--border-color);
+}
+.sgi-readonly-separator span {
+    font-size: .55rem;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: #ccc;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.sgi-readonly-separator::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+/* Sticky action buttons */
+.sgi-sticky-actions {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    border-top: 1px solid var(--border-color);
+    padding: .75rem 1.5rem;
+    margin: 0 -1.5rem -1.5rem;
+    z-index: 10;
+    display: flex;
+    gap: .5rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1199.98px) {
+    .sgi-invoice-layout {
+        flex-direction: column;
+    }
+    .sgi-invoice-sidebar {
+        width: 100%;
+    }
+}
+@media (max-width: 767.98px) {
+    .sgi-ledger {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .sgi-ledger-item:nth-child(4n) {
+        border-right: 1px solid var(--border-color);
+    }
+    .sgi-ledger-item:nth-child(2n) {
+        border-right: none;
+    }
+    .sgi-section-readonly {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    .sgi-readonly-separator {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    .sgi-sticky-actions {
+        margin: 0 -1rem -1rem;
+        padding: .75rem 1rem;
+    }
+}
+
+/* ─── Excel Mapper ─── */
+.export-field-item {
+    border-bottom: 1px solid var(--border-color);
+}
+.export-field-item:last-child {
+    border-bottom: none;
+}
+.export-field-item:hover {
+    background: #f8f9fa;
+}
+.sortable-ghost {
+    opacity: 0.4;
+    background: #e9ecef;
+}

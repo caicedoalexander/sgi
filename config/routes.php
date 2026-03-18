@@ -213,6 +213,20 @@ return function (RouteBuilder $routes): void {
             ['employeeId' => '\d+', 'documentId' => '\d+', 'pass' => ['employeeId', 'documentId']]
         );
 
+        // Employee Excel import/export AJAX
+        $builder->connect(
+            '/employees/export-config',
+            ['controller' => 'Employees', 'action' => 'exportConfig']
+        );
+        $builder->connect(
+            '/employees/import-upload',
+            ['controller' => 'Employees', 'action' => 'importUpload']
+        );
+        $builder->connect(
+            '/employees/import-process',
+            ['controller' => 'Employees', 'action' => 'importProcess']
+        );
+
         // Petty Cash Records (Caja Menor)
         $builder->connect(
             '/petty-cash-records/advance-status/{id}',
