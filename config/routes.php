@@ -254,6 +254,13 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']]
         );
 
+        // Employee observations
+        $builder->connect(
+            '/employees/add-observation/{id}',
+            ['controller' => 'Employees', 'action' => 'addObservation'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+
         $builder->fallbacks();
     });
 
