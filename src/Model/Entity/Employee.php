@@ -38,7 +38,6 @@ class Employee extends Entity
         'pension_fund' => true,
         'arl' => true,
         'severance_fund' => true,
-        'notes' => true,
         'profile_image' => true,
     ];
 
