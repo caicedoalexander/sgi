@@ -95,7 +95,9 @@ foreach ($folders as $folder) {
             <?php endif; ?>
             <div class="mt-2 d-flex gap-1 flex-wrap">
                 <?php if ($employee->has('employee_status') && $employee->employee_status): ?>
-                    <span class="badge bg-info"><?= h($employee->employee_status->name) ?></span>
+                    <span class="badge <?= $employee->employee_status_id === \App\Constants\EmployeeStatusConstants::RETIRADO ? 'bg-danger' : 'bg-info' ?>">
+                        <?= h($employee->employee_status->name) ?>
+                    </span>
                 <?php endif; ?>
                 <?php if (!empty($currentNovelty)): ?>
                     <span class="badge bg-warning text-dark">
@@ -247,15 +249,96 @@ foreach ($folders as $folder) {
     </div>
     <?php endif; ?>
 
-    <!-- Observaciones -->
-    <?php if ($employee->notes): ?>
-    <div style="border-top:1px solid var(--border-color);padding:1rem 1.25rem">
-        <div class="sgi-section-title" style="padding:0 0 .5rem">Observaciones</div>
-        <p class="mb-0" style="font-size:.8125rem;color:#555;line-height:1.6"><?= nl2br(h($employee->notes)) ?></p>
+    <!-- Observaciones (chat) -->
+    <div style="border-top:1px solid var(--border-color)">
+        <div class="sgi-section-title">Observaciones</div>
+        <div style="max-height:400px;overflow-y:auto;padding:.5rem 1.25rem .875rem;">
+            <?php if (empty($employee->employee_observations)): ?>
+            <div class="text-center text-muted py-3" style="font-size:.8rem">
+                <i class="bi bi-chat-square-dots d-block mb-1" style="font-size:1.5rem;color:#ddd"></i>
+                Sin observaciones aún
+            </div>
+            <?php else: ?>
+            <?php foreach ($employee->employee_observations as $obs): ?>
+            <div class="d-flex align-items-start gap-2 mb-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:32px;height:32px;background:var(--primary-color);color:#fff;font-size:.7rem;font-weight:700;">
+                    <?php
+                    $names = explode(' ', $obs->user->full_name ?? '');
+                    echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
+                    ?>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="font-size:.8rem;font-weight:600;color:#222;">
+                            <?= h($obs->user->full_name ?? '') ?>
+                        </span>
+                        <span style="font-size:.7rem;color:#aaa;">
+                            <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
+                        </span>
+                    </div>
+                    <div style="font-size:.84rem;color:#444;line-height:1.5;margin-top:.15rem;">
+                        <?= nl2br(h($obs->message)) ?>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+        <?php if (!empty($userPermissions['employees']['can_edit'])): ?>
+        <div style="border-top:1px solid var(--border-color);padding:.75rem 1.25rem;">
+            <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $employee->id]]) ?>
+            <div class="d-flex gap-2 align-items-end">
+                <textarea name="message" class="form-control" rows="1"
+                          style="font-size:.82rem;resize:none;"
+                          placeholder="Escriba una observación..." required></textarea>
+                <button type="submit" class="btn btn-primary flex-shrink-0"
+                        style="padding:.5rem .75rem;" title="Enviar">
+                    <i class="bi bi-send" style="font-size:.85rem;"></i>
+                </button>
+            </div>
+            <?= $this->Form->end() ?>
+        </div>
+        <?php endif; ?>
     </div>
-    <?php endif; ?>
 
 </div>
+
+<!-- Historial de Cambios -->
+<?php if (!empty($employee->employee_histories)): ?>
+<div class="card card-primary mb-4">
+    <div class="card-header">
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-clock-history"></i>
+            Historial de Cambios
+        </span>
+    </div>
+    <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
+        <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Campo</th>
+                    <th>Valor Anterior</th>
+                    <th>Valor Nuevo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($employee->employee_histories as $history): ?>
+                <tr>
+                    <td style="font-size:.8rem;white-space:nowrap;"><?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?></td>
+                    <td style="font-size:.8rem;"><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
+                    <td style="font-size:.8rem;"><?= h($fieldLabels[$history->field_changed] ?? $history->field_changed) ?></td>
+                    <td style="font-size:.8rem;" class="text-muted"><?= h($history->old_value) ?: '—' ?></td>
+                    <td style="font-size:.8rem;" class="fw-semibold"><?= h($history->new_value) ?: '—' ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Novedades -->
 <?php
