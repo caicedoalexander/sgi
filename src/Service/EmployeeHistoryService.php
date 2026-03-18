@@ -5,40 +5,49 @@ namespace App\Service;
 
 use App\Model\Entity\Employee;
 use Cake\ORM\TableRegistry;
+use DateTimeInterface;
 
 class EmployeeHistoryService
 {
     public const FIELD_LABELS = [
-        'document_type'            => 'Tipo de Documento',
-        'document_number'          => 'Número de Documento',
-        'first_name'               => 'Nombres',
-        'last_name1'               => 'Primer Apellido',
-        'last_name2'               => 'Segundo Apellido',
-        'birth_date'               => 'Fecha de Nacimiento',
-        'gender'                   => 'Género',
-        'marital_status_id'        => 'Estado Civil',
-        'education_level_id'       => 'Nivel Educativo',
-        'email'                    => 'Correo Electrónico',
-        'phone'                    => 'Teléfono',
-        'address'                  => 'Dirección',
-        'city'                     => 'Ciudad',
-        'employee_status_id'       => 'Estado del Empleado',
-        'position_id'              => 'Cargo',
-        'supervisor_position_id'   => 'Jefe Inmediato',
-        'operation_center_id'      => 'Centro de Operación',
-        'cost_center_id'           => 'Centro de Costos',
-        'hire_date'                => 'Fecha de Ingreso',
-        'termination_date'         => 'Fecha de Retiro',
-        'salary'                   => 'Salario',
-        'contract_type'            => 'Tipo de Contrato',
+        'document_type' => 'Tipo de Documento',
+        'document_number' => 'Número de Documento',
+        'first_name' => 'Nombres',
+        'last_name1' => 'Primer Apellido',
+        'last_name2' => 'Segundo Apellido',
+        'birth_date' => 'Fecha de Nacimiento',
+        'gender' => 'Género',
+        'marital_status_id' => 'Estado Civil',
+        'education_level_id' => 'Nivel Educativo',
+        'email' => 'Correo Electrónico',
+        'phone' => 'Teléfono',
+        'address' => 'Dirección',
+        'city' => 'Ciudad',
+        'employee_status_id' => 'Estado del Empleado',
+        'position_id' => 'Cargo',
+        'supervisor_position_id' => 'Jefe Inmediato',
+        'operation_center_id' => 'Centro de Operación',
+        'cost_center_id' => 'Centro de Costos',
+        'hire_date' => 'Fecha de Ingreso',
+        'termination_date' => 'Fecha de Retiro',
+        'salary' => 'Salario',
+        'contract_type' => 'Tipo de Contrato',
         'temporary_organization_id' => 'Organización Temporal',
-        'vest_number'              => 'Número de Chaleco',
-        'eps'                      => 'EPS',
-        'pension_fund'             => 'Fondo de Pensión',
-        'arl'                      => 'ARL',
-        'severance_fund'           => 'Fondo de Cesantías',
+        'vest_number' => 'Número de Chaleco',
+        'eps' => 'EPS',
+        'pension_fund' => 'Fondo de Pensión',
+        'arl' => 'ARL',
+        'severance_fund' => 'Fondo de Cesantías',
     ];
 
+    /**
+     * Record field-by-field changes between original and modified employee.
+     *
+     * @param \App\Model\Entity\Employee $original Original employee state.
+     * @param \App\Model\Entity\Employee $modified Modified employee state.
+     * @param int $userId ID of the user making changes.
+     * @return void
+     */
     public function recordChanges(Employee $original, Employee $modified, int $userId): void
     {
         $fieldsToTrack = array_keys(self::FIELD_LABELS);
@@ -50,10 +59,10 @@ class EmployeeHistoryService
             $newVal = $modified->get($field);
 
             // Normalize DateTime to string for comparison
-            if ($oldVal instanceof \DateTimeInterface) {
+            if ($oldVal instanceof DateTimeInterface) {
                 $oldVal = $oldVal->format('Y-m-d');
             }
-            if ($newVal instanceof \DateTimeInterface) {
+            if ($newVal instanceof DateTimeInterface) {
                 $newVal = $newVal->format('Y-m-d');
             }
 

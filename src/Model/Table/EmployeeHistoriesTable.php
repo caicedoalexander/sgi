@@ -9,6 +9,9 @@ use Cake\Validation\Validator;
 
 class EmployeeHistoriesTable extends Table
 {
+    /**
+     * @inheritDoc
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -35,6 +38,9 @@ class EmployeeHistoriesTable extends Table
         ]);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -64,6 +70,9 @@ class EmployeeHistoriesTable extends Table
         return $validator;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->existsIn('employee_id', 'Employees'), ['errorField' => 'employee_id']);
