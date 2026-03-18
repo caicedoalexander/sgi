@@ -423,6 +423,7 @@ class EmployeesController extends AppController
                 'Employees',
                 $mapping,
                 $enabledHeaders,
+                fn($entity) => $this->documentService->createDefaultFolders((int)$entity->id),
             );
 
             $this->set([

@@ -59,6 +59,7 @@ class ExcelImportService
         string $tableName,
         array $mapping,
         array $enabledHeaders,
+        ?callable $onCreated = null,
     ): ImportResult {
         $result = new ImportResult();
         $definitions = $this->mappingService->getFieldDefinitions($module);
@@ -211,6 +212,9 @@ class ExcelImportService
                     $result->updated++;
                 } else {
                     $result->created++;
+                    if ($onCreated) {
+                        $onCreated($entity);
+                    }
                 }
             } else {
                 $errors = $entity->getErrors();
