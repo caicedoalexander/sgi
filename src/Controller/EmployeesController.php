@@ -44,7 +44,7 @@ class EmployeesController extends AppController
 
     public function index()
     {
-        $query = $this->Employees->find()
+        $query = $this->Employees->find('withCurrentNovelty')
             ->contain(['EmployeeStatuses', 'Positions', 'OperationCenters'])
             ->order(['Employees.last_name1' => 'ASC', 'Employees.last_name2' => 'ASC']);
 
@@ -90,7 +90,22 @@ class EmployeesController extends AppController
             ->order(['EmployeeFolders.name' => 'ASC'])
             ->all();
 
-        $this->set(compact('employee', 'folders'));
+        // Current active novelty for today
+        $today = date('Y-m-d');
+        $currentNovelty = $this->Employees->EmployeeNovelties->find()
+            ->where([
+                'EmployeeNovelties.employee_id' => $id,
+                'EmployeeNovelties.pipeline_status !=' => \App\Constants\NoveltyConstants::STATUS_RECHAZADA,
+                'OR' => [
+                    ['EmployeeNovelties.permission_date' => $today, 'EmployeeNovelties.start_date IS' => null],
+                    ['EmployeeNovelties.start_date <=' => $today, 'EmployeeNovelties.end_date >=' => $today],
+                ],
+            ])
+            ->contain(['NoveltyTypes'])
+            ->order(['EmployeeNovelties.created' => 'DESC'])
+            ->first();
+
+        $this->set(compact('employee', 'folders', 'currentNovelty'));
     }
 
     public function add()

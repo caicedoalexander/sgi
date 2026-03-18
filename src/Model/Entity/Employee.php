@@ -40,12 +40,21 @@ class Employee extends Entity
         'severance_fund' => true,
         'notes' => true,
         'profile_image' => true,
-        'active' => true,
     ];
 
     protected function _getFullName(): string
     {
         return trim(($this->first_name ?? '') . ' ' . ($this->last_name1 ?? '') . ' ' . ($this->last_name2 ?? ''));
+    }
+
+    /**
+     * Get the first active novelty for today (loaded via conditional contain).
+     */
+    protected function _getCurrentNovelty(): ?EmployeeNovelty
+    {
+        $novelties = $this->employee_novelties ?? [];
+
+        return !empty($novelties) ? $novelties[0] : null;
     }
 
     protected function _getAge(): ?int

@@ -45,7 +45,7 @@ class DashboardController extends AppController
         $recentNovelties = [];
         if ($canView('employees') || $canView('employee_novelties')) {
             if ($canView('employees')) {
-                $rrhhStats['active_employees'] = $this->_safeCount('Employees', ['active' => true]);
+                $rrhhStats['active_employees'] = $this->_safeCount('Employees', ['employee_status_id' => \App\Constants\EmployeeStatusConstants::ACTIVO]);
             }
             if ($canView('employee_novelties')) {
                 $monthStart = date('Y-m-01 00:00:00');

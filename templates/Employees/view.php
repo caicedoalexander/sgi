@@ -93,11 +93,16 @@ foreach ($folders as $folder) {
             if ($sub): ?>
             <div class="sgi-profile-sub"><?= implode(' &middot; ', $sub) ?></div>
             <?php endif; ?>
-            <?php if ($employee->has('employee_status') && $employee->employee_status): ?>
-            <div class="mt-2">
-                <span class="badge bg-info"><?= h($employee->employee_status->name) ?></span>
+            <div class="mt-2 d-flex gap-1 flex-wrap">
+                <?php if ($employee->has('employee_status') && $employee->employee_status): ?>
+                    <span class="badge bg-info"><?= h($employee->employee_status->name) ?></span>
+                <?php endif; ?>
+                <?php if (!empty($currentNovelty)): ?>
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-journal-text me-1"></i><?= h($currentNovelty->novelty_type->name ?? '') ?>
+                    </span>
+                <?php endif; ?>
             </div>
-            <?php endif; ?>
         </div>
     </div>
 

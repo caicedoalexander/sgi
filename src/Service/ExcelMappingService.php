@@ -55,7 +55,6 @@ final class ExcelMappingService
             'arl' => ['label' => 'ARL', 'type' => 'string'],
             'severance_fund' => ['label' => 'Fondo de cesantías', 'type' => 'string'],
             'notes' => ['label' => 'Observaciones', 'type' => 'string'],
-            'active' => ['label' => 'Activo', 'type' => 'boolean'],
 
             // FK fields: import/export by code
             'position_id' => [

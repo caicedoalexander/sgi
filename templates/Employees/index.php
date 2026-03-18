@@ -253,6 +253,11 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
                     <?php if ($employee->has('employee_status') && $employee->employee_status): ?>
                         <span class="badge bg-info"><?= h($employee->employee_status->name) ?></span>
                     <?php endif; ?>
+                    <?php if ($employee->current_novelty): ?>
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-journal-text me-1"></i><?= h($employee->current_novelty->novelty_type->name ?? '') ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
                 <div class="d-flex gap-1">
                     <?php if (!empty($userPermissions['employees']['can_edit'])): ?>

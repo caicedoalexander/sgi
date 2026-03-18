@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use App\Constants\ContractTypeConstants;
+use App\Constants\NoveltyConstants;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -156,5 +158,38 @@ class EmployeesTable extends Table
         ]);
 
         return $rules;
+    }
+
+    /**
+     * Finder that adds a conditional contain for today's active novelties.
+     * Usage: ->find('withCurrentNovelty')
+     */
+    public function findWithCurrentNovelty(SelectQuery $query): SelectQuery
+    {
+        $today = date('Y-m-d');
+
+        return $query->contain([
+            'EmployeeNovelties' => function (SelectQuery $q) use ($today) {
+                return $q
+                    ->where([
+                        'EmployeeNovelties.pipeline_status !=' => NoveltyConstants::STATUS_RECHAZADA,
+                        'OR' => [
+                            // Single-day: permission_date = today, no start/end range
+                            [
+                                'EmployeeNovelties.permission_date' => $today,
+                                'EmployeeNovelties.start_date IS' => null,
+                            ],
+                            // Multi-day range: today within start_date..end_date
+                            [
+                                'EmployeeNovelties.start_date <=' => $today,
+                                'EmployeeNovelties.end_date >=' => $today,
+                            ],
+                        ],
+                    ])
+                    ->contain(['NoveltyTypes'])
+                    ->order(['EmployeeNovelties.created' => 'DESC'])
+                    ->limit(1);
+            },
+        ]);
     }
 }

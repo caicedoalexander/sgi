@@ -548,7 +548,7 @@ class EmployeeNoveltiesController extends AppController
         $employeesTable = TableRegistry::getTableLocator()->get('Employees');
 
         $userEmployee = $employeesTable->find()
-            ->where(['email' => $user->email, 'active' => true])
+            ->where(['email' => $user->email, 'employee_status_id' => \App\Constants\EmployeeStatusConstants::ACTIVO])
             ->first();
 
         if (!$userEmployee || !$userEmployee->position_id) {
