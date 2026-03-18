@@ -57,6 +57,16 @@ class EmployeesTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->hasMany('EmployeeHistories', [
+            'foreignKey' => 'employee_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
+        $this->hasMany('EmployeeObservations', [
+            'foreignKey' => 'employee_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator
