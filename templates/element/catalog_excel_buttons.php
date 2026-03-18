@@ -9,12 +9,12 @@
 $controller = $controller ?? $this->request->getParam('controller');
 ?>
 <?= $this->Html->link(
-    '<i class="bi bi-upload me-1"></i>Exportar',
+    '<i class="bi bi-upload"></i>',
     ['controller' => $controller, 'action' => 'export'],
     ['class' => 'btn btn-outline-success btn-sm', 'escape' => false]
 ) ?>
-<button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#importExcelModal">
-    <i class="bi bi-download me-1"></i>Importar
+<button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#importExcelModal">
+    <i class="bi bi-download"></i>
 </button>
 
 <!-- Import Modal -->

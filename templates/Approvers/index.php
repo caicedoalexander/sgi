@@ -49,7 +49,5 @@ $this->assign('title', 'Aprobadores');
             </tbody>
         </table>
     </div>
-    <div class="card-footer">
-        <small class="text-muted"><?= $this->Paginator->counter('Mostrando {{start}}-{{end}} de {{count}}') ?></small>
-    </div>
+    <?= $this->element('pagination') ?>
 </div>

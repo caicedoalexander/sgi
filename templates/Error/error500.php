@@ -29,8 +29,42 @@ if (Configure::read('debug')) :
     $this->end();
 endif;
 ?>
-<h2><?= __d('cake', 'An Internal Error Has Occurred.') ?></h2>
-<p class="error">
-    <strong><?= __d('cake', 'Error') ?>: </strong>
-    <?= h($message) ?>
+
+<div style="
+    font-size: 6.5rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -.04em;
+    color: var(--primary-color);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: .25rem;
+">500</div>
+
+<div style="
+    font-size: .55rem;
+    font-weight: 600;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.25);
+    margin-bottom: 1.5rem;
+">Error interno del servidor</div>
+
+<div class="sgi-error-divider"></div>
+
+<p style="
+    font-size: .95rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: .5rem;
+    letter-spacing: -.01em;
+">Algo salió mal</p>
+
+<p style="
+    font-size: .8rem;
+    color: rgba(255,255,255,.35);
+    line-height: 1.6;
+    margin: 0;
+">
+    El servidor encontró un error inesperado y no pudo completar la solicitud.
+    Si el problema persiste, contacta al administrador del sistema.
 </p>

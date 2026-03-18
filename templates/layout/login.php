@@ -21,17 +21,7 @@
         <div class="d-flex flex-column justify-content-between p-5"
              style="width:42%;flex-shrink:0;">
 
-            <!-- Logo -->
-            <div class="d-flex align-items-center gap-2">
-                <div class="d-flex align-items-center justify-content-center"
-                     style="width:36px;height:36px;background-color:var(--primary-color);flex-shrink:0;">
-                    <i class="bi bi-building text-white" style="font-size:1rem;"></i>
-                </div>
-                <div>
-                    <div class="fw-bold text-white lh-1" style="font-size:1.3rem;letter-spacing:-.02em;">SGI COPC</div>
-                    <!-- <div style="font-size:.55rem;letter-spacing:.1em;color:rgba(255,255,255,.3);text-transform:uppercase;margin-top:3px;">Sistema de Gestión Interna</div> -->
-                </div>
-            </div>
+            <?= $this->element('sgi_logo') ?>
 
             <!-- Tagline central -->
             <div>
@@ -78,7 +68,6 @@
 
     </div>
 
-    <?= $this->element('copcsa') ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

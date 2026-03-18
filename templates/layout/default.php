@@ -37,10 +37,15 @@ $noveltiesCount = $noveltiesCount ?? 0;
             position: fixed;
             top: 0; left: 0; bottom: 0;
             width: var(--sidebar-width);
-            overflow-y: auto;
+            overflow-y: hidden;
             z-index: 100;
             display: flex;
             flex-direction: column;
+        }
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
         }
         .content-wrapper {
             margin-left: var(--sidebar-width);
@@ -54,16 +59,7 @@ $noveltiesCount = $noveltiesCount ?? 0;
         <nav class="sidebar d-flex flex-column flex-shrink-0 p-3 bg-dark">
 
             <!-- Logo -->
-            <a href="<?= $this->Url->build('/') ?>" class="d-flex align-items-center mb-3 text-white text-decoration-none">
-                <div class="d-flex align-items-center justify-content-center me-2"
-                     style="width:36px;height:36px;background-color:var(--primary-color);flex-shrink:0;">
-                    <i class="bi bi-building text-white" style="font-size:1rem;"></i>
-                </div>
-                <div>
-                    <div class="fw-bold text-white lh-1" style="font-size:1.05rem;letter-spacing:-.02em;">SGI COPC</div>
-                    <div style="font-size:.55rem;letter-spacing:.1em;color:rgba(255,255,255,.3);text-transform:uppercase;margin-top:3px;">Sistema de Gestión Interna</div>
-                </div>
-            </a>
+            <?= $this->element('sgi_logo') ?>
 
             <!-- Divisor -->
             <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:.75rem;"></div>
@@ -82,6 +78,7 @@ $noveltiesCount = $noveltiesCount ?? 0;
             };
             ?>
 
+            <div class="sidebar-nav">
             <ul class="nav nav-pills flex-column mb-3">
                 <li class="nav-item">
                     <?= $this->Html->link(
@@ -348,6 +345,7 @@ $noveltiesCount = $noveltiesCount ?? 0;
                 <?php endif; ?>
                 <?php endif; ?>
             </ul>
+            </div>
 
             <!-- Footer de usuario -->
             <div class="sidebar-footer d-flex align-items-center justify-content-between">
@@ -373,10 +371,10 @@ $noveltiesCount = $noveltiesCount ?? 0;
 
         <!-- Contenido -->
         <?php
-        $meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        $dias  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        $meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        $dias  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
         $now   = new \DateTime();
-        $topbarDate = $dias[(int)$now->format('w')] . ' ' . $now->format('d') . ' ' . $meses[(int)$now->format('n')] . ' ' . $now->format('Y');
+        $topbarDate = $dias[(int)$now->format('w')] . ', ' . $now->format('d') . ' de ' . $meses[(int)$now->format('n')] . ' del ' . $now->format('Y');
         ?>
         <div class="content-wrapper flex-grow-1">
             <nav class="sgi-topbar sticky-top d-flex align-items-center justify-content-between px-4">
@@ -396,8 +394,6 @@ $noveltiesCount = $noveltiesCount ?? 0;
     <div id="sgi-flash-container">
         <?= $this->Flash->render() ?>
     </div>
-
-    <?= $this->element('copcsa') ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
