@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Service\EmployeeDocumentService;
 use App\Service\EmployeeFilterService;
+use App\Service\EmployeeHistoryService;
 use App\Service\ExcelImportService;
 use App\Service\ExcelMappingService;
 use App\Service\ExcelService;
@@ -19,12 +20,14 @@ class EmployeesController extends AppController
 
     private EmployeeFilterService $filterService;
     private EmployeeDocumentService $documentService;
+    private EmployeeHistoryService $historyService;
 
     public function initialize(): void
     {
         parent::initialize();
         $this->filterService = new EmployeeFilterService();
         $this->documentService = new EmployeeDocumentService();
+        $this->historyService = new EmployeeHistoryService();
     }
 
     /**
@@ -82,6 +85,14 @@ class EmployeesController extends AppController
                     'UploadedByUsers',
                 ],
             ],
+            'EmployeeObservations' => [
+                'sort' => ['EmployeeObservations.created' => 'ASC'],
+                'Users',
+            ],
+            'EmployeeHistories' => [
+                'sort' => ['EmployeeHistories.created' => 'DESC'],
+                'Users',
+            ],
         ]);
 
         $folders = $this->Employees->EmployeeFolders->find()
@@ -106,6 +117,7 @@ class EmployeesController extends AppController
             ->first();
 
         $this->set(compact('employee', 'folders', 'currentNovelty'));
+        $this->set('fieldLabels', EmployeeHistoryService::FIELD_LABELS);
     }
 
     public function add()
@@ -137,9 +149,12 @@ class EmployeesController extends AppController
     {
         $employee = $this->Employees->get($id);
         if ($this->request->is(['patch', 'post', 'put'])) {
+            $original = clone $employee;
             $employee = $this->Employees->patchEntity($employee, $this->request->getData());
             if ($this->Employees->save($employee)) {
-                // No additional logic needed for retired employees
+                $userId = (int)$this->Authentication->getIdentity()->getIdentifier();
+                $this->historyService->recordChanges($original, $employee, $userId);
+
                 $warning = $this->documentService->handleProfileImage(
                     $employee,
                     $this->request->getUploadedFile('profile_image_file'),
@@ -170,6 +185,27 @@ class EmployeesController extends AppController
         }
 
         return $this->redirect(['action' => 'index']);
+    }
+
+    public function addObservation($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $userId = (int)$this->Authentication->getIdentity()->getIdentifier();
+
+        $observationsTable = $this->fetchTable('EmployeeObservations');
+        $observation = $observationsTable->newEntity([
+            'employee_id' => $id,
+            'user_id' => $userId,
+            'message' => $this->request->getData('message'),
+        ]);
+
+        if ($observationsTable->save($observation)) {
+            $this->Flash->success('Observación agregada.');
+        } else {
+            $this->Flash->error('No se pudo agregar la observación.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
     }
 
     public function addFolder($employeeId = null)
