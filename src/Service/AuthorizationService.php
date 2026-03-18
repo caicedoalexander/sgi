@@ -34,6 +34,7 @@ class AuthorizationService
         'novelty_types' => 'Tipos de Novedad',
         'petty_cash' => 'Caja Menor',
         'novelty_liquidation_docs' => 'Documentos de Liquidación',
+        'leave_document_templates' => 'Plantillas Documento',
     ];
 
     private array $cache = [];

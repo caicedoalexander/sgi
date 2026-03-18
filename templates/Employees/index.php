@@ -251,7 +251,9 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
             <div class="card-footer d-flex justify-content-between align-items-center px-3 py-2">
                 <div class="d-flex gap-1 flex-wrap">
                     <?php if ($employee->has('employee_status') && $employee->employee_status): ?>
-                        <span class="badge bg-info"><?= h($employee->employee_status->name) ?></span>
+                        <span class="badge <?= $employee->employee_status_id === \App\Constants\EmployeeStatusConstants::RETIRADO ? 'bg-danger' : 'bg-info' ?>">
+                            <?= h($employee->employee_status->name) ?>
+                        </span>
                     <?php endif; ?>
                     <?php if ($employee->current_novelty): ?>
                         <span class="badge bg-warning text-dark">

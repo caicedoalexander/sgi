@@ -148,7 +148,6 @@ $noveltiesCount = $noveltiesCount ?? 0;
                     $canView('employees') ? 'employees' : null,
                     $canView('employee_novelties') ? 'employee_novelties' : null,
                     $canView('novelty_liquidation_docs') ? 'novelty_liquidation_docs' : null,
-                    $canView('novelty_types') ? 'novelty_types_templates' : null,
                 ]);
                 if (!empty($rrhhItems)): ?>
                 <li class="nav-heading">RRHH</li>
@@ -180,15 +179,6 @@ $noveltiesCount = $noveltiesCount ?? 0;
                     ) ?>
                 </li>
                 <?php endif; ?>
-                <?php if ($canView('novelty_types')): ?>
-                <li class="nav-item">
-                    <?= $this->Html->link(
-                        '<i class="bi bi-file-earmark-ruled me-2"></i>Plantillas Documento',
-                        ['controller' => 'LeaveDocumentTemplates', 'action' => 'index'],
-                        ['class' => $navLink('LeaveDocumentTemplates'), 'escape' => false]
-                    ) ?>
-                </li>
-                <?php endif; ?>
                 <?php endif; ?>
 
                 <?php
@@ -204,6 +194,7 @@ $noveltiesCount = $noveltiesCount ?? 0;
                     $canView('default_folders') ? 'default_folders' : null,
                     $canView('novelty_types') ? 'novelty_types' : null,
                     $canView('temporary_organizations') ? 'temporary_organizations' : null,
+                    $canView('leave_document_templates') ? 'leave_document_templates' : null,
                 ]);
                 if (!empty($catalogoItems)): ?>
                 <li class="nav-heading">Catálogos</li>
@@ -303,6 +294,15 @@ $noveltiesCount = $noveltiesCount ?? 0;
                         '<i class="bi bi-building-gear me-2"></i>Org. Temporales',
                         ['controller' => 'TemporaryOrganizations', 'action' => 'index'],
                         ['class' => $navLink('TemporaryOrganizations'), 'escape' => false]
+                    ) ?>
+                </li>
+                <?php endif; ?>
+                <?php if ($canView('leave_document_templates')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-file-earmark-ruled me-2"></i>Plantillas Documento',
+                        ['controller' => 'LeaveDocumentTemplates', 'action' => 'index'],
+                        ['class' => $navLink('LeaveDocumentTemplates'), 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>

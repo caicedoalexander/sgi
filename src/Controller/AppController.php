@@ -44,7 +44,7 @@ class AppController extends Controller
         'DianCrosschecks' => 'dian_crosschecks',
         'EmployeeNovelties' => 'employee_novelties',
         'NoveltyTypes' => 'novelty_types',
-        'LeaveDocumentTemplates' => 'novelty_types',
+        'LeaveDocumentTemplates' => 'leave_document_templates',
         'PettyCashRecords' => 'petty_cash',
         'NoveltyLiquidationDocs' => 'novelty_liquidation_docs',
     ];

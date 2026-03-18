@@ -290,8 +290,9 @@ foreach ($folders as $folder) {
             <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $employee->id]]) ?>
             <div class="d-flex gap-2 align-items-end">
                 <textarea name="message" class="form-control" rows="1"
-                          style="font-size:.82rem;resize:none;"
-                          placeholder="Escriba una observación..." required></textarea>
+                          style="font-size:.82rem;resize:none;overflow:hidden;"
+                          placeholder="Escriba una observación..." required
+                          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';"></textarea>
                 <button type="submit" class="btn btn-primary flex-shrink-0"
                         style="padding:.5rem .75rem;" title="Enviar">
                     <i class="bi bi-send" style="font-size:.85rem;"></i>
