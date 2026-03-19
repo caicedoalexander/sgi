@@ -305,6 +305,15 @@ class InvoicePipelineService
             }
         }
 
+        // Auto-set area_approval_date when area_approval changes to Aprobada or Rechazada
+        if (array_key_exists('area_approval', $filteredData)) {
+            $newApproval = $filteredData['area_approval'] ?? '';
+            $oldApproval = $invoice->area_approval ?? '';
+            if ($newApproval !== $oldApproval && in_array($newApproval, [InvoiceConstants::APPROVAL_APPROVED, InvoiceConstants::APPROVAL_REJECTED])) {
+                $invoice->area_approval_date = date('Y-m-d');
+            }
+        }
+
         $canAdvance = $this->canAdvance($roleName, $currentStatus);
         $isRejected = $this->isRejected($invoice);
 

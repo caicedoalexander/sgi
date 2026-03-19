@@ -1,6 +1,6 @@
 <a href="<?= $this->Url->build('/') ?>"
    class="text-white text-decoration-none d-flex align-items-center mb-3"
-   style="gap:0;outline:none;">
+   style="gap:0;outline:none;width:100%;">
 
     <!-- Marco del logo de empresa -->
     <div style="

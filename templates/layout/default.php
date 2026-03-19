@@ -36,9 +36,10 @@ $noveltiesCount = $noveltiesCount ?? 0;
         .sidebar {
             position: fixed;
             top: 0; left: 0; bottom: 0;
-            width: var(--sidebar-width);
+            width: max-content;
+            min-width: 200px;
             overflow-y: hidden;
-            z-index: 100;
+            z-index: 1030;
             display: flex;
             flex-direction: column;
         }
@@ -91,53 +92,66 @@ $noveltiesCount = $noveltiesCount ?? 0;
                 <?php
                 $facturacionItems = array_filter([
                     $canView('invoices') ? 'invoices' : null,
-                    $canView('approvers') ? 'approvers' : null,
-                    $canView('petty_cash') ? 'petty_cash' : null,
+                    $canView('novelty_liquidation_docs') ? 'novelty_liquidation_docs' : null,
                 ]);
+                $facturacionSubActive = in_array($this->request->getParam('controller'), ['Invoices', 'PettyCashRecords']);
                 if (!empty($facturacionItems)): ?>
                 <li class="nav-heading">Facturación</li>
                 <?php if ($canView('invoices')): ?>
-                <li class="nav-item">
-                    <?= $this->Html->link(
-                        '<i class="bi bi-receipt me-2"></i>Mis Facturas' .
-                        (!empty($sidebarCounters) ? ' <span class="badge bg-success sidebar-badge ms-auto">' . array_sum($sidebarCounters) . '</span>' : ''),
-                        ['controller' => 'Invoices', 'action' => 'index'],
-                        ['class' => $navLink('Invoices', 'index') . ' d-flex align-items-center', 'escape' => false]
-                    ) ?>
-                </li>
-                <li class="nav-item">
-                    <?= $this->Html->link(
-                        '<i class="bi bi-receipt-cutoff me-2"></i>Todas las Facturas' .
-                        (!empty($totalInvoicesCount) ? ' <span class="badge bg-info sidebar-badge ms-auto">' . $totalInvoicesCount . '</span>' : ''),
-                        ['controller' => 'Invoices', 'action' => 'all'],
-                        ['class' => $navLink('Invoices', 'all') . ' d-flex align-items-center', 'escape' => false]
-                    ) ?>
-                </li>
-                <li class="nav-item">
-                    <?= $this->Html->link(
-                        '<i class="bi bi-x-circle me-2"></i>Facturas Rechazadas' .
-                        ($rejectedInvoicesCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $rejectedInvoicesCount . '</span>' : ''),
-                        ['controller' => 'Invoices', 'action' => 'rejected'],
-                        ['class' => $navLink('Invoices', 'rejected') . ' d-flex align-items-center', 'escape' => false]
-                    ) ?>
+                <li class="nav-item sidebar-has-submenu">
+                    <div class="sidebar-collapsible-header">
+                        <?= $this->Html->link(
+                            '<i class="bi bi-receipt-cutoff me-2"></i><span class="flex-grow-1">Todas las Facturas</span>',
+                            ['controller' => 'Invoices', 'action' => 'all'],
+                            ['class' => $navLink('Invoices', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false]
+                        ) ?>
+                        <button class="sidebar-chevron-btn"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#facturacion-submenu"
+                                aria-expanded="<?= $facturacionSubActive ? 'true' : 'false' ?>"
+                                aria-controls="facturacion-submenu">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="collapse<?= $facturacionSubActive ? ' show' : '' ?>"
+                         id="facturacion-submenu">
+                        <ul class="sidebar-submenu">
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-receipt me-2"></i>Mis Facturas' .
+                                    (!empty($sidebarCounters) ? ' <span class="badge bg-success sidebar-badge ms-auto">' . array_sum($sidebarCounters) . '</span>' : ''),
+                                    ['controller' => 'Invoices', 'action' => 'index'],
+                                    ['class' => $navLink('Invoices', 'index') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-x-circle me-2"></i>Facturas Rechazadas' .
+                                    ($rejectedInvoicesCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $rejectedInvoicesCount . '</span>' : ''),
+                                    ['controller' => 'Invoices', 'action' => 'rejected'],
+                                    ['class' => $navLink('Invoices', 'rejected') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
+                            <?php if ($canView('petty_cash')): ?>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-wallet2 me-2"></i>Caja Menor' .
+                                    ($pettyCashCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $pettyCashCount . '</span>' : ''),
+                                    ['controller' => 'PettyCashRecords', 'action' => 'index'],
+                                    ['class' => $navLink('PettyCashRecords') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
                 </li>
                 <?php endif; ?>
-                <?php if ($canView('approvers')): ?>
+                <?php if ($canView('novelty_liquidation_docs')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
-                        '<i class="bi bi-person-check me-2"></i>Aprobadores',
-                        ['controller' => 'Approvers', 'action' => 'index'],
-                        ['class' => $navLink('Approvers'), 'escape' => false]
-                    ) ?>
-                </li>
-                <?php endif; ?>
-                <?php if ($canView('petty_cash')): ?>
-                <li class="nav-item">
-                    <?= $this->Html->link(
-                        '<i class="bi bi-wallet2 me-2"></i>Caja Menor' .
-                        ($pettyCashCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $pettyCashCount . '</span>' : ''),
-                        ['controller' => 'PettyCashRecords', 'action' => 'index'],
-                        ['class' => $navLink('PettyCashRecords') . ' d-flex align-items-center', 'escape' => false]
+                        '<i class="bi bi-file-earmark-text me-2"></i>Docs. Liquidación',
+                        ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index'],
+                        ['class' => $navLink('NoveltyLiquidationDocs') . ' d-flex align-items-center', 'escape' => false]
                     ) ?>
                 </li>
                 <?php endif; ?>
@@ -147,7 +161,6 @@ $noveltiesCount = $noveltiesCount ?? 0;
                 $rrhhItems = array_filter([
                     $canView('employees') ? 'employees' : null,
                     $canView('employee_novelties') ? 'employee_novelties' : null,
-                    $canView('novelty_liquidation_docs') ? 'novelty_liquidation_docs' : null,
                 ]);
                 if (!empty($rrhhItems)): ?>
                 <li class="nav-heading">RRHH</li>
@@ -170,19 +183,11 @@ $noveltiesCount = $noveltiesCount ?? 0;
                     ) ?>
                 </li>
                 <?php endif; ?>
-                <?php if ($canView('novelty_liquidation_docs')): ?>
-                <li class="nav-item">
-                    <?= $this->Html->link(
-                        '<i class="bi bi-file-earmark-text me-2"></i>Docs. Liquidación',
-                        ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index'],
-                        ['class' => $navLink('NoveltyLiquidationDocs') . ' d-flex align-items-center', 'escape' => false]
-                    ) ?>
-                </li>
-                <?php endif; ?>
                 <?php endif; ?>
 
                 <?php
                 $catalogoItems = array_filter([
+                    $canView('approvers') ? 'approvers' : null,
                     $canView('providers') ? 'providers' : null,
                     $canView('operation_centers') ? 'operation_centers' : null,
                     $canView('expense_types') ? 'expense_types' : null,
@@ -198,6 +203,15 @@ $noveltiesCount = $noveltiesCount ?? 0;
                 ]);
                 if (!empty($catalogoItems)): ?>
                 <li class="nav-heading">Catálogos</li>
+                <?php if ($canView('approvers')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-person-check me-2"></i>Aprobadores',
+                        ['controller' => 'Approvers', 'action' => 'index'],
+                        ['class' => $navLink('Approvers'), 'escape' => false]
+                    ) ?>
+                </li>
+                <?php endif; ?>
                 <?php if ($canView('providers')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(
@@ -368,6 +382,7 @@ $noveltiesCount = $noveltiesCount ?? 0;
                 <?php endif; ?>
             </div>
         </nav>
+        <script>(function(){var s=document.querySelector('.sidebar');if(s)document.documentElement.style.setProperty('--sidebar-width',s.offsetWidth+'px');})();</script>
 
         <!-- Contenido -->
         <?php

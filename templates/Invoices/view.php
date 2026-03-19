@@ -222,12 +222,6 @@ $dianClass = match($invoice->dian_validation ?? '') {
         <div class="col-md-4" style="border-right:1px solid var(--border-color);">
             <div class="sgi-section-title">Revisión</div>
             <div class="sgi-data-row">
-                <span class="sgi-data-label">Confirmado por</span>
-                <span class="sgi-data-value">
-                    <?= $invoice->hasValue('confirmed_by_user') ? h($invoice->confirmed_by_user->full_name) : '—' ?>
-                </span>
-            </div>
-            <div class="sgi-data-row">
                 <span class="sgi-data-label">Aprobador</span>
                 <span class="sgi-data-value">
                     <?= $invoice->hasValue('approver_user') ? h($invoice->approver_user->full_name) : '—' ?>

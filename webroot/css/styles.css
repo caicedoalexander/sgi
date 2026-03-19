@@ -1552,6 +1552,7 @@ textarea.form-control {
     color: rgba(255,255,255,.5);
     border-radius: 0;
     font-size: .875rem;
+    white-space: nowrap;
     box-shadow: inset 2px 0 0 transparent;
     transition: color .15s ease, box-shadow .15s ease, background-color .15s ease;
 }
@@ -1574,6 +1575,61 @@ textarea.form-control {
     padding: .6rem 1rem .2rem;
     margin-top: .25rem;
 }
+/* Sidebar — dropdown con sub-items */
+.sidebar-collapsible-header {
+    display: flex;
+    align-items: stretch;
+}
+.sidebar-collapsible-header > .nav-link {
+    flex: 1 1 0;
+    min-width: 0;
+}
+.sidebar-chevron-btn {
+    flex-shrink: 0;
+    width: 2rem;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color .15s ease;
+    padding: 0;
+}
+.sidebar-chevron-btn:hover {
+    color: rgba(255,255,255,.75);
+}
+.sidebar-chevron-btn .bi-chevron-down {
+    font-size: .7rem;
+    transition: transform .2s ease;
+}
+.sidebar-chevron-btn[aria-expanded="true"] .bi-chevron-down {
+    transform: rotate(180deg);
+}
+.sidebar-submenu {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+.sidebar-submenu .nav-link {
+    padding-left: 2.4rem;
+    font-size: .825rem;
+    color: rgba(255,255,255,.4);
+}
+.sidebar-submenu .nav-link:hover {
+    color: rgba(255,255,255,.8);
+    background-color: rgba(255,255,255,.03);
+    box-shadow: inset 2px 0 0 rgba(255,255,255,.12);
+}
+.sidebar-submenu .nav-link.active {
+    color: #fff;
+    box-shadow: inset 2px 0 0 var(--primary-color);
+    font-weight: 500;
+}
+
 .sidebar-badge {
     font-size: .65rem;
     padding: .15em .4em;
