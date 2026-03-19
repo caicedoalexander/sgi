@@ -9,17 +9,31 @@
  * @var array $adminStats
  * @var array $userPermissions
  * @var object|null $currentUser
+ * @var array $invoiceFinancialStats
+ * @var array $invoiceChartData
+ * @var array $rrhhExtendedStats
+ * @var array $rrhhChartData
+ * @var string $currentPeriod
+ * @var string $dateFrom
+ * @var string $dateTo
  */
 $this->assign('title', 'Inicio');
 $userPermissions = $userPermissions ?? [];
 $canView = fn(string $module): bool => !empty($userPermissions[$module]['can_view']);
 
-$invoiceStats    = $invoiceStats ?? [];
-$recentInvoices  = $recentInvoices ?? [];
-$rrhhStats       = $rrhhStats ?? [];
-$recentNovelties = $recentNovelties ?? [];
-$catalogStats    = $catalogStats ?? [];
-$adminStats      = $adminStats ?? [];
+$invoiceStats          = $invoiceStats ?? [];
+$recentInvoices        = $recentInvoices ?? [];
+$invoiceFinancialStats = $invoiceFinancialStats ?? [];
+$invoiceChartData      = $invoiceChartData ?? [];
+$rrhhStats             = $rrhhStats ?? [];
+$recentNovelties       = $recentNovelties ?? [];
+$rrhhExtendedStats     = $rrhhExtendedStats ?? [];
+$rrhhChartData         = $rrhhChartData ?? [];
+$catalogStats          = $catalogStats ?? [];
+$adminStats            = $adminStats ?? [];
+$currentPeriod         = $currentPeriod ?? 'month';
+$dateFrom              = $dateFrom ?? '';
+$dateTo                = $dateTo ?? '';
 
 $dias  = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -46,6 +60,8 @@ $statusBadge = [
     </span>
     <p class="mb-0 text-muted" style="font-size:.82rem;"><?= $fecha ?></p>
 </div>
+
+<?= $this->element('period_selector', compact('currentPeriod', 'dateFrom', 'dateTo')) ?>
 
 <div class="d-flex flex-column gap-5">
 
@@ -104,6 +120,58 @@ $statusBadge = [
             </div>
         </div>
     </div>
+
+    <?php if (!empty($invoiceFinancialStats)): ?>
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-sm-4 col-xl-3">
+            <div class="sgi-stat-card p-3 h-100">
+                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Monto Pagado</div>
+                <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:var(--primary-color);">$<?= $this->Number->format($invoiceFinancialStats['total_paid'] ?? 0, ['places' => 0]) ?></div>
+                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En el período</div>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-xl-3">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#0dcaf0;">
+                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Monto en Proceso</div>
+                <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:#212529;">$<?= $this->Number->format($invoiceFinancialStats['total_in_process'] ?? 0, ['places' => 0]) ?></div>
+                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Sin pagar</div>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-xl-3">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--secondary-color);">
+                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Promedio/Factura</div>
+                <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:#212529;">$<?= $this->Number->format($invoiceFinancialStats['avg_amount'] ?? 0, ['places' => 0]) ?></div>
+                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Media del período</div>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-xl-3">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#dc3545;">
+                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Vencidas</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#dc3545;"><?= $this->Number->format($invoiceFinancialStats['overdue'] ?? 0) ?></div>
+                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Requieren atención</div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($invoiceChartData)): ?>
+    <div class="row g-3 mb-3">
+        <div class="col-md-5">
+            <div style="background:#fff;border:1px solid var(--border-color);padding:1rem;">
+                <div style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;margin-bottom:.75rem;">Distribución por estado</div>
+                <div id="invoiceDonutChart"
+                     data-chart-donut='<?= json_encode($invoiceChartData['donut_status'] ?? []) ?>'></div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div style="background:#fff;border:1px solid var(--border-color);padding:1rem;">
+                <div style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;margin-bottom:.75rem;">Facturas por mes</div>
+                <div id="invoiceBarChart"
+                     data-chart-monthly='<?= json_encode($invoiceChartData['monthly'] ?? []) ?>'></div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <?php if (!empty($recentInvoices)): ?>
     <div style="background:#fff;border:1px solid var(--border-color);">
@@ -182,6 +250,58 @@ $statusBadge = [
             </div>
         </div>
         <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($rrhhExtendedStats)): ?>
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-sm-4 col-xl-3">
+            <div class="sgi-stat-card p-3 h-100">
+                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Edad Media</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $rrhhExtendedStats['avg_age'] ?? 0 ?></div>
+                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Años</div>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-xl-3">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--secondary-color);">
+                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Antigüedad Media</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $rrhhExtendedStats['avg_tenure'] ?? 0 ?></div>
+                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Años</div>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-xl-3">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--primary-color);">
+                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Nuevos Ingresos</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--primary-color);"><?= $this->Number->format($rrhhExtendedStats['new_hires'] ?? 0) ?></div>
+                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En el período</div>
+            </div>
+        </div>
+        <div class="col-6 col-sm-4 col-xl-3">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#dc3545;">
+                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Retiros</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#dc3545;"><?= $this->Number->format($rrhhExtendedStats['terminations'] ?? 0) ?></div>
+                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En el período</div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($rrhhChartData)): ?>
+    <div class="row g-3 mb-3">
+        <div class="col-md-5">
+            <div style="background:#fff;border:1px solid var(--border-color);padding:1rem;">
+                <div style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;margin-bottom:.75rem;">Distribución por contrato</div>
+                <div id="employeeDonutChart"
+                     data-chart-contract='<?= json_encode($rrhhChartData['donut_contract'] ?? []) ?>'></div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div style="background:#fff;border:1px solid var(--border-color);padding:1rem;">
+                <div style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;margin-bottom:.75rem;">Novedades por mes</div>
+                <div id="noveltyBarChart"
+                     data-chart-novelties='<?= json_encode($rrhhChartData['monthly_novelties'] ?? []) ?>'></div>
+            </div>
+        </div>
     </div>
     <?php endif; ?>
 
@@ -307,3 +427,5 @@ $statusBadge = [
 <?php endif; ?>
 
 </div>
+
+<?php $this->Html->script('dashboard-charts', ['block' => 'script']); ?>
