@@ -109,6 +109,7 @@ class InvoicesController extends AppController
 
         $roleName = $this->_getRoleName();
         $isRejected = $this->pipeline->isRejected($invoice);
+        $isApproved = $invoice->pipeline_status === 'aprobacion' && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
         $pipelineStatuses = InvoicePipelineService::STATUSES;
         $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
 
@@ -118,7 +119,7 @@ class InvoicesController extends AppController
         }
 
         $fieldLabels = InvoiceHistoryService::FIELD_LABELS;
-        $this->set(compact('invoice', 'roleName', 'isRejected', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
+        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
     }
 
     public function add()
@@ -177,6 +178,7 @@ class InvoicesController extends AppController
         $canAdvance = $invoice->isInPettyCash() ? false : $this->pipeline->canAdvance($roleName, $currentStatus);
         $visibleSections = $this->pipeline->getVisibleSections($roleName, $currentStatus);
         $isRejected = $this->pipeline->isRejected($invoice);
+        $isApproved = $invoice->pipeline_status === 'aprobacion' && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
 
         // Pre-compute advance errors for GET
         $advanceErrors = [];
@@ -243,6 +245,7 @@ class InvoicesController extends AppController
             'currentStatus',
             'visibleSections',
             'isRejected',
+            'isApproved',
             'advanceErrors',
             'nextStatus',
         ));

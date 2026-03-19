@@ -201,6 +201,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             'pipelineStatuses' => $pipelineStatuses,
             'pipelineLabels'   => $pipelineLabels,
             'isRejected'       => $isRejected,
+            'isApproved'       => $isApproved ?? false,
             'paymentStatus'    => $invoice->payment_status,
         ]) ?>
     </div>

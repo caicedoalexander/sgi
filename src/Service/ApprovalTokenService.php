@@ -96,7 +96,7 @@ class ApprovalTokenService
         }
 
         // Apply action to the entity
-        return $this->applyAction($record->entity_type, $record->entity_id, $action, $observations, $record->created_by, $approvalDate);
+        return $this->applyAction($record->entity_type, $record->entity_id, $action, $observations, $approvedByUserId, $approvalDate);
     }
 
     private function applyAction(string $entityType, int $entityId, string $action, ?string $observations, ?int $createdBy, ?string $approvalDate): bool

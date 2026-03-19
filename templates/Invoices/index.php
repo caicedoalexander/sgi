@@ -165,6 +165,7 @@ $pipelineOptions = [
                 <?php foreach ($invoices as $invoice):
                     $ps             = $pipelineBadges[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
                     $isRejected     = ($invoice->area_approval === 'Rechazada');
+                    $isApproved     = ($invoice->pipeline_status === 'aprobacion' && $invoice->area_approval === 'Aprobada');
                     $isPartialPay   = ($invoice->pipeline_status === 'tesoreria' && $invoice->payment_status === 'Pago Parcial');
                     $isPaid         = ($invoice->pipeline_status === 'pagada');
                     $readyForPay    = (!empty($invoice->ready_for_payment) && $invoice->ready_for_payment !== 'No');
@@ -229,6 +230,9 @@ $pipelineOptions = [
                                 <span class="badge bg-danger">Rechazada</span>
                             <?php else: ?>
                                 <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
+                                <?php if ($isApproved): ?>
+                                    <span class="badge bg-success">Aprobada</span>
+                                <?php endif; ?>
                                 <?php if ($isPartialPay): ?>
                                     <span class="badge bg-warning text-dark">Pago Parcial</span>
                                 <?php endif; ?>

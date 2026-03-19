@@ -5,9 +5,11 @@
  * @var string[] $pipelineStatuses
  * @var string[] $pipelineLabels
  * @var bool $isRejected      (optional) true when area_approval = 'Rechazada'
+ * @var bool $isApproved      (optional) true when area_approval = 'Aprobada' and still in aprobacion
  * @var string|null $paymentStatus  (optional) invoice payment_status value
  */
 $isRejected   = $isRejected ?? false;
+$isApproved   = $isApproved ?? false;
 $paymentStatus = $paymentStatus ?? null;
 
 $statusIcons = $statusIcons ?? [
@@ -83,6 +85,8 @@ $progressColor = $isRejected ? '#dc3545' : 'var(--primary-color)';
 
                 <?php if ($isCurrent && $isRejected): ?>
                     <span class="badge bg-danger mt-1" style="font-size:.6rem;">Rechazada</span>
+                <?php elseif ($isCurrent && $isApproved): ?>
+                    <span class="badge bg-success mt-1" style="font-size:.6rem;">Aprobada</span>
                 <?php elseif ($status === 'tesoreria' && $isPartialPayment): ?>
                     <span class="badge bg-warning text-dark mt-1" style="font-size:.6rem;">Pago Parcial</span>
                 <?php endif; ?>

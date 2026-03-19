@@ -95,6 +95,9 @@ $dianClass = match($invoice->dian_validation ?? '') {
                     <?php if ($isRejected): ?>
                         <span class="badge bg-danger">Rechazada</span>
                     <?php endif; ?>
+                    <?php if (!empty($isApproved)): ?>
+                        <span class="badge bg-success">Aprobada</span>
+                    <?php endif; ?>
                     <?php if ($invoice->pipeline_status === 'tesoreria' && $invoice->payment_status === 'Pago Parcial'): ?>
                         <span class="badge bg-warning text-dark">Pago Parcial</span>
                     <?php endif; ?>
@@ -123,6 +126,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
             'pipelineStatuses' => $pipelineStatuses,
             'pipelineLabels'   => $pipelineLabels,
             'isRejected'       => $isRejected,
+            'isApproved'       => $isApproved ?? false,
             'paymentStatus'    => $invoice->payment_status,
         ]) ?>
     </div>
