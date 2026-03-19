@@ -36,8 +36,10 @@
             font-weight:700;
             color:#fff;
             letter-spacing:-.03em;
-            line-height:1;
-        ">SGI COPC</div>
+            line-height:1; display:flex; align-items:center; gap:4px;
+        "><span>
+            SGI
+        </span> <span>·</span> COPCSA</div>
         <div style="
             font-size:.565rem;
             font-weight:600;
