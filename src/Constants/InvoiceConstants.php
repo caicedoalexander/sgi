@@ -36,4 +36,10 @@ final class InvoiceConstants
 
     // Token de aprobacion (horas de validez)
     public const APPROVAL_TOKEN_HOURS = 48;
+
+    // Documento Equivalente - tipos de titular
+    public const HOLDER_TYPE_PROVIDER = 'provider';
+    public const HOLDER_TYPE_EMPLOYEE = 'employee';
+    public const HOLDER_TYPE_MANUAL = 'manual';
+    public const HOLDER_TYPES = [self::HOLDER_TYPE_PROVIDER, self::HOLDER_TYPE_EMPLOYEE, self::HOLDER_TYPE_MANUAL];
 }
