@@ -110,4 +110,61 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // ── Documento Equivalente toggle ──────────────────────────────────────
+    (function () {
+        var checkbox = document.getElementById('is-equivalent-document');
+        if (!checkbox) return;
+
+        var holderTypeWrapper = document.getElementById('holder-type-wrapper');
+        var holderTypeSelect = document.getElementById('equivalent-holder-type');
+        var providerWrapper = document.getElementById('provider-wrapper');
+        var employeeWrapper = document.getElementById('employee-wrapper');
+        var manualDocWrapper = document.getElementById('manual-doc-wrapper');
+        var purchaseOrderWrapper = document.getElementById('purchase-order-wrapper');
+        var dueDateWrapper = document.getElementById('due-date-wrapper');
+
+        function toggleEquivalent() {
+            var isEquiv = checkbox.checked;
+
+            // Show/hide holder type selector
+            if (holderTypeWrapper) holderTypeWrapper.classList.toggle('d-none', !isEquiv);
+
+            // Disable purchase order and due date
+            if (purchaseOrderWrapper) {
+                var poInput = purchaseOrderWrapper.querySelector('input');
+                if (poInput) { poInput.disabled = isEquiv; if (isEquiv) poInput.value = ''; }
+            }
+            if (dueDateWrapper) {
+                var ddInput = dueDateWrapper.querySelector('input:not([type=hidden])');
+                if (ddInput) { ddInput.disabled = isEquiv; if (isEquiv) ddInput.value = ''; }
+            }
+
+            if (!isEquiv) {
+                // Reset: show provider, hide employee/manual
+                if (providerWrapper) providerWrapper.classList.remove('d-none');
+                if (employeeWrapper) employeeWrapper.classList.add('d-none');
+                if (manualDocWrapper) manualDocWrapper.classList.add('d-none');
+                if (holderTypeSelect) holderTypeSelect.value = '';
+            } else {
+                toggleHolderType();
+            }
+        }
+
+        function toggleHolderType() {
+            if (!holderTypeSelect) return;
+            var type = holderTypeSelect.value;
+
+            // Provider: show only when type is 'provider' or empty (default)
+            if (providerWrapper) providerWrapper.classList.toggle('d-none', type === 'employee' || type === 'manual');
+            if (employeeWrapper) employeeWrapper.classList.toggle('d-none', type !== 'employee');
+            if (manualDocWrapper) manualDocWrapper.classList.toggle('d-none', type !== 'manual');
+        }
+
+        checkbox.addEventListener('change', toggleEquivalent);
+        if (holderTypeSelect) holderTypeSelect.addEventListener('change', toggleHolderType);
+
+        // Initialize state on page load
+        toggleEquivalent();
+    })();
+
 });
