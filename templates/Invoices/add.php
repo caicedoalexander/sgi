@@ -63,18 +63,57 @@ $documentTypes = [
                         'empty'   => '-- Seleccione --',
                     ]) ?>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3" id="purchase-order-wrapper">
                     <?= $this->Form->control('purchase_order', [
                         'class' => 'form-control',
                         'label' => ['text' => 'Orden de Compra', 'class' => 'form-label'],
                     ]) ?>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3" id="provider-wrapper">
                     <?= $this->Form->control('provider_id', [
                         'class'   => 'form-select select2-enable',
                         'label'   => ['text' => 'Proveedor', 'class' => 'form-label'],
                         'options' => $providers,
                         'empty'   => '-- Seleccione --',
+                    ]) ?>
+                </div>
+            </div>
+
+            <!-- Documento Equivalente -->
+            <div class="row g-3 mt-1">
+                <div class="col-md-3">
+                    <div class="form-check mt-4">
+                        <?= $this->Form->checkbox('is_equivalent_document', [
+                            'class' => 'form-check-input',
+                            'id' => 'is-equivalent-document',
+                        ]) ?>
+                        <label class="form-check-label" for="is-equivalent-document">
+                            Es Documento Equivalente
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3 d-none" id="holder-type-wrapper">
+                    <?= $this->Form->control('equivalent_holder_type', [
+                        'class'   => 'form-select',
+                        'label'   => ['text' => 'Titular del Documento', 'class' => 'form-label'],
+                        'options' => ['provider' => 'Proveedor', 'employee' => 'Empleado', 'manual' => 'Cédula Manual'],
+                        'empty'   => '-- Seleccione --',
+                        'id'      => 'equivalent-holder-type',
+                    ]) ?>
+                </div>
+                <div class="col-md-3 d-none" id="employee-wrapper">
+                    <?= $this->Form->control('employee_id', [
+                        'class'   => 'form-select select2-enable',
+                        'label'   => ['text' => 'Empleado', 'class' => 'form-label'],
+                        'options' => $employees ?? [],
+                        'empty'   => '-- Seleccione --',
+                    ]) ?>
+                </div>
+                <div class="col-md-3 d-none" id="manual-doc-wrapper">
+                    <?= $this->Form->control('manual_document_number', [
+                        'class'       => 'form-control',
+                        'label'       => ['text' => 'Cédula', 'class' => 'form-label'],
+                        'placeholder' => 'Número de cédula',
                     ]) ?>
                 </div>
             </div>
@@ -95,7 +134,7 @@ $documentTypes = [
                         'label' => ['text' => 'Fecha de Emisión', 'class' => 'form-label'],
                     ]) ?>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" id="due-date-wrapper">
                     <?= $this->Form->control('due_date', [
                         'type'  => 'text',
                         'class' => 'form-control flatpickr-date',
