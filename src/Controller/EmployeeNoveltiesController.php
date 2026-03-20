@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\NoveltyConstants;
+use App\Constants\RoleConstants;
 use App\Service\LeaveDocumentService;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
@@ -48,7 +49,7 @@ class EmployeeNoveltiesController extends AppController
             ->contain(['Employees', 'NoveltyTypes', 'RegisteredByUsers'])
             ->order(['EmployeeNovelties.created' => 'DESC']);
 
-        if ($roleName !== 'Administrador') {
+        if ($roleName !== RoleConstants::ADMIN) {
             $subordinateIds = $this->_getSubordinateEmployeeIds($user);
             if (!empty($subordinateIds)) {
                 $query->where(['EmployeeNovelties.employee_id IN' => $subordinateIds]);
