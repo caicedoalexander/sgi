@@ -1,16 +1,16 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\PettyCashRecord $record
+ * @var \App\Model\Entity\LegalizationRecord $record
  * @var iterable $availableInvoices
  * @var iterable $operationCenters
  * @var array $groupFilters
  * @var bool $canDeleteDocuments
  */
-use App\Constants\PettyCashConstants;
+use App\Constants\LegalizationConstants;
 $groupFilters = $groupFilters ?? [];
 
-$this->assign('title', 'Editar Caja Menor ' . $record->code);
+$this->assign('title', 'Editar Legalización ' . ($record->code ?? '#' . $record->id));
 
 $statusBadge = [
     'agrupacion' => 'bg-info text-dark',
@@ -18,9 +18,9 @@ $statusBadge = [
     'tesoreria' => 'bg-warning text-dark',
     'pagado' => 'bg-success',
 ];
-$statusLabels = PettyCashConstants::STATUS_LABELS;
+$statusLabels = LegalizationConstants::STATUS_LABELS;
 
-$nextStatus = PettyCashConstants::TRANSITIONS[$record->status] ?? null;
+$nextStatus = LegalizationConstants::TRANSITIONS[$record->status] ?? null;
 
 $readyForPaymentOptions = [
     ''                   => '-- Seleccione --',
@@ -36,7 +36,7 @@ $readyForPaymentOptions = [
 $paymentStatusOptions = ['' => '-- Seleccione --', 'Pago total' => 'Pago total', 'Pago Parcial' => 'Pago Parcial'];
 
 // Determine which sections to show based on status
-$statusIndex = array_search($record->status, PettyCashConstants::STATUSES);
+$statusIndex = array_search($record->status, LegalizationConstants::STATUSES);
 $showAccounting = $statusIndex >= 1; // contabilidad or later
 $showTreasury = $statusIndex >= 2;   // tesoreria or later
 
@@ -86,7 +86,7 @@ $invoiceCount = count($record->invoices ?? []);
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Editar Caja Menor</span>
+    <span class="sgi-page-title">Editar Legalización</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
             '<i class="bi bi-arrow-left me-1"></i>Volver',
@@ -129,11 +129,11 @@ $invoiceCount = count($record->invoices ?? []);
         <div class="d-flex align-items-center gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-                <i class="bi bi-wallet2"></i>
+                <i class="bi bi-file-earmark-check"></i>
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
-                    <?= h($record->code) ?>
+                    <?= h($record->code ?? '#' . $record->id) ?>
                 </div>
                 <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
                     Total: <strong style="color:var(--primary-color);">$ <?= $this->Number->format($record->total_amount, ['places' => 2]) ?></strong>
@@ -147,7 +147,7 @@ $invoiceCount = count($record->invoices ?? []);
 
     <!-- Progress -->
     <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
-        <?= $this->element('petty_cash_progress', ['status' => $record->status]) ?>
+        <?= $this->element('legalization_progress', ['status' => $record->status]) ?>
     </div>
 
     <!-- ── Ficha resumen (ledger) ── -->
@@ -156,7 +156,7 @@ $invoiceCount = count($record->invoices ?? []);
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Código</div>
                 <?php if (!$record->isPagado()): ?>
-                <div class="sgi-ledger-value"><input type="text" name="code" form="pettyCashEditForm" class="form-control form-control-sm" style="font-family:monospace;max-width:200px;" maxlength="30" value="<?= h($record->code ?? '') ?>" placeholder="Opcional"></div>
+                <div class="sgi-ledger-value"><input type="text" name="code" form="legalizationEditForm" class="form-control form-control-sm" style="font-family:monospace;max-width:200px;" maxlength="30" value="<?= h($record->code ?? '') ?>" placeholder="Opcional"></div>
                 <?php else: ?>
                 <div class="sgi-ledger-value" style="font-family:monospace;"><?= h($record->code ?? '—') ?></div>
                 <?php endif; ?>
@@ -183,7 +183,7 @@ $invoiceCount = count($record->invoices ?? []);
     </div>
 
     <div class="card-body p-4" style="padding-top:0 !important;">
-        <?= $this->Form->create($record, ['id' => 'pettyCashEditForm']) ?>
+        <?= $this->Form->create($record, ['id' => 'legalizationEditForm']) ?>
 
         <div class="sgi-form-sections">
 
@@ -443,7 +443,7 @@ $invoiceCount = count($record->invoices ?? []);
                 <?= $btnLabel ?>
             </button>
 
-            <?php if ($record->isAgrupacion() && !empty($userPermissions['petty_cash']['can_delete'])): ?>
+            <?php if ($record->isAgrupacion() && !empty($userPermissions['legalizations']['can_delete'])): ?>
             <?= $this->Form->postLink(
                 '<i class="bi bi-trash me-1"></i>Eliminar',
                 ['action' => 'delete', $record->id],
@@ -467,7 +467,7 @@ $invoiceCount = count($record->invoices ?? []);
 <!-- Columna derecha: soportes + observaciones -->
 <div class="sgi-invoice-sidebar">
 
-<?php $docs = $record->petty_cash_documents ?? []; ?>
+<?php $docs = $record->legalization_documents ?? []; ?>
 <div class="card card-primary">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
@@ -476,7 +476,7 @@ $invoiceCount = count($record->invoices ?? []);
             <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
         </span>
         <?php if (!$record->isPagado()): ?>
-        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadPcDocModal">
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadLegDocModal">
             <i class="bi bi-upload me-1"></i>Subir
         </button>
         <?php endif; ?>
@@ -535,7 +535,7 @@ $invoiceCount = count($record->invoices ?? []);
 </div>
 
 <!-- Observaciones: chat -->
-<?php $obsCount = count($record->petty_cash_observations ?? []); ?>
+<?php $obsCount = count($record->legalization_observations ?? []); ?>
 <div class="card card-primary" style="display:flex;flex-direction:column;">
     <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);"></i>
@@ -547,13 +547,13 @@ $invoiceCount = count($record->invoices ?? []);
 
     <!-- Mensajes -->
     <div id="obs-chat-scroll" style="min-height:100px;max-height:340px;overflow-y:auto;padding:1rem .875rem;background:#f9fafb;display:flex;flex-direction:column;gap:.875rem;">
-        <?php if (empty($record->petty_cash_observations)): ?>
+        <?php if (empty($record->legalization_observations)): ?>
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 0;color:#c5c5c5;gap:.5rem;">
             <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
             <span style="font-size:.78rem;">Sin observaciones aún</span>
         </div>
         <?php else: ?>
-        <?php foreach ($record->petty_cash_observations as $obs):
+        <?php foreach ($record->legalization_observations as $obs):
             $isMine   = $currentUser && $obs->user_id === $currentUser->id;
             $names    = explode(' ', trim($obs->user->full_name ?? ''));
             $initials = strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[array_key_last($names)] ?? '', 0, 1));
@@ -601,7 +601,7 @@ $invoiceCount = count($record->invoices ?? []);
 
 <?php if (!$record->isPagado()): ?>
 <!-- Modal: Subir Soporte -->
-<div class="modal fade" id="uploadPcDocModal" tabindex="-1">
+<div class="modal fade" id="uploadLegDocModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <?= $this->Form->create(null, ['url' => ['action' => 'uploadDocument', $record->id], 'type' => 'file']) ?>

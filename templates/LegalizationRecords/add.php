@@ -1,17 +1,17 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\PettyCashRecord $record
+ * @var \App\Model\Entity\LegalizationRecord $record
  * @var iterable $availableInvoices
  * @var iterable $operationCenters
  * @var array $groupFilters
  */
-$this->assign('title', 'Nuevo Registro de Caja Menor');
+$this->assign('title', 'Nuevo Registro de Legalización');
 $groupFilters = $groupFilters ?? [];
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Nuevo Registro de Caja Menor</span>
+    <span class="sgi-page-title">Nuevo Registro de Legalización</span>
     <?= $this->Html->link(
         '<i class="bi bi-arrow-left me-1"></i>Volver',
         ['action' => 'index'],
@@ -60,7 +60,7 @@ $groupFilters = $groupFilters ?? [];
     <div class="card-header d-flex align-items-center gap-3">
         <div class="d-flex align-items-center justify-content-center flex-shrink-0"
              style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-            <i class="bi bi-wallet2"></i>
+            <i class="bi bi-file-earmark-check"></i>
         </div>
         <div>
             <div style="font-size:.95rem;font-weight:700;color:#111;">Crear Registro</div>
@@ -72,7 +72,7 @@ $groupFilters = $groupFilters ?? [];
 
         <div class="mb-4">
             <label class="form-label">Código <small class="text-muted">(opcional)</small></label>
-            <input type="text" name="code" class="form-control" maxlength="30" value="<?= h($record->code ?? '') ?>" placeholder="Ej. CM-2026-0001">
+            <input type="text" name="code" class="form-control" maxlength="30" value="<?= h($record->code ?? '') ?>" placeholder="Ej. LEG-2026-0001">
         </div>
 
         <div class="mb-4">
@@ -93,7 +93,7 @@ $groupFilters = $groupFilters ?? [];
             <?php if (empty($availableInvoices) || count($availableInvoices) === 0): ?>
             <div class="alert alert-info">
                 <i class="bi bi-info-circle me-1"></i>
-                No hay facturas de tipo "Caja menor" disponibles<?= !empty($groupFilters['date_from']) || !empty($groupFilters['date_to']) || !empty($groupFilters['operation_center_id']) ? ' con los filtros seleccionados' : '' ?>.
+                No hay facturas de tipo "Legalización" disponibles<?= !empty($groupFilters['date_from']) || !empty($groupFilters['date_to']) || !empty($groupFilters['operation_center_id']) ? ' con los filtros seleccionados' : '' ?>.
             </div>
             <?php else: ?>
             <select name="invoice_ids[]" class="form-select select2-enable" multiple
@@ -109,7 +109,7 @@ $groupFilters = $groupFilters ?? [];
                 <option value="<?= $inv->id ?>"><?= h($label) ?></option>
                 <?php endforeach; ?>
             </select>
-            <small class="text-muted">Facturas tipo "Caja menor" en estado "aprobación" sin agrupar.</small>
+            <small class="text-muted">Facturas tipo "Legalización" en estado "aprobación" sin agrupar.</small>
             <?php endif; ?>
         </div>
 

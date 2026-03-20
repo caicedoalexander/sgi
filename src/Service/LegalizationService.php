@@ -4,12 +4,12 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
-use App\Constants\PettyCashConstants;
-use App\Model\Entity\PettyCashRecord;
+use App\Constants\LegalizationConstants;
+use App\Model\Entity\LegalizationRecord;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 
-class PettyCashService
+class LegalizationService
 {
     public function validateGrouping(array $invoiceIds): array
     {
@@ -27,9 +27,9 @@ class PettyCashService
         foreach ($invoices as $invoice) {
             $foundIds[] = $invoice->id;
 
-            if ($invoice->document_type !== 'Caja menor') {
+            if ($invoice->document_type !== 'Legalización') {
                 $errors[] = sprintf(
-                    'La factura #%s no es de tipo "Caja menor".',
+                    'La factura #%s no es de tipo "Legalización".',
                     $invoice->invoice_number ?? $invoice->id,
                 );
             }
@@ -39,9 +39,9 @@ class PettyCashService
                     $invoice->invoice_number ?? $invoice->id,
                 );
             }
-            if (!empty($invoice->petty_cash_record_id)) {
+            if (!empty($invoice->legalization_record_id)) {
                 $errors[] = sprintf(
-                    'La factura #%s ya pertenece a otro registro de Caja Menor.',
+                    'La factura #%s ya pertenece a otro registro de Legalización.',
                     $invoice->invoice_number ?? $invoice->id,
                 );
             }
@@ -55,7 +55,7 @@ class PettyCashService
         return $errors;
     }
 
-    public function addInvoices(PettyCashRecord $record, array $invoiceIds): array
+    public function addInvoices(LegalizationRecord $record, array $invoiceIds): array
     {
         $errors = $this->validateGrouping($invoiceIds);
         if (!empty($errors)) {
@@ -65,7 +65,7 @@ class PettyCashService
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         foreach ($invoiceIds as $invoiceId) {
             $invoicesTable->updateAll(
-                ['petty_cash_record_id' => $record->id],
+                ['legalization_record_id' => $record->id],
                 ['id' => $invoiceId],
             );
         }
@@ -75,7 +75,7 @@ class PettyCashService
         return [];
     }
 
-    public function removeInvoice(PettyCashRecord $record, int $invoiceId): bool
+    public function removeInvoice(LegalizationRecord $record, int $invoiceId): bool
     {
         if (!$record->isAgrupacion()) {
             return false;
@@ -83,8 +83,8 @@ class PettyCashService
 
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $invoicesTable->updateAll(
-            ['petty_cash_record_id' => null],
-            ['id' => $invoiceId, 'petty_cash_record_id' => $record->id],
+            ['legalization_record_id' => null],
+            ['id' => $invoiceId, 'legalization_record_id' => $record->id],
         );
 
         $this->calculateAndSaveTotal($record);
@@ -92,23 +92,23 @@ class PettyCashService
         return true;
     }
 
-    public function calculateAndSaveTotal(PettyCashRecord $record): void
+    public function calculateAndSaveTotal(LegalizationRecord $record): void
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $result = $invoicesTable->find()
-            ->where(['petty_cash_record_id' => $record->id])
+            ->where(['legalization_record_id' => $record->id])
             ->select(['total' => $invoicesTable->find()->func()->sum('amount')])
             ->first();
 
-        $table = TableRegistry::getTableLocator()->get('PettyCashRecords');
+        $table = TableRegistry::getTableLocator()->get('LegalizationRecords');
         $record->total_amount = (float)($result->total ?? 0);
         $table->save($record);
     }
 
-    public function advanceStatus(PettyCashRecord $record, int $userId): array
+    public function advanceStatus(LegalizationRecord $record, int $userId): array
     {
         $currentStatus = $record->status;
-        $nextStatus = PettyCashConstants::TRANSITIONS[$currentStatus] ?? null;
+        $nextStatus = LegalizationConstants::TRANSITIONS[$currentStatus] ?? null;
 
         if ($nextStatus === null) {
             return ['success' => false, 'error' => 'Este registro ya está en su estado final.'];
@@ -116,7 +116,7 @@ class PettyCashService
 
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $invoices = $invoicesTable->find()
-            ->where(['petty_cash_record_id' => $record->id])
+            ->where(['legalization_record_id' => $record->id])
             ->all()
             ->toArray();
 
@@ -124,8 +124,7 @@ class PettyCashService
             return ['success' => false, 'error' => 'El registro debe tener al menos una factura agrupada.'];
         }
 
-        // Validate transition requirements specific to each petty cash step
-        $validationErrors = $this->validatePettyCashTransition($currentStatus, $invoices, $record);
+        $validationErrors = $this->validateLegalizationTransition($currentStatus, $invoices, $record);
         if (!empty($validationErrors)) {
             return [
                 'success' => false,
@@ -139,21 +138,18 @@ class PettyCashService
             $today = date('Y-m-d');
             $updateData = [];
 
-            if ($nextStatus === PettyCashConstants::STATUS_CONTABILIDAD) {
-                // Agrupación → Contabilidad: advance invoices to contabilidad
+            if ($nextStatus === LegalizationConstants::STATUS_CONTABILIDAD) {
                 $updateData = [
                     'pipeline_status' => 'contabilidad',
                 ];
-            } elseif ($nextStatus === PettyCashConstants::STATUS_TESORERIA) {
-                // Contabilidad → Tesorería: apply accounting fields from record to invoices
+            } elseif ($nextStatus === LegalizationConstants::STATUS_TESORERIA) {
                 $updateData = [
                     'pipeline_status' => 'tesoreria',
                     'accrued' => (bool)$record->accrued,
                     'accrual_date' => $record->accrual_date ?? $today,
                     'ready_for_payment' => $record->ready_for_payment,
                 ];
-            } elseif ($nextStatus === PettyCashConstants::STATUS_PAGADO) {
-                // Tesorería → Pagado: apply treasury fields from record to invoices
+            } elseif ($nextStatus === LegalizationConstants::STATUS_PAGADO) {
                 $updateData = [
                     'pipeline_status' => 'pagada',
                     'payment_status' => $record->payment_status ?? InvoiceConstants::PAYMENT_FULL,
@@ -164,11 +160,11 @@ class PettyCashService
             if (!empty($updateData)) {
                 $invoicesTable->updateAll(
                     $updateData,
-                    ['petty_cash_record_id' => $record->id],
+                    ['legalization_record_id' => $record->id],
                 );
             }
 
-            $table = TableRegistry::getTableLocator()->get('PettyCashRecords');
+            $table = TableRegistry::getTableLocator()->get('LegalizationRecords');
             $record->status = $nextStatus;
             $table->save($record);
 
@@ -179,14 +175,11 @@ class PettyCashService
         });
     }
 
-    /**
-     * Get transition validation errors for the current record (used by views).
-     */
-    public function getTransitionErrors(PettyCashRecord $record): array
+    public function getTransitionErrors(LegalizationRecord $record): array
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $invoices = $invoicesTable->find()
-            ->where(['petty_cash_record_id' => $record->id])
+            ->where(['legalization_record_id' => $record->id])
             ->all()
             ->toArray();
 
@@ -194,23 +187,22 @@ class PettyCashService
             return ['El registro debe tener al menos una factura agrupada.'];
         }
 
-        return $this->validatePettyCashTransition($record->status, $invoices, $record);
+        return $this->validateLegalizationTransition($record->status, $invoices, $record);
     }
 
-    /**
-     * Validate petty cash specific transition requirements.
-     * Petty cash invoices bypass normal pipeline approval requirements.
-     */
-    private function validatePettyCashTransition(string $fromStatus, array $invoices, PettyCashRecord $record): array
+    private function validateLegalizationTransition(
+        string $fromStatus,
+        array $invoices,
+        LegalizationRecord $record,
+    ): array
     {
         $errors = [];
 
         switch ($fromStatus) {
-            case PettyCashConstants::STATUS_AGRUPACION:
-                // No special requirements - just need invoices grouped
+            case LegalizationConstants::STATUS_AGRUPACION:
                 break;
 
-            case PettyCashConstants::STATUS_CONTABILIDAD:
+            case LegalizationConstants::STATUS_CONTABILIDAD:
                 if (empty($record->accrued)) {
                     $errors[] = 'El registro debe estar marcado como Causado.';
                 }
@@ -219,7 +211,7 @@ class PettyCashService
                 }
                 break;
 
-            case PettyCashConstants::STATUS_TESORERIA:
+            case LegalizationConstants::STATUS_TESORERIA:
                 if (empty($record->payment_status)) {
                     $errors[] = 'Debe seleccionar un Estado de Pago.';
                 }
@@ -239,9 +231,9 @@ class PettyCashService
         $query = $invoicesTable->find()
             ->contain(['Providers', 'OperationCenters'])
             ->where([
-                'Invoices.document_type' => 'Caja menor',
+                'Invoices.document_type' => 'Legalización',
                 'Invoices.pipeline_status' => 'aprobacion',
-                'Invoices.petty_cash_record_id IS' => null,
+                'Invoices.legalization_record_id IS' => null,
             ])
             ->order(['Invoices.issue_date' => 'ASC']);
 
@@ -258,7 +250,7 @@ class PettyCashService
         return $query;
     }
 
-    public function canDelete(PettyCashRecord $record): bool
+    public function canDelete(LegalizationRecord $record): bool
     {
         return $record->isAgrupacion();
     }

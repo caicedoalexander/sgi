@@ -3,18 +3,18 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
-use App\Constants\PettyCashConstants;
+use App\Constants\LegalizationConstants;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-class PettyCashRecordsTable extends Table
+class LegalizationRecordsTable extends Table
 {
     public function initialize(array $config): void
     {
         parent::initialize($config);
 
-        $this->setTable('petty_cash_records');
+        $this->setTable('legalization_records');
         $this->setDisplayField('code');
         $this->setPrimaryKey('id');
 
@@ -26,15 +26,15 @@ class PettyCashRecordsTable extends Table
             'joinType' => 'INNER',
         ]);
         $this->hasMany('Invoices', [
-            'foreignKey' => 'petty_cash_record_id',
+            'foreignKey' => 'legalization_record_id',
         ]);
-        $this->hasMany('PettyCashDocuments', [
-            'foreignKey' => 'petty_cash_record_id',
+        $this->hasMany('LegalizationDocuments', [
+            'foreignKey' => 'legalization_record_id',
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
-        $this->hasMany('PettyCashObservations', [
-            'foreignKey' => 'petty_cash_record_id',
+        $this->hasMany('LegalizationObservations', [
+            'foreignKey' => 'legalization_record_id',
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
@@ -49,7 +49,7 @@ class PettyCashRecordsTable extends Table
 
         $validator
             ->scalar('status')
-            ->inList('status', PettyCashConstants::STATUSES);
+            ->inList('status', LegalizationConstants::STATUSES);
 
         $validator
             ->decimal('total_amount');

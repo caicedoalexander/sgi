@@ -46,6 +46,7 @@ class AppController extends Controller
         'NoveltyTypes' => 'novelty_types',
         'LeaveDocumentTemplates' => 'leave_document_templates',
         'PettyCashRecords' => 'petty_cash',
+        'LegalizationRecords' => 'legalizations',
         'NoveltyLiquidationDocs' => 'novelty_liquidation_docs',
     ];
 
@@ -169,6 +170,11 @@ class AppController extends Controller
                 ->where(['status !=' => 'pagado'])
                 ->count());
 
+            $legalizationTable = TableRegistry::getTableLocator()->get('LegalizationRecords');
+            $this->set('legalizationCount', $legalizationTable->find()
+                ->where(['status !=' => 'pagado'])
+                ->count());
+
             $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
             $this->set('noveltiesCount', $noveltiesTable->find()
                 ->where(['pipeline_status NOT IN' => ['pagada', 'rechazada']])
@@ -178,6 +184,7 @@ class AppController extends Controller
             $this->set('totalInvoicesCount', 0);
             $this->set('rejectedInvoicesCount', 0);
             $this->set('pettyCashCount', 0);
+            $this->set('legalizationCount', 0);
             $this->set('noveltiesCount', 0);
         }
     }

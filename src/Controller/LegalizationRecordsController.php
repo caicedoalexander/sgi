@@ -3,20 +3,20 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Constants\PettyCashConstants;
-use App\Service\PettyCashDocumentService;
-use App\Service\PettyCashService;
+use App\Constants\LegalizationConstants;
+use App\Service\LegalizationDocumentService;
+use App\Service\LegalizationService;
 
-class PettyCashRecordsController extends AppController
+class LegalizationRecordsController extends AppController
 {
-    private PettyCashService $pettyCashService;
-    private PettyCashDocumentService $documentService;
+    private LegalizationService $legalizationService;
+    private LegalizationDocumentService $documentService;
 
     public function initialize(): void
     {
         parent::initialize();
-        $this->pettyCashService = new PettyCashService();
-        $this->documentService = new PettyCashDocumentService();
+        $this->legalizationService = new LegalizationService();
+        $this->documentService = new LegalizationDocumentService();
     }
 
     private function _getCurrentUser(): object
@@ -26,24 +26,23 @@ class PettyCashRecordsController extends AppController
 
     public function index()
     {
-        $query = $this->PettyCashRecords->find()
+        $query = $this->LegalizationRecords->find()
             ->contain(['CreatedByUsers', 'Invoices'])
-            ->order(['PettyCashRecords.created' => 'DESC']);
+            ->order(['LegalizationRecords.created' => 'DESC']);
 
-        // Filters
         $params = $this->request->getQueryParams();
 
         if (!empty($params['code'])) {
-            $query->where(['PettyCashRecords.code LIKE' => '%' . $params['code'] . '%']);
+            $query->where(['LegalizationRecords.code LIKE' => '%' . $params['code'] . '%']);
         }
         if (!empty($params['status'])) {
-            $query->where(['PettyCashRecords.status' => $params['status']]);
+            $query->where(['LegalizationRecords.status' => $params['status']]);
         }
         if (!empty($params['date_from'])) {
-            $query->where(['PettyCashRecords.created >=' => $params['date_from']]);
+            $query->where(['LegalizationRecords.created >=' => $params['date_from']]);
         }
         if (!empty($params['date_to'])) {
-            $query->where(['PettyCashRecords.created <=' => $params['date_to'] . ' 23:59:59']);
+            $query->where(['LegalizationRecords.created <=' => $params['date_to'] . ' 23:59:59']);
         }
 
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -53,16 +52,16 @@ class PettyCashRecordsController extends AppController
 
     public function view($id = null)
     {
-        $record = $this->PettyCashRecords->get($id, contain: [
+        $record = $this->LegalizationRecords->get($id, contain: [
             'CreatedByUsers',
             'Invoices' => ['Providers'],
-            'PettyCashDocuments' => [
+            'LegalizationDocuments' => [
                 'UploadedByUsers',
-                'sort' => ['PettyCashDocuments.created' => 'DESC'],
+                'sort' => ['LegalizationDocuments.created' => 'DESC'],
             ],
-            'PettyCashObservations' => [
+            'LegalizationObservations' => [
                 'Users',
-                'sort' => ['PettyCashObservations.created' => 'ASC'],
+                'sort' => ['LegalizationObservations.created' => 'ASC'],
             ],
         ]);
 
@@ -71,7 +70,7 @@ class PettyCashRecordsController extends AppController
 
     public function add()
     {
-        $record = $this->PettyCashRecords->newEmptyEntity();
+        $record = $this->LegalizationRecords->newEmptyEntity();
 
         if ($this->request->is('post')) {
             $user = $this->_getCurrentUser();
@@ -79,23 +78,23 @@ class PettyCashRecordsController extends AppController
 
             $invoiceIds = array_map('intval', array_filter((array)($data['invoice_ids'] ?? [])));
 
-            $record = $this->PettyCashRecords->patchEntity($record, [
+            $record = $this->LegalizationRecords->patchEntity($record, [
                 'code' => !empty($data['code']) ? $data['code'] : null,
-                'status' => PettyCashConstants::STATUS_AGRUPACION,
+                'status' => LegalizationConstants::STATUS_AGRUPACION,
                 'total_amount' => 0,
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $user->id,
             ]);
 
-            if ($this->PettyCashRecords->save($record)) {
+            if ($this->LegalizationRecords->save($record)) {
                 if (!empty($invoiceIds)) {
-                    $errors = $this->pettyCashService->addInvoices($record, $invoiceIds);
+                    $errors = $this->legalizationService->addInvoices($record, $invoiceIds);
                     foreach ($errors as $err) {
                         $this->Flash->warning($err);
                     }
                 }
 
-                $this->Flash->success('Registro de Caja Menor creado exitosamente.');
+                $this->Flash->success('Registro de Legalización creado exitosamente.');
 
                 return $this->redirect(['action' => 'edit', $record->id]);
             }
@@ -104,23 +103,23 @@ class PettyCashRecordsController extends AppController
         }
 
         $groupFilters = $this->request->getQueryParams();
-        $availableInvoices = $this->pettyCashService->getAvailableInvoices($groupFilters)->all();
+        $availableInvoices = $this->legalizationService->getAvailableInvoices($groupFilters)->all();
         $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
         $this->set(compact('record', 'availableInvoices', 'operationCenters', 'groupFilters'));
     }
 
     public function edit($id = null)
     {
-        $record = $this->PettyCashRecords->get($id, contain: [
+        $record = $this->LegalizationRecords->get($id, contain: [
             'CreatedByUsers',
             'Invoices' => ['Providers', 'OperationCenters'],
-            'PettyCashDocuments' => [
+            'LegalizationDocuments' => [
                 'UploadedByUsers',
-                'sort' => ['PettyCashDocuments.created' => 'DESC'],
+                'sort' => ['LegalizationDocuments.created' => 'DESC'],
             ],
-            'PettyCashObservations' => [
+            'LegalizationObservations' => [
                 'Users',
-                'sort' => ['PettyCashObservations.created' => 'ASC'],
+                'sort' => ['LegalizationObservations.created' => 'ASC'],
             ],
         ]);
 
@@ -156,26 +155,27 @@ class PettyCashRecordsController extends AppController
             }
 
             if (!empty($patchData)) {
-                $record = $this->PettyCashRecords->patchEntity($record, $patchData);
-                $this->PettyCashRecords->save($record);
+                $record = $this->LegalizationRecords->patchEntity($record, $patchData);
+                $this->LegalizationRecords->save($record);
             }
 
             // Add invoices (only in agrupacion)
             if ($record->isAgrupacion() && !empty($data['invoice_ids'])) {
                 $invoiceIds = array_map('intval', array_filter((array)$data['invoice_ids']));
-                $errors = $this->pettyCashService->addInvoices($record, $invoiceIds);
+                $errors = $this->legalizationService->addInvoices($record, $invoiceIds);
                 foreach ($errors as $err) {
                     $this->Flash->warning($err);
                 }
             }
 
-            // Try to advance automatically (save + advance unified)
+            // Try to advance automatically
             $user = $this->_getCurrentUser();
-            $canAdvance = !$record->isPagado() && (PettyCashConstants::TRANSITIONS[$record->status] ?? null) !== null;
+            $nextTrans = LegalizationConstants::TRANSITIONS[$record->status] ?? null;
+            $canAdvance = !$record->isPagado() && $nextTrans !== null;
             if ($canAdvance) {
-                $result = $this->pettyCashService->advanceStatus($record, $user->id);
+                $result = $this->legalizationService->advanceStatus($record, $user->id);
                 if ($result['success']) {
-                    $nextLabel = PettyCashConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
+                    $nextLabel = LegalizationConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
                     $this->Flash->success(sprintf('Registro guardado y avanzado a: %s', $nextLabel));
                 } else {
                     $this->Flash->success('Registro actualizado.');
@@ -188,31 +188,33 @@ class PettyCashRecordsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        // Compute advance errors for the view (to decide button label)
-        $nextStatus = PettyCashConstants::TRANSITIONS[$record->status] ?? null;
+        $nextStatus = LegalizationConstants::TRANSITIONS[$record->status] ?? null;
         $advanceErrors = [];
         if ($nextStatus) {
-            $advanceErrors = $this->pettyCashService->getTransitionErrors($record);
+            $advanceErrors = $this->legalizationService->getTransitionErrors($record);
         }
 
         $groupFilters = $this->request->getQueryParams();
-        $availableInvoices = $this->pettyCashService->getAvailableInvoices($groupFilters)->all();
+        $availableInvoices = $this->legalizationService->getAvailableInvoices($groupFilters)->all();
         $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
-        $canDeleteDocuments = $this->_checkPermission('petty_cash', 'delete');
+        $canDeleteDocuments = $this->_checkPermission('legalizations', 'delete');
 
-        $this->set(compact('record', 'availableInvoices', 'operationCenters', 'canDeleteDocuments', 'groupFilters', 'nextStatus', 'advanceErrors'));
+        $this->set(compact(
+            'record', 'availableInvoices', 'operationCenters',
+            'canDeleteDocuments', 'groupFilters', 'nextStatus', 'advanceErrors',
+        ));
     }
 
     public function advanceStatus($id = null)
     {
         $this->request->allowMethod(['post']);
-        $record = $this->PettyCashRecords->get($id);
+        $record = $this->LegalizationRecords->get($id);
         $user = $this->_getCurrentUser();
 
-        $result = $this->pettyCashService->advanceStatus($record, $user->id);
+        $result = $this->legalizationService->advanceStatus($record, $user->id);
 
         if ($result['success']) {
-            $nextLabel = PettyCashConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
+            $nextLabel = LegalizationConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
             $this->Flash->success(sprintf('Registro avanzado a: %s', $nextLabel));
         } else {
             $this->Flash->error($result['error']);
@@ -224,23 +226,22 @@ class PettyCashRecordsController extends AppController
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
-        $record = $this->PettyCashRecords->get($id);
+        $record = $this->LegalizationRecords->get($id);
 
-        if (!$this->pettyCashService->canDelete($record)) {
+        if (!$this->legalizationService->canDelete($record)) {
             $this->Flash->error('Solo se pueden eliminar registros en estado Agrupación.');
 
             return $this->redirect(['action' => 'index']);
         }
 
-        // Unlink invoices first
         $invoicesTable = $this->fetchTable('Invoices');
         $invoicesTable->updateAll(
-            ['petty_cash_record_id' => null],
-            ['petty_cash_record_id' => $record->id],
+            ['legalization_record_id' => null],
+            ['legalization_record_id' => $record->id],
         );
 
-        if ($this->PettyCashRecords->delete($record)) {
-            $this->Flash->success('Registro de Caja Menor eliminado.');
+        if ($this->LegalizationRecords->delete($record)) {
+            $this->Flash->success('Registro de Legalización eliminado.');
         } else {
             $this->Flash->error('No se pudo eliminar el registro.');
         }
@@ -251,9 +252,9 @@ class PettyCashRecordsController extends AppController
     public function removeInvoice($recordId = null, $invoiceId = null)
     {
         $this->request->allowMethod(['post']);
-        $record = $this->PettyCashRecords->get($recordId);
+        $record = $this->LegalizationRecords->get($recordId);
 
-        if ($this->pettyCashService->removeInvoice($record, (int)$invoiceId)) {
+        if ($this->legalizationService->removeInvoice($record, (int)$invoiceId)) {
             $this->Flash->success('Factura removida del registro.');
         } else {
             $this->Flash->error('No se puede remover facturas de un registro que no esté en Agrupación.');
@@ -265,7 +266,7 @@ class PettyCashRecordsController extends AppController
     public function uploadDocument($id = null)
     {
         $this->request->allowMethod(['post']);
-        $this->PettyCashRecords->get($id); // Verify exists
+        $this->LegalizationRecords->get($id);
 
         $file = $this->request->getUploadedFile('file');
         if (!$file) {
@@ -296,9 +297,9 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
         $user = $this->_getCurrentUser();
 
-        $observationsTable = $this->fetchTable('PettyCashObservations');
+        $observationsTable = $this->fetchTable('LegalizationObservations');
         $observation = $observationsTable->newEntity([
-            'petty_cash_record_id' => $id,
+            'legalization_record_id' => $id,
             'user_id' => $user->id,
             'message' => $this->request->getData('message'),
         ]);
@@ -315,7 +316,7 @@ class PettyCashRecordsController extends AppController
     public function deleteDocument($recordId = null, $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
-        $this->PettyCashRecords->get($recordId); // Verify exists
+        $this->LegalizationRecords->get($recordId);
 
         if ($this->documentService->deleteDocument((int)$documentId)) {
             $this->Flash->success('El soporte ha sido eliminado.');
