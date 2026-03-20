@@ -58,6 +58,6 @@ class Invoice extends Entity
 
     public function isPaid(): bool
     {
-        return ($this->pipeline_status ?? '') === 'pagada';
+        return ($this->pipeline_status ?? '') === InvoiceConstants::STATUS_PAGADA;
     }
 }
