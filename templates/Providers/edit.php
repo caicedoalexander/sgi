@@ -14,10 +14,17 @@ $this->assign('title', 'Editar Proveedor');
     <div class="card-body">
         <?= $this->Form->create($provider) ?>
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <?= $this->Form->control('nit', ['class' => 'form-control', 'label' => ['text' => 'NIT', 'class' => 'form-label']]) ?>
+            <div class="col-md-3 mb-3">
+                <?= $this->Form->control('document_type', [
+                    'class' => 'form-select',
+                    'label' => ['text' => 'Tipo de Documento', 'class' => 'form-label'],
+                    'options' => ['NIT' => 'NIT', 'CC' => 'CC', 'Otro' => 'Otro'],
+                ]) ?>
             </div>
-            <div class="col-md-8 mb-3">
+            <div class="col-md-3 mb-3">
+                <?= $this->Form->control('document_number', ['class' => 'form-control', 'label' => ['text' => 'Número de Documento', 'class' => 'form-label']]) ?>
+            </div>
+            <div class="col-md-6 mb-3">
                 <?= $this->Form->control('name', ['class' => 'form-control', 'label' => ['text' => 'Nombre', 'class' => 'form-label']]) ?>
             </div>
         </div>

@@ -21,7 +21,8 @@ $this->assign('title', 'Proveedores');
             <thead class="table-light">
                 <tr>
                     <th><?= $this->Paginator->sort('id', '#') ?></th>
-                    <th><?= $this->Paginator->sort('nit', 'NIT') ?></th>
+                    <th><?= $this->Paginator->sort('document_type', 'Tipo Doc.') ?></th>
+                    <th><?= $this->Paginator->sort('document_number', 'Número Doc.') ?></th>
                     <th><?= $this->Paginator->sort('name', 'Nombre') ?></th>
                     <th><?= $this->Paginator->sort('active', 'Estado') ?></th>
                     <th><?= $this->Paginator->sort('created', 'Creado') ?></th>
@@ -32,7 +33,8 @@ $this->assign('title', 'Proveedores');
                 <?php foreach ($providers as $provider): ?>
                 <tr>
                     <td><?= $this->Number->format($provider->id) ?></td>
-                    <td><code><?= h($provider->nit) ?></code></td>
+                    <td><span class="badge bg-secondary"><?= h($provider->document_type) ?></span></td>
+                    <td><code><?= h($provider->document_number) ?></code></td>
                     <td><?= h($provider->name) ?></td>
                     <td><?= $provider->active ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>' ?></td>
                     <td><?= $provider->created?->format('d/m/Y H:i') ?></td>
