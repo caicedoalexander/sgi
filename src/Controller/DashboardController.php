@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Constants\ContractTypeConstants;
 use App\Constants\EmployeeStatusConstants;
+use App\Constants\InvoiceConstants;
 use DateTime;
 use Exception;
 
@@ -35,11 +36,11 @@ class DashboardController extends AppController
         if ($canView('invoices')) {
             $invoiceStats = [
                 'total' => $this->_safeCount('Invoices'),
-                'aprobacion' => $this->_safeCount('Invoices', ['pipeline_status' => 'aprobacion']),
-                'contabilidad' => $this->_safeCount('Invoices', ['pipeline_status' => 'contabilidad']),
-                'tesoreria' => $this->_safeCount('Invoices', ['pipeline_status' => 'tesoreria']),
-                'pagada' => $this->_safeCount('Invoices', ['pipeline_status' => 'pagada']),
-                'rechazada' => $this->_safeCount('Invoices', ['area_approval' => 'Rechazada']),
+                'aprobacion' => $this->_safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_APROBACION]),
+                'contabilidad' => $this->_safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD]),
+                'tesoreria' => $this->_safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_TESORERIA]),
+                'pagada' => $this->_safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_PAGADA]),
+                'rechazada' => $this->_safeCount('Invoices', ['area_approval' => InvoiceConstants::APPROVAL_REJECTED]),
             ];
             $recentInvoices = $this->_safeQuery(function () {
                 return $this->fetchTable('Invoices')
@@ -274,16 +275,16 @@ class DashboardController extends AppController
             $dateConditions = ['Invoices.created >=' => $from, 'Invoices.created <=' => $to . ' 23:59:59'];
 
             $totalPaid = $table->find()
-                ->where(array_merge(['pipeline_status' => 'pagada'], $dateConditions))
+                ->where(array_merge(['pipeline_status' => InvoiceConstants::STATUS_PAGADA], $dateConditions))
                 ->select(['total' => $table->find()->func()->sum('amount')])
                 ->first();
 
             $totalInProcess = $table->find()
                 ->where(array_merge([
-                    'pipeline_status IN' => ['aprobacion', 'contabilidad', 'tesoreria'],
+                    'pipeline_status IN' => [InvoiceConstants::STATUS_APROBACION, InvoiceConstants::STATUS_CONTABILIDAD, InvoiceConstants::STATUS_TESORERIA],
                     'OR' => [
                         'area_approval IS' => null,
-                        'area_approval !=' => 'Rechazada',
+                        'area_approval !=' => InvoiceConstants::APPROVAL_REJECTED,
                     ],
                 ], $dateConditions))
                 ->select(['total' => $table->find()->func()->sum('amount')])
@@ -297,10 +298,10 @@ class DashboardController extends AppController
             $overdue = $table->find()
                 ->where([
                     'due_date <' => date('Y-m-d'),
-                    'pipeline_status !=' => 'pagada',
+                    'pipeline_status !=' => InvoiceConstants::STATUS_PAGADA,
                     'OR' => [
                         'area_approval IS' => null,
-                        'area_approval !=' => 'Rechazada',
+                        'area_approval !=' => InvoiceConstants::APPROVAL_REJECTED,
                     ],
                 ])
                 ->count();
@@ -329,7 +330,7 @@ class DashboardController extends AppController
 
             // Donut: amount by pipeline status
             $statusAmounts = [];
-            foreach (['aprobacion', 'contabilidad', 'tesoreria', 'pagada'] as $status) {
+            foreach (InvoiceConstants::PIPELINE_STATUSES as $status) {
                 $result = $table->find()
                     ->where(array_merge(['pipeline_status' => $status], $dateConditions))
                     ->select(['total' => $table->find()->func()->sum('amount')])
@@ -338,7 +339,7 @@ class DashboardController extends AppController
             }
             // Rejected
             $rejected = $table->find()
-                ->where(array_merge(['area_approval' => 'Rechazada'], $dateConditions))
+                ->where(array_merge(['area_approval' => InvoiceConstants::APPROVAL_REJECTED], $dateConditions))
                 ->select(['total' => $table->find()->func()->sum('amount')])
                 ->first();
             $statusAmounts['rechazada'] = (float)($rejected->total ?? 0);
