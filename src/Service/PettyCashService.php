@@ -33,9 +33,9 @@ class PettyCashService
                     $invoice->invoice_number ?? $invoice->id,
                 );
             }
-            if ($invoice->pipeline_status !== 'aprobacion') {
+            if ($invoice->pipeline_status !== 'contabilidad') {
                 $errors[] = sprintf(
-                    'La factura #%s no está en estado "aprobación".',
+                    'La factura #%s no está en estado "contabilidad".',
                     $invoice->invoice_number ?? $invoice->id,
                 );
             }
@@ -240,7 +240,7 @@ class PettyCashService
             ->contain(['Providers', 'OperationCenters'])
             ->where([
                 'Invoices.document_type' => 'Caja menor',
-                'Invoices.pipeline_status' => 'aprobacion',
+                'Invoices.pipeline_status' => 'contabilidad',
                 'Invoices.petty_cash_record_id IS' => null,
             ])
             ->order(['Invoices.issue_date' => 'ASC']);
