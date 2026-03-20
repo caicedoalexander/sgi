@@ -46,6 +46,14 @@ class InvoicesController extends AppController
             ? ['Invoices.pipeline_status IN' => $visibleStatuses]
             : [];
 
+        // Excluir facturas de Caja Menor que ya están en contabilidad o posterior
+        $conditions[] = [
+            'OR' => [
+                'Invoices.document_type !=' => 'Caja menor',
+                'Invoices.pipeline_status' => 'aprobacion',
+            ],
+        ];
+
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
         $invoices = $this->paginate($this->_buildInvoiceQuery($conditions, $userId));
 
