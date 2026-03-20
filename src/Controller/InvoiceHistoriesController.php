@@ -5,6 +5,8 @@ namespace App\Controller;
 
 class InvoiceHistoriesController extends AppController
 {
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     public function index()
     {
         $query = $this->InvoiceHistories->find()

@@ -7,6 +7,8 @@ use App\Service\ExcelService;
 
 class ProvidersController extends AppController
 {
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     public function index()
     {
         $providers = $this->paginate($this->Providers);

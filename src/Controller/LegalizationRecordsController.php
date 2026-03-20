@@ -9,6 +9,8 @@ use App\Service\LegalizationService;
 
 class LegalizationRecordsController extends AppController
 {
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     private LegalizationService $legalizationService;
     private LegalizationDocumentService $documentService;
 

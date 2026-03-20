@@ -5,6 +5,8 @@ namespace App\Controller;
 
 class ApproversController extends AppController
 {
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     public function index()
     {
         $query = $this->Approvers->find()->contain(['Users', 'OperationCenters']);

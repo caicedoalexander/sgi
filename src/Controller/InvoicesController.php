@@ -15,6 +15,8 @@ use Cake\ORM\TableRegistry;
 
 class InvoicesController extends AppController
 {
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     private InvoicePipelineService $pipeline;
     private InvoiceFilterService $filterService;
     private InvoiceDocumentService $documentService;

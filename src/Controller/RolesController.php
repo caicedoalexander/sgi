@@ -7,6 +7,8 @@ use App\Service\AuthorizationService;
 
 class RolesController extends AppController
 {
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     public function index()
     {
         $roles = $this->paginate($this->Roles);

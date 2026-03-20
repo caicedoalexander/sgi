@@ -9,6 +9,8 @@ use App\Service\PettyCashService;
 
 class PettyCashRecordsController extends AppController
 {
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     private PettyCashService $pettyCashService;
     private PettyCashDocumentService $documentService;
 

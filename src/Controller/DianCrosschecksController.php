@@ -8,6 +8,8 @@ use Cake\Http\Response;
 
 class DianCrosschecksController extends AppController
 {
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     private DianCrosscheckService $crosscheckService;
 
     public function initialize(): void

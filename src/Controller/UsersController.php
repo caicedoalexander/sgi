@@ -7,6 +7,8 @@ use Cake\Event\EventInterface;
 
 class UsersController extends AppController
 {
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     public function beforeFilter(EventInterface $event): void
     {
         parent::beforeFilter($event);

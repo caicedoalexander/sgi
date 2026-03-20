@@ -5,6 +5,8 @@ namespace App\Controller;
 
 class ExpenseTypesController extends AppController
 {
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     public function index()
     {
         $expenseTypes = $this->paginate($this->ExpenseTypes);

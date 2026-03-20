@@ -9,6 +9,8 @@ class PositionsController extends AppController
 {
     use ExcelCatalogTrait;
 
+    public array $paginate = ['limit' => 15, 'maxLimit' => 15];
+
     public function index()
     {
         $positions = $this->paginate($this->Positions);
