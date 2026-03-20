@@ -50,8 +50,8 @@ class InvoicesController extends AppController
         // Excluir facturas de Caja Menor que ya están en contabilidad o posterior
         $conditions[] = [
             'OR' => [
-                'Invoices.document_type !=' => 'Caja menor',
-                'Invoices.pipeline_status' => 'aprobacion',
+                'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_CAJA_MENOR,
+                'Invoices.pipeline_status' => InvoiceConstants::STATUS_APROBACION,
             ],
         ];
 
@@ -100,7 +100,7 @@ class InvoicesController extends AppController
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
         $invoices = $this->paginate($this->_buildInvoiceQuery([
             'Invoices.due_date <' => date('Y-m-d'),
-            'Invoices.pipeline_status !=' => 'pagada',
+            'Invoices.pipeline_status !=' => InvoiceConstants::STATUS_PAGADA,
         ], $userId));
         $visibleStatuses = [];
 
@@ -136,7 +136,7 @@ class InvoicesController extends AppController
 
         $roleName = $this->_getRoleName();
         $isRejected = $this->pipeline->isRejected($invoice);
-        $isApproved = $invoice->pipeline_status === 'aprobacion' && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
+        $isApproved = $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
         $pipelineStatuses = InvoicePipelineService::STATUSES;
         $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
 
@@ -156,7 +156,7 @@ class InvoicesController extends AppController
             $user = $this->_getCurrentUser();
             $data = $this->request->getData();
             $data['registered_by'] = $user->id;
-            $data['pipeline_status'] = 'aprobacion';
+            $data['pipeline_status'] = InvoiceConstants::STATUS_APROBACION;
             $data['registration_date'] = date('Y-m-d');
 
             $invoice = $this->Invoices->patchEntity($invoice, $data);
@@ -206,7 +206,7 @@ class InvoicesController extends AppController
         $canAdvance = $invoice->isInPettyCash() ? false : $this->pipeline->canAdvance($roleName, $currentStatus);
         $visibleSections = $this->pipeline->getVisibleSections($roleName, $currentStatus);
         $isRejected = $this->pipeline->isRejected($invoice);
-        $isApproved = $invoice->pipeline_status === 'aprobacion' && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
+        $isApproved = $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
 
         // Pre-compute advance errors for GET
         $advanceErrors = [];
