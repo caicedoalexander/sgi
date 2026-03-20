@@ -9,11 +9,13 @@ use App\Service\SystemSettingsService;
 class SystemSettingsController extends AppController
 {
     private SystemSettingsService $settingsService;
+    private NotificationService $notificationService;
 
     public function initialize(): void
     {
         parent::initialize();
         $this->settingsService = new SystemSettingsService();
+        $this->notificationService = new NotificationService();
     }
 
     public function index()
@@ -65,8 +67,7 @@ class SystemSettingsController extends AppController
     {
         $this->request->allowMethod(['post']);
 
-        $notificationService = new NotificationService();
-        $result = $notificationService->testSmtpConnection();
+        $result = $this->notificationService->testSmtpConnection();
 
         if ($result['success']) {
             $this->Flash->success($result['message']);

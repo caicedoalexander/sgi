@@ -8,6 +8,14 @@ use Cake\Http\Response;
 
 class DianCrosschecksController extends AppController
 {
+    private DianCrosscheckService $crosscheckService;
+
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->crosscheckService = new DianCrosscheckService();
+    }
+
     /**
      * List DIAN crosscheck records.
      *
@@ -47,8 +55,7 @@ class DianCrosschecksController extends AppController
             }
 
             $user = $this->Authentication->getIdentity();
-            $service = new DianCrosscheckService();
-            $result = $service->processUpload($file, (int)$user->getIdentifier());
+            $result = $this->crosscheckService->processUpload($file, (int)$user->getIdentifier());
 
             if (is_string($result)) {
                 $this->Flash->error($result);

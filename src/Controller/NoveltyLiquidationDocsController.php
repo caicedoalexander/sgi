@@ -18,6 +18,7 @@ class NoveltyLiquidationDocsController extends AppController
     private NoveltyPipelineService $pipelineService;
     private NoveltyDocumentService $documentService;
     private NoveltyObservationService $observationService;
+    private NoveltySignatureService $signatureService;
 
     /**
      * @return void
@@ -28,6 +29,7 @@ class NoveltyLiquidationDocsController extends AppController
         $this->pipelineService = new NoveltyPipelineService();
         $this->documentService = new NoveltyDocumentService();
         $this->observationService = new NoveltyObservationService();
+        $this->signatureService = new NoveltySignatureService();
     }
 
     /**
@@ -192,7 +194,6 @@ class NoveltyLiquidationDocsController extends AppController
     {
         $this->request->allowMethod(['post']);
         $signerType = $this->request->getData('signer_type');
-        $signatureService = new NoveltySignatureService();
         $user = $this->Authentication->getIdentity()->getOriginalData();
 
         $signaturesTable = $this->fetchTable('NoveltyLiquidationSignatures');
@@ -217,7 +218,7 @@ class NoveltyLiquidationDocsController extends AppController
             $signaturesTable->save($signature);
             $this->Flash->success('Firma vinculada desde la novedad.');
         } elseif (!empty($signatureBase64)) {
-            $path = $signatureService->saveFromBase64(
+            $path = $this->signatureService->saveFromBase64(
                 (int)$id,
                 $signatureBase64,
                 $user->id,

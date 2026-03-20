@@ -24,6 +24,8 @@ class EmployeeNoveltiesController extends AppController
     private NoveltyDocumentService $documentService;
     private NoveltyObservationService $observationService;
     private NoveltyHistoryService $historyService;
+    private LeaveDocumentService $leaveDocumentService;
+    private NoveltySignatureService $signatureService;
 
     /**
      * @return void
@@ -35,6 +37,8 @@ class EmployeeNoveltiesController extends AppController
         $this->documentService = new NoveltyDocumentService();
         $this->observationService = new NoveltyObservationService();
         $this->historyService = new NoveltyHistoryService();
+        $this->leaveDocumentService = new LeaveDocumentService();
+        $this->signatureService = new NoveltySignatureService();
     }
 
     /**
@@ -177,9 +181,8 @@ class EmployeeNoveltiesController extends AppController
         $documentsByStatus = $this->documentService->getDocumentsByStatus($novelty->id);
 
         // PDF template check
-        $service = new LeaveDocumentService();
         $employee = $novelty->employee;
-        $template = $employee ? $service->resolveTemplate(
+        $template = $employee ? $this->leaveDocumentService->resolveTemplate(
             (int)$novelty->novelty_type_id,
             $employee->contract_type ?? null,
             $employee->temporary_organization_id ?? null,
@@ -210,9 +213,8 @@ class EmployeeNoveltiesController extends AppController
             'NoveltyTypes',
         ]);
 
-        $service = new LeaveDocumentService();
         $employee = $novelty->employee;
-        $template = $service->resolveTemplate(
+        $template = $this->leaveDocumentService->resolveTemplate(
             (int)$novelty->novelty_type_id,
             $employee->contract_type ?? null,
             $employee->temporary_organization_id ?? null,
@@ -282,12 +284,11 @@ class EmployeeNoveltiesController extends AppController
                 }
 
                 // Handle employee signature
-                $signatureService = new NoveltySignatureService();
                 $signaturePath = null;
 
                 $signatureFile = $this->request->getUploadedFile('signature_file');
                 if ($signatureFile && $signatureFile->getError() === UPLOAD_ERR_OK) {
-                    $signaturePath = $signatureService->saveFromUpload(
+                    $signaturePath = $this->signatureService->saveFromUpload(
                         $novelty->id,
                         $signatureFile,
                         $user->id,
@@ -298,7 +299,7 @@ class EmployeeNoveltiesController extends AppController
                 if (!$signaturePath) {
                     $signatureBase64 = $this->request->getData('signature_base64');
                     if (!empty($signatureBase64)) {
-                        $signaturePath = $signatureService->saveFromBase64(
+                        $signaturePath = $this->signatureService->saveFromBase64(
                             $novelty->id,
                             $signatureBase64,
                             $user->id,
