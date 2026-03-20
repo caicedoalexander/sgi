@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\InvoiceConstants;
+use App\Constants\LegalizationConstants;
+use App\Constants\NoveltyConstants;
+use App\Constants\PettyCashConstants;
 use App\Service\AuthorizationService;
 use App\Service\InvoicePipelineService;
 use Cake\Controller\Controller;
@@ -162,28 +166,28 @@ class AppController extends Controller
             $this->set('sidebarCounters', $counters);
             $this->set('totalInvoicesCount', $invoicesTable->find()->count());
             $this->set('rejectedInvoicesCount', $invoicesTable->find()
-                ->where(['area_approval' => 'Rechazada'])
+                ->where(['area_approval' => InvoiceConstants::APPROVAL_REJECTED])
                 ->count());
             $this->set('overdueInvoicesCount', $invoicesTable->find()
                 ->where([
                     'due_date <' => date('Y-m-d'),
-                    'pipeline_status !=' => 'pagada',
+                    'pipeline_status !=' => InvoiceConstants::STATUS_PAGADA,
                 ])
                 ->count());
 
             $pettyCashTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
             $this->set('pettyCashCount', $pettyCashTable->find()
-                ->where(['status !=' => 'pagado'])
+                ->where(['status !=' => PettyCashConstants::STATUS_PAGADO])
                 ->count());
 
             $legalizationTable = TableRegistry::getTableLocator()->get('LegalizationRecords');
             $this->set('legalizationCount', $legalizationTable->find()
-                ->where(['status !=' => 'pagado'])
+                ->where(['status !=' => LegalizationConstants::STATUS_PAGADO])
                 ->count());
 
             $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
             $this->set('noveltiesCount', $noveltiesTable->find()
-                ->where(['pipeline_status NOT IN' => ['pagada', 'rechazada']])
+                ->where(['pipeline_status NOT IN' => [NoveltyConstants::STATUS_PAGADA, NoveltyConstants::STATUS_RECHAZADA]])
                 ->count());
         } catch (Exception $e) {
             $this->set('sidebarCounters', []);
