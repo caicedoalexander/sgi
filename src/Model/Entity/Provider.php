@@ -8,7 +8,8 @@ use Cake\ORM\Entity;
 class Provider extends Entity
 {
     protected array $_accessible = [
-        'nit' => true,
+        'document_type' => true,
+        'document_number' => true,
         'name' => true,
         'active' => true,
     ];

@@ -69,7 +69,7 @@ class ProvidersController extends AppController
     public function export()
     {
         $query = $this->Providers->find()
-            ->select(['Providers.nit', 'Providers.name', 'Providers.active'])
+            ->select(['Providers.document_type', 'Providers.document_number', 'Providers.name', 'Providers.active'])
             ->order(['Providers.name' => 'ASC']);
 
         $excelService = new ExcelService();
@@ -101,7 +101,7 @@ class ProvidersController extends AppController
         }
 
         $excelService = new ExcelService();
-        $result = $excelService->importCatalog('Providers', $file, 'nit');
+        $result = $excelService->importCatalog('Providers', $file, 'document_number');
 
         $this->Flash->success($result->getSummary());
 
