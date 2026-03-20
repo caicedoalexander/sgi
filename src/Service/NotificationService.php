@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\InvoiceConstants;
+use App\Constants\RoleConstants;
 use App\Model\Entity\Invoice;
 use Cake\Log\Log;
 use Cake\Mailer\Mailer;
@@ -191,10 +193,10 @@ class NotificationService
     private function getStatusRoleMapping(): array
     {
         return [
-            'aprobacion' => null,
-            'contabilidad' => 'Contabilidad',
-            'tesoreria' => 'Tesorería',
-            'pagada' => null,
+            InvoiceConstants::STATUS_APROBACION    => null,
+            InvoiceConstants::STATUS_CONTABILIDAD  => RoleConstants::CONTABILIDAD,
+            InvoiceConstants::STATUS_TESORERIA     => RoleConstants::TESORERIA,
+            InvoiceConstants::STATUS_PAGADA        => null,
         ];
     }
 
