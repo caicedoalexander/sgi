@@ -27,13 +27,13 @@ class LegalizationService
         foreach ($invoices as $invoice) {
             $foundIds[] = $invoice->id;
 
-            if ($invoice->document_type !== 'Legalización') {
+            if ($invoice->document_type !== InvoiceConstants::DOCTYPE_LEGALIZACION) {
                 $errors[] = sprintf(
                     'La factura #%s no es de tipo "Legalización".',
                     $invoice->invoice_number ?? $invoice->id,
                 );
             }
-            if ($invoice->pipeline_status !== 'aprobacion') {
+            if ($invoice->pipeline_status !== InvoiceConstants::STATUS_APROBACION) {
                 $errors[] = sprintf(
                     'La factura #%s no está en estado "aprobación".',
                     $invoice->invoice_number ?? $invoice->id,
@@ -140,18 +140,18 @@ class LegalizationService
 
             if ($nextStatus === LegalizationConstants::STATUS_CONTABILIDAD) {
                 $updateData = [
-                    'pipeline_status' => 'contabilidad',
+                    'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
                 ];
             } elseif ($nextStatus === LegalizationConstants::STATUS_TESORERIA) {
                 $updateData = [
-                    'pipeline_status' => 'tesoreria',
+                    'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
                     'accrued' => (bool)$record->accrued,
                     'accrual_date' => $record->accrual_date ?? $today,
                     'ready_for_payment' => $record->ready_for_payment,
                 ];
             } elseif ($nextStatus === LegalizationConstants::STATUS_PAGADO) {
                 $updateData = [
-                    'pipeline_status' => 'pagada',
+                    'pipeline_status' => InvoiceConstants::STATUS_PAGADA,
                     'payment_status' => $record->payment_status ?? InvoiceConstants::PAYMENT_FULL,
                     'payment_date' => $record->payment_date ?? $today,
                 ];
@@ -230,8 +230,8 @@ class LegalizationService
         $query = $invoicesTable->find()
             ->contain(['Providers', 'OperationCenters'])
             ->where([
-                'Invoices.document_type' => 'Legalización',
-                'Invoices.pipeline_status' => 'aprobacion',
+                'Invoices.document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+                'Invoices.pipeline_status' => InvoiceConstants::STATUS_APROBACION,
                 'Invoices.legalization_record_id IS' => null,
             ])
             ->order(['Invoices.issue_date' => 'ASC']);
