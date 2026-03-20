@@ -89,6 +89,7 @@ class InvoicesController extends AppController
 
         $invoice = $this->Invoices->get($id, contain: [
             'Providers',
+            'Employees',
             'OperationCenters',
             'ExpenseTypes',
             'CostCenters',
@@ -151,6 +152,7 @@ class InvoicesController extends AppController
 
         $invoice = $this->Invoices->get($id, contain: [
             'Providers',
+            'Employees',
             'OperationCenters',
             'PettyCashRecords',
             'InvoiceObservations' => [
@@ -456,6 +458,16 @@ class InvoicesController extends AppController
                 ->find('list', limit: 200)
                 ->where(['ApproverUsers.id IN' => $activeApproverIds])
                 ->all(),
+            'employees' => $this->fetchTable('Employees')
+                ->find()
+                ->where(['Employees.active' => true])
+                ->order(['Employees.first_name' => 'ASC'])
+                ->limit(500)
+                ->all()
+                ->combine('id', function ($employee) {
+                    return $employee->full_name . ' - ' . $employee->document_number;
+                })
+                ->toArray(),
         ];
     }
 
