@@ -5,6 +5,7 @@ namespace App\Service;
 
 use App\Model\Entity\Invoice;
 use Cake\ORM\TableRegistry;
+use DateTimeInterface;
 
 class InvoiceHistoryService
 {
@@ -52,10 +53,10 @@ class InvoiceHistoryService
             $newVal = $modified->get($field);
 
             // Normalizar DateTime a string para comparacion
-            if ($oldVal instanceof \DateTimeInterface) {
+            if ($oldVal instanceof DateTimeInterface) {
                 $oldVal = $oldVal->format('Y-m-d');
             }
-            if ($newVal instanceof \DateTimeInterface) {
+            if ($newVal instanceof DateTimeInterface) {
                 $newVal = $newVal->format('Y-m-d');
             }
 

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\EmployeeStatusConstants;
 use App\Constants\NoveltyConstants;
 use App\Service\LeaveDocumentService;
 use App\Service\NoveltyDocumentService;
@@ -548,7 +549,7 @@ class EmployeeNoveltiesController extends AppController
         $employeesTable = TableRegistry::getTableLocator()->get('Employees');
 
         $userEmployee = $employeesTable->find()
-            ->where(['email' => $user->email, 'employee_status_id' => \App\Constants\EmployeeStatusConstants::ACTIVO])
+            ->where(['email' => $user->email, 'employee_status_id' => EmployeeStatusConstants::ACTIVO])
             ->first();
 
         if (!$userEmployee || !$userEmployee->position_id) {

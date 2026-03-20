@@ -194,8 +194,7 @@ class LegalizationService
         string $fromStatus,
         array $invoices,
         LegalizationRecord $record,
-    ): array
-    {
+    ): array {
         $errors = [];
 
         switch ($fromStatus) {

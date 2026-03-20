@@ -200,8 +200,13 @@ class LegalizationRecordsController extends AppController
         $canDeleteDocuments = $this->_checkPermission('legalizations', 'delete');
 
         $this->set(compact(
-            'record', 'availableInvoices', 'operationCenters',
-            'canDeleteDocuments', 'groupFilters', 'nextStatus', 'advanceErrors',
+            'record',
+            'availableInvoices',
+            'operationCenters',
+            'canDeleteDocuments',
+            'groupFilters',
+            'nextStatus',
+            'advanceErrors',
         ));
     }
 

@@ -10,6 +10,7 @@ use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePipelineService;
 use ArrayObject;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 
 class InvoicesController extends AppController
@@ -413,7 +414,7 @@ class InvoicesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
-    private function _buildInvoiceQuery(array $conditions = [], ?int $userId = null): \Cake\ORM\Query\SelectQuery
+    private function _buildInvoiceQuery(array $conditions = [], ?int $userId = null): SelectQuery
     {
         $query = $this->Invoices->find()
             ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers']);

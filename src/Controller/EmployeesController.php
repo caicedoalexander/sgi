@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\NoveltyConstants;
 use App\Service\EmployeeDocumentService;
 use App\Service\EmployeeFilterService;
 use App\Service\EmployeeHistoryService;
@@ -106,7 +107,7 @@ class EmployeesController extends AppController
         $currentNovelty = $this->Employees->EmployeeNovelties->find()
             ->where([
                 'EmployeeNovelties.employee_id' => $id,
-                'EmployeeNovelties.pipeline_status !=' => \App\Constants\NoveltyConstants::STATUS_RECHAZADA,
+                'EmployeeNovelties.pipeline_status !=' => NoveltyConstants::STATUS_RECHAZADA,
                 'OR' => [
                     ['EmployeeNovelties.permission_date' => $today, 'EmployeeNovelties.start_date IS' => null],
                     ['EmployeeNovelties.start_date <=' => $today, 'EmployeeNovelties.end_date >=' => $today],

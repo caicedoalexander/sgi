@@ -5,6 +5,7 @@ namespace App\Service;
 
 use App\Constants\NoveltyConstants;
 use Cake\ORM\TableRegistry;
+use DateTimeInterface;
 
 /**
  * Records field-by-field audit trail for employee novelties.
@@ -95,7 +96,7 @@ class NoveltyHistoryService
         if (is_bool($value)) {
             return $value ? '1' : '0';
         }
-        if ($value instanceof \DateTimeInterface) {
+        if ($value instanceof DateTimeInterface) {
             return $value->format('Y-m-d');
         }
 
