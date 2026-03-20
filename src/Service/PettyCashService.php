@@ -27,13 +27,13 @@ class PettyCashService
         foreach ($invoices as $invoice) {
             $foundIds[] = $invoice->id;
 
-            if ($invoice->document_type !== 'Caja menor') {
+            if ($invoice->document_type !== InvoiceConstants::DOCTYPE_CAJA_MENOR) {
                 $errors[] = sprintf(
                     'La factura #%s no es de tipo "Caja menor".',
                     $invoice->invoice_number ?? $invoice->id,
                 );
             }
-            if ($invoice->pipeline_status !== 'contabilidad') {
+            if ($invoice->pipeline_status !== InvoiceConstants::STATUS_CONTABILIDAD) {
                 $errors[] = sprintf(
                     'La factura #%s no está en estado "contabilidad".',
                     $invoice->invoice_number ?? $invoice->id,
@@ -142,12 +142,12 @@ class PettyCashService
             if ($nextStatus === PettyCashConstants::STATUS_CONTABILIDAD) {
                 // Agrupación → Contabilidad: advance invoices to contabilidad
                 $updateData = [
-                    'pipeline_status' => 'contabilidad',
+                    'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
                 ];
             } elseif ($nextStatus === PettyCashConstants::STATUS_TESORERIA) {
                 // Contabilidad → Tesorería: apply accounting fields from record to invoices
                 $updateData = [
-                    'pipeline_status' => 'tesoreria',
+                    'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
                     'accrued' => (bool)$record->accrued,
                     'accrual_date' => $record->accrual_date ?? $today,
                     'ready_for_payment' => $record->ready_for_payment,
@@ -155,7 +155,7 @@ class PettyCashService
             } elseif ($nextStatus === PettyCashConstants::STATUS_PAGADO) {
                 // Tesorería → Pagado: apply treasury fields from record to invoices
                 $updateData = [
-                    'pipeline_status' => 'pagada',
+                    'pipeline_status' => InvoiceConstants::STATUS_PAGADA,
                     'payment_status' => $record->payment_status ?? InvoiceConstants::PAYMENT_FULL,
                     'payment_date' => $record->payment_date ?? $today,
                 ];
@@ -239,8 +239,8 @@ class PettyCashService
         $query = $invoicesTable->find()
             ->contain(['Providers', 'OperationCenters'])
             ->where([
-                'Invoices.document_type' => 'Caja menor',
-                'Invoices.pipeline_status' => 'contabilidad',
+                'Invoices.document_type' => InvoiceConstants::DOCTYPE_CAJA_MENOR,
+                'Invoices.pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
                 'Invoices.petty_cash_record_id IS' => null,
             ])
             ->order(['Invoices.issue_date' => 'ASC']);
