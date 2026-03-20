@@ -7,8 +7,14 @@ final class InvoiceConstants
 {
     // Tipos de documento
     public const DOCUMENT_TYPES = [
-        'Factura', 'Nota Debito', 'Caja menor', 'Tarjeta de Crédito',
-        'Reintegro', 'Legalización', 'Recibo', 'Anticipo',
+        self::DOCTYPE_FACTURA,
+        self::DOCTYPE_NOTA_DEBITO,
+        self::DOCTYPE_CAJA_MENOR,
+        self::DOCTYPE_TARJETA_CREDITO,
+        self::DOCTYPE_REINTEGRO,
+        self::DOCTYPE_LEGALIZACION,
+        self::DOCTYPE_RECIBO,
+        self::DOCTYPE_ANTICIPO,
     ];
 
     // Estados de aprobacion de area
@@ -22,6 +28,29 @@ final class InvoiceConstants
     public const DIAN_APPROVED = 'Aprobada';
     public const DIAN_REJECTED = 'Rechazado';
     public const DIAN_STATUSES = [self::DIAN_PENDING, self::DIAN_APPROVED, self::DIAN_REJECTED];
+
+    // Pipeline statuses
+    public const STATUS_APROBACION = 'aprobacion';
+    public const STATUS_CONTABILIDAD = 'contabilidad';
+    public const STATUS_TESORERIA = 'tesoreria';
+    public const STATUS_PAGADA = 'pagada';
+
+    public const PIPELINE_STATUSES = [
+        self::STATUS_APROBACION,
+        self::STATUS_CONTABILIDAD,
+        self::STATUS_TESORERIA,
+        self::STATUS_PAGADA,
+    ];
+
+    // Document types
+    public const DOCTYPE_FACTURA = 'Factura';
+    public const DOCTYPE_NOTA_DEBITO = 'Nota Debito';
+    public const DOCTYPE_CAJA_MENOR = 'Caja menor';
+    public const DOCTYPE_TARJETA_CREDITO = 'Tarjeta de Crédito';
+    public const DOCTYPE_REINTEGRO = 'Reintegro';
+    public const DOCTYPE_LEGALIZACION = 'Legalización';
+    public const DOCTYPE_RECIBO = 'Recibo';
+    public const DOCTYPE_ANTICIPO = 'Anticipo';
 
     // Estados de pago
     public const PAYMENT_FULL = 'Pago total';
