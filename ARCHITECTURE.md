@@ -1,299 +1,501 @@
-# SGI - Arquitectura del Sistema
+# SGI — Architecture Guide
 
-Documento de referencia arquitectonica para el Sistema de Gestion Interna (SGI).
+Practical guide for building and extending the SGI (Sistema de Gestión Interna). This document covers **how** to work on the project: layer responsibilities, patterns, conventions, and step-by-step instructions for common tasks.
 
----
-
-## 1. Stack Tecnologico
-
-| Componente | Tecnologia | Version |
-|------------|-----------|---------|
-| Framework | CakePHP | 5.3.* |
-| PHP | PHP | >= 8.2 |
-| Base de datos | MariaDB | Remota (Easypanel) |
-| Autenticacion | cakephp/authentication | ^3.0 |
-| Excel | phpoffice/phpspreadsheet | ^2.0 / ^3.0 |
-| PDF | TCPDF + FPDI | ^6.10 / ^2.6 |
-| Frontend | Bootstrap 5 + CSS plano | CDN |
-| Tipografia | Inter Variable | Local (TTF) |
-| Iconos | Bootstrap Icons | CDN |
-| Fechas | Flatpickr | CDN |
-| Moneda | AutoNumeric | CDN |
-| Selects | Select2 | CDN |
+For quick reference and commands, see `CLAUDE.md`. For visual design rules, see `STYLES.md`.
 
 ---
 
-## 2. Estructura de Directorios
+## 1. Application Layers
+
+### 1.1 Request Lifecycle
 
 ```
-sgi/
-|-- src/
-|   |-- Application.php              # Middleware stack, autenticacion
-|   |-- Controller/
-|   |   |-- AppController.php         # Base: permisos, sidebar counters
-|   |   |-- DashboardController.php   # Dashboard con contadores
-|   |   |-- InvoicesController.php    # CRUD + pipeline de facturas
-|   |   |-- EmployeesController.php   # CRUD + documentos de empleados
-|   |   |-- UsersController.php       # Login/logout, CRUD usuarios
-|   |   |-- Trait/
-|   |   |   |-- ExcelCatalogTrait.php # Export/import reutilizable
-|   |   |-- [28 controllers mas]     # Catalogos y modulos
-|   |
-|   |-- Model/
-|   |   |-- Entity/                   # Entidades tipadas con helpers de dominio
-|   |   |   |-- Invoice.php           # isRejected(), isApproved(), isPaid()
-|   |   |   |-- Employee.php          # Campos de empleado + contrato
-|   |   |   |-- User.php              # Hash de password automatico
-|   |   |-- Table/                    # Tablas ORM con validacion via constantes
-|   |   |   |-- InvoicesTable.php     # Asociaciones, validacion, finders
-|   |   |   |-- EmployeesTable.php    # Validacion condicional por tipo contrato
-|   |   |   |-- UsersTable.php        # findAuth() para login
-|   |
-|   |-- Service/                      # Servicios con inyeccion de dependencias
-|   |   |-- InvoicePipelineService.php    # Pipeline de 4 estados
-|   |   |-- InvoiceHistoryService.php     # Audit trail campo a campo
-|   |   |-- AuthorizationService.php      # RBAC por rol/modulo/accion
-|   |   |-- ApprovalTokenService.php      # Tokens SHA256, delega al pipeline
-|   |   |-- NotificationService.php       # Emails SMTP dinamico
-|   |   |-- EmployeeDocumentService.php   # Gestion de archivos empleado
-|   |   |-- InvoiceDocumentService.php    # Gestion de archivos factura
-|   |   |-- ExcelService.php              # Export/import XLSX
-|   |   |-- InvoiceFilterService.php      # Filtros de busqueda facturas
-|   |   |-- EmployeeFilterService.php     # Filtros de busqueda empleados
-|   |   |-- SystemSettingsService.php     # Configuracion SMTP, etc.
-|   |   |-- DianCrosscheckService.php     # Cruce DIAN
-|   |   |-- LeaveDocumentService.php      # Documentos de permisos
-|   |   |-- LeaveSignatureService.php     # Firma digital permisos
-|   |   |-- N8nService.php                # Integracion n8n
-|   |   |-- WebhookService.php            # Webhooks salientes
-|   |   |-- ImportResult.php              # DTO resultado importacion
-|   |
-|   |-- Constants/
-|   |   |-- RoleConstants.php             # Nombres de roles del sistema
-|   |   |-- EmployeeStatusConstants.php   # IDs de estados de empleado
-|   |   |-- InvoiceConstants.php          # Tipos, estados, opciones de factura
-|   |
-|   |-- View/
-|   |   |-- AppView.php              # formatDateEs() fechas en espanol
-|   |
-|   |-- Middleware/
-|       |-- HostHeaderMiddleware.php  # Prevencion Host Header Injection
-|
-|-- templates/
-|   |-- layout/
-|   |   |-- default.php              # Sidebar + topbar + content area
-|   |   |-- login.php                # Split-panel (dark | blanco)
-|   |   |-- ajax.php                 # Respuestas AJAX sin layout
-|   |   |-- external.php             # Layout para aprobacion externa
-|   |   |-- error.php                # Layout de errores
-|   |   |-- email/                   # Templates de email HTML/texto
-|   |-- element/
-|   |   |-- pipeline_progress.php    # Barra visual del pipeline
-|   |   |-- pagination.php           # Paginacion reutilizable
-|   |   |-- catalog_excel_buttons.php # Botones export/import
-|   |   |-- flash/                   # Mensajes flash por tipo
-|   |-- [Carpetas por controller]    # index, add, edit, view
-|
-|-- config/
-|   |-- app.php / app_local.php      # Configuracion de la aplicacion
-|   |-- routes.php                   # Rutas custom + fallbacks
-|   |-- bootstrap.php                # Carga de .env, plugins
-|   |-- Migrations/                  # Migraciones con prefijo fecha
-|   |-- Seeds/                       # Seed inicial
-|
-|-- webroot/
-|   |-- css/styles.css               # Sistema de diseno completo
-|   |-- js/sgi-common.js             # Inicializacion de plugins JS
-|   |-- js/leave-template-editor.js  # Editor de plantillas de permisos
-|   |-- fonts/Inter-Variable.ttf     # Fuente Inter (100-900)
-|   |-- uploads/                     # Archivos subidos (employees, invoices)
-|   |-- icons/favicon.svg
-```
-
----
-
-## 3. Capas de la Aplicacion
-
-### 3.1 Request Lifecycle
-
-```
-Request HTTP
-    |
-    v
+HTTP Request
+    │
+    ▼
 [Middleware Stack]
-    ErrorHandler -> HostHeader -> Asset -> Routing -> Authentication -> BodyParser -> CSRF
-    |
-    v
+    ErrorHandler → HostHeader → Asset → Routing → Authentication → BodyParser → CSRF
+    │
+    ▼
 [AppController::beforeFilter]
-    1. Obtener identidad del usuario
-    2. Setear currentUser en vistas
-    3. Calcular sidebar counters
-    4. Calcular permisos del usuario
-    5. Enforcar permiso para controller/action actual
-    |
-    v
+    1. Get user identity
+    2. Set currentUser for views
+    3. Calculate sidebar counters
+    4. Calculate user permissions
+    5. Enforce permission for current controller/action
+    │
+    ▼
 [Controller Action]
-    1. Validar datos de entrada
-    2. Delegar a Service (logica de negocio)
-    3. Interactuar con Model (persistencia)
-    4. Setear variables para la vista
-    |
-    v
+    1. Validate input
+    2. Delegate to Service (business logic)
+    3. Interact with Model (persistence)
+    4. Set view variables
+    │
+    ▼
 [View/Template]
-    Layout (default.php) + Template especifico
-    |
-    v
-Response HTTP
+    Layout (default.php) + Specific template
+    │
+    ▼
+HTTP Response
 ```
 
-### 3.2 Responsabilidades por Capa
+### 1.2 Layer Responsibilities
 
-| Capa | Responsabilidad | NO debe hacer |
-|------|----------------|---------------|
-| **Controller** | Recibir request, validar input, delegar a services, preparar vista | Logica de negocio, queries complejas |
-| **Service** | Logica de negocio, orquestacion, transacciones | Acceso directo a request/response |
-| **Table (Model)** | Asociaciones, validacion de datos, custom finders | Logica de negocio compleja |
-| **Entity** | Whitelist de campos, propiedades virtuales, helpers de dominio | Queries a BD |
-| **View/Template** | Presentacion HTML, formateo visual | Logica de negocio, queries a BD |
-| **Middleware** | Seguridad transversal, parsing | Logica de negocio especifica |
-| **Constants** | Valores de dominio reutilizables (roles, estados, tipos) | Logica, acceso a BD |
+| Layer | Does | Does NOT |
+|-------|------|----------|
+| **Controller** | Receive request, validate input, delegate to services, set view variables | Business logic, complex queries |
+| **Service** | Business logic, orchestration, DB transactions | Access request/response directly |
+| **Table (Model)** | Associations, data validation, custom finders, behaviors | Complex business logic |
+| **Entity** | Field whitelist (`$_accessible`), virtual properties, domain helpers | Database queries |
+| **View/Template** | HTML presentation, visual formatting | Business logic, DB queries |
+| **Constants** | Reusable domain values (roles, states, types) | Logic, DB access |
+| **Middleware** | Cross-cutting security concerns (auth, CSRF, host validation) | Specific business logic |
+
+**Rule of thumb:** If you're writing an `if` with business meaning in a controller, it belongs in a service. If you're running a query in a template, it belongs in the controller. If you're hardcoding a string like `'Rechazada'` in PHP, it belongs in a constant.
 
 ---
 
-## 4. Modulos del Sistema
+## 2. Conceptual Directory Structure
 
-### 4.1 Modulo de Facturas (core)
+This section explains **what goes where** — not what files exist. When adding new code, place it in the correct layer.
 
-Implementa un **pipeline de 4 estados**:
+### `src/Controller/`
+
+One controller per resource. Always extends `AppController`. Responsible for HTTP concerns only.
 
 ```
-aprobacion --> contabilidad --> tesoreria --> pagada
+src/Controller/
+├── AppController.php              # Base class: permissions, sidebar counters
+├── {Resource}Controller.php       # One per module (Invoices, Employees, etc.)
+└── Trait/
+    └── ExcelCatalogTrait.php      # Shared trait for catalog export/import
 ```
 
-**Componentes:**
-- `InvoicesController` — CRUD + avance de estado, usa `_buildInvoiceQuery()` para queries reutilizables
-- `InvoicePipelineService` — transiciones, campos editables por rol, `saveAndAdvance()`
-- `InvoiceHistoryService` — audit trail campo a campo con comparacion estricta normalizada
-- `ApprovalTokenService` — tokens SHA256, delega aprobacion al pipeline via `saveAndAdvance()`
-- `NotificationService` — emails de cambio de estado
-- `InvoiceDocumentService` — archivos adjuntos
-- `InvoiceFilterService` — filtros de busqueda
+**What goes here:**
+- Request validation and input sanitization
+- Service instantiation in `initialize()`
+- Shared query builders as `_build*Query()` private methods
+- View variable assignment via `$this->set()`
 
-**Reglas de negocio clave:**
-- Cada rol solo ve estados asignados (`ROLE_VISIBLE_STATUSES`)
-- Cada rol solo edita campos de su estado (`EDITABLE_FIELDS`)
-- Admin puede ver y editar todo
-- `Invoice::isRejected()` verifica si fue rechazada en area
-- Aprobacion externa via token bypasea login
+**What does NOT go here:**
+- Business rules, state transitions, calculations
+- Direct complex queries (delegate to Table finders or Services)
 
-### 4.2 Modulo de Empleados (HR)
+### `src/Service/`
 
-**Componentes:**
-- `EmployeesController` — CRUD + gestion de documentos
-- `EmployeeDocumentService` — carpetas y archivos por empleado
-- `EmployeeFilterService` — filtros de busqueda
-- `EmployeeNovedadesController` — novedades/cambios de empleado
-- `EmployeeLeavesController` — permisos/ausencias
-- `LeaveDocumentService` — generacion de documentos de permiso
-- `LeaveSignatureService` — firma digital
+One service per business domain. No access to request/response. Accesses tables via `TableRegistry::getTableLocator()->get()`.
 
-### 4.3 Modulo de Catalogos
+```
+src/Service/
+├── {Domain}Service.php            # Core business logic (InvoicePipelineService)
+├── {Domain}FilterService.php      # Search/filter logic (InvoiceFilterService)
+├── {Domain}DocumentService.php    # File upload/management (InvoiceDocumentService)
+├── {Domain}HistoryService.php     # Audit trail (InvoiceHistoryService)
+└── ImportResult.php               # DTOs when needed
+```
 
-Controllers simples CRUD para tablas de referencia. Todos usan `ExcelCatalogTrait` para export/import:
+**What goes here:**
+- Business rules and validations
+- State machine logic (pipeline transitions)
+- Cross-table orchestration and DB transactions
+- Email sending, webhook calls, external integrations
 
-- Proveedores, Centros de operacion, Tipos de gasto
-- Centros de costos, Roles, Usuarios, Aprobadores
-- Estados de empleado, Estados civiles, Niveles educativos, Cargos
+**What does NOT go here:**
+- `$this->request` or `$this->response` — services are request-agnostic
+- HTML rendering or view logic
 
-### 4.4 Modulo de Configuracion
+### `src/Model/Entity/`
 
-- `SystemSettingsController` — configuracion SMTP, parametros del sistema
-- `DianCrosschecksController` — cruce con DIAN
+Typed entities with field whitelist and domain helper methods.
+
+```
+src/Model/Entity/
+└── {Resource}.php                 # Entity with $_accessible + helpers
+```
+
+**What goes here:**
+- `$_accessible` array defining mass-assignable fields
+- Domain helper methods that inspect entity state (e.g., `isRejected()`, `isPaid()`)
+- Virtual fields via `_get{FieldName}()` methods
+
+**What does NOT go here:**
+- Database queries of any kind
+- Business logic that requires other entities or tables
+
+### `src/Model/Table/`
+
+ORM table classes with associations, validation rules, behaviors, and custom finders.
+
+```
+src/Model/Table/
+└── {Resource}Table.php            # Associations, validation, finders
+```
+
+**What goes here:**
+- `initialize()`: table name, primary key, associations (`belongsTo`, `hasMany`), behaviors
+- `validationDefault()`: field-level validation rules
+- Custom finders (e.g., `findCodeList()`, `findAuth()`)
+
+**What does NOT go here:**
+- Business logic beyond simple data validation
+- Complex multi-table orchestration (use a Service)
+
+### `src/Constants/`
+
+Domain values as `final` classes with `public const`. Never hardcode domain strings or IDs in PHP.
+
+```
+src/Constants/
+└── {Domain}Constants.php          # e.g., InvoiceConstants, RoleConstants
+```
+
+### `templates/`
+
+One folder per controller, plus shared elements and layouts.
+
+```
+templates/
+├── layout/
+│   ├── default.php                # Authenticated pages (sidebar + topbar)
+│   ├── login.php                  # Login page (split-panel)
+│   ├── external.php               # External approval via token
+│   ├── ajax.php                   # AJAX responses (no layout chrome)
+│   └── email/                     # Email templates (HTML + text)
+├── element/
+│   ├── pipeline_progress.php      # Reusable pipeline visual bar
+│   ├── pagination.php             # Pagination component (use in all lists)
+│   └── catalog_excel_buttons.php  # Export/import buttons for catalogs
+└── {ControllerName}/
+    ├── index.php                  # List view
+    ├── add.php                    # Create form
+    ├── edit.php                   # Edit form
+    └── view.php                   # Detail view
+```
+
+### `config/Migrations/`
+
+Timestamped migration files. Base class is `Migrations\BaseMigration`.
+
+```
+config/Migrations/
+└── YYYYMMDDHHMMSS_DescriptiveName.php
+```
+
+### `webroot/`
+
+Public assets. Custom CSS and JS live here — no build step.
+
+```
+webroot/
+├── css/styles.css                 # Complete design system (see STYLES.md)
+├── js/sgi-common.js               # Plugin initialization (Flatpickr, AutoNumeric, Select2)
+├── fonts/Inter-Variable.ttf       # Inter font (weights 100–900)
+└── uploads/{entity}/{id}/         # User-uploaded files
+```
 
 ---
 
-## 5. Sistema de Permisos (RBAC)
+## 3. How to Create a New Module
 
-### 5.1 Roles
+Step-by-step guide with real code examples from the project.
 
-Definidos en `src/Constants/RoleConstants.php`:
+### 3.1 Create the Migration
 
-| Constante | Valor | Acceso |
-|-----------|-------|--------|
-| `ADMIN` | Administrador | Todo |
-| `REGISTRO_REVISION` | Registro/Revision | Estado 'aprobacion' |
-| `CONTABILIDAD` | Contabilidad | Estado 'contabilidad' |
-| `TESORERIA` | Tesoreria | Estado 'tesoreria' |
+Use `Migrations\BaseMigration` (NOT `AbstractMigration`). Protect with `hasTable()`.
 
-### 5.2 Flujo de Verificacion
+```php
+<?php
+declare(strict_types=1);
 
+use Migrations\BaseMigration;
+
+class CreateWidgets extends BaseMigration
+{
+    public function up(): void
+    {
+        if (!$this->hasTable('widgets')) {
+            $table = $this->table('widgets');
+            $table
+                ->addColumn('name', 'string', ['limit' => 100, 'null' => false])
+                ->addColumn('operation_center_id', 'integer', ['signed' => true, 'null' => false])
+                ->addColumn('active', 'boolean', ['default' => true])
+                ->addColumn('created', 'datetime', ['null' => true])
+                ->addColumn('modified', 'datetime', ['null' => true])
+                ->addForeignKey('operation_center_id', 'operation_centers', 'id', [
+                    'delete' => 'RESTRICT',
+                    'update' => 'CASCADE',
+                ])
+                ->create();
+        }
+    }
+
+    public function down(): void
+    {
+        if ($this->hasTable('widgets')) {
+            $this->table('widgets')->drop()->save();
+        }
+    }
+}
 ```
-AppController::beforeFilter()
-    |
-    v
-_enforcePermission(user)
-    |
-    v
-controllerModuleMap[controllerName] --> module
-_actionToPermission(action) --> permAction (view/add/edit/delete)
-    |
-    v
-AuthorizationService::isAllowed(roleId, roleName, module, permAction)
-    |-- Admin? --> true (bypass)
-    |-- Otro rol? --> consulta tabla `permissions`
+
+**Critical:** Foreign key columns must have **identical types** (signed/unsigned) as the referenced column. Check existing tables before adding FKs.
+
+### 3.2 Create the Constants (if needed)
+
+If the module has domain values (states, types, options), create a constants class:
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Constants;
+
+final class WidgetConstants
+{
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INACTIVE = 'inactive';
+    public const STATUSES = [self::STATUS_ACTIVE, self::STATUS_INACTIVE];
+}
 ```
 
-### 5.3 Tabla permissions
+### 3.3 Create the Entity
 
+Define `$_accessible` and add domain helpers if the entity has meaningful state:
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Entity;
+
+use Cake\ORM\Entity;
+
+class Widget extends Entity
+{
+    protected array $_accessible = [
+        'name' => true,
+        'operation_center_id' => true,
+        'active' => true,
+    ];
+
+    // Domain helper — only if the entity has meaningful state to check
+    public function isActive(): bool
+    {
+        return (bool)$this->active;
+    }
+}
+```
+
+### 3.4 Create the Table
+
+Add associations, `TimestampBehavior`, validation, and custom finders:
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Model\Table;
+
+use Cake\ORM\Table;
+use Cake\Validation\Validator;
+
+class WidgetsTable extends Table
+{
+    public function initialize(array $config): void
+    {
+        parent::initialize($config);
+
+        $this->setTable('widgets');
+        $this->setDisplayField('name');
+        $this->setPrimaryKey('id');
+
+        $this->addBehavior('Timestamp');
+
+        $this->belongsTo('OperationCenters', [
+            'foreignKey' => 'operation_center_id',
+            'joinType' => 'INNER',
+        ]);
+    }
+
+    public function validationDefault(Validator $validator): Validator
+    {
+        $validator
+            ->notEmptyString('name', 'Name is required')
+            ->requirePresence('operation_center_id', 'create');
+
+        return $validator;
+    }
+
+    // Custom finder pattern — use instead of overriding findList()
+    public function findCodeList(\Cake\ORM\Query\SelectQuery $query, array $options): \Cake\ORM\Query\SelectQuery
+    {
+        return $query->formatResults(fn($results) =>
+            $results->combine('id', fn($row) => $row->code . ' - ' . $row->name)
+        );
+    }
+}
+```
+
+**Important:** Never override `findList()` in CakePHP 5 — the signature is incompatible. Use custom finders like `findCodeList()` instead.
+
+### 3.5 Create the Controller
+
+Extend `AppController`, set pagination, instantiate services in `initialize()`:
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Controller;
+
+class WidgetsController extends AppController
+{
+    public $paginate = ['limit' => 15, 'maxLimit' => 15];
+
+    public function initialize(): void
+    {
+        parent::initialize();
+        // Instantiate services here if needed
+        // $this->widgetService = new WidgetService();
+    }
+
+    public function index()
+    {
+        $query = $this->Widgets->find()
+            ->contain(['OperationCenters']);
+
+        $widgets = $this->paginate($query);
+        $this->set(compact('widgets'));
+    }
+
+    public function add()
+    {
+        $widget = $this->Widgets->newEmptyEntity();
+
+        if ($this->request->is('post')) {
+            $widget = $this->Widgets->patchEntity($widget, $this->request->getData());
+            if ($this->Widgets->save($widget)) {
+                $this->Flash->success('Widget saved.');
+                return $this->redirect(['action' => 'index']);
+            }
+            $this->Flash->error('Could not save widget.');
+        }
+
+        $operationCenters = $this->Widgets->OperationCenters->find('list')->toArray();
+        $this->set(compact('widget', 'operationCenters'));
+    }
+}
+```
+
+### 3.6 Register Permissions
+
+Three places must be updated:
+
+**1. Add to `AppController::$controllerModuleMap`:**
+```php
+// In src/Controller/AppController.php
+protected array $controllerModuleMap = [
+    // ... existing entries
+    'Widgets' => 'widgets',
+];
+```
+
+**2. Add to `AuthorizationService::MODULES`:**
+```php
+// In src/Service/AuthorizationService.php
+public const MODULES = [
+    // ... existing entries
+    'widgets' => 'Widgets',
+];
+```
+
+**3. Insert permissions in the database** (via migration or seed):
 ```sql
-permissions(id, role_id, module, can_view, can_create, can_edit, can_delete)
+INSERT INTO permissions (role_id, module, can_view, can_create, can_edit, can_delete)
+VALUES
+    (1, 'widgets', 1, 1, 1, 1),  -- Admin: full access
+    (5, 'widgets', 1, 1, 0, 0);  -- Registro/Revisión: view + create
 ```
 
-Los modulos disponibles estan definidos en `AuthorizationService::MODULES`.
+### 3.7 Create Templates
+
+Follow `STYLES.md` for visual consistency. Use standard elements:
+
+- `templates/element/pagination.php` for paginated lists
+- `.flatpickr-date` class on date inputs
+- `.currency-input` class on money inputs
+- `.clickable-row` with `data-href` on table rows
+- `AppView::formatDateEs()` for Spanish-formatted dates
+
+### 3.8 Add Routes (only if custom actions needed)
+
+Standard CRUD works automatically via `$builder->fallbacks()`. Only add routes for non-standard actions:
+
+```php
+// In config/routes.php — BEFORE $builder->fallbacks()
+$builder->connect(
+    '/widgets/activate/{id}',
+    ['controller' => 'Widgets', 'action' => 'activate'],
+    ['id' => '\d+', 'pass' => ['id']]
+);
+```
 
 ---
 
-## 6. Patrones y Convenciones
+## 4. Patterns and Conventions
 
-### 6.1 Constantes de Dominio
+### 4.1 Constants Over Hardcoding
 
-Todos los valores de dominio (estados, tipos, opciones) van en `src/Constants/`:
+Never use literal strings or numbers for domain values in PHP code. Always reference constants:
 
 ```php
-// src/Constants/InvoiceConstants.php
-InvoiceConstants::APPROVAL_REJECTED   // 'Rechazada'
-InvoiceConstants::PAYMENT_FULL        // 'Pago total'
-InvoiceConstants::DOCUMENT_TYPES      // ['Factura', 'Nota Debito', ...]
+// WRONG
+if ($invoice->area_approval === 'Rechazada') { ... }
+if ($user->role->name === 'Administrador') { ... }
 
-// src/Constants/EmployeeStatusConstants.php
-EmployeeStatusConstants::RETIRADO     // 2
+// CORRECT
+use App\Constants\InvoiceConstants;
+use App\Constants\RoleConstants;
 
-// src/Constants/RoleConstants.php
-RoleConstants::ADMIN                  // 'Administrador'
+if ($invoice->area_approval === InvoiceConstants::APPROVAL_REJECTED) { ... }
+if ($user->role->name === RoleConstants::ADMIN) { ... }
 ```
 
-**Regla:** nunca usar strings o numeros literales para valores de dominio en codigo PHP (`src/`). Siempre referenciar la constante.
-
-### 6.2 Servicios
-
-**Inyeccion de dependencias:** Los servicios reciben sus dependencias via constructor con defaults opcionales. Se instancian en `initialize()` del controller.
+Constants are defined in `src/Constants/` as `final` classes:
 
 ```php
-// Servicio con DI
+final class InvoiceConstants
+{
+    public const APPROVAL_REJECTED = 'Rechazada';
+    public const APPROVAL_APPROVED = 'Aprobada';
+    public const APPROVAL_STATUSES = [self::APPROVAL_PENDING, self::APPROVAL_APPROVED, self::APPROVAL_REJECTED];
+
+    public const PAYMENT_FULL = 'Pago total';
+    public const PAYMENT_PARTIAL = 'Pago Parcial';
+}
+```
+
+### 4.2 Service Dependency Injection
+
+Services receive dependencies via constructor with optional defaults. This allows testing with mocks while keeping production instantiation simple:
+
+```php
 class InvoicePipelineService
 {
     public function __construct(
         ?InvoiceHistoryService $historyService = null,
         ?NotificationService $notificationService = null,
-        ?ApprovalTokenService $tokenService = null,
     ) {
         $this->historyService = $historyService ?? new InvoiceHistoryService();
         $this->notificationService = $notificationService ?? new NotificationService();
-        $this->tokenService = $tokenService ?? new ApprovalTokenService();
     }
 }
+```
 
-// Controller
+Controllers instantiate services in `initialize()`:
+
+```php
 public function initialize(): void
 {
     parent::initialize();
@@ -303,51 +505,22 @@ public function initialize(): void
 }
 ```
 
-**Reglas:**
-- Un servicio por dominio de negocio
-- Los servicios acceden a tablas via `TableRegistry::getTableLocator()->get()`
-- Los servicios NO acceden al request/response
-- Dependencias entre servicios se inyectan via constructor
-- No duplicar logica: si un servicio ya implementa algo, delegar a el
+**Rules:**
+- One service per business domain
+- Services access tables via `TableRegistry::getTableLocator()->get('TableName')`
+- Services do NOT access `$this->request` or `$this->response`
+- Dependencies between services are injected via constructor
+- Don't duplicate logic — delegate to the service that already implements it
 
-### 6.3 Entities
+### 4.3 Reusable Queries in Controllers
 
-Las entities pueden tener metodos helper de dominio que no acceden a BD:
-
-```php
-class Invoice extends Entity
-{
-    public function isRejected(): bool { ... }
-    public function isApproved(): bool { ... }
-    public function isPaid(): bool { ... }
-}
-```
-
-### 6.4 Custom Finders
-
-En CakePHP 5, **no sobreescribir** `findList()` (firma incompatible):
-
-```php
-public function findCodeList(SelectQuery $query, array $options): SelectQuery
-{
-    return $query->formatResults(fn($results) =>
-        $results->combine('id', fn($row) => $row->code . ' - ' . $row->name)
-    );
-}
-
-// USO
-$table->find('codeList');
-```
-
-### 6.5 Queries Reutilizables en Controllers
-
-Cuando multiples acciones comparten la misma query base, extraer a metodo privado:
+When multiple actions share the same base query, extract to a private `_build*Query()` method:
 
 ```php
 private function _buildInvoiceQuery(array $conditions = []): SelectQuery
 {
     $query = $this->Invoices->find()
-        ->contain(['Providers', 'OperationCenters', ...]);
+        ->contain(['Providers', 'OperationCenters', 'ExpenseTypes']);
 
     if (!empty($conditions)) {
         $query->where($conditions);
@@ -357,264 +530,516 @@ private function _buildInvoiceQuery(array $conditions = []): SelectQuery
 
     return $query;
 }
+
+// Usage
+public function index()
+{
+    $query = $this->_buildInvoiceQuery(['pipeline_status' => 'aprobacion']);
+    $invoices = $this->paginate($query);
+    $this->set(compact('invoices'));
+}
 ```
 
-### 6.6 Paginacion
+### 4.4 Custom Finders
+
+In CakePHP 5, **do not override `findList()`** — the signature is incompatible with `Table::findList()`. Use custom finders instead:
+
+```php
+// In Table class
+public function findCodeList(SelectQuery $query, array $options): SelectQuery
+{
+    return $query->formatResults(fn($results) =>
+        $results->combine('id', fn($row) => $row->code . ' - ' . $row->name)
+    );
+}
+
+// Usage
+$items = $this->OperationCenters->find('codeList')->toArray();
+```
+
+### 4.5 Pagination
+
+Fixed at **15 items per page** across the entire application:
 
 ```php
 public $paginate = ['limit' => 15, 'maxLimit' => 15];
 ```
 
-Siempre 15 registros por pagina. Usar elemento `templates/element/pagination.php`.
+Always use the `pagination.php` element in list templates:
 
-### 6.7 Formateo de Fechas
+```php
+<?= $this->element('pagination') ?>
+```
+
+### 4.6 Date Formatting
+
+Use `AppView::formatDateEs()` for Spanish-formatted dates in views:
 
 ```php
 $this->AppView->formatDateEs($entity->created);
-// Resultado: "Lunes, 17 Febrero 2026"
+// Output: "Lunes, 17 Febrero 2026"
 ```
 
-### 6.8 Migraciones
+### 4.7 Migrations
 
-- Clase base: `Migrations\BaseMigration` (NO `AbstractMigration`)
-- Prefijo de fecha: `YYYYMMDDHHMMSS_NombreDescriptivo.php`
-- FKs: tipos de columna deben coincidir exactamente (signed/unsigned)
-- Si migra a mitad, usar `$this->hasTable()` para proteger
+- **Base class:** `Migrations\BaseMigration` (NOT `AbstractMigration`)
+- **Filename prefix:** `YYYYMMDDHHMMSS_DescriptiveName.php`
+- **Foreign keys:** Column types must match exactly (signed/unsigned)
+- **Protection:** Use `$this->hasTable()` to prevent failures if table already exists
+- **Language:** Migration names and comments in English
 
-### 6.9 Rutas
+### 4.8 Routes
 
-Rutas custom en `config/routes.php` para acciones especiales. El fallback `$builder->fallbacks()` cubre CRUD estandar automaticamente.
+Standard CRUD is handled automatically by `$builder->fallbacks()` in `config/routes.php`. Only add custom routes for non-standard actions:
 
 ```php
+// Custom action with ID parameter
 $builder->connect(
     '/invoices/advance-status/{id}',
     ['controller' => 'Invoices', 'action' => 'advanceStatus'],
     ['id' => '\d+', 'pass' => ['id']]
 );
+
+// Custom action with token parameter
+$builder->connect(
+    '/approve/{token}',
+    ['controller' => 'ExternalApprovals', 'action' => 'review'],
+    ['token' => '[a-f0-9]{64}', 'pass' => ['token']]
+);
 ```
 
-### 6.10 Historial de Cambios
+**Always** add custom routes **before** `$builder->fallbacks()`.
 
-`InvoiceHistoryService::recordChanges()` usa comparacion estricta (`!==`) con normalizacion de tipos:
-- `DateTimeInterface` se normaliza a string `Y-m-d`
-- Booleanos se normalizan con cast `(bool)`
-- Strings vacios se normalizan a `null`
+### 4.9 Change History / Audit Trail
+
+`InvoiceHistoryService::recordChanges()` compares old vs new values with strict comparison (`!==`) and type normalization:
+
+- `DateTimeInterface` → normalized to `Y-m-d` string
+- Booleans → normalized with `(bool)` cast
+- Empty strings → normalized to `null`
+
+This prevents false positives in the audit trail from type mismatches.
+
+### 4.10 Excel Catalog Export/Import
+
+Catalog controllers use `ExcelCatalogTrait` for standardized Excel export and import:
+
+```php
+use App\Controller\Trait\ExcelCatalogTrait;
+
+class ProvidersController extends AppController
+{
+    use ExcelCatalogTrait;
+    // ...
+}
+```
+
+The trait provides `exportExcel()` and `importExcel()` actions. Use the `catalog_excel_buttons.php` element in templates to render the UI buttons.
+
+### 4.11 Error Handling
+
+Errors are handled differently depending on the layer:
+
+**Controllers** — Use Flash messages for user-facing errors and redirect. Never expose internal details:
+
+```php
+// Save operation with Flash feedback
+if ($this->Widgets->save($widget)) {
+    $this->Flash->success('Widget guardado correctamente.');
+    return $this->redirect(['action' => 'index']);
+}
+$this->Flash->error('No se pudo guardar el widget. Verifique los datos.');
+```
+
+**Services** — Return structured results (arrays or booleans) to indicate success/failure. Throw exceptions only for truly exceptional situations (data corruption, external service unavailable). Let the controller decide what to show to the user:
+
+```php
+// Service returns structured result — controller decides how to present it
+class InvoicePipelineService
+{
+    public function saveAndAdvance(Invoice $invoice, array $data, string $roleName): array
+    {
+        // Returns ['success' => bool, 'errors' => [...], 'warnings' => [...]]
+    }
+
+    public function validateTransitionRequirements(Invoice $invoice, string $fromStatus): array
+    {
+        // Returns array of error strings (empty = valid)
+        $errors = [];
+        if ($this->isRejected($invoice)) {
+            $errors[] = 'La factura fue rechazada y no puede avanzar.';
+        }
+        return $errors;
+    }
+}
+
+// Controller interprets the result
+$result = $this->pipeline->saveAndAdvance($invoice, $data, $roleName);
+if (!$result['success']) {
+    foreach ($result['errors'] as $error) {
+        $this->Flash->error($error);
+    }
+}
+```
+
+**Tables** — Use CakePHP validation rules in `validationDefault()`. Entity errors are automatically available via `$entity->getErrors()` after a failed `patchEntity()` or `save()`.
+
+**Exceptions** — Use CakePHP built-in exceptions for HTTP-level errors:
+
+```php
+use Cake\Http\Exception\NotFoundException;
+use Cake\Http\Exception\ForbiddenException;
+
+// In controller — entity not found
+$invoice = $this->Invoices->get($id);  // Throws NotFoundException automatically
+
+// In controller — manual permission check
+if (!$this->canAccessInvoice($invoice)) {
+    throw new ForbiddenException('No tiene permiso para ver esta factura.');
+}
+```
+
+**Rules:**
+- Controllers handle user-facing feedback (Flash messages, redirects)
+- Services return data, not HTTP responses — never throw `NotFoundException` from a service
+- Never catch exceptions silently — if you catch, log or re-throw
+- Never expose stack traces, SQL errors, or internal paths to the user
+
+### 4.12 Database Transactions
+
+Use `Connection::transactional()` for operations that modify multiple tables or require atomicity. This is the standard pattern in services:
+
+```php
+use Cake\Datasource\ConnectionManager;
+
+class InvoicePipelineService
+{
+    public function saveAndAdvance(Invoice $invoice, array $data, string $roleName): array
+    {
+        $connection = ConnectionManager::get('default');
+
+        return $connection->transactional(function () use ($invoice, $data, $roleName) {
+            $invoicesTable = $this->getTable('Invoices');
+
+            $invoice = $invoicesTable->patchEntity($invoice, $data);
+            if (!$invoicesTable->save($invoice)) {
+                return ['success' => false, 'errors' => ['No se pudo guardar la factura.']];
+            }
+
+            // Record history (second table write — same transaction)
+            $this->historyService->recordChanges($invoice, $originalData, $userId);
+
+            // Advance status (third table write — same transaction)
+            $invoice->pipeline_status = $nextStatus;
+            $invoicesTable->save($invoice);
+
+            return ['success' => true, 'errors' => []];
+        });
+    }
+}
+```
+
+**Rules:**
+- Use `$connection->transactional()` — it auto-commits on success and auto-rollbacks on exception
+- Never use manual `begin()` / `commit()` / `rollback()` unless you have a specific reason (e.g., nested savepoints)
+- Wrap in a transaction when: saving to multiple tables, save + delete, or any operation where partial completion would leave inconsistent data
+- Do NOT wrap single-table saves in a transaction — CakePHP handles those internally
+- Get the connection via `ConnectionManager::get('default')` in services, or `$this->Table->getConnection()` when a table reference is already available
+
+### 4.13 Logging
+
+Use CakePHP's built-in `Log` class. Log at the appropriate level depending on the situation:
+
+```php
+use Cake\Log\Log;
+
+// Error — something failed that should not have (save error, external API failure)
+Log::error('Failed to send notification email for invoice #{id}', ['id' => $invoice->id]);
+
+// Warning — something unexpected but recoverable (missing optional data, deprecated usage)
+Log::warning('Invoice #{id} advanced without approver assigned', ['id' => $invoice->id]);
+
+// Info — significant business events worth tracking (state transitions, user actions)
+Log::info('Invoice #{id} advanced from {from} to {to} by user #{userId}', [
+    'id' => $invoice->id,
+    'from' => $fromStatus,
+    'to' => $toStatus,
+    'userId' => $userId,
+]);
+
+// Debug — detailed information for troubleshooting (query parameters, calculation steps)
+Log::debug('Filter params applied: {params}', ['params' => json_encode($filters)]);
+```
+
+**What to log:**
+- Failed save/delete operations in services (with entity ID and context)
+- External service calls (email sending, API calls) — both success and failure
+- Pipeline state transitions (who, what, when)
+- Authentication events (login, logout, failed attempts — handled by the auth plugin)
+
+**What NOT to log:**
+- Successful CRUD operations on simple entities (that's noise, not signal)
+- Request/response data that contains passwords or sensitive fields
+- Every query execution (use DebugKit for that during development)
+
+**Rules:**
+- Always include entity IDs and relevant context in log messages
+- Use structured placeholders (`{id}`, `{status}`) instead of string concatenation
+- Services log errors and warnings; controllers generally don't need to log (Flash messages serve that purpose for the user)
+
+### 4.14 Validation: Tables vs Services
+
+Validation happens at two levels. Each level has a distinct purpose — do not mix them:
+
+| Level | Where | What It Validates | Examples |
+|-------|-------|-------------------|----------|
+| **Field validation** | `Table::validationDefault()` | Data format, presence, type, length | Required fields, email format, max length, `inList()` |
+| **Business validation** | Service methods | Domain rules, state-dependent rules, cross-entity rules | "Cannot advance if rejected", "Payment date required for full payment" |
+
+```php
+// FIELD VALIDATION — in Table class
+// Answers: "Is this data well-formed?"
+public function validationDefault(Validator $validator): Validator
+{
+    $validator
+        ->notEmptyString('name', 'El nombre es requerido')
+        ->maxLength('name', 200)
+        ->email('email', false, 'Email inválido')
+        ->inList('pipeline_status', InvoiceConstants::PIPELINE_STATUSES)
+        ->decimal('amount', null, 'El monto debe ser numérico');
+
+    return $validator;
+}
+
+// BUSINESS VALIDATION — in Service class
+// Answers: "Is this operation allowed given the current state?"
+public function validateTransitionRequirements(Invoice $invoice, string $fromStatus): array
+{
+    $errors = [];
+
+    if ($this->isRejected($invoice)) {
+        $errors[] = 'La factura fue rechazada y no puede avanzar en el pipeline.';
+    }
+
+    if ($fromStatus === InvoiceConstants::STATUS_TESORERIA) {
+        if ($invoice->payment_status !== InvoiceConstants::PAYMENT_FULL) {
+            $errors[] = 'El estado de pago debe ser "Pago total" para marcar como pagada.';
+        }
+        if (empty($invoice->payment_date)) {
+            $errors[] = 'La fecha de pago es requerida para marcar como pagada.';
+        }
+    }
+
+    return $errors;
+}
+```
+
+**Rules:**
+- Table validation runs automatically on `patchEntity()` and `save()` — it's the first line of defense
+- Service validation is called explicitly by the controller before performing a business operation
+- Never put business rules in `validationDefault()` (e.g., "can only edit if status is X")
+- Never put format checks in services (e.g., "email must be valid") — that's the table's job
+- Use constants in `inList()` validators: `->inList('status', InvoiceConstants::STATUSES)`
+
+### 4.15 Naming Conventions
+
+CakePHP enforces most naming via convention-over-configuration. This table documents the full set used in SGI:
+
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Database table | `snake_case`, plural | `invoice_histories` |
+| Database column | `snake_case` | `operation_center_id` |
+| Foreign key column | `singular_table_id` | `provider_id`, `role_id` |
+| Entity class | `PascalCase`, singular | `InvoiceHistory` |
+| Table class | `PascalCase`, plural + `Table` | `InvoiceHistoriesTable` |
+| Controller class | `PascalCase`, plural + `Controller` | `InvoiceHistoriesController` |
+| Service class | `PascalCase` + `Service` | `InvoicePipelineService` |
+| Constants class | `PascalCase` + `Constants` | `InvoiceConstants` |
+| Constants | `UPPER_SNAKE_CASE` | `APPROVAL_REJECTED` |
+| Template folder | `PascalCase`, matches controller | `templates/InvoiceHistories/` |
+| Template file | `snake_case.php` | `index.php`, `add.php` |
+| Element file | `snake_case.php` | `pipeline_progress.php` |
+| Migration file | `YYYYMMDDHHMMSS_PascalCase.php` | `20260215120000_CreateWidgets.php` |
+| Route URL | `kebab-case` | `/invoices/advance-status/{id}` |
+| Controller action | `camelCase` | `advanceStatus()`, `exportExcel()` |
+| Private controller method | `_camelCase` (underscore prefix) | `_buildInvoiceQuery()` |
+| Entity virtual field | `_getCamelCase()` | `_getFullName()` |
+| Custom finder | `findCamelCase()` | `findCodeList()`, `findAuth()` |
+| CSS custom class | `.sgi-kebab-case` | `.sgi-stat-card`, `.sgi-btn-primary` |
+
+**Critical conventions:**
+- CakePHP auto-inflects names: `InvoiceHistories` controller → `invoice_histories` table → `InvoiceHistory` entity
+- Foreign keys **must** follow the pattern `singular_table_id` for CakePHP associations to work automatically
+- Template folders **must** match the controller name exactly (PascalCase) for automatic template resolution
 
 ---
 
-## 7. Frontend
+## 5. Permission System (RBAC)
 
-### 7.1 Layouts
+### 5.1 How It Works
 
-| Layout | Uso |
-|--------|-----|
-| `default.php` | Todas las paginas autenticadas (sidebar + topbar) |
-| `login.php` | Pagina de login (split-panel) |
-| `external.php` | Aprobacion externa via token |
-| `ajax.php` | Respuestas AJAX sin chrome |
-| `error.php` | Paginas de error (400, 500) |
+Every controller action is automatically checked against the `permissions` table. The flow:
 
-### 7.2 Assets
+```
+AppController::beforeFilter()
+    │
+    ▼
+_enforcePermission(user)
+    │
+    ▼
+$controllerModuleMap[ControllerName] → module name
+_actionToPermission(action) → permission action (view/add/edit/delete)
+    │
+    ▼
+AuthorizationService::isAllowed(roleId, roleName, module, permAction)
+    ├── Admin? → true (bypass all checks)
+    └── Other role? → query `permissions` table
+```
 
-**Orden de carga obligatorio en layout:**
-1. Bootstrap CSS
-2. Bootstrap Icons CSS
-3. Flatpickr CSS
-4. `styles.css` (custom, sobreescribe Bootstrap)
+The `isAllowed()` method maps actions to permission columns:
 
-**JavaScript (al final del body):**
-1. Bootstrap JS
-2. Flatpickr JS + locale es
-3. AutoNumeric JS
-4. Select2 JS
-5. `sgi-common.js` (inicializacion)
+```php
+return match ($action) {
+    'view', 'index' => (bool)$perm['can_view'],
+    'add' => (bool)$perm['can_create'],
+    'edit' => (bool)$perm['can_edit'],
+    'delete' => (bool)$perm['can_delete'],
+    default => false,
+};
+```
 
-### 7.3 Clases CSS Custom
+### 5.2 Roles
 
-| Clase | Uso |
-|-------|-----|
-| `.sgi-stat-card` | Tarjeta de contador en dashboard |
-| `.sgi-quick-tile` | Acceso rapido en dashboard |
-| `.sgi-btn-primary` | Boton principal verde |
-| `.sgi-input-group` | Grupo de input con borde verde al focus |
-| `.sgi-topbar` | Barra superior |
-| `.sgi-topbar-title` | Titulo con borde izquierdo verde |
-| `.sgi-sidebar-logout` | Boton logout en sidebar |
-| `.flatpickr-date` | Input de fecha (Flatpickr auto-init) |
-| `.currency-input` | Input de moneda COP (AutoNumeric auto-init) |
-| `.clickable-row` | Fila de tabla clickeable (requiere `data-href`) |
+Defined in `src/Constants/RoleConstants.php`:
 
-### 7.4 Sistema de Diseno
+| Constant | Value | Access |
+|----------|-------|--------|
+| `ADMIN` | Administrador | Full access (bypasses all checks) |
+| `REGISTRO_REVISION` | Registro/Revisión | Invoice `aprobacion` state |
+| `CONTABILIDAD` | Contabilidad | Invoice `contabilidad` state |
+| `TESORERIA` | Tesorería | Invoice `tesoreria` state |
 
-Documentado completamente en `STYLES.md`. Principios fundamentales:
-- **Bordes en lugar de sombras** (sin box-shadow excepto sidebar activo)
-- **Inter Variable** como fuente local
-- **Micro-caps** para etiquetas de seccion
-- **border-radius: 0** o maximo 2px
-- Colores via CSS custom properties en `:root`
+### 5.3 How to Add a New Module to Permissions
+
+See [Section 3.6](#36-register-permissions) — three places must be updated: `$controllerModuleMap`, `AuthorizationService::MODULES`, and the `permissions` table.
 
 ---
 
-## 8. Seguridad
+## 6. Invoice Pipeline (Core Business Module)
 
-### 8.1 Autenticacion
+### 6.1 The 4-State Workflow
 
-- Plugin `cakephp/authentication ^3.0`
-- Autenticadores: `Session` + `Form`
-- Identificador: `Password` con `bcrypt`
-- Finder custom: `UsersTable::findAuth()` filtra `active = true` con `contain(['Roles'])`
-- Redirect a `/login` si no autenticado
+```
+aprobacion → contabilidad → tesoreria → pagada
+```
 
-### 8.2 Autorizacion
+Each role can only see and edit invoices in their assigned states:
 
-- RBAC via `AuthorizationService` + tabla `permissions`
-- Verificacion automatica en `AppController::beforeFilter()`
-- Admin bypassa todos los permisos
+| Role | Visible States | Editable Fields |
+|------|---------------|-----------------|
+| Registro/Revisión | `aprobacion` | Document fields, approver, DIAN |
+| Contabilidad | `aprobacion`, `contabilidad` | Accounting fields (accrued, accrual_date) |
+| Tesorería | `tesoreria` | Payment fields (payment_status, payment_date) |
+| Admin | All | All |
 
-### 8.3 CSRF
+### 6.2 Key Components
 
-- `CsrfProtectionMiddleware` con `httponly: true`
-- Token en meta tag para peticiones AJAX
+- **`InvoicePipelineService`** — Central orchestrator. Manages transitions, field permissions, validation.
+  - `saveAndAdvance()` — Unified save + state transition in one transaction
+  - `getVisibleSections()` — Controls which form sections each role sees
+  - `validateTransitionRequirements()` — Checks if all required fields are filled before advancing
+  - `getVisibleStatuses()` — Returns which pipeline states a role can see
+  - `isRejected()` — Checks if invoice was rejected (blocks all advancement)
 
-### 8.4 Host Header Injection
+- **`InvoiceHistoryService`** — Records field-by-field changes in `invoice_histories` table
 
-- `HostHeaderMiddleware` valida header Host en produccion
+- **`ApprovalTokenService`** — SHA256 tokens for external stakeholder approval (bypasses login)
 
-### 8.5 Upload de Archivos
+- **`NotificationService`** — Sends emails on state changes
 
-- Archivos en `webroot/uploads/{entity}/{id}/`
-- Nombre de archivo con prefijo unico: `inv_` + `uniqid()` + extension
+### 6.3 Transition Rules
+
+Validated in `validateTransitionRequirements()`:
+- **Any state:** If `area_approval = 'Rechazada'`, the pipeline is blocked
+- **tesoreria → pagada:** Requires `payment_status = 'Pago total'` AND `payment_date` not empty
+
+### 6.4 Form Sections by Role
+
+`getVisibleSections()` returns which sections to show in the edit form:
+
+| Section | Registro/Revisión | Contabilidad | Tesorería |
+|---------|:-:|:-:|:-:|
+| general | ✓ | ✓ | ✓ |
+| dates | ✓ | ✓ | — |
+| classification | ✓ | ✓ | — |
+| revision | ✓ | — | — |
+| accounting | — | ✓ | — |
+| treasury | — | — | ✓ |
 
 ---
 
-## 9. Reglas para Nuevos Modulos
+## 7. Frontend and Design System
 
-Al crear un nuevo modulo, seguir este checklist:
+For complete visual rules, CSS variables, color palette, typography, and component specifications, see **`STYLES.md`**. This section covers only the practical essentials needed when writing templates.
 
-### Controller
-- [ ] Extender `AppController`
-- [ ] Agregar al `$controllerModuleMap` en AppController
-- [ ] Setear `public $paginate = ['limit' => 15, 'maxLimit' => 15]`
-- [ ] Instanciar servicios en `initialize()`
-- [ ] Extraer queries compartidas a metodo privado `_build*Query()`
-- [ ] No hacer queries complejas directamente
+### 7.1 Asset Load Order (Mandatory)
 
-### Model
-- [ ] Crear Entity con `$_accessible` correcto y helpers de dominio si aplica
-- [ ] Crear Table con asociaciones, validacion y behaviors
-- [ ] Usar constantes de `src/Constants/` en validadores `inList()`
-- [ ] Usar `findCodeList()` si necesita lista de "code - name"
-- [ ] Agregar `TimestampBehavior`
+**CSS** (in `<head>`, this exact order):
+1. Bootstrap CSS → 2. Bootstrap Icons CSS → 3. Flatpickr CSS → 4. `styles.css` (custom — overrides Bootstrap)
 
-### Service (si hay logica de negocio)
-- [ ] Crear en `src/Service/`
-- [ ] Inyectar dependencias via constructor con defaults opcionales
-- [ ] No acceder a request/response desde el servicio
-- [ ] No duplicar logica que ya existe en otro servicio
+**JavaScript** (end of `<body>`):
+1. Bootstrap JS → 2. Flatpickr JS + Spanish locale → 3. AutoNumeric JS → 4. Select2 JS → 5. `sgi-common.js` (auto-initializes plugins)
 
-### Constants (si hay valores de dominio)
-- [ ] Crear en `src/Constants/`
-- [ ] Clase `final` con constantes `public const`
-- [ ] Referenciar desde servicios, tablas y controllers
+### 7.2 Auto-Initialized Components
 
-### Templates
-- [ ] Seguir STYLES.md para componentes visuales
-- [ ] Usar element `pagination.php` para tablas paginadas
-- [ ] Usar clases `.flatpickr-date`, `.currency-input`, `.clickable-row`
-- [ ] Usar `AppView::formatDateEs()` para fechas
+These initialize automatically via `sgi-common.js` — just add the CSS class:
 
-### Permisos
-- [ ] Agregar modulo a `AuthorizationService::MODULES`
-- [ ] Agregar mapping en `AppController::$controllerModuleMap`
-- [ ] Configurar permisos por rol en la tabla `permissions`
+| Class | Effect |
+|-------|--------|
+| `.flatpickr-date` | Date picker |
+| `.currency-input` | COP currency formatting |
+| `.select2` | Searchable dropdown |
+| `.clickable-row` | Row click navigation (requires `data-href`) |
 
-### Migraciones
-- [ ] Usar `Migrations\BaseMigration` como clase base
-- [ ] Prefijo de fecha: `YYYYMMDDHHMMSS_`
-- [ ] FKs con tipos de columna identicos al campo referenciado
-- [ ] Usar `$this->hasTable()` como proteccion
+### 7.3 Layouts
 
-### Rutas (si necesita rutas custom)
-- [ ] Agregar en `config/routes.php` antes del `$builder->fallbacks()`
-- [ ] Patron: `/{controller-dashed}/{action-dashed}/{id}`
-- [ ] Constraint de parametros: `['id' => '\d+', 'pass' => ['id']]`
+| Layout | When to Use |
+|--------|------------|
+| `default.php` | All authenticated pages (sidebar + topbar) |
+| `login.php` | Login page (split-panel: dark left / white right) |
+| `external.php` | External approval via token (no sidebar) |
+| `ajax.php` | AJAX responses (no layout chrome) |
+
+For the full list of custom CSS classes (`.sgi-stat-card`, `.sgi-btn-primary`, `.sgi-input-group`, etc.) and design principles (borders over shadows, micro-caps, Inter Variable font), refer to `STYLES.md`.
 
 ---
 
-## 10. Dependencias Externas
+## 8. Security
 
-### Produccion
-| Paquete | Proposito |
-|---------|-----------|
-| `cakephp/cakephp` | Framework base |
-| `cakephp/authentication` | Login por sesion + formulario |
-| `cakephp/migrations` | Migraciones de BD |
-| `phpoffice/phpspreadsheet` | Export/import Excel |
-| `tecnickcom/tcpdf` | Generacion de PDF |
-| `setasign/fpdi` | Manipulacion de PDF existentes |
-| `mobiledetect/mobiledetectlib` | Deteccion de dispositivo |
+### 8.1 Authentication
 
-### Desarrollo
-| Paquete | Proposito |
-|---------|-----------|
-| `cakephp/bake` | Generacion de scaffolding |
-| `cakephp/debug_kit` | Debug toolbar |
-| `cakephp/cakephp-codesniffer` | Code style (estandar CakePHP) |
-| `phpunit/phpunit` | Testing |
-| `josegonzalez/dotenv` | Carga de .env |
+- Plugin: `cakephp/authentication ^3.0`
+- Authenticators: `Session` + `Form`
+- Identifier: `Password` with bcrypt hashing
+- Custom finder: `UsersTable::findAuth()` filters `active = true` with `contain(['Roles'])`
+- Unauthenticated requests redirect to `/login`
 
----
+**How it works:** `Application.php` implements `AuthenticationServiceProviderInterface` and registers the `AuthenticationMiddleware` in the middleware stack (before `BodyParserMiddleware`).
 
-## 11. Base de Datos
+### 8.2 Authorization
 
-### Tablas principales
+Automatic RBAC via `AuthorizationService` + `permissions` table. Enforced in `AppController::beforeFilter()` on every request. Admin role bypasses all permission checks. See [Section 5](#5-permission-system-rbac) for details.
 
-```
-roles                    -- Roles del sistema (4 roles)
-users                    -- Usuarios (FK -> roles)
-permissions              -- Permisos RBAC (role_id, module, can_*)
+### 8.3 CSRF Protection
 
-invoices                 -- Facturas con pipeline
-invoice_histories        -- Audit trail de facturas
-invoice_documents        -- Archivos adjuntos de facturas
-invoice_observations     -- Observaciones/comentarios
-approval_tokens          -- Tokens de aprobacion externa
+`CsrfProtectionMiddleware` with `httponly: true`. Token is available in a meta tag for AJAX requests.
 
-providers                -- Proveedores (NIT)
-operation_centers        -- Centros de operacion
-expense_types            -- Tipos de gasto
-cost_centers             -- Centros de costos
-approvers                -- Aprobadores por centro
+### 8.4 Host Header Validation
 
-employees                -- Empleados
-employee_folders         -- Carpetas de documentos
-employee_documents       -- Archivos de empleados
-employee_statuses        -- Estados de empleado
-employee_novedades       -- Novedades/cambios
-employee_leaves          -- Permisos/ausencias
+`HostHeaderMiddleware` validates the `Host` header in production to prevent Host Header Injection attacks.
 
-leave_types              -- Tipos de permiso
-leave_document_templates -- Plantillas de documentos
-leave_template_fields    -- Campos de plantillas
+### 8.5 File Uploads
 
-dian_crosschecks         -- Cruce DIAN
-
-marital_statuses         -- Estados civiles
-education_levels         -- Niveles educativos
-positions                -- Cargos
-default_folders          -- Carpetas por defecto
-organizaciones_temporales -- Organizaciones temporales
-system_settings          -- Configuracion del sistema
-```
-
-### Relaciones clave
-
-```
-users -----> roles (belongsTo)
-invoices --> providers, operation_centers, expense_types, cost_centers (belongsTo)
-invoices --> invoice_histories, invoice_documents, invoice_observations (hasMany)
-employees -> employee_statuses, positions, education_levels (belongsTo)
-employees -> employee_folders -> employee_documents (hasMany nested)
-employees -> employee_leaves, employee_novedades (hasMany)
-approvers -> users, operation_centers (belongsTo)
-```
+- Files stored in `webroot/uploads/{entity}/{id}/`
+- Filenames use a unique prefix: `inv_` + `uniqid()` + original extension
+- Upload logic is encapsulated in document services (`InvoiceDocumentService`, `EmployeeDocumentService`, etc.)
