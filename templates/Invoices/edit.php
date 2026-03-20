@@ -220,8 +220,8 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 </div>
             </div>
             <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">NIT</div>
-                <div class="sgi-ledger-value"><?= h($invoice->provider->nit ?? '—') ?></div>
+                <div class="sgi-ledger-label">Documento</div>
+                <div class="sgi-ledger-value"><?= h(($invoice->provider->document_type ?? '') . ' ' . ($invoice->provider->document_number ?? '—')) ?></div>
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Valor</div>

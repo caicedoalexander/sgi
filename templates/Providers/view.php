@@ -15,8 +15,10 @@ $this->assign('title', 'Proveedor: ' . $provider->name);
         <dl class="row mb-0">
             <dt class="col-sm-3">ID</dt>
             <dd class="col-sm-9"><?= $this->Number->format($provider->id) ?></dd>
-            <dt class="col-sm-3">NIT</dt>
-            <dd class="col-sm-9"><code><?= h($provider->nit) ?></code></dd>
+            <dt class="col-sm-3">Tipo Documento</dt>
+            <dd class="col-sm-9"><span class="badge bg-secondary"><?= h($provider->document_type) ?></span></dd>
+            <dt class="col-sm-3">Número Documento</dt>
+            <dd class="col-sm-9"><code><?= h($provider->document_number) ?></code></dd>
             <dt class="col-sm-3">Nombre</dt>
             <dd class="col-sm-9"><?= h($provider->name) ?></dd>
             <dt class="col-sm-3">Estado</dt>
