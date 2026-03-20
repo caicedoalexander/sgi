@@ -319,7 +319,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                             : ['class' => 'form-select', 'disabled' => true]
                     )) ?>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3" id="purchase-order-wrapper">
                     <label class="form-label">Orden de Compra</label>
                     <?= $this->Form->control('purchase_order', array_merge(
                         ['label' => false],
@@ -328,13 +328,56 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                             : ['class' => 'form-control', 'disabled' => true]
                     )) ?>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3" id="provider-wrapper">
                     <label class="form-label">Proveedor</label>
                     <?= $this->Form->control('provider_id', array_merge(
                         ['label' => false, 'options' => $providers, 'empty' => '-- Seleccione --'],
                         $canEdit('provider_id')
                             ? ['class' => 'form-select select2-enable']
                             : ['class' => 'form-select select2-enable', 'disabled' => true]
+                    )) ?>
+                </div>
+            </div>
+
+            <!-- Documento Equivalente -->
+            <div class="row g-3 mt-1">
+                <div class="col-md-3">
+                    <div class="form-check mt-2">
+                        <?= $this->Form->checkbox('is_equivalent_document', [
+                            'class' => 'form-check-input',
+                            'id' => 'is-equivalent-document',
+                            'disabled' => !$canEdit('document_type'),
+                        ]) ?>
+                        <label class="form-check-label" for="is-equivalent-document">
+                            Es Documento Equivalente
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3 <?= empty($invoice->is_equivalent_document) ? 'd-none' : '' ?>" id="holder-type-wrapper">
+                    <label class="form-label">Titular del Documento</label>
+                    <?= $this->Form->control('equivalent_holder_type', array_merge(
+                        ['label' => false, 'options' => ['provider' => 'Proveedor', 'employee' => 'Empleado', 'manual' => 'Cédula Manual'], 'empty' => '-- Seleccione --', 'id' => 'equivalent-holder-type'],
+                        $canEdit('document_type')
+                            ? ['class' => 'form-select']
+                            : ['class' => 'form-select', 'disabled' => true]
+                    )) ?>
+                </div>
+                <div class="col-md-3 <?= ($invoice->equivalent_holder_type ?? '') !== 'employee' ? 'd-none' : '' ?>" id="employee-wrapper">
+                    <label class="form-label">Empleado</label>
+                    <?= $this->Form->control('employee_id', array_merge(
+                        ['label' => false, 'options' => $employees ?? [], 'empty' => '-- Seleccione --'],
+                        $canEdit('document_type')
+                            ? ['class' => 'form-select select2-enable']
+                            : ['class' => 'form-select select2-enable', 'disabled' => true]
+                    )) ?>
+                </div>
+                <div class="col-md-3 <?= ($invoice->equivalent_holder_type ?? '') !== 'manual' ? 'd-none' : '' ?>" id="manual-doc-wrapper">
+                    <label class="form-label">Cédula</label>
+                    <?= $this->Form->control('manual_document_number', array_merge(
+                        ['label' => false, 'placeholder' => 'Número de cédula'],
+                        $canEdit('document_type')
+                            ? ['class' => 'form-control']
+                            : ['class' => 'form-control', 'disabled' => true]
                     )) ?>
                 </div>
             </div>
@@ -359,23 +402,31 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                     <input type="hidden" name="registration_date"
                            value="<?= h($invoice->registration_date?->format('Y-m-d') ?? '') ?>">
                 </div>
-                <?php foreach ([
-                    'issue_date' => 'Fecha de Emisión',
-                    'due_date'   => 'Fecha de Vencimiento',
-                ] as $field => $label): ?>
                 <div class="col-md-4">
-                    <label class="form-label"><?= $label ?></label>
-                    <?php if ($canEdit($field)): ?>
-                        <input type="text" name="<?= $field ?>" class="form-control flatpickr-date"
-                               value="<?= h($invoice->$field?->format('Y-m-d') ?? '') ?>">
+                    <label class="form-label">Fecha de Emisión</label>
+                    <?php if ($canEdit('issue_date')): ?>
+                        <input type="text" name="issue_date" class="form-control flatpickr-date"
+                               value="<?= h($invoice->issue_date?->format('Y-m-d') ?? '') ?>">
                     <?php else: ?>
                         <input type="text" class="form-control" disabled
-                               value="<?= h($invoice->$field?->format('d/m/Y') ?? '') ?>">
-                        <input type="hidden" name="<?= $field ?>"
-                               value="<?= h($invoice->$field?->format('Y-m-d') ?? '') ?>">
+                               value="<?= h($invoice->issue_date?->format('d/m/Y') ?? '') ?>">
+                        <input type="hidden" name="issue_date"
+                               value="<?= h($invoice->issue_date?->format('Y-m-d') ?? '') ?>">
                     <?php endif; ?>
                 </div>
-                <?php endforeach; ?>
+                <div class="col-md-4" id="due-date-wrapper">
+                    <label class="form-label">Fecha de Vencimiento</label>
+                    <?php if ($canEdit('due_date')): ?>
+                        <input type="text" name="due_date" class="form-control flatpickr-date"
+                               value="<?= h($invoice->due_date?->format('Y-m-d') ?? '') ?>"
+                               <?= !empty($invoice->is_equivalent_document) ? 'disabled' : '' ?>>
+                    <?php else: ?>
+                        <input type="text" class="form-control" disabled
+                               value="<?= h($invoice->due_date?->format('d/m/Y') ?? '') ?>">
+                        <input type="hidden" name="due_date"
+                               value="<?= h($invoice->due_date?->format('Y-m-d') ?? '') ?>">
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
         <?php endif; ?>
