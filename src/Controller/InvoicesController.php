@@ -469,7 +469,7 @@ class InvoicesController extends AppController
                 ->all(),
             'employees' => $this->fetchTable('Employees')
                 ->find()
-                ->where(['Employees.active' => true])
+                ->where(['Employees.employee_status_id' => \App\Constants\EmployeeStatusConstants::ACTIVO])
                 ->order(['Employees.first_name' => 'ASC'])
                 ->limit(500)
                 ->all()
