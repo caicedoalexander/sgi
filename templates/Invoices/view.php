@@ -98,6 +98,9 @@ $dianClass = match($invoice->dian_validation ?? '') {
                     <?php if (!empty($isApproved)): ?>
                         <span class="badge bg-success">Aprobada</span>
                     <?php endif; ?>
+                    <?php if (!empty($invoice->is_equivalent_document)): ?>
+                        <span class="badge bg-dark">Doc. Equivalente</span>
+                    <?php endif; ?>
                     <?php if ($invoice->pipeline_status === 'tesoreria' && $invoice->payment_status === 'Pago Parcial'): ?>
                         <span class="badge bg-warning text-dark">Pago Parcial</span>
                     <?php endif; ?>
@@ -155,8 +158,18 @@ $dianClass = match($invoice->dian_validation ?? '') {
         <div class="col-md-6">
             <div class="sgi-section-title">Clasificación</div>
             <div class="sgi-data-row">
-                <span class="sgi-data-label">Proveedor</span>
-                <span class="sgi-data-value"><?= $invoice->hasValue('provider') ? h($invoice->provider->name) : '—' ?></span>
+                <span class="sgi-data-label">Titular</span>
+                <span class="sgi-data-value">
+                    <?php if (!empty($invoice->is_equivalent_document) && ($invoice->equivalent_holder_type ?? '') === 'employee'): ?>
+                        <?= $invoice->hasValue('employee') ? h($invoice->employee->full_name) : '—' ?>
+                        <span class="text-muted small">(Empleado)</span>
+                    <?php elseif (!empty($invoice->is_equivalent_document) && ($invoice->equivalent_holder_type ?? '') === 'manual'): ?>
+                        <?= h($invoice->manual_document_number ?? '—') ?>
+                        <span class="text-muted small">(Cédula Manual)</span>
+                    <?php else: ?>
+                        <?= $invoice->hasValue('provider') ? h($invoice->provider->name) : '—' ?>
+                    <?php endif; ?>
+                </span>
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Tipo de Gasto</span>
