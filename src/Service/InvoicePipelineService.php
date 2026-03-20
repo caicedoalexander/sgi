@@ -27,28 +27,28 @@ class InvoicePipelineService
     }
 
     // Pipeline statuses in order
-    public const STATUSES = ['aprobacion', 'contabilidad', 'tesoreria', 'pagada'];
+    public const STATUSES = InvoiceConstants::PIPELINE_STATUSES;
 
     public const STATUS_LABELS = [
-        'aprobacion' => 'Aprobación',
-        'contabilidad' => 'Contabilidad',
-        'tesoreria' => 'Tesorería',
-        'pagada' => 'Pagada',
+        InvoiceConstants::STATUS_APROBACION    => 'Aprobación',
+        InvoiceConstants::STATUS_CONTABILIDAD  => 'Contabilidad',
+        InvoiceConstants::STATUS_TESORERIA     => 'Tesorería',
+        InvoiceConstants::STATUS_PAGADA        => 'Pagada',
     ];
 
     public const STATUS_ICONS = [
-        'aprobacion' => 'bi-check-circle',
-        'contabilidad' => 'bi-calculator',
-        'tesoreria' => 'bi-bank',
-        'pagada' => 'bi-cash-coin',
+        InvoiceConstants::STATUS_APROBACION    => 'bi-check-circle',
+        InvoiceConstants::STATUS_CONTABILIDAD  => 'bi-calculator',
+        InvoiceConstants::STATUS_TESORERIA     => 'bi-bank',
+        InvoiceConstants::STATUS_PAGADA        => 'bi-cash-coin',
     ];
 
     // Which statuses each role can see/work with
     private const ROLE_VISIBLE_STATUSES = [
-        RoleConstants::REGISTRO_REVISION => ['aprobacion'],
-        RoleConstants::CONTABILIDAD      => ['contabilidad'],
-        RoleConstants::TESORERIA         => ['tesoreria'],
-        RoleConstants::ADMIN             => ['aprobacion', 'contabilidad', 'tesoreria', 'pagada'],
+        RoleConstants::REGISTRO_REVISION => [InvoiceConstants::STATUS_APROBACION],
+        RoleConstants::CONTABILIDAD      => [InvoiceConstants::STATUS_CONTABILIDAD],
+        RoleConstants::TESORERIA         => [InvoiceConstants::STATUS_TESORERIA],
+        RoleConstants::ADMIN             => InvoiceConstants::PIPELINE_STATUSES,
     ];
 
     // All fields available for Admin in any status
@@ -64,7 +64,7 @@ class InvoicePipelineService
     // Fields editable by role in each status
     private const EDITABLE_FIELDS = [
         RoleConstants::REGISTRO_REVISION => [
-            'aprobacion' => [
+            InvoiceConstants::STATUS_APROBACION => [
                 'invoice_number', 'issue_date', 'due_date',
                 'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
                 'detail', 'amount', 'expense_type_id', 'cost_center_id',
@@ -73,12 +73,12 @@ class InvoicePipelineService
             ],
         ],
         RoleConstants::CONTABILIDAD => [
-            'contabilidad' => [
+            InvoiceConstants::STATUS_CONTABILIDAD => [
                 'accrued', 'ready_for_payment',
             ],
         ],
         RoleConstants::TESORERIA => [
-            'tesoreria' => [
+            InvoiceConstants::STATUS_TESORERIA => [
                 'payment_status', 'payment_date',
             ],
         ],
@@ -93,7 +93,7 @@ class InvoicePipelineService
 
     // Fields required before advancing from each status
     private const TRANSITION_REQUIREMENTS = [
-        'aprobacion' => [
+        InvoiceConstants::STATUS_APROBACION => [
             [
                 'field' => 'approver_id',
                 'not_empty' => true,
@@ -110,7 +110,7 @@ class InvoicePipelineService
                 'label' => 'Validación DIAN debe ser "Aprobada"',
             ],
         ],
-        'contabilidad' => [
+        InvoiceConstants::STATUS_CONTABILIDAD => [
             [
                 'field' => 'accrued',
                 'value' => true,
@@ -127,7 +127,7 @@ class InvoicePipelineService
                 'label' => 'Campo "Lista para Pago" es requerido',
             ],
         ],
-        'tesoreria' => [
+        InvoiceConstants::STATUS_TESORERIA => [
             [
                 'field' => 'payment_status',
                 'value' => InvoiceConstants::PAYMENT_FULL,
@@ -143,10 +143,10 @@ class InvoicePipelineService
 
     // Next status transitions
     public const TRANSITIONS = [
-        'aprobacion'    => 'contabilidad',
-        'contabilidad'  => 'tesoreria',
-        'tesoreria'     => 'pagada',
-        'pagada'        => null,
+        InvoiceConstants::STATUS_APROBACION    => InvoiceConstants::STATUS_CONTABILIDAD,
+        InvoiceConstants::STATUS_CONTABILIDAD  => InvoiceConstants::STATUS_TESORERIA,
+        InvoiceConstants::STATUS_TESORERIA     => InvoiceConstants::STATUS_PAGADA,
+        InvoiceConstants::STATUS_PAGADA        => null,
     ];
 
     public function getVisibleStatuses(string $roleName): array
@@ -365,7 +365,7 @@ class InvoicePipelineService
         if ($saved) {
             // Send approval link when approver_id is newly assigned in 'aprobacion' state
             if (
-                $currentStatus === 'aprobacion'
+                $currentStatus === InvoiceConstants::STATUS_APROBACION
                 && !empty($invoice->approver_id)
                 && $invoice->approver_id !== $originalApproverId
                 && $baseUrl
