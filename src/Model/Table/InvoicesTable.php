@@ -23,7 +23,7 @@ class InvoicesTable extends Table
 
         $this->belongsTo('Providers', [
             'foreignKey' => 'provider_id',
-            'joinType' => 'INNER',
+            'joinType' => 'LEFT',
         ]);
         $this->belongsTo('OperationCenters', [
             'foreignKey' => 'operation_center_id',
@@ -67,6 +67,10 @@ class InvoicesTable extends Table
             'foreignKey' => 'petty_cash_record_id',
             'joinType' => 'LEFT',
         ]);
+        $this->belongsTo('Employees', [
+            'foreignKey' => 'employee_id',
+            'joinType' => 'LEFT',
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator
@@ -87,8 +91,7 @@ class InvoicesTable extends Table
 
         $validator
             ->date('due_date')
-            ->requirePresence('due_date', 'create')
-            ->notEmptyDate('due_date');
+            ->allowEmptyDate('due_date');
 
         $validator
             ->scalar('document_type')
@@ -114,8 +117,25 @@ class InvoicesTable extends Table
 
         $validator
             ->integer('provider_id')
-            ->requirePresence('provider_id', 'create')
-            ->notEmptyString('provider_id');
+            ->allowEmptyString('provider_id');
+
+        $validator
+            ->boolean('is_equivalent_document')
+            ->allowEmptyString('is_equivalent_document');
+
+        $validator
+            ->scalar('equivalent_holder_type')
+            ->allowEmptyString('equivalent_holder_type')
+            ->inList('equivalent_holder_type', InvoiceConstants::HOLDER_TYPES);
+
+        $validator
+            ->integer('employee_id')
+            ->allowEmptyString('employee_id');
+
+        $validator
+            ->scalar('manual_document_number')
+            ->maxLength('manual_document_number', 30)
+            ->allowEmptyString('manual_document_number');
 
         $validator
             ->integer('operation_center_id')
@@ -190,7 +210,14 @@ class InvoicesTable extends Table
             'errorField' => 'invoice_number',
             'allowNullableNulls' => true,
         ]);
-        $rules->add($rules->existsIn('provider_id', 'Providers'), ['errorField' => 'provider_id']);
+        $rules->add($rules->existsIn('provider_id', 'Providers'), [
+            'errorField' => 'provider_id',
+            'allowNullableNulls' => true,
+        ]);
+        $rules->add($rules->existsIn('employee_id', 'Employees'), [
+            'errorField' => 'employee_id',
+            'allowNullableNulls' => true,
+        ]);
         $rules->add($rules->existsIn('operation_center_id', 'OperationCenters'), ['errorField' => 'operation_center_id']);
         $rules->add($rules->existsIn('expense_type_id', 'ExpenseTypes'), ['errorField' => 'expense_type_id']);
         $rules->add($rules->existsIn('cost_center_id', 'CostCenters'), [

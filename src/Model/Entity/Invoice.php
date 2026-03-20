@@ -16,6 +16,10 @@ class Invoice extends Entity
         'document_type' => true,
         'purchase_order' => true,
         'provider_id' => true,
+        'is_equivalent_document' => true,
+        'equivalent_holder_type' => true,
+        'employee_id' => true,
+        'manual_document_number' => true,
         'operation_center_id' => true,
         'detail' => true,
         'amount' => true,
@@ -34,6 +38,7 @@ class Invoice extends Entity
         'pipeline_status' => true,
         'registered_by' => true,
         'petty_cash_record_id' => true,
+        'legalization_record_id' => true,
     ];
 
     public function isInPettyCash(): bool
