@@ -92,6 +92,23 @@ class InvoicesController extends AppController
         $this->render('index');
     }
 
+    public function overdue(): void
+    {
+        $roleName = $this->_getRoleName();
+        $userId = (int)$this->_getCurrentUser()->id;
+
+        $this->paginate = ['limit' => 15, 'maxLimit' => 15];
+        $invoices = $this->paginate($this->_buildInvoiceQuery([
+            'Invoices.due_date <' => date('Y-m-d'),
+            'Invoices.pipeline_status !=' => 'pagada',
+        ], $userId));
+        $visibleStatuses = [];
+
+        $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
+        $this->set($this->_getFilterDropdowns());
+        $this->render('index');
+    }
+
     public function view($id = null)
     {
         $this->fetchTable('InvoiceReads')->markAsRead((int)$id, (int)$this->_getCurrentUser()->id);

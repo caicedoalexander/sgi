@@ -164,6 +164,12 @@ class AppController extends Controller
             $this->set('rejectedInvoicesCount', $invoicesTable->find()
                 ->where(['area_approval' => 'Rechazada'])
                 ->count());
+            $this->set('overdueInvoicesCount', $invoicesTable->find()
+                ->where([
+                    'due_date <' => date('Y-m-d'),
+                    'pipeline_status !=' => 'pagada',
+                ])
+                ->count());
 
             $pettyCashTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
             $this->set('pettyCashCount', $pettyCashTable->find()
@@ -183,6 +189,7 @@ class AppController extends Controller
             $this->set('sidebarCounters', []);
             $this->set('totalInvoicesCount', 0);
             $this->set('rejectedInvoicesCount', 0);
+            $this->set('overdueInvoicesCount', 0);
             $this->set('pettyCashCount', 0);
             $this->set('legalizationCount', 0);
             $this->set('noveltiesCount', 0);

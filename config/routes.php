@@ -62,6 +62,12 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'Invoices', 'action' => 'rejected']
         );
 
+        // Invoice overdue view
+        $builder->connect(
+            '/invoices/overdue',
+            ['controller' => 'Invoices', 'action' => 'overdue']
+        );
+
         // Invoice pipeline advance action
         $builder->connect(
             '/invoices/advance-status/{id}',

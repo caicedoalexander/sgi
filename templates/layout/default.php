@@ -133,6 +133,14 @@ $noveltiesCount = $noveltiesCount ?? 0;
                                     ['class' => $navLink('Invoices', 'rejected') . ' d-flex align-items-center', 'escape' => false]
                                 ) ?>
                             </li>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-clock-history me-2"></i>Facturas Vencidas' .
+                                    ($overdueInvoicesCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $overdueInvoicesCount . '</span>' : ''),
+                                    ['controller' => 'Invoices', 'action' => 'overdue'],
+                                    ['class' => $navLink('Invoices', 'overdue') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
                             <?php if ($canView('petty_cash')): ?>
                             <li class="nav-item">
                                 <?= $this->Html->link(
