@@ -6,6 +6,7 @@ namespace App\Service;
 use App\Model\Entity\Employee;
 use Cake\ORM\TableRegistry;
 use DateTime;
+use DateTimeInterface;
 use Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
@@ -420,7 +421,7 @@ class ExcelImportService
             return null;
         }
 
-        if ($value instanceof \DateTimeInterface) {
+        if ($value instanceof DateTimeInterface) {
             return $value->format('Y-m-d');
         }
 
