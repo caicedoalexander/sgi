@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Model\Entity\Employee;
 use Cake\ORM\TableRegistry;
 use DateTime;
 use Exception;
@@ -60,6 +61,8 @@ class ExcelImportService
         array $mapping,
         array $enabledHeaders,
         ?callable $onCreated = null,
+        ?EmployeeHistoryService $historyService = null,
+        ?int $userId = null,
     ): ImportResult {
         $result = new ImportResult();
         $definitions = $this->mappingService->getFieldDefinitions($module);
@@ -190,7 +193,34 @@ class ExcelImportService
                 ->first();
 
             if ($existing) {
-                $entity = $table->patchEntity($existing, $rowData);
+                // Filter to only fields with actual changes
+                $changedData = $this->filterChangedFields($existing, $rowData, $definitions);
+
+                if (empty($changedData)) {
+                    $result->unchanged++;
+                    continue;
+                }
+
+                // Clone original state before patching (for history)
+                $originalClone = clone $existing;
+
+                $entity = $table->patchEntity($existing, $changedData);
+
+                if ($table->save($entity)) {
+                    $result->updated++;
+                    // Record history if service provided
+                    if ($historyService && $userId && $entity instanceof Employee) {
+                        $historyService->recordChanges($originalClone, $entity, $userId);
+                    }
+                } else {
+                    $errors = $entity->getErrors();
+                    $errorMsg = "Fila {$rowNum}: ";
+                    foreach ($errors as $field => $fieldErrors) {
+                        $label = $definitions[$field]['label'] ?? $field;
+                        $errorMsg .= "{$label}: " . implode(', ', $fieldErrors) . '. ';
+                    }
+                    $result->errors[] = trim($errorMsg);
+                }
             } else {
                 // Validate required_new fields
                 $missingNew = [];
@@ -205,25 +235,21 @@ class ExcelImportService
                     continue;
                 }
                 $entity = $table->newEntity($rowData);
-            }
 
-            if ($table->save($entity)) {
-                if ($existing) {
-                    $result->updated++;
-                } else {
+                if ($table->save($entity)) {
                     $result->created++;
                     if ($onCreated) {
                         $onCreated($entity);
                     }
+                } else {
+                    $errors = $entity->getErrors();
+                    $errorMsg = "Fila {$rowNum}: ";
+                    foreach ($errors as $field => $fieldErrors) {
+                        $label = $definitions[$field]['label'] ?? $field;
+                        $errorMsg .= "{$label}: " . implode(', ', $fieldErrors) . '. ';
+                    }
+                    $result->errors[] = trim($errorMsg);
                 }
-            } else {
-                $errors = $entity->getErrors();
-                $errorMsg = "Fila {$rowNum}: ";
-                foreach ($errors as $field => $fieldErrors) {
-                    $label = $definitions[$field]['label'] ?? $field;
-                    $errorMsg .= "{$label}: " . implode(', ', $fieldErrors) . '. ';
-                }
-                $result->errors[] = trim($errorMsg);
             }
         }
 
