@@ -443,13 +443,9 @@ class ExcelImportService
         }
 
         if ($value instanceof DateTimeInterface) {
-            // CakePHP's i18n Date overrides format() to use ICU patterns.
-            // Use i18nFormat() for CakePHP dates, native format() for plain DateTime.
-            if (method_exists($value, 'i18nFormat')) {
-                return $value->i18nFormat('yyyy-MM-dd');
-            }
-
-            return $value->format('Y-m-d');
+            // CakePHP's Date overrides format() with ICU patterns.
+            // Use getTimestamp() + native date() to bypass the override.
+            return date('Y-m-d', $value->getTimestamp());
         }
 
         return match ($type) {
