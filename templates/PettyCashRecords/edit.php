@@ -7,6 +7,7 @@
  * @var array $groupFilters
  * @var bool $canDeleteDocuments
  */
+use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 $groupFilters = $groupFilters ?? [];
 
@@ -33,7 +34,7 @@ $readyForPaymentOptions = [
     'No Legalización'    => 'No Legalización',
     'Reintegro'          => 'Reintegro',
 ];
-$paymentStatusOptions = ['' => '-- Seleccione --', 'Pago total' => 'Pago total', 'Pago Parcial' => 'Pago Parcial'];
+$paymentStatusOptions = ['' => '-- Seleccione --', InvoiceConstants::PAYMENT_FULL => 'Pago total', InvoiceConstants::PAYMENT_PARTIAL => 'Pago Parcial'];
 
 // Determine which sections to show based on status
 $statusIndex = array_search($record->status, PettyCashConstants::STATUSES);

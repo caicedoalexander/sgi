@@ -8,18 +8,16 @@
  * @var bool $isApproved      (optional) true when area_approval = 'Aprobada' and still in aprobacion
  * @var string|null $paymentStatus  (optional) invoice payment_status value
  */
+
+use App\Constants\InvoiceConstants;
+use App\Service\InvoicePipelineService;
 $isRejected   = $isRejected ?? false;
 $isApproved   = $isApproved ?? false;
 $paymentStatus = $paymentStatus ?? null;
 
-$statusIcons = $statusIcons ?? [
-    'aprobacion'    => 'bi-check-circle',
-    'contabilidad'  => 'bi-calculator',
-    'tesoreria'     => 'bi-bank',
-    'pagada'        => 'bi-cash-coin',
-];
+$statusIcons = $statusIcons ?? InvoicePipelineService::STATUS_ICONS;
 $currentIndex = array_search($currentStatus, $pipelineStatuses);
-$isPartialPayment = ($currentStatus === 'tesoreria' && $paymentStatus === 'Pago Parcial');
+$isPartialPayment = ($currentStatus === InvoiceConstants::STATUS_TESORERIA && $paymentStatus === InvoiceConstants::PAYMENT_PARTIAL);
 ?>
 <?php
 $totalSteps = count($pipelineStatuses);
@@ -87,7 +85,7 @@ $progressColor = $isRejected ? '#dc3545' : 'var(--primary-color)';
                     <span class="badge bg-danger mt-1" style="font-size:.6rem;">Rechazada</span>
                 <?php elseif ($isCurrent && $isApproved): ?>
                     <span class="badge bg-success mt-1" style="font-size:.6rem;">Aprobada</span>
-                <?php elseif ($status === 'tesoreria' && $isPartialPayment): ?>
+                <?php elseif ($status === InvoiceConstants::STATUS_TESORERIA && $isPartialPayment): ?>
                     <span class="badge bg-warning text-dark mt-1" style="font-size:.6rem;">Pago Parcial</span>
                 <?php endif; ?>
             </div>

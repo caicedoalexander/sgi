@@ -3,15 +3,16 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\LegalizationRecord $record
  */
+use App\Constants\InvoiceConstants;
 use App\Constants\LegalizationConstants;
 
 $this->assign('title', 'Legalización ' . ($record->code ?? '#' . $record->id));
 
 $statusBadge = [
-    'agrupacion' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'tesoreria' => 'bg-warning text-dark',
-    'pagado' => 'bg-success',
+    LegalizationConstants::STATUS_AGRUPACION => 'bg-info text-dark',
+    LegalizationConstants::STATUS_CONTABILIDAD => 'bg-primary',
+    LegalizationConstants::STATUS_TESORERIA => 'bg-warning text-dark',
+    LegalizationConstants::STATUS_PAGADO => 'bg-success',
 ];
 $statusLabels = LegalizationConstants::STATUS_LABELS;
 
@@ -149,10 +150,10 @@ $docIconColor = fn(?string $mime): string => match(true) {
                     <td>
                         <?php
                         $pBadge = match($inv->pipeline_status) {
-                            'aprobacion' => 'bg-info text-dark',
-                            'contabilidad' => 'bg-primary',
-                            'tesoreria' => 'bg-warning text-dark',
-                            'pagada' => 'bg-success',
+                            InvoiceConstants::STATUS_APROBACION => 'bg-info text-dark',
+                            InvoiceConstants::STATUS_CONTABILIDAD => 'bg-primary',
+                            InvoiceConstants::STATUS_TESORERIA => 'bg-warning text-dark',
+                            InvoiceConstants::STATUS_PAGADA => 'bg-success',
                             default => 'bg-dark',
                         };
                         ?>

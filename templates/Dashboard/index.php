@@ -17,6 +17,8 @@
  * @var string $dateFrom
  * @var string $dateTo
  */
+use App\Constants\InvoiceConstants;
+
 $this->assign('title', 'Inicio');
 $userPermissions = $userPermissions ?? [];
 $canView = fn(string $module): bool => !empty($userPermissions[$module]['can_view']);
@@ -42,10 +44,10 @@ $hoy   = new DateTime();
 $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(int)$hoy->format('n') - 1] . ' de ' . $hoy->format('Y');
 
 $statusBadge = [
-    'aprobacion'   => ['label' => 'Aprobación',  'class' => 'bg-warning text-dark'],
-    'contabilidad' => ['label' => 'Contabilidad', 'class' => 'bg-info text-dark'],
-    'tesoreria'    => ['label' => 'Tesorería',    'class' => 'bg-primary'],
-    'pagada'       => ['label' => 'Pagada',       'class' => 'bg-success'],
+    InvoiceConstants::STATUS_APROBACION   => ['label' => 'Aprobación',  'class' => 'bg-warning text-dark'],
+    InvoiceConstants::STATUS_CONTABILIDAD => ['label' => 'Contabilidad', 'class' => 'bg-info text-dark'],
+    InvoiceConstants::STATUS_TESORERIA    => ['label' => 'Tesorería',    'class' => 'bg-primary'],
+    InvoiceConstants::STATUS_PAGADA       => ['label' => 'Pagada',       'class' => 'bg-success'],
 ];
 ?>
 
@@ -199,7 +201,7 @@ $statusBadge = [
                             <?= h($invoice->provider->name ?? '—') ?>
                         </td>
                         <td class="px-3 py-2" style="border-color:var(--border-color);">
-                            <?php if (($invoice->area_approval ?? '') === 'Rechazada'): ?>
+                            <?php if (($invoice->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED): ?>
                                 <span class="badge bg-danger">Rechazada</span>
                             <?php else: ?>
                                 <?php $s = $statusBadge[$invoice->pipeline_status] ?? ['label' => $invoice->pipeline_status, 'class' => 'bg-secondary']; ?>

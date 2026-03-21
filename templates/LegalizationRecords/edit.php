@@ -7,16 +7,17 @@
  * @var array $groupFilters
  * @var bool $canDeleteDocuments
  */
+use App\Constants\InvoiceConstants;
 use App\Constants\LegalizationConstants;
 $groupFilters = $groupFilters ?? [];
 
 $this->assign('title', 'Editar Legalización ' . ($record->code ?? '#' . $record->id));
 
 $statusBadge = [
-    'agrupacion' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'tesoreria' => 'bg-warning text-dark',
-    'pagado' => 'bg-success',
+    LegalizationConstants::STATUS_AGRUPACION => 'bg-info text-dark',
+    LegalizationConstants::STATUS_CONTABILIDAD => 'bg-primary',
+    LegalizationConstants::STATUS_TESORERIA => 'bg-warning text-dark',
+    LegalizationConstants::STATUS_PAGADO => 'bg-success',
 ];
 $statusLabels = LegalizationConstants::STATUS_LABELS;
 
@@ -33,7 +34,7 @@ $readyForPaymentOptions = [
     'No Legalización'    => 'No Legalización',
     'Reintegro'          => 'Reintegro',
 ];
-$paymentStatusOptions = ['' => '-- Seleccione --', 'Pago total' => 'Pago total', 'Pago Parcial' => 'Pago Parcial'];
+$paymentStatusOptions = ['' => '-- Seleccione --', InvoiceConstants::PAYMENT_FULL => 'Pago total', InvoiceConstants::PAYMENT_PARTIAL => 'Pago Parcial'];
 
 // Determine which sections to show based on status
 $statusIndex = array_search($record->status, LegalizationConstants::STATUSES);

@@ -3,15 +3,18 @@
  * @var \App\View\AppView $this
  * @var iterable $records
  */
+
+use App\Constants\LegalizationConstants;
+
 $this->assign('title', 'Legalizaciones');
 
 $statusBadge = [
-    'agrupacion' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'tesoreria' => 'bg-warning text-dark',
-    'pagado' => 'bg-success',
+    LegalizationConstants::STATUS_AGRUPACION => 'bg-info text-dark',
+    LegalizationConstants::STATUS_CONTABILIDAD => 'bg-primary',
+    LegalizationConstants::STATUS_TESORERIA => 'bg-warning text-dark',
+    LegalizationConstants::STATUS_PAGADO => 'bg-success',
 ];
-$statusLabels = \App\Constants\LegalizationConstants::STATUS_LABELS;
+$statusLabels = LegalizationConstants::STATUS_LABELS;
 
 $params = $this->request->getQueryParams();
 ?>
