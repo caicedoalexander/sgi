@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
 use App\Service\ExcelService;
 use App\Service\InvoiceDocumentService;
@@ -488,7 +489,7 @@ class InvoicesController extends AppController
                 ->all(),
             'employees' => $this->fetchTable('Employees')
                 ->find()
-                ->where(['Employees.employee_status_id' => \App\Constants\EmployeeStatusConstants::ACTIVO])
+                ->where(['Employees.employee_status_id' => EmployeeStatusConstants::ACTIVO])
                 ->order(['Employees.first_name' => 'ASC'])
                 ->limit(500)
                 ->all()
