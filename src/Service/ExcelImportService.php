@@ -194,27 +194,6 @@ class ExcelImportService
                 ->first();
 
             if ($existing) {
-                // DEBUG: Log comparison for first existing record
-                if ($result->updated === 0 && $result->unchanged === 0) {
-                    $debugLog = "=== DEBUG IMPORT COMPARISON (Row {$rowNum}) ===\n";
-                    foreach ($rowData as $f => $nv) {
-                        $t = $definitions[$f]['type'] ?? 'string';
-                        if (!empty($definitions[$f]['fk'])) {
-                            $t = 'integer';
-                        }
-                        $ov = $existing->get($f);
-                        $on = $this->normalizeForComparison($ov, $t);
-                        $nn = $this->normalizeForComparison($nv, $t);
-                        $match = $on === $nn ? 'EQUAL' : 'DIFF';
-                        $debugLog .= "{$f} [{$t}]: old=" . var_export($ov, true)
-                            . " → norm=" . var_export($on, true)
-                            . " | new=" . var_export($nv, true)
-                            . " → norm=" . var_export($nn, true)
-                            . " [{$match}]\n";
-                    }
-                    file_put_contents(TMP . 'import_debug.log', $debugLog);
-                }
-
                 // Filter to only fields with actual changes
                 $changedData = $this->filterChangedFields($existing, $rowData, $definitions);
 
@@ -443,6 +422,12 @@ class ExcelImportService
         }
 
         if ($value instanceof DateTimeInterface) {
+            // CakePHP's i18n Date overrides format() to use ICU patterns.
+            // Use i18nFormat() for CakePHP dates, native format() for plain DateTime.
+            if (method_exists($value, 'i18nFormat')) {
+                return $value->i18nFormat('yyyy-MM-dd');
+            }
+
             return $value->format('Y-m-d');
         }
 
