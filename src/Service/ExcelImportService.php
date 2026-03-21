@@ -442,10 +442,13 @@ class ExcelImportService
             return null;
         }
 
+        // CakePHP Chronos 3.x Date doesn't implement DateTimeInterface.
+        // Extract the native DateTimeImmutable to use PHP's format().
+        if (is_object($value) && method_exists($value, 'toNative')) {
+            return $value->toNative()->format('Y-m-d');
+        }
         if ($value instanceof DateTimeInterface) {
-            // CakePHP's Date overrides format() with ICU patterns.
-            // Use getTimestamp() + native date() to bypass the override.
-            return date('Y-m-d', $value->getTimestamp());
+            return $value->format('Y-m-d');
         }
 
         return match ($type) {
