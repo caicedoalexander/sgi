@@ -384,20 +384,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     <i class="bi bi-check-circle-fill text-success" style="font-size:1.5rem"></i>
                     <strong>Importación completada</strong>
                 </div>
-                <div class="row g-3 mb-3">
-                    <div class="col-3 text-center">
+                <div class="d-flex justify-content-center gap-3 mb-3 flex-wrap">
+                    <div class="text-center" style="min-width:80px">
                         <div style="font-size:1.5rem;font-weight:600;color:var(--primary-color)">${data.created}</div>
                         <div style="font-size:.75rem;color:#666">Creados</div>
                     </div>
-                    <div class="col-3 text-center">
+                    <div class="text-center" style="min-width:80px">
                         <div style="font-size:1.5rem;font-weight:600;color:#0d6efd">${data.updated}</div>
                         <div style="font-size:.75rem;color:#666">Actualizados</div>
                     </div>
-                    <div class="col-3 text-center">
+                    <div class="text-center" style="min-width:80px">
+                        <div style="font-size:1.5rem;font-weight:600;color:#6c757d">${data.unchanged || 0}</div>
+                        <div style="font-size:.75rem;color:#666">Sin cambios</div>
+                    </div>
+                    <div class="text-center" style="min-width:80px">
                         <div style="font-size:1.5rem;font-weight:600;color:#6c757d">${data.skipped}</div>
                         <div style="font-size:.75rem;color:#666">Omitidos</div>
                     </div>
-                    <div class="col-3 text-center">
+                    <div class="text-center" style="min-width:80px">
                         <div style="font-size:1.5rem;font-weight:600;color:#dc3545">${data.errors ? data.errors.length : 0}</div>
                         <div style="font-size:.75rem;color:#666">Errores</div>
                     </div>
