@@ -380,4 +380,59 @@ class ExcelImportService
 
         return $lookups;
     }
+
+    /**
+     * Normalize a value for comparison between existing DB value and imported value.
+     *
+     * @param mixed $value The value to normalize
+     * @param string $type The field type from definitions
+     * @return string|null Normalized string representation for comparison
+     */
+    private function normalizeForComparison(mixed $value, string $type): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        return match ($type) {
+            'date' => trim((string)$value),
+            'decimal' => rtrim(rtrim(number_format((float)$value, 10, '.', ''), '0'), '.'),
+            'integer' => (string)(int)$value,
+            'boolean' => (string)(int)(bool)$value,
+            default => trim((string)$value),
+        };
+    }
+
+    /**
+     * Filter rowData to only fields that actually differ from existing entity.
+     *
+     * @param object $existing The existing entity from DB
+     * @param array<string, mixed> $rowData Imported row data
+     * @param array<string, array> $definitions Field definitions with types
+     * @return array<string, mixed> Only the fields that have real changes
+     */
+    private function filterChangedFields(object $existing, array $rowData, array $definitions): array
+    {
+        $changed = [];
+        foreach ($rowData as $field => $newValue) {
+            $type = $definitions[$field]['type'] ?? 'string';
+            // FK fields store integer IDs regardless of their declared type
+            if (!empty($definitions[$field]['fk'])) {
+                $type = 'integer';
+            }
+
+            $oldNormalized = $this->normalizeForComparison($existing->get($field), $type);
+            $newNormalized = $this->normalizeForComparison($newValue, $type);
+
+            if ($oldNormalized !== $newNormalized) {
+                $changed[$field] = $newValue;
+            }
+        }
+
+        return $changed;
+    }
 }
