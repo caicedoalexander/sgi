@@ -469,6 +469,8 @@ class EmployeesController extends AppController
 
         try {
             $importService = new ExcelImportService();
+            $historyService = new EmployeeHistoryService();
+            $userId = (int)$this->request->getAttribute('identity')->getIdentifier();
             $result = $importService->processImport(
                 $tempPath,
                 'Employees',
@@ -476,18 +478,21 @@ class EmployeesController extends AppController
                 $mapping,
                 $enabledHeaders,
                 fn($entity) => $this->documentService->createDefaultFolders((int)$entity->id),
+                $historyService,
+                $userId,
             );
 
             $this->set([
                 'success' => empty($result->errors) || $result->created > 0 || $result->updated > 0,
                 'created' => $result->created,
                 'updated' => $result->updated,
+                'unchanged' => $result->unchanged,
                 'skipped' => $result->skipped,
                 'errors' => $result->errors,
                 'summary' => $result->getSummary(),
             ]);
             $this->viewBuilder()->setOption('serialize', [
-                'success', 'created', 'updated', 'skipped', 'errors', 'summary',
+                'success', 'created', 'updated', 'unchanged', 'skipped', 'errors', 'summary',
             ]);
         } finally {
             if (file_exists($tempPath)) {
