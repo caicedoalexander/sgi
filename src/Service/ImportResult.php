@@ -7,6 +7,7 @@ class ImportResult
 {
     public int $created = 0;
     public int $updated = 0;
+    public int $unchanged = 0;
     public int $skipped = 0;
     public array $errors = [];
 
@@ -18,6 +19,9 @@ class ImportResult
         }
         if ($this->updated > 0) {
             $parts[] = "{$this->updated} actualizados";
+        }
+        if ($this->unchanged > 0) {
+            $parts[] = "{$this->unchanged} sin cambios";
         }
         if ($this->skipped > 0) {
             $parts[] = "{$this->skipped} omitidos";
