@@ -8,24 +8,28 @@
  * @var string[] $pipelineLabels
  * @var string[] $fieldLabels
  */
+
+use App\Constants\InvoiceConstants;
+use App\Service\InvoicePipelineService;
+
 $this->assign('title', 'Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
 $pipelineBadgeMap = [
-    'aprobacion'    => ['Aprobación',    'bg-info text-dark'],
-    'contabilidad'  => ['Contabilidad',  'bg-primary'],
-    'tesoreria'     => ['Tesorería',     'bg-warning text-dark'],
-    'pagada'        => ['Pagada',        'bg-success'],
+    InvoiceConstants::STATUS_APROBACION    => ['Aprobación',    'bg-info text-dark'],
+    InvoiceConstants::STATUS_CONTABILIDAD  => ['Contabilidad',  'bg-primary'],
+    InvoiceConstants::STATUS_TESORERIA     => ['Tesorería',     'bg-warning text-dark'],
+    InvoiceConstants::STATUS_PAGADA        => ['Pagada',        'bg-success'],
 ];
 $ps = $pipelineBadgeMap[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
 
 $approvalClass = match($invoice->area_approval ?? '') {
-    'Aprobada'  => 'bg-success',
-    'Rechazada' => 'bg-danger',
+    InvoiceConstants::APPROVAL_APPROVED  => 'bg-success',
+    InvoiceConstants::APPROVAL_REJECTED => 'bg-danger',
     default     => 'bg-secondary',
 };
 $dianClass = match($invoice->dian_validation ?? '') {
-    'Aprobada'  => 'bg-success',
-    'Rechazado' => 'bg-danger',
+    InvoiceConstants::DIAN_APPROVED  => 'bg-success',
+    InvoiceConstants::DIAN_REJECTED => 'bg-danger',
     default     => 'bg-secondary',
 };
 ?>
@@ -101,7 +105,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
                     <?php if (!empty($invoice->is_equivalent_document)): ?>
                         <span class="badge bg-dark">Doc. Equivalente</span>
                     <?php endif; ?>
-                    <?php if ($invoice->pipeline_status === 'tesoreria' && $invoice->payment_status === 'Pago Parcial'): ?>
+                    <?php if ($invoice->pipeline_status === InvoiceConstants::STATUS_TESORERIA && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL): ?>
                         <span class="badge bg-warning text-dark">Pago Parcial</span>
                     <?php endif; ?>
                 </div>
@@ -283,9 +287,9 @@ $dianClass = match($invoice->dian_validation ?? '') {
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Estado Pago</span>
                 <span class="sgi-data-value">
-                    <?php if ($invoice->payment_status === 'Pago Parcial'): ?>
+                    <?php if ($invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL): ?>
                         <span class="badge bg-warning text-dark"><?= h($invoice->payment_status) ?></span>
-                    <?php elseif ($invoice->payment_status === 'Pago total'): ?>
+                    <?php elseif ($invoice->payment_status === InvoiceConstants::PAYMENT_FULL): ?>
                         <span class="badge bg-success"><?= h($invoice->payment_status) ?></span>
                     <?php else: ?>
                         —
@@ -326,12 +330,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
 <!-- Soportes Documentales (solo lectura) -->
 <?php
 $documentsByStatus = $documentsByStatus ?? [];
-$statusLabels = [
-    'aprobacion' => 'Aprobación',
-    'contabilidad' => 'Contabilidad',
-    'tesoreria' => 'Tesorería',
-    'pagada' => 'Pagada',
-];
+$statusLabels = InvoicePipelineService::STATUS_LABELS;
 $docIcon = fn(?string $mime): string => match(true) {
     str_contains($mime ?? '', 'pdf') => 'bi-file-earmark-pdf',
     str_contains($mime ?? '', 'image') => 'bi-file-earmark-image',
@@ -387,7 +386,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                             <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
                                 <div>
                                     <?php
-                                    $badgeColors = ['aprobacion' => 'bg-info text-dark', 'contabilidad' => 'bg-primary', 'tesoreria' => 'bg-warning text-dark', 'pagada' => 'bg-success'];
+                                    $badgeColors = [InvoiceConstants::STATUS_APROBACION => 'bg-info text-dark', InvoiceConstants::STATUS_CONTABILIDAD => 'bg-primary', InvoiceConstants::STATUS_TESORERIA => 'bg-warning text-dark', InvoiceConstants::STATUS_PAGADA => 'bg-success'];
                                     ?>
                                     <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
                                         <?= $statusLabels[$status] ?? $status ?>

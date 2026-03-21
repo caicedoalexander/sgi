@@ -8,6 +8,9 @@
  * @var \Cake\ORM\ResultSet $operationCenters
  * @var \Cake\ORM\ResultSet $expenseTypes
  */
+
+use App\Constants\InvoiceConstants;
+use App\Service\InvoicePipelineService;
 $isAllView      = $this->request->getParam('action') === 'all';
 $isRejectedView = $this->request->getParam('action') === 'rejected';
 $pageTitle = $isRejectedView ? 'Facturas Rechazadas'
@@ -16,20 +19,15 @@ $pageTitle = $isRejectedView ? 'Facturas Rechazadas'
 $this->assign('title', $pageTitle);
 
 $pipelineBadges = [
-    'aprobacion'    => ['Aprobación',    'bg-info text-dark'],
-    'contabilidad'  => ['Contabilidad',  'bg-primary'],
-    'tesoreria'     => ['Tesorería',     'bg-warning text-dark'],
-    'pagada'        => ['Pagada',        'bg-success'],
+    InvoiceConstants::STATUS_APROBACION    => ['Aprobación',    'bg-info text-dark'],
+    InvoiceConstants::STATUS_CONTABILIDAD  => ['Contabilidad',  'bg-primary'],
+    InvoiceConstants::STATUS_TESORERIA     => ['Tesorería',     'bg-warning text-dark'],
+    InvoiceConstants::STATUS_PAGADA        => ['Pagada',        'bg-success'],
 ];
 
 $query = $this->request->getQueryParams();
 $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
-$pipelineOptions = [
-    'aprobacion' => 'Aprobación',
-    'contabilidad' => 'Contabilidad',
-    'tesoreria' => 'Tesorería',
-    'pagada' => 'Pagada',
-];
+$pipelineOptions = InvoicePipelineService::STATUS_LABELS;
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
@@ -164,10 +162,10 @@ $pipelineOptions = [
             <tbody>
                 <?php foreach ($invoices as $invoice):
                     $ps             = $pipelineBadges[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
-                    $isRejected     = ($invoice->area_approval === 'Rechazada');
-                    $isApproved     = ($invoice->pipeline_status === 'aprobacion' && $invoice->area_approval === 'Aprobada');
-                    $isPartialPay   = ($invoice->pipeline_status === 'tesoreria' && $invoice->payment_status === 'Pago Parcial');
-                    $isPaid         = ($invoice->pipeline_status === 'pagada');
+                    $isRejected     = ($invoice->area_approval === InvoiceConstants::APPROVAL_REJECTED);
+                    $isApproved     = ($invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED);
+                    $isPartialPay   = ($invoice->pipeline_status === InvoiceConstants::STATUS_TESORERIA && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL);
+                    $isPaid         = ($invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA);
                     $readyForPay    = (!empty($invoice->ready_for_payment) && $invoice->ready_for_payment !== 'No');
                 ?>
                 <tr class="clickable-row<?= $isRejected ? ' table-danger' : '' ?>"

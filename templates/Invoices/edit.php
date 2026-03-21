@@ -13,20 +13,14 @@
  * @var string[] $advanceErrors
  * @var string|null $nextStatus
  */
+
+use App\Constants\InvoiceConstants;
+
 $this->assign('title', 'Editar Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
-$documentTypes = [
-    'Factura'             => 'Factura',
-    'Nota Debito'         => 'Nota Débito',
-    'Caja menor'          => 'Caja menor',
-    'Tarjeta de Crédito'  => 'Tarjeta de Crédito',
-    'Reintegro'           => 'Reintegro',
-    'Legalización'        => 'Legalización',
-    'Recibo'              => 'Recibo',
-    'Anticipo'            => 'Anticipo',
-];
-$approvalOptions       = ['Pendiente' => 'Pendiente', 'Aprobada' => 'Aprobada', 'Rechazada' => 'Rechazada'];
-$dianOptions           = ['Pendiente' => 'Pendiente', 'Aprobada' => 'Aprobada', 'Rechazado' => 'Rechazado'];
+$documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstants::DOCUMENT_TYPES);
+$approvalOptions       = array_combine(InvoiceConstants::APPROVAL_STATUSES, InvoiceConstants::APPROVAL_STATUSES);
+$dianOptions           = array_combine(InvoiceConstants::DIAN_STATUSES, InvoiceConstants::DIAN_STATUSES);
 $readyForPaymentOptions = [
     ''                   => '-- Seleccione --',
     'Si'                 => 'Sí',
@@ -38,7 +32,7 @@ $readyForPaymentOptions = [
     'No Legalización'    => 'No Legalización',
     'Reintegro'          => 'Reintegro',
 ];
-$paymentStatusOptions = ['' => '-- Seleccione --', 'Pago total' => 'Pago total', 'Pago Parcial' => 'Pago Parcial'];
+$paymentStatusOptions = ['' => '-- Seleccione --', InvoiceConstants::PAYMENT_FULL => 'Pago total', InvoiceConstants::PAYMENT_PARTIAL => 'Pago Parcial'];
 
 $canEdit = fn(string $field): bool => in_array($field, $editableFields, true);
 
