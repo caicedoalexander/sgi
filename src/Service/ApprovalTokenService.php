@@ -176,11 +176,13 @@ class ApprovalTokenService
         $novelty = $table->get($noveltyId);
 
         if ($action === 'approve') {
-            $novelty->status = NoveltyConstants::STATUS_APPROVED;
+            $novelty->pipeline_status = NoveltyConstants::STATUS_RRHH;
+            $novelty->area_approval = NoveltyConstants::APPROVAL_APPROVED;
+            $novelty->approved_by = $novelty->approver_id;
             $novelty->approved_at = new DateTime();
         } elseif ($action === 'reject') {
-            $novelty->status = NoveltyConstants::STATUS_REJECTED;
-            $novelty->approved_at = new DateTime();
+            $novelty->area_approval = NoveltyConstants::APPROVAL_REJECTED;
+            // Stay in aprobacion status — RRHH can edit and resend
         }
 
         return (bool)$table->save($novelty);
@@ -205,7 +207,7 @@ class ApprovalTokenService
             if ($entityType === 'invoices') {
                 $contain = ['Providers', 'InvoiceDocuments'];
             } elseif ($entityType === 'employee_novelties') {
-                $contain = ['Employees', 'NoveltyTypes'];
+                $contain = ['Employees', 'NoveltyTypes', 'Approvers'];
             }
 
             return $table->get($entityId, contain: $contain);
