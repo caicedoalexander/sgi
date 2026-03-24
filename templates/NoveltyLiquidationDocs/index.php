@@ -9,8 +9,10 @@ use App\Constants\NoveltyConstants;
 $this->assign('title', 'Documentos de Liquidación');
 
 $statusBadges = [
+    'aprobacion' => 'bg-warning text-dark',
+    'rrhh' => 'bg-secondary',
     'contabilidad' => 'bg-primary',
-    'firmas_aprobacion' => 'bg-warning text-dark',
+    'revision_firmas' => 'bg-warning text-dark',
     'gdp' => 'bg-dark',
     'tesoreria' => 'bg-info',
     'pagada' => 'bg-success',
