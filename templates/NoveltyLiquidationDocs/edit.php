@@ -6,7 +6,6 @@
  * @var array $effectiveStatuses
  * @var array $documentsByStatus
  * @var \App\Model\Entity\User $currentUser
- * @var array $existingWorkerSignatures
  */
 use App\Constants\NoveltyConstants;
 
@@ -25,7 +24,8 @@ $currentStatus = $doc->pipeline_status;
 $statusBadgeMap = [
     'rrhh'             => 'bg-secondary',
     'contabilidad'     => 'bg-primary',
-    'firmas_aprobacion'=> 'bg-warning text-dark',
+    'aprobacion'       => 'bg-warning text-dark',
+    'revision_firmas'  => 'bg-warning text-dark',
     'gdp'              => 'bg-dark',
     'tesoreria'        => 'bg-info',
     'pagada'           => 'bg-success',
@@ -52,7 +52,7 @@ $docIconColor = fn(?string $mime): string => match(true) {
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
 $badgeColors = [
     'rrhh' => 'bg-secondary', 'contabilidad' => 'bg-primary',
-    'firmas_aprobacion' => 'bg-warning text-dark',
+    'aprobacion' => 'bg-warning text-dark', 'revision_firmas' => 'bg-warning text-dark',
     'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'pagada' => 'bg-success',
 ];
 $noveltyCount = count($doc->employee_novelties);
@@ -217,8 +217,8 @@ $noveltyCount = count($doc->employee_novelties);
             <?php endif; ?>
         </div>
 
-        <!-- Signatures Section (in firmas_aprobacion stage or if signatures exist) -->
-        <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_FIRMAS_APROBACION || !empty($doc->novelty_liquidation_signatures)): ?>
+        <!-- Signatures Section (in revision_firmas stage or if signatures exist) -->
+        <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_REVISION_FIRMAS || !empty($doc->novelty_liquidation_signatures)): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -243,30 +243,7 @@ $noveltyCount = count($doc->employee_novelties);
                             </div>
                             <span class="badge bg-success mt-1">Firmado</span>
                         <?php else: ?>
-                            <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_FIRMAS_APROBACION): ?>
-
-                            <?php
-                            $hasExistingSig = ($sig->signer_type === NoveltyConstants::SIGNER_TRABAJADOR && !empty($existingWorkerSignatures));
-                            ?>
-
-                            <?php if ($hasExistingSig): ?>
-                            <!-- Option to use existing employee signature from novelty -->
-                            <div class="mb-2">
-                                <div style="font-size:.68rem;color:#888;margin-bottom:.35rem;">Firma existente de la novedad:</div>
-                                <?php $ws = $existingWorkerSignatures[0]; ?>
-                                <img src="<?= $this->Url->build('/' . $ws['path']) ?>" alt="Firma"
-                                     style="max-width:100%;max-height:80px;border:1px solid var(--border-color);border-radius:4px;background:#fff;">
-                                <div style="font-size:.65rem;color:#aaa;margin-top:.2rem;"><?= h($ws['name']) ?></div>
-                                <?= $this->Form->create(null, ['url' => ['action' => 'addSignature', $doc->id], 'class' => 'd-inline']) ?>
-                                <input type="hidden" name="signer_type" value="<?= h($sig->signer_type) ?>">
-                                <input type="hidden" name="use_existing_path" value="<?= h($ws['path']) ?>">
-                                <button type="submit" class="btn btn-sm btn-outline-primary mt-1">
-                                    <i class="bi bi-link-45deg me-1"></i>Usar esta firma
-                                </button>
-                                <?= $this->Form->end() ?>
-                            </div>
-                            <div style="font-size:.65rem;color:#bbb;margin-bottom:.35rem;text-align:center;">— o firmar de nuevo —</div>
-                            <?php endif; ?>
+                            <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_REVISION_FIRMAS): ?>
 
                             <!-- Manual signature pad -->
                             <?= $this->Form->create(null, ['url' => ['action' => 'addSignature', $doc->id], 'class' => 'sig-form']) ?>
@@ -338,11 +315,11 @@ $noveltyCount = count($doc->employee_novelties);
             <?php elseif ($currentStatus === NoveltyConstants::STATUS_CONTABILIDAD): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'class' => 'd-inline']) ?>
             <button type="submit" class="btn btn-success">
-                <i class="bi bi-arrow-right-circle me-1"></i>Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_FIRMAS_APROBACION] ?? '' ?>
+                <i class="bi bi-arrow-right-circle me-1"></i>Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_REVISION_FIRMAS] ?? '' ?>
             </button>
             <?= $this->Form->end() ?>
 
-            <?php elseif ($currentStatus === NoveltyConstants::STATUS_FIRMAS_APROBACION): ?>
+            <?php elseif ($currentStatus === NoveltyConstants::STATUS_REVISION_FIRMAS): ?>
                 <?php if (empty($groupErrors)): ?>
                 <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'class' => 'd-inline']) ?>
                 <button type="submit" class="btn btn-success">
