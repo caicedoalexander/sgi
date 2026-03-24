@@ -133,6 +133,52 @@ class NotificationService
         }
     }
 
+    /**
+     * Send approval link email for a novelty to the assigned approver.
+     */
+    public function sendNoveltyApprovalEmail(object $approver, object $novelty, string $approvalUrl): void
+    {
+        $smtpConfig = $this->settings->getGroup('smtp');
+
+        if (empty($smtpConfig['smtp_host']) || empty($smtpConfig['smtp_from_email'])) {
+            Log::warning('SMTP no configurado — no se envió email de aprobación de novedad.');
+
+            return;
+        }
+
+        $this->configureTransport($smtpConfig);
+
+        $employeeName = $novelty->custom_name ?? ($novelty->employee->full_name ?? '—');
+        $noveltyTypeName = $novelty->novelty_type->name ?? '—';
+
+        try {
+            $mailer = new Mailer();
+            $mailer->setTransport('sgi_dynamic');
+            $mailer->setFrom(
+                $smtpConfig['smtp_from_email'],
+                $smtpConfig['smtp_from_name'] ?? 'SGI',
+            );
+            $mailer->setTo($approver->email);
+            $mailer->setSubject("SGI-COPCSA - Solicitud de Aprobación: Novedad de {$employeeName}");
+            $mailer->setEmailFormat('html');
+            $mailer->setViewVars([
+                'employeeName' => $employeeName,
+                'noveltyTypeName' => $noveltyTypeName,
+                'reason' => $novelty->reason ?? '',
+                'approvalUrl' => $approvalUrl,
+                'recipientName' => $approver->full_name ?? $approver->username ?? '',
+            ]);
+            $mailer->viewBuilder()
+                ->setTemplate('novelty_approval_request')
+                ->setLayout('default');
+            $mailer->deliver();
+
+            Log::info("Novelty approval link sent to {$approver->email} for novelty #{$novelty->id}");
+        } catch (Exception $e) {
+            Log::error("Novelty approval email failed for {$approver->email}: " . $e->getMessage());
+        }
+    }
+
     private function configureTransport(array $smtpConfig): void
     {
         $config = [
