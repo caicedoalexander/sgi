@@ -133,17 +133,6 @@ class NoveltyLiquidationDocsController extends AppController
         $effectiveStatuses = $this->pipelineService->getEffectiveStatuses();
         $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($doc->id);
 
-        // Collect existing employee signatures from linked novelties
-        $existingWorkerSignatures = [];
-        foreach ($doc->employee_novelties as $novelty) {
-            if (!empty($novelty->employee_signature)) {
-                $existingWorkerSignatures[] = [
-                    'path' => $novelty->employee_signature,
-                    'name' => $novelty->custom_name ?: ($novelty->employee->full_name ?? '—'),
-                ];
-            }
-        }
-
         $currentUser = $user;
         $this->set(compact(
             'doc',
@@ -151,7 +140,6 @@ class NoveltyLiquidationDocsController extends AppController
             'effectiveStatuses',
             'documentsByStatus',
             'currentUser',
-            'existingWorkerSignatures',
         ));
     }
 
@@ -207,17 +195,9 @@ class NoveltyLiquidationDocsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $existingPath = $this->request->getData('use_existing_path');
         $signatureBase64 = $this->request->getData('signature_base64');
 
-        if (!empty($existingPath) && file_exists(WWW_ROOT . $existingPath)) {
-            // Reuse an existing employee signature from the novelty
-            $signature->signature_path = $existingPath;
-            $signature->signed_by = $user->id;
-            $signature->approved_at = new DateTime();
-            $signaturesTable->save($signature);
-            $this->Flash->success('Firma vinculada desde la novedad.');
-        } elseif (!empty($signatureBase64)) {
+        if (!empty($signatureBase64)) {
             $path = $this->signatureService->saveFromBase64(
                 (int)$id,
                 $signatureBase64,
@@ -231,6 +211,8 @@ class NoveltyLiquidationDocsController extends AppController
                 $signaturesTable->save($signature);
                 $this->Flash->success('Firma registrada.');
             }
+        } else {
+            $this->Flash->error('No se proporcionó una firma.');
         }
 
         return $this->redirect(['action' => 'edit', $id]);
