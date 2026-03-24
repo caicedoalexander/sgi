@@ -18,10 +18,10 @@ $isRejected = $novelty->isRejected();
 $currentStatus = $novelty->pipeline_status;
 
 $statusBadgeMap = [
-    'registro' => 'bg-secondary',
+    'aprobacion' => 'bg-warning text-dark',
     'rrhh' => 'bg-info text-dark',
     'contabilidad' => 'bg-primary',
-    'firmas_aprobacion' => 'bg-warning text-dark',
+    'revision_firmas' => 'bg-warning text-dark',
     'gdp' => 'bg-dark',
     'tesoreria' => 'bg-info',
     'pagada' => 'bg-success',
@@ -45,8 +45,8 @@ $docIconColor = fn(?string $mime): string => match(true) {
 };
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
 $badgeColors = [
-    'registro' => 'bg-secondary', 'rrhh' => 'bg-info text-dark', 'contabilidad' => 'bg-primary',
-    'firmas_aprobacion' => 'bg-warning text-dark', 'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'pagada' => 'bg-success',
+    'aprobacion' => 'bg-warning text-dark', 'rrhh' => 'bg-info text-dark', 'contabilidad' => 'bg-primary',
+    'revision_firmas' => 'bg-warning text-dark', 'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'pagada' => 'bg-success',
 ];
 ?>
 
@@ -248,26 +248,15 @@ $badgeColors = [
     </div>
 
     <!-- Signatures -->
-    <?php if ($novelty->employee_signature || $novelty->coordinator_signature): ?>
+    <?php if ($novelty->employee_signature): ?>
     <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
-        <?php if ($novelty->employee_signature): ?>
-        <div class="<?= $novelty->coordinator_signature ? 'col-md-6' : 'col-12' ?>" style="<?= $novelty->coordinator_signature ? 'border-right:1px solid var(--border-color);' : '' ?>">
+        <div class="col-12">
             <div class="sgi-section-title">Firma del Funcionario</div>
             <div style="padding:.25rem 1.25rem .875rem;">
                 <img src="<?= $this->Url->build('/' . $novelty->employee_signature) ?>" alt="Firma Funcionario"
                      style="max-width:400px;max-height:150px;border:1px solid var(--border-color);">
             </div>
         </div>
-        <?php endif; ?>
-        <?php if ($novelty->coordinator_signature): ?>
-        <div class="<?= $novelty->employee_signature ? 'col-md-6' : 'col-12' ?>">
-            <div class="sgi-section-title">Firma del Coordinador</div>
-            <div style="padding:.25rem 1.25rem .875rem;">
-                <img src="<?= $this->Url->build('/' . $novelty->coordinator_signature) ?>" alt="Firma Coordinador"
-                     style="max-width:400px;max-height:150px;border:1px solid var(--border-color);">
-            </div>
-        </div>
-        <?php endif; ?>
     </div>
     <?php endif; ?>
 

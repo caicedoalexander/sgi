@@ -11,10 +11,10 @@ use App\Constants\NoveltyConstants;
 $this->assign('title', 'Novedades de Empleados');
 
 $statusBadges = [
-    'registro' => 'bg-secondary',
+    'aprobacion' => 'bg-warning text-dark',
     'rrhh' => 'bg-info text-dark',
     'contabilidad' => 'bg-primary',
-    'firmas_aprobacion' => 'bg-warning text-dark',
+    'revision_firmas' => 'bg-warning text-dark',
     'gdp' => 'bg-dark',
     'tesoreria' => 'bg-info',
     'pagada' => 'bg-success',
