@@ -22,8 +22,10 @@ $isPaid = $doc->pipeline_status === NoveltyConstants::STATUS_PAGADA;
 $currentStatus = $doc->pipeline_status;
 
 $statusBadgeMap = [
+    'aprobacion' => 'bg-warning text-dark',
+    'rrhh' => 'bg-secondary',
     'contabilidad' => 'bg-primary',
-    'firmas_aprobacion' => 'bg-warning text-dark',
+    'revision_firmas' => 'bg-warning text-dark',
     'gdp' => 'bg-dark',
     'tesoreria' => 'bg-info',
     'pagada' => 'bg-success',
@@ -47,7 +49,8 @@ $docIconColor = fn(?string $mime): string => match(true) {
 };
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
 $badgeColors = [
-    'contabilidad' => 'bg-primary', 'firmas_aprobacion' => 'bg-warning text-dark',
+    'aprobacion' => 'bg-warning text-dark', 'rrhh' => 'bg-secondary',
+    'contabilidad' => 'bg-primary', 'revision_firmas' => 'bg-warning text-dark',
     'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'pagada' => 'bg-success',
 ];
 ?>
