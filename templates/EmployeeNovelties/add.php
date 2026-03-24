@@ -5,6 +5,7 @@
  * @var array $employees
  * @var array $noveltyTypes
  * @var string|null $preselectedEmployee
+ * @var array $approversList
  */
 use App\Constants\NoveltyConstants;
 
@@ -65,6 +66,17 @@ $this->assign('title', 'Nueva Novedad');
                 ]) ?>
             </div>
 
+            <!-- Approver select (shown when type requires boss approval) -->
+            <div class="col-md-6" id="approver-field" style="display:none;">
+                <label class="form-label">Aprobador (Jefe Inmediato)</label>
+                <?= $this->Form->control('approver_id', [
+                    'label' => false,
+                    'options' => $approversList ?? [],
+                    'empty' => '— Seleccione aprobador —',
+                    'class' => 'form-select select2',
+                ]) ?>
+            </div>
+
             <!-- Conditional fields -->
             <div class="col-md-4" id="permission-date-group">
                 <label class="form-label">Fecha del Permiso</label>
@@ -122,8 +134,8 @@ $this->assign('title', 'Nueva Novedad');
                 ]) ?>
             </div>
 
-            <!-- Firma del Funcionario -->
-            <div class="col-12">
+            <!-- Firma del Funcionario (shown when type requires employee signature at creation) -->
+            <div class="col-12" id="signature-field" style="display:none;">
                 <label class="form-label">Firma del Funcionario <span class="text-muted fw-normal" style="font-size:.78rem;">(Opcional)</span></label>
                 <div class="d-flex gap-3 align-items-start mb-2">
                     <div>
@@ -200,6 +212,18 @@ $this->assign('title', 'Nueva Novedad');
                     endTimeGroup.style.display = 'none';
                 } else {
                     toggleScheduleFields();
+                }
+
+                // Show/hide approver field
+                var approverField = document.getElementById('approver-field');
+                if (approverField) {
+                    approverField.style.display = flags.requires_boss_approval ? '' : 'none';
+                }
+
+                // Show/hide employee signature field
+                var sigField = document.getElementById('signature-field');
+                if (sigField) {
+                    sigField.style.display = flags.requires_employee_signature_creation ? '' : 'none';
                 }
 
                 // Re-init Select2 for massive if shown
