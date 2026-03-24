@@ -45,26 +45,18 @@ $this->assign('title', $preselectedParent ? 'Nuevo Subtipo de Novedad' : 'Nuevo 
             <label class="sgi-section-label">Configuración del Pipeline</label>
             <div class="row g-3 mt-1">
                 <div class="col-md-6">
-                    <p class="text-muted small mb-2">Etapas requeridas</p>
+                    <p class="text-muted small mb-2">Configuración de aprobación y firmas</p>
                     <div class="form-check form-switch mb-2">
-                        <?= $this->Form->checkbox('requires_rrhh', ['class' => 'form-check-input', 'id' => 'requires-rrhh', 'checked' => true]) ?>
-                        <label class="form-check-label" for="requires-rrhh">Requiere etapa RRHH</label>
+                        <?= $this->Form->checkbox('requires_boss_approval', ['class' => 'form-check-input', 'id' => 'requires-boss-approval']) ?>
+                        <label class="form-check-label" for="requires-boss-approval">Requiere aprobación del jefe inmediato</label>
                     </div>
                     <div class="form-check form-switch mb-2">
-                        <?= $this->Form->checkbox('requires_contabilidad', ['class' => 'form-check-input', 'id' => 'requires-contabilidad']) ?>
-                        <label class="form-check-label" for="requires-contabilidad">Requiere etapa Contabilidad</label>
+                        <?= $this->Form->checkbox('requires_employee_signature_creation', ['class' => 'form-check-input', 'id' => 'requires-sig-creation']) ?>
+                        <label class="form-check-label" for="requires-sig-creation">Requiere firma del empleado al crear</label>
                     </div>
                     <div class="form-check form-switch mb-2">
-                        <?= $this->Form->checkbox('requires_firmas', ['class' => 'form-check-input', 'id' => 'requires-firmas', 'checked' => true]) ?>
-                        <label class="form-check-label" for="requires-firmas">Requiere Firmas y Aprobación</label>
-                    </div>
-                    <div class="form-check form-switch mb-2">
-                        <?= $this->Form->checkbox('requires_gdp', ['class' => 'form-check-input', 'id' => 'requires-gdp', 'checked' => true]) ?>
-                        <label class="form-check-label" for="requires-gdp">Requiere etapa GDP</label>
-                    </div>
-                    <div class="form-check form-switch mb-2">
-                        <?= $this->Form->checkbox('requires_tesoreria', ['class' => 'form-check-input', 'id' => 'requires-tesoreria', 'checked' => true]) ?>
-                        <label class="form-check-label" for="requires-tesoreria">Requiere etapa Tesorería</label>
+                        <?= $this->Form->checkbox('requires_employee_signature_review', ['class' => 'form-check-input', 'id' => 'requires-sig-review']) ?>
+                        <label class="form-check-label" for="requires-sig-review">Requiere firma del empleado en revisión de documentos</label>
                     </div>
                 </div>
                 <div class="col-md-6">
