@@ -11,7 +11,8 @@ use DateTime;
 class NoveltyPipelineService
 {
     /**
-     * Get the next status for a novelty, skipping stages disabled by type flags.
+     * Get the next status for a novelty.
+     * Only skips aprobacion if the type doesn't require boss approval.
      */
     public function getNextStatus(object $novelty, ?object $noveltyType = null): ?string
     {
@@ -34,8 +35,8 @@ class NoveltyPipelineService
 
         $nextStatus = NoveltyConstants::TRANSITIONS[$currentStatus] ?? null;
 
-        // Skip stages that are disabled by type flags
-        while ($nextStatus && $noveltyType && $this->shouldSkipStage($nextStatus, $noveltyType)) {
+        // Skip aprobacion if type doesn't require boss approval
+        if ($nextStatus === NoveltyConstants::STATUS_APROBACION && $noveltyType && !$noveltyType->requires_boss_approval) {
             $nextStatus = NoveltyConstants::TRANSITIONS[$nextStatus] ?? null;
         }
 
@@ -43,33 +44,18 @@ class NoveltyPipelineService
     }
 
     /**
-     * Check if a pipeline stage should be skipped based on type flags.
-     */
-    private function shouldSkipStage(string $status, object $noveltyType): bool
-    {
-        return match ($status) {
-            NoveltyConstants::STATUS_RRHH => !$noveltyType->requires_rrhh,
-            NoveltyConstants::STATUS_CONTABILIDAD => !$noveltyType->requires_contabilidad,
-            NoveltyConstants::STATUS_FIRMAS_APROBACION => !$noveltyType->requires_firmas,
-            NoveltyConstants::STATUS_GDP => !$noveltyType->requires_gdp,
-            NoveltyConstants::STATUS_TESORERIA => !$noveltyType->requires_tesoreria,
-            NoveltyConstants::STATUS_PAGADA => !$noveltyType->requires_tesoreria,
-            default => false,
-        };
-    }
-
-    /**
-     * Get the effective pipeline statuses for a novelty type (excluding skipped stages).
+     * Get the effective pipeline statuses for a novelty type.
      */
     public function getEffectiveStatuses(?object $noveltyType = null): array
     {
-        if (!$noveltyType) {
+        if (!$noveltyType || $noveltyType->requires_boss_approval) {
             return NoveltyConstants::PIPELINE_STATUSES;
         }
 
+        // Exclude aprobacion
         return array_values(array_filter(
             NoveltyConstants::PIPELINE_STATUSES,
-            fn(string $status) => !$this->shouldSkipStage($status, $noveltyType),
+            fn(string $status) => $status !== NoveltyConstants::STATUS_APROBACION,
         ));
     }
 
@@ -128,7 +114,6 @@ class NoveltyPipelineService
             ->where(['liquidation_doc_id' => $liquidationDoc->id])
             ->all();
 
-        // Calculate next status using first member's type (all should advance to same group status)
         $firstMember = $members->first();
         if (!$firstMember) {
             return ['success' => false, 'errors' => ['No hay novedades en este documento de liquidación.']];
@@ -201,6 +186,15 @@ class NoveltyPipelineService
         $errors = [];
 
         switch ($fromStatus) {
+            case NoveltyConstants::STATUS_APROBACION:
+                if (empty($novelty->approver_id)) {
+                    $errors[] = 'Debe asignar un aprobador.';
+                }
+                if (!empty($novelty->area_approval) && $novelty->area_approval === NoveltyConstants::APPROVAL_REJECTED) {
+                    $errors[] = 'La novedad fue rechazada por el aprobador. Edite y reenvíe para aprobación.';
+                }
+                break;
+
             case NoveltyConstants::STATUS_RRHH:
                 if ($novelty->passes_payroll === null) {
                     $errors[] = 'Debe indicar si "Pasa a Nómina".';
@@ -226,8 +220,13 @@ class NoveltyPipelineService
         $currentStatus = $liquidationDoc->pipeline_status;
 
         switch ($currentStatus) {
-            case NoveltyConstants::STATUS_FIRMAS_APROBACION:
+            case NoveltyConstants::STATUS_REVISION_FIRMAS:
                 $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
+
+                $totalSlots = $signaturesTable->find()
+                    ->where(['liquidation_doc_id' => $liquidationDoc->id])
+                    ->count();
+
                 $signedCount = $signaturesTable->find()
                     ->where([
                         'liquidation_doc_id' => $liquidationDoc->id,
@@ -235,7 +234,7 @@ class NoveltyPipelineService
                     ])
                     ->count();
 
-                if ($signedCount < count(NoveltyConstants::SIGNER_TYPES)) {
+                if ($signedCount < $totalSlots) {
                     $errors[] = 'Todas las firmas requeridas deben estar presentes para avanzar.';
                 }
                 break;
@@ -273,6 +272,7 @@ class NoveltyPipelineService
     /**
      * Assign a novelty to a liquidation document.
      * Creates the document if it doesn't exist yet.
+     * Creates 2 or 3 signature slots based on type's requires_employee_signature_review.
      */
     public function assignToLiquidationDoc(
         EmployeeNovelty $novelty,
@@ -301,9 +301,27 @@ class NoveltyPipelineService
                 return ['No se pudo crear el documento de liquidación.'];
             }
 
-            // Create signature slots
+            // Determine which signature slots to create
+            $signerTypes = [
+                NoveltyConstants::SIGNER_CONTADOR,
+                NoveltyConstants::SIGNER_COORDINADOR_ADMIN,
+            ];
+
+            // Check if any novelty type requires employee signature in review
+            $noveltyType = null;
+            if (!empty($novelty->novelty_type)) {
+                $noveltyType = $novelty->novelty_type;
+            } elseif (!empty($novelty->novelty_type_id)) {
+                $noveltyType = TableRegistry::getTableLocator()->get('NoveltyTypes')
+                    ->get($novelty->novelty_type_id);
+            }
+
+            if ($noveltyType && $noveltyType->requires_employee_signature_review) {
+                $signerTypes[] = NoveltyConstants::SIGNER_TRABAJADOR;
+            }
+
             $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
-            foreach (NoveltyConstants::SIGNER_TYPES as $signerType) {
+            foreach ($signerTypes as $signerType) {
                 $sig = $signaturesTable->newEntity([
                     'liquidation_doc_id' => $doc->id,
                     'signer_type' => $signerType,
@@ -348,6 +366,10 @@ class NoveltyPipelineService
 
         if (in_array($pipelineStatus, [NoveltyConstants::STATUS_RRHH, NoveltyConstants::STATUS_CONTABILIDAD])) {
             $fields[] = 'passes_payroll';
+        }
+
+        if ($pipelineStatus === NoveltyConstants::STATUS_APROBACION) {
+            $fields[] = 'approver_id';
         }
 
         return $fields;
