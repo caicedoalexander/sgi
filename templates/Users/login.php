@@ -5,7 +5,7 @@
 $this->assign('title', 'Iniciar Sesión');
 ?>
 
-<?= $this->Form->create(null, ['url' => ['action' => 'login']]) ?>
+<?= $this->Form->create(null, ['url' => ['action' => 'login', '?' => ['redirect' => $this->request->getQuery('redirect')]]]) ?>
 
 <!-- Usuario -->
 <div class="mb-3">
