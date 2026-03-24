@@ -89,11 +89,9 @@ class NoveltyTypesController extends AppController
         return $this->response
             ->withType('application/json')
             ->withStringBody(json_encode([
-                'requires_rrhh' => (bool)$noveltyType->requires_rrhh,
-                'requires_contabilidad' => (bool)$noveltyType->requires_contabilidad,
-                'requires_firmas' => (bool)$noveltyType->requires_firmas,
-                'requires_gdp' => (bool)$noveltyType->requires_gdp,
-                'requires_tesoreria' => (bool)$noveltyType->requires_tesoreria,
+                'requires_boss_approval' => (bool)$noveltyType->requires_boss_approval,
+                'requires_employee_signature_creation' => (bool)$noveltyType->requires_employee_signature_creation,
+                'requires_employee_signature_review' => (bool)$noveltyType->requires_employee_signature_review,
                 'show_start_date' => (bool)$noveltyType->show_start_date,
                 'show_end_date' => (bool)$noveltyType->show_end_date,
                 'show_permission_date' => (bool)$noveltyType->show_permission_date,
