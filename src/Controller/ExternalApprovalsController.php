@@ -60,6 +60,13 @@ class ExternalApprovalsController extends AppController
             return $this->render('expired');
         }
 
+        if ($tokenRecord->entity_type === 'employee_novelties' && $entity->approver_id !== $currentUser->id) {
+            $this->Flash->error('No tiene autorización para aprobar esta novedad. Solo el aprobador asignado puede hacerlo.');
+            $this->set('unauthorized', true);
+
+            return $this->render('expired');
+        }
+
         $this->set(compact('token', 'tokenRecord', 'entity', 'currentUser'));
     }
 
@@ -82,6 +89,13 @@ class ExternalApprovalsController extends AppController
 
         if ($tokenRecord->entity_type === 'invoices' && $entity && $entity->approver_id !== $currentUser->id) {
             $this->Flash->error('No tiene autorización para aprobar esta factura.');
+            $this->set('expired', true);
+
+            return $this->render('expired');
+        }
+
+        if ($tokenRecord->entity_type === 'employee_novelties' && $entity && $entity->approver_id !== $currentUser->id) {
+            $this->Flash->error('No tiene autorización para aprobar esta novedad.');
             $this->set('expired', true);
 
             return $this->render('expired');
