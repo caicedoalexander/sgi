@@ -6,6 +6,8 @@
  * @var string|null $nextStatus
  * @var array $transitionErrors
  * @var bool $canAdvance
+ * @var bool $isApprovalRejected
+ * @var array $approversList
  * @var array $documentsByStatus
  * @var array $liquidationDocs
  */
@@ -21,9 +23,10 @@ $currentStatus = $novelty->pipeline_status;
 
 $statusBadgeMap = [
     'registro' => 'bg-secondary',
+    'aprobacion' => 'bg-warning text-dark',
     'rrhh' => 'bg-info text-dark',
     'contabilidad' => 'bg-primary',
-    'firmas_aprobacion' => 'bg-warning text-dark',
+    'revision_firmas' => 'bg-warning text-dark',
     'gdp' => 'bg-dark',
     'tesoreria' => 'bg-info',
     'pagada' => 'bg-success',
@@ -49,8 +52,8 @@ $docIconColor = fn(?string $mime): string => match(true) {
 };
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
 $badgeColors = [
-    'registro' => 'bg-secondary', 'rrhh' => 'bg-info text-dark', 'contabilidad' => 'bg-primary',
-    'firmas_aprobacion' => 'bg-warning text-dark', 'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'pagada' => 'bg-success',
+    'registro' => 'bg-secondary', 'aprobacion' => 'bg-warning text-dark', 'rrhh' => 'bg-info text-dark', 'contabilidad' => 'bg-primary',
+    'revision_firmas' => 'bg-warning text-dark', 'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'pagada' => 'bg-success',
 ];
 ?>
 
@@ -70,6 +73,19 @@ $badgeColors = [
         ) ?>
     </div>
 </div>
+
+<!-- Approval rejection alert -->
+<?php if (!empty($isApprovalRejected)): ?>
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+    <i class="bi bi-x-circle"></i>
+    <span>Esta novedad fue <strong>rechazada</strong> por el aprobador. Edite los datos necesarios y reenvíe para aprobación.</span>
+    <?= $this->Form->postLink(
+        '<i class="bi bi-send me-1"></i>Reenviar para Aprobación',
+        ['action' => 'resendApproval', $novelty->id],
+        ['class' => 'btn btn-warning btn-sm ms-auto', 'escape' => false, 'confirm' => '¿Reenviar la solicitud de aprobación?']
+    ) ?>
+</div>
+<?php endif; ?>
 
 <!-- Advance warning -->
 <?php if ($canAdvance && !$isRejected && !empty($transitionErrors)): ?>
@@ -290,7 +306,7 @@ $badgeColors = [
         </div>
 
         <!-- Signatures -->
-        <?php if ($novelty->employee_signature || $novelty->coordinator_signature): ?>
+        <?php if ($novelty->employee_signature): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -300,7 +316,6 @@ $badgeColors = [
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
             <div class="row g-3">
-                <?php if ($novelty->employee_signature): ?>
                 <div class="col-md-6">
                     <label class="form-label small">Firma del Funcionario</label>
                     <div>
@@ -308,17 +323,34 @@ $badgeColors = [
                              style="max-width:300px;max-height:120px;border:1px solid var(--border-color);">
                     </div>
                 </div>
-                <?php endif; ?>
-                <?php if ($novelty->coordinator_signature): ?>
-                <div class="col-md-6">
-                    <label class="form-label small">Firma del Coordinador</label>
-                    <div>
-                        <img src="<?= $this->Url->build('/' . $novelty->coordinator_signature) ?>" alt="Firma"
-                             style="max-width:300px;max-height:120px;border:1px solid var(--border-color);">
-                    </div>
-                </div>
-                <?php endif; ?>
             </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Approver section (when in aprobacion status) -->
+        <?php if ($novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION): ?>
+        <div class="mb-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="text-uppercase fw-semibold flex-shrink-0"
+                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                    <i class="bi bi-person-check me-1"></i>Aprobación
+                </span>
+                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+            </div>
+            <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id]]) ?>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label">Aprobador</label>
+                    <?= $this->Form->control('approver_id', [
+                        'label' => false,
+                        'options' => $approversList ?? [],
+                        'empty' => '— Seleccione —',
+                        'class' => 'form-select select2',
+                        'value' => $novelty->approver_id,
+                    ]) ?>
+                </div>
+            </div>
+            <?= $this->Form->end() ?>
         </div>
         <?php endif; ?>
 
