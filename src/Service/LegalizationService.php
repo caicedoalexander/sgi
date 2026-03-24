@@ -33,9 +33,9 @@ class LegalizationService
                     $invoice->invoice_number ?? $invoice->id,
                 );
             }
-            if ($invoice->pipeline_status !== InvoiceConstants::STATUS_APROBACION) {
+            if ($invoice->pipeline_status !== InvoiceConstants::STATUS_CONTABILIDAD) {
                 $errors[] = sprintf(
-                    'La factura #%s no está en estado "aprobación".',
+                    'La factura #%s no está en estado "contabilidad".',
                     $invoice->invoice_number ?? $invoice->id,
                 );
             }
@@ -231,7 +231,7 @@ class LegalizationService
             ->contain(['Providers', 'OperationCenters'])
             ->where([
                 'Invoices.document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
-                'Invoices.pipeline_status' => InvoiceConstants::STATUS_APROBACION,
+                'Invoices.pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
                 'Invoices.legalization_record_id IS' => null,
             ])
             ->order(['Invoices.issue_date' => 'ASC']);

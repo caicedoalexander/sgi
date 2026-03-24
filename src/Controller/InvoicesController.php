@@ -58,6 +58,14 @@ class InvoicesController extends AppController
             ],
         ];
 
+        // Excluir facturas de Legalización que ya están en contabilidad o posterior
+        $conditions[] = [
+            'OR' => [
+                'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+                'Invoices.pipeline_status' => InvoiceConstants::STATUS_APROBACION,
+            ],
+        ];
+
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
         $invoices = $this->paginate($this->_buildInvoiceQuery($conditions, $userId));
 
