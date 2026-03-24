@@ -7,18 +7,23 @@ final class NoveltyConstants
 {
     // Pipeline statuses (ordered)
     public const STATUS_REGISTRO = 'registro';
+    public const STATUS_APROBACION = 'aprobacion';
     public const STATUS_RRHH = 'rrhh';
     public const STATUS_CONTABILIDAD = 'contabilidad';
-    public const STATUS_FIRMAS_APROBACION = 'firmas_aprobacion';
+    public const STATUS_REVISION_FIRMAS = 'revision_firmas';
     public const STATUS_GDP = 'gdp';
     public const STATUS_TESORERIA = 'tesoreria';
     public const STATUS_PAGADA = 'pagada';
     public const STATUS_RECHAZADA = 'rechazada';
 
+    // Backward compat for renamed status
+    public const STATUS_FIRMAS_APROBACION = self::STATUS_REVISION_FIRMAS;
+
     public const PIPELINE_STATUSES = [
+        self::STATUS_APROBACION,
         self::STATUS_RRHH,
         self::STATUS_CONTABILIDAD,
-        self::STATUS_FIRMAS_APROBACION,
+        self::STATUS_REVISION_FIRMAS,
         self::STATUS_GDP,
         self::STATUS_TESORERIA,
         self::STATUS_PAGADA,
@@ -26,9 +31,10 @@ final class NoveltyConstants
 
     public const ALL_STATUSES = [
         self::STATUS_REGISTRO,
+        self::STATUS_APROBACION,
         self::STATUS_RRHH,
         self::STATUS_CONTABILIDAD,
-        self::STATUS_FIRMAS_APROBACION,
+        self::STATUS_REVISION_FIRMAS,
         self::STATUS_GDP,
         self::STATUS_TESORERIA,
         self::STATUS_PAGADA,
@@ -37,9 +43,10 @@ final class NoveltyConstants
 
     public const STATUS_LABELS = [
         self::STATUS_REGISTRO => 'Registro',
+        self::STATUS_APROBACION => 'Aprobación',
         self::STATUS_RRHH => 'RRHH',
         self::STATUS_CONTABILIDAD => 'Contabilidad',
-        self::STATUS_FIRMAS_APROBACION => 'Firmas y Aprobación',
+        self::STATUS_REVISION_FIRMAS => 'Revisión y Firmas de documentos',
         self::STATUS_GDP => 'GDP',
         self::STATUS_TESORERIA => 'Tesorería',
         self::STATUS_PAGADA => 'Pagada',
@@ -48,9 +55,10 @@ final class NoveltyConstants
 
     public const STATUS_ICONS = [
         self::STATUS_REGISTRO => 'bi-pencil-square',
+        self::STATUS_APROBACION => 'bi-person-check',
         self::STATUS_RRHH => 'bi-people',
         self::STATUS_CONTABILIDAD => 'bi-calculator',
-        self::STATUS_FIRMAS_APROBACION => 'bi-pen',
+        self::STATUS_REVISION_FIRMAS => 'bi-pen',
         self::STATUS_GDP => 'bi-clipboard-check',
         self::STATUS_TESORERIA => 'bi-bank',
         self::STATUS_PAGADA => 'bi-cash-coin',
@@ -58,9 +66,10 @@ final class NoveltyConstants
 
     // Linear transitions
     public const TRANSITIONS = [
+        self::STATUS_APROBACION => self::STATUS_RRHH,
         self::STATUS_RRHH => self::STATUS_CONTABILIDAD,
-        self::STATUS_CONTABILIDAD => self::STATUS_FIRMAS_APROBACION,
-        self::STATUS_FIRMAS_APROBACION => self::STATUS_GDP,
+        self::STATUS_CONTABILIDAD => self::STATUS_REVISION_FIRMAS,
+        self::STATUS_REVISION_FIRMAS => self::STATUS_GDP,
         self::STATUS_GDP => self::STATUS_TESORERIA,
         self::STATUS_TESORERIA => self::STATUS_PAGADA,
         self::STATUS_PAGADA => null,
@@ -105,25 +114,27 @@ final class NoveltyConstants
         self::PAYMENT_NA => 'N/A',
     ];
 
-    // Signer types (for liquidation doc signatures)
+    // Signer types (for liquidation doc signatures) — jefe_inmediato removed
     public const SIGNER_CONTADOR = 'contador';
     public const SIGNER_COORDINADOR_ADMIN = 'coordinador_admin';
-    public const SIGNER_JEFE_INMEDIATO = 'jefe_inmediato';
     public const SIGNER_TRABAJADOR = 'trabajador';
     public const SIGNER_TYPES = [
         self::SIGNER_CONTADOR,
         self::SIGNER_COORDINADOR_ADMIN,
-        self::SIGNER_JEFE_INMEDIATO,
         self::SIGNER_TRABAJADOR,
     ];
     public const SIGNER_LABELS = [
         self::SIGNER_CONTADOR => 'Contador',
         self::SIGNER_COORDINADOR_ADMIN => 'Coordinador Administrativo',
-        self::SIGNER_JEFE_INMEDIATO => 'Jefe Inmediato',
         self::SIGNER_TRABAJADOR => 'Trabajador',
     ];
 
-    // Backward compat — old statuses mapping
+    // Approval values (for area_approval field)
+    public const APPROVAL_PENDING = 'Pendiente';
+    public const APPROVAL_APPROVED = 'Aprobada';
+    public const APPROVAL_REJECTED = 'Rechazada';
+
+    // Backward compat
     public const STATUS_PENDING = self::STATUS_REGISTRO;
     public const STATUS_APPROVED = self::STATUS_PAGADA;
     public const STATUS_REJECTED = self::STATUS_RECHAZADA;
