@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\NoveltyConstants;
 use App\Constants\RoleConstants;
+use App\Service\ApprovalTokenService;
 use App\Service\LeaveDocumentService;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
@@ -26,6 +27,7 @@ class EmployeeNoveltiesController extends AppController
     private NoveltyHistoryService $historyService;
     private LeaveDocumentService $leaveDocumentService;
     private NoveltySignatureService $signatureService;
+    private ApprovalTokenService $tokenService;
 
     /**
      * @return void
@@ -39,6 +41,7 @@ class EmployeeNoveltiesController extends AppController
         $this->historyService = new NoveltyHistoryService();
         $this->leaveDocumentService = new LeaveDocumentService();
         $this->signatureService = new NoveltySignatureService();
+        $this->tokenService = new ApprovalTokenService();
     }
 
     /**
@@ -120,6 +123,23 @@ class EmployeeNoveltiesController extends AppController
             && !$novelty->isGrouped()
             && $nextStatus !== null;
 
+        $isApprovalRejected = $novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION
+            && $novelty->area_approval === NoveltyConstants::APPROVAL_REJECTED;
+
+        $approversList = [];
+        if ($novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION) {
+            $approvers = TableRegistry::getTableLocator()->get('Approvers')
+                ->find()
+                ->contain(['Users'])
+                ->where(['Approvers.active' => true])
+                ->all();
+            foreach ($approvers as $approver) {
+                if ($approver->user) {
+                    $approversList[$approver->user->id] = $approver->user->full_name;
+                }
+            }
+        }
+
         $documentsByStatus = $this->documentService->getDocumentsByStatus($novelty->id);
 
         // Existing liquidation docs for assignment dropdown
@@ -141,6 +161,8 @@ class EmployeeNoveltiesController extends AppController
             'nextStatus',
             'transitionErrors',
             'canAdvance',
+            'isApprovalRejected',
+            'approversList',
             'documentsByStatus',
             'liquidationDocs',
         ));
@@ -247,12 +269,14 @@ class EmployeeNoveltiesController extends AppController
             $data['registered_by'] = $user->id;
             $data['filing_date'] = Date::now()->format('Y-m-d');
 
-            // Determine initial status: first active pipeline stage for this type
+            // Determine initial status based on type's requires_boss_approval
             $initialStatus = NoveltyConstants::STATUS_RRHH;
+            $noveltyType = null;
             if (!empty($data['novelty_type_id'])) {
                 $noveltyType = $this->EmployeeNovelties->NoveltyTypes->get($data['novelty_type_id']);
-                $effectiveStatuses = $this->pipelineService->getEffectiveStatuses($noveltyType);
-                $initialStatus = $effectiveStatuses[0] ?? NoveltyConstants::STATUS_RRHH;
+                if ($noveltyType->requires_boss_approval) {
+                    $initialStatus = NoveltyConstants::STATUS_APROBACION;
+                }
             }
             $data['pipeline_status'] = $initialStatus;
 
@@ -313,6 +337,21 @@ class EmployeeNoveltiesController extends AppController
                     $this->EmployeeNovelties->save($novelty);
                 }
 
+                // Generate approval token if type requires boss approval
+                if ($noveltyType && $noveltyType->requires_boss_approval && !empty($novelty->approver_id)) {
+                    $token = $this->tokenService->generateToken('employee_novelties', $novelty->id, $user->id);
+                    $baseUrl = $this->request->scheme() . '://' . $this->request->host();
+                    $approvalUrl = $baseUrl . '/approve/' . $token;
+
+                    // Send notification email to approver
+                    $approversTable = TableRegistry::getTableLocator()->get('Users');
+                    $approver = $approversTable->get($novelty->approver_id);
+                    if ($approver && !empty($approver->email)) {
+                        $notificationService = new \App\Service\NotificationService();
+                        $notificationService->sendNoveltyApprovalEmail($approver, $novelty, $approvalUrl);
+                    }
+                }
+
                 $this->Flash->success(__('La novedad ha sido registrada.'));
 
                 return $this->redirect(['action' => 'index']);
@@ -329,7 +368,20 @@ class EmployeeNoveltiesController extends AppController
 
         $preselectedEmployee = $this->request->getQuery('employee_id');
 
-        $this->set(compact('novelty', 'employees', 'noveltyTypes', 'preselectedEmployee'));
+        $approvers = TableRegistry::getTableLocator()->get('Approvers')
+            ->find()
+            ->contain(['Users'])
+            ->where(['Approvers.active' => true])
+            ->all();
+
+        $approversList = [];
+        foreach ($approvers as $approver) {
+            if ($approver->user) {
+                $approversList[$approver->user->id] = $approver->user->full_name;
+            }
+        }
+
+        $this->set(compact('novelty', 'employees', 'noveltyTypes', 'preselectedEmployee', 'approversList'));
     }
 
     /**
@@ -394,6 +446,52 @@ class EmployeeNoveltiesController extends AppController
         } else {
             $this->Flash->error($result['error']);
         }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    /**
+     * Resend approval token for a rejected novelty.
+     *
+     * @param string|null $id Novelty ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function resendApproval(?string $id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $novelty = $this->EmployeeNovelties->get($id, contain: ['NoveltyTypes']);
+        $user = $this->Authentication->getIdentity()->getOriginalData();
+
+        if ($novelty->pipeline_status !== NoveltyConstants::STATUS_APROBACION) {
+            $this->Flash->error('Solo se puede reenviar aprobación para novedades en estado de aprobación.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        if (empty($novelty->approver_id)) {
+            $this->Flash->error('Debe asignar un aprobador antes de reenviar.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        // Clear rejection
+        $novelty->area_approval = null;
+        $this->EmployeeNovelties->save($novelty);
+
+        // Generate new token
+        $token = $this->tokenService->generateToken('employee_novelties', $novelty->id, $user->id);
+        $baseUrl = $this->request->scheme() . '://' . $this->request->host();
+        $approvalUrl = $baseUrl . '/approve/' . $token;
+
+        // Send notification email
+        $approversTable = TableRegistry::getTableLocator()->get('Users');
+        $approver = $approversTable->get($novelty->approver_id);
+        if ($approver && !empty($approver->email)) {
+            $notificationService = new \App\Service\NotificationService();
+            $notificationService->sendNoveltyApprovalEmail($approver, $novelty, $approvalUrl);
+        }
+
+        $this->Flash->success('Enlace de aprobación reenviado al aprobador (válido por 48h).');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
