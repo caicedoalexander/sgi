@@ -141,6 +141,11 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']]
         );
         $builder->connect(
+            '/employee-novelties/resend-approval/{id}',
+            ['controller' => 'EmployeeNovelties', 'action' => 'resendApproval'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
             '/employee-novelties/add-observation/{id}',
             ['controller' => 'EmployeeNovelties', 'action' => 'addObservation'],
             ['id' => '\d+', 'pass' => ['id']]
