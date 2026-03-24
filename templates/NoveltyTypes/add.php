@@ -46,42 +46,42 @@ $this->assign('title', $preselectedParent ? 'Nuevo Subtipo de Novedad' : 'Nuevo 
             <div class="row g-3 mt-1">
                 <div class="col-md-6">
                     <p class="text-muted small mb-2">Configuración de aprobación y firmas</p>
-                    <div class="form-check form-switch mb-2">
+                    <div class="form-check mb-2">
                         <?= $this->Form->checkbox('requires_boss_approval', ['class' => 'form-check-input', 'id' => 'requires-boss-approval']) ?>
                         <label class="form-check-label" for="requires-boss-approval">Requiere aprobación del jefe inmediato</label>
                     </div>
-                    <div class="form-check form-switch mb-2">
+                    <div class="form-check mb-2">
                         <?= $this->Form->checkbox('requires_employee_signature_creation', ['class' => 'form-check-input', 'id' => 'requires-sig-creation']) ?>
                         <label class="form-check-label" for="requires-sig-creation">Requiere firma del empleado al crear</label>
                     </div>
-                    <div class="form-check form-switch mb-2">
+                    <div class="form-check mb-2">
                         <?= $this->Form->checkbox('requires_employee_signature_review', ['class' => 'form-check-input', 'id' => 'requires-sig-review']) ?>
                         <label class="form-check-label" for="requires-sig-review">Requiere firma del empleado en revisión de documentos</label>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <p class="text-muted small mb-2">Campos visibles en formulario</p>
-                    <div class="form-check form-switch mb-2">
+                    <div class="form-check mb-2">
                         <?= $this->Form->checkbox('show_start_date', ['class' => 'form-check-input', 'id' => 'show-start-date', 'checked' => true]) ?>
                         <label class="form-check-label" for="show-start-date">Mostrar Fecha Inicio</label>
                     </div>
-                    <div class="form-check form-switch mb-2">
+                    <div class="form-check mb-2">
                         <?= $this->Form->checkbox('show_end_date', ['class' => 'form-check-input', 'id' => 'show-end-date', 'checked' => true]) ?>
                         <label class="form-check-label" for="show-end-date">Mostrar Fecha Fin</label>
                     </div>
-                    <div class="form-check form-switch mb-2">
+                    <div class="form-check mb-2">
                         <?= $this->Form->checkbox('show_permission_date', ['class' => 'form-check-input', 'id' => 'show-permission-date', 'checked' => true]) ?>
                         <label class="form-check-label" for="show-permission-date">Mostrar Fecha de Permiso</label>
                     </div>
-                    <div class="form-check form-switch mb-2">
+                    <div class="form-check mb-2">
                         <?= $this->Form->checkbox('show_schedule_type', ['class' => 'form-check-input', 'id' => 'show-schedule-type', 'checked' => true]) ?>
                         <label class="form-check-label" for="show-schedule-type">Mostrar Tipo de Horario</label>
                     </div>
-                    <div class="form-check form-switch mb-2">
+                    <div class="form-check mb-2">
                         <?= $this->Form->checkbox('uses_custom_name', ['class' => 'form-check-input', 'id' => 'uses-custom-name']) ?>
                         <label class="form-check-label" for="uses-custom-name">Usa Nombre Libre (en vez de select de empleado)</label>
                     </div>
-                    <div class="form-check form-switch mb-2">
+                    <div class="form-check mb-2">
                         <?= $this->Form->checkbox('is_massive', ['class' => 'form-check-input', 'id' => 'is-massive']) ?>
                         <label class="form-check-label" for="is-massive">Novedad Masiva (multi-selección de empleados)</label>
                     </div>
