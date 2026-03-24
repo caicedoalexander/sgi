@@ -52,6 +52,11 @@ class EmployeeNoveltiesTable extends Table
             'foreignKey' => 'rrhh_by',
             'joinType' => 'LEFT',
         ]);
+        $this->belongsTo('Approvers', [
+            'className' => 'Users',
+            'foreignKey' => 'approver_id',
+            'joinType' => 'LEFT',
+        ]);
         $this->hasMany('NoveltyMassiveEmployees', [
             'foreignKey' => 'novelty_id',
             'dependent' => true,
@@ -168,6 +173,10 @@ class EmployeeNoveltiesTable extends Table
             'allowNullableNulls' => true,
         ]);
         $rules->add($rules->existsIn('registered_by', 'RegisteredByUsers'), ['errorField' => 'registered_by']);
+        $rules->add($rules->existsIn('approver_id', 'Approvers'), [
+            'errorField' => 'approver_id',
+            'allowNullableNulls' => true,
+        ]);
 
         $rules->add(function ($entity) {
             if ($entity->schedule_type !== NoveltyConstants::SCHEDULE_HOURS) {

@@ -25,7 +25,8 @@ class EmployeeNovelty extends Entity
         'approved_at' => true,
         'registered_by' => true,
         'employee_signature' => true,
-        'coordinator_signature' => true,
+        'approver_id' => true,
+        'area_approval' => true,
         'observations' => true,
         'passes_payroll' => true,
         'rrhh_by' => true,
@@ -46,5 +47,10 @@ class EmployeeNovelty extends Entity
     public function isGrouped(): bool
     {
         return $this->liquidation_doc_id !== null;
+    }
+
+    public function isApprovalRejected(): bool
+    {
+        return $this->area_approval === NoveltyConstants::APPROVAL_REJECTED;
     }
 }
