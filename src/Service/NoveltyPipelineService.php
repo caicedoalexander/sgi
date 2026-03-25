@@ -131,7 +131,7 @@ class NoveltyPipelineService
     }
 
     /**
-     * Get the effective pipeline statuses for a novelty type.
+     * Get the effective pipeline statuses for a novelty type (full pipeline).
      */
     public function getEffectiveStatuses(?object $noveltyType = null): array
     {
@@ -142,6 +142,22 @@ class NoveltyPipelineService
         // Exclude aprobacion
         return array_values(array_filter(
             NoveltyConstants::PIPELINE_STATUSES,
+            fn(string $status) => $status !== NoveltyConstants::STATUS_APROBACION,
+        ));
+    }
+
+    /**
+     * Get pipeline statuses for the individual novelty phase
+     * (before liquidation doc takes over).
+     */
+    public function getNoveltyStatuses(?object $noveltyType = null): array
+    {
+        if (!$noveltyType || $noveltyType->requires_boss_approval) {
+            return NoveltyConstants::NOVELTY_STATUSES;
+        }
+
+        return array_values(array_filter(
+            NoveltyConstants::NOVELTY_STATUSES,
             fn(string $status) => $status !== NoveltyConstants::STATUS_APROBACION,
         ));
     }

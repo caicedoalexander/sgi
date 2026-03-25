@@ -29,6 +29,13 @@ final class NoveltyConstants
         self::STATUS_PAGADA,
     ];
 
+    // Novelty individual pipeline (before liquidation doc takes over)
+    public const NOVELTY_STATUSES = [
+        self::STATUS_APROBACION,
+        self::STATUS_RRHH,
+        self::STATUS_CONTABILIDAD,
+    ];
+
     public const ALL_STATUSES = [
         self::STATUS_REGISTRO,
         self::STATUS_APROBACION,

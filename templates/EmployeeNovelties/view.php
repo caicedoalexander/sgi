@@ -110,9 +110,13 @@ $badgeColors = [
 
     <!-- Pipeline progress -->
     <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+        <?php
+        $noveltyPipelineLabels = $statusLabels;
+        $noveltyPipelineLabels[NoveltyConstants::STATUS_CONTABILIDAD] = 'Paso a Nómina';
+        ?>
         <?= $this->element('pipeline_progress', [
-            'pipelineStatuses' => $effectiveStatuses,
-            'pipelineLabels' => $statusLabels,
+            'pipelineStatuses' => $noveltyStatuses ?? $effectiveStatuses,
+            'pipelineLabels' => $noveltyPipelineLabels,
             'currentStatus' => $currentStatus,
             'isRejected' => $isRejected,
             'statusIcons' => $statusIcons,

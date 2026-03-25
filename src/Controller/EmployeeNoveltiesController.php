@@ -183,6 +183,7 @@ class EmployeeNoveltiesController extends AppController
         $this->observationService->markAsRead($user->id, noveltyId: $novelty->id);
 
         $effectiveStatuses = $this->pipelineService->getEffectiveStatuses($novelty->novelty_type);
+        $noveltyStatuses = $this->pipelineService->getNoveltyStatuses($novelty->novelty_type);
         $nextStatus = $this->pipelineService->getNextStatus($novelty);
         $transitionErrors = $this->pipelineService->validateTransition($novelty, $novelty->pipeline_status);
         $canAdvance = !$novelty->isRejected()
@@ -225,6 +226,7 @@ class EmployeeNoveltiesController extends AppController
         $this->set(compact(
             'novelty',
             'effectiveStatuses',
+            'noveltyStatuses',
             'nextStatus',
             'transitionErrors',
             'canAdvance',
@@ -269,6 +271,7 @@ class EmployeeNoveltiesController extends AppController
         ]);
 
         $effectiveStatuses = $this->pipelineService->getEffectiveStatuses($novelty->novelty_type);
+        $noveltyStatuses = $this->pipelineService->getNoveltyStatuses($novelty->novelty_type);
 
         $documentsByStatus = $this->documentService->getDocumentsByStatus($novelty->id);
 
@@ -286,6 +289,7 @@ class EmployeeNoveltiesController extends AppController
         $this->set(compact(
             'novelty',
             'effectiveStatuses',
+            'noveltyStatuses',
             'documentsByStatus',
             'hasActiveTemplate',
             'fieldLabels',
