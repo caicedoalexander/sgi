@@ -20,6 +20,7 @@ $statusIcons = NoveltyConstants::STATUS_ICONS;
 $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
 $isRejected = $novelty->isRejected();
 $currentStatus = $novelty->pipeline_status;
+$sections = $visibleSections ?? ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'];
 
 $statusBadgeMap = [
     'registro' => 'bg-secondary',
@@ -144,6 +145,7 @@ $badgeColors = [
     <div class="card-body p-4">
 
         <!-- Section: Información de la Novedad -->
+        <?php if (in_array('informacion', $sections)): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -182,8 +184,10 @@ $badgeColors = [
             </div>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
 
         <!-- Section: Fechas y Horario -->
+        <?php if (in_array('fechas', $sections)): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -239,9 +243,10 @@ $badgeColors = [
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Section: Motivo -->
-        <?php if ($novelty->reason): ?>
+        <?php if (in_array('motivo', $sections) && $novelty->reason): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -257,6 +262,7 @@ $badgeColors = [
         <?php endif; ?>
 
         <!-- Section: Gestión (RRHH fields) -->
+        <?php if (in_array('rrhh', $sections)): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -304,9 +310,10 @@ $badgeColors = [
             </div>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
 
         <!-- Signatures -->
-        <?php if ($novelty->employee_signature): ?>
+        <?php if (in_array('firmas', $sections) && $novelty->employee_signature): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -328,7 +335,7 @@ $badgeColors = [
         <?php endif; ?>
 
         <!-- Approver section (when in aprobacion status) -->
-        <?php if ($novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION): ?>
+        <?php if (in_array('aprobacion', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -377,7 +384,7 @@ $badgeColors = [
         </div>
         <?php endif; ?>
 
-        <?php if ($novelty->pipeline_status === NoveltyConstants::STATUS_CONTABILIDAD && !$novelty->isGrouped() && !$isRejected): ?>
+        <?php if (in_array('contabilidad', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_CONTABILIDAD && !$novelty->isGrouped() && !$isRejected): ?>
         <div class="pt-3" style="border-top:1px solid var(--border-color);">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
