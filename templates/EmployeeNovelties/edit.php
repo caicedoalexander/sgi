@@ -75,6 +75,22 @@ $badgeColors = [
     </div>
 </div>
 
+<!-- Grouped novelty alert -->
+<?php if ($novelty->isGrouped()): ?>
+<div class="alert alert-info d-flex align-items-center gap-2 mb-4" style="border-left:3px solid #0dcaf0;">
+    <i class="bi bi-link-45deg fs-5"></i>
+    <div>
+        Esta novedad pertenece al documento de liquidación
+        <strong><?= $this->Html->link(
+            h($novelty->novelty_liquidation_doc->liquidation_number ?? '#' . $novelty->liquidation_doc_id),
+            ['controller' => 'NoveltyLiquidationDocs', 'action' => 'edit', $novelty->liquidation_doc_id],
+            ['class' => 'alert-link']
+        ) ?></strong>.
+        Los cambios de estado se gestionan desde allí.
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Approval rejection alert -->
 <?php if (!empty($isApprovalRejected)): ?>
 <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
