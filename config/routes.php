@@ -119,6 +119,16 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']]
         );
 
+        // Employee novelties views
+        $builder->connect(
+            '/employee-novelties/all',
+            ['controller' => 'EmployeeNovelties', 'action' => 'all']
+        );
+        $builder->connect(
+            '/employee-novelties/rejected',
+            ['controller' => 'EmployeeNovelties', 'action' => 'rejected']
+        );
+
         // Employee novelties pipeline
         $builder->connect(
             '/employee-novelties/advance/{id}',
