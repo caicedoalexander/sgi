@@ -5,10 +5,20 @@
  * @var string|null $statusFilter
  * @var string|null $typeFilter
  * @var array $noveltyTypes
+ * @var array $visibleStatuses
  */
 use App\Constants\NoveltyConstants;
 
-$this->assign('title', 'Novedades de Empleados');
+$action = $this->request->getParam('action');
+
+$pageTitles = [
+    'all' => 'Todas las Novedades',
+    'rejected' => 'Novedades Rechazadas',
+];
+$pageTitle = $pageTitles[$action] ?? 'Mis Novedades';
+$this->assign('title', $pageTitle);
+
+$linkAction = ($action === 'index') ? 'edit' : 'view';
 
 $statusBadges = [
     'aprobacion' => 'bg-warning text-dark',
@@ -25,26 +35,40 @@ $statusLabels = NoveltyConstants::STATUS_LABELS;
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Novedades de Empleados</span>
-    <?php if (!empty($userPermissions['employee_novelties']['can_create'])): ?>
-    <?= $this->Html->link(
-        '<i class="bi bi-plus-lg me-1"></i>Nueva Novedad',
-        ['action' => 'add'],
-        ['class' => 'btn btn-primary', 'escape' => false]
-    ) ?>
-    <?php endif; ?>
+    <span class="sgi-page-title"><?= $pageTitle ?></span>
+    <div class="d-flex gap-2">
+        <?php if (!empty($userPermissions['employee_novelties']['can_create'])): ?>
+        <?= $this->Html->link(
+            '<i class="bi bi-plus-lg me-1"></i>Nueva Novedad',
+            ['action' => 'add'],
+            ['class' => 'btn btn-primary', 'escape' => false]
+        ) ?>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- View navigation -->
+<div class="d-flex gap-2 mb-3">
+    <?= $this->Html->link('Mis Novedades', ['action' => 'index'],
+        ['class' => 'btn btn-sm ' . ($action === 'index' ? 'btn-dark' : 'btn-outline-dark')]) ?>
+    <?= $this->Html->link('Todas las Novedades', ['action' => 'all'],
+        ['class' => 'btn btn-sm ' . ($action === 'all' ? 'btn-dark' : 'btn-outline-dark')]) ?>
+    <?= $this->Html->link('Rechazadas', ['action' => 'rejected'],
+        ['class' => 'btn btn-sm ' . ($action === 'rejected' ? 'btn-danger' : 'btn-outline-danger')]) ?>
 </div>
 
 <!-- Filters -->
 <div class="card card-primary mb-3">
     <div class="card-body py-2 px-3">
         <form method="get" class="d-flex gap-3 align-items-center flex-wrap">
+            <?php if ($action !== 'rejected'): ?>
             <select name="pipeline_status" class="form-select form-select-sm" style="max-width:200px;" onchange="this.form.submit()">
                 <option value="">Estado: Todos</option>
                 <?php foreach (NoveltyConstants::ALL_STATUSES as $s): ?>
                 <option value="<?= $s ?>" <?= ($statusFilter ?? '') === $s ? 'selected' : '' ?>><?= $statusLabels[$s] ?? ucfirst($s) ?></option>
                 <?php endforeach; ?>
             </select>
+            <?php endif; ?>
             <select name="novelty_type_id" class="form-select form-select-sm" style="max-width:200px;" onchange="this.form.submit()">
                 <option value="">Tipo: Todos</option>
                 <?php foreach ($noveltyTypes as $id => $name): ?>
@@ -52,7 +76,7 @@ $statusLabels = NoveltyConstants::STATUS_LABELS;
                 <?php endforeach; ?>
             </select>
             <?php if ($statusFilter || $typeFilter): ?>
-            <a href="<?= $this->Url->build(['action' => 'index']) ?>" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+            <a href="<?= $this->Url->build(['action' => $action]) ?>" class="btn btn-sm btn-outline-secondary">Limpiar</a>
             <?php endif; ?>
         </form>
     </div>
@@ -74,7 +98,8 @@ $statusLabels = NoveltyConstants::STATUS_LABELS;
             </thead>
             <tbody>
                 <?php foreach ($novelties as $novelty): ?>
-                <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'edit', $novelty->id]) ?>">
+                <tr class="clickable-row <?= $novelty->isRejected() ? 'table-danger' : '' ?>"
+                    data-href="<?= $this->Url->build(['action' => $linkAction, $novelty->id]) ?>">
                     <td><?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?></td>
                     <td><?= h($novelty->novelty_type->name ?? '—') ?></td>
                     <td><?= $novelty->permission_date?->format('d/m/Y') ?: '—' ?></td>
