@@ -192,14 +192,52 @@ $noveltiesCount = $noveltiesCount ?? 0;
                     ) ?>
                 </li>
                 <?php endif; ?>
-                <?php if ($canView('employee_novelties')): ?>
-                <li class="nav-item">
-                    <?= $this->Html->link(
-                        '<i class="bi bi-journal-text me-2"></i>Novedades' .
-                        ($noveltiesCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $noveltiesCount . '</span>' : ''),
-                        ['controller' => 'EmployeeNovelties', 'action' => 'index'],
-                        ['class' => $navLink('EmployeeNovelties') . ' d-flex align-items-center', 'escape' => false]
-                    ) ?>
+                <?php
+                $noveltiesSubActive = $currentController === 'EmployeeNovelties';
+                if ($canView('employee_novelties')): ?>
+                <li class="nav-item sidebar-has-submenu">
+                    <div class="sidebar-collapsible-header">
+                        <?= $this->Html->link(
+                            '<i class="bi bi-journal-text me-2"></i><span class="flex-grow-1">Novedades</span>' .
+                            ($noveltiesCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $noveltiesCount . '</span>' : ''),
+                            ['controller' => 'EmployeeNovelties', 'action' => 'index'],
+                            ['class' => $navLink('EmployeeNovelties', 'index') . ' flex-grow-1 d-flex align-items-center', 'escape' => false]
+                        ) ?>
+                        <button class="sidebar-chevron-btn"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#novedades-submenu"
+                                aria-expanded="<?= $noveltiesSubActive ? 'true' : 'false' ?>"
+                                aria-controls="novedades-submenu">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="collapse<?= $noveltiesSubActive ? ' show' : '' ?>"
+                         id="novedades-submenu">
+                        <ul class="sidebar-submenu">
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-journal-text me-2"></i>Mis Novedades' .
+                                    ($noveltiesCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $noveltiesCount . '</span>' : ''),
+                                    ['controller' => 'EmployeeNovelties', 'action' => 'index'],
+                                    ['class' => $navLink('EmployeeNovelties', 'index') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-journal-check me-2"></i>Todas las Novedades',
+                                    ['controller' => 'EmployeeNovelties', 'action' => 'all'],
+                                    ['class' => $navLink('EmployeeNovelties', 'all') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-x-circle me-2"></i>Rechazadas',
+                                    ['controller' => 'EmployeeNovelties', 'action' => 'rejected'],
+                                    ['class' => $navLink('EmployeeNovelties', 'rejected') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
                 <?php endif; ?>
                 <?php endif; ?>
