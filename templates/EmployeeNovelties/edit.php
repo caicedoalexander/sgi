@@ -211,6 +211,33 @@ $badgeColors = [
                     <span class="badge bg-<?= $novelty->is_paid ? 'success' : 'secondary' ?>"><?= $novelty->is_paid ? 'Sí' : 'No' ?></span>
                 </div>
             </div>
+            <?php if ($novelty->approved_by_user): ?>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Aprobador</div>
+                <div class="sgi-ledger-value"><?= h($novelty->approved_by_user->full_name ?? '—') ?></div>
+            </div>
+            <?php endif; ?>
+            <?php if ($novelty->area_approval): ?>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Estado Aprobación</div>
+                <div class="sgi-ledger-value">
+                    <?php
+                    $approvalBadge = match($novelty->area_approval) {
+                        NoveltyConstants::APPROVAL_APPROVED => 'bg-success',
+                        NoveltyConstants::APPROVAL_REJECTED => 'bg-danger',
+                        default => 'bg-warning text-dark',
+                    };
+                    ?>
+                    <span class="badge <?= $approvalBadge ?>"><?= h($novelty->area_approval) ?></span>
+                </div>
+            </div>
+            <?php endif; ?>
+            <?php if ($novelty->approved_at): ?>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Fecha Aprobación</div>
+                <div class="sgi-ledger-value"><?= $novelty->approved_at->format('d/m/Y H:i') ?></div>
+            </div>
+            <?php endif; ?>
             <?php if ($novelty->reason): ?>
             <div class="sgi-ledger-item" style="grid-column:span 4;">
                 <div class="sgi-ledger-label">Motivo</div>
