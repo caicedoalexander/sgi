@@ -64,6 +64,13 @@ class EmployeeNoveltiesController extends AppController
         $query = $this->EmployeeNovelties->find()
             ->contain(['Employees', 'NoveltyTypes', 'RegisteredByUsers'])
             ->where($conditions)
+            ->where(function ($exp) {
+                // In contabilidad, only show novelties not yet linked to a liquidation doc
+                return $exp->or([
+                    'EmployeeNovelties.pipeline_status !=' => NoveltyConstants::STATUS_CONTABILIDAD,
+                    'EmployeeNovelties.liquidation_doc_id IS' => null,
+                ]);
+            })
             ->order(['EmployeeNovelties.created' => 'DESC']);
 
         $statusFilter = $this->request->getQuery('pipeline_status');
