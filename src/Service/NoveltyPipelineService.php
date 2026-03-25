@@ -13,7 +13,7 @@ class NoveltyPipelineService
 {
     // Which statuses each role can see/work with in "Mis Novedades"
     private const ROLE_VISIBLE_STATUSES = [
-        RoleConstants::AUXILIAR_PERSONAL  => [
+        RoleConstants::AUXILIAR_PERSONAL => [
             NoveltyConstants::STATUS_APROBACION,
             NoveltyConstants::STATUS_RRHH,
             NoveltyConstants::STATUS_REVISION_FIRMAS,
@@ -25,11 +25,11 @@ class NoveltyPipelineService
             NoveltyConstants::STATUS_REVISION_FIRMAS,
             NoveltyConstants::STATUS_GDP,
         ],
-        RoleConstants::CONTABILIDAD       => [NoveltyConstants::STATUS_CONTABILIDAD],
-        RoleConstants::CONTADOR           => [NoveltyConstants::STATUS_REVISION_FIRMAS],
-        RoleConstants::COORDINADOR_ADMIN  => [NoveltyConstants::STATUS_REVISION_FIRMAS],
-        RoleConstants::TESORERIA          => [NoveltyConstants::STATUS_TESORERIA],
-        RoleConstants::ADMIN              => NoveltyConstants::PIPELINE_STATUSES,
+        RoleConstants::CONTABILIDAD => [NoveltyConstants::STATUS_CONTABILIDAD],
+        RoleConstants::CONTADOR => [NoveltyConstants::STATUS_REVISION_FIRMAS],
+        RoleConstants::COORDINADOR_ADMIN => [NoveltyConstants::STATUS_REVISION_FIRMAS],
+        RoleConstants::TESORERIA => [NoveltyConstants::STATUS_TESORERIA],
+        RoleConstants::ADMIN => NoveltyConstants::PIPELINE_STATUSES,
     ];
 
     // All novelty fields (for Admin)
@@ -55,26 +55,46 @@ class NoveltyPipelineService
 
     // Sections visible per role (non-Admin roles have fixed sections)
     private const VISIBLE_SECTIONS_BY_ROLE = [
-        RoleConstants::AUXILIAR_PERSONAL  => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas'],
-        RoleConstants::ASISTENTE_PERSONAL => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas'],
-        RoleConstants::CONTABILIDAD       => ['informacion', 'fechas', 'contabilidad'],
-        RoleConstants::CONTADOR           => ['informacion', 'fechas', 'firmas'],
-        RoleConstants::COORDINADOR_ADMIN  => ['informacion', 'fechas', 'firmas'],
-        RoleConstants::TESORERIA          => ['informacion'],
+        RoleConstants::AUXILIAR_PERSONAL => [
+            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas',
+        ],
+        RoleConstants::ASISTENTE_PERSONAL => [
+            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas',
+        ],
+        RoleConstants::CONTABILIDAD => ['informacion', 'fechas', 'contabilidad'],
+        RoleConstants::CONTADOR => ['informacion', 'fechas', 'firmas'],
+        RoleConstants::COORDINADOR_ADMIN => ['informacion', 'fechas', 'firmas'],
+        RoleConstants::TESORERIA => ['informacion'],
     ];
 
     // All sections in pipeline order (for Admin)
-    private const ALL_SECTIONS = ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'];
+    private const ALL_SECTIONS = [
+        'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
+    ];
 
     // Map pipeline statuses to which sections are visible up to that point (for Admin)
     private const SECTIONS_BY_STATUS = [
-        NoveltyConstants::STATUS_APROBACION     => ['informacion', 'fechas', 'motivo', 'aprobacion', 'firmas'],
-        NoveltyConstants::STATUS_RRHH           => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas'],
-        NoveltyConstants::STATUS_CONTABILIDAD   => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'],
-        NoveltyConstants::STATUS_REVISION_FIRMAS => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'],
-        NoveltyConstants::STATUS_GDP            => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'],
-        NoveltyConstants::STATUS_TESORERIA      => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'],
-        NoveltyConstants::STATUS_PAGADA         => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'],
+        NoveltyConstants::STATUS_APROBACION => [
+            'informacion', 'fechas', 'motivo', 'aprobacion', 'firmas',
+        ],
+        NoveltyConstants::STATUS_RRHH => [
+            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas',
+        ],
+        NoveltyConstants::STATUS_CONTABILIDAD => [
+            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
+        ],
+        NoveltyConstants::STATUS_REVISION_FIRMAS => [
+            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
+        ],
+        NoveltyConstants::STATUS_GDP => [
+            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
+        ],
+        NoveltyConstants::STATUS_TESORERIA => [
+            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
+        ],
+        NoveltyConstants::STATUS_PAGADA => [
+            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
+        ],
     ];
 
     /**

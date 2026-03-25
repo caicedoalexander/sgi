@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
-use App\Constants\RoleConstants;
 use App\Service\ApprovalTokenService;
 use App\Service\LeaveDocumentService;
+use App\Service\NotificationService;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
@@ -417,7 +417,7 @@ class EmployeeNoveltiesController extends AppController
                     $approversTable = TableRegistry::getTableLocator()->get('Users');
                     $approver = $approversTable->get($novelty->approver_id);
                     if ($approver && !empty($approver->email)) {
-                        $notificationService = new \App\Service\NotificationService();
+                        $notificationService = new NotificationService();
                         $notificationService->sendNoveltyApprovalEmail($approver, $novelty, $approvalUrl);
                     }
                 }
@@ -557,7 +557,7 @@ class EmployeeNoveltiesController extends AppController
         $approversTable = TableRegistry::getTableLocator()->get('Users');
         $approver = $approversTable->get($novelty->approver_id);
         if ($approver && !empty($approver->email)) {
-            $notificationService = new \App\Service\NotificationService();
+            $notificationService = new NotificationService();
             $notificationService->sendNoveltyApprovalEmail($approver, $novelty, $approvalUrl);
         }
 
