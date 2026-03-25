@@ -21,17 +21,20 @@ $isPartialPayment = ($currentStatus === InvoiceConstants::STATUS_TESORERIA && $p
 ?>
 <?php
 $totalSteps = count($pipelineStatuses);
-$progressPercent = $totalSteps > 0 ? ($currentIndex / ($totalSteps)) * 100 : 0;
+// Lines start at center of first circle, end at center of last circle
+// Each flex:1 item = 100/N wide, center of item i = (i+0.5)*100/N
+$lineOffset = $totalSteps > 1 ? 50 / $totalSteps : 0;
+$progressPercent = $totalSteps > 1 ? ($currentIndex / ($totalSteps - 1)) * 100 : 0;
 $progressColor = $isRejected ? '#dc3545' : 'var(--primary-color)';
 ?>
 <div class="pipeline-progress">
     <div class="d-flex align-items-center justify-content-between position-relative">
-        <!-- Base line (gray) -->
+        <!-- Base line (gray): center of first to center of last -->
         <div class="position-absolute"
-             style="top:24px;left:12.5%;right:12.5%;height:3px;background:#dee2e6;z-index:0;"></div>
-        <!-- Progress line (colored) -->
+             style="top:24px;left:<?= $lineOffset ?>%;right:<?= $lineOffset ?>%;height:3px;background:#dee2e6;z-index:0;"></div>
+        <!-- Progress line (colored): same origin, width as % of line span -->
         <div class="position-absolute"
-             style="top:24px;left:12.5%;width:<?= $progressPercent ?>%;height:3px;background:<?= $progressColor ?>;z-index:0;transition:width .5s ease,background .3s ease;"></div>
+             style="top:24px;left:<?= $lineOffset ?>%;width:calc((100% - <?= 2 * $lineOffset ?>%) * <?= $progressPercent / 100 ?>);height:3px;background:<?= $progressColor ?>;z-index:0;transition:width .5s ease,background .3s ease;"></div>
 
         <?php foreach ($pipelineStatuses as $i => $status): ?>
             <?php
