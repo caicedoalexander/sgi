@@ -218,6 +218,8 @@ $badgeColors = [
 
     <div class="card-body p-4" style="padding-top:0 !important;">
 
+        <?php $hasEditableFields = !empty($editableFields ?? []); ?>
+        <?php if ($hasEditableFields): ?>
         <!-- Section: Gestión (RRHH fields) -->
         <?php if (in_array('rrhh', $sections)): ?>
         <div class="mb-4">
@@ -411,6 +413,13 @@ $badgeColors = [
             <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">
                 <i class="bi bi-x-lg me-1"></i>Rechazar Individualmente
             </button>
+        </div>
+        <?php endif; ?>
+
+        <?php else: ?>
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            No tiene permisos de edición para esta novedad en el estado actual.
         </div>
         <?php endif; ?>
 

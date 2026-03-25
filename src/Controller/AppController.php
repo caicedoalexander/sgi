@@ -9,6 +9,7 @@ use App\Constants\NoveltyConstants;
 use App\Constants\PettyCashConstants;
 use App\Service\AuthorizationService;
 use App\Service\InvoicePipelineService;
+use App\Service\NoveltyPipelineService;
 use Cake\Controller\Controller;
 use Cake\Event\EventInterface;
 use Cake\ORM\TableRegistry;
@@ -186,9 +187,18 @@ class AppController extends Controller
                 ->count());
 
             $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
-            $this->set('noveltiesCount', $noveltiesTable->find()
-                ->where(['pipeline_status NOT IN' => [NoveltyConstants::STATUS_PAGADA, NoveltyConstants::STATUS_RECHAZADA]])
-                ->count());
+            $noveltyPipeline = new NoveltyPipelineService();
+            $noveltyVisibleStatuses = $noveltyPipeline->getVisibleStatuses($roleName);
+            if (!empty($noveltyVisibleStatuses)) {
+                $this->set('noveltiesCount', $noveltiesTable->find()
+                    ->where([
+                        'pipeline_status IN' => $noveltyVisibleStatuses,
+                        'pipeline_status !=' => NoveltyConstants::STATUS_RECHAZADA,
+                    ])
+                    ->count());
+            } else {
+                $this->set('noveltiesCount', 0);
+            }
         } catch (Exception $e) {
             $this->set('sidebarCounters', []);
             $this->set('totalInvoicesCount', 0);
