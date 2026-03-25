@@ -37,7 +37,15 @@ $this->assign('title', 'Tipos de Novedad');
                     <td>
                         <?php if (!empty($noveltyType->child_novelty_types)): ?>
                             <?php foreach ($noveltyType->child_novelty_types as $child): ?>
-                                <span class="badge bg-light text-dark border me-1"><?= h($child->name) ?></span>
+                                <?php if (!empty($userPermissions['novelty_types']['can_edit'])): ?>
+                                    <?= $this->Html->link(
+                                        h($child->name) . ' <i class="bi bi-pencil-fill" style="font-size:0.65em;"></i>',
+                                        ['action' => 'edit', $child->id],
+                                        ['class' => 'badge bg-light text-dark border me-1 text-decoration-none', 'escape' => false, 'title' => 'Editar subtipo']
+                                    ) ?>
+                                <?php else: ?>
+                                    <span class="badge bg-light text-dark border me-1"><?= h($child->name) ?></span>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <span class="text-muted">—</span>

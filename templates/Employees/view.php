@@ -305,42 +305,6 @@ foreach ($folders as $folder) {
 
 </div>
 
-<!-- Historial de Cambios -->
-<?php if (!empty($employee->employee_histories)): ?>
-<div class="card card-primary mb-4">
-    <div class="card-header">
-        <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-clock-history"></i>
-            Historial de Cambios
-        </span>
-    </div>
-    <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
-        <table class="table table-sm table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Fecha</th>
-                    <th>Usuario</th>
-                    <th>Campo</th>
-                    <th>Valor Anterior</th>
-                    <th>Valor Nuevo</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($employee->employee_histories as $history): ?>
-                <tr>
-                    <td style="font-size:.8rem;white-space:nowrap;"><?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?></td>
-                    <td style="font-size:.8rem;"><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
-                    <td style="font-size:.8rem;"><?= h($fieldLabels[$history->field_changed] ?? $history->field_changed) ?></td>
-                    <td style="font-size:.8rem;" class="text-muted"><?= h($history->old_value) ?: '—' ?></td>
-                    <td style="font-size:.8rem;" class="fw-semibold"><?= h($history->new_value) ?: '—' ?></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-</div>
-<?php endif; ?>
-
 <!-- Novedades -->
 <?php
 use App\Constants\NoveltyConstants;
@@ -551,6 +515,42 @@ $novedades = $employee->employee_novelties ?? [];
         </div>
     <?php endif; ?>
 </div>
+
+<!-- Historial de Cambios -->
+<?php if (!empty($employee->employee_histories)): ?>
+<div class="card card-primary mb-4">
+    <div class="card-header">
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-clock-history"></i>
+            Historial de Cambios
+        </span>
+    </div>
+    <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
+        <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Campo</th>
+                    <th>Valor Anterior</th>
+                    <th>Valor Nuevo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($employee->employee_histories as $history): ?>
+                <tr>
+                    <td style="font-size:.8rem;white-space:nowrap;"><?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?></td>
+                    <td style="font-size:.8rem;"><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
+                    <td style="font-size:.8rem;"><?= h($fieldLabels[$history->field_changed] ?? $history->field_changed) ?></td>
+                    <td style="font-size:.8rem;" class="text-muted"><?= h($history->old_value) ?: '—' ?></td>
+                    <td style="font-size:.8rem;" class="fw-semibold"><?= h($history->new_value) ?: '—' ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Modal: Nueva Carpeta -->
 <div class="modal fade" id="newFolderModal" tabindex="-1">
