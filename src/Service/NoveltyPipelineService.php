@@ -4,12 +4,79 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\NoveltyConstants;
+use App\Constants\RoleConstants;
 use App\Model\Entity\EmployeeNovelty;
 use Cake\ORM\TableRegistry;
 use DateTime;
 
 class NoveltyPipelineService
 {
+    // Which statuses each role can see/work with in "Mis Novedades"
+    private const ROLE_VISIBLE_STATUSES = [
+        RoleConstants::AUXILIAR_PERSONAL  => [
+            NoveltyConstants::STATUS_APROBACION,
+            NoveltyConstants::STATUS_RRHH,
+            NoveltyConstants::STATUS_REVISION_FIRMAS,
+            NoveltyConstants::STATUS_GDP,
+        ],
+        RoleConstants::ASISTENTE_PERSONAL => [
+            NoveltyConstants::STATUS_APROBACION,
+            NoveltyConstants::STATUS_RRHH,
+            NoveltyConstants::STATUS_REVISION_FIRMAS,
+            NoveltyConstants::STATUS_GDP,
+        ],
+        RoleConstants::CONTABILIDAD       => [NoveltyConstants::STATUS_CONTABILIDAD],
+        RoleConstants::CONTADOR           => [NoveltyConstants::STATUS_REVISION_FIRMAS],
+        RoleConstants::COORDINADOR_ADMIN  => [NoveltyConstants::STATUS_REVISION_FIRMAS],
+        RoleConstants::TESORERIA          => [NoveltyConstants::STATUS_TESORERIA],
+        RoleConstants::ADMIN              => NoveltyConstants::PIPELINE_STATUSES,
+    ];
+
+    // All novelty fields (for Admin)
+    private const ALL_FIELDS = [
+        'approver_id', 'area_approval', 'passes_payroll',
+        'rrhh_by', 'liquidation_doc_id',
+    ];
+
+    // Fields editable by role in each status
+    private const EDITABLE_FIELDS = [
+        RoleConstants::AUXILIAR_PERSONAL => [
+            NoveltyConstants::STATUS_APROBACION => ['approver_id'],
+            NoveltyConstants::STATUS_RRHH => ['passes_payroll'],
+        ],
+        RoleConstants::ASISTENTE_PERSONAL => [
+            NoveltyConstants::STATUS_APROBACION => ['approver_id'],
+            NoveltyConstants::STATUS_RRHH => ['passes_payroll'],
+        ],
+        RoleConstants::CONTABILIDAD => [
+            NoveltyConstants::STATUS_CONTABILIDAD => ['liquidation_doc_id'],
+        ],
+    ];
+
+    // Sections visible per role (non-Admin roles have fixed sections)
+    private const VISIBLE_SECTIONS_BY_ROLE = [
+        RoleConstants::AUXILIAR_PERSONAL  => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas'],
+        RoleConstants::ASISTENTE_PERSONAL => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas'],
+        RoleConstants::CONTABILIDAD       => ['informacion', 'fechas', 'contabilidad'],
+        RoleConstants::CONTADOR           => ['informacion', 'fechas', 'firmas'],
+        RoleConstants::COORDINADOR_ADMIN  => ['informacion', 'fechas', 'firmas'],
+        RoleConstants::TESORERIA          => ['informacion'],
+    ];
+
+    // All sections in pipeline order (for Admin)
+    private const ALL_SECTIONS = ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'];
+
+    // Map pipeline statuses to which sections are visible up to that point (for Admin)
+    private const SECTIONS_BY_STATUS = [
+        NoveltyConstants::STATUS_APROBACION     => ['informacion', 'fechas', 'motivo', 'aprobacion', 'firmas'],
+        NoveltyConstants::STATUS_RRHH           => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas'],
+        NoveltyConstants::STATUS_CONTABILIDAD   => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'],
+        NoveltyConstants::STATUS_REVISION_FIRMAS => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'],
+        NoveltyConstants::STATUS_GDP            => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'],
+        NoveltyConstants::STATUS_TESORERIA      => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'],
+        NoveltyConstants::STATUS_PAGADA         => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'],
+    ];
+
     /**
      * Get the next status for a novelty.
      * Only skips aprobacion if the type doesn't require boss approval.
@@ -373,5 +440,57 @@ class NoveltyPipelineService
         }
 
         return $fields;
+    }
+
+    /**
+     * Get the statuses visible to a role in "Mis Novedades".
+     */
+    public function getVisibleStatuses(string $roleName): array
+    {
+        return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+    }
+
+    /**
+     * Get editable fields for a role in a given status.
+     */
+    public function getEditableFields(string $roleName, string $status): array
+    {
+        if ($roleName === RoleConstants::ADMIN) {
+            return self::ALL_FIELDS;
+        }
+
+        return self::EDITABLE_FIELDS[$roleName][$status] ?? [];
+    }
+
+    /**
+     * Get visible sections for a role in a given status.
+     */
+    public function getVisibleSections(string $roleName, string $status): array
+    {
+        if ($roleName === RoleConstants::ADMIN) {
+            return self::SECTIONS_BY_STATUS[$status] ?? self::ALL_SECTIONS;
+        }
+
+        return self::VISIBLE_SECTIONS_BY_ROLE[$roleName] ?? [];
+    }
+
+    /**
+     * Check if a role can advance from a given status.
+     */
+    public function canAdvanceFromStatus(string $roleName, string $status): bool
+    {
+        $visible = self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+
+        return in_array($status, $visible, true);
+    }
+
+    /**
+     * Filter entity data to only allowed fields for the role/status.
+     */
+    public function filterEntityData(array $data, string $roleName, string $status): array
+    {
+        $allowed = $this->getEditableFields($roleName, $status);
+
+        return array_intersect_key($data, array_flip($allowed));
     }
 }
