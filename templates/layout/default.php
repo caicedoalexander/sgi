@@ -223,13 +223,6 @@ $noveltiesCount = $noveltiesCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-journal-check me-2"></i>Todas las Novedades',
-                                    ['controller' => 'EmployeeNovelties', 'action' => 'all'],
-                                    ['class' => $navLink('EmployeeNovelties', 'all') . ' d-flex align-items-center', 'escape' => false]
-                                ) ?>
-                            </li>
-                            <li class="nav-item">
-                                <?= $this->Html->link(
                                     '<i class="bi bi-x-circle me-2"></i>Rechazadas',
                                     ['controller' => 'EmployeeNovelties', 'action' => 'rejected'],
                                     ['class' => $navLink('EmployeeNovelties', 'rejected') . ' d-flex align-items-center', 'escape' => false]
