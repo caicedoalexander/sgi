@@ -195,6 +195,12 @@ class AppController extends Controller
                         'pipeline_status IN' => $noveltyVisibleStatuses,
                         'pipeline_status !=' => NoveltyConstants::STATUS_RECHAZADA,
                     ])
+                    ->where(function ($exp) {
+                        return $exp->or([
+                            'pipeline_status !=' => NoveltyConstants::STATUS_CONTABILIDAD,
+                            'liquidation_doc_id IS' => null,
+                        ]);
+                    })
                     ->count());
             } else {
                 $this->set('noveltiesCount', 0);
