@@ -451,17 +451,6 @@ $badgeColors = [
         </div>
         <?php endif; ?>
 
-        <!-- Grouped novelty: reject-only -->
-        <?php if (!$isRejected && !$novelty->isPaid() && $novelty->isGrouped()): ?>
-        <div class="pt-3" style="border-top:1px solid var(--border-color);">
-            <div class="text-muted small mb-2">
-                <i class="bi bi-info-circle me-1"></i>Esta novedad avanza desde su documento de liquidación.
-            </div>
-            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal">
-                <i class="bi bi-x-lg me-1"></i>Rechazar Individualmente
-            </button>
-        </div>
-        <?php endif; ?>
 
         <?php else: ?>
         <div class="alert alert-info mb-0">
