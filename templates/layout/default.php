@@ -198,10 +198,9 @@ $noveltiesCount = $noveltiesCount ?? 0;
                 <li class="nav-item sidebar-has-submenu">
                     <div class="sidebar-collapsible-header">
                         <?= $this->Html->link(
-                            '<i class="bi bi-journal-text me-2"></i><span class="flex-grow-1">Novedades</span>' .
-                            ($noveltiesCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $noveltiesCount . '</span>' : ''),
-                            ['controller' => 'EmployeeNovelties', 'action' => 'index'],
-                            ['class' => $navLink('EmployeeNovelties', 'index') . ' flex-grow-1 d-flex align-items-center', 'escape' => false]
+                            '<i class="bi bi-journal-text me-2"></i><span class="flex-grow-1">Todas las Novedades</span>',
+                            ['controller' => 'EmployeeNovelties', 'action' => 'all'],
+                            ['class' => $navLink('EmployeeNovelties', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false]
                         ) ?>
                         <button class="sidebar-chevron-btn"
                                 data-bs-toggle="collapse"
