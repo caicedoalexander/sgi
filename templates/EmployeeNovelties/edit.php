@@ -142,124 +142,81 @@ $badgeColors = [
         ]) ?>
     </div>
 
-    <div class="card-body p-4">
-
-        <!-- Section: Información de la Novedad -->
-        <?php if (in_array('informacion', $sections)): ?>
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-file-text me-1"></i>Información
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+    <!-- Ficha resumen (ledger) -->
+    <div style="padding:1rem 1.5rem .75rem;">
+        <div class="sgi-ledger">
+            <div class="sgi-ledger-item" style="grid-column:span 2;">
+                <div class="sgi-ledger-label">Empleado</div>
+                <div class="sgi-ledger-value"><?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?></div>
             </div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Empleado</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Tipo de Novedad</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= h($novelty->novelty_type->name ?? '—') ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Fecha Diligenciamiento</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= $novelty->filing_date?->format('d/m/Y') ?? '—' ?>">
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Tipo de Novedad</div>
+                <div class="sgi-ledger-value"><?= h($novelty->novelty_type->name ?? '—') ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Diligenciamiento</div>
+                <div class="sgi-ledger-value"><?= $novelty->filing_date?->format('d/m/Y') ?? '—' ?></div>
+            </div>
+            <?php if ($novelty->permission_date): ?>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Fecha del Permiso</div>
+                <div class="sgi-ledger-value"><?= $novelty->permission_date->format('d/m/Y') ?></div>
+            </div>
+            <?php endif; ?>
+            <?php if ($novelty->schedule_type): ?>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Horario</div>
+                <div class="sgi-ledger-value"><?= $scheduleLabels[$novelty->schedule_type] ?? h($novelty->schedule_type) ?></div>
+            </div>
+            <?php endif; ?>
+            <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_DAYS): ?>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Fecha Inicio</div>
+                <div class="sgi-ledger-value"><?= $novelty->start_date?->format('d/m/Y') ?: '—' ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Fecha Fin</div>
+                <div class="sgi-ledger-value"><?= $novelty->end_date?->format('d/m/Y') ?: '—' ?></div>
+            </div>
+            <?php endif; ?>
+            <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_HOURS): ?>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Hora Salida</div>
+                <div class="sgi-ledger-value"><?= h($novelty->start_time) ?: '—' ?></div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Hora Entrada</div>
+                <div class="sgi-ledger-value"><?= h($novelty->end_time) ?: '—' ?></div>
+            </div>
+            <?php endif; ?>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Remunerado</div>
+                <div class="sgi-ledger-value">
+                    <span class="badge bg-<?= $novelty->is_paid ? 'success' : 'secondary' ?>"><?= $novelty->is_paid ? 'Sí' : 'No' ?></span>
                 </div>
             </div>
-
-            <!-- Massive employees -->
-            <?php if (!empty($novelty->novelty_massive_employees)): ?>
-            <div class="mt-3">
-                <label class="form-label">Empleados (Masiva)</label>
-                <div>
-                    <?php foreach ($novelty->novelty_massive_employees as $me): ?>
-                        <span class="badge bg-light text-dark me-1 mb-1"><?= h($me->employee->full_name ?? '—') ?></span>
-                    <?php endforeach; ?>
+            <?php if ($novelty->reason): ?>
+            <div class="sgi-ledger-item" style="grid-column:span 4;">
+                <div class="sgi-ledger-label">Motivo</div>
+                <div class="sgi-ledger-value" style="white-space:normal;font-weight:400;font-size:.8rem;line-height:1.5;">
+                    <?= nl2br(h($novelty->reason)) ?>
                 </div>
             </div>
             <?php endif; ?>
         </div>
-        <?php endif; ?>
-
-        <!-- Section: Fechas y Horario -->
-        <?php if (in_array('fechas', $sections)): ?>
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-calendar3 me-1"></i>Fechas y Horario
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
-            <div class="row g-3">
-                <?php if ($novelty->permission_date): ?>
-                <div class="col-md-3">
-                    <label class="form-label">Fecha del Permiso</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= $novelty->permission_date->format('d/m/Y') ?>">
-                </div>
-                <?php endif; ?>
-                <?php if ($novelty->schedule_type): ?>
-                <div class="col-md-3">
-                    <label class="form-label">Tipo de Horario</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= $scheduleLabels[$novelty->schedule_type] ?? h($novelty->schedule_type) ?>">
-                </div>
-                <?php endif; ?>
-                <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_DAYS): ?>
-                <div class="col-md-3">
-                    <label class="form-label">Fecha Inicio</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= $novelty->start_date?->format('d/m/Y') ?: '—' ?>">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Fecha Fin</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= $novelty->end_date?->format('d/m/Y') ?: '—' ?>">
-                </div>
-                <?php endif; ?>
-                <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_HOURS): ?>
-                <div class="col-md-3">
-                    <label class="form-label">Hora Salida</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= h($novelty->start_time) ?: '—' ?>">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Hora Entrada</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= h($novelty->end_time) ?: '—' ?>">
-                </div>
-                <?php endif; ?>
-                <div class="col-md-3">
-                    <label class="form-label">Remunerado</label>
-                    <div class="pt-1">
-                        <span class="badge bg-<?= $novelty->is_paid ? 'success' : 'secondary' ?>"><?= $novelty->is_paid ? 'Sí' : 'No' ?></span>
-                    </div>
-                </div>
+        <?php if (!empty($novelty->novelty_massive_employees)): ?>
+        <div class="mt-2">
+            <span style="font-size:.55rem;text-transform:uppercase;letter-spacing:.14em;color:#aaa;font-weight:600;">Empleados (Masiva)</span>
+            <div class="mt-1">
+                <?php foreach ($novelty->novelty_massive_employees as $me): ?>
+                    <span class="badge bg-light text-dark me-1 mb-1"><?= h($me->employee->full_name ?? '—') ?></span>
+                <?php endforeach; ?>
             </div>
         </div>
         <?php endif; ?>
+    </div>
 
-        <!-- Section: Motivo -->
-        <?php if (in_array('motivo', $sections) && $novelty->reason): ?>
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-chat-left-text me-1"></i>Motivo
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
-            <div style="font-size:.875rem;color:#333;line-height:1.65;">
-                <?= nl2br(h($novelty->reason)) ?>
-            </div>
-        </div>
-        <?php endif; ?>
+    <div class="card-body p-4" style="padding-top:0 !important;">
 
         <!-- Section: Gestión (RRHH fields) -->
         <?php if (in_array('rrhh', $sections)): ?>
