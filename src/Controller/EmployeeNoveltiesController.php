@@ -175,6 +175,9 @@ class EmployeeNoveltiesController extends AppController
         ]);
 
         $user = $this->Authentication->getIdentity()->getOriginalData();
+        $roleName = $this->_getUserRoleName($user);
+        $editableFields = $this->pipelineService->getEditableFields($roleName, $novelty->pipeline_status);
+        $visibleSections = $this->pipelineService->getVisibleSections($roleName, $novelty->pipeline_status);
 
         // Mark observations as read
         $this->observationService->markAsRead($user->id, noveltyId: $novelty->id);
@@ -229,6 +232,9 @@ class EmployeeNoveltiesController extends AppController
             'approversList',
             'documentsByStatus',
             'liquidationDocs',
+            'roleName',
+            'editableFields',
+            'visibleSections',
         ));
     }
 
