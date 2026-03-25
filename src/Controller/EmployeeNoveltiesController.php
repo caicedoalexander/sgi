@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Constants\EmployeeStatusConstants;
 use App\Constants\NoveltyConstants;
 use App\Constants\RoleConstants;
 use App\Service\ApprovalTokenService;
@@ -45,25 +44,27 @@ class EmployeeNoveltiesController extends AppController
     }
 
     /**
+     * Index — "Mis Novedades" filtered by role's visible statuses.
+     *
      * @return \Cake\Http\Response|null|void
      */
     public function index()
     {
         $user = $this->Authentication->getIdentity()->getOriginalData();
         $roleName = $this->_getUserRoleName($user);
+        $visibleStatuses = $this->pipelineService->getVisibleStatuses($roleName);
+
+        $conditions = [];
+        if (!empty($visibleStatuses)) {
+            $conditions['EmployeeNovelties.pipeline_status IN'] = $visibleStatuses;
+        }
+        // Exclude rejected from "Mis Novedades"
+        $conditions['EmployeeNovelties.pipeline_status !='] = NoveltyConstants::STATUS_RECHAZADA;
 
         $query = $this->EmployeeNovelties->find()
             ->contain(['Employees', 'NoveltyTypes', 'RegisteredByUsers'])
+            ->where($conditions)
             ->order(['EmployeeNovelties.created' => 'DESC']);
-
-        if ($roleName !== RoleConstants::ADMIN) {
-            $subordinateIds = $this->_getSubordinateEmployeeIds($user);
-            if (!empty($subordinateIds)) {
-                $query->where(['EmployeeNovelties.employee_id IN' => $subordinateIds]);
-            } else {
-                $query->where(['1 = 0']);
-            }
-        }
 
         $statusFilter = $this->request->getQuery('pipeline_status');
         if ($statusFilter) {
@@ -81,7 +82,70 @@ class EmployeeNoveltiesController extends AppController
             ->order(['name' => 'ASC'])
             ->toArray();
 
-        $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes'));
+        $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes', 'visibleStatuses'));
+    }
+
+    /**
+     * All — "Todas las Novedades" (read-only, all statuses).
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function all()
+    {
+        $query = $this->EmployeeNovelties->find()
+            ->contain(['Employees', 'NoveltyTypes', 'RegisteredByUsers'])
+            ->order(['EmployeeNovelties.created' => 'DESC']);
+
+        $statusFilter = $this->request->getQuery('pipeline_status');
+        if ($statusFilter) {
+            $query->where(['EmployeeNovelties.pipeline_status' => $statusFilter]);
+        }
+
+        $typeFilter = $this->request->getQuery('novelty_type_id');
+        if ($typeFilter) {
+            $query->where(['EmployeeNovelties.novelty_type_id' => $typeFilter]);
+        }
+
+        $novelties = $this->paginate($query);
+
+        $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list')
+            ->order(['name' => 'ASC'])
+            ->toArray();
+
+        $visibleStatuses = [];
+
+        $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes', 'visibleStatuses'));
+        $this->render('index');
+    }
+
+    /**
+     * Rejected — "Novedades Rechazadas".
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function rejected()
+    {
+        $query = $this->EmployeeNovelties->find()
+            ->contain(['Employees', 'NoveltyTypes', 'RegisteredByUsers'])
+            ->where(['EmployeeNovelties.pipeline_status' => NoveltyConstants::STATUS_RECHAZADA])
+            ->order(['EmployeeNovelties.created' => 'DESC']);
+
+        $typeFilter = $this->request->getQuery('novelty_type_id');
+        if ($typeFilter) {
+            $query->where(['EmployeeNovelties.novelty_type_id' => $typeFilter]);
+        }
+
+        $novelties = $this->paginate($query);
+
+        $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list')
+            ->order(['name' => 'ASC'])
+            ->toArray();
+
+        $statusFilter = null;
+        $visibleStatuses = [];
+
+        $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes', 'visibleStatuses'));
+        $this->render('index');
     }
 
     /**
@@ -638,29 +702,5 @@ class EmployeeNoveltiesController extends AppController
         }
 
         return $grouped;
-    }
-
-    /**
-     * @param object $user Current user.
-     * @return array
-     */
-    private function _getSubordinateEmployeeIds(object $user): array
-    {
-        $employeesTable = TableRegistry::getTableLocator()->get('Employees');
-
-        $userEmployee = $employeesTable->find()
-            ->where(['email' => $user->email, 'employee_status_id' => EmployeeStatusConstants::ACTIVO])
-            ->first();
-
-        if (!$userEmployee || !$userEmployee->position_id) {
-            return [];
-        }
-
-        $subordinates = $employeesTable->find()
-            ->where(['supervisor_position_id' => $userEmployee->position_id])
-            ->select(['id'])
-            ->all();
-
-        return array_map(fn($e) => $e->id, $subordinates->toArray());
     }
 }
