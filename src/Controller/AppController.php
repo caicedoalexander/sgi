@@ -206,6 +206,11 @@ class AppController extends Controller
                 $this->set('noveltiesCount', 0);
             }
 
+            // Rejected novelties count
+            $this->set('rejectedNoveltiesCount', $noveltiesTable->find()
+                ->where(['pipeline_status' => NoveltyConstants::STATUS_RECHAZADA])
+                ->count());
+
             // Active novelties count (vigentes hoy)
             $today = date('Y-m-d');
             $activeNoveltiesCount = $noveltiesTable->find()
@@ -235,6 +240,7 @@ class AppController extends Controller
             $this->set('pettyCashCount', 0);
             $this->set('legalizationCount', 0);
             $this->set('noveltiesCount', 0);
+            $this->set('rejectedNoveltiesCount', 0);
             $this->set('activeNoveltiesCount', 0);
         }
     }

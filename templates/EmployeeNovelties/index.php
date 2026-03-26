@@ -32,6 +32,8 @@ $statusBadges = [
 ];
 $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
 $statusLabels = NoveltyConstants::STATUS_LABELS;
+$calendarColors = NoveltyConstants::CALENDAR_COLORS;
+$calendarColorCount = count($calendarColors);
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
@@ -115,7 +117,10 @@ $statusLabels = NoveltyConstants::STATUS_LABELS;
                     <tr class="clickable-row <?= $novelty->isRejected() ? 'table-danger' : '' ?>"
                         data-href="<?= $this->Url->build(['action' => $linkAction, $novelty->id]) ?>">
                         <td><?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?></td>
-                        <td><?= h($novelty->novelty_type->name ?? '—') ?></td>
+                        <td><?php
+                            $typeName = h($novelty->novelty_type->name ?? '—');
+                            $typeColor = $calendarColors[($novelty->novelty_type_id - 1) % $calendarColorCount];
+                        ?><span class="badge" style="background-color:<?= $typeColor ?>"><?= $typeName ?></span></td>
                         <td><?= $novelty->permission_date?->format('d/m/Y') ?: '—' ?></td>
                         <td><?= $scheduleLabels[$novelty->schedule_type] ?? '—' ?></td>
                         <td>

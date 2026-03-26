@@ -13,6 +13,7 @@ $rejectedInvoicesCount = $rejectedInvoicesCount ?? 0;
 $pettyCashCount = $pettyCashCount ?? 0;
 $legalizationCount = $legalizationCount ?? 0;
 $noveltiesCount = $noveltiesCount ?? 0;
+$rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -223,7 +224,8 @@ $noveltiesCount = $noveltiesCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-x-circle me-2"></i>Rechazadas',
+                                    '<i class="bi bi-x-circle me-2"></i>Rechazadas' .
+                                    ($rejectedNoveltiesCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $rejectedNoveltiesCount . '</span>' : ''),
                                     ['controller' => 'EmployeeNovelties', 'action' => 'rejected'],
                                     ['class' => $navLink('EmployeeNovelties', 'rejected') . ' d-flex align-items-center', 'escape' => false]
                                 ) ?>
