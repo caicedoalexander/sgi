@@ -391,7 +391,7 @@ $badgeColors = [
         <?php endif; ?>
 
         <?php if (in_array('contabilidad', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_CONTABILIDAD && !$novelty->isGrouped() && !$isRejected): ?>
-        <div class="pt-3" style="border-top:1px solid var(--border-color);">
+        <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
