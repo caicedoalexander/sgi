@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Constants\ContractTypeConstants;
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
+use App\Constants\NoveltyConstants;
 use DateTime;
 use Exception;
 
@@ -70,6 +71,33 @@ class DashboardController extends AppController
             if ($canView('employee_novelties')) {
                 $monthStart = date('Y-m-01 00:00:00');
                 $rrhhStats['novelties_month'] = $this->_safeCount('EmployeeNovelties', ['created >=' => $monthStart]);
+
+                // Active novelties today (vigentes)
+                $today = date('Y-m-d');
+                try {
+                    $rrhhStats['active_novelties'] = $this->fetchTable('EmployeeNovelties')
+                        ->find()
+                        ->where([
+                            'pipeline_status IN' => NoveltyConstants::ACTIVE_STATUSES,
+                        ])
+                        ->where(function ($exp) use ($today) {
+                            return $exp->or([
+                                $exp->and([
+                                    'schedule_type' => NoveltyConstants::SCHEDULE_DAYS,
+                                    'start_date <=' => $today,
+                                    'end_date >=' => $today,
+                                ]),
+                                $exp->and([
+                                    'schedule_type' => NoveltyConstants::SCHEDULE_HOURS,
+                                    'permission_date' => $today,
+                                ]),
+                            ]);
+                        })
+                        ->count();
+                } catch (Exception $e) {
+                    $rrhhStats['active_novelties'] = 0;
+                }
+
                 $recentNovelties = $this->_safeQuery(function () {
                     return $this->fetchTable('EmployeeNovelties')
                         ->find()

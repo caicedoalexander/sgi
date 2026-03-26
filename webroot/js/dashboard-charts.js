@@ -1,6 +1,8 @@
 /**
  * SGI Dashboard Charts
  * ApexCharts initialization from data-* attributes on div elements.
+ * Styled to match the SGI design system: no border-radius, border-based hierarchy,
+ * Inter font, micro-caps labels, muted grid, corporate color palette.
  */
 (function () {
     'use strict';
@@ -24,7 +26,7 @@
         rechazada:    'Rechazada'
     };
 
-    var CONTRACT_COLORS = ['#469D61', '#CD6A15', '#83542B'];
+    var CONTRACT_COLORS = ['#469D61', '#CD6A15', '#83542B', '#3B82F6', '#8B5CF6'];
     var NOVELTY_COLOR = '#469D61';
 
     /* ── Helpers ──────────────────────────────────────────────── */
@@ -53,34 +55,64 @@
         return '$' + v;
     }
 
-    /* ── Shared base configs ─────────────────────────────────── */
+    /* ── Shared SGI base configs ─────────────────────────────── */
     var fontFamily = "'Inter', system-ui, sans-serif";
+
+    // SGI micro-caps style for axis labels
+    var axisLabelStyle = {
+        fontSize: '10px',
+        fontWeight: 600,
+        colors: '#999',
+        fontFamily: fontFamily
+    };
+
+    var axisTitleStyle = {
+        fontSize: '9px',
+        fontWeight: 600,
+        color: '#bbb',
+        fontFamily: fontFamily
+    };
 
     var donutBase = {
         chart: {
             type: 'donut',
-            height: 300,
+            height: 280,
             fontFamily: fontFamily,
             animations: {
                 enabled: true,
                 easing: 'easeinout',
-                speed: 600,
-                animateGradually: { enabled: true, delay: 80 }
+                speed: 700,
+                animateGradually: { enabled: true, delay: 100 }
             }
         },
         stroke: { width: 2, colors: ['#fff'] },
         plotOptions: {
             pie: {
                 donut: {
-                    size: '65%',
+                    size: '70%',
                     labels: {
                         show: true,
+                        name: {
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            color: '#999',
+                            offsetY: -4
+                        },
+                        value: {
+                            fontSize: '18px',
+                            fontWeight: 700,
+                            color: '#212529',
+                            offsetY: 4
+                        },
                         total: {
                             show: true,
-                            fontSize: '11px',
+                            fontSize: '9px',
                             fontWeight: 600,
-                            color: '#6c757d',
-                            label: 'Total'
+                            color: '#999',
+                            label: 'TOTAL',
+                            formatter: function (w) {
+                                return w.globals.seriesTotals.reduce(function (a, b) { return a + b; }, 0);
+                            }
                         }
                     }
                 },
@@ -91,44 +123,51 @@
             position: 'bottom',
             fontSize: '11px',
             fontWeight: 500,
-            markers: { size: 5, offsetX: -2 },
-            itemMargin: { horizontal: 8, vertical: 4 }
+            fontFamily: fontFamily,
+            labels: { colors: '#555' },
+            markers: { size: 4, offsetX: -3, shape: 'square' },
+            itemMargin: { horizontal: 10, vertical: 3 }
         },
         dataLabels: {
             enabled: false
         },
         tooltip: {
-            style: { fontSize: '12px' }
+            style: { fontSize: '11px', fontFamily: fontFamily },
+            fillSeriesColor: false,
+            marker: { show: true }
         }
     };
 
     var barBase = {
         chart: {
             type: 'bar',
-            height: 300,
+            height: 280,
             fontFamily: fontFamily,
             toolbar: { show: false },
             animations: {
                 enabled: true,
                 easing: 'easeinout',
-                speed: 600,
-                animateGradually: { enabled: true, delay: 60 }
+                speed: 700,
+                animateGradually: { enabled: true, delay: 80 }
             }
         },
         plotOptions: {
             bar: {
-                borderRadius: 3,
-                columnWidth: '55%'
+                borderRadius: 0,
+                columnWidth: '50%'
             }
         },
         dataLabels: { enabled: false },
         grid: {
-            borderColor: '#f0f0f0',
-            strokeDashArray: 3,
-            xaxis: { lines: { show: false } }
+            borderColor: '#eee',
+            strokeDashArray: 0,
+            xaxis: { lines: { show: false } },
+            yaxis: { lines: { show: true } },
+            padding: { top: -8, bottom: 0 }
         },
         tooltip: {
-            style: { fontSize: '12px' }
+            style: { fontSize: '11px', fontFamily: fontFamily },
+            marker: { show: true }
         }
     };
 
@@ -153,25 +192,32 @@
             plotOptions: {
                 pie: {
                     donut: {
-                        size: '65%',
+                        size: '70%',
                         labels: {
                             show: true,
-                            total: {
-                                show: true,
-                                fontSize: '11px',
+                            name: {
+                                fontSize: '10px',
                                 fontWeight: 600,
-                                color: '#6c757d',
-                                label: 'Total',
-                                formatter: function (w) {
-                                    var total = w.globals.seriesTotals.reduce(function (a, b) { return a + b; }, 0);
-                                    return formatCurrency(total);
-                                }
+                                color: '#999',
+                                offsetY: -4
                             },
                             value: {
                                 fontSize: '16px',
                                 fontWeight: 700,
                                 color: '#212529',
+                                offsetY: 4,
                                 formatter: function (val) { return formatCurrency(val); }
+                            },
+                            total: {
+                                show: true,
+                                fontSize: '9px',
+                                fontWeight: 600,
+                                color: '#999',
+                                label: 'TOTAL',
+                                formatter: function (w) {
+                                    var total = w.globals.seriesTotals.reduce(function (a, b) { return a + b; }, 0);
+                                    return formatCurrency(total);
+                                }
                             }
                         }
                     },
@@ -179,7 +225,8 @@
                 }
             },
             tooltip: {
-                style: { fontSize: '12px' },
+                style: { fontSize: '11px', fontFamily: fontFamily },
+                fillSeriesColor: false,
                 y: {
                     formatter: function (val) { return formatCurrency(val); }
                 }
@@ -203,43 +250,51 @@
             ],
             chart: Object.assign({}, barBase.chart, {
                 type: 'line',
-                height: 300
+                height: 280
             }),
             stroke: {
-                width: [0, 3],
-                curve: 'smooth'
+                width: [0, 2],
+                curve: 'straight',
+                dashArray: [0, 0]
             },
-            colors: ['#469D61', '#0d6efd'],
+            colors: ['#469D61', '#212529'],
             fill: {
                 type: ['solid', 'solid'],
                 opacity: [0.85, 1]
             },
             plotOptions: {
                 bar: {
-                    borderRadius: 3,
-                    columnWidth: '50%'
+                    borderRadius: 0,
+                    columnWidth: '45%'
                 }
+            },
+            markers: {
+                size: [0, 3],
+                colors: ['#469D61', '#212529'],
+                strokeColors: '#fff',
+                strokeWidth: 2,
+                shape: 'square'
             },
             xaxis: {
                 categories: barLabels,
-                labels: { style: { fontSize: '11px', colors: '#6c757d' } },
-                axisBorder: { color: '#dee2e6' },
-                axisTicks: { color: '#dee2e6' }
+                labels: { style: axisLabelStyle },
+                axisBorder: { show: true, color: '#e0e0e0' },
+                axisTicks: { show: true, color: '#e0e0e0' }
             },
             yaxis: [
                 {
-                    title: { text: 'Cantidad', style: { fontSize: '10px', fontWeight: 600, color: '#adb5bd' } },
+                    title: { text: 'CANTIDAD', style: axisTitleStyle },
                     labels: {
-                        style: { fontSize: '11px', colors: '#6c757d' },
+                        style: axisLabelStyle,
                         formatter: function (v) { return Math.round(v); }
                     },
                     forceNiceScale: true
                 },
                 {
                     opposite: true,
-                    title: { text: 'Monto', style: { fontSize: '10px', fontWeight: 600, color: '#adb5bd' } },
+                    title: { text: 'MONTO', style: axisTitleStyle },
                     labels: {
-                        style: { fontSize: '11px', colors: '#6c757d' },
+                        style: axisLabelStyle,
                         formatter: function (v) { return abbreviate(v); }
                     }
                 }
@@ -247,15 +302,17 @@
             legend: {
                 position: 'top',
                 horizontalAlign: 'right',
-                fontSize: '11px',
-                fontWeight: 500,
-                markers: { size: 5, offsetX: -2 },
-                itemMargin: { horizontal: 8 }
+                fontSize: '10px',
+                fontWeight: 600,
+                fontFamily: fontFamily,
+                labels: { colors: '#777' },
+                markers: { size: 4, offsetX: -3, shape: 'square' },
+                itemMargin: { horizontal: 10 }
             },
             tooltip: {
                 shared: true,
                 intersect: false,
-                style: { fontSize: '12px' },
+                style: { fontSize: '11px', fontFamily: fontFamily },
                 y: {
                     formatter: function (val, opts) {
                         if (opts.seriesIndex === 1) return formatCurrency(val);
@@ -285,30 +342,7 @@
         new ApexCharts(contractEl, Object.assign({}, donutBase, {
             series: cValues,
             labels: cLabels,
-            colors: cColors,
-            plotOptions: {
-                pie: {
-                    donut: {
-                        size: '65%',
-                        labels: {
-                            show: true,
-                            total: {
-                                show: true,
-                                fontSize: '11px',
-                                fontWeight: 600,
-                                color: '#6c757d',
-                                label: 'Total'
-                            },
-                            value: {
-                                fontSize: '18px',
-                                fontWeight: 700,
-                                color: '#212529'
-                            }
-                        }
-                    },
-                    expandOnClick: false
-                }
-            }
+            colors: cColors
         })).render();
     }
 
@@ -325,20 +359,20 @@
             colors: [NOVELTY_COLOR],
             xaxis: {
                 categories: nLabels,
-                labels: { style: { fontSize: '11px', colors: '#6c757d' } },
-                axisBorder: { color: '#dee2e6' },
-                axisTicks: { color: '#dee2e6' }
+                labels: { style: axisLabelStyle },
+                axisBorder: { show: true, color: '#e0e0e0' },
+                axisTicks: { show: true, color: '#e0e0e0' }
             },
             yaxis: {
                 labels: {
-                    style: { fontSize: '11px', colors: '#6c757d' },
+                    style: axisLabelStyle,
                     formatter: function (v) { return Math.round(v); }
                 },
                 forceNiceScale: true
             },
             legend: { show: false },
             tooltip: {
-                style: { fontSize: '12px' },
+                style: { fontSize: '11px', fontFamily: fontFamily },
                 y: {
                     formatter: function (val) { return val + ' novedades'; }
                 }

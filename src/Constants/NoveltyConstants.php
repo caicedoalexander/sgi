@@ -36,6 +36,16 @@ final class NoveltyConstants
         self::STATUS_CONTABILIDAD,
     ];
 
+    // Statuses considered "active" (approved and processed)
+    public const ACTIVE_STATUSES = [
+        self::STATUS_RRHH,
+        self::STATUS_CONTABILIDAD,
+        self::STATUS_REVISION_FIRMAS,
+        self::STATUS_GDP,
+        self::STATUS_TESORERIA,
+        self::STATUS_PAGADA,
+    ];
+
     public const ALL_STATUSES = [
         self::STATUS_REGISTRO,
         self::STATUS_APROBACION,
@@ -140,6 +150,20 @@ final class NoveltyConstants
     public const APPROVAL_PENDING = 'Pendiente';
     public const APPROVAL_APPROVED = 'Aprobada';
     public const APPROVAL_REJECTED = 'Rechazada';
+
+    // Calendar event colors by novelty type ID (cycles for IDs > count)
+    public const CALENDAR_COLORS = [
+        '#469D61', // green
+        '#CD6A15', // orange
+        '#3B82F6', // blue
+        '#8B5CF6', // purple
+        '#EF4444', // red
+        '#F59E0B', // amber
+        '#06B6D4', // cyan
+        '#EC4899', // pink
+        '#10B981', // emerald
+        '#6366F1', // indigo
+    ];
 
     // Backward compat
     public const STATUS_PENDING = self::STATUS_REGISTRO;

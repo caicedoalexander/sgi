@@ -2758,3 +2758,9 @@ textarea.form-control {
     opacity: 0.4;
     background: #e9ecef;
 }
+
+/* =============================================
+   FullCalendar — SGI overrides
+   NOTE: !important required because FullCalendar v6
+   injects its CSS from the JS bundle AFTER this stylesheet.
+   ============================================= */

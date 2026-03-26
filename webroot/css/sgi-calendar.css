@@ -1,0 +1,177 @@
+/* =============================================
+   FullCalendar — SGI overrides
+   FullCalendar v6 adds .fc directly to the same
+   element that has .sgi-calendar, so we use the
+   compound selector .sgi-calendar.fc (no space).
+   ============================================= */
+
+/* Container padding */
+.sgi-calendar {
+    padding: .75rem 1rem 1rem;
+}
+
+/* Toolbar title */
+.sgi-calendar.fc .fc-toolbar-title {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -.03em;
+    color: #111;
+}
+
+/* Navigation buttons */
+.sgi-calendar.fc .fc-button {
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 0;
+    color: #333;
+    font-size: .78rem;
+    font-weight: 500;
+    padding: .3em .65em;
+    box-shadow: none;
+    transition: border-color .15s ease, background-color .15s ease;
+}
+.sgi-calendar.fc .fc-button:hover {
+    background-color: #f5f5f5;
+    border-color: #bbb;
+    color: #111;
+}
+.sgi-calendar.fc .fc-button:active,
+.sgi-calendar.fc .fc-button.fc-button-active {
+    background-color: var(--bg-dark);
+    border-color: var(--bg-dark);
+    color: #fff;
+}
+.sgi-calendar.fc .fc-button:focus {
+    box-shadow: none;
+}
+.sgi-calendar.fc .fc-button:disabled {
+    opacity: .45;
+}
+
+/* Button groups */
+.sgi-calendar.fc .fc-button-group > .fc-button {
+    border-radius: 0;
+}
+
+/* Today button */
+.sgi-calendar.fc .fc-today-button {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+    font-weight: 500;
+}
+.sgi-calendar.fc .fc-today-button:hover {
+    background-color: #3a8752;
+    border-color: #3a8752;
+    color: #fff;
+}
+.sgi-calendar.fc .fc-today-button:disabled {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+    opacity: .5;
+}
+
+/* Grid borders */
+.sgi-calendar.fc .fc-scrollgrid {
+    border-color: var(--border-color);
+    border-radius: 0;
+}
+.sgi-calendar.fc td,
+.sgi-calendar.fc th {
+    border-color: var(--border-color);
+}
+.sgi-calendar.fc .fc-scrollgrid-section > * {
+    border-color: var(--border-color);
+}
+
+/* Day headers — micro-caps */
+.sgi-calendar.fc .fc-col-header-cell {
+    background-color: #fafafa;
+    border-color: var(--border-color);
+    padding: .45rem 0;
+}
+.sgi-calendar.fc .fc-col-header-cell-cushion {
+    font-size: .65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #888;
+    text-decoration: none;
+}
+
+/* Day numbers */
+.sgi-calendar.fc .fc-daygrid-day-number {
+    font-size: .78rem;
+    font-weight: 500;
+    color: #444;
+    padding: .35rem .5rem;
+    text-decoration: none;
+}
+
+/* Today highlight */
+.sgi-calendar.fc .fc-day-today {
+    background-color: rgba(70, 157, 97, .04);
+}
+.sgi-calendar.fc .fc-day-today .fc-daygrid-day-number {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* Other month days */
+.sgi-calendar.fc .fc-day-other .fc-daygrid-day-number {
+    color: #ccc;
+}
+
+/* Events */
+.sgi-calendar.fc .fc-daygrid-event {
+    border-radius: 0;
+    border: none;
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: -.01em;
+    padding: 2px 5px;
+    margin-bottom: 1px;
+    cursor: pointer;
+    transition: opacity .15s ease;
+}
+.sgi-calendar.fc .fc-daygrid-event:hover {
+    opacity: .85;
+}
+.sgi-calendar.fc .fc-daygrid-dot-event {
+    border-radius: 0;
+}
+
+/* Event title */
+.sgi-calendar.fc .fc-event-title {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* More link */
+.sgi-calendar.fc .fc-daygrid-more-link {
+    font-size: .65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.sgi-calendar.fc .fc-daygrid-more-link:hover {
+    color: #3a8752;
+}
+
+/* Popover (more events) */
+.sgi-calendar.fc .fc-popover {
+    border-radius: 0;
+    border: 1px solid var(--border-color);
+    border-top: 2px solid var(--bg-dark);
+    box-shadow: none;
+}
+.sgi-calendar.fc .fc-popover-header {
+    background-color: #fafafa;
+    border-radius: 0;
+    font-size: .75rem;
+    font-weight: 600;
+}

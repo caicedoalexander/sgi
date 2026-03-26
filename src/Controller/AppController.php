@@ -61,7 +61,7 @@ class AppController extends Controller
     protected function _actionToPermission(string $action): string
     {
         return match ($action) {
-            'index', 'view', 'export', 'all', 'rejected', 'exportPdf', 'preview' => 'view',
+            'index', 'view', 'export', 'all', 'rejected', 'exportPdf', 'preview', 'active', 'activeEvents', 'allEvents' => 'view',
             'add', 'addFolder', 'uploadDocument', 'import' => 'add',
             'edit', 'advanceStatus', 'addObservation', 'testSmtp', 'approve', 'reject', 'generateApprovalLink', 'deactivate', 'saveFields', 'removeInvoice', 'advance', 'advanceGroup', 'addSignature', 'assignLiquidation', 'getFlags' => 'edit',
             'delete', 'deleteDocument' => 'delete',
@@ -205,6 +205,28 @@ class AppController extends Controller
             } else {
                 $this->set('noveltiesCount', 0);
             }
+
+            // Active novelties count (vigentes hoy)
+            $today = date('Y-m-d');
+            $activeNoveltiesCount = $noveltiesTable->find()
+                ->where([
+                    'pipeline_status IN' => NoveltyConstants::ACTIVE_STATUSES,
+                ])
+                ->where(function ($exp) use ($today) {
+                    return $exp->or([
+                        $exp->and([
+                            'schedule_type' => NoveltyConstants::SCHEDULE_DAYS,
+                            'start_date <=' => $today,
+                            'end_date >=' => $today,
+                        ]),
+                        $exp->and([
+                            'schedule_type' => NoveltyConstants::SCHEDULE_HOURS,
+                            'permission_date' => $today,
+                        ]),
+                    ]);
+                })
+                ->count();
+            $this->set('activeNoveltiesCount', $activeNoveltiesCount);
         } catch (Exception $e) {
             $this->set('sidebarCounters', []);
             $this->set('totalInvoicesCount', 0);
@@ -213,6 +235,7 @@ class AppController extends Controller
             $this->set('pettyCashCount', 0);
             $this->set('legalizationCount', 0);
             $this->set('noveltiesCount', 0);
+            $this->set('activeNoveltiesCount', 0);
         }
     }
 

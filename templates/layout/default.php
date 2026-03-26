@@ -228,6 +228,14 @@ $noveltiesCount = $noveltiesCount ?? 0;
                                     ['class' => $navLink('EmployeeNovelties', 'rejected') . ' d-flex align-items-center', 'escape' => false]
                                 ) ?>
                             </li>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-calendar-check me-2"></i>Vigentes' .
+                                    ($activeNoveltiesCount > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $activeNoveltiesCount . '</span>' : ''),
+                                    ['controller' => 'EmployeeNovelties', 'action' => 'active'],
+                                    ['class' => $navLink('EmployeeNovelties', 'active') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
                         </ul>
                     </div>
                 </li>

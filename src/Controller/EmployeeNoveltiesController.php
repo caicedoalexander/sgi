@@ -119,9 +119,14 @@ class EmployeeNoveltiesController extends AppController
             ->order(['name' => 'ASC'])
             ->toArray();
 
+        $employees = $this->EmployeeNovelties->Employees->find('list', [
+            'keyField' => 'id',
+            'valueField' => 'full_name',
+        ])->order(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
+
         $visibleStatuses = [];
 
-        $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes', 'visibleStatuses'));
+        $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes', 'employees', 'visibleStatuses'));
         $this->render('index');
     }
 
@@ -153,6 +158,205 @@ class EmployeeNoveltiesController extends AppController
 
         $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes', 'visibleStatuses'));
         $this->render('index');
+    }
+
+    /**
+     * Active — Calendar view of currently active novelties.
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function active()
+    {
+        $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list', [
+            'keyField' => 'id',
+            'valueField' => 'name',
+        ])->toArray();
+
+        $employees = $this->EmployeeNovelties->Employees->find('list', [
+            'keyField' => 'id',
+            'valueField' => 'full_name',
+        ])->order(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
+
+        $this->set(compact('noveltyTypes', 'employees'));
+    }
+
+    /**
+     * ActiveEvents — JSON endpoint for FullCalendar events.
+     *
+     * @return \Cake\Http\Response
+     */
+    public function activeEvents(): Response
+    {
+        $this->request->allowMethod(['get']);
+
+        $start = $this->request->getQuery('start');
+        $end = $this->request->getQuery('end');
+
+        if (!$start || !$end) {
+            return $this->response->withType('application/json')
+                ->withStringBody(json_encode([]));
+        }
+
+        $today = date('Y-m-d');
+
+        $conditions = [
+            'EmployeeNovelties.pipeline_status IN' => NoveltyConstants::ACTIVE_STATUSES,
+        ];
+
+        // "Vigente" means today falls within the novelty's date range
+        $conditions[] = function ($exp) use ($today) {
+            return $exp->or([
+                // days: today is between start_date and end_date
+                $exp->and([
+                    'EmployeeNovelties.schedule_type' => NoveltyConstants::SCHEDULE_DAYS,
+                    'EmployeeNovelties.start_date <=' => $today,
+                    'EmployeeNovelties.end_date >=' => $today,
+                ]),
+                // hours: permission_date is today
+                $exp->and([
+                    'EmployeeNovelties.schedule_type' => NoveltyConstants::SCHEDULE_HOURS,
+                    'EmployeeNovelties.permission_date' => $today,
+                ]),
+            ]);
+        };
+
+        // Optional filters
+        $typeFilter = $this->request->getQuery('novelty_type_id');
+        if ($typeFilter) {
+            $conditions['EmployeeNovelties.novelty_type_id'] = $typeFilter;
+        }
+
+        $employeeFilter = $this->request->getQuery('employee_id');
+        if ($employeeFilter) {
+            $conditions['EmployeeNovelties.employee_id'] = $employeeFilter;
+        }
+
+        $novelties = $this->EmployeeNovelties->find()
+            ->contain(['Employees', 'NoveltyTypes'])
+            ->where($conditions)
+            ->all();
+
+        $colors = NoveltyConstants::CALENDAR_COLORS;
+        $colorCount = count($colors);
+
+        $events = [];
+        foreach ($novelties as $novelty) {
+            $employeeName = $novelty->employee ? $novelty->employee->full_name : ($novelty->custom_name ?? 'Sin empleado');
+            $typeName = $novelty->novelty_type ? $novelty->novelty_type->name : 'Sin tipo';
+            $color = $colors[($novelty->novelty_type_id - 1) % $colorCount];
+
+            if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_DAYS) {
+                $eventStart = $novelty->start_date->format('Y-m-d');
+                // FullCalendar end is exclusive, so add 1 day
+                $eventEnd = $novelty->end_date->modify('+1 day')->format('Y-m-d');
+            } else {
+                $eventStart = $novelty->permission_date->format('Y-m-d');
+                $eventEnd = $eventStart;
+            }
+
+            $events[] = [
+                'id' => $novelty->id,
+                'title' => $employeeName . ' - ' . $typeName,
+                'start' => $eventStart,
+                'end' => $eventEnd,
+                'color' => $color,
+                'url' => \Cake\Routing\Router::url(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]),
+            ];
+        }
+
+        return $this->response->withType('application/json')
+            ->withStringBody(json_encode($events));
+    }
+
+    /**
+     * AllEvents — JSON endpoint for FullCalendar showing all novelties in a date range.
+     *
+     * @return \Cake\Http\Response
+     */
+    public function allEvents(): Response
+    {
+        $this->request->allowMethod(['get']);
+
+        $start = $this->request->getQuery('start');
+        $end = $this->request->getQuery('end');
+
+        if (!$start || !$end) {
+            return $this->response->withType('application/json')
+                ->withStringBody(json_encode([]));
+        }
+
+        $conditions = [];
+
+        // Date range overlap with calendar visible range
+        $conditions[] = function ($exp) use ($start, $end) {
+            return $exp->or([
+                $exp->and([
+                    'EmployeeNovelties.schedule_type' => NoveltyConstants::SCHEDULE_DAYS,
+                    'EmployeeNovelties.start_date <=' => $end,
+                    'EmployeeNovelties.end_date >=' => $start,
+                ]),
+                $exp->and([
+                    'EmployeeNovelties.schedule_type' => NoveltyConstants::SCHEDULE_HOURS,
+                    'EmployeeNovelties.permission_date >=' => $start,
+                    'EmployeeNovelties.permission_date <=' => $end,
+                ]),
+            ]);
+        };
+
+        // Optional filters
+        $statusFilter = $this->request->getQuery('pipeline_status');
+        if ($statusFilter) {
+            $conditions['EmployeeNovelties.pipeline_status'] = $statusFilter;
+        }
+
+        $typeFilter = $this->request->getQuery('novelty_type_id');
+        if ($typeFilter) {
+            $conditions['EmployeeNovelties.novelty_type_id'] = $typeFilter;
+        }
+
+        $employeeFilter = $this->request->getQuery('employee_id');
+        if ($employeeFilter) {
+            $conditions['EmployeeNovelties.employee_id'] = $employeeFilter;
+        }
+
+        $novelties = $this->EmployeeNovelties->find()
+            ->contain(['Employees', 'NoveltyTypes'])
+            ->where($conditions)
+            ->all();
+
+        $colors = NoveltyConstants::CALENDAR_COLORS;
+        $colorCount = count($colors);
+        $statusLabels = NoveltyConstants::STATUS_LABELS;
+
+        $events = [];
+        foreach ($novelties as $novelty) {
+            $employeeName = $novelty->employee ? $novelty->employee->full_name : ($novelty->custom_name ?? 'Sin empleado');
+            $typeName = $novelty->novelty_type ? $novelty->novelty_type->name : 'Sin tipo';
+            $color = $colors[($novelty->novelty_type_id - 1) % $colorCount];
+
+            if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_DAYS) {
+                $eventStart = $novelty->start_date->format('Y-m-d');
+                $eventEnd = $novelty->end_date->modify('+1 day')->format('Y-m-d');
+            } else {
+                $eventStart = $novelty->permission_date->format('Y-m-d');
+                $eventEnd = $eventStart;
+            }
+
+            $events[] = [
+                'id' => $novelty->id,
+                'title' => $employeeName . ' - ' . $typeName,
+                'start' => $eventStart,
+                'end' => $eventEnd,
+                'color' => $color,
+                'url' => \Cake\Routing\Router::url(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]),
+                'extendedProps' => [
+                    'status' => $statusLabels[$novelty->pipeline_status] ?? $novelty->pipeline_status,
+                ],
+            ];
+        }
+
+        return $this->response->withType('application/json')
+            ->withStringBody(json_encode($events));
     }
 
     /**

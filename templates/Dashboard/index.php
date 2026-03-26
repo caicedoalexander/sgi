@@ -159,36 +159,40 @@ $statusBadge = [
     <?php if (!empty($invoiceChartData)): ?>
     <div class="row g-3 mb-3">
         <div class="col-md-5">
-            <div style="background:#fff;border:1px solid var(--border-color);padding:1rem;">
-                <div style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;margin-bottom:.75rem;">Distribución por estado</div>
-                <div id="invoiceDonutChart"
-                     data-chart-donut='<?= json_encode($invoiceChartData['donut_status'] ?? []) ?>'></div>
+            <div class="card card-primary">
+                <div class="card-body">
+                    <div style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;margin-bottom:.75rem;">Distribución por estado</div>
+                    <div id="invoiceDonutChart"
+                         data-chart-donut='<?= json_encode($invoiceChartData['donut_status'] ?? []) ?>'></div>
+                </div>
             </div>
         </div>
         <div class="col-md-7">
-            <div style="background:#fff;border:1px solid var(--border-color);padding:1rem;">
-                <div style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;margin-bottom:.75rem;">Facturas por mes</div>
-                <div id="invoiceBarChart"
-                     data-chart-monthly='<?= json_encode($invoiceChartData['monthly'] ?? []) ?>'></div>
+            <div class="card card-dark">
+                <div class="card-body">
+                    <div style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;margin-bottom:.75rem;">Facturas por mes</div>
+                    <div id="invoiceBarChart"
+                         data-chart-monthly='<?= json_encode($invoiceChartData['monthly'] ?? []) ?>'></div>
+                </div>
             </div>
         </div>
     </div>
     <?php endif; ?>
 
     <?php if (!empty($recentInvoices)): ?>
-    <div style="background:#fff;border:1px solid var(--border-color);">
-        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="border-bottom:1px solid var(--border-color);">
-            <span style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;">Actividad reciente</span>
-            <?= $this->Html->link('Ver todas →', ['controller' => 'Invoices', 'action' => 'all'], ['style' => 'font-size:.78rem;color:var(--primary-color);text-decoration:none;font-weight:500;']) ?>
+    <div class="card card-primary">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <span style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;">Actividad reciente</span>
+            <?= $this->Html->link('Ver todas →', ['controller' => 'Invoices', 'action' => 'all'], ['style' => 'font-size:.75rem;color:var(--primary-color);text-decoration:none;font-weight:500;']) ?>
         </div>
         <div class="table-responsive">
             <table class="table table-sm mb-0" style="font-size:.82rem;">
                 <thead>
-                    <tr style="background:#f8f9fa;">
-                        <th class="px-3 py-2" style="color:#6c757d;font-weight:600;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Nº Factura</th>
-                        <th class="px-3 py-2" style="color:#6c757d;font-weight:600;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Proveedor</th>
-                        <th class="px-3 py-2" style="color:#6c757d;font-weight:600;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Estado</th>
-                        <th class="px-3 py-2" style="color:#6c757d;font-weight:600;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Modificado</th>
+                    <tr style="background:#fafafa;">
+                        <th class="px-3 py-2" style="color:#999;font-weight:600;font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Nº Factura</th>
+                        <th class="px-3 py-2" style="color:#999;font-weight:600;font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Proveedor</th>
+                        <th class="px-3 py-2" style="color:#999;font-weight:600;font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Estado</th>
+                        <th class="px-3 py-2" style="color:#999;font-weight:600;font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Modificado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -252,6 +256,17 @@ $statusBadge = [
             </div>
         </div>
         <?php endif; ?>
+        <?php if (isset($rrhhStats['active_novelties'])): ?>
+        <div class="col-6 col-sm-4 col-xl-2">
+            <a href="<?= $this->Url->build(['controller' => 'EmployeeNovelties', 'action' => 'active']) ?>" class="text-decoration-none">
+                <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--primary-color);cursor:pointer;">
+                    <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Vigentes</div>
+                    <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--primary-color);"><?= $this->Number->format($rrhhStats['active_novelties']) ?></div>
+                    <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Hoy</div>
+                </div>
+            </a>
+        </div>
+        <?php endif; ?>
     </div>
     <?php endif; ?>
 
@@ -291,35 +306,39 @@ $statusBadge = [
     <?php if (!empty($rrhhChartData)): ?>
     <div class="row g-3 mb-3">
         <div class="col-md-5">
-            <div style="background:#fff;border:1px solid var(--border-color);padding:1rem;">
-                <div style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;margin-bottom:.75rem;">Distribución por contrato</div>
-                <div id="employeeDonutChart"
-                     data-chart-contract='<?= json_encode($rrhhChartData['donut_contract'] ?? []) ?>'></div>
+            <div class="card card-primary">
+                <div class="card-body">
+                    <div style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;margin-bottom:.75rem;">Distribución por contrato</div>
+                    <div id="employeeDonutChart"
+                         data-chart-contract='<?= json_encode($rrhhChartData['donut_contract'] ?? []) ?>'></div>
+                </div>
             </div>
         </div>
         <div class="col-md-7">
-            <div style="background:#fff;border:1px solid var(--border-color);padding:1rem;">
-                <div style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;margin-bottom:.75rem;">Novedades por mes</div>
-                <div id="noveltyBarChart"
-                     data-chart-novelties='<?= json_encode($rrhhChartData['monthly_novelties'] ?? []) ?>'></div>
+            <div class="card card-dark">
+                <div class="card-body">
+                    <div style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;margin-bottom:.75rem;">Novedades por mes</div>
+                    <div id="noveltyBarChart"
+                         data-chart-novelties='<?= json_encode($rrhhChartData['monthly_novelties'] ?? []) ?>'></div>
+                </div>
             </div>
         </div>
     </div>
     <?php endif; ?>
 
     <?php if (!empty($recentNovelties)): ?>
-    <div style="background:#fff;border:1px solid var(--border-color);">
-        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="border-bottom:1px solid var(--border-color);">
-            <span style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;">Novedades recientes</span>
-            <?= $this->Html->link('Ver todas →', ['controller' => 'EmployeeNovelties', 'action' => 'index'], ['style' => 'font-size:.78rem;color:var(--primary-color);text-decoration:none;font-weight:500;']) ?>
+    <div class="card" style="border-top-color:var(--secondary-color);">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <span style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;">Novedades recientes</span>
+            <?= $this->Html->link('Ver todas →', ['controller' => 'EmployeeNovelties', 'action' => 'index'], ['style' => 'font-size:.75rem;color:var(--primary-color);text-decoration:none;font-weight:500;']) ?>
         </div>
         <div class="table-responsive">
             <table class="table table-sm mb-0" style="font-size:.82rem;">
                 <thead>
-                    <tr style="background:#f8f9fa;">
-                        <th class="px-3 py-2" style="color:#6c757d;font-weight:600;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Empleado</th>
-                        <th class="px-3 py-2" style="color:#6c757d;font-weight:600;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Tipo</th>
-                        <th class="px-3 py-2" style="color:#6c757d;font-weight:600;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Fecha</th>
+                    <tr style="background:#fafafa;">
+                        <th class="px-3 py-2" style="color:#999;font-weight:600;font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Empleado</th>
+                        <th class="px-3 py-2" style="color:#999;font-weight:600;font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Tipo</th>
+                        <th class="px-3 py-2" style="color:#999;font-weight:600;font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border-color);">Fecha</th>
                     </tr>
                 </thead>
                 <tbody>

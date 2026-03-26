@@ -129,6 +129,20 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'EmployeeNovelties', 'action' => 'rejected']
         );
 
+        // Employee novelties active/calendar view
+        $builder->connect(
+            '/employee-novelties/active',
+            ['controller' => 'EmployeeNovelties', 'action' => 'active']
+        );
+        $builder->connect(
+            '/employee-novelties/active-events',
+            ['controller' => 'EmployeeNovelties', 'action' => 'activeEvents']
+        );
+        $builder->connect(
+            '/employee-novelties/all-events',
+            ['controller' => 'EmployeeNovelties', 'action' => 'allEvents']
+        );
+
         // Employee novelties pipeline
         $builder->connect(
             '/employee-novelties/advance/{id}',
