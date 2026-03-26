@@ -445,9 +445,6 @@ $badgeColors = [
             </button>
             <?= $this->Form->end() ?>
             <?php endif; ?>
-            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
-                <i class="bi bi-x-lg me-1"></i>Rechazar
-            </button>
         </div>
         <?php endif; ?>
 
@@ -635,29 +632,6 @@ $badgeColors = [
 </div>
 <?php endif; ?>
 
-<!-- Reject Modal -->
-<?php if (!$isRejected && !$novelty->isPaid()): ?>
-<div class="modal fade" id="rejectModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <?= $this->Form->create(null, ['url' => ['action' => 'reject', $novelty->id]]) ?>
-            <div class="modal-header">
-                <h5 class="modal-title">Rechazar Novedad</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <label class="form-label">Motivo del rechazo</label>
-                <textarea name="observations" class="form-control" rows="3"></textarea>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-danger">Rechazar</button>
-            </div>
-            <?= $this->Form->end() ?>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
 
 <?php $this->append('script') ?>
 <script>
