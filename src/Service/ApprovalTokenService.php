@@ -105,7 +105,7 @@ class ApprovalTokenService
             case 'invoices':
                 return $this->applyInvoiceAction($entityId, $action, $observations, $createdBy, $approvalDate);
             case 'employee_novelties':
-                return $this->applyNoveltyAction($entityId, $action);
+                return $this->applyNoveltyAction($entityId, $action, $observations, $createdBy);
             default:
                 return false;
         }
@@ -170,7 +170,7 @@ class ApprovalTokenService
         $observationsTable->save($observation);
     }
 
-    private function applyNoveltyAction(int $noveltyId, string $action): bool
+    private function applyNoveltyAction(int $noveltyId, string $action, ?string $observations = null, ?int $createdBy = null): bool
     {
         $table = TableRegistry::getTableLocator()->get('EmployeeNovelties');
         $novelty = $table->get($noveltyId);
@@ -185,7 +185,15 @@ class ApprovalTokenService
             // Stay in aprobacion status — RRHH can edit and resend
         }
 
-        return (bool)$table->save($novelty);
+        $saved = (bool)$table->save($novelty);
+
+        if ($saved && !empty($observations)) {
+            $userId = $createdBy ?? $novelty->approver_id ?? 0;
+            $observationService = new NoveltyObservationService();
+            $observationService->addToNovelty($noveltyId, $userId, $observations);
+        }
+
+        return $saved;
     }
 
     public function getEntity(string $entityType, int $entityId): ?object
