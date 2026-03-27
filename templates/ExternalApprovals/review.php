@@ -172,12 +172,6 @@ $entityType = $tokenRecord->entity_type;
         <?= $this->Form->create(null, ['url' => ['action' => 'process', $token]]) ?>
 
         <div class="mb-3">
-            <label class="form-label">Fecha de Aprobaci&oacute;n</label>
-            <input type="date" name="approval_date" class="form-control"
-                   value="<?= date('Y-m-d') ?>">
-        </div>
-
-        <div class="mb-3">
             <label class="form-label">Observaciones (opcional)</label>
             <textarea name="observations" class="form-control" rows="3" placeholder="Comentarios adicionales..."></textarea>
         </div>

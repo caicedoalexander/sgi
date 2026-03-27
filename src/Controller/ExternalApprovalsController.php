@@ -109,7 +109,7 @@ class ExternalApprovalsController extends AppController
         }
 
         $observations = $this->request->getData('observations');
-        $approvalDate = $this->request->getData('approval_date');
+        $approvalDate = date('Y-m-d');
         $ip = $this->request->clientIp();
         $userAgent = $this->request->getHeaderLine('User-Agent');
 

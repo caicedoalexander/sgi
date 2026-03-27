@@ -25,13 +25,13 @@
 <body>
     <!-- Header -->
     <div style="background:var(--bg-dark);padding:.75rem 1.5rem;">
-        <div class="d-flex align-items-center gap-2">
-            <div class="d-flex align-items-center justify-content-center"
-                 style="width:32px;height:32px;background-color:var(--primary-color);flex-shrink:0;">
-                <i class="bi bi-building text-white" style="font-size:.85rem;"></i>
+        <div class="d-flex align-items-center gap-2" style="gap:0!important;">
+            <div style="width:32px;height:32px;flex-shrink:0;border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;padding:4px;">
+                <img src="<?= $this->Url->build('/img/copcsa.png') ?>" alt="COPCSA" style="width:100%;height:100%;object-fit:contain;display:block;">
             </div>
+            <div style="width:2px;height:22px;background-color:var(--primary-color);flex-shrink:0;margin:0 10px;"></div>
             <div>
-                <div class="fw-bold text-white" style="font-size:.95rem;letter-spacing:-.02em;">SGI COPC</div>
+                <div class="fw-bold text-white" style="font-size:.95rem;letter-spacing:-.02em;">SGI · COPCSA</div>
                 <div style="font-size:.5rem;letter-spacing:.1em;color:rgba(255,255,255,.3);text-transform:uppercase;">Aprobación Externa</div>
             </div>
         </div>

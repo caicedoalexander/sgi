@@ -628,12 +628,15 @@ class EmployeeNoveltiesController extends AppController
                     $baseUrl = $this->request->scheme() . '://' . $this->request->host();
                     $approvalUrl = $baseUrl . '/approve/' . $token;
 
+                    // Reload novelty with associations for email
+                    $noveltyForEmail = $this->EmployeeNovelties->get($novelty->id, contain: ['Employees', 'NoveltyTypes']);
+
                     // Send notification email to approver
                     $approversTable = TableRegistry::getTableLocator()->get('Users');
                     $approver = $approversTable->get($novelty->approver_id);
                     if ($approver && !empty($approver->email)) {
                         $notificationService = new NotificationService();
-                        $notificationService->sendNoveltyApprovalEmail($approver, $novelty, $approvalUrl);
+                        $notificationService->sendNoveltyApprovalEmail($approver, $noveltyForEmail, $approvalUrl);
                     }
                 }
 
@@ -744,7 +747,7 @@ class EmployeeNoveltiesController extends AppController
     public function resendApproval(?string $id = null)
     {
         $this->request->allowMethod(['post']);
-        $novelty = $this->EmployeeNovelties->get($id, contain: ['NoveltyTypes']);
+        $novelty = $this->EmployeeNovelties->get($id, contain: ['Employees', 'NoveltyTypes']);
         $user = $this->Authentication->getIdentity()->getOriginalData();
 
         if ($novelty->pipeline_status !== NoveltyConstants::STATUS_APROBACION) {
