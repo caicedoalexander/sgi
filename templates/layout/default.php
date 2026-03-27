@@ -128,7 +128,7 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-x-circle me-2"></i>Facturas Rechazadas' .
+                                    '<i class="bi bi-x-circle me-2"></i>Rechazadas' .
                                     ($rejectedInvoicesCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $rejectedInvoicesCount . '</span>' : ''),
                                     ['controller' => 'Invoices', 'action' => 'rejected'],
                                     ['class' => $navLink('Invoices', 'rejected') . ' d-flex align-items-center', 'escape' => false]
@@ -136,7 +136,7 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-clock-history me-2"></i>Facturas Vencidas' .
+                                    '<i class="bi bi-clock-history me-2"></i>Vencidas' .
                                     ($overdueInvoicesCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $overdueInvoicesCount . '</span>' : ''),
                                     ['controller' => 'Invoices', 'action' => 'overdue'],
                                     ['class' => $navLink('Invoices', 'overdue') . ' d-flex align-items-center', 'escape' => false]
