@@ -232,6 +232,16 @@ class AppController extends Controller
                 })
                 ->count();
             $this->set('activeNoveltiesCount', $activeNoveltiesCount);
+
+            // Liquidation docs counters by status
+            $liquidationTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
+            $liquidationCounters = [];
+            foreach ([NoveltyConstants::STATUS_CONTABILIDAD, NoveltyConstants::STATUS_TESORERIA, NoveltyConstants::STATUS_REVISION_FIRMAS, NoveltyConstants::STATUS_GDP] as $status) {
+                $liquidationCounters[$status] = $liquidationTable->find()
+                    ->where(['pipeline_status' => $status])
+                    ->count();
+            }
+            $this->set('liquidationCounters', $liquidationCounters);
         } catch (Exception $e) {
             $this->set('sidebarCounters', []);
             $this->set('totalInvoicesCount', 0);
@@ -242,6 +252,7 @@ class AppController extends Controller
             $this->set('noveltiesCount', 0);
             $this->set('rejectedNoveltiesCount', 0);
             $this->set('activeNoveltiesCount', 0);
+            $this->set('liquidationCounters', []);
         }
     }
 
