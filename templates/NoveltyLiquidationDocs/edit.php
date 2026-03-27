@@ -514,6 +514,7 @@ $noveltyCount = count($doc->employee_novelties);
 <?php endif; ?>
 
 <?= $this->Html->script('sgi-signature') ?>
+<?= $this->Html->script('sgi-epadlink') ?>
 
 <?php $this->append('script') ?>
 <script>

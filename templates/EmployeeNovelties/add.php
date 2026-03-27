@@ -240,3 +240,4 @@ $this->assign('title', 'Nueva Novedad');
 })();
 </script>
 <?= $this->Html->script('sgi-signature') ?>
+<?= $this->Html->script('sgi-epadlink') ?>
