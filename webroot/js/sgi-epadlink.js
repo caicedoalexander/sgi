@@ -145,7 +145,8 @@
      * Initialize: add ePadLink buttons to all signature pads if extension is present.
      */
     function init() {
-        if (!isExtensionInstalled()) return;
+        // TODO: restaurar verificación de extensión antes de producción
+        // if (!isExtensionInstalled()) return;
 
         // Listen for signature responses (once, globally)
         document.addEventListener('SigCaptureWeb_SignResponse', onSignResponse, false);
