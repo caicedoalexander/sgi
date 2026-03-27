@@ -8,6 +8,8 @@
  *   - Dispatch: "SigCaptureWeb_SignStartEvent" with JSON message
  *   - Listen:   "SigCaptureWeb_SignResponse" with signature data
  *
+ * Response field: "imageData" (base64 PNG), "isSigned" (bool), "errorMsg" (string|null).
+ *
  * If the extension is not detected, no buttons are shown (silent degradation).
  */
 (function () {
@@ -75,6 +77,9 @@
      */
     function onSignResponse(event) {
         var str = event.target.getAttribute('SigCaptureWeb_msgAttri');
+        if (!str) {
+            str = event.target.getAttribute('SigCaptureWeb_MsgAttribute');
+        }
         if (!str) return;
 
         var data;
@@ -85,11 +90,9 @@
             return;
         }
 
-        if (data.isSigned && data.imgData && activePadElement) {
-            // Build data URL from the base64 image data
-            var dataUrl = 'data:image/png;base64,' + data.imgData;
+        if (data.isSigned && data.imageData && activePadElement) {
+            var dataUrl = 'data:image/png;base64,' + data.imageData;
 
-            // Inject into the existing signature pad flow
             if (window.SgiSignature && typeof window.SgiSignature.injectSignature === 'function') {
                 window.SgiSignature.injectSignature(activePadElement, dataUrl);
             }
@@ -115,7 +118,6 @@
      * Add the ePadLink button to a .sgi-signature-pad container.
      */
     function enhancePad(container) {
-        // Create wrapper for button + status
         var wrapper = document.createElement('div');
         wrapper.style.cssText = 'display:flex;align-items:center;gap:.5rem;margin-top:.4rem;';
 
@@ -131,7 +133,6 @@
         wrapper.appendChild(btn);
         wrapper.appendChild(status);
 
-        // Insert after the signature pad container
         container.parentNode.insertBefore(wrapper, container.nextSibling);
 
         btn.addEventListener('click', function (e) {
@@ -145,11 +146,22 @@
      * Initialize: add ePadLink buttons to all signature pads if extension is present.
      */
     function init() {
-        // TODO: restaurar verificación de extensión antes de producción
-        // if (!isExtensionInstalled()) return;
+        if (!isExtensionInstalled()) return;
 
-        // Listen for signature responses (once, globally)
-        document.addEventListener('SigCaptureWeb_SignResponse', onSignResponse, false);
+        // Listen for signature responses on <html> where the extension dispatches
+        document.documentElement.addEventListener('SigCaptureWeb_SignResponse', onSignResponse, false);
+
+        // MutationObserver fallback for extensions that set attributes instead of dispatching events
+        var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1 && node.getAttribute && node.getAttribute('SigCaptureWeb_msgAttri')) {
+                        onSignResponse({ target: node });
+                    }
+                });
+            });
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['SigCaptureWeb_msgAttri'] });
 
         // Enhance all signature pad elements
         document.querySelectorAll('.sgi-signature-pad').forEach(enhancePad);
