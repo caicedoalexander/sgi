@@ -172,7 +172,10 @@ class NoveltyDocumentService
     {
         $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
         $documents = $documentsTable->find()
-            ->where(['liquidation_doc_id' => $liquidationDocId])
+            ->where([
+                'liquidation_doc_id' => $liquidationDocId,
+                'document_type !=' => \App\Constants\NoveltyConstants::DOC_TYPE_LIQUIDATION,
+            ])
             ->contain(['UploadedByUsers'])
             ->order(['NoveltyDocuments.created' => 'DESC'])
             ->all();
@@ -183,5 +186,114 @@ class NoveltyDocumentService
         }
 
         return $grouped;
+    }
+
+    /**
+     * Get the liquidation document for a group.
+     *
+     * @param int $liquidationDocId Liquidation document ID.
+     * @return object|null
+     */
+    public function getLiquidationDocument(int $liquidationDocId): ?object
+    {
+        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
+
+        return $documentsTable->find()
+            ->where([
+                'liquidation_doc_id' => $liquidationDocId,
+                'document_type' => \App\Constants\NoveltyConstants::DOC_TYPE_LIQUIDATION,
+            ])
+            ->contain(['UploadedByUsers'])
+            ->first();
+    }
+
+    /**
+     * Upload the liquidation document (first time).
+     *
+     * @param int $liquidationDocId Liquidation document ID.
+     * @param \Laminas\Diactoros\UploadedFile $file Uploaded file.
+     * @param int|null $uploadedBy User ID.
+     * @return object|string
+     */
+    public function uploadLiquidationDocument(
+        int $liquidationDocId,
+        UploadedFile $file,
+        ?int $uploadedBy,
+    ): object|string {
+        $existing = $this->getLiquidationDocument($liquidationDocId);
+        if ($existing) {
+            return 'Ya existe un documento de liquidación. Use la opción de actualizar.';
+        }
+
+        return $this->upload($file, 'liquidation', $uploadedBy, 'novelty_liquidations/' . $liquidationDocId, [
+            'liquidation_doc_id' => $liquidationDocId,
+            'document_type' => \App\Constants\NoveltyConstants::DOC_TYPE_LIQUIDATION,
+        ]);
+    }
+
+    /**
+     * Update (replace) the liquidation document.
+     *
+     * @param int $liquidationDocId Liquidation document ID.
+     * @param \Laminas\Diactoros\UploadedFile $file Uploaded file.
+     * @param int|null $uploadedBy User ID.
+     * @return object|string
+     */
+    public function updateLiquidationDocument(
+        int $liquidationDocId,
+        UploadedFile $file,
+        ?int $uploadedBy,
+    ): object|string {
+        $existing = $this->getLiquidationDocument($liquidationDocId);
+        if (!$existing) {
+            return 'No existe un documento de liquidación para actualizar.';
+        }
+
+        if ($file->getError() !== UPLOAD_ERR_OK) {
+            return 'No se recibió ningún archivo válido.';
+        }
+        if ($file->getSize() > self::MAX_DOC_SIZE) {
+            return 'El archivo excede el tamaño máximo de 10MB.';
+        }
+        $mimeType = $file->getClientMediaType();
+        if (!in_array($mimeType, self::ALLOWED_DOC_MIMES)) {
+            return 'Tipo de archivo no permitido. Use PDF, imágenes, Word o Excel.';
+        }
+
+        // Delete old physical file
+        $oldPath = WWW_ROOT . $existing->file_path;
+        if (file_exists($oldPath)) {
+            unlink($oldPath);
+        }
+
+        // Save new file
+        $uploadDir = WWW_ROOT . 'uploads' . DS . 'novelty_liquidations' . DS . $liquidationDocId;
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $originalName = $file->getClientFilename();
+        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+        $uniqueName = uniqid('nov_') . '.' . $extension;
+        $filePath = $uploadDir . DS . $uniqueName;
+        $file->moveTo($filePath);
+
+        // Update record
+        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
+        $existing->file_path = 'uploads/novelty_liquidations/' . $liquidationDocId . '/' . $uniqueName;
+        $existing->file_name = $originalName;
+        $existing->file_size = $file->getSize();
+        $existing->mime_type = $mimeType;
+        $existing->uploaded_by = $uploadedBy;
+
+        if (!$documentsTable->save($existing)) {
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+
+            return 'No se pudo actualizar el documento.';
+        }
+
+        return $existing;
     }
 }
