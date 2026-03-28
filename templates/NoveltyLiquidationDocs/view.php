@@ -5,6 +5,7 @@
  * @var array $groupErrors
  * @var array $effectiveStatuses
  * @var array $documentsByStatus
+ * @var object|null $liquidationDocument
  * @var array $groupHistories
  * @var array $fieldLabels
  */
@@ -271,6 +272,47 @@ $badgeColors = [
         <?php endif; ?>
     </div>
 </div>
+
+<!-- Dedicated Liquidation Document (read-only) -->
+<?php if ($liquidationDocument ?? null): ?>
+<div class="card card-primary mb-3" style="border-top:2px solid var(--primary-color);">
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-file-earmark-text" style="font-size:.85rem;color:var(--primary-color);"></i>
+        <span style="font-size:.85rem;font-weight:600;">Documento de Liquidación</span>
+    </div>
+    <div style="padding:.8rem .875rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;">
+            <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+                <i class="bi <?= $docIcon($liquidationDocument->mime_type) ?>"
+                   style="color:<?= $docIconColor($liquidationDocument->mime_type) ?>;font-size:1rem;"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                     title="<?= h($liquidationDocument->file_name) ?>">
+                    <?= h($liquidationDocument->file_name) ?>
+                </div>
+                <div style="display:flex;align-items:center;gap:.5rem;margin-top:.25rem;flex-wrap:wrap;">
+                    <span style="font-size:.65rem;color:#bbb;">
+                        <i class="bi bi-clock" style="font-size:.6rem;"></i>
+                        <?= $liquidationDocument->created?->format('d/m/Y H:i') ?>
+                    </span>
+                    <?php if ($liquidationDocument->uploaded_by_user): ?>
+                    <span style="font-size:.65rem;color:#bbb;">
+                        <i class="bi bi-person" style="font-size:.6rem;"></i>
+                        <?= h($liquidationDocument->uploaded_by_user->full_name ?? '') ?>
+                    </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?= $this->Html->link(
+                '<i class="bi bi-download"></i>',
+                '/' . $liquidationDocument->file_path,
+                ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'target' => '_blank', 'title' => 'Descargar']
+            ) ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Documents (read-only grid) -->
 <div class="card card-primary mb-4">
