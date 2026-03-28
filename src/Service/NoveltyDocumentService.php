@@ -225,7 +225,7 @@ class NoveltyDocumentService
             return 'Ya existe un documento de liquidación. Use la opción de actualizar.';
         }
 
-        return $this->upload($file, 'liquidation', $uploadedBy, 'novelty_liquidations/' . $liquidationDocId, [
+        return $this->upload($file, 'd. liquidacion', $uploadedBy, 'novelty_liquidations/' . $liquidationDocId, [
             'liquidation_doc_id' => $liquidationDocId,
             'document_type' => \App\Constants\NoveltyConstants::DOC_TYPE_LIQUIDATION,
         ]);
