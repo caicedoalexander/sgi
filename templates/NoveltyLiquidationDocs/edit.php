@@ -5,6 +5,7 @@
  * @var array $groupErrors
  * @var array $effectiveStatuses
  * @var array $documentsByStatus
+ * @var object|null $liquidationDocument
  * @var \App\Model\Entity\User $currentUser
  */
 use App\Constants\NoveltyConstants;
@@ -345,6 +346,105 @@ $noveltyCount = count($doc->employee_novelties);
 
 <!-- Right column: documents + observations -->
 <div class="sgi-invoice-sidebar">
+
+<!-- Dedicated Liquidation Document -->
+<?php
+$canUploadLiqDoc = $currentStatus === NoveltyConstants::STATUS_CONTABILIDAD && !$liquidationDocument;
+$canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
+    NoveltyConstants::STATUS_CONTABILIDAD,
+    NoveltyConstants::STATUS_REVISION_FIRMAS,
+    NoveltyConstants::STATUS_GDP,
+]);
+?>
+<div class="card card-primary mb-3" style="border-top:2px solid var(--primary-color);">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-file-earmark-text" style="font-size:.85rem;color:var(--primary-color);"></i>
+            <span style="font-size:.85rem;font-weight:600;">Documento de Liquidación</span>
+        </span>
+    </div>
+
+    <?php if ($liquidationDocument): ?>
+    <div style="padding:.8rem .875rem;">
+        <div style="display:flex;align-items:center;gap:.75rem;">
+            <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+                <i class="bi <?= $docIcon($liquidationDocument->mime_type) ?>"
+                   style="color:<?= $docIconColor($liquidationDocument->mime_type) ?>;font-size:1rem;"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                     title="<?= h($liquidationDocument->file_name) ?>">
+                    <?= h($liquidationDocument->file_name) ?>
+                </div>
+                <div style="display:flex;align-items:center;gap:.5rem;margin-top:.25rem;flex-wrap:wrap;">
+                    <span style="font-size:.65rem;color:#bbb;">
+                        <i class="bi bi-clock" style="font-size:.6rem;"></i>
+                        <?= $liquidationDocument->created?->format('d/m/Y H:i') ?>
+                    </span>
+                    <?php if ($liquidationDocument->uploaded_by_user): ?>
+                    <span style="font-size:.65rem;color:#bbb;">
+                        <i class="bi bi-person" style="font-size:.6rem;"></i>
+                        <?= h($liquidationDocument->uploaded_by_user->full_name ?? '') ?>
+                    </span>
+                    <?php endif; ?>
+                    <?php if ($liquidationDocument->file_size): ?>
+                    <span style="font-size:.63rem;color:#ccc;"><?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div style="display:flex;gap:.25rem;flex-shrink:0;">
+                <?= $this->Html->link(
+                    '<i class="bi bi-download"></i>',
+                    '/' . $liquidationDocument->file_path,
+                    ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'target' => '_blank', 'title' => 'Descargar']
+                ) ?>
+            </div>
+        </div>
+
+        <?php if ($canUpdateLiqDoc): ?>
+        <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border-color);">
+            <?= $this->Form->create(null, [
+                'url' => ['action' => 'updateLiquidationDocument', $doc->id],
+                'type' => 'file',
+                'class' => 'd-flex gap-2 align-items-end',
+            ]) ?>
+            <div style="flex:1;">
+                <input type="file" name="liquidation_file" class="form-control form-control-sm" required
+                       accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary flex-shrink-0">
+                <i class="bi bi-arrow-repeat me-1"></i>Actualizar
+            </button>
+            <?= $this->Form->end() ?>
+        </div>
+        <?php endif; ?>
+    </div>
+
+    <?php elseif ($canUploadLiqDoc): ?>
+    <div style="padding:.8rem .875rem;">
+        <?= $this->Form->create(null, [
+            'url' => ['action' => 'uploadLiquidationDocument', $doc->id],
+            'type' => 'file',
+            'class' => 'd-flex gap-2 align-items-end',
+        ]) ?>
+        <div style="flex:1;">
+            <input type="file" name="liquidation_file" class="form-control form-control-sm" required
+                   accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
+            <div class="form-text" style="font-size:.7rem;">Máx 10 MB — PDF, imágenes, Word o Excel.</div>
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary flex-shrink-0">
+            <i class="bi bi-upload me-1"></i>Subir
+        </button>
+        <?= $this->Form->end() ?>
+    </div>
+
+    <?php else: ?>
+    <div style="padding:1.5rem 1rem;text-align:center;color:#c8c8c8;">
+        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.25rem;"></i>
+        <span style="font-size:.78rem;">Sin documento de liquidación</span>
+    </div>
+    <?php endif; ?>
+</div>
 
 <!-- Documents panel -->
 <div class="card card-primary">
