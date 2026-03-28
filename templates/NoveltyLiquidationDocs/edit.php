@@ -396,7 +396,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
         <span class="badge" style="font-size:.6rem;background:var(--primary-color);color:#fff;">D. Liquidación</span>
     </div>
     <?php if ($liquidationDocument): ?>
-    <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
             <i class="bi <?= $docIcon($liquidationDocument->mime_type) ?>"
                style="color:<?= $docIconColor($liquidationDocument->mime_type) ?>;font-size:1rem;"></i>
@@ -415,23 +415,23 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
                 <span style="font-size:.63rem;color:#ccc;"><?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
                 <?php endif; ?>
             </div>
-            <?php if ($canUpdateLiqDoc): ?>
-            <div style="margin-top:.5rem;">
-                <?= $this->Form->create(null, [
-                    'url' => ['action' => 'updateLiquidationDocument', $doc->id],
-                    'type' => 'file',
-                    'class' => 'd-flex gap-2 align-items-center',
-                ]) ?>
-                <input type="file" name="liquidation_file" class="form-control form-control-sm" required
-                       accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx" style="font-size:.72rem;">
-                <button type="submit" class="btn btn-sm btn-outline-primary flex-shrink-0" style="padding:.2rem .4rem;font-size:.68rem;line-height:1;">
-                    <i class="bi bi-arrow-repeat"></i>
-                </button>
-                <?= $this->Form->end() ?>
-            </div>
-            <?php endif; ?>
         </div>
-        <div style="display:flex;gap:.25rem;flex-shrink:0;align-self:center;">
+        <div style="display:flex;gap:.25rem;flex-shrink:0;">
+            <?php if ($canUpdateLiqDoc): ?>
+            <?= $this->Form->create(null, [
+                'url' => ['action' => 'updateLiquidationDocument', $doc->id],
+                'type' => 'file',
+                'id' => 'liq-doc-update-form',
+                'class' => 'd-inline',
+            ]) ?>
+            <input type="file" name="liquidation_file" id="liq-doc-file" required
+                   accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+                   style="display:none;" onchange="document.getElementById('liq-doc-update-form').submit();">
+            <label for="liq-doc-file" class="btn btn-sm btn-outline-primary" style="padding:.25rem .45rem;font-size:.72rem;line-height:1;cursor:pointer;" title="Reemplazar">
+                <i class="bi bi-arrow-repeat"></i>
+            </label>
+            <?= $this->Form->end() ?>
+            <?php endif; ?>
             <?= $this->Html->link(
                 '<i class="bi bi-box-arrow-up-right"></i>',
                 '/' . $liquidationDocument->file_path,
@@ -440,22 +440,33 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
         </div>
     </div>
     <?php elseif ($canUploadLiqDoc): ?>
-    <div style="padding:.65rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
+        <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;"></i>
+        </div>
+        <div style="flex:1;min-width:0;">
+            <span style="font-size:.76rem;color:#999;">Sin documento</span>
+        </div>
         <?= $this->Form->create(null, [
             'url' => ['action' => 'uploadLiquidationDocument', $doc->id],
             'type' => 'file',
-            'class' => 'd-flex gap-2 align-items-center',
+            'id' => 'liq-doc-upload-form',
+            'class' => 'd-inline flex-shrink-0',
         ]) ?>
-        <input type="file" name="liquidation_file" class="form-control form-control-sm" required
-               accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx" style="flex:1;font-size:.72rem;">
-        <button type="submit" class="btn btn-sm btn-primary flex-shrink-0" style="padding:.25rem .5rem;font-size:.72rem;line-height:1;">
+        <input type="file" name="liquidation_file" id="liq-doc-file-new" required
+               accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+               style="display:none;" onchange="document.getElementById('liq-doc-upload-form').submit();">
+        <label for="liq-doc-file-new" class="btn btn-sm btn-outline-primary" style="padding:.25rem .5rem;font-size:.72rem;line-height:1;cursor:pointer;" title="Subir documento">
             <i class="bi bi-upload me-1"></i>Subir
-        </button>
+        </label>
         <?= $this->Form->end() ?>
     </div>
     <?php else: ?>
-    <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);text-align:center;color:#c8c8c8;background:rgba(70,157,97,.03);">
-        <span style="font-size:.73rem;"><i class="bi bi-file-earmark-x me-1"></i>Sin documento</span>
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
+        <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;"></i>
+        </div>
+        <span style="font-size:.76rem;color:#c8c8c8;">Sin documento</span>
     </div>
     <?php endif; ?>
 
