@@ -211,6 +211,16 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'addObservation'],
             ['id' => '\d+', 'pass' => ['id']]
         );
+        $builder->connect(
+            '/novelty-liquidation-docs/upload-liquidation-document/{id}',
+            ['controller' => 'NoveltyLiquidationDocs', 'action' => 'uploadLiquidationDocument'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/novelty-liquidation-docs/update-liquidation-document/{id}',
+            ['controller' => 'NoveltyLiquidationDocs', 'action' => 'updateLiquidationDocument'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
 
         // Novelty Types AJAX flags
         $builder->connect(
