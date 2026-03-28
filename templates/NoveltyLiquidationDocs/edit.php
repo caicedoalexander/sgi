@@ -242,38 +242,39 @@ $noveltyCount = count($doc->employee_novelties);
                     <div class="border p-3 text-center h-100" style="border-radius:2px;">
                         <div class="fw-bold small mb-2"><?= $signerLabels[$sig->signer_type] ?? h($sig->signer_type) ?></div>
                         <?php if ($sig->signature_path): ?>
-                            <img src="<?= $this->Url->build('/' . $sig->signature_path) ?>" alt="Firma"
-                                 style="max-width:100%;max-height:100px;border:1px solid var(--border-color);">
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Firmado</span>
                             <div class="mt-1 small text-muted">
                                 <?= h($sig->signed_by_user->full_name ?? '') ?>
                                 <?php if ($sig->approved_at): ?>
                                 <br><?= $sig->approved_at->format('d/m/Y H:i') ?>
                                 <?php endif; ?>
                             </div>
-                            <span class="badge bg-success mt-1">Firmado</span>
                         <?php else: ?>
-                            <?php
-                            $canSign = ($sig->signer_type === NoveltyConstants::SIGNER_TRABAJADOR)
-                                ? ($doc->pipeline_status === NoveltyConstants::STATUS_GDP)
-                                : ($doc->pipeline_status === NoveltyConstants::STATUS_REVISION_FIRMAS);
-                            ?>
-                            <?php if ($canSign): ?>
+                            <span class="badge bg-secondary">Pendiente</span>
+                        <?php endif; ?>
 
-                            <!-- Manual signature pad -->
-                            <?= $this->Form->create(null, ['url' => ['action' => 'addSignature', $doc->id], 'class' => 'sig-form']) ?>
+                        <?php
+                        $canToggle = ($sig->signer_type === NoveltyConstants::SIGNER_TRABAJADOR)
+                            ? ($doc->pipeline_status === NoveltyConstants::STATUS_GDP)
+                            : ($doc->pipeline_status === NoveltyConstants::STATUS_REVISION_FIRMAS);
+                        ?>
+                        <?php if ($canToggle): ?>
+                        <div class="mt-2">
+                            <?= $this->Form->create(null, ['url' => ['action' => 'addSignature', $doc->id], 'class' => 'd-inline']) ?>
                             <input type="hidden" name="signer_type" value="<?= h($sig->signer_type) ?>">
-                            <input type="hidden" name="signature_base64" class="sig-base64">
-                            <div class="sgi-signature-pad" data-target=".sig-base64"
-                                 data-signer-label="<?= h($signerLabels[$sig->signer_type] ?? $sig->signer_type) ?>"
-                                 style="width:100%;height:90px;margin-bottom:.5rem;"></div>
-                            <button type="submit" class="btn btn-sm btn-primary">
-                                <i class="bi bi-check-lg me-1"></i>Firmar
+                            <?php if ($sig->signature_path): ?>
+                            <input type="hidden" name="signature_status" value="pending">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Marcar Pendiente
                             </button>
-                            <?= $this->Form->end() ?>
-
                             <?php else: ?>
-                            <span class="badge bg-secondary mt-2">Pendiente</span>
+                            <input type="hidden" name="signature_status" value="signed">
+                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-check-circle me-1"></i>Marcar Firmado
+                            </button>
                             <?php endif; ?>
+                            <?= $this->Form->end() ?>
+                        </div>
                         <?php endif; ?>
                     </div>
                 </div>

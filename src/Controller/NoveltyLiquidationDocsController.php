@@ -186,6 +186,7 @@ class NoveltyLiquidationDocsController extends AppController
     {
         $this->request->allowMethod(['post']);
         $signerType = $this->request->getData('signer_type');
+        $signatureStatus = $this->request->getData('signature_status');
         $user = $this->Authentication->getIdentity()->getOriginalData();
 
         $signaturesTable = $this->fetchTable('NoveltyLiquidationSignatures');
@@ -199,24 +200,20 @@ class NoveltyLiquidationDocsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $signatureBase64 = $this->request->getData('signature_base64');
-
-        if (!empty($signatureBase64)) {
-            $path = $this->signatureService->saveFromBase64(
-                (int)$id,
-                $signatureBase64,
-                $user->id,
-                'liquidation_' . $signerType,
-            );
-            if ($path) {
-                $signature->signature_path = $path;
-                $signature->signed_by = $user->id;
-                $signature->approved_at = new DateTime();
-                $signaturesTable->save($signature);
-                $this->Flash->success('Firma registrada.');
-            }
+        if ($signatureStatus === 'signed') {
+            $signature->signature_path = 'marked_as_signed';
+            $signature->signed_by = $user->id;
+            $signature->approved_at = new DateTime();
+            $signaturesTable->save($signature);
+            $this->Flash->success('Firma marcada como firmada.');
+        } elseif ($signatureStatus === 'pending') {
+            $signature->signature_path = null;
+            $signature->signed_by = null;
+            $signature->approved_at = null;
+            $signaturesTable->save($signature);
+            $this->Flash->success('Firma marcada como pendiente.');
         } else {
-            $this->Flash->error('No se proporcionó una firma.');
+            $this->Flash->error('Estado de firma no válido.');
         }
 
         return $this->redirect(['action' => 'edit', $id]);
