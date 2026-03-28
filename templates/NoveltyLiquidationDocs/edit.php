@@ -427,7 +427,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
             <input type="file" name="liquidation_file" id="liq-doc-file" required
                    accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
                    style="display:none;" onchange="document.getElementById('liq-doc-update-form').submit();">
-            <label for="liq-doc-file" class="btn btn-sm btn-outline-primary" style="padding:.25rem .45rem;font-size:.72rem;line-height:1;cursor:pointer;" title="Reemplazar">
+            <label for="liq-doc-file" class="btn btn-sm btn-outline-primary" style="width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;cursor:pointer;" title="Reemplazar">
                 <i class="bi bi-arrow-repeat"></i>
             </label>
             <?= $this->Form->end() ?>
@@ -435,10 +435,11 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
             <?= $this->Html->link(
                 '<i class="bi bi-box-arrow-up-right"></i>',
                 '/' . $liquidationDocument->file_path,
-                ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
+                ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
             ) ?>
         </div>
     </div>
+    <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php elseif ($canUploadLiqDoc): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
@@ -461,6 +462,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
         </label>
         <?= $this->Form->end() ?>
     </div>
+    <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php else: ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
@@ -468,6 +470,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
         </div>
         <span style="font-size:.76rem;color:#c8c8c8;">Sin documento</span>
     </div>
+    <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php endif; ?>
 
     <?php if (empty($documentsByStatus)): ?>
