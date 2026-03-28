@@ -441,7 +441,7 @@ $badgeColors = [
         <?php endif; ?>
 
         <!-- Advance/Reject buttons (non-RRHH stages) -->
-        <?php if ($canAdvance && $currentStatus !== NoveltyConstants::STATUS_RRHH): ?>
+        <?php if ($canAdvance && !in_array($currentStatus, [NoveltyConstants::STATUS_RRHH, NoveltyConstants::STATUS_APROBACION])): ?>
         <div class="d-flex gap-2 pt-3" style="border-top:1px solid var(--border-color);">
             <?php if (empty($transitionErrors)): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id], 'class' => 'd-inline']) ?>
