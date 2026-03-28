@@ -78,6 +78,7 @@ class NoveltyLiquidationDocsController extends AppController
         $effectiveStatuses = $this->pipelineService->getEffectiveStatuses();
 
         $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($doc->id);
+        $liquidationDocument = $this->documentService->getLiquidationDocument($doc->id);
 
         // Aggregate change history from all novelties in this group
         $noveltyIds = array_map(fn($n) => $n->id, $doc->employee_novelties);
@@ -98,6 +99,7 @@ class NoveltyLiquidationDocsController extends AppController
             'groupErrors',
             'effectiveStatuses',
             'documentsByStatus',
+            'liquidationDocument',
             'groupHistories',
             'fieldLabels',
         ));
@@ -132,6 +134,7 @@ class NoveltyLiquidationDocsController extends AppController
         $groupErrors = $this->pipelineService->validateGroupTransition($doc);
         $effectiveStatuses = $this->pipelineService->getEffectiveStatuses();
         $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($doc->id);
+        $liquidationDocument = $this->documentService->getLiquidationDocument($doc->id);
 
         $currentUser = $user;
         $this->set(compact(
@@ -139,6 +142,7 @@ class NoveltyLiquidationDocsController extends AppController
             'groupErrors',
             'effectiveStatuses',
             'documentsByStatus',
+            'liquidationDocument',
             'currentUser',
         ));
     }
@@ -241,6 +245,79 @@ class NoveltyLiquidationDocsController extends AppController
             $this->Flash->error($result);
         } else {
             $this->Flash->success('Documento subido exitosamente.');
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    /**
+     * Upload the dedicated liquidation document.
+     *
+     * @param string|null $id Document ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function uploadLiquidationDocument(?string $id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $doc = $this->NoveltyLiquidationDocs->get($id);
+        $user = $this->Authentication->getIdentity()->getOriginalData();
+        $file = $this->request->getUploadedFile('liquidation_file');
+
+        if (!$file) {
+            $this->Flash->error('No se seleccionó ningún archivo.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        $result = $this->documentService->uploadLiquidationDocument($doc->id, $file, $user->id);
+
+        if (is_string($result)) {
+            $this->Flash->error($result);
+        } else {
+            $this->Flash->success('Documento de liquidación subido exitosamente.');
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    /**
+     * Update (replace) the dedicated liquidation document.
+     *
+     * @param string|null $id Document ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function updateLiquidationDocument(?string $id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $doc = $this->NoveltyLiquidationDocs->get($id);
+        $user = $this->Authentication->getIdentity()->getOriginalData();
+
+        $allowedStatuses = [
+            NoveltyConstants::STATUS_CONTABILIDAD,
+            NoveltyConstants::STATUS_REVISION_FIRMAS,
+            NoveltyConstants::STATUS_GDP,
+        ];
+
+        if (!in_array($doc->pipeline_status, $allowedStatuses)) {
+            $this->Flash->error('No se puede actualizar el documento en este estado.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        $file = $this->request->getUploadedFile('liquidation_file');
+
+        if (!$file) {
+            $this->Flash->error('No se seleccionó ningún archivo.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        $result = $this->documentService->updateLiquidationDocument($doc->id, $file, $user->id);
+
+        if (is_string($result)) {
+            $this->Flash->error($result);
+        } else {
+            $this->Flash->success('Documento de liquidación actualizado exitosamente.');
         }
 
         return $this->redirect(['action' => 'edit', $id]);
