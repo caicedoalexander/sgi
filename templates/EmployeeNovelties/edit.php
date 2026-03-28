@@ -341,7 +341,7 @@ $badgeColors = [
         <?php endif; ?>
 
         <!-- Approver section (when in aprobacion status) -->
-        <?php if (in_array('aprobacion', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION): ?>
+        <?php if (in_array('aprobacion', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION && !$isRejected): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -350,7 +350,7 @@ $badgeColors = [
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
-            <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id]]) ?>
+            <?= $this->Form->create(null, ['url' => ['action' => 'resendApproval', $novelty->id]]) ?>
             <div class="row g-3 align-items-end">
                 <div class="col-md-6">
                     <label class="form-label">Aprobador</label>
@@ -361,6 +361,11 @@ $badgeColors = [
                         'class' => 'form-select select2',
                         'value' => $novelty->approver_id,
                     ]) ?>
+                </div>
+                <div class="col-md-6">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-send me-1"></i>Enviar link de aprobación
+                    </button>
                 </div>
             </div>
             <?= $this->Form->end() ?>

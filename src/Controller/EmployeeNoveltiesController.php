@@ -756,8 +756,16 @@ class EmployeeNoveltiesController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
+        // Allow updating approver from the form
+        $newApproverId = $this->request->getData('approver_id');
+        if (!empty($newApproverId)) {
+            $novelty->approver_id = (int)$newApproverId;
+            $this->EmployeeNovelties->save($novelty);
+            $novelty = $this->EmployeeNovelties->get($id, contain: ['Employees', 'NoveltyTypes']);
+        }
+
         if (empty($novelty->approver_id)) {
-            $this->Flash->error('Debe asignar un aprobador antes de reenviar.');
+            $this->Flash->error('Debe asignar un aprobador antes de enviar.');
 
             return $this->redirect(['action' => 'edit', $id]);
         }
