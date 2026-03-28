@@ -167,13 +167,21 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                 </li>
                 <?php endif; ?>
                 <?php if ($canView('novelty_liquidation_docs')): ?>
-                <?php $liquidacionSubActive = $currentController === 'NoveltyLiquidationDocs'; ?>
+                <?php
+                $liquidacionSubActive = $currentController === 'NoveltyLiquidationDocs';
+                $liqStatusFilter = $this->request->getQuery('pipeline_status');
+                $liqSubLink = function (string $status) use ($currentController, $liqStatusFilter): string {
+                    $match = $currentController === 'NoveltyLiquidationDocs' && $liqStatusFilter === $status;
+                    return 'nav-link d-flex align-items-center' . ($match ? ' active' : '');
+                };
+                $liqParentActive = $currentController === 'NoveltyLiquidationDocs' && $currentAction === 'index' && empty($liqStatusFilter);
+                ?>
                 <li class="nav-item sidebar-has-submenu">
                     <div class="sidebar-collapsible-header">
                         <?= $this->Html->link(
                             '<i class="bi bi-file-earmark-text me-2"></i><span class="flex-grow-1">D. de Liquidación</span>',
                             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index'],
-                            ['class' => $navLink('NoveltyLiquidationDocs', 'index') . ' flex-grow-1 d-flex align-items-center', 'escape' => false]
+                            ['class' => 'nav-link flex-grow-1 d-flex align-items-center' . ($liqParentActive ? ' active' : ''), 'escape' => false]
                         ) ?>
                         <button class="sidebar-chevron-btn"
                                 data-bs-toggle="collapse"
@@ -191,7 +199,7 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                                     '<i class="bi bi-calculator me-2"></i>En Contabilidad' .
                                     (!empty($liquidationCounters['contabilidad']) ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $liquidationCounters['contabilidad'] . '</span>' : ''),
                                     ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index', '?' => ['pipeline_status' => 'contabilidad']],
-                                    ['class' => 'nav-link d-flex align-items-center', 'escape' => false]
+                                    ['class' => $liqSubLink('contabilidad'), 'escape' => false]
                                 ) ?>
                             </li>
                             <li class="nav-item">
@@ -199,7 +207,7 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                                     '<i class="bi bi-bank me-2"></i>En Tesorería' .
                                     (!empty($liquidationCounters['tesoreria']) ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $liquidationCounters['tesoreria'] . '</span>' : ''),
                                     ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index', '?' => ['pipeline_status' => 'tesoreria']],
-                                    ['class' => 'nav-link d-flex align-items-center', 'escape' => false]
+                                    ['class' => $liqSubLink('tesoreria'), 'escape' => false]
                                 ) ?>
                             </li>
                             <li class="nav-item">
@@ -207,7 +215,7 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                                     '<i class="bi bi-pen me-2"></i>En Revisión y Firmas' .
                                     (!empty($liquidationCounters['revision_firmas']) ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $liquidationCounters['revision_firmas'] . '</span>' : ''),
                                     ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index', '?' => ['pipeline_status' => 'revision_firmas']],
-                                    ['class' => 'nav-link d-flex align-items-center', 'escape' => false]
+                                    ['class' => $liqSubLink('revision_firmas'), 'escape' => false]
                                 ) ?>
                             </li>
                             <li class="nav-item">
@@ -215,7 +223,7 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                                     '<i class="bi bi-clipboard-check me-2"></i>GDP' .
                                     (!empty($liquidationCounters['gdp']) ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $liquidationCounters['gdp'] . '</span>' : ''),
                                     ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index', '?' => ['pipeline_status' => 'gdp']],
-                                    ['class' => 'nav-link d-flex align-items-center', 'escape' => false]
+                                    ['class' => $liqSubLink('gdp'), 'escape' => false]
                                 ) ?>
                             </li>
                         </ul>
