@@ -326,25 +326,43 @@ class NoveltyPipelineService
             case NoveltyConstants::STATUS_REVISION_FIRMAS:
                 $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
 
+                // Only validate non-worker signatures in revision_firmas
                 $totalSlots = $signaturesTable->find()
-                    ->where(['liquidation_doc_id' => $liquidationDoc->id])
+                    ->where([
+                        'liquidation_doc_id' => $liquidationDoc->id,
+                        'signer_type !=' => NoveltyConstants::SIGNER_TRABAJADOR,
+                    ])
                     ->count();
 
                 $signedCount = $signaturesTable->find()
                     ->where([
                         'liquidation_doc_id' => $liquidationDoc->id,
+                        'signer_type !=' => NoveltyConstants::SIGNER_TRABAJADOR,
                         'signature_path IS NOT' => null,
                     ])
                     ->count();
 
                 if ($signedCount < $totalSlots) {
-                    $errors[] = 'Todas las firmas requeridas deben estar presentes para avanzar.';
+                    $errors[] = 'Todas las firmas requeridas (Contador y Coordinador) deben estar presentes para avanzar.';
                 }
                 break;
 
             case NoveltyConstants::STATUS_GDP:
                 if ($liquidationDoc->passes_for_payment === null) {
                     $errors[] = 'Debe indicar si "Pasa para Pago".';
+                }
+
+                // Validate worker signature
+                $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
+                $workerSlot = $signaturesTable->find()
+                    ->where([
+                        'liquidation_doc_id' => $liquidationDoc->id,
+                        'signer_type' => NoveltyConstants::SIGNER_TRABAJADOR,
+                    ])
+                    ->first();
+
+                if ($workerSlot && empty($workerSlot->signature_path)) {
+                    $errors[] = 'La firma del trabajador es requerida para avanzar.';
                 }
                 break;
 

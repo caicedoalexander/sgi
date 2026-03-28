@@ -219,7 +219,7 @@ $noveltyCount = count($doc->employee_novelties);
         </div>
 
         <!-- Signatures Section (in revision_firmas stage or if signatures exist) -->
-        <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_REVISION_FIRMAS || !empty($doc->novelty_liquidation_signatures)): ?>
+        <?php if (in_array($doc->pipeline_status, [NoveltyConstants::STATUS_REVISION_FIRMAS, NoveltyConstants::STATUS_GDP]) || !empty($doc->novelty_liquidation_signatures)): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -244,7 +244,12 @@ $noveltyCount = count($doc->employee_novelties);
                             </div>
                             <span class="badge bg-success mt-1">Firmado</span>
                         <?php else: ?>
-                            <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_REVISION_FIRMAS): ?>
+                            <?php
+                            $canSign = ($sig->signer_type === NoveltyConstants::SIGNER_TRABAJADOR)
+                                ? ($doc->pipeline_status === NoveltyConstants::STATUS_GDP)
+                                : ($doc->pipeline_status === NoveltyConstants::STATUS_REVISION_FIRMAS);
+                            ?>
+                            <?php if ($canSign): ?>
 
                             <!-- Manual signature pad -->
                             <?= $this->Form->create(null, ['url' => ['action' => 'addSignature', $doc->id], 'class' => 'sig-form']) ?>
