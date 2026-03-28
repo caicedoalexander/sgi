@@ -323,6 +323,20 @@ class NoveltyPipelineService
         $currentStatus = $liquidationDoc->pipeline_status;
 
         switch ($currentStatus) {
+            case NoveltyConstants::STATUS_CONTABILIDAD:
+                $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
+                $hasLiqDoc = $documentsTable->find()
+                    ->where([
+                        'liquidation_doc_id' => $liquidationDoc->id,
+                        'document_type' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
+                    ])
+                    ->count();
+
+                if ($hasLiqDoc === 0) {
+                    $errors[] = 'Debe subir el documento de liquidación antes de avanzar.';
+                }
+                break;
+
             case NoveltyConstants::STATUS_REVISION_FIRMAS:
                 $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
 

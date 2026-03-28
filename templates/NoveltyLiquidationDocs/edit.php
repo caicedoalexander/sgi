@@ -219,7 +219,15 @@ $noveltyCount = count($doc->employee_novelties);
         </div>
 
         <!-- Signatures Section (in revision_firmas stage or if signatures exist) -->
-        <?php if (in_array($doc->pipeline_status, [NoveltyConstants::STATUS_REVISION_FIRMAS, NoveltyConstants::STATUS_GDP]) || !empty($doc->novelty_liquidation_signatures)): ?>
+        <?php
+        $signaturesVisibleStatuses = [
+            NoveltyConstants::STATUS_REVISION_FIRMAS,
+            NoveltyConstants::STATUS_GDP,
+            NoveltyConstants::STATUS_TESORERIA,
+            NoveltyConstants::STATUS_PAGADA,
+        ];
+        ?>
+        <?php if (in_array($doc->pipeline_status, $signaturesVisibleStatuses) || ($doc->pipeline_status === NoveltyConstants::STATUS_RECHAZADA && !empty($doc->novelty_liquidation_signatures))): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -319,10 +327,17 @@ $noveltyCount = count($doc->employee_novelties);
             <?= $this->Form->end() ?>
 
             <?php elseif ($currentStatus === NoveltyConstants::STATUS_CONTABILIDAD): ?>
-            <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'class' => 'd-inline']) ?>
-            <button type="submit" class="btn btn-success">
-                <i class="bi bi-arrow-right-circle me-1"></i>Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_REVISION_FIRMAS] ?? '' ?>
-            </button>
+            <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id]]) ?>
+            <div class="d-flex flex-wrap gap-3 align-items-end">
+                <div style="min-width:180px;">
+                    <label class="form-label" style="font-size:.8rem;">Fecha Documento</label>
+                    <input type="text" name="document_date" class="form-control form-control-sm flatpickr-date"
+                           value="<?= $doc->document_date?->format('Y-m-d') ?>">
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_REVISION_FIRMAS] ?? '' ?>
+                </button>
+            </div>
             <?= $this->Form->end() ?>
 
             <?php elseif ($currentStatus === NoveltyConstants::STATUS_REVISION_FIRMAS): ?>
