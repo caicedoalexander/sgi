@@ -131,6 +131,10 @@ final class NoveltyConstants
         self::PAYMENT_NA => 'N/A',
     ];
 
+    // Document types (for novelty_documents)
+    public const DOC_TYPE_SUPPORT = 'support';
+    public const DOC_TYPE_LIQUIDATION = 'liquidation_document';
+
     // Signer types (for liquidation doc signatures) — jefe_inmediato removed
     public const SIGNER_CONTADOR = 'contador';
     public const SIGNER_COORDINADOR_ADMIN = 'coordinador_admin';
