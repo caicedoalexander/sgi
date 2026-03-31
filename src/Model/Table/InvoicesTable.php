@@ -63,6 +63,11 @@ class InvoicesTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->hasMany('InvoiceApprovals', [
+            'foreignKey' => 'invoice_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
         $this->belongsTo('PettyCashRecords', [
             'foreignKey' => 'petty_cash_record_id',
             'joinType' => 'LEFT',
