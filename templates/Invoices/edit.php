@@ -499,7 +499,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Aprobadores</label>
-                    <?php if (!$hasPendingApprovals && $canEdit('approver_id')): ?>
+                    <?php if (!$hasPendingApprovals && !empty($editableFields) && $currentStatus === 'aprobacion'): ?>
                         <select name="approver_ids[]" id="approver-ids" class="form-select select2" multiple="multiple">
                             <?php foreach ($approvers as $appId => $appName): ?>
                                 <option value="<?= $appId ?>"><?= h($appName) ?></option>
