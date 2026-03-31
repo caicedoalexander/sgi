@@ -14,16 +14,13 @@ class InvoicePipelineService
 {
     private InvoiceHistoryService $historyService;
     private NotificationService $notificationService;
-    private ApprovalTokenService $tokenService;
 
     public function __construct(
         ?InvoiceHistoryService $historyService = null,
         ?NotificationService $notificationService = null,
-        ?ApprovalTokenService $tokenService = null,
     ) {
         $this->historyService = $historyService ?? new InvoiceHistoryService();
         $this->notificationService = $notificationService ?? new NotificationService();
-        $this->tokenService = $tokenService ?? new ApprovalTokenService();
     }
 
     // Pipeline statuses in order
@@ -68,7 +65,7 @@ class InvoicePipelineService
                 'invoice_number', 'issue_date', 'due_date',
                 'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
                 'detail', 'amount', 'expense_type_id', 'cost_center_id',
-                'confirmed_by', 'approver_id',
+                'confirmed_by',
                 'dian_validation',
             ],
         ],
@@ -95,14 +92,9 @@ class InvoicePipelineService
     private const TRANSITION_REQUIREMENTS = [
         InvoiceConstants::STATUS_APROBACION => [
             [
-                'field' => 'approver_id',
-                'not_empty' => true,
-                'label' => 'Debe seleccionar un Aprobador',
-            ],
-            [
                 'field' => 'area_approval',
                 'value' => InvoiceConstants::APPROVAL_APPROVED,
-                'label' => 'Aprobación del Área debe ser "Aprobada"',
+                'label' => 'Todos los aprobadores deben haber aprobado',
             ],
             [
                 'field' => 'dian_validation',
@@ -282,7 +274,6 @@ class InvoicePipelineService
      *   - 'nextStatus'     => ?string
      *   - 'advanceErrors'  => string[]   (warnings when save succeeded but advance did not)
      *   - 'notificationErrors' => string[]  (notification failures, non-blocking)
-     *   - 'approvalLinkSent'   => bool
      */
     public function saveAndAdvance(
         Invoice $invoice,
@@ -316,8 +307,6 @@ class InvoicePipelineService
 
         $canAdvance = $this->canAdvance($roleName, $currentStatus);
         $isRejected = $this->isRejected($invoice);
-
-        $originalApproverId = $invoice->approver_id;
 
         // Determine if we can advance with submitted data
         $advanceNextStatus = null;
@@ -360,24 +349,8 @@ class InvoicePipelineService
         );
 
         $notificationErrors = [];
-        $approvalLinkSent = false;
 
         if ($saved) {
-            // Send approval link when approver_id is newly assigned in 'aprobacion' state
-            if (
-                $currentStatus === InvoiceConstants::STATUS_APROBACION
-                && !empty($invoice->approver_id)
-                && $invoice->approver_id !== $originalApproverId
-                && $baseUrl
-            ) {
-                $approvalResult = $this->trySendApprovalLink($invoice, $userId, $baseUrl);
-                if ($approvalResult['success']) {
-                    $approvalLinkSent = true;
-                } else {
-                    $notificationErrors[] = $approvalResult['error'];
-                }
-            }
-
             // Send status change notification if pipeline advanced
             if ($advanceNextStatus) {
                 $notifResult = $this->trySendNotification($invoice, $currentStatus, $advanceNextStatus);
@@ -393,7 +366,6 @@ class InvoicePipelineService
             'nextStatus' => $advanceNextStatus,
             'advanceErrors' => $postAdvanceErrors,
             'notificationErrors' => $notificationErrors,
-            'approvalLinkSent' => $approvalLinkSent,
         ];
     }
 
@@ -444,46 +416,6 @@ class InvoicePipelineService
             'nextStatus' => $nextStatus,
             'notificationError' => $notifResult['error'],
         ];
-    }
-
-    /**
-     * Build the approval link URL for an invoice.
-     */
-    public function generateApprovalLink(int $invoiceId, int $userId, string $baseUrl): string
-    {
-        $token = $this->tokenService->generateToken('invoices', $invoiceId, $userId);
-
-        return $baseUrl . '/approve/' . $token;
-    }
-
-    /**
-     * Try to generate token and send approval link email.
-     * Returns ['success' => bool, 'error' => ?string, 'url' => ?string].
-     */
-    public function trySendApprovalLink(Invoice $invoice, int $userId, string $baseUrl): array
-    {
-        try {
-            if (empty($invoice->approver_id)) {
-                return ['success' => false, 'error' => 'No hay aprobador asignado.', 'url' => null];
-            }
-
-            $token = $this->tokenService->generateToken('invoices', $invoice->id, $userId);
-            $approvalUrl = $baseUrl . '/approve/' . $token;
-
-            // Ensure invoice has provider loaded for the email template
-            if (!$invoice->has('provider') || empty($invoice->provider)) {
-                $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-                $invoice = $invoicesTable->get($invoice->id, contain: ['Providers']);
-            }
-
-            $this->notificationService->sendApprovalLinkNotification($invoice, $approvalUrl);
-
-            return ['success' => true, 'error' => null, 'url' => $approvalUrl];
-        } catch (Exception $e) {
-            Log::error('Error enviando link de aprobación para factura #' . $invoice->id . ': ' . $e->getMessage());
-
-            return ['success' => false, 'error' => 'No se pudo enviar el correo de aprobación: ' . $e->getMessage(), 'url' => null];
-        }
     }
 
     /**
