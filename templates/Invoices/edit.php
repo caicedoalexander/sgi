@@ -496,20 +496,47 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
+            <?php if (($invoice->area_approval ?? '') === 'Rechazada'): ?>
+                <?php
+                $rejector = null;
+                foreach ($currentApprovals as $a) {
+                    if ($a->status === 'Rechazada') { $rejector = $a; break; }
+                }
+                ?>
+                <div class="alert alert-warning mb-3" style="border:1px solid #ffc107;border-left:3px solid #CD6A15;border-radius:0;">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-exclamation-triangle-fill" style="color:#CD6A15;font-size:1.1rem;margin-top:1px;"></i>
+                        <div>
+                            <strong>Rechazada por <?= h($rejector->user->full_name ?? $rejector->user->username ?? 'Aprobador') ?></strong>
+                            <?php if ($rejector && $rejector->observations): ?>
+                                <div class="mt-1" style="font-size:.85rem;color:#555;"><?= h($rejector->observations) ?></div>
+                            <?php endif; ?>
+                            <div class="mt-1" style="font-size:.8rem;color:#888;">Corrija los datos y re-asigne aprobadores para reiniciar el flujo.</div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Aprobadores</label>
                     <?php if (!$hasPendingApprovals && !empty($editableFields) && $currentStatus === 'aprobacion'): ?>
-                        <select name="approver_ids[]" id="approver-ids" class="form-select select2" multiple="multiple">
+                        <select name="approver_ids[]" id="approver-ids" class="form-select select2-enable" multiple
+                                data-placeholder="Seleccione los aprobadores...">
                             <?php foreach ($approvers as $appId => $appName): ?>
                                 <option value="<?= $appId ?>"><?= h($appName) ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <small class="text-muted">Seleccione los aprobadores y guarde para enviar enlaces</small>
+                        <small class="text-muted mt-1 d-block">
+                            <i class="bi bi-info-circle me-1"></i>Al guardar se enviarán los enlaces de aprobación
+                        </small>
+                    <?php elseif ($hasPendingApprovals): ?>
+                        <div class="d-flex align-items-center gap-2 py-2">
+                            <span class="spinner-border spinner-border-sm text-warning" role="status" style="width:.9rem;height:.9rem;"></span>
+                            <span style="font-size:.85rem;color:#888;">Aprobaciones en curso — no se puede modificar</span>
+                        </div>
                     <?php else: ?>
-                        <p class="form-control-plaintext text-muted">
-                            <?= $hasPendingApprovals ? 'Aprobaciones en curso — no se puede modificar' : 'No editable en este estado' ?>
-                        </p>
+                        <div class="py-2" style="font-size:.85rem;color:#aaa;">No editable en este estado</div>
                     <?php endif; ?>
                 </div>
                 <div class="col-md-3">
@@ -530,55 +557,61 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 </div>
                 <?php endif; ?>
 
-                <?php if (($invoice->area_approval ?? '') === 'Rechazada'): ?>
-                    <?php
-                    $rejector = null;
-                    foreach ($currentApprovals as $a) {
-                        if ($a->status === 'Rechazada') { $rejector = $a; break; }
-                    }
-                    ?>
-                    <div class="col-12">
-                        <div class="alert alert-warning mb-2">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            Rechazada por <strong><?= h($rejector->user->full_name ?? $rejector->user->username ?? 'Aprobador') ?></strong>.
-                            <?= $rejector && $rejector->observations ? h($rejector->observations) : '' ?>
-                            Corrija y re-asigne aprobadores.
-                        </div>
-                    </div>
-                <?php endif; ?>
-
                 <?php if (!empty($currentApprovals)): ?>
                 <div class="col-12 mt-2">
-                    <label class="form-label">Estado de Aprobaciones</label>
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Aprobador</th>
-                                <th>Estado</th>
-                                <th>Fecha</th>
-                                <th>Observaciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($currentApprovals as $approval): ?>
-                            <tr>
-                                <td><?= h($approval->user->full_name ?? $approval->user->username) ?></td>
-                                <td>
-                                    <?php
-                                    $badgeClass = match ($approval->status) {
-                                        'Aprobada' => 'bg-success',
-                                        'Rechazada' => 'bg-danger',
-                                        default => 'bg-secondary',
-                                    };
-                                    ?>
-                                    <span class="badge <?= $badgeClass ?>"><?= h($approval->status) ?></span>
-                                </td>
-                                <td><?= $approval->responded_at ? $approval->responded_at->format('Y-m-d H:i') : '—' ?></td>
-                                <td><?= $approval->observations ? h($approval->observations) : '—' ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <?php
+                    $totalApprovals = count($currentApprovals);
+                    $approvedCount = 0;
+                    $rejectedCount = 0;
+                    $pendingCount = 0;
+                    foreach ($currentApprovals as $a) {
+                        match ($a->status) {
+                            'Aprobada' => $approvedCount++,
+                            'Rechazada' => $rejectedCount++,
+                            default => $pendingCount++,
+                        };
+                    }
+                    ?>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <label class="form-label mb-0">Estado de Aprobaciones</label>
+                        <div class="d-flex gap-2" style="font-size:.75rem;">
+                            <?php if ($approvedCount > 0): ?>
+                                <span class="badge bg-success"><?= $approvedCount ?> aprobada<?= $approvedCount > 1 ? 's' : '' ?></span>
+                            <?php endif; ?>
+                            <?php if ($pendingCount > 0): ?>
+                                <span class="badge bg-secondary"><?= $pendingCount ?> pendiente<?= $pendingCount > 1 ? 's' : '' ?></span>
+                            <?php endif; ?>
+                            <?php if ($rejectedCount > 0): ?>
+                                <span class="badge bg-danger"><?= $rejectedCount ?> rechazada<?= $rejectedCount > 1 ? 's' : '' ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
+                        <?php foreach ($currentApprovals as $i => $approval): ?>
+                            <?php
+                            $statusIcon = match ($approval->status) {
+                                'Aprobada' => '<i class="bi bi-check-circle-fill" style="color:#469D61;"></i>',
+                                'Rechazada' => '<i class="bi bi-x-circle-fill" style="color:#dc3545;"></i>',
+                                default => '<i class="bi bi-clock" style="color:#888;"></i>',
+                            };
+                            $borderBottom = $i < $totalApprovals - 1 ? 'border-bottom:1px solid var(--border-color);' : '';
+                            ?>
+                            <div class="d-flex align-items-center gap-3 px-3 py-2" style="<?= $borderBottom ?>font-size:.875rem;">
+                                <div style="flex:0 0 20px;"><?= $statusIcon ?></div>
+                                <div style="flex:1;min-width:0;">
+                                    <div class="fw-medium"><?= h($approval->user->full_name ?? $approval->user->username) ?></div>
+                                    <?php if ($approval->observations): ?>
+                                        <div style="font-size:.78rem;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="<?= h($approval->observations) ?>">
+                                            <?= h($approval->observations) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="text-end" style="flex:0 0 auto;font-size:.78rem;color:#888;">
+                                    <?= $approval->responded_at ? $approval->responded_at->format('d/m/Y H:i') : 'Pendiente' ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
                 <?php endif; ?>
 
