@@ -228,7 +228,17 @@ $pipelineOptions = InvoicePipelineService::STATUS_LABELS;
                                 <span class="badge bg-danger">Rechazada</span>
                             <?php else: ?>
                                 <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
-                                <?php if ($isApproved): ?>
+                                <?php if (isset($approvalSummaries[$invoice->id]) && $approvalSummaries[$invoice->id]['total'] > 0):
+                                    $s = $approvalSummaries[$invoice->id];
+                                ?>
+                                    <?php if ($s['rejected'] > 0): ?>
+                                        <span class="badge bg-danger">Rechazada</span>
+                                    <?php elseif ($s['approved'] === $s['total']): ?>
+                                        <span class="badge bg-success">Aprobada</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary"><?= $s['approved'] ?>/<?= $s['total'] ?> aprobados</span>
+                                    <?php endif; ?>
+                                <?php elseif ($isApproved): ?>
                                     <span class="badge bg-success">Aprobada</span>
                                 <?php endif; ?>
                                 <?php if ($isPartialPay): ?>

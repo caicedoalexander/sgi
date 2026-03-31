@@ -497,16 +497,22 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
             <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Aprobador</label>
-                    <?= $this->Form->control('approver_id', array_merge(
-                        ['label' => false, 'options' => $approvers, 'empty' => '-- Seleccione --'],
-                        $canEdit('approver_id')
-                            ? ['class' => 'form-select']
-                            : ['class' => 'form-select', 'disabled' => true]
-                    )) ?>
+                <div class="col-md-6">
+                    <label class="form-label">Aprobadores</label>
+                    <?php if (!$hasPendingApprovals && $canEdit('approver_id')): ?>
+                        <select name="approver_ids[]" id="approver-ids" class="form-select select2" multiple="multiple">
+                            <?php foreach ($approvers as $appId => $appName): ?>
+                                <option value="<?= $appId ?>"><?= h($appName) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="text-muted">Seleccione los aprobadores y guarde para enviar enlaces</small>
+                    <?php else: ?>
+                        <p class="form-control-plaintext text-muted">
+                            <?= $hasPendingApprovals ? 'Aprobaciones en curso — no se puede modificar' : 'No editable en este estado' ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Aprobación Área</label>
                     <?= $this->Form->control('area_approval', [
                         'label' => false,
@@ -517,12 +523,65 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                     <small class="text-muted">Se actualiza desde el enlace de aprobación</small>
                 </div>
                 <?php if ($invoice->area_approval_date): ?>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Fecha Aprobación</label>
                     <input type="text" class="form-control" disabled
                            value="<?= h($invoice->area_approval_date?->format('d/m/Y') ?? '') ?>">
                 </div>
                 <?php endif; ?>
+
+                <?php if (($invoice->area_approval ?? '') === 'Rechazada'): ?>
+                    <?php
+                    $rejector = null;
+                    foreach ($currentApprovals as $a) {
+                        if ($a->status === 'Rechazada') { $rejector = $a; break; }
+                    }
+                    ?>
+                    <div class="col-12">
+                        <div class="alert alert-warning mb-2">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Rechazada por <strong><?= h($rejector->user->full_name ?? $rejector->user->username ?? 'Aprobador') ?></strong>.
+                            <?= $rejector && $rejector->observations ? h($rejector->observations) : '' ?>
+                            Corrija y re-asigne aprobadores.
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (!empty($currentApprovals)): ?>
+                <div class="col-12 mt-2">
+                    <label class="form-label">Estado de Aprobaciones</label>
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Aprobador</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($currentApprovals as $approval): ?>
+                            <tr>
+                                <td><?= h($approval->user->full_name ?? $approval->user->username) ?></td>
+                                <td>
+                                    <?php
+                                    $badgeClass = match ($approval->status) {
+                                        'Aprobada' => 'bg-success',
+                                        'Rechazada' => 'bg-danger',
+                                        default => 'bg-secondary',
+                                    };
+                                    ?>
+                                    <span class="badge <?= $badgeClass ?>"><?= h($approval->status) ?></span>
+                                </td>
+                                <td><?= $approval->responded_at ? $approval->responded_at->format('Y-m-d H:i') : '—' ?></td>
+                                <td><?= $approval->observations ? h($approval->observations) : '—' ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php endif; ?>
+
                 <div class="col-md-4">
                     <label class="form-label">Validación DIAN</label>
                     <?= $this->Form->control('dian_validation', array_merge(

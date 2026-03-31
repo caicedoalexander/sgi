@@ -38,14 +38,6 @@ $dianClass = match($invoice->dian_validation ?? '') {
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Ver Factura</span>
     <div class="d-flex gap-2">
-        <?php if (!empty($userPermissions['invoices']['can_edit'])): ?>
-        <?= $this->Form->postLink(
-            '<i class="bi bi-link-45deg me-1"></i>Enlace Aprobación',
-            ['action' => 'generateApprovalLink', $invoice->id],
-            ['class' => 'btn btn-outline-primary btn-sm', 'escape' => false,
-             'confirm' => '¿Generar enlace de aprobación externa (válido 48h)?']
-        ) ?>
-        <?php endif; ?>
         <?= $this->Html->link(
             '<i class="bi bi-arrow-left me-1"></i>Volver',
             ['action' => 'index'],
