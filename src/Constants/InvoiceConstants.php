@@ -23,6 +23,17 @@ final class InvoiceConstants
     public const APPROVAL_REJECTED = 'Rechazada';
     public const APPROVAL_STATUSES = [self::APPROVAL_PENDING, self::APPROVAL_APPROVED, self::APPROVAL_REJECTED];
 
+    // Individual approver statuses (for invoice_approvals table)
+    public const APPROVER_STATUS_PENDING = 'Pendiente';
+    public const APPROVER_STATUS_APPROVED = 'Aprobada';
+    public const APPROVER_STATUS_REJECTED = 'Rechazada';
+
+    public const APPROVER_STATUSES = [
+        self::APPROVER_STATUS_PENDING,
+        self::APPROVER_STATUS_APPROVED,
+        self::APPROVER_STATUS_REJECTED,
+    ];
+
     // Validacion DIAN
     public const DIAN_PENDING = 'Pendiente';
     public const DIAN_APPROVED = 'Aprobada';
