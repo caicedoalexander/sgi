@@ -1043,19 +1043,34 @@ body {
     border-radius: 0;
     border: 1px solid var(--border-color);
     font-size: .875rem;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #333;
     padding: .5rem 2.25rem .5rem .75rem;
-    transition: border-color .15s ease, box-shadow .15s ease;
+    height: 38px;
+    transition: border-color .15s ease;
     box-shadow: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
     background-position: right .75rem center;
+    background-size: 10px 6px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 .form-select:focus {
     border-color: var(--primary-color);
     box-shadow: none;
     outline: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 5l4-4 4 4' stroke='%23469D61' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 .form-select:disabled {
     background-color: #f8f9fa;
     opacity: 0.7;
+    color: #888;
+}
+.form-select option {
+    font-size: .875rem;
+    padding: .375rem .5rem;
 }
 
 /* Textarea */
