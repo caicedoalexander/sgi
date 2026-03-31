@@ -83,7 +83,7 @@ class NotificationService
     /**
      * Send approval link email to the assigned approver. Throws on failure.
      */
-    public function sendApprovalLinkNotification(Invoice $invoice, string $approvalUrl): void
+    public function sendApprovalLinkNotification(Invoice $invoice, string $approvalUrl, ?int $approverUserId = null): void
     {
         $smtpConfig = $this->settings->getGroup('smtp');
 
@@ -91,11 +91,12 @@ class NotificationService
             throw new Exception('SMTP no configurado. Configure el correo en Ajustes del Sistema.');
         }
 
-        if (empty($invoice->approver_id)) {
-            throw new Exception('No hay aprobador asignado a la factura.');
+        $approverId = $approverUserId ?? $invoice->approver_id;
+        if (!$approverId) {
+            return;
         }
 
-        $recipients = $this->getApproverRecipient($invoice->approver_id);
+        $recipients = $this->getApproverRecipient($approverId);
         if (empty($recipients)) {
             throw new Exception('El aprobador asignado no tiene un usuario activo o no tiene correo.');
         }
