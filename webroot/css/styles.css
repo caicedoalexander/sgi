@@ -1903,21 +1903,36 @@ textarea.form-control {
     padding: .25rem .5rem;
 }
 .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    display: inline-flex;
+    align-items: center;
     background-color: rgba(70, 157, 97, .1);
     border: 1px solid rgba(70, 157, 97, .25);
     border-radius: 2px;
     color: var(--primary-color);
     font-size: .75rem;
     font-weight: 500;
-    padding: .1rem .375rem .1rem .25rem;
+    padding: .15rem .5rem;
     margin: .2rem .25rem .2rem 0;
+    max-width: 100%;
+}
+.select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    order: 1;
     color: var(--primary-color);
     font-weight: 700;
-    margin-right: .25rem;
-    border-right: 1px solid rgba(70, 157, 97, .2);
-    padding-right: .3rem;
+    margin-left: .4rem;
+    margin-right: 0;
+    padding: 0 0 0 .4rem;
+    border-left: 1px solid rgba(70, 157, 97, .2);
+    border-right: none;
+    font-size: .85rem;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
     transition: color .15s ease;
 }
 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
