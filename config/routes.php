@@ -112,13 +112,6 @@ return function (RouteBuilder $routes): void {
             ['invoiceId' => '\d+', 'documentId' => '\d+', 'pass' => ['invoiceId', 'documentId']]
         );
 
-        // Invoice generate approval link
-        $builder->connect(
-            '/invoices/generate-approval-link/{id}',
-            ['controller' => 'Invoices', 'action' => 'generateApprovalLink'],
-            ['id' => '\d+', 'pass' => ['id']]
-        );
-
         // Employee novelties views
         $builder->connect(
             '/employee-novelties/all',

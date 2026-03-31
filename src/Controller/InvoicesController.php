@@ -9,6 +9,7 @@ use App\Service\ExcelService;
 use App\Service\InvoiceDocumentService;
 use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
+use App\Service\InvoiceApprovalService;
 use App\Service\InvoicePipelineService;
 use ArrayObject;
 use Cake\ORM\Query\SelectQuery;
@@ -21,6 +22,7 @@ class InvoicesController extends AppController
     private InvoicePipelineService $pipeline;
     private InvoiceFilterService $filterService;
     private InvoiceDocumentService $documentService;
+    private InvoiceApprovalService $approvalService;
 
     public function initialize(): void
     {
@@ -28,6 +30,7 @@ class InvoicesController extends AppController
         $this->pipeline = new InvoicePipelineService();
         $this->filterService = new InvoiceFilterService();
         $this->documentService = new InvoiceDocumentService();
+        $this->approvalService = new InvoiceApprovalService();
     }
 
     private function _getCurrentUser(): object
@@ -70,6 +73,7 @@ class InvoicesController extends AppController
         $invoices = $this->paginate($this->_buildInvoiceQuery($conditions, $userId));
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
+        $this->set('approvalSummaries', $this->_getApprovalSummaries($invoices));
         $this->set($this->_getFilterDropdowns());
     }
 
@@ -83,6 +87,7 @@ class InvoicesController extends AppController
         $visibleStatuses = [];
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
+        $this->set('approvalSummaries', $this->_getApprovalSummaries($invoices));
         $this->set($this->_getFilterDropdowns());
         $this->render('index');
     }
@@ -99,6 +104,7 @@ class InvoicesController extends AppController
         $visibleStatuses = [];
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
+        $this->set('approvalSummaries', $this->_getApprovalSummaries($invoices));
         $this->set($this->_getFilterDropdowns());
         $this->render('index');
     }
@@ -116,6 +122,7 @@ class InvoicesController extends AppController
         $visibleStatuses = [];
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
+        $this->set('approvalSummaries', $this->_getApprovalSummaries($invoices));
         $this->set($this->_getFilterDropdowns());
         $this->render('index');
     }
@@ -255,11 +262,21 @@ class InvoicesController extends AppController
                     }
                 }
 
-                if (!empty($result['approvalLinkSent'])) {
-                    $this->Flash->success('Se envió el enlace de aprobación al aprobador por correo.');
-                }
                 foreach ($result['notificationErrors'] as $notifErr) {
                     $this->Flash->warning($notifErr);
+                }
+
+                // Handle multi-approver assignment
+                $submittedApproverIds = $this->request->getData('approver_ids') ?? [];
+                if (!empty($submittedApproverIds) && $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION) {
+                    $baseUrl = $this->_getBaseUrl();
+                    $approvalResult = $this->approvalService->assignApprovers($invoice, $submittedApproverIds, $baseUrl, $user->id);
+                    if ($approvalResult['success']) {
+                        $this->Flash->success('Se enviaron los enlaces de aprobación a los aprobadores seleccionados.');
+                    }
+                    foreach ($approvalResult['errors'] as $approvalErr) {
+                        $this->Flash->error($approvalErr);
+                    }
                 }
 
                 return $this->redirect(['action' => 'edit', $id]);
@@ -272,6 +289,10 @@ class InvoicesController extends AppController
         $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
 
         $canDeleteDocuments = $this->_checkPermission('invoices', 'delete');
+
+        // Multi-approver data
+        $currentApprovals = $this->approvalService->getCurrentApprovals($invoice->id);
+        $hasPendingApprovals = $this->approvalService->hasPendingApprovals($invoice->id);
 
         $this->set(compact(
             'invoice',
@@ -287,6 +308,8 @@ class InvoicesController extends AppController
             'isApproved',
             'advanceErrors',
             'nextStatus',
+            'currentApprovals',
+            'hasPendingApprovals',
         ));
         $this->set($this->_getFormDropdowns());
     }
@@ -319,30 +342,6 @@ class InvoicesController extends AppController
         $this->Flash->error($result['error']);
 
         return $this->redirect(['action' => 'edit', $id]);
-    }
-
-    public function generateApprovalLink($id = null)
-    {
-        $this->request->allowMethod(['post']);
-        $invoice = $this->Invoices->get($id, contain: ['Providers']);
-        $user = $this->_getCurrentUser();
-
-        if (empty($invoice->approver_id)) {
-            $this->Flash->error('Debe asignar un aprobador antes de generar el enlace.');
-
-            return $this->redirect(['action' => 'edit', $id]);
-        }
-
-        $baseUrl = $this->_getBaseUrl();
-        $result = $this->pipeline->trySendApprovalLink($invoice, $user->id, $baseUrl);
-
-        if ($result['success']) {
-            $this->Flash->success('Enlace de aprobación enviado por correo al aprobador (válido por 48h).');
-        } else {
-            $this->Flash->error('Error al enviar el enlace de aprobación: ' . $result['error']);
-        }
-
-        return $this->redirect(['action' => 'view', $id]);
     }
 
     private function _getBaseUrl(): string
@@ -468,6 +467,18 @@ class InvoicesController extends AppController
         $this->filterService->apply($query, $this->request->getQueryParams());
 
         return $query;
+    }
+
+    private function _getApprovalSummaries($invoices): array
+    {
+        $summaries = [];
+        foreach ($invoices as $inv) {
+            if ($inv->pipeline_status === InvoiceConstants::STATUS_APROBACION) {
+                $summaries[$inv->id] = $this->approvalService->getApprovalSummary($inv->id);
+            }
+        }
+
+        return $summaries;
     }
 
     private function _getFilterDropdowns(): array
