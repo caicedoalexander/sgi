@@ -21,6 +21,7 @@ $isRejected = $doc->pipeline_status === NoveltyConstants::STATUS_RECHAZADA;
 $isPaid = $doc->pipeline_status === NoveltyConstants::STATUS_PAGADA;
 $isFinal = $isRejected || $isPaid;
 $currentStatus = $doc->pipeline_status;
+$skipsGdp = $skipsGdp ?? false;
 
 $statusBadgeMap = [
     'rrhh'             => 'bg-secondary',
@@ -342,13 +343,23 @@ $noveltyCount = count($doc->employee_novelties);
             <?= $this->Form->end() ?>
 
             <?php elseif ($currentStatus === NoveltyConstants::STATUS_REVISION_FIRMAS): ?>
-                <?php if (empty($groupErrors)): ?>
-                <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'class' => 'd-inline']) ?>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-arrow-right-circle me-1"></i>Avanzar Grupo
-                </button>
-                <?= $this->Form->end() ?>
+            <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id]]) ?>
+            <div class="d-flex flex-wrap gap-3 align-items-end">
+                <?php if ($skipsGdp): ?>
+                <div style="min-width:200px;">
+                    <label class="form-label">Pasa para Pago</label>
+                    <select name="passes_for_payment" class="form-select" required>
+                        <option value="">-- Seleccione --</option>
+                        <option value="1" <?= $doc->passes_for_payment === true ? 'selected' : '' ?>>Sí</option>
+                        <option value="0" <?= $doc->passes_for_payment === false ? 'selected' : '' ?>>No</option>
+                    </select>
+                </div>
                 <?php endif; ?>
+                <button type="submit" class="btn btn-success flex-shrink-0"<?= empty($groupErrors) ? '' : ' disabled' ?>>
+                    <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
+                </button>
+            </div>
+            <?= $this->Form->end() ?>
 
             <?php elseif ($currentStatus === NoveltyConstants::STATUS_RRHH): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'class' => 'd-inline']) ?>

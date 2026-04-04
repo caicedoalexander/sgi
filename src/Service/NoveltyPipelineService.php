@@ -127,6 +127,11 @@ class NoveltyPipelineService
             $nextStatus = NoveltyConstants::TRANSITIONS[$nextStatus] ?? null;
         }
 
+        // Skip GDP if type doesn't require employee signature review
+        if ($nextStatus === NoveltyConstants::STATUS_GDP && $noveltyType && !$noveltyType->requires_employee_signature_review) {
+            $nextStatus = NoveltyConstants::TRANSITIONS[$nextStatus] ?? null;
+        }
+
         return $nextStatus;
     }
 
@@ -135,15 +140,16 @@ class NoveltyPipelineService
      */
     public function getEffectiveStatuses(?object $noveltyType = null): array
     {
-        if (!$noveltyType || $noveltyType->requires_boss_approval) {
-            return NoveltyConstants::PIPELINE_STATUSES;
+        $statuses = NoveltyConstants::PIPELINE_STATUSES;
+
+        if ($noveltyType && !$noveltyType->requires_boss_approval) {
+            $statuses = array_filter($statuses, fn(string $s) => $s !== NoveltyConstants::STATUS_APROBACION);
+        }
+        if ($noveltyType && !$noveltyType->requires_employee_signature_review) {
+            $statuses = array_filter($statuses, fn(string $s) => $s !== NoveltyConstants::STATUS_GDP);
         }
 
-        // Exclude aprobacion
-        return array_values(array_filter(
-            NoveltyConstants::PIPELINE_STATUSES,
-            fn(string $status) => $status !== NoveltyConstants::STATUS_APROBACION,
-        ));
+        return array_values($statuses);
     }
 
     /**
@@ -359,6 +365,14 @@ class NoveltyPipelineService
                 if ($signedCount < $totalSlots) {
                     $errors[] = 'Todas las firmas requeridas (Contador y Coordinador) deben estar presentes para avanzar.';
                 }
+
+                // If GDP will be skipped, validate passes_for_payment here
+                $firstMember = $this->_getFirstGroupMember($liquidationDoc);
+                if ($firstMember && $firstMember->novelty_type && !$firstMember->novelty_type->requires_employee_signature_review) {
+                    if ($liquidationDoc->passes_for_payment === null) {
+                        $errors[] = 'Debe indicar si "Pasa para Pago".';
+                    }
+                }
                 break;
 
             case NoveltyConstants::STATUS_GDP:
@@ -560,5 +574,17 @@ class NoveltyPipelineService
         $allowed = $this->getEditableFields($roleName, $status);
 
         return array_intersect_key($data, array_flip($allowed));
+    }
+
+    /**
+     * Get the first novelty member of a liquidation document group with its type.
+     */
+    private function _getFirstGroupMember(object $liquidationDoc): ?object
+    {
+        return TableRegistry::getTableLocator()->get('EmployeeNovelties')
+            ->find()
+            ->contain(['NoveltyTypes'])
+            ->where(['liquidation_doc_id' => $liquidationDoc->id])
+            ->first();
     }
 }

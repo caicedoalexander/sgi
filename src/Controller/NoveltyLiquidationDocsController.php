@@ -75,7 +75,10 @@ class NoveltyLiquidationDocsController extends AppController
         $this->observationService->markAsRead($user->id, liquidationDocId: $doc->id);
 
         $groupErrors = $this->pipelineService->validateGroupTransition($doc);
-        $effectiveStatuses = $this->pipelineService->getEffectiveStatuses();
+        $firstNovelty = $doc->employee_novelties[0] ?? null;
+        $noveltyType = $firstNovelty?->novelty_type;
+        $skipsGdp = $noveltyType && !$noveltyType->requires_employee_signature_review;
+        $effectiveStatuses = $this->pipelineService->getEffectiveStatuses($noveltyType);
 
         $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($doc->id);
         $liquidationDocument = $this->documentService->getLiquidationDocument($doc->id);
@@ -132,7 +135,10 @@ class NoveltyLiquidationDocsController extends AppController
         $this->observationService->markAsRead($user->id, liquidationDocId: $doc->id);
 
         $groupErrors = $this->pipelineService->validateGroupTransition($doc);
-        $effectiveStatuses = $this->pipelineService->getEffectiveStatuses();
+        $firstNovelty = $doc->employee_novelties[0] ?? null;
+        $noveltyType = $firstNovelty?->novelty_type;
+        $skipsGdp = $noveltyType && !$noveltyType->requires_employee_signature_review;
+        $effectiveStatuses = $this->pipelineService->getEffectiveStatuses($noveltyType);
         $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($doc->id);
         $liquidationDocument = $this->documentService->getLiquidationDocument($doc->id);
 
@@ -144,6 +150,7 @@ class NoveltyLiquidationDocsController extends AppController
             'documentsByStatus',
             'liquidationDocument',
             'currentUser',
+            'skipsGdp',
         ));
     }
 
