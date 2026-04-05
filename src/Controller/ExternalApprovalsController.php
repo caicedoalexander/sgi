@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\InvoiceConstants;
 use App\Service\ApprovalTokenService;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoicePipelineService;
@@ -141,7 +142,7 @@ class ExternalApprovalsController extends AppController
                 $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
                 $invoice = $invoicesTable->get($result['invoice_id']);
 
-                if ($invoice->pipeline_status === 'aprobacion') {
+                if ($invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION) {
                     $identity = $this->Authentication->getIdentity();
                     $pipelineService->advance($invoice, 'Admin', (int)$identity->getIdentifier());
                 }

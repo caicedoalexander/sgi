@@ -496,11 +496,11 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
-            <?php if (($invoice->area_approval ?? '') === 'Rechazada'): ?>
+            <?php if (($invoice->area_approval ?? '') === \App\Constants\InvoiceConstants::APPROVAL_REJECTED): ?>
                 <?php
                 $rejector = null;
                 foreach ($currentApprovals as $a) {
-                    if ($a->status === 'Rechazada') { $rejector = $a; break; }
+                    if ($a->status === \App\Constants\InvoiceConstants::APPROVER_STATUS_REJECTED) { $rejector = $a; break; }
                 }
                 ?>
                 <div class="alert alert-warning mb-3" style="border:1px solid #ffc107;border-left:3px solid #CD6A15;border-radius:0;">
@@ -520,7 +520,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Aprobadores</label>
-                    <?php if (!$hasPendingApprovals && !empty($editableFields) && $currentStatus === 'aprobacion'): ?>
+                    <?php if (!$hasPendingApprovals && !empty($editableFields) && $currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION): ?>
                         <select name="approver_ids[]" id="approver-ids" class="form-select select2-enable" multiple
                                 data-placeholder="Seleccione los aprobadores...">
                             <?php foreach ($approvers as $appId => $appName): ?>
@@ -566,8 +566,8 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                     $pendingCount = 0;
                     foreach ($currentApprovals as $a) {
                         match ($a->status) {
-                            'Aprobada' => $approvedCount++,
-                            'Rechazada' => $rejectedCount++,
+                            \App\Constants\InvoiceConstants::APPROVER_STATUS_APPROVED => $approvedCount++,
+                            \App\Constants\InvoiceConstants::APPROVER_STATUS_REJECTED => $rejectedCount++,
                             default => $pendingCount++,
                         };
                     }
@@ -590,8 +590,8 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                         <?php foreach ($currentApprovals as $i => $approval): ?>
                             <?php
                             $statusIcon = match ($approval->status) {
-                                'Aprobada' => '<i class="bi bi-check-circle-fill" style="color:#469D61;"></i>',
-                                'Rechazada' => '<i class="bi bi-x-circle-fill" style="color:#dc3545;"></i>',
+                                \App\Constants\InvoiceConstants::APPROVER_STATUS_APPROVED => '<i class="bi bi-check-circle-fill" style="color:#469D61;"></i>',
+                                \App\Constants\InvoiceConstants::APPROVER_STATUS_REJECTED => '<i class="bi bi-x-circle-fill" style="color:#dc3545;"></i>',
                                 default => '<i class="bi bi-clock" style="color:#888;"></i>',
                             };
                             $borderBottom = $i < $totalApprovals - 1 ? 'border-bottom:1px solid var(--border-color);' : '';
