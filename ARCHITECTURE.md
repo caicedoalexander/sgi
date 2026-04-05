@@ -426,7 +426,6 @@ Follow `STYLES.md` for visual consistency. Use standard elements:
 - `.flatpickr-date` class on date inputs
 - `.currency-input` class on money inputs
 - `.clickable-row` with `data-href` on table rows
-- `AppView::formatDateEs()` for Spanish-formatted dates
 
 ### 3.8 Add Routes (only if custom actions needed)
 
@@ -571,16 +570,7 @@ Always use the `pagination.php` element in list templates:
 <?= $this->element('pagination') ?>
 ```
 
-### 4.6 Date Formatting
-
-Use `AppView::formatDateEs()` for Spanish-formatted dates in views:
-
-```php
-$this->AppView->formatDateEs($entity->created);
-// Output: "Lunes, 17 Febrero 2026"
-```
-
-### 4.7 Migrations
+### 4.6 Migrations
 
 - **Base class:** `Migrations\BaseMigration` (NOT `AbstractMigration`)
 - **Filename prefix:** `YYYYMMDDHHMMSS_DescriptiveName.php`
@@ -588,7 +578,7 @@ $this->AppView->formatDateEs($entity->created);
 - **Protection:** Use `$this->hasTable()` to prevent failures if table already exists
 - **Language:** Migration names and comments in English
 
-### 4.8 Routes
+### 4.7 Routes
 
 Standard CRUD is handled automatically by `$builder->fallbacks()` in `config/routes.php`. Only add custom routes for non-standard actions:
 
@@ -610,7 +600,7 @@ $builder->connect(
 
 **Always** add custom routes **before** `$builder->fallbacks()`.
 
-### 4.9 Change History / Audit Trail
+### 4.8 Change History / Audit Trail
 
 `InvoiceHistoryService::recordChanges()` compares old vs new values with strict comparison (`!==`) and type normalization:
 
@@ -620,7 +610,7 @@ $builder->connect(
 
 This prevents false positives in the audit trail from type mismatches.
 
-### 4.10 Excel Catalog Export/Import
+### 4.9 Excel Catalog Export/Import
 
 Catalog controllers use `ExcelCatalogTrait` for standardized Excel export and import:
 
@@ -636,7 +626,7 @@ class ProvidersController extends AppController
 
 The trait provides `exportExcel()` and `importExcel()` actions. Use the `catalog_excel_buttons.php` element in templates to render the UI buttons.
 
-### 4.11 Error Handling
+### 4.10 Error Handling
 
 Errors are handled differently depending on the layer:
 
@@ -705,7 +695,7 @@ if (!$this->canAccessInvoice($invoice)) {
 - Never catch exceptions silently — if you catch, log or re-throw
 - Never expose stack traces, SQL errors, or internal paths to the user
 
-### 4.12 Database Transactions
+### 4.11 Database Transactions
 
 Use `Connection::transactional()` for operations that modify multiple tables or require atomicity. This is the standard pattern in services:
 
@@ -746,7 +736,7 @@ class InvoicePipelineService
 - Do NOT wrap single-table saves in a transaction — CakePHP handles those internally
 - Get the connection via `ConnectionManager::get('default')` in services, or `$this->Table->getConnection()` when a table reference is already available
 
-### 4.13 Logging
+### 4.12 Logging
 
 Use CakePHP's built-in `Log` class. Log at the appropriate level depending on the situation:
 
@@ -787,7 +777,7 @@ Log::debug('Filter params applied: {params}', ['params' => json_encode($filters)
 - Use structured placeholders (`{id}`, `{status}`) instead of string concatenation
 - Services log errors and warnings; controllers generally don't need to log (Flash messages serve that purpose for the user)
 
-### 4.14 Validation: Tables vs Services
+### 4.13 Validation: Tables vs Services
 
 Validation happens at two levels. Each level has a distinct purpose — do not mix them:
 
@@ -841,7 +831,7 @@ public function validateTransitionRequirements(Invoice $invoice, string $fromSta
 - Never put format checks in services (e.g., "email must be valid") — that's the table's job
 - Use constants in `inList()` validators: `->inList('status', InvoiceConstants::STATUSES)`
 
-### 4.15 Naming Conventions
+### 4.14 Naming Conventions
 
 CakePHP enforces most naming via convention-over-configuration. This table documents the full set used in SGI:
 
