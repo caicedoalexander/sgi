@@ -533,7 +533,7 @@ class EmployeeNoveltiesController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $pdfContent = $service->generatePdf((int)$id, (int)$template->id);
+        $pdfContent = $this->leaveDocumentService->generatePdf((int)$id, (int)$template->id);
 
         return $this->response
             ->withType('application/pdf')
