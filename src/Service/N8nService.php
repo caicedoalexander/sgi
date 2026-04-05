@@ -11,10 +11,12 @@ class N8nService
     /**
      * Constructor.
      */
-    public function __construct()
-    {
-        $this->webhookService = new WebhookService();
-        $this->settingsService = new SystemSettingsService();
+    public function __construct(
+        ?WebhookService $webhookService = null,
+        ?SystemSettingsService $settingsService = null,
+    ) {
+        $this->webhookService = $webhookService ?? new WebhookService();
+        $this->settingsService = $settingsService ?? new SystemSettingsService();
     }
 
     /**
