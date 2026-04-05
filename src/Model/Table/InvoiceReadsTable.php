@@ -23,11 +23,20 @@ class InvoiceReadsTable extends Table
      */
     public function markAsRead(int $invoiceId, int $userId): void
     {
-        $this->getConnection()->execute(
-            'INSERT INTO invoice_reads (invoice_id, user_id, last_visited_at)
-             VALUES (?, ?, NOW())
-             ON DUPLICATE KEY UPDATE last_visited_at = NOW()',
-            [$invoiceId, $userId],
-        );
+        $existing = $this->find()
+            ->where(['invoice_id' => $invoiceId, 'user_id' => $userId])
+            ->first();
+
+        if ($existing) {
+            $existing->last_visited_at = new \Cake\I18n\DateTime();
+            $this->save($existing);
+        } else {
+            $entity = $this->newEntity([
+                'invoice_id' => $invoiceId,
+                'user_id' => $userId,
+                'last_visited_at' => new \Cake\I18n\DateTime(),
+            ]);
+            $this->save($entity);
+        }
     }
 }

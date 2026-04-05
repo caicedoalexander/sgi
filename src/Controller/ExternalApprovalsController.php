@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\InvoiceConstants;
 use App\Service\ApprovalTokenService;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoicePipelineService;
@@ -13,12 +14,14 @@ class ExternalApprovalsController extends AppController
 {
     private ApprovalTokenService $tokenService;
     private InvoiceApprovalService $approvalService;
+    private InvoicePipelineService $pipelineService;
 
     public function initialize(): void
     {
         parent::initialize();
         $this->tokenService = new ApprovalTokenService();
         $this->approvalService = new InvoiceApprovalService();
+        $this->pipelineService = new InvoicePipelineService();
     }
 
     public function beforeFilter(EventInterface $event): void
@@ -137,13 +140,12 @@ class ExternalApprovalsController extends AppController
             }
 
             if ($result['allApproved']) {
-                $pipelineService = new InvoicePipelineService();
                 $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
                 $invoice = $invoicesTable->get($result['invoice_id']);
 
-                if ($invoice->pipeline_status === 'aprobacion') {
+                if ($invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION) {
                     $identity = $this->Authentication->getIdentity();
-                    $pipelineService->advance($invoice, 'Admin', (int)$identity->getIdentifier());
+                    $this->pipelineService->advance($invoice, 'Admin', (int)$identity->getIdentifier());
                 }
             }
 

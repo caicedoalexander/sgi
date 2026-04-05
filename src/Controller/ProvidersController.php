@@ -9,6 +9,14 @@ class ProvidersController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    private ExcelService $excelService;
+
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->excelService = new ExcelService();
+    }
+
     public function index()
     {
         $providers = $this->paginate($this->Providers);
@@ -74,8 +82,7 @@ class ProvidersController extends AppController
             ->select(['Providers.document_type', 'Providers.document_number', 'Providers.name', 'Providers.active'])
             ->order(['Providers.name' => 'ASC']);
 
-        $excelService = new ExcelService();
-        $filePath = $excelService->exportCatalog('Proveedores', $query);
+        $filePath = $this->excelService->exportCatalog('Proveedores', $query);
 
         $response = $this->response->withFile($filePath, [
             'download' => true,
@@ -102,8 +109,7 @@ class ProvidersController extends AppController
             return $this->redirect(['action' => 'index']);
         }
 
-        $excelService = new ExcelService();
-        $result = $excelService->importCatalog('Providers', $file, 'document_number');
+        $result = $this->excelService->importCatalog('Providers', $file, 'document_number');
 
         $this->Flash->success($result->getSummary());
 

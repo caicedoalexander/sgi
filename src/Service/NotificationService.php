@@ -16,9 +16,9 @@ class NotificationService
 {
     private SystemSettingsService $settings;
 
-    public function __construct()
+    public function __construct(?SystemSettingsService $settings = null)
     {
-        $this->settings = new SystemSettingsService();
+        $this->settings = $settings ?? new SystemSettingsService();
     }
 
     /**

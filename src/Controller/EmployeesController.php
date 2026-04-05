@@ -22,6 +22,9 @@ class EmployeesController extends AppController
     private EmployeeFilterService $filterService;
     private EmployeeDocumentService $documentService;
     private EmployeeHistoryService $historyService;
+    private ExcelMappingService $mappingService;
+    private ExcelService $excelService;
+    private ExcelImportService $importService;
 
     public function initialize(): void
     {
@@ -29,6 +32,9 @@ class EmployeesController extends AppController
         $this->filterService = new EmployeeFilterService();
         $this->documentService = new EmployeeDocumentService();
         $this->historyService = new EmployeeHistoryService();
+        $this->mappingService = new ExcelMappingService();
+        $this->excelService = new ExcelService();
+        $this->importService = new ExcelImportService();
     }
 
     /**
@@ -39,8 +45,7 @@ class EmployeesController extends AppController
         $this->request->allowMethod(['get']);
         $this->viewBuilder()->setClassName('Json');
 
-        $mappingService = new ExcelMappingService();
-        $fields = $mappingService->getExportableFields('Employees');
+        $fields = $this->mappingService->getExportableFields('Employees');
 
         $this->set('fields', $fields);
         $this->viewBuilder()->setOption('serialize', ['fields']);
@@ -292,11 +297,10 @@ class EmployeesController extends AppController
             return null;
         }
 
-        $mappingService = new ExcelMappingService();
-        $labelMap = $mappingService->getLabelMap('Employees');
+        $labelMap = $this->mappingService->getLabelMap('Employees');
 
         // Filter to only valid fields
-        $allDefinitions = $mappingService->getFieldDefinitions('Employees');
+        $allDefinitions = $this->mappingService->getFieldDefinitions('Employees');
         $validFields = array_filter($requestFields, fn($f) => isset($allDefinitions[$f]));
         if (empty($validFields)) {
             $this->response = $this->response->withStatus(400);
@@ -366,8 +370,7 @@ class EmployeesController extends AppController
                 });
             });
 
-        $excelService = new ExcelService();
-        $filePath = $excelService->exportWithLabels('Empleados', $query, $validFields, $labelMap);
+        $filePath = $this->excelService->exportWithLabels('Empleados', $query, $validFields, $labelMap);
 
         $response = $this->response->withFile($filePath, [
             'download' => true,
@@ -408,12 +411,10 @@ class EmployeesController extends AppController
         $file->moveTo($tempPath);
 
         try {
-            $importService = new ExcelImportService();
-            $headers = $importService->readHeaders($tempPath);
+            $headers = $this->importService->readHeaders($tempPath);
 
-            $mappingService = new ExcelMappingService();
-            $autoMapping = $mappingService->autoMapColumns($headers, 'Employees');
-            $systemFields = $mappingService->getImportableFields('Employees');
+            $autoMapping = $this->mappingService->autoMapColumns($headers, 'Employees');
+            $systemFields = $this->mappingService->getImportableFields('Employees');
 
             $this->set(compact('tempName', 'headers', 'autoMapping', 'systemFields'));
             $this->viewBuilder()->setOption('serialize', ['tempName', 'headers', 'autoMapping', 'systemFields']);
@@ -468,17 +469,15 @@ class EmployeesController extends AppController
         }
 
         try {
-            $importService = new ExcelImportService();
-            $historyService = new EmployeeHistoryService();
             $userId = (int)$this->request->getAttribute('identity')->getIdentifier();
-            $result = $importService->processImport(
+            $result = $this->importService->processImport(
                 $tempPath,
                 'Employees',
                 'Employees',
                 $mapping,
                 $enabledHeaders,
                 fn($entity) => $this->documentService->createDefaultFolders((int)$entity->id),
-                $historyService,
+                $this->historyService,
                 $userId,
             );
 

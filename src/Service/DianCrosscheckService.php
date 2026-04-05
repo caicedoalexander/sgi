@@ -20,9 +20,9 @@ class DianCrosscheckService
     /**
      * Constructor.
      */
-    public function __construct()
+    public function __construct(?N8nService $n8nService = null)
     {
-        $this->n8nService = new N8nService();
+        $this->n8nService = $n8nService ?? new N8nService();
     }
 
     /**
