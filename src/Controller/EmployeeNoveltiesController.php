@@ -27,6 +27,7 @@ class EmployeeNoveltiesController extends AppController
     private LeaveDocumentService $leaveDocumentService;
     private NoveltySignatureService $signatureService;
     private ApprovalTokenService $tokenService;
+    private NotificationService $notificationService;
 
     /**
      * @return void
@@ -41,6 +42,7 @@ class EmployeeNoveltiesController extends AppController
         $this->leaveDocumentService = new LeaveDocumentService();
         $this->signatureService = new NoveltySignatureService();
         $this->tokenService = new ApprovalTokenService();
+        $this->notificationService = new NotificationService();
     }
 
     /**
@@ -635,8 +637,7 @@ class EmployeeNoveltiesController extends AppController
                     $approversTable = TableRegistry::getTableLocator()->get('Users');
                     $approver = $approversTable->get($novelty->approver_id);
                     if ($approver && !empty($approver->email)) {
-                        $notificationService = new NotificationService();
-                        $notificationService->sendNoveltyApprovalEmail($approver, $noveltyForEmail, $approvalUrl);
+                        $this->notificationService->sendNoveltyApprovalEmail($approver, $noveltyForEmail, $approvalUrl);
                     }
                 }
 
@@ -783,8 +784,7 @@ class EmployeeNoveltiesController extends AppController
         $approversTable = TableRegistry::getTableLocator()->get('Users');
         $approver = $approversTable->get($novelty->approver_id);
         if ($approver && !empty($approver->email)) {
-            $notificationService = new NotificationService();
-            $notificationService->sendNoveltyApprovalEmail($approver, $novelty, $approvalUrl);
+            $this->notificationService->sendNoveltyApprovalEmail($approver, $novelty, $approvalUrl);
         }
 
         $this->Flash->success('Enlace de aprobación reenviado al aprobador (válido por 48h).');

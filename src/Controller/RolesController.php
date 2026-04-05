@@ -9,6 +9,14 @@ class RolesController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    private AuthorizationService $authService;
+
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->authService = new AuthorizationService();
+    }
+
     public function index()
     {
         $roles = $this->paginate($this->Roles);
@@ -32,8 +40,7 @@ class RolesController extends AppController
             if ($this->Roles->save($role)) {
                 // Save permissions if provided
                 if (!empty($data['permissions'])) {
-                    $authService = new AuthorizationService();
-                    $authService->savePermissionsForRole($role->id, $data['permissions']);
+                    $this->authService->savePermissionsForRole($role->id, $data['permissions']);
                 }
                 $this->Flash->success('El rol ha sido guardado.');
 
@@ -56,8 +63,7 @@ class RolesController extends AppController
             $role = $this->Roles->patchEntity($role, $data);
             if ($this->Roles->save($role)) {
                 // Save permissions
-                $authService = new AuthorizationService();
-                $authService->savePermissionsForRole($role->id, $data['permissions'] ?? []);
+                $this->authService->savePermissionsForRole($role->id, $data['permissions'] ?? []);
                 $this->Flash->success('El rol ha sido actualizado.');
 
                 return $this->redirect(['action' => 'index']);
@@ -65,9 +71,8 @@ class RolesController extends AppController
             $this->Flash->error('No se pudo actualizar el rol. Intente de nuevo.');
         }
 
-        $authService = new AuthorizationService();
         $modules = AuthorizationService::MODULES;
-        $permissionsMatrix = $authService->getPermissionsForRoleAsMatrix((int)$id);
+        $permissionsMatrix = $this->authService->getPermissionsForRoleAsMatrix((int)$id);
 
         $this->set(compact('role', 'modules', 'permissionsMatrix'));
     }

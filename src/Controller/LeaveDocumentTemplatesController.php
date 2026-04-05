@@ -10,6 +10,14 @@ class LeaveDocumentTemplatesController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    private LeaveDocumentService $leaveDocumentService;
+
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->leaveDocumentService = new LeaveDocumentService();
+    }
+
     public function index()
     {
         $query = $this->LeaveDocumentTemplates->find()
@@ -35,8 +43,7 @@ class LeaveDocumentTemplatesController extends AppController
             // Handle file upload
             $file = $this->request->getUploadedFile('template_file');
             if ($file && $file->getError() === UPLOAD_ERR_OK) {
-                $service = new LeaveDocumentService();
-                $result = $service->uploadTemplate($file);
+                $result = $this->leaveDocumentService->uploadTemplate($file);
 
                 if (isset($result['error'])) {
                     $this->Flash->error($result['error']);
@@ -97,8 +104,7 @@ class LeaveDocumentTemplatesController extends AppController
 
         $template = $this->LeaveDocumentTemplates->get($id);
 
-        $service = new LeaveDocumentService();
-        $service->deleteTemplateFile($template->file_path);
+        $this->leaveDocumentService->deleteTemplateFile($template->file_path);
 
         if ($this->LeaveDocumentTemplates->delete($template)) {
             $this->Flash->success('Plantilla eliminada.');
@@ -153,8 +159,7 @@ class LeaveDocumentTemplatesController extends AppController
     {
         $this->autoRender = false;
 
-        $service = new LeaveDocumentService();
-        $pdfContent = $service->generatePreviewPdf((int)$id);
+        $pdfContent = $this->leaveDocumentService->generatePreviewPdf((int)$id);
 
         return $this->response
             ->withType('application/pdf')
