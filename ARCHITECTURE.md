@@ -862,6 +862,156 @@ CakePHP enforces most naming via convention-over-configuration. This table docum
 - Foreign keys **must** follow the pattern `singular_table_id` for CakePHP associations to work automatically
 - Template folders **must** match the controller name exactly (PascalCase) for automatic template resolution
 
+### 4.15 Service Families
+
+Business domains that involve pipeline workflows, documents, and audit trails follow a consistent service family pattern. Each domain gets up to 5 specialized services:
+
+| Service Type | Purpose | Examples |
+|--------------|---------|----------|
+| `{Domain}PipelineService` | State machine: transitions, role-based field visibility, validation | `InvoicePipelineService`, `NoveltyPipelineService` |
+| `{Domain}FilterService` | Search/filter logic applied to queries | `InvoiceFilterService`, `EmployeeFilterService` |
+| `{Domain}DocumentService` | File upload, validation, deletion | `InvoiceDocumentService`, `NoveltyDocumentService`, `EmployeeDocumentService` |
+| `{Domain}HistoryService` | Field-by-field audit trail recording | `InvoiceHistoryService`, `NoveltyHistoryService`, `EmployeeHistoryService` |
+| `{Domain}ObservationService` | User comments/observations on records | `NoveltyObservationService` |
+
+Not every domain needs all five — create only what the module requires.
+
+### 4.16 Pipeline Service Structure
+
+Pipeline services manage state machine workflows. They define their configuration through a set of `const` arrays:
+
+```php
+class InvoicePipelineService
+{
+    // 1. Status labels for display
+    public const STATUS_LABELS = [
+        InvoiceConstants::STATUS_APROBACION => 'Aprobacion',
+        InvoiceConstants::STATUS_CONTABILIDAD => 'Contabilidad',
+        // ...
+    ];
+
+    // 2. Which statuses each role can see
+    private const ROLE_VISIBLE_STATUSES = [
+        RoleConstants::REGISTRO_REVISION => [InvoiceConstants::STATUS_APROBACION],
+        RoleConstants::CONTABILIDAD => [InvoiceConstants::STATUS_CONTABILIDAD],
+        // ...
+    ];
+
+    // 3. Which fields each role can edit per status
+    private const EDITABLE_FIELDS = [
+        RoleConstants::REGISTRO_REVISION => [
+            InvoiceConstants::STATUS_APROBACION => ['invoice_number', 'issue_date', ...],
+        ],
+        // ...
+    ];
+
+    // 4. Which form sections each role sees
+    private const VISIBLE_SECTIONS_BY_ROLE = [
+        RoleConstants::REGISTRO_REVISION => ['general', 'dates', 'classification', 'revision'],
+        RoleConstants::CONTABILIDAD => ['general', 'dates', 'classification', 'accounting'],
+        // ...
+    ];
+
+    // 5. State transitions (linear)
+    public const TRANSITIONS = [
+        InvoiceConstants::STATUS_APROBACION => InvoiceConstants::STATUS_CONTABILIDAD,
+        // ...
+    ];
+
+    // 6. Requirements to advance from each status
+    private const TRANSITION_REQUIREMENTS = [
+        InvoiceConstants::STATUS_APROBACION => [
+            ['field' => 'area_approval', 'value' => InvoiceConstants::APPROVAL_APPROVED, 'label' => '...'],
+        ],
+        // ...
+    ];
+}
+```
+
+**Key methods** every pipeline service provides:
+
+| Method | Purpose |
+|--------|---------|
+| `getVisibleStatuses(roleName)` | Returns which pipeline states a role can see |
+| `getEditableFields(roleName, status)` | Returns field whitelist for a role at a given status |
+| `getVisibleSections(roleName, status)` | Returns which form sections to display |
+| `validateTransitionRequirements(entity, fromStatus)` | Returns array of error strings (empty = valid) |
+| `saveAndAdvance(entity, data, roleName)` | Unified save + state transition in one transaction |
+| `filterEntityData(data, roleName, status)` | Strips fields the role cannot edit |
+
+### 4.17 Document Service Conventions
+
+All document services share common constraints and patterns:
+
+**Upload limits:**
+- Maximum file size: `10 MB` (`MAX_DOC_SIZE = 10 * 1024 * 1024`)
+- Allowed MIME types: PDF, JPEG, PNG, GIF, Word (`.doc`, `.docx`), Excel (`.xls`, `.xlsx`)
+
+**Storage:**
+- Files stored in `webroot/uploads/{entity}/{id}/`
+- Filenames use a unique prefix: `{entity_prefix}_` + `uniqid()` + original extension
+- Entity prefixes: `inv_` (invoices), `nov_` (novelties), `emp_` (employees)
+
+**Return convention:**
+- On validation error: return a `string` with the error message
+- On success: return the saved document `Entity`
+
+**Standard methods:**
+
+| Method | Purpose |
+|--------|---------|
+| `uploadDocument(entityId, ..., file)` | Validate, move file, create DB record |
+| `deleteDocument(documentId)` | Remove file from disk + delete DB record |
+| `canDeleteDocument(document, pipelineStatus)` | Check if deletion is allowed given current state |
+
+### 4.18 History Service Conventions
+
+History services record field-by-field changes for audit trails. Each service defines:
+
+1. **`FIELD_LABELS`** — `public const` array mapping field names to human-readable Spanish labels
+2. **`recordChanges(original, modified, userId)`** — Compares old vs new values for tracked fields
+
+**Value normalization** (applied before comparison with `!==`):
+- `DateTimeInterface` → `Y-m-d` string
+- Booleans → `(bool)` cast
+- Empty strings → `null`
+
+**History record structure** (same across all history tables):
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `{entity}_id` | integer | FK to the parent entity |
+| `user_id` | integer | FK to the user who made the change |
+| `field_changed` | string | Field name that was modified |
+| `old_value` | string (nullable) | Previous value |
+| `new_value` | string (nullable) | New value |
+| `created` | datetime | Timestamp of the change |
+
+### 4.19 External Integration Services
+
+External integrations follow a layered pattern:
+
+```
+WebhookService          ← Low-level HTTP client (Cake\Http\Client wrapper)
+    ↑
+N8nService              ← n8n-specific: resolves webhook URLs from SystemSettings
+    ↑
+DianCrosscheckService   ← Domain-specific: DIAN file upload + status tracking
+NotificationService     ← Email sending via CakePHP Mailer + SMTP from SystemSettings
+```
+
+**`WebhookService`** — Generic HTTP client wrapper. Provides `sendJson(url, data)` and `sendFile(url, filePath, fieldName, extraData)`. Returns structured array:
+
+```php
+['success' => bool, 'statusCode' => int, 'body' => string, 'error' => string]
+```
+
+**`N8nService`** — Resolves n8n webhook URLs from `system_settings` table via `SystemSettingsService`. Methods: `sendData(webhookKey, data)`, `sendFile(webhookKey, filePath, ...)`, `isConfigured(webhookKey)`.
+
+**`NotificationService`** — Sends emails on pipeline state transitions. Reads SMTP config from `system_settings` table. Determines recipients based on role and target pipeline status.
+
+**`SystemSettingsService`** — Key-value configuration store. Provides `get(key)`, `getGroup(prefix)`, `set(key, value)`. Used to store SMTP credentials, webhook URLs, and application-wide settings.
+
 ---
 
 ## 5. Permission System (RBAC)

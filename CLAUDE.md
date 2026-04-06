@@ -32,6 +32,16 @@ php bin/cake migrations create Name  # New migration (uses BaseMigration, NOT Ab
 php bin/seed-admin.php               # username: admin, pass: Admin2024*
 ```
 
+## Environment Setup
+
+```bash
+# .env file lives at project root (not config/)
+# Required variables:
+DATABASE_URL=mysql://user:pass@host:3306/sgi_db
+```
+
+The dotenv loader is enabled in `config/bootstrap.php` (~line 69) pointing to `ROOT . DS . '.env'`.
+
 ## Architecture
 
 See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
@@ -39,7 +49,7 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 ### Layer Summary
 
 - **Controller** → HTTP concerns, input validation, delegates to services. One per resource, extends `AppController`.
-- **Service** (`src/Service/`) → Business logic, state transitions, DB transactions. 20+ services.
+- **Service** (`src/Service/`) → Business logic, state transitions, DB transactions. 30 services.
 - **Table/Entity** (`src/Model/`) → ORM associations, validation rules, custom finders.
 - **Constants** (`src/Constants/`) → Domain values (states, roles, types). Never hardcode strings like `'Rechazada'` — use constants.
 - **Templates** (`templates/`) → PHP views. Layouts: `default.php` (authenticated), `login.php` (split-panel), `external.php` (approval tokens).
@@ -49,10 +59,17 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 | Service | Purpose |
 |---------|---------|
 | `InvoicePipelineService` | 4-state workflow: aprobacion → contabilidad → tesoreria → pagada |
+| `NoveltyPipelineService` | Novelty state workflow (similar pattern to invoices) |
 | `AuthorizationService` | RBAC via `permissions` table. Admin bypasses all. |
 | `InvoiceHistoryService` | Field-by-field audit trail in `invoice_histories` |
 | `ApprovalTokenService` | External approval via SHA256 tokens (48h TTL) |
 | `NotificationService` | Email on state transitions |
+| `LegalizationService` | Legalization records business logic |
+| `PettyCashService` | Petty cash records management |
+| `DianCrosscheckService` | DIAN crosscheck validation |
+| `N8nService` | n8n workflow integration |
+| `WebhookService` | Outbound webhook dispatch |
+| `SystemSettingsService` | Application-wide configuration |
 
 ### Auth & Permissions
 
@@ -101,4 +118,5 @@ States: `aprobacion` → `contabilidad` → `tesoreria` → `pagada`. Each role 
 6. Controller → `src/Controller/` (extends AppController)
 7. Permissions → Add to `$controllerModuleMap`, `AuthorizationService::MODULES`, `permissions` table
 8. Templates → `templates/{Controller}/` (index, add, edit, view)
-9. Routes → Custom routes before `$builder->fallbacks()` if needed
+9. Sidebar → Add nav-link in `templates/layout/default.php` under the correct section
+10. Routes → Custom routes before `$builder->fallbacks()` if needed
