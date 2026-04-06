@@ -106,11 +106,11 @@ class InvoiceApprovalService
 
         return $this->invoiceApprovalsTable->find()
             ->where([
-                'invoice_id' => $invoiceId,
-                'created >=' => $batchStart,
+                'InvoiceApprovals.invoice_id' => $invoiceId,
+                'InvoiceApprovals.created >=' => $batchStart,
             ])
             ->contain(['Users'])
-            ->orderBy(['created' => 'ASC'])
+            ->orderBy(['InvoiceApprovals.created' => 'ASC'])
             ->all()
             ->toArray();
     }
