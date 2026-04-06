@@ -58,6 +58,7 @@ class ExternalApprovalsController extends AppController
             $tokenRecord = (object)[
                 'entity_type' => 'invoices',
                 'entity_id' => $entity->id,
+                'expires_at' => $approval->token_expires_at,
             ];
 
             $this->set(compact('token', 'tokenRecord', 'entity', 'currentUser'));
