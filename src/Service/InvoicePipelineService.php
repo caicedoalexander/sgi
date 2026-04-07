@@ -27,24 +27,27 @@ class InvoicePipelineService
     public const STATUSES = InvoiceConstants::PIPELINE_STATUSES;
 
     public const STATUS_LABELS = [
-        InvoiceConstants::STATUS_APROBACION    => 'Aprobación',
-        InvoiceConstants::STATUS_CONTABILIDAD  => 'Contabilidad',
-        InvoiceConstants::STATUS_TESORERIA     => 'Tesorería',
-        InvoiceConstants::STATUS_PAGADA        => 'Pagada',
+        InvoiceConstants::STATUS_APROBACION        => 'Aprobación',
+        InvoiceConstants::STATUS_CONTABILIDAD      => 'Contabilidad',
+        InvoiceConstants::STATUS_TESORERIA         => 'Tesorería',
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
+        InvoiceConstants::STATUS_PAGADA            => 'Pagada',
     ];
 
     public const STATUS_ICONS = [
-        InvoiceConstants::STATUS_APROBACION    => 'bi-check-circle',
-        InvoiceConstants::STATUS_CONTABILIDAD  => 'bi-calculator',
-        InvoiceConstants::STATUS_TESORERIA     => 'bi-bank',
-        InvoiceConstants::STATUS_PAGADA        => 'bi-cash-coin',
+        InvoiceConstants::STATUS_APROBACION        => 'bi-check-circle',
+        InvoiceConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
+        InvoiceConstants::STATUS_TESORERIA         => 'bi-bank',
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
+        InvoiceConstants::STATUS_PAGADA            => 'bi-cash-coin',
     ];
 
     // Which statuses each role can see/work with
     private const ROLE_VISIBLE_STATUSES = [
         RoleConstants::REGISTRO_REVISION => [InvoiceConstants::STATUS_APROBACION],
         RoleConstants::CONTABILIDAD      => [InvoiceConstants::STATUS_CONTABILIDAD],
-        RoleConstants::TESORERIA         => [InvoiceConstants::STATUS_TESORERIA],
+        RoleConstants::TESORERIA         => [InvoiceConstants::STATUS_TESORERIA, InvoiceConstants::STATUS_AUTORIZACION_PAGO],
+        RoleConstants::CONTADOR          => [InvoiceConstants::STATUS_AUTORIZACION_PAGO],
         RoleConstants::ADMIN             => InvoiceConstants::PIPELINE_STATUSES,
     ];
 
@@ -56,6 +59,7 @@ class InvoicePipelineService
         'confirmed_by', 'approver_id', 'area_approval',
         'dian_validation', 'accrued', 'ready_for_payment',
         'payment_status', 'payment_date', 'pipeline_status',
+        'payment_authorized',
     ];
 
     // Fields editable by role in each status
@@ -78,6 +82,12 @@ class InvoicePipelineService
             InvoiceConstants::STATUS_TESORERIA => [
                 'payment_status', 'payment_date',
             ],
+            InvoiceConstants::STATUS_AUTORIZACION_PAGO => [],
+        ],
+        RoleConstants::CONTADOR => [
+            InvoiceConstants::STATUS_AUTORIZACION_PAGO => [
+                'payment_authorized',
+            ],
         ],
     ];
 
@@ -86,6 +96,7 @@ class InvoicePipelineService
         RoleConstants::REGISTRO_REVISION => ['general', 'dates', 'classification', 'revision'],
         RoleConstants::CONTABILIDAD      => ['general', 'dates', 'classification', 'accounting'],
         RoleConstants::TESORERIA         => ['general', 'treasury'],
+        RoleConstants::CONTADOR          => ['general', 'dates', 'classification', 'revision', 'accounting', 'treasury', 'payment_authorization'],
     ];
 
     // Fields required before advancing from each status
@@ -122,8 +133,8 @@ class InvoicePipelineService
         InvoiceConstants::STATUS_TESORERIA => [
             [
                 'field' => 'payment_status',
-                'value' => InvoiceConstants::PAYMENT_FULL,
-                'label' => 'Estado de Pago debe ser "Pago total" para marcar como Pagada',
+                'not_empty' => true,
+                'label' => 'Estado de Pago es requerido (Pago total o Pago Parcial)',
             ],
             [
                 'field' => 'payment_date',
@@ -131,14 +142,22 @@ class InvoicePipelineService
                 'label' => 'Fecha de Pago es requerida',
             ],
         ],
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO => [
+            [
+                'field' => 'payment_authorized',
+                'value' => true,
+                'label' => 'El Contador debe autorizar el pago antes de marcar como Pagada',
+            ],
+        ],
     ];
 
     // Next status transitions
     public const TRANSITIONS = [
-        InvoiceConstants::STATUS_APROBACION    => InvoiceConstants::STATUS_CONTABILIDAD,
-        InvoiceConstants::STATUS_CONTABILIDAD  => InvoiceConstants::STATUS_TESORERIA,
-        InvoiceConstants::STATUS_TESORERIA     => InvoiceConstants::STATUS_PAGADA,
-        InvoiceConstants::STATUS_PAGADA        => null,
+        InvoiceConstants::STATUS_APROBACION        => InvoiceConstants::STATUS_CONTABILIDAD,
+        InvoiceConstants::STATUS_CONTABILIDAD       => InvoiceConstants::STATUS_TESORERIA,
+        InvoiceConstants::STATUS_TESORERIA          => InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO  => InvoiceConstants::STATUS_PAGADA,
+        InvoiceConstants::STATUS_PAGADA             => null,
     ];
 
     public function getVisibleStatuses(string $roleName): array
@@ -167,7 +186,7 @@ class InvoicePipelineService
         }
 
         // Admin: show sections up to the current state
-        // STATUSES: aprobacion(0), contabilidad(1), tesoreria(2), pagada(3)
+        // STATUSES: aprobacion(0), contabilidad(1), tesoreria(2), autorizacion_pago(3), pagada(4)
         $statusIndex = $this->getStatusIndex($status);
         $sections = ['general', 'dates', 'classification', 'revision'];
         if ($statusIndex >= 1) {
@@ -175,6 +194,9 @@ class InvoicePipelineService
         }
         if ($statusIndex >= 2) {
             $sections[] = 'treasury';
+        }
+        if ($statusIndex >= 3) {
+            $sections[] = 'payment_authorization';
         }
 
         return $sections;
@@ -302,6 +324,17 @@ class InvoicePipelineService
             $oldApproval = $invoice->area_approval ?? '';
             if ($newApproval !== $oldApproval && in_array($newApproval, [InvoiceConstants::APPROVAL_APPROVED, InvoiceConstants::APPROVAL_REJECTED])) {
                 $invoice->area_approval_date = date('Y-m-d');
+            }
+        }
+
+        // Auto-set payment_authorized_by and payment_authorized_date when authorizing
+        if (array_key_exists('payment_authorized', $filteredData)) {
+            if (!empty($filteredData['payment_authorized']) && !$invoice->payment_authorized) {
+                $filteredData['payment_authorized_by'] = $userId;
+                $filteredData['payment_authorized_date'] = date('Y-m-d');
+            } elseif (empty($filteredData['payment_authorized'])) {
+                $filteredData['payment_authorized_by'] = null;
+                $filteredData['payment_authorized_date'] = null;
             }
         }
 

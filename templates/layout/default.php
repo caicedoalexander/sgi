@@ -335,6 +335,15 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                     ) ?>
                 </li>
                 <?php endif; ?>
+                <?php if ($canView('banking_entities')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-bank me-2"></i>Entidades Bancarias',
+                        ['controller' => 'BankingEntities', 'action' => 'index'],
+                        ['class' => $navLink('BankingEntities'), 'escape' => false]
+                    ) ?>
+                </li>
+                <?php endif; ?>
                 <?php if ($canView('operation_centers')): ?>
                 <li class="nav-item">
                     <?= $this->Html->link(

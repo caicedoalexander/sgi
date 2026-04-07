@@ -76,6 +76,16 @@ class InvoicesTable extends Table
             'foreignKey' => 'employee_id',
             'joinType' => 'LEFT',
         ]);
+        $this->belongsTo('PaymentAuthorizedByUsers', [
+            'className' => 'Users',
+            'foreignKey' => 'payment_authorized_by',
+            'joinType' => 'LEFT',
+        ]);
+        $this->hasMany('InvoicePayments', [
+            'foreignKey' => 'invoice_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator
@@ -206,6 +216,17 @@ class InvoicesTable extends Table
             ->integer('confirmed_by')
             ->allowEmptyString('confirmed_by');
 
+        $validator
+            ->boolean('payment_authorized');
+
+        $validator
+            ->integer('payment_authorized_by')
+            ->allowEmptyString('payment_authorized_by');
+
+        $validator
+            ->date('payment_authorized_date')
+            ->allowEmptyDate('payment_authorized_date');
+
         return $validator;
     }
 
@@ -236,6 +257,10 @@ class InvoicesTable extends Table
         ]);
         $rules->add($rules->existsIn('approver_id', 'ApproverUsers'), [
             'errorField' => 'approver_id',
+            'allowNullableNulls' => true,
+        ]);
+        $rules->add($rules->existsIn('payment_authorized_by', 'PaymentAuthorizedByUsers'), [
+            'errorField' => 'payment_authorized_by',
             'allowNullableNulls' => true,
         ]);
 

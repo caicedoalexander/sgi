@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
+use App\Constants\RoleConstants;
 use App\Service\ExcelService;
 use App\Service\InvoiceDocumentService;
 use App\Service\InvoiceFilterService;
@@ -150,6 +151,12 @@ class InvoicesController extends AppController
                 'UploadedByUsers',
                 'sort' => ['InvoiceDocuments.created' => 'DESC'],
             ],
+            'InvoicePayments' => [
+                'BankingEntities',
+                'CreatedByUsers',
+                'sort' => ['InvoicePayments.payment_date' => 'ASC'],
+            ],
+            'PaymentAuthorizedByUsers',
         ]);
 
         $roleName = $this->_getRoleName();
@@ -207,6 +214,12 @@ class InvoicesController extends AppController
                 'UploadedByUsers',
                 'sort' => ['InvoiceDocuments.created' => 'DESC'],
             ],
+            'InvoicePayments' => [
+                'BankingEntities',
+                'CreatedByUsers',
+                'sort' => ['InvoicePayments.payment_date' => 'ASC'],
+            ],
+            'PaymentAuthorizedByUsers',
         ]);
 
         if ($invoice->isInPettyCash()) {
@@ -294,6 +307,11 @@ class InvoicesController extends AppController
         $currentApprovals = $this->approvalService->getCurrentApprovals($invoice->id);
         $hasPendingApprovals = $this->approvalService->hasPendingApprovals($invoice->id);
 
+        $paymentsTotal = array_sum(array_map(
+            fn($p) => (float)$p->amount,
+            $invoice->invoice_payments ?? [],
+        ));
+
         $this->set(compact(
             'invoice',
             'editableFields',
@@ -310,6 +328,7 @@ class InvoicesController extends AppController
             'nextStatus',
             'currentApprovals',
             'hasPendingApprovals',
+            'paymentsTotal',
         ));
         $this->set($this->_getFormDropdowns());
     }
@@ -406,6 +425,7 @@ class InvoicesController extends AppController
                     'Lista para Pago'     => $invoice->ready_for_payment ?? '',
                     'Estado Pago'         => $invoice->payment_status ?? '',
                     'Fecha Pago'          => $invoice->payment_date?->format('Y-m-d') ?? '',
+                    'Autorizada Pago'     => $invoice->payment_authorized ? 'Sí' : 'No',
                     'Estado Pipeline'     => $pipelineLabels[$invoice->pipeline_status] ?? $invoice->pipeline_status ?? '',
                 ]);
             });
@@ -516,6 +536,7 @@ class InvoicesController extends AppController
                     return $employee->full_name . ' - ' . $employee->document_number;
                 })
                 ->toArray(),
+            'bankingEntities' => $this->fetchTable('BankingEntities')->find('codeList')->all(),
         ];
     }
 
@@ -570,5 +591,70 @@ class InvoicesController extends AppController
         }
 
         return $this->redirect(['action' => 'view', $invoiceId]);
+    }
+
+    public function addPayment($invoiceId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($invoiceId);
+
+        $roleName = $this->_getRoleName();
+        $currentStatus = $invoice->pipeline_status;
+
+        // Only Tesorería (or Admin) can add payments in tesoreria state
+        if ($roleName !== RoleConstants::ADMIN && (
+            $roleName !== RoleConstants::TESORERIA ||
+            $currentStatus !== InvoiceConstants::STATUS_TESORERIA
+        )) {
+            $this->Flash->error('No tiene permisos para registrar pagos en este estado.');
+
+            return $this->redirect(['action' => 'edit', $invoiceId]);
+        }
+
+        $paymentsTable = $this->fetchTable('InvoicePayments');
+        $payment = $paymentsTable->newEntity([
+            'invoice_id' => $invoiceId,
+            'banking_entity_id' => $this->request->getData('banking_entity_id'),
+            'amount' => $this->request->getData('amount'),
+            'payment_date' => $this->request->getData('payment_date'),
+            'created_by' => $this->_getCurrentUser()->id,
+        ]);
+
+        if ($paymentsTable->save($payment)) {
+            $this->Flash->success('Pago registrado correctamente.');
+        } else {
+            $this->Flash->error('No se pudo registrar el pago. Verifique los datos.');
+        }
+
+        return $this->redirect(['action' => 'edit', $invoiceId]);
+    }
+
+    public function deletePayment($invoiceId = null, $paymentId = null)
+    {
+        $this->request->allowMethod(['post', 'delete']);
+        $invoice = $this->Invoices->get($invoiceId);
+
+        $roleName = $this->_getRoleName();
+        $currentStatus = $invoice->pipeline_status;
+
+        if ($roleName !== RoleConstants::ADMIN && (
+            $roleName !== RoleConstants::TESORERIA ||
+            $currentStatus !== InvoiceConstants::STATUS_TESORERIA
+        )) {
+            $this->Flash->error('No tiene permisos para eliminar pagos en este estado.');
+
+            return $this->redirect(['action' => 'edit', $invoiceId]);
+        }
+
+        $paymentsTable = $this->fetchTable('InvoicePayments');
+        $payment = $paymentsTable->get($paymentId);
+
+        if ($paymentsTable->delete($payment)) {
+            $this->Flash->success('Pago eliminado.');
+        } else {
+            $this->Flash->error('No se pudo eliminar el pago.');
+        }
+
+        return $this->redirect(['action' => 'edit', $invoiceId]);
     }
 }

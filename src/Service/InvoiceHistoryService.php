@@ -32,9 +32,12 @@ class InvoiceHistoryService
         'accrued'             => 'Causada',
         'accrual_date'        => 'Fecha de Causación',
         'ready_for_payment'   => 'Lista para Pago',
-        'payment_status'      => 'Estado de Pago',
-        'payment_date'        => 'Fecha de Pago',
-        'pipeline_status'     => 'Estado del Pipeline',
+        'payment_status'              => 'Estado de Pago',
+        'payment_date'                => 'Fecha de Pago',
+        'payment_authorized'          => 'Autorizada para Pago',
+        'payment_authorized_by'       => 'Autorizada por',
+        'payment_authorized_date'     => 'Fecha Autorización Pago',
+        'pipeline_status'             => 'Estado del Pipeline',
     ];
 
     public function recordChanges(Invoice $original, Invoice $modified, int $userId): void

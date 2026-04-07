@@ -50,10 +50,11 @@ if ($isRejected) {
 }
 
 $pipelineBadgeMap = [
-    'aprobacion'    => ['Aprobación',    'bg-info text-dark'],
-    'contabilidad'  => ['Contabilidad',  'bg-primary'],
-    'tesoreria'     => ['Tesorería',     'bg-warning text-dark'],
-    'pagada'        => ['Pagada',        'bg-success'],
+    'aprobacion'        => ['Aprobación',    'bg-info text-dark'],
+    'contabilidad'      => ['Contabilidad',  'bg-primary'],
+    'tesoreria'         => ['Tesorería',     'bg-warning text-dark'],
+    'autorizacion_pago' => ['Aut. Pago',     'bg-info'],
+    'pagada'            => ['Pagada',        'bg-success'],
 ];
 $ps = $pipelineBadgeMap[$currentStatus] ?? ['Desconocido', 'bg-dark'];
 
@@ -62,12 +63,13 @@ $expenseTypesArr = is_array($expenseTypes) ? $expenseTypes : (method_exists($exp
 
 // ── Compute section render order: editable first, read-only after ──
 $sectionFieldMap = [
-    'general'        => ['invoice_number', 'document_type', 'purchase_order', 'provider_id'],
-    'dates'          => ['issue_date', 'due_date'],
-    'classification' => ['operation_center_id', 'expense_type_id', 'cost_center_id', 'amount', 'detail'],
-    'revision'       => ['approver_id', 'dian_validation'],
-    'accounting'     => ['accrued', 'ready_for_payment'],
-    'treasury'       => ['payment_status', 'payment_date'],
+    'general'               => ['invoice_number', 'document_type', 'purchase_order', 'provider_id'],
+    'dates'                 => ['issue_date', 'due_date'],
+    'classification'        => ['operation_center_id', 'expense_type_id', 'cost_center_id', 'amount', 'detail'],
+    'revision'              => ['approver_id', 'dian_validation'],
+    'accounting'            => ['accrued', 'ready_for_payment'],
+    'treasury'              => ['payment_status', 'payment_date'],
+    'payment_authorization' => ['payment_authorized'],
 ];
 $editableSectionKeys = [];
 $readOnlySectionKeys = [];
@@ -142,8 +144,8 @@ if (!empty($invoice->invoice_documents)) {
         $documentsByStatus[$doc->pipeline_status][] = $doc;
     }
 }
-$statusLabels = ['aprobacion' => 'Aprobación', 'contabilidad' => 'Contabilidad', 'tesoreria' => 'Tesorería', 'pagada' => 'Pagada'];
-$badgeColors  = ['aprobacion' => 'bg-info text-dark', 'contabilidad' => 'bg-primary', 'tesoreria' => 'bg-warning text-dark', 'pagada' => 'bg-success'];
+$statusLabels = ['aprobacion' => 'Aprobación', 'contabilidad' => 'Contabilidad', 'tesoreria' => 'Tesorería', 'autorizacion_pago' => 'Aut. Pago', 'pagada' => 'Pagada'];
+$badgeColors  = ['aprobacion' => 'bg-info text-dark', 'contabilidad' => 'bg-primary', 'tesoreria' => 'bg-warning text-dark', 'autorizacion_pago' => 'bg-info', 'pagada' => 'bg-success'];
 $docIcon = fn(?string $mime): string => match(true) {
     str_contains($mime ?? '', 'pdf')                                                                  => 'bi-file-earmark-pdf',
     str_contains($mime ?? '', 'image')                                                                => 'bi-file-earmark-image',
@@ -697,6 +699,143 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                                value="<?= h($invoice->payment_date?->format('d/m/Y') ?? '') ?>">
                     <?php endif; ?>
                 </div>
+            </div>
+
+            <!-- Sub-sección: Pagos registrados -->
+            <div class="mt-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-uppercase fw-semibold" style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                        <i class="bi bi-credit-card me-1"></i>Pagos Registrados
+                    </span>
+                    <?php if ($canEdit('payment_status')): ?>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#add-payment-form">
+                        <i class="bi bi-plus-lg me-1"></i>Agregar Pago
+                    </button>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($canEdit('payment_status')): ?>
+                <div class="collapse mb-3" id="add-payment-form">
+                    <div class="card card-body" style="border-top:2px solid var(--primary-color);">
+                        <?= $this->Form->create(null, ['url' => ['action' => 'addPayment', $invoice->id]]) ?>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Entidad Bancaria</label>
+                                <select name="banking_entity_id" class="form-select select2-enable" required>
+                                    <option value="">-- Seleccione --</option>
+                                    <?php foreach ($bankingEntities as $beId => $beName): ?>
+                                        <option value="<?= $beId ?>"><?= h($beName) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Monto (COP)</label>
+                                <input type="text" name="amount" class="form-control currency-input" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Fecha de Pago</label>
+                                <input type="text" name="payment_date" class="form-control flatpickr-date" required>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save me-1"></i>Registrar</button>
+                            </div>
+                        </div>
+                        <?= $this->Form->end() ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($invoice->invoice_payments)): ?>
+                <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Entidad Bancaria</th>
+                                <th>Monto</th>
+                                <th>Fecha</th>
+                                <th>Registrado por</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($invoice->invoice_payments as $payment): ?>
+                            <tr>
+                                <td><?= h($payment->banking_entity->name ?? '—') ?></td>
+                                <td>$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
+                                <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
+                                <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
+                                <td class="text-end">
+                                    <?php if ($canEdit('payment_status')): ?>
+                                    <?= $this->Form->postLink(
+                                        '<i class="bi bi-trash"></i>',
+                                        ['action' => 'deletePayment', $invoice->id, $payment->id],
+                                        ['confirm' => '¿Eliminar este pago?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false]
+                                    ) ?>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th>Total Pagado</th>
+                                <th colspan="4">$ <?= number_format($paymentsTotal ?? 0, 0, ',', '.') ?></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <?php else: ?>
+                <div class="text-muted text-center py-3" style="font-size:.85rem;border:1px dashed var(--border-color);">
+                    <i class="bi bi-credit-card me-1"></i>No hay pagos registrados
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($sectionName === 'payment_authorization' && in_array('payment_authorization', $visibleSections)): ?>
+        <!-- ── Sección: Autorización de Pago ── -->
+        <div class="mb-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="text-uppercase fw-semibold flex-shrink-0"
+                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                    <i class="bi bi-shield-check me-1"></i>Autorización de Pago
+                </span>
+                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label d-block">Autorizada para Pago</label>
+                    <?php if ($canEdit('payment_authorized')): ?>
+                    <div class="form-check">
+                        <?= $this->Form->checkbox('payment_authorized', [
+                            'class' => 'form-check-input',
+                            'id' => 'payment-authorized-check',
+                        ]) ?>
+                        <label class="form-check-label" for="payment-authorized-check">Autorizar pago</label>
+                    </div>
+                    <?php else: ?>
+                    <div class="py-1">
+                        <?php if ($invoice->payment_authorized): ?>
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizada</span>
+                        <?php else: ?>
+                            <span class="badge bg-secondary">Pendiente</span>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php if ($invoice->payment_authorized_by): ?>
+                <div class="col-md-4">
+                    <label class="form-label">Autorizada por</label>
+                    <input type="text" class="form-control" disabled
+                           value="<?= h($invoice->payment_authorized_by_user->full_name ?? $invoice->payment_authorized_by_user->username ?? '—') ?>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fecha de Autorización</label>
+                    <input type="text" class="form-control" disabled
+                           value="<?= h($invoice->payment_authorized_date?->format('d/m/Y') ?? '') ?>">
+                </div>
+                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>

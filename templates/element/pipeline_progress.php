@@ -21,6 +21,9 @@ $isPartialPayment = ($currentStatus === InvoiceConstants::STATUS_TESORERIA && $p
 ?>
 <?php
 $totalSteps = count($pipelineStatuses);
+$circleSize = $totalSteps >= 5 ? '40px' : '48px';
+$fontSize = $totalSteps >= 5 ? '0.95rem' : '1.1rem';
+$lineTop = $totalSteps >= 5 ? '20px' : '24px';
 // Lines start at center of first circle, end at center of last circle
 // Each flex:1 item = 100/N wide, center of item i = (i+0.5)*100/N
 $lineOffset = $totalSteps > 1 ? 50 / $totalSteps : 0;
@@ -31,10 +34,10 @@ $progressColor = $isRejected ? '#dc3545' : 'var(--primary-color)';
     <div class="d-flex align-items-center justify-content-between position-relative">
         <!-- Base line (gray): center of first to center of last -->
         <div class="position-absolute"
-             style="top:24px;left:<?= $lineOffset ?>%;right:<?= $lineOffset ?>%;height:3px;background:#dee2e6;z-index:0;"></div>
+             style="top:<?= $lineTop ?>;left:<?= $lineOffset ?>%;right:<?= $lineOffset ?>%;height:3px;background:#dee2e6;z-index:0;"></div>
         <!-- Progress line (colored): same origin, width as % of line span -->
         <div class="position-absolute"
-             style="top:24px;left:<?= $lineOffset ?>%;width:calc((100% - <?= 2 * $lineOffset ?>%) * <?= $progressPercent / 100 ?>);height:3px;background:<?= $progressColor ?>;z-index:0;transition:width .5s ease,background .3s ease;"></div>
+             style="top:<?= $lineTop ?>;left:<?= $lineOffset ?>%;width:calc((100% - <?= 2 * $lineOffset ?>%) * <?= $progressPercent / 100 ?>);height:3px;background:<?= $progressColor ?>;z-index:0;transition:width .5s ease,background .3s ease;"></div>
 
         <?php foreach ($pipelineStatuses as $i => $status): ?>
             <?php
@@ -70,7 +73,7 @@ $progressColor = $isRejected ? '#dc3545' : 'var(--primary-color)';
             ?>
             <div class="d-flex flex-column align-items-center position-relative" style="z-index:1;flex:1;">
                 <div class="d-flex align-items-center justify-content-center mb-1"
-                     style="width:48px;height:48px;font-size:1.1rem;transition:all .3s ease;<?= $circleStyle ?>">
+                     style="width:<?= $circleSize ?>;height:<?= $circleSize ?>;font-size:<?= $fontSize ?>;transition:all .3s ease;<?= $circleStyle ?>">
                     <?php if ($rejectedHere): ?>
                         <i class="bi bi-x-lg fw-bold"></i>
                     <?php elseif ($isPast): ?>

@@ -15,10 +15,11 @@ use App\Service\InvoicePipelineService;
 $this->assign('title', 'Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
 $pipelineBadgeMap = [
-    InvoiceConstants::STATUS_APROBACION    => ['Aprobación',    'bg-info text-dark'],
-    InvoiceConstants::STATUS_CONTABILIDAD  => ['Contabilidad',  'bg-primary'],
-    InvoiceConstants::STATUS_TESORERIA     => ['Tesorería',     'bg-warning text-dark'],
-    InvoiceConstants::STATUS_PAGADA        => ['Pagada',        'bg-success'],
+    InvoiceConstants::STATUS_APROBACION        => ['Aprobación',    'bg-info text-dark'],
+    InvoiceConstants::STATUS_CONTABILIDAD      => ['Contabilidad',  'bg-primary'],
+    InvoiceConstants::STATUS_TESORERIA         => ['Tesorería',     'bg-warning text-dark'],
+    InvoiceConstants::STATUS_AUTORIZACION_PAGO => ['Aut. Pago',     'bg-info'],
+    InvoiceConstants::STATUS_PAGADA            => ['Pagada',        'bg-success'],
 ];
 $ps = $pipelineBadgeMap[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
 
@@ -293,6 +294,66 @@ $dianClass = match($invoice->dian_validation ?? '') {
                 <span class="sgi-data-value"><?= $invoice->payment_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
         </div>
+    </div>
+
+    <!-- Autorización de Pago -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="sgi-section-title">Autorización de Pago</div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Autorizada</span>
+                <span class="sgi-data-value">
+                    <?php if ($invoice->payment_authorized): ?>
+                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Sí</span>
+                    <?php else: ?>
+                        <span class="badge bg-secondary">Pendiente</span>
+                    <?php endif; ?>
+                </span>
+            </div>
+            <?php if ($invoice->payment_authorized_by): ?>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Autorizada por</span>
+                <span class="sgi-data-value"><?= h($invoice->payment_authorized_by_user->full_name ?? $invoice->payment_authorized_by_user->username ?? '—') ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Fecha Autorización</span>
+                <span class="sgi-data-value"><?= $invoice->payment_authorized_date?->format('d/m/Y') ?? '—' ?></span>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php if (!empty($invoice->invoice_payments)): ?>
+        <div class="col-md-8">
+            <div class="sgi-section-title">Pagos Registrados</div>
+            <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Entidad Bancaria</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Registrado por</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($invoice->invoice_payments as $payment): ?>
+                        <tr>
+                            <td><?= h($payment->banking_entity->name ?? '—') ?></td>
+                            <td>$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
+                            <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
+                            <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th>Total Pagado</th>
+                            <th colspan="3">$ <?= number_format(array_sum(array_map(fn($p) => (float)$p->amount, $invoice->invoice_payments)), 0, ',', '.') ?></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- Barra de registro -->

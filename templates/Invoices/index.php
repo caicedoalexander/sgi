@@ -19,10 +19,11 @@ $pageTitle = $isRejectedView ? 'Facturas Rechazadas'
 $this->assign('title', $pageTitle);
 
 $pipelineBadges = [
-    InvoiceConstants::STATUS_APROBACION    => ['Aprobación',    'bg-info text-dark'],
-    InvoiceConstants::STATUS_CONTABILIDAD  => ['Contabilidad',  'bg-primary'],
-    InvoiceConstants::STATUS_TESORERIA     => ['Tesorería',     'bg-warning text-dark'],
-    InvoiceConstants::STATUS_PAGADA        => ['Pagada',        'bg-success'],
+    InvoiceConstants::STATUS_APROBACION        => ['Aprobación',    'bg-info text-dark'],
+    InvoiceConstants::STATUS_CONTABILIDAD      => ['Contabilidad',  'bg-primary'],
+    InvoiceConstants::STATUS_TESORERIA         => ['Tesorería',     'bg-warning text-dark'],
+    InvoiceConstants::STATUS_AUTORIZACION_PAGO => ['Aut. Pago',     'bg-info'],
+    InvoiceConstants::STATUS_PAGADA            => ['Pagada',        'bg-success'],
 ];
 
 $query = $this->request->getQueryParams();

@@ -326,6 +326,18 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']]
         );
 
+        // Invoice payments
+        $builder->connect(
+            '/invoices/add-payment/{invoiceId}',
+            ['controller' => 'Invoices', 'action' => 'addPayment'],
+            ['pass' => ['invoiceId']],
+        );
+        $builder->connect(
+            '/invoices/delete-payment/{invoiceId}/{paymentId}',
+            ['controller' => 'Invoices', 'action' => 'deletePayment'],
+            ['pass' => ['invoiceId', 'paymentId']],
+        );
+
         $builder->fallbacks();
     });
 

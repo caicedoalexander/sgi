@@ -46,6 +46,7 @@ class AppController extends Controller
         'PettyCashRecords' => 'petty_cash',
         'LegalizationRecords' => 'legalizations',
         'NoveltyLiquidationDocs' => 'novelty_liquidation_docs',
+        'BankingEntities' => 'banking_entities',
     ];
 
     /**

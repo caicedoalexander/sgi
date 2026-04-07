@@ -44,12 +44,14 @@ final class InvoiceConstants
     public const STATUS_APROBACION = 'aprobacion';
     public const STATUS_CONTABILIDAD = 'contabilidad';
     public const STATUS_TESORERIA = 'tesoreria';
+    public const STATUS_AUTORIZACION_PAGO = 'autorizacion_pago';
     public const STATUS_PAGADA = 'pagada';
 
     public const PIPELINE_STATUSES = [
         self::STATUS_APROBACION,
         self::STATUS_CONTABILIDAD,
         self::STATUS_TESORERIA,
+        self::STATUS_AUTORIZACION_PAGO,
         self::STATUS_PAGADA,
     ];
 
