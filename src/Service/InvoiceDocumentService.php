@@ -3,22 +3,24 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Service\Trait\DocumentUploadTrait;
 use Cake\ORM\TableRegistry;
 use Laminas\Diactoros\UploadedFile;
 
 class InvoiceDocumentService
 {
-    private const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10 MB
+    use DocumentUploadTrait;
 
-    private const ALLOWED_DOC_MIMES = [
-        'application/pdf',
-        'image/jpeg', 'image/png', 'image/gif',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ];
-
+    /**
+     * Upload a document for an invoice.
+     *
+     * @param int $invoiceId Invoice ID.
+     * @param string $pipelineStatus Current pipeline status.
+     * @param \Laminas\Diactoros\UploadedFile $file Uploaded file.
+     * @param int|null $uploadedBy User ID.
+     * @param string|null $documentType Document type.
+     * @return object|string Entity on success, error message on failure.
+     */
     public function uploadDocument(
         int $invoiceId,
         string $pipelineStatus,
@@ -26,73 +28,43 @@ class InvoiceDocumentService
         ?int $uploadedBy,
         ?string $documentType = null,
     ): object|string {
-        if ($file->getError() !== UPLOAD_ERR_OK) {
-            return 'No se recibió ningún archivo válido.';
-        }
-
-        if ($file->getSize() > self::MAX_DOC_SIZE) {
-            return 'El archivo excede el tamaño máximo de 10MB.';
-        }
-
-        $mimeType = $file->getClientMediaType();
-        if (!in_array($mimeType, self::ALLOWED_DOC_MIMES)) {
-            return 'Tipo de archivo no permitido. Use PDF, imágenes, Word o Excel.';
-        }
-
-        $uploadDir = WWW_ROOT . 'uploads' . DS . 'invoices' . DS . $invoiceId;
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-
-        $originalName = $file->getClientFilename();
-        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-        $uniqueName = uniqid('inv_') . '.' . $extension;
-        $filePath = $uploadDir . DS . $uniqueName;
-
-        $file->moveTo($filePath);
-
-        $documentsTable = TableRegistry::getTableLocator()->get('InvoiceDocuments');
-        $document = $documentsTable->newEntity([
+        return $this->uploadAndSave($file, 'InvoiceDocuments', 'invoices/' . $invoiceId, 'inv_', [
             'invoice_id' => $invoiceId,
             'pipeline_status' => $pipelineStatus,
             'document_type' => $documentType,
-            'file_path' => 'uploads/invoices/' . $invoiceId . '/' . $uniqueName,
-            'file_name' => $originalName,
-            'file_size' => $file->getSize(),
-            'mime_type' => $mimeType,
             'uploaded_by' => $uploadedBy,
         ]);
-
-        if (!$documentsTable->save($document)) {
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
-
-            return 'No se pudo guardar el documento.';
-        }
-
-        return $document;
     }
 
+    /**
+     * Delete an invoice document.
+     *
+     * @param int $documentId Document ID.
+     * @return bool
+     */
     public function deleteDocument(int $documentId): bool
     {
-        $documentsTable = TableRegistry::getTableLocator()->get('InvoiceDocuments');
-        $document = $documentsTable->get($documentId);
-
-        $filePath = WWW_ROOT . $document->file_path;
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
-
-        return $documentsTable->delete($document);
+        return $this->deleteDocumentRecord('InvoiceDocuments', $documentId);
     }
 
+    /**
+     * Check if a document can be deleted in the current status.
+     *
+     * @param object $document Document entity.
+     * @param string $currentPipelineStatus Current pipeline status.
+     * @return bool
+     */
     public function canDeleteDocument(object $document, string $currentPipelineStatus): bool
     {
-        // Can only delete documents that were uploaded in the current status
         return $document->pipeline_status === $currentPipelineStatus;
     }
 
+    /**
+     * Get documents grouped by pipeline status.
+     *
+     * @param int $invoiceId Invoice ID.
+     * @return array
+     */
     public function getDocumentsByStatus(int $invoiceId): array
     {
         $documentsTable = TableRegistry::getTableLocator()->get('InvoiceDocuments');

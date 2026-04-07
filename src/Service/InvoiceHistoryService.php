@@ -4,11 +4,13 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Model\Entity\Invoice;
+use App\Service\Trait\HistoryNormalizationTrait;
 use Cake\ORM\TableRegistry;
-use DateTimeInterface;
 
 class InvoiceHistoryService
 {
+    use HistoryNormalizationTrait;
+
     public const FIELD_LABELS = [
         'invoice_number'      => 'Número de Factura',
         'registration_date'   => 'Fecha de Registro',
@@ -47,43 +49,33 @@ class InvoiceHistoryService
         ];
 
         $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
+        $entities = [];
 
         foreach ($fieldsToTrack as $field) {
-            $oldVal = $original->get($field);
-            $newVal = $modified->get($field);
+            $oldVal = $this->normalizeValue($original->get($field));
+            $newVal = $this->normalizeValue($modified->get($field));
 
-            // Normalizar DateTime a string para comparacion
-            if ($oldVal instanceof DateTimeInterface) {
-                $oldVal = $oldVal->format('Y-m-d');
-            }
-            if ($newVal instanceof DateTimeInterface) {
-                $newVal = $newVal->format('Y-m-d');
-            }
-
-            // Normalizar booleanos
+            // Normalizar booleanos para comparacion consistente
             if (is_bool($oldVal) || is_bool($newVal)) {
                 $oldVal = (bool)$oldVal;
                 $newVal = (bool)$newVal;
             }
 
-            // Normalizar null y string vacio
-            if ($oldVal === '') {
-                $oldVal = null;
-            }
-            if ($newVal === '') {
-                $newVal = null;
-            }
-
             if ($oldVal !== $newVal) {
-                $history = $historiesTable->newEntity([
+                $entities[] = $historiesTable->newEntity([
                     'invoice_id' => $original->id,
                     'user_id' => $userId,
                     'field_changed' => $field,
                     'old_value' => $oldVal !== null ? (string)$oldVal : null,
                     'new_value' => $newVal !== null ? (string)$newVal : null,
                 ]);
-                $historiesTable->save($history);
             }
+        }
+
+        if (!empty($entities)) {
+            $historiesTable->getConnection()->transactional(function () use ($historiesTable, $entities): void {
+                $historiesTable->saveMany($entities);
+            });
         }
     }
 

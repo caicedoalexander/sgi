@@ -3,17 +3,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Constants\InvoiceConstants;
-use App\Constants\LegalizationConstants;
-use App\Constants\NoveltyConstants;
-use App\Constants\PettyCashConstants;
 use App\Service\AuthorizationService;
-use App\Service\InvoicePipelineService;
-use App\Service\NoveltyPipelineService;
+use App\Service\SidebarCounterService;
 use Cake\Controller\Controller;
 use Cake\Event\EventInterface;
-use Cake\ORM\TableRegistry;
-use Exception;
 
 class AppController extends Controller
 {
@@ -150,109 +143,12 @@ class AppController extends Controller
 
     protected function _setSidebarCounters(object $user): void
     {
-        try {
-            $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-            $roleName = $this->_getUserRoleName($user);
+        $roleName = $this->_getUserRoleName($user);
+        $counterService = new SidebarCounterService();
+        $counters = $counterService->getCounters($roleName);
 
-            $pipeline = new InvoicePipelineService();
-            $visibleStatuses = $pipeline->getVisibleStatuses($roleName);
-
-            $counters = [];
-            foreach ($visibleStatuses as $status) {
-                $counters[$status] = $invoicesTable->find()
-                    ->where(['pipeline_status' => $status])
-                    ->count();
-            }
-
-            $this->set('sidebarCounters', $counters);
-            $this->set('totalInvoicesCount', $invoicesTable->find()->count());
-            $this->set('rejectedInvoicesCount', $invoicesTable->find()
-                ->where(['area_approval' => InvoiceConstants::APPROVAL_REJECTED])
-                ->count());
-            $this->set('overdueInvoicesCount', $invoicesTable->find()
-                ->where([
-                    'due_date <' => date('Y-m-d'),
-                    'pipeline_status !=' => InvoiceConstants::STATUS_PAGADA,
-                ])
-                ->count());
-
-            $pettyCashTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
-            $this->set('pettyCashCount', $pettyCashTable->find()
-                ->where(['status !=' => PettyCashConstants::STATUS_PAGADO])
-                ->count());
-
-            $legalizationTable = TableRegistry::getTableLocator()->get('LegalizationRecords');
-            $this->set('legalizationCount', $legalizationTable->find()
-                ->where(['status !=' => LegalizationConstants::STATUS_PAGADO])
-                ->count());
-
-            $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
-            $noveltyPipeline = new NoveltyPipelineService();
-            $noveltyVisibleStatuses = $noveltyPipeline->getVisibleStatuses($roleName);
-            if (!empty($noveltyVisibleStatuses)) {
-                $this->set('noveltiesCount', $noveltiesTable->find()
-                    ->where([
-                        'pipeline_status IN' => $noveltyVisibleStatuses,
-                        'pipeline_status !=' => NoveltyConstants::STATUS_RECHAZADA,
-                    ])
-                    ->where(function ($exp) {
-                        return $exp->or([
-                            'pipeline_status !=' => NoveltyConstants::STATUS_CONTABILIDAD,
-                            'liquidation_doc_id IS' => null,
-                        ]);
-                    })
-                    ->count());
-            } else {
-                $this->set('noveltiesCount', 0);
-            }
-
-            // Rejected novelties count
-            $this->set('rejectedNoveltiesCount', $noveltiesTable->find()
-                ->where(['pipeline_status' => NoveltyConstants::STATUS_RECHAZADA])
-                ->count());
-
-            // Active novelties count (vigentes hoy)
-            $today = date('Y-m-d');
-            $activeNoveltiesCount = $noveltiesTable->find()
-                ->where([
-                    'pipeline_status IN' => NoveltyConstants::ACTIVE_STATUSES,
-                ])
-                ->where(function ($exp) use ($today) {
-                    return $exp->or([
-                        $exp->and([
-                            'schedule_type' => NoveltyConstants::SCHEDULE_DAYS,
-                            'start_date <=' => $today,
-                            'end_date >=' => $today,
-                        ]),
-                        $exp->and([
-                            'schedule_type' => NoveltyConstants::SCHEDULE_HOURS,
-                            'permission_date' => $today,
-                        ]),
-                    ]);
-                })
-                ->count();
-            $this->set('activeNoveltiesCount', $activeNoveltiesCount);
-
-            // Liquidation docs counters by status
-            $liquidationTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
-            $liquidationCounters = [];
-            foreach ([NoveltyConstants::STATUS_CONTABILIDAD, NoveltyConstants::STATUS_TESORERIA, NoveltyConstants::STATUS_REVISION_FIRMAS, NoveltyConstants::STATUS_GDP] as $status) {
-                $liquidationCounters[$status] = $liquidationTable->find()
-                    ->where(['pipeline_status' => $status])
-                    ->count();
-            }
-            $this->set('liquidationCounters', $liquidationCounters);
-        } catch (Exception $e) {
-            $this->set('sidebarCounters', []);
-            $this->set('totalInvoicesCount', 0);
-            $this->set('rejectedInvoicesCount', 0);
-            $this->set('overdueInvoicesCount', 0);
-            $this->set('pettyCashCount', 0);
-            $this->set('legalizationCount', 0);
-            $this->set('noveltiesCount', 0);
-            $this->set('rejectedNoveltiesCount', 0);
-            $this->set('activeNoveltiesCount', 0);
-            $this->set('liquidationCounters', []);
+        foreach ($counters as $key => $value) {
+            $this->set($key, $value);
         }
     }
 

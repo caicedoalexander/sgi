@@ -424,14 +424,15 @@ class InvoicePipelineService
      */
     private function trySendNotification(Invoice $invoice, string $fromStatus, string $toStatus): array
     {
-        try {
-            $this->notificationService->sendStatusChangeNotification($invoice, $fromStatus, $toStatus);
+        $notifResult = $this->notificationService->sendStatusChangeNotification($invoice, $fromStatus, $toStatus);
 
-            return ['success' => true, 'error' => null];
-        } catch (Exception $e) {
-            Log::error('Error enviando notificación de cambio de estado para factura #' . $invoice->id . ': ' . $e->getMessage());
+        if (!empty($notifResult['failed'])) {
+            $errorMsg = implode('; ', $notifResult['failed']);
+            Log::error('Error enviando notificación de cambio de estado para factura #' . $invoice->id . ': ' . $errorMsg);
 
-            return ['success' => false, 'error' => 'No se pudo enviar la notificación de cambio de estado: ' . $e->getMessage()];
+            return ['success' => false, 'error' => 'No se pudo enviar la notificación de cambio de estado: ' . $errorMsg];
         }
+
+        return ['success' => true, 'error' => null];
     }
 }

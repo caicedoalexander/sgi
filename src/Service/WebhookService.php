@@ -9,16 +9,22 @@ use Exception;
 
 class WebhookService
 {
+    private const MAX_RETRIES = 3;
+    private const BASE_DELAY_MS = 1000; // 1s, 2s, 4s
+
     private Client $client;
+    private int $maxRetries;
 
     /**
      * @param int $timeout Request timeout in seconds.
+     * @param int $maxRetries Maximum retry attempts on server errors.
      */
-    public function __construct(int $timeout = 30)
+    public function __construct(int $timeout = 30, int $maxRetries = self::MAX_RETRIES)
     {
         $this->client = new Client([
             'timeout' => $timeout,
         ]);
+        $this->maxRetries = $maxRetries;
     }
 
     /**
@@ -50,30 +56,14 @@ class WebhookService
             ];
         }
 
-        try {
-            $response = $this->client->post($url, array_merge($extraData, [
+        return $this->executeWithRetry(function () use ($url, $filePath, $fieldName, $extraData, $headers) {
+            return $this->client->post($url, array_merge($extraData, [
                 $fieldName => fopen($filePath, 'r'),
             ]), [
                 'headers' => $headers,
                 'type' => 'multipart/form-data',
             ]);
-
-            return [
-                'success' => $response->isOk(),
-                'statusCode' => $response->getStatusCode(),
-                'body' => (string)$response->getBody(),
-                'error' => $response->isOk() ? null : "HTTP {$response->getStatusCode()}",
-            ];
-        } catch (Exception $e) {
-            Log::error("WebhookService::sendFile error: {$e->getMessage()}");
-
-            return [
-                'success' => false,
-                'statusCode' => 0,
-                'body' => '',
-                'error' => $e->getMessage(),
-            ];
-        }
+        });
     }
 
     /**
@@ -81,26 +71,59 @@ class WebhookService
      */
     public function post(string $url, mixed $body, array $headers = []): array
     {
-        try {
-            $response = $this->client->post($url, (string)$body, [
+        return $this->executeWithRetry(function () use ($url, $body, $headers) {
+            return $this->client->post($url, (string)$body, [
                 'headers' => $headers,
             ]);
+        });
+    }
 
-            return [
-                'success' => $response->isOk(),
-                'statusCode' => $response->getStatusCode(),
-                'body' => (string)$response->getBody(),
-                'error' => $response->isOk() ? null : "HTTP {$response->getStatusCode()}",
-            ];
-        } catch (Exception $e) {
-            Log::error("WebhookService::post error: {$e->getMessage()}");
+    /**
+     * Execute an HTTP request with exponential backoff retry.
+     *
+     * @param callable $request Closure that performs the HTTP call and returns a Response.
+     * @return array{success: bool, statusCode: int, body: string, error: ?string}
+     */
+    private function executeWithRetry(callable $request): array
+    {
+        $lastException = null;
 
-            return [
-                'success' => false,
-                'statusCode' => 0,
-                'body' => '',
-                'error' => $e->getMessage(),
-            ];
+        for ($attempt = 0; $attempt <= $this->maxRetries; $attempt++) {
+            try {
+                $response = $request();
+
+                // Don't retry client errors (4xx), only server errors (5xx) and timeouts
+                if ($response->isOk() || ($response->getStatusCode() >= 400 && $response->getStatusCode() < 500)) {
+                    return [
+                        'success' => $response->isOk(),
+                        'statusCode' => $response->getStatusCode(),
+                        'body' => (string)$response->getBody(),
+                        'error' => $response->isOk() ? null : "HTTP {$response->getStatusCode()}",
+                    ];
+                }
+
+                // Server error — will retry
+                $lastException = new Exception("HTTP {$response->getStatusCode()}");
+            } catch (Exception $e) {
+                $lastException = $e;
+            }
+
+            // Exponential backoff: 1s, 2s, 4s
+            if ($attempt < $this->maxRetries) {
+                $delayMs = self::BASE_DELAY_MS * (2 ** $attempt);
+                usleep($delayMs * 1000);
+                $msg = $lastException->getMessage();
+                Log::warning("WebhookService: retry #{$attempt + 1} after {$delayMs}ms — {$msg}");
+            }
         }
+
+        Log::error("WebhookService: all {$this->maxRetries} retries exhausted — {$lastException->getMessage()}");
+
+        return [
+            'success' => false,
+            'statusCode' => 0,
+            'body' => '',
+            'error' => "Retries exhausted: {$lastException->getMessage()}",
+        ];
     }
 }

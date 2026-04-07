@@ -59,8 +59,8 @@ class DianCrosschecksController extends AppController
             $user = $this->Authentication->getIdentity();
             $result = $this->crosscheckService->processUpload($file, (int)$user->getIdentifier());
 
-            if (is_string($result)) {
-                $this->Flash->error($result);
+            if (!$result->success) {
+                $this->Flash->error($result->firstError());
 
                 return $this->redirect(['action' => 'add']);
             }

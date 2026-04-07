@@ -4,14 +4,16 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\NoveltyConstants;
+use App\Service\Trait\HistoryNormalizationTrait;
 use Cake\ORM\TableRegistry;
-use DateTimeInterface;
 
 /**
  * Records field-by-field audit trail for employee novelties.
  */
 class NoveltyHistoryService
 {
+    use HistoryNormalizationTrait;
+
     /**
      * Field labels for display in history table.
      */
@@ -42,21 +44,27 @@ class NoveltyHistoryService
     public function recordChanges(object $original, object $modified, int $userId): void
     {
         $table = TableRegistry::getTableLocator()->get('NoveltyHistories');
+        $entities = [];
 
         foreach (array_keys(self::FIELD_LABELS) as $field) {
-            $oldVal = $this->normalize($original->$field ?? null);
-            $newVal = $this->normalize($modified->$field ?? null);
+            $oldVal = $this->normalizeToString($original->$field ?? null);
+            $newVal = $this->normalizeToString($modified->$field ?? null);
 
             if ($oldVal !== $newVal) {
-                $entry = $table->newEntity([
+                $entities[] = $table->newEntity([
                     'novelty_id' => $modified->id,
                     'user_id' => $userId,
                     'field_changed' => $field,
                     'old_value' => $oldVal === '' ? null : $oldVal,
                     'new_value' => $newVal === '' ? null : $newVal,
                 ]);
-                $table->save($entry);
             }
+        }
+
+        if (!empty($entities)) {
+            $table->getConnection()->transactional(function () use ($table, $entities): void {
+                $table->saveMany($entities);
+            });
         }
     }
 
@@ -80,26 +88,5 @@ class NoveltyHistoryService
             'new_value' => NoveltyConstants::STATUS_LABELS[$toStatus] ?? $toStatus,
         ]);
         $table->save($entry);
-    }
-
-    /**
-     * Normalize a value for comparison.
-     *
-     * @param mixed $value Value to normalize.
-     * @return string
-     */
-    private function normalize(mixed $value): string
-    {
-        if ($value === null) {
-            return '';
-        }
-        if (is_bool($value)) {
-            return $value ? '1' : '0';
-        }
-        if ($value instanceof DateTimeInterface) {
-            return $value->format('Y-m-d');
-        }
-
-        return (string)$value;
     }
 }

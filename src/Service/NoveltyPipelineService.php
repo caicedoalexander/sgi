@@ -196,9 +196,14 @@ class NoveltyPipelineService
         }
 
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
-        $novelty->pipeline_status = $nextStatus;
 
-        if (!$noveltiesTable->save($novelty)) {
+        $result = $noveltiesTable->getConnection()->transactional(function () use ($noveltiesTable, $novelty, $nextStatus) {
+            $novelty->pipeline_status = $nextStatus;
+
+            return $noveltiesTable->save($novelty);
+        });
+
+        if (!$result) {
             return ['success' => false, 'error' => 'No se pudo avanzar el estado.'];
         }
 

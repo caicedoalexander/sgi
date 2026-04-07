@@ -22,14 +22,16 @@ class NotificationService
     }
 
     /**
-     * Send status change notification. Throws on critical failures.
+     * Send status change notification. Returns result instead of throwing.
+     *
+     * @return array{sent: int, failed: array<string>}
      */
-    public function sendStatusChangeNotification(Invoice $invoice, string $fromStatus, string $toStatus): void
+    public function sendStatusChangeNotification(Invoice $invoice, string $fromStatus, string $toStatus): array
     {
         $smtpConfig = $this->settings->getGroup('smtp');
 
         if (empty($smtpConfig['smtp_host']) || empty($smtpConfig['smtp_from_email'])) {
-            throw new Exception('SMTP no configurado. Configure el correo en Ajustes del Sistema.');
+            return ['sent' => 0, 'failed' => ['SMTP no configurado. Configure el correo en Ajustes del Sistema.']];
         }
 
         $recipients = $this->getRecipientsForStatus($toStatus);
@@ -37,7 +39,7 @@ class NotificationService
         if (empty($recipients)) {
             Log::info("No hay destinatarios para notificación de estado '{$toStatus}' - factura #{$invoice->id}");
 
-            return;
+            return ['sent' => 0, 'failed' => []];
         }
 
         $this->configureTransport($smtpConfig);
@@ -47,7 +49,8 @@ class NotificationService
         $toLabel = $statusLabels[$toStatus] ?? $toStatus;
         $invoiceNumber = $invoice->invoice_number ?: '#' . $invoice->id;
 
-        $errors = [];
+        $sent = 0;
+        $failed = [];
         foreach ($recipients as $recipient) {
             try {
                 $mailer = new Mailer();
@@ -69,15 +72,14 @@ class NotificationService
                     ->setTemplate('invoice_status_changed')
                     ->setLayout('default');
                 $mailer->deliver();
+                $sent++;
             } catch (Exception $e) {
                 Log::error("Email notification failed for {$recipient->email}: " . $e->getMessage());
-                $errors[] = $recipient->email . ': ' . $e->getMessage();
+                $failed[] = $recipient->email . ': ' . $e->getMessage();
             }
         }
 
-        if (!empty($errors)) {
-            throw new Exception('Falló el envío a: ' . implode('; ', $errors));
-        }
+        return ['sent' => $sent, 'failed' => $failed];
     }
 
     /**
