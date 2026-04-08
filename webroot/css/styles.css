@@ -1934,6 +1934,7 @@ textarea.form-control {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    margin-left: .4rem;
 }
 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
     order: 1;
@@ -1941,11 +1942,9 @@ textarea.form-control {
     font-weight: 700;
     margin-left: .4rem;
     margin-right: 0;
-    padding: 0 0 0 .4rem;
-    border-left: 1px solid rgba(70, 157, 97, .2);
+    padding: 0 0 0 0;
     border-right: none;
     font-size: .85rem;
-    line-height: 1;
     cursor: pointer;
     flex-shrink: 0;
     transition: color .15s ease;
