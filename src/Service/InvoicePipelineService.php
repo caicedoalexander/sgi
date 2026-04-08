@@ -99,6 +99,13 @@ class InvoicePipelineService
         RoleConstants::CONTADOR          => ['general', 'dates', 'classification', 'revision', 'accounting', 'treasury', 'payment_authorization'],
     ];
 
+    // Sections collapsed by default (accordion) per role/status
+    private const COLLAPSIBLE_SECTIONS_BY_ROLE = [
+        RoleConstants::REGISTRO_REVISION => [
+            InvoiceConstants::STATUS_APROBACION => ['general', 'dates', 'classification'],
+        ],
+    ];
+
     // Fields required before advancing from each status
     private const TRANSITION_REQUIREMENTS = [
         InvoiceConstants::STATUS_APROBACION => [
@@ -200,6 +207,14 @@ class InvoicePipelineService
         }
 
         return $sections;
+    }
+
+    /**
+     * Returns sections that should be collapsed (accordion) in the edit form.
+     */
+    public function getCollapsibleSections(string $roleName, string $status): array
+    {
+        return self::COLLAPSIBLE_SECTIONS_BY_ROLE[$roleName][$status] ?? [];
     }
 
     /**

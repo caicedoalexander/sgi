@@ -9,6 +9,7 @@
  * @var string[] $pipelineStatuses
  * @var string[] $pipelineLabels
  * @var string[] $visibleSections
+ * @var string[] $collapsibleSections
  * @var bool $isRejected
  * @var string[] $advanceErrors
  * @var string|null $nextStatus
@@ -80,8 +81,13 @@ foreach ($visibleSections as $s) {
         $readOnlySectionKeys[] = $s;
     }
 }
-$renderOrder = array_merge($editableSectionKeys, $readOnlySectionKeys);
+// Reorder: non-collapsible editable first, then collapsible editable, then read-only
+$collapsible = $collapsibleSections ?? [];
+$nonCollapsibleEditable = array_filter($editableSectionKeys, fn($s) => !in_array($s, $collapsible, true));
+$collapsibleEditable = array_filter($editableSectionKeys, fn($s) => in_array($s, $collapsible, true));
+$renderOrder = array_merge(array_values($nonCollapsibleEditable), array_values($collapsibleEditable), $readOnlySectionKeys);
 $isReadOnlySection = fn(string $s): bool => in_array($s, $readOnlySectionKeys, true);
+$isCollapsibleSection = fn(string $s): bool => in_array($s, $collapsible, true);
 ?>
 
 <!-- Encabezado de página -->
@@ -279,12 +285,32 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         <div class="sgi-form-sections">
 
         <?php
+        $collapsibleLabels = [
+            'general' => ['icon' => 'bi-file-text', 'label' => 'Documento'],
+            'dates' => ['icon' => 'bi-calendar3', 'label' => 'Fechas'],
+            'classification' => ['icon' => 'bi-tags', 'label' => 'Clasificación y Valor'],
+        ];
         foreach ($renderOrder as $sectionName):
             $sectionIsReadOnly = $isReadOnlySection($sectionName);
 
             // Skip read-only sections — the ledger summary already shows reference data
             if ($sectionIsReadOnly) { continue; }
+
+            $sectionCollapsible = $isCollapsibleSection($sectionName);
         ?>
+
+        <?php if ($sectionCollapsible): ?>
+        <details class="sgi-collapsible-section mb-4">
+            <summary class="d-flex align-items-center gap-3 mb-0" style="cursor:pointer;list-style:none;">
+                <span class="text-uppercase fw-semibold flex-shrink-0"
+                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                    <i class="bi <?= $collapsibleLabels[$sectionName]['icon'] ?? 'bi-pencil' ?> me-1"></i><?= $collapsibleLabels[$sectionName]['label'] ?? ucfirst($sectionName) ?>
+                </span>
+                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+                <i class="bi bi-chevron-right sgi-collapse-chevron" style="font-size:.7rem;color:#bbb;transition:transform .2s;"></i>
+            </summary>
+            <div style="padding-top:.75rem;">
+        <?php endif; ?>
 
         <?php if ($sectionName === 'general' && in_array('general', $visibleSections)): ?>
         <!-- ── Sección: Información del Documento ── -->
@@ -838,6 +864,11 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 <?php endif; ?>
             </div>
         </div>
+        <?php endif; ?>
+
+        <?php if ($sectionCollapsible): ?>
+            </div>
+        </details>
         <?php endif; ?>
 
         <?php endforeach; ?>
