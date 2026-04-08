@@ -384,6 +384,28 @@ class InvoicesController extends AppController
             'message' => $this->request->getData('message'),
         ]);
 
+        if ($this->request->is('ajax')) {
+            $this->autoRender = false;
+            $this->response = $this->response->withType('application/json');
+
+            if ($observationsTable->save($observation)) {
+                $body = json_encode([
+                    'success' => true,
+                    'observation' => [
+                        'message' => $observation->message,
+                        'user_name' => $user->full_name,
+                        'created' => $observation->created->format('d/m/Y H:i'),
+                    ],
+                ]);
+            } else {
+                $body = json_encode(['success' => false, 'error' => 'No se pudo agregar la observación.']);
+            }
+
+            $this->response = $this->response->withStringBody($body);
+
+            return $this->response;
+        }
+
         if ($observationsTable->save($observation)) {
             $this->Flash->success('Observación agregada.');
         } else {

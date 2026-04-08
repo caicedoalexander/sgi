@@ -126,7 +126,7 @@ class InvoiceApprovalService
                 'status' => InvoiceConstants::APPROVER_STATUS_PENDING,
                 'token_expires_at >' => new DateTime(),
             ])
-            ->contain(['Invoices' => ['Providers'], 'Users'])
+            ->contain(['Invoices' => ['Providers', 'InvoiceDocuments'], 'Users'])
             ->first();
     }
 

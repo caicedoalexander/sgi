@@ -1044,17 +1044,17 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
 
     <!-- Input -->
     <div style="border-top:1px solid var(--border-color);padding:.75rem .875rem;background:#fff;">
-        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $invoice->id]]) ?>
+        <form id="obs-form" data-url="<?= $this->Url->build(['action' => 'addObservation', $invoice->id]) ?>">
         <div class="d-flex gap-2 align-items-end">
-            <textarea name="message" class="form-control auto-resize" rows="1"
+            <textarea id="obs-message" name="message" class="form-control auto-resize" rows="1"
                       style="font-size:.82rem;background:#f9fafb;border-color:var(--border-color);"
-                      placeholder="Escriba una observación..." required></textarea>
-            <button type="submit" class="btn btn-primary flex-shrink-0"
+                      placeholder="Escriba una observación..."></textarea>
+            <button type="submit" id="obs-send-btn" class="btn btn-primary flex-shrink-0"
                     style="padding:.5rem .75rem;align-self:flex-end;" title="Enviar">
                 <i class="bi bi-send" style="font-size:.85rem;"></i>
             </button>
         </div>
-        <?= $this->Form->end() ?>
+        </form>
     </div>
 </div>
 
@@ -1110,6 +1110,79 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         syncHeight(el);
         el.addEventListener('input', function() { syncHeight(this); });
     });
+
+    // AJAX observations
+    var form = document.getElementById('obs-form');
+    var textarea = document.getElementById('obs-message');
+    var btn = document.getElementById('obs-send-btn');
+    var emptyState = chat ? chat.querySelector('[style*="align-items:center"][style*="justify-content:center"]') : null;
+    var obsCountBadge = document.querySelector('.sgi-folder-count');
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var message = textarea.value.trim();
+            if (!message) return;
+
+            btn.disabled = true;
+
+            fetch(form.dataset.url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
+                },
+                body: 'message=' + encodeURIComponent(message)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    // Remove empty state
+                    if (emptyState) { emptyState.remove(); emptyState = null; }
+
+                    // Build bubble HTML
+                    var html = '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;">'
+                        + '<div style="font-size:.63rem;color:#aaa;font-weight:500;letter-spacing:.01em;padding-right:.3rem">Tú</div>'
+                        + '<div style="max-width:92%;padding:.55rem .8rem;font-size:.81rem;line-height:1.5;word-break:break-word;'
+                        + 'background:var(--primary-color);color:#fff;border:1px solid var(--primary-color);border-radius:10px 10px 2px 10px;">'
+                        + data.observation.message.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
+                        + '</div>'
+                        + '<div style="font-size:.61rem;color:#c0c0c0;padding-right:.3rem">' + data.observation.created + '</div>'
+                        + '</div>';
+
+                    chat.insertAdjacentHTML('beforeend', html);
+                    chat.scrollTop = chat.scrollHeight;
+
+                    // Update count badge
+                    var currentCount = obsCountBadge ? parseInt(obsCountBadge.textContent) || 0 : 0;
+                    if (obsCountBadge) {
+                        obsCountBadge.textContent = currentCount + 1;
+                    } else {
+                        var header = form.closest('.card').querySelector('.card-header');
+                        if (header) {
+                            var badge = document.createElement('span');
+                            badge.className = 'sgi-folder-count ms-auto';
+                            badge.textContent = '1';
+                            header.appendChild(badge);
+                            obsCountBadge = badge;
+                        }
+                    }
+
+                    textarea.value = '';
+                    syncHeight(textarea);
+                } else {
+                    alert(data.error || 'Error al agregar observación.');
+                }
+            })
+            .catch(function() {
+                alert('Error de conexión. Intente nuevamente.');
+            })
+            .finally(function() {
+                btn.disabled = false;
+            });
+        });
+    }
 })();
 </script>
 <?php $this->end() ?>
