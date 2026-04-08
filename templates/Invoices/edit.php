@@ -679,8 +679,15 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Fecha de Causación</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= h($invoice->accrual_date?->format('d/m/Y') ?? '') ?>">
+                    <?php if ($canEdit('accrual_date')): ?>
+                        <input type="text" name="accrual_date" class="form-control flatpickr-date"
+                               value="<?= h($invoice->accrual_date?->format('Y-m-d') ?? '') ?>">
+                    <?php else: ?>
+                        <input type="text" class="form-control" disabled
+                               value="<?= h($invoice->accrual_date?->format('d/m/Y') ?? '') ?>">
+                        <input type="hidden" name="accrual_date"
+                               value="<?= h($invoice->accrual_date?->format('Y-m-d') ?? '') ?>">
+                    <?php endif; ?>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Lista para Pago</label>

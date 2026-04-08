@@ -75,7 +75,7 @@ class InvoicePipelineService
         ],
         RoleConstants::CONTABILIDAD => [
             InvoiceConstants::STATUS_CONTABILIDAD => [
-                'accrued', 'ready_for_payment',
+                'accrued', 'accrual_date', 'ready_for_payment',
             ],
         ],
         RoleConstants::TESORERIA => [
@@ -323,15 +323,6 @@ class InvoicePipelineService
 
         $currentStatus = $invoice->pipeline_status;
         $filteredData = $this->filterEntityData($data, $roleName, $currentStatus);
-
-        // Auto-set accrual_date when marking as accrued, clear it when unchecking
-        if (array_key_exists('accrued', $filteredData)) {
-            if (!empty($filteredData['accrued']) && empty($invoice->accrual_date)) {
-                $filteredData['accrual_date'] = date('Y-m-d');
-            } elseif (empty($filteredData['accrued'])) {
-                $filteredData['accrual_date'] = null;
-            }
-        }
 
         // Auto-set area_approval_date when area_approval changes to Aprobada or Rechazada
         if (array_key_exists('area_approval', $filteredData)) {
