@@ -385,11 +385,8 @@ class InvoicesController extends AppController
         ]);
 
         if ($this->request->is('ajax')) {
-            $this->autoRender = false;
-            $this->response = $this->response->withType('application/json');
-
             if ($observationsTable->save($observation)) {
-                $body = json_encode([
+                return $this->_jsonResponse([
                     'success' => true,
                     'observation' => [
                         'message' => $observation->message,
@@ -397,13 +394,9 @@ class InvoicesController extends AppController
                         'created' => $observation->created->format('d/m/Y H:i'),
                     ],
                 ]);
-            } else {
-                $body = json_encode(['success' => false, 'error' => 'No se pudo agregar la observación.']);
             }
 
-            $this->response = $this->response->withStringBody($body);
-
-            return $this->response;
+            return $this->_jsonResponse(['success' => false, 'error' => 'No se pudo agregar la observación.']);
         }
 
         if ($observationsTable->save($observation)) {
@@ -571,6 +564,9 @@ class InvoicesController extends AppController
 
         $file = $this->request->getUploadedFile('file');
         if (!$file) {
+            if ($this->request->is('ajax')) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'No se recibió ningún archivo válido.']);
+            }
             $this->Flash->error(__('No se recibió ningún archivo válido.'));
 
             return $this->redirect(['action' => 'edit', $invoiceId]);
@@ -584,6 +580,26 @@ class InvoicesController extends AppController
             $identity ? (int)$identity->getIdentifier() : null,
             $this->request->getData('document_type'),
         );
+
+        if ($this->request->is('ajax')) {
+            if (is_string($result)) {
+                return $this->_jsonResponse(['success' => false, 'error' => $result]);
+            }
+
+            return $this->_jsonResponse([
+                'success' => true,
+                'document' => [
+                    'id' => $result->id,
+                    'file_name' => $result->file_name,
+                    'document_type' => $result->document_type,
+                    'mime_type' => $result->mime_type,
+                    'file_path' => $result->file_path,
+                    'file_size' => $result->file_size,
+                    'pipeline_status' => $result->pipeline_status,
+                    'created' => $result->created->format('d/m/Y H:i'),
+                ],
+            ]);
+        }
 
         if (is_string($result)) {
             $this->Flash->error(__($result));
@@ -603,12 +619,25 @@ class InvoicesController extends AppController
         $document = $documentsTable->get($documentId);
 
         if (!$this->documentService->canDeleteDocument($document, $invoice->pipeline_status)) {
+            if ($this->request->is('ajax')) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'No se puede eliminar un soporte de un estado anterior.']);
+            }
             $this->Flash->error(__('No se puede eliminar un soporte de un estado anterior.'));
 
             return $this->redirect(['action' => 'view', $invoiceId]);
         }
 
-        if ($this->documentService->deleteDocument((int)$documentId)) {
+        $deleted = $this->documentService->deleteDocument((int)$documentId);
+
+        if ($this->request->is('ajax')) {
+            if ($deleted) {
+                return $this->_jsonResponse(['success' => true]);
+            }
+
+            return $this->_jsonResponse(['success' => false, 'error' => 'No se pudo eliminar el soporte.']);
+        }
+
+        if ($deleted) {
             $this->Flash->success(__('El soporte ha sido eliminado.'));
         } else {
             $this->Flash->error(__('No se pudo eliminar el soporte.'));

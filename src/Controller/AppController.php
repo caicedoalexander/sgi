@@ -181,4 +181,13 @@ class AppController extends Controller
 
         return $authService->isAllowed((int)$user->role_id, $roleName, $module, $action);
     }
+
+    protected function _jsonResponse(array $data): \Cake\Http\Response
+    {
+        $this->autoRender = false;
+
+        return $this->response
+            ->withType('application/json')
+            ->withStringBody(json_encode($data));
+    }
 }

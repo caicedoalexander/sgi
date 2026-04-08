@@ -924,73 +924,70 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         <?php endif; ?>
     </div>
 
-    <?php if (empty($documentsByStatus)): ?>
-        <div style="padding:2rem 1rem;text-align:center;color:#c8c8c8;">
-            <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
-            <span style="font-size:.8rem;">Sin soportes adjuntos</span>
+    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
+        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+        <span style="font-size:.8rem;">Sin soportes adjuntos</span>
+    </div>
+    <div id="docs-list" style="max-height:420px;overflow-y:auto;">
+        <?php
+        $multipleStatuses = count($documentsByStatus) > 1;
+        foreach ($documentsByStatus as $status => $docs):
+        ?>
+        <?php if ($multipleStatuses): ?>
+        <div style="padding:.3rem .875rem;background:#f8f9fa;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
+            <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
+            <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>
-    <?php else: ?>
-        <div style="max-height:420px;overflow-y:auto;">
-            <?php
-            $multipleStatuses = count($documentsByStatus) > 1;
-            foreach ($documentsByStatus as $status => $docs):
-            ?>
-            <?php if ($multipleStatuses): ?>
-            <div style="padding:.3rem .875rem;background:#f8f9fa;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-                <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
-                <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
+        <?php endif; ?>
+        <?php foreach ($docs as $doc): ?>
+        <div class="doc-row" data-doc-id="<?= $doc->id ?>" style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
+            <!-- Icono tipo archivo -->
+            <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+                <i class="bi <?= $docIcon($doc->mime_type) ?>"
+                   style="color:<?= $docIconColor($doc->mime_type) ?>;font-size:1rem;"></i>
             </div>
-            <?php endif; ?>
-            <?php foreach ($docs as $doc): ?>
-            <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
-                <!-- Icono tipo archivo -->
-                <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-                    <i class="bi <?= $docIcon($doc->mime_type) ?>"
-                       style="color:<?= $docIconColor($doc->mime_type) ?>;font-size:1rem;"></i>
+            <!-- Info -->
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
+                     title="<?= h($doc->document_type ?: $doc->file_name) ?>">
+                    <?= h($doc->document_type ?: $doc->file_name) ?>
                 </div>
-                <!-- Info -->
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
-                         title="<?= h($doc->document_type ?: $doc->file_name) ?>">
-                        <?= h($doc->document_type ?: $doc->file_name) ?>
-                    </div>
-                    <?php if ($doc->document_type): ?>
-                    <div style="font-size:.7rem;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem;"
-                         title="<?= h($doc->file_name) ?>"><?= h($doc->file_name) ?></div>
+                <?php if ($doc->document_type): ?>
+                <div style="font-size:.7rem;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem;"
+                     title="<?= h($doc->file_name) ?>"><?= h($doc->file_name) ?></div>
+                <?php endif; ?>
+                <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
+                    <?php if (!$multipleStatuses): ?>
+                    <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.58rem;"><?= $statusLabels[$status] ?? $status ?></span>
                     <?php endif; ?>
-                    <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
-                        <?php if (!$multipleStatuses): ?>
-                        <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.58rem;"><?= $statusLabels[$status] ?? $status ?></span>
-                        <?php endif; ?>
-                        <span style="font-size:.65rem;color:#bbb;">
-                            <i class="bi bi-clock" style="font-size:.6rem;"></i>
-                            <?= $doc->created?->format('d/m/Y H:i') ?>
-                        </span>
-                        <?php if ($doc->file_size): ?>
-                        <span style="font-size:.63rem;color:#ccc;"><?= $this->Number->toReadableSize($doc->file_size) ?></span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <!-- Acciones -->
-                <div style="display:flex;gap:.25rem;flex-shrink:0;align-self:center;">
-                    <?= $this->Html->link(
-                        '<i class="bi bi-box-arrow-up-right"></i>',
-                        '/' . $doc->file_path,
-                        ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
-                    ) ?>
-                    <?php if ($canDeleteDocuments && $doc->pipeline_status === $currentStatus): ?>
-                    <?= $this->Form->postLink(
-                        '<i class="bi bi-trash"></i>',
-                        ['action' => 'deleteDocument', $invoice->id, $doc->id],
-                        ['confirm' => '¿Eliminar este soporte?', 'class' => 'btn btn-sm btn-outline-danger', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'title' => 'Eliminar']
-                    ) ?>
+                    <span style="font-size:.65rem;color:#bbb;">
+                        <i class="bi bi-clock" style="font-size:.6rem;"></i>
+                        <?= $doc->created?->format('d/m/Y H:i') ?>
+                    </span>
+                    <?php if ($doc->file_size): ?>
+                    <span style="font-size:.63rem;color:#ccc;"><?= $this->Number->toReadableSize($doc->file_size) ?></span>
                     <?php endif; ?>
                 </div>
             </div>
-            <?php endforeach; ?>
-            <?php endforeach; ?>
+            <!-- Acciones -->
+            <div style="display:flex;gap:.25rem;flex-shrink:0;align-self:center;">
+                <?= $this->Html->link(
+                    '<i class="bi bi-box-arrow-up-right"></i>',
+                    '/' . $doc->file_path,
+                    ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
+                ) ?>
+                <?php if ($canDeleteDocuments && $doc->pipeline_status === $currentStatus): ?>
+                <button type="button" class="btn btn-sm btn-outline-danger doc-delete-btn"
+                        data-url="<?= $this->Url->build(['action' => 'deleteDocument', $invoice->id, $doc->id]) ?>"
+                        style="padding:.25rem .45rem;font-size:.72rem;line-height:1;" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <?php endif; ?>
+            </div>
         </div>
-    <?php endif; ?>
+        <?php endforeach; ?>
+        <?php endforeach; ?>
+    </div>
 </div>
 <?php endif; ?>
 
@@ -1067,25 +1064,27 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
 <div class="modal fade" id="uploadInvoiceDocModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <?= $this->Form->create(null, ['url' => ['action' => 'uploadDocument', $invoice->id], 'type' => 'file']) ?>
+            <form id="upload-doc-form" data-url="<?= $this->Url->build(['action' => 'uploadDocument', $invoice->id]) ?>" enctype="multipart/form-data">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <?= $this->Form->control('document_type', ['class' => 'form-control', 'label' => ['text' => 'Tipo de Documento (opcional)', 'class' => 'form-label'], 'placeholder' => 'Ej. Factura, Cotización, Soporte...']) ?>
+                    <label class="form-label">Tipo de Documento (opcional)</label>
+                    <input type="text" name="document_type" class="form-control" placeholder="Ej. Factura, Cotización, Soporte...">
                 </div>
                 <div class="mb-3">
-                    <?= $this->Form->control('file', ['type' => 'file', 'class' => 'form-control', 'label' => ['text' => 'Archivo', 'class' => 'form-label'], 'required' => true, 'accept' => '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx']) ?>
+                    <label class="form-label">Archivo</label>
+                    <input type="file" name="file" class="form-control" required accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
                     <div class="form-text">Máximo 10 MB — PDF, imágenes, Word o Excel.</div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                <button type="submit" id="upload-doc-btn" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
             </div>
-            <?= $this->Form->end() ?>
+            </form>
         </div>
     </div>
 </div>
@@ -1183,6 +1182,144 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             });
         });
     }
+
+    // ── AJAX: Upload document ──
+    var uploadForm = document.getElementById('upload-doc-form');
+    var uploadBtn  = document.getElementById('upload-doc-btn');
+    var docsList   = document.getElementById('docs-list');
+    var docsEmpty  = document.getElementById('docs-empty-state');
+    var docsCount  = document.querySelector('.sgi-folder-count');
+    var csrfToken  = <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>;
+    var canDelete  = <?= json_encode(!empty($canDeleteDocuments)) ?>;
+    var currentStatus = <?= json_encode($currentStatus) ?>;
+    var invoiceId  = <?= json_encode($invoice->id) ?>;
+
+    var statusLabels = <?= json_encode($statusLabels) ?>;
+    var badgeColors  = <?= json_encode($badgeColors) ?>;
+
+    function docIconClass(mime) {
+        mime = mime || '';
+        if (mime.indexOf('pdf') !== -1) return 'bi-file-earmark-pdf';
+        if (mime.indexOf('image') !== -1) return 'bi-file-earmark-image';
+        if (mime.indexOf('wordprocessingml') !== -1 || mime.indexOf('msword') !== -1) return 'bi-file-earmark-word';
+        if (mime.indexOf('spreadsheet') !== -1 || mime.indexOf('excel') !== -1) return 'bi-file-earmark-excel';
+        return 'bi-file-earmark';
+    }
+    function docIconColorVal(mime) {
+        mime = mime || '';
+        if (mime.indexOf('pdf') !== -1) return '#dc3545';
+        if (mime.indexOf('image') !== -1) return '#0dcaf0';
+        if (mime.indexOf('wordprocessingml') !== -1 || mime.indexOf('msword') !== -1) return '#0d6efd';
+        if (mime.indexOf('spreadsheet') !== -1 || mime.indexOf('excel') !== -1) return 'var(--primary-color)';
+        return '#aaa';
+    }
+    function formatFileSize(bytes) {
+        if (!bytes) return '';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+    function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function updateDocsCounter(delta) {
+        var el = document.querySelector('.card-header .sgi-folder-count');
+        if (!el) return;
+        var m = el.textContent.match(/(\d+)/);
+        var n = m ? parseInt(m[1]) + delta : delta;
+        if (n < 0) n = 0;
+        el.textContent = n + ' doc' + (n !== 1 ? 's' : '');
+    }
+
+    function buildDocRow(doc) {
+        var label = doc.document_type || doc.file_name;
+        var badge = badgeColors[doc.pipeline_status] || 'bg-secondary';
+        var statusLabel = statusLabels[doc.pipeline_status] || doc.pipeline_status;
+        var deleteBtn = canDelete && doc.pipeline_status === currentStatus
+            ? '<button type="button" class="btn btn-sm btn-outline-danger doc-delete-btn" data-url="/invoices/delete-document/' + invoiceId + '/' + doc.id + '" style="padding:.25rem .45rem;font-size:.72rem;line-height:1;" title="Eliminar"><i class="bi bi-trash"></i></button>'
+            : '';
+
+        return '<div class="doc-row" data-doc-id="' + doc.id + '" style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">'
+            + '<div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">'
+            + '<i class="bi ' + docIconClass(doc.mime_type) + '" style="color:' + docIconColorVal(doc.mime_type) + ';font-size:1rem;"></i></div>'
+            + '<div style="flex:1;min-width:0;">'
+            + '<div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;" title="' + esc(label) + '">' + esc(label) + '</div>'
+            + (doc.document_type ? '<div style="font-size:.7rem;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem;" title="' + esc(doc.file_name) + '">' + esc(doc.file_name) + '</div>' : '')
+            + '<div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">'
+            + '<span class="badge ' + badge + '" style="font-size:.58rem;">' + esc(statusLabel) + '</span>'
+            + '<span style="font-size:.65rem;color:#bbb;"><i class="bi bi-clock" style="font-size:.6rem;"></i> ' + esc(doc.created) + '</span>'
+            + (doc.file_size ? '<span style="font-size:.63rem;color:#ccc;">' + formatFileSize(doc.file_size) + '</span>' : '')
+            + '</div></div>'
+            + '<div style="display:flex;gap:.25rem;flex-shrink:0;align-self:center;">'
+            + '<a href="/' + doc.file_path + '" class="btn btn-sm btn-outline-secondary" style="padding:.25rem .45rem;font-size:.72rem;line-height:1;" target="_blank" title="Abrir"><i class="bi bi-box-arrow-up-right"></i></a>'
+            + deleteBtn + '</div></div>';
+    }
+
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var fileInput = uploadForm.querySelector('input[type="file"]');
+            if (!fileInput.files.length) return;
+
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Subiendo...';
+
+            var fd = new FormData(uploadForm);
+            fetch(uploadForm.dataset.url, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrfToken },
+                body: fd
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    if (docsEmpty) docsEmpty.style.display = 'none';
+                    docsList.insertAdjacentHTML('beforeend', buildDocRow(data.document));
+                    updateDocsCounter(1);
+                    uploadForm.reset();
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('uploadInvoiceDocModal'));
+                    if (modal) modal.hide();
+                } else {
+                    alert(data.error || 'Error al subir el archivo.');
+                }
+            })
+            .catch(function() { alert('Error de conexión. Intente nuevamente.'); })
+            .finally(function() {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="bi bi-upload me-1"></i>Subir';
+            });
+        });
+    }
+
+    // ── AJAX: Delete document ──
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.doc-delete-btn');
+        if (!btn) return;
+        if (!confirm('¿Eliminar este soporte?')) return;
+
+        btn.disabled = true;
+        fetch(btn.dataset.url, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrfToken }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                var row = btn.closest('.doc-row');
+                if (row) row.remove();
+                updateDocsCounter(-1);
+                if (!docsList.querySelector('.doc-row') && docsEmpty) {
+                    docsEmpty.style.display = '';
+                }
+            } else {
+                alert(data.error || 'Error al eliminar.');
+                btn.disabled = false;
+            }
+        })
+        .catch(function() {
+            alert('Error de conexión. Intente nuevamente.');
+            btn.disabled = false;
+        });
+    });
 })();
 </script>
 <?php $this->end() ?>
