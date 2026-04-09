@@ -33,10 +33,7 @@ class InvoiceHistoryService
         'accrual_date'        => 'Fecha de Causación',
         'ready_for_payment'   => 'Lista para Pago',
         'payment_status'              => 'Estado de Pago',
-        'payment_date'                => 'Fecha de Pago',
-        'payment_authorized'          => 'Autorizada para Pago',
-        'payment_authorized_by'       => 'Autorizada por',
-        'payment_authorized_date'     => 'Fecha Autorización Pago',
+        'full_payment_date'           => 'Fecha Pago Total',
         'pipeline_status'             => 'Estado del Pipeline',
     ];
 
@@ -48,7 +45,7 @@ class InvoiceHistoryService
             'detail', 'amount', 'expense_type_id', 'cost_center_id',
             'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
             'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
-            'payment_status', 'payment_date', 'pipeline_status',
+            'payment_status', 'full_payment_date', 'pipeline_status',
         ];
 
         $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
