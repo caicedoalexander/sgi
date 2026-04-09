@@ -337,6 +337,63 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'Invoices', 'action' => 'deletePayment'],
             ['pass' => ['invoiceId', 'paymentId']],
         );
+        $builder->connect(
+            '/invoices/authorize-payment/{invoiceId}/{paymentId}',
+            ['controller' => 'Invoices', 'action' => 'authorizePayment'],
+            ['pass' => ['invoiceId', 'paymentId']],
+        );
+
+        // Payment Schedulings (Programación)
+        $builder->connect(
+            '/payment-schedulings/advance/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'advance'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/payment-schedulings/reject/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'reject'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/payment-schedulings/import-excel/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'importExcel'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/payment-schedulings/preview-import/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'previewImport'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/payment-schedulings/confirm-import/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'confirmImport'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/payment-schedulings/add-item/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'addItem'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/payment-schedulings/remove-item/{id}/{itemId}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'removeItem'],
+            ['id' => '\d+', 'itemId' => '\d+', 'pass' => ['id', 'itemId']],
+        );
+        $builder->connect(
+            '/payment-schedulings/upload-attachment/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'uploadAttachment'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/payment-schedulings/delete-attachment/{id}/{attachmentId}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'deleteAttachment'],
+            ['id' => '\d+', 'attachmentId' => '\d+', 'pass' => ['id', 'attachmentId']],
+        );
+        $builder->connect(
+            '/payment-schedulings/add-observation/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'addObservation'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
 
         $builder->fallbacks();
     });

@@ -154,9 +154,9 @@ class InvoicesController extends AppController
             'InvoicePayments' => [
                 'BankingEntities',
                 'CreatedByUsers',
+                'AuthorizedByUsers',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
-            'PaymentAuthorizedByUsers',
         ]);
 
         $roleName = $this->_getRoleName();
@@ -217,9 +217,9 @@ class InvoicesController extends AppController
             'InvoicePayments' => [
                 'BankingEntities',
                 'CreatedByUsers',
+                'AuthorizedByUsers',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
-            'PaymentAuthorizedByUsers',
         ]);
 
         if ($invoice->isInPettyCash()) {
@@ -441,8 +441,7 @@ class InvoicesController extends AppController
                     'Fecha Causación'     => $invoice->accrual_date?->format('Y-m-d') ?? '',
                     'Lista para Pago'     => $invoice->ready_for_payment ?? '',
                     'Estado Pago'         => $invoice->payment_status ?? '',
-                    'Fecha Pago'          => $invoice->payment_date?->format('Y-m-d') ?? '',
-                    'Autorizada Pago'     => $invoice->payment_authorized ? 'Sí' : 'No',
+                    'Fecha Pago Total'    => $invoice->full_payment_date?->format('Y-m-d') ?? '',
                     'Estado Pipeline'     => $pipelineLabels[$invoice->pipeline_status] ?? $invoice->pipeline_status ?? '',
                 ]);
             });
@@ -674,9 +673,45 @@ class InvoicesController extends AppController
         ]);
 
         if ($paymentsTable->save($payment)) {
-            $this->Flash->success('Pago registrado correctamente.');
+            // Avanzar factura a autorizacion_pago
+            $invoice->pipeline_status = InvoiceConstants::STATUS_AUTORIZACION_PAGO;
+            $this->Invoices->save($invoice);
+            $this->Flash->success('Pago registrado. La factura pasó a Autorización de Pago.');
         } else {
             $this->Flash->error('No se pudo registrar el pago. Verifique los datos.');
+        }
+
+        return $this->redirect(['action' => 'edit', $invoiceId]);
+    }
+
+    public function authorizePayment($invoiceId = null, $paymentId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($invoiceId);
+        $user = $this->_getCurrentUser();
+        $roleName = $this->_getRoleName();
+
+        if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
+            $this->Flash->error('Solo el Contador puede autorizar pagos.');
+
+            return $this->redirect(['action' => 'edit', $invoiceId]);
+        }
+
+        $paymentService = new \App\Service\InvoicePaymentService();
+        $result = $paymentService->authorizePayment((int)$paymentId, (int)$user->id);
+
+        if ($result['success']) {
+            if ($result['paymentStatus'] === InvoiceConstants::PAYMENT_FULL) {
+                $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+                $this->Invoices->save($invoice);
+                $this->Flash->success('Pago autorizado. Factura marcada como Pagada.');
+            } else {
+                $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
+                $this->Invoices->save($invoice);
+                $this->Flash->success('Pago autorizado. Factura devuelta a Tesorería (Pago Parcial).');
+            }
+        } else {
+            $this->Flash->error('No se pudo autorizar el pago.');
         }
 
         return $this->redirect(['action' => 'edit', $invoiceId]);

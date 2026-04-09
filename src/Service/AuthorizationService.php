@@ -37,6 +37,7 @@ class AuthorizationService
         'novelty_liquidation_docs' => 'Documentos de Liquidación',
         'leave_document_templates' => 'Plantillas Documento',
         'banking_entities' => 'Entidades Bancarias',
+        'payment_schedulings' => 'Programación',
     ];
 
     private array $cache = [];
