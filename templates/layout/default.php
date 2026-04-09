@@ -162,6 +162,15 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                                 ) ?>
                             </li>
                             <?php endif; ?>
+                            <?php if ($canView('payment_schedulings')): ?>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-calendar-check me-2"></i>Programación',
+                                    ['controller' => 'PaymentSchedulings', 'action' => 'index'],
+                                    ['class' => $navLink('PaymentSchedulings') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
+                            <?php endif; ?>
                         </ul>
                     </div>
                 </li>
