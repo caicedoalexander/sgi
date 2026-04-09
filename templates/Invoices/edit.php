@@ -72,10 +72,12 @@ $sectionFieldMap = [
     'treasury'              => [],
     'payment_authorization' => [],
 ];
+// Sections with their own internal permission logic — never skip as read-only
+$functionalSections = ['treasury', 'payment_authorization'];
 $editableSectionKeys = [];
 $readOnlySectionKeys = [];
 foreach ($visibleSections as $s) {
-    if (!empty(array_intersect($sectionFieldMap[$s] ?? [], $editableFields))) {
+    if (in_array($s, $functionalSections, true) || !empty(array_intersect($sectionFieldMap[$s] ?? [], $editableFields))) {
         $editableSectionKeys[] = $s;
     } else {
         $readOnlySectionKeys[] = $s;
