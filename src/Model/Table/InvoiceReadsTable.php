@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use Cake\I18n\DateTime;
 use Cake\ORM\Table;
 
 class InvoiceReadsTable extends Table
@@ -28,13 +29,13 @@ class InvoiceReadsTable extends Table
             ->first();
 
         if ($existing) {
-            $existing->last_visited_at = new \Cake\I18n\DateTime();
+            $existing->last_visited_at = new DateTime();
             $this->save($existing);
         } else {
             $entity = $this->newEntity([
                 'invoice_id' => $invoiceId,
                 'user_id' => $userId,
-                'last_visited_at' => new \Cake\I18n\DateTime(),
+                'last_visited_at' => new DateTime(),
             ]);
             $this->save($entity);
         }

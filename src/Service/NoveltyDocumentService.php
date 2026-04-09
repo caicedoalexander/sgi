@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\NoveltyConstants;
 use Cake\ORM\TableRegistry;
 use Laminas\Diactoros\UploadedFile;
 
@@ -174,7 +175,7 @@ class NoveltyDocumentService
         $documents = $documentsTable->find()
             ->where([
                 'liquidation_doc_id' => $liquidationDocId,
-                'document_type !=' => \App\Constants\NoveltyConstants::DOC_TYPE_LIQUIDATION,
+                'document_type !=' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
             ])
             ->contain(['UploadedByUsers'])
             ->order(['NoveltyDocuments.created' => 'DESC'])
@@ -201,7 +202,7 @@ class NoveltyDocumentService
         return $documentsTable->find()
             ->where([
                 'liquidation_doc_id' => $liquidationDocId,
-                'document_type' => \App\Constants\NoveltyConstants::DOC_TYPE_LIQUIDATION,
+                'document_type' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
             ])
             ->contain(['UploadedByUsers'])
             ->first();
@@ -227,7 +228,7 @@ class NoveltyDocumentService
 
         return $this->upload($file, 'd. liquidacion', $uploadedBy, 'novelty_liquidations/' . $liquidationDocId, [
             'liquidation_doc_id' => $liquidationDocId,
-            'document_type' => \App\Constants\NoveltyConstants::DOC_TYPE_LIQUIDATION,
+            'document_type' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
         ]);
     }
 

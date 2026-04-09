@@ -6,7 +6,6 @@ namespace App\Controller;
 use App\Constants\PaymentSchedulingConstants;
 use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PaymentSchedulingService;
-use Laminas\Diactoros\UploadedFile;
 
 class PaymentSchedulingsController extends AppController
 {
@@ -140,8 +139,16 @@ class PaymentSchedulingsController extends AppController
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->all();
 
         $this->set(compact(
-            'record', 'roleName', 'currentStatus', 'canAdvance', 'canReject',
-            'total', 'advanceErrors', 'pipelineLabels', 'nextStatus', 'bankingEntities',
+            'record',
+            'roleName',
+            'currentStatus',
+            'canAdvance',
+            'canReject',
+            'total',
+            'advanceErrors',
+            'pipelineLabels',
+            'nextStatus',
+            'bankingEntities',
         ));
     }
 
@@ -234,7 +241,7 @@ class PaymentSchedulingsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        /** @var UploadedFile $file */
+        /** @var \Laminas\Diactoros\UploadedFile $file */
         $file = $this->request->getUploadedFile('excel_file');
         if (!$file || $file->getError() !== UPLOAD_ERR_OK) {
             $this->Flash->error('No se recibió un archivo válido.');
@@ -343,7 +350,7 @@ class PaymentSchedulingsController extends AppController
     public function uploadAttachment($id = null)
     {
         $this->request->allowMethod(['post']);
-        $record = $this->PaymentSchedulings->get($id);
+        $this->PaymentSchedulings->get($id);
 
         $file = $this->request->getUploadedFile('file');
         if (!$file || $file->getError() !== UPLOAD_ERR_OK) {

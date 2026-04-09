@@ -8,7 +8,6 @@ use App\Constants\RoleConstants;
 use App\Model\Entity\Invoice;
 use Cake\Log\Log;
 use Cake\ORM\TableRegistry;
-use Exception;
 
 class InvoicePipelineService
 {

@@ -5,8 +5,10 @@ namespace App\Service;
 
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
+use App\Model\Entity\InvoiceApproval;
 use Cake\I18n\DateTime;
 use Cake\ORM\TableRegistry;
+use Exception;
 
 class InvoiceApprovalService
 {
@@ -14,7 +16,7 @@ class InvoiceApprovalService
     private $notificationService;
 
     public function __construct(
-        ?NotificationService $notificationService = null
+        ?NotificationService $notificationService = null,
     ) {
         $this->invoiceApprovalsTable = TableRegistry::getTableLocator()->get('InvoiceApprovals');
         $this->notificationService = $notificationService ?? new NotificationService();
@@ -23,7 +25,7 @@ class InvoiceApprovalService
     /**
      * Assign approvers to an invoice, generate tokens, and send notifications.
      *
-     * @param Invoice $invoice The invoice entity
+     * @param \App\Model\Entity\Invoice $invoice The invoice entity
      * @param array $approverUserIds Array of user IDs to assign as approvers
      * @param string $baseUrl Base URL for approval links
      * @param int $createdByUserId The user who assigned the approvers
@@ -62,12 +64,13 @@ class InvoiceApprovalService
             $approvalUrl = $baseUrl . '/approve/' . $token;
             try {
                 $this->notificationService->sendApprovalLinkNotification($invoice, $approvalUrl, (int)$userId);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Log but don't block — approval record was created
             }
         }
 
         $success = empty($errors);
+
         return compact('success', 'errors', 'approvals');
     }
 
@@ -118,7 +121,7 @@ class InvoiceApprovalService
     /**
      * Validate and consume a token. Returns the approval record or null.
      */
-    public function validateToken(string $token): ?\App\Model\Entity\InvoiceApproval
+    public function validateToken(string $token): ?InvoiceApproval
     {
         return $this->invoiceApprovalsTable->find()
             ->where([
@@ -140,14 +143,14 @@ class InvoiceApprovalService
         string $action,
         ?string $observations,
         ?string $ipAddress,
-        ?string $userAgent
+        ?string $userAgent,
     ): array {
         $approval = $this->validateToken($token);
         if (!$approval) {
             return ['success' => false, 'allApproved' => false, 'rejected' => false, 'errors' => ['Token inválido o expirado']];
         }
 
-        $newStatus = ($action === 'approve')
+        $newStatus = $action === 'approve'
             ? InvoiceConstants::APPROVER_STATUS_APPROVED
             : InvoiceConstants::APPROVER_STATUS_REJECTED;
 
@@ -264,7 +267,7 @@ class InvoiceApprovalService
 
         $this->invoiceApprovalsTable->updateAll(
             ['token' => null, 'token_expires_at' => null],
-            $conditions
+            $conditions,
         );
     }
 }

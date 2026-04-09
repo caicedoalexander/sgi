@@ -15,6 +15,7 @@ use App\Service\NoveltySignatureService;
 use Cake\Http\Response;
 use Cake\I18n\Date;
 use Cake\ORM\TableRegistry;
+use Cake\Routing\Router;
 
 class EmployeeNoveltiesController extends AppController
 {
@@ -262,7 +263,7 @@ class EmployeeNoveltiesController extends AppController
                 'start' => $eventStart,
                 'end' => $eventEnd,
                 'color' => $color,
-                'url' => \Cake\Routing\Router::url(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]),
+                'url' => Router::url(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]),
             ];
         }
 
@@ -350,7 +351,7 @@ class EmployeeNoveltiesController extends AppController
                 'start' => $eventStart,
                 'end' => $eventEnd,
                 'color' => $color,
-                'url' => \Cake\Routing\Router::url(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]),
+                'url' => Router::url(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]),
                 'extendedProps' => [
                     'status' => $statusLabels[$novelty->pipeline_status] ?? $novelty->pipeline_status,
                 ],

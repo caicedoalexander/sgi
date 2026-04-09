@@ -246,6 +246,7 @@ class InvoicesTable extends Table
             'errorField' => 'approver_id',
             'allowNullableNulls' => true,
         ]);
+
         return $rules;
     }
 }

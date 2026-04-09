@@ -7,6 +7,7 @@ use App\Service\AuthorizationService;
 use App\Service\SidebarCounterService;
 use Cake\Controller\Controller;
 use Cake\Event\EventInterface;
+use Cake\Http\Response;
 
 class AppController extends Controller
 {
@@ -183,7 +184,7 @@ class AppController extends Controller
         return $authService->isAllowed((int)$user->role_id, $roleName, $module, $action);
     }
 
-    protected function _jsonResponse(array $data): \Cake\Http\Response
+    protected function _jsonResponse(array $data): Response
     {
         $this->autoRender = false;
 

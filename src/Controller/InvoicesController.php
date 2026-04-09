@@ -7,10 +7,11 @@ use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Service\ExcelService;
+use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
 use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
-use App\Service\InvoiceApprovalService;
+use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
 use ArrayObject;
 use Cake\ORM\Query\SelectQuery;
@@ -654,10 +655,12 @@ class InvoicesController extends AppController
         $currentStatus = $invoice->pipeline_status;
 
         // Only Tesorería (or Admin) can add payments in tesoreria state
-        if ($roleName !== RoleConstants::ADMIN && (
+        if (
+            $roleName !== RoleConstants::ADMIN && (
             $roleName !== RoleConstants::TESORERIA ||
             $currentStatus !== InvoiceConstants::STATUS_TESORERIA
-        )) {
+            )
+        ) {
             $this->Flash->error('No tiene permisos para registrar pagos en este estado.');
 
             return $this->redirect(['action' => 'edit', $invoiceId]);
@@ -697,7 +700,7 @@ class InvoicesController extends AppController
             return $this->redirect(['action' => 'edit', $invoiceId]);
         }
 
-        $paymentService = new \App\Service\InvoicePaymentService();
+        $paymentService = new InvoicePaymentService();
         $result = $paymentService->authorizePayment((int)$paymentId, (int)$user->id);
 
         if ($result['success']) {
@@ -725,10 +728,12 @@ class InvoicesController extends AppController
         $roleName = $this->_getRoleName();
         $currentStatus = $invoice->pipeline_status;
 
-        if ($roleName !== RoleConstants::ADMIN && (
+        if (
+            $roleName !== RoleConstants::ADMIN && (
             $roleName !== RoleConstants::TESORERIA ||
             $currentStatus !== InvoiceConstants::STATUS_TESORERIA
-        )) {
+            )
+        ) {
             $this->Flash->error('No tiene permisos para eliminar pagos en este estado.');
 
             return $this->redirect(['action' => 'edit', $invoiceId]);

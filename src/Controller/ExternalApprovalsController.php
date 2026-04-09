@@ -146,7 +146,7 @@ class ExternalApprovalsController extends AppController
                 $this->_saveExternalObservation(
                     $approval->invoice_id,
                     $currentUser->id,
-                    "[Aprobación externa - {$actionLabel}] {$observations}"
+                    "[Aprobación externa - {$actionLabel}] {$observations}",
                 );
             }
 
@@ -213,7 +213,7 @@ class ExternalApprovalsController extends AppController
             $this->_saveExternalObservation(
                 $tokenRecord->entity_id,
                 $currentUser->id,
-                "[Aprobación externa - {$actionLabel}] {$observations}"
+                "[Aprobación externa - {$actionLabel}] {$observations}",
             );
         }
 
