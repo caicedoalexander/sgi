@@ -889,7 +889,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         </div><!-- /sgi-form-sections -->
 
         <!-- Botones de acción (sticky) -->
-        <?php if (!empty($editableFields) || $canAdvance): ?>
+        <?php if (!empty($editableFields)): ?>
         <div class="sgi-sticky-actions">
             <button type="submit" class="<?= $btnClass ?>">
                 <?= $btnLabel ?>
@@ -900,7 +900,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 ['class' => 'btn btn-outline-secondary']
             ) ?>
         </div>
-        <?php else: ?>
+        <?php elseif (empty(array_intersect($functionalSections, $visibleSections))): ?>
         <div class="alert alert-info mb-0">
             <i class="bi bi-info-circle me-1"></i>
             No tiene permisos de edición para esta factura en el estado actual.
