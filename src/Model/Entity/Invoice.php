@@ -34,12 +34,9 @@ class Invoice extends Entity
         'accrual_date' => true,
         'ready_for_payment' => true,
         'payment_status' => true,
-        'payment_date' => true,
+        'full_payment_date' => true,
         'pipeline_status' => true,
         'registered_by' => true,
-        'payment_authorized' => true,
-        'payment_authorized_by' => true,
-        'payment_authorized_date' => false,
         'petty_cash_record_id' => true,
         'legalization_record_id' => true,
     ];

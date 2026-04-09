@@ -12,6 +12,10 @@ class InvoicePayment extends Entity
         'banking_entity_id' => true,
         'amount' => true,
         'payment_date' => true,
+        'payment_scheduling_id' => true,
+        'authorized' => true,
+        'authorized_by' => true,
+        'authorized_date' => true,
         'created_by' => true,
     ];
 }

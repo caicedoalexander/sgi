@@ -76,15 +76,13 @@ class InvoicesTable extends Table
             'foreignKey' => 'employee_id',
             'joinType' => 'LEFT',
         ]);
-        $this->belongsTo('PaymentAuthorizedByUsers', [
-            'className' => 'Users',
-            'foreignKey' => 'payment_authorized_by',
-            'joinType' => 'LEFT',
-        ]);
         $this->hasMany('InvoicePayments', [
             'foreignKey' => 'invoice_id',
             'dependent' => true,
             'cascadeCallbacks' => true,
+        ]);
+        $this->hasMany('PaymentSchedulingItems', [
+            'foreignKey' => 'invoice_id',
         ]);
     }
 
@@ -209,23 +207,12 @@ class InvoicesTable extends Table
             ->allowEmptyDate('accrual_date');
 
         $validator
-            ->date('payment_date')
-            ->allowEmptyDate('payment_date');
+            ->date('full_payment_date')
+            ->allowEmptyDate('full_payment_date');
 
         $validator
             ->integer('confirmed_by')
             ->allowEmptyString('confirmed_by');
-
-        $validator
-            ->boolean('payment_authorized');
-
-        $validator
-            ->integer('payment_authorized_by')
-            ->allowEmptyString('payment_authorized_by');
-
-        $validator
-            ->date('payment_authorized_date')
-            ->allowEmptyDate('payment_authorized_date');
 
         return $validator;
     }
@@ -259,11 +246,6 @@ class InvoicesTable extends Table
             'errorField' => 'approver_id',
             'allowNullableNulls' => true,
         ]);
-        $rules->add($rules->existsIn('payment_authorized_by', 'PaymentAuthorizedByUsers'), [
-            'errorField' => 'payment_authorized_by',
-            'allowNullableNulls' => true,
-        ]);
-
         return $rules;
     }
 }
