@@ -58,8 +58,7 @@ class InvoicePipelineService
         'detail', 'amount', 'expense_type_id', 'cost_center_id',
         'confirmed_by', 'approver_id', 'area_approval',
         'dian_validation', 'accrued', 'ready_for_payment',
-        'payment_status', 'payment_date', 'pipeline_status',
-        'payment_authorized',
+        'payment_status', 'full_payment_date', 'pipeline_status',
     ];
 
     // Fields editable by role in each status
@@ -79,15 +78,11 @@ class InvoicePipelineService
             ],
         ],
         RoleConstants::TESORERIA => [
-            InvoiceConstants::STATUS_TESORERIA => [
-                'payment_status', 'payment_date',
-            ],
+            InvoiceConstants::STATUS_TESORERIA => [],
             InvoiceConstants::STATUS_AUTORIZACION_PAGO => [],
         ],
         RoleConstants::CONTADOR => [
-            InvoiceConstants::STATUS_AUTORIZACION_PAGO => [
-                'payment_authorized',
-            ],
+            InvoiceConstants::STATUS_AUTORIZACION_PAGO => [],
         ],
     ];
 
@@ -139,21 +134,16 @@ class InvoicePipelineService
         ],
         InvoiceConstants::STATUS_TESORERIA => [
             [
-                'field' => 'payment_status',
-                'not_empty' => true,
-                'label' => 'Estado de Pago es requerido (Pago total o Pago Parcial)',
-            ],
-            [
-                'field' => 'payment_date',
-                'not_empty' => true,
-                'label' => 'Fecha de Pago es requerida',
+                'field' => '_has_pending_payment',
+                'custom' => true,
+                'label' => 'Debe registrar al menos un pago para avanzar a autorización',
             ],
         ],
         InvoiceConstants::STATUS_AUTORIZACION_PAGO => [
             [
-                'field' => 'payment_authorized',
-                'value' => true,
-                'label' => 'El Contador debe autorizar el pago antes de marcar como Pagada',
+                'field' => '_payment_authorized',
+                'custom' => true,
+                'label' => 'El pago pendiente debe ser autorizado por el Contador',
             ],
         ],
     ];
@@ -242,6 +232,20 @@ class InvoicePipelineService
 
         $errors = [];
         foreach (self::TRANSITION_REQUIREMENTS[$fromStatus] ?? [] as $rule) {
+            if (!empty($rule['custom'])) {
+                $paymentService = new InvoicePaymentService();
+                if ($rule['field'] === '_has_pending_payment') {
+                    if (!$paymentService->hasPendingAuthorization($invoice->id)) {
+                        $errors[] = $rule['label'];
+                    }
+                } elseif ($rule['field'] === '_payment_authorized') {
+                    if ($paymentService->hasPendingAuthorization($invoice->id)) {
+                        $errors[] = $rule['label'];
+                    }
+                }
+                continue;
+            }
+
             $field = $rule['field'];
             $value = $invoice->$field ?? null;
 
@@ -333,17 +337,6 @@ class InvoicePipelineService
             }
         }
 
-        // Auto-set payment_authorized_by and payment_authorized_date when authorizing
-        if (array_key_exists('payment_authorized', $filteredData)) {
-            if (!empty($filteredData['payment_authorized']) && !$invoice->payment_authorized) {
-                $filteredData['payment_authorized_by'] = $userId;
-                $filteredData['payment_authorized_date'] = date('Y-m-d');
-            } elseif (empty($filteredData['payment_authorized'])) {
-                $filteredData['payment_authorized_by'] = null;
-                $filteredData['payment_authorized_date'] = null;
-            }
-        }
-
         $canAdvance = $this->canAdvance($roleName, $currentStatus);
         $isRejected = $this->isRejected($invoice);
 
@@ -381,6 +374,26 @@ class InvoicePipelineService
                         $advanceNextStatus,
                         $userId,
                     );
+
+                    // After advancing from autorizacion_pago: check payment_status
+                    // If partial, regress to tesoreria for more payments
+                    if ($currentStatus === InvoiceConstants::STATUS_AUTORIZACION_PAGO) {
+                        $paymentService = new InvoicePaymentService();
+                        $paymentService->recalculatePaymentStatus($invoice->id);
+                        $refreshed = $invoicesTable->get($invoice->id);
+
+                        if ($refreshed->payment_status === InvoiceConstants::PAYMENT_PARTIAL) {
+                            $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
+                            $advanceNextStatus = InvoiceConstants::STATUS_TESORERIA;
+                            $invoicesTable->save($invoice);
+                            $this->historyService->recordStatusChange(
+                                $invoice->id,
+                                InvoiceConstants::STATUS_PAGADA,
+                                InvoiceConstants::STATUS_TESORERIA,
+                                $userId,
+                            );
+                        }
+                    }
                 }
 
                 return true;
