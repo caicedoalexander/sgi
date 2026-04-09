@@ -756,11 +756,10 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 <?php if ($isTesoreriaEdit): ?>
                 <div class="collapse mb-3" id="add-payment-form">
                     <div class="card card-body" style="border-top:2px solid var(--primary-color);">
-                        <?= $this->Form->create(null, ['url' => ['action' => 'addPayment', $invoice->id]]) ?>
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Entidad Bancaria</label>
-                                <select name="banking_entity_id" class="form-select select2-enable" required>
+                                <select id="pay-banking-entity" class="form-select select2-enable" required>
                                     <option value="">-- Seleccione --</option>
                                     <?php foreach ($bankingEntities as $beId => $beName): ?>
                                         <option value="<?= $beId ?>"><?= h($beName) ?></option>
@@ -769,17 +768,16 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Monto (COP)</label>
-                                <input type="text" name="amount" class="form-control currency-input" required>
+                                <input type="text" id="pay-amount" class="form-control currency-input" required>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Fecha de Pago</label>
-                                <input type="text" name="payment_date" class="form-control flatpickr-date" required>
+                                <input type="text" id="pay-date" class="form-control flatpickr-date" required>
                             </div>
                             <div class="col-md-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save me-1"></i>Registrar</button>
+                                <button type="button" id="btn-register-payment" class="btn btn-primary w-100"><i class="bi bi-save me-1"></i>Registrar</button>
                             </div>
                         </div>
-                        <?= $this->Form->end() ?>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -1330,6 +1328,58 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             btn.disabled = false;
         });
     });
+    // ── Register Payment (outside nested form) ──
+    var btnPay = document.getElementById('btn-register-payment');
+    if (btnPay) {
+        btnPay.addEventListener('click', function() {
+            var bankingEntity = document.getElementById('pay-banking-entity');
+            var amount = document.getElementById('pay-amount');
+            var payDate = document.getElementById('pay-date');
+
+            if (!bankingEntity.value || !amount.value || !payDate.value) {
+                alert('Complete todos los campos del pago.');
+                return;
+            }
+
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '<?= $this->Url->build(['action' => 'addPayment', $invoice->id]) ?>';
+            form.style.display = 'none';
+
+            var csrf = document.querySelector('input[name="_csrfToken"]');
+            if (csrf) {
+                var csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_csrfToken';
+                csrfInput.value = csrf.value;
+                form.appendChild(csrfInput);
+            }
+
+            var fields = {
+                'banking_entity_id': bankingEntity.value,
+                'amount': (function() {
+                    try {
+                        var an = AutoNumeric.getAutoNumericElement(amount);
+                        return an.getNumericString();
+                    } catch(e) {
+                        return amount.value.replace(/\$\s?/g, '').replace(/\./g, '').replace(',', '.');
+                    }
+                })(),
+                'payment_date': payDate.value
+            };
+            for (var key in fields) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = fields[key];
+                form.appendChild(input);
+            }
+
+            document.body.appendChild(form);
+            btnPay.disabled = true;
+            form.submit();
+        });
+    }
 })();
 </script>
 <?php $this->end() ?>

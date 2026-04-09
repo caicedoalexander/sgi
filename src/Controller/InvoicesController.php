@@ -681,7 +681,18 @@ class InvoicesController extends AppController
             $this->Invoices->save($invoice);
             $this->Flash->success('Pago registrado. La factura pasó a Autorización de Pago.');
         } else {
-            $this->Flash->error('No se pudo registrar el pago. Verifique los datos.');
+            $errors = $payment->getErrors();
+            $errorMsg = 'No se pudo registrar el pago.';
+            if (!empty($errors)) {
+                $details = [];
+                foreach ($errors as $field => $fieldErrors) {
+                    foreach ($fieldErrors as $rule => $msg) {
+                        $details[] = "$field: $msg";
+                    }
+                }
+                $errorMsg .= ' ' . implode(', ', $details);
+            }
+            $this->Flash->error($errorMsg);
         }
 
         return $this->redirect(['action' => 'edit', $invoiceId]);
