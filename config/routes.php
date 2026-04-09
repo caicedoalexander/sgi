@@ -343,6 +343,12 @@ return function (RouteBuilder $routes): void {
             ['pass' => ['invoiceId', 'paymentId']],
         );
 
+        $builder->connect(
+            '/invoices/reject-payment/{invoiceId}/{paymentId}',
+            ['controller' => 'Invoices', 'action' => 'rejectPayment'],
+            ['pass' => ['invoiceId', 'paymentId']],
+        );
+
         // Payment Schedulings (Programación)
         $builder->connect(
             '/payment-schedulings/advance/{id}',

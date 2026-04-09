@@ -814,18 +814,23 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                                 <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
                                 <td class="text-end">
                                     <?php if ($isContadorAutPago && !$payment->authorized && empty($payment->payment_scheduling_id)): ?>
-                                    <?= $this->Form->postLink(
-                                        '<i class="bi bi-shield-check me-1"></i>Autorizar',
-                                        ['action' => 'authorizePayment', $invoice->id, $payment->id],
-                                        ['confirm' => '¿Autorizar este pago?', 'class' => 'btn btn-sm btn-outline-success', 'escape' => false]
-                                    ) ?>
+                                    <button type="button" class="btn btn-sm btn-outline-success btn-post-action"
+                                            data-url="<?= $this->Url->build(['action' => 'authorizePayment', $invoice->id, $payment->id]) ?>"
+                                            data-confirm="¿Autorizar este pago?">
+                                        <i class="bi bi-shield-check me-1"></i>Autorizar
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-post-action"
+                                            data-url="<?= $this->Url->build(['action' => 'rejectPayment', $invoice->id, $payment->id]) ?>"
+                                            data-confirm="¿Rechazar este pago? Se eliminará y la factura volverá a Tesorería.">
+                                        <i class="bi bi-x-circle me-1"></i>Rechazar
+                                    </button>
                                     <?php endif; ?>
                                     <?php if ($isTesoreriaEdit && !$payment->authorized): ?>
-                                    <?= $this->Form->postLink(
-                                        '<i class="bi bi-trash"></i>',
-                                        ['action' => 'deletePayment', $invoice->id, $payment->id],
-                                        ['confirm' => '¿Eliminar este pago?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false]
-                                    ) ?>
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-post-action"
+                                            data-url="<?= $this->Url->build(['action' => 'deletePayment', $invoice->id, $payment->id]) ?>"
+                                            data-confirm="¿Eliminar este pago?">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -1380,6 +1385,32 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             form.submit();
         });
     }
+
+    // ── Generic POST action buttons (authorize, reject, delete payments) ──
+    document.querySelectorAll('.btn-post-action').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var msg = btn.getAttribute('data-confirm');
+            if (msg && !confirm(msg)) return;
+
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = btn.getAttribute('data-url');
+            form.style.display = 'none';
+
+            var csrf = document.querySelector('input[name="_csrfToken"]');
+            if (csrf) {
+                var csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_csrfToken';
+                csrfInput.value = csrf.value;
+                form.appendChild(csrfInput);
+            }
+
+            document.body.appendChild(form);
+            btn.disabled = true;
+            form.submit();
+        });
+    });
 })();
 </script>
 <?php $this->end() ?>

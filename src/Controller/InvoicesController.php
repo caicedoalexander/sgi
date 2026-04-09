@@ -731,6 +731,38 @@ class InvoicesController extends AppController
         return $this->redirect(['action' => 'edit', $invoiceId]);
     }
 
+    public function rejectPayment($invoiceId = null, $paymentId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($invoiceId);
+        $roleName = $this->_getRoleName();
+
+        if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
+            $this->Flash->error('Solo el Contador puede rechazar pagos.');
+
+            return $this->redirect(['action' => 'edit', $invoiceId]);
+        }
+
+        $paymentsTable = $this->fetchTable('InvoicePayments');
+        $payment = $paymentsTable->get($paymentId);
+
+        if ($payment->authorized) {
+            $this->Flash->error('No se puede rechazar un pago ya autorizado.');
+
+            return $this->redirect(['action' => 'edit', $invoiceId]);
+        }
+
+        if ($paymentsTable->delete($payment)) {
+            $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
+            $this->Invoices->save($invoice);
+            $this->Flash->success('Pago rechazado. Factura devuelta a Tesorería.');
+        } else {
+            $this->Flash->error('No se pudo rechazar el pago.');
+        }
+
+        return $this->redirect(['action' => 'edit', $invoiceId]);
+    }
+
     public function deletePayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
