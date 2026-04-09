@@ -69,8 +69,8 @@ $sectionFieldMap = [
     'classification'        => ['operation_center_id', 'expense_type_id', 'cost_center_id', 'amount', 'detail'],
     'revision'              => ['approver_id', 'dian_validation'],
     'accounting'            => ['accrued', 'ready_for_payment'],
-    'treasury'              => ['payment_status', 'payment_date'],
-    'payment_authorization' => ['payment_authorized'],
+    'treasury'              => [],
+    'payment_authorization' => [],
 ];
 $editableSectionKeys = [];
 $readOnlySectionKeys = [];
@@ -704,7 +704,13 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
 
         <?php if ($sectionName === 'treasury' && in_array('treasury', $visibleSections)): ?>
         <!-- ── Sección: Tesorería ── -->
-        <div class="mb-4 ">
+        <?php
+            $isTesoreriaEdit = ($roleName === \App\Constants\RoleConstants::TESORERIA || $roleName === \App\Constants\RoleConstants::ADMIN)
+                && $currentStatus === \App\Constants\InvoiceConstants::STATUS_TESORERIA;
+            $isContadorAutPago = ($roleName === \App\Constants\RoleConstants::CONTADOR || $roleName === \App\Constants\RoleConstants::ADMIN)
+                && $currentStatus === \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO;
+        ?>
+        <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
@@ -715,22 +721,20 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Estado de Pago</label>
-                    <?= $this->Form->control('payment_status', array_merge(
-                        ['label' => false, 'options' => $paymentStatusOptions],
-                        $canEdit('payment_status')
-                            ? ['class' => 'form-select']
-                            : ['class' => 'form-select', 'disabled' => true]
-                    )) ?>
+                    <div class="py-1">
+                        <?php if ($invoice->payment_status === \App\Constants\InvoiceConstants::PAYMENT_FULL): ?>
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Pago total</span>
+                        <?php elseif ($invoice->payment_status === \App\Constants\InvoiceConstants::PAYMENT_PARTIAL): ?>
+                            <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pago Parcial</span>
+                        <?php else: ?>
+                            <span class="badge bg-secondary">Sin pagos</span>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Fecha de Pago</label>
-                    <?php if ($canEdit('payment_date')): ?>
-                        <input type="text" name="payment_date" class="form-control flatpickr-date"
-                               value="<?= h($invoice->payment_date?->format('Y-m-d') ?? '') ?>">
-                    <?php else: ?>
-                        <input type="text" class="form-control" disabled
-                               value="<?= h($invoice->payment_date?->format('d/m/Y') ?? '') ?>">
-                    <?php endif; ?>
+                    <label class="form-label">Fecha Pago Total</label>
+                    <input type="text" class="form-control" disabled
+                           value="<?= h($invoice->full_payment_date?->format('d/m/Y') ?? '') ?>">
                 </div>
             </div>
 
@@ -740,14 +744,14 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                     <span class="text-uppercase fw-semibold" style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
                         <i class="bi bi-credit-card me-1"></i>Pagos Registrados
                     </span>
-                    <?php if ($canEdit('payment_status')): ?>
+                    <?php if ($isTesoreriaEdit): ?>
                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#add-payment-form">
                         <i class="bi bi-plus-lg me-1"></i>Agregar Pago
                     </button>
                     <?php endif; ?>
                 </div>
 
-                <?php if ($canEdit('payment_status')): ?>
+                <?php if ($isTesoreriaEdit): ?>
                 <div class="collapse mb-3" id="add-payment-form">
                     <div class="card card-body" style="border-top:2px solid var(--primary-color);">
                         <?= $this->Form->create(null, ['url' => ['action' => 'addPayment', $invoice->id]]) ?>
@@ -786,6 +790,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                                 <th>Entidad Bancaria</th>
                                 <th>Monto</th>
                                 <th>Fecha</th>
+                                <th>Estado</th>
                                 <th>Registrado por</th>
                                 <th class="text-end">Acciones</th>
                             </tr>
@@ -796,9 +801,26 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                                 <td><?= h($payment->banking_entity->name ?? '—') ?></td>
                                 <td>$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
                                 <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
+                                <td>
+                                    <?php if ($payment->authorized): ?>
+                                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
+                                        <?php if ($payment->authorized_by_user): ?>
+                                        <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
                                 <td class="text-end">
-                                    <?php if ($canEdit('payment_status')): ?>
+                                    <?php if ($isContadorAutPago && !$payment->authorized && empty($payment->payment_scheduling_id)): ?>
+                                    <?= $this->Form->postLink(
+                                        '<i class="bi bi-shield-check me-1"></i>Autorizar',
+                                        ['action' => 'authorizePayment', $invoice->id, $payment->id],
+                                        ['confirm' => '¿Autorizar este pago?', 'class' => 'btn btn-sm btn-outline-success', 'escape' => false]
+                                    ) ?>
+                                    <?php endif; ?>
+                                    <?php if ($isTesoreriaEdit && !$payment->authorized): ?>
                                     <?= $this->Form->postLink(
                                         '<i class="bi bi-trash"></i>',
                                         ['action' => 'deletePayment', $invoice->id, $payment->id],
@@ -812,7 +834,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                         <tfoot class="table-light">
                             <tr>
                                 <th>Total Pagado</th>
-                                <th colspan="4">$ <?= number_format($paymentsTotal ?? 0, 0, ',', '.') ?></th>
+                                <th colspan="5">$ <?= number_format($paymentsTotal ?? 0, 0, ',', '.') ?></th>
                             </tr>
                         </tfoot>
                     </table>
@@ -837,38 +859,17 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
             <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label d-block">Autorizada para Pago</label>
-                    <?php if ($canEdit('payment_authorized')): ?>
-                    <div class="form-check">
-                        <?= $this->Form->checkbox('payment_authorized', [
-                            'class' => 'form-check-input',
-                            'id' => 'payment-authorized-check',
-                        ]) ?>
-                        <label class="form-check-label" for="payment-authorized-check">Autorizar pago</label>
-                    </div>
+                <div class="col-md-12">
+                    <?php if ($currentStatus === \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO): ?>
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Los pagos pendientes de esta factura requieren autorización del Contador.
+                            La autorización se realiza desde la tabla de pagos en la sección Tesorería.
+                        </div>
                     <?php else: ?>
-                    <div class="py-1">
-                        <?php if ($invoice->payment_authorized): ?>
-                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizada</span>
-                        <?php else: ?>
-                            <span class="badge bg-secondary">Pendiente</span>
-                        <?php endif; ?>
-                    </div>
+                        <p class="text-muted mb-0">La autorización de pagos se gestiona individualmente desde la sección de Tesorería.</p>
                     <?php endif; ?>
                 </div>
-                <?php if ($invoice->payment_authorized_by): ?>
-                <div class="col-md-4">
-                    <label class="form-label">Autorizada por</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= h($invoice->payment_authorized_by_user->full_name ?? $invoice->payment_authorized_by_user->username ?? '—') ?>">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Fecha de Autorización</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= h($invoice->payment_authorized_date?->format('d/m/Y') ?? '') ?>">
-                </div>
-                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>

@@ -290,39 +290,16 @@ $dianClass = match($invoice->dian_validation ?? '') {
                 </span>
             </div>
             <div class="sgi-data-row">
-                <span class="sgi-data-label">Fecha Pago</span>
-                <span class="sgi-data-value"><?= $invoice->payment_date?->format('d/m/Y') ?? '—' ?></span>
+                <span class="sgi-data-label">Fecha Pago Total</span>
+                <span class="sgi-data-value"><?= $invoice->full_payment_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
         </div>
     </div>
 
-    <!-- Autorización de Pago -->
+    <!-- Pagos Registrados -->
     <div class="row g-3 mb-3">
-        <div class="col-md-4">
-            <div class="sgi-section-title">Autorización de Pago</div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Autorizada</span>
-                <span class="sgi-data-value">
-                    <?php if ($invoice->payment_authorized): ?>
-                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Sí</span>
-                    <?php else: ?>
-                        <span class="badge bg-secondary">Pendiente</span>
-                    <?php endif; ?>
-                </span>
-            </div>
-            <?php if ($invoice->payment_authorized_by): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Autorizada por</span>
-                <span class="sgi-data-value"><?= h($invoice->payment_authorized_by_user->full_name ?? $invoice->payment_authorized_by_user->username ?? '—') ?></span>
-            </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Fecha Autorización</span>
-                <span class="sgi-data-value"><?= $invoice->payment_authorized_date?->format('d/m/Y') ?? '—' ?></span>
-            </div>
-            <?php endif; ?>
-        </div>
         <?php if (!empty($invoice->invoice_payments)): ?>
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="sgi-section-title">Pagos Registrados</div>
             <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
                 <table class="table table-sm mb-0">
@@ -331,6 +308,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
                             <th>Entidad Bancaria</th>
                             <th>Monto</th>
                             <th>Fecha</th>
+                            <th>Estado</th>
                             <th>Registrado por</th>
                         </tr>
                     </thead>
@@ -340,6 +318,16 @@ $dianClass = match($invoice->dian_validation ?? '') {
                             <td><?= h($payment->banking_entity->name ?? '—') ?></td>
                             <td>$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
                             <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
+                            <td>
+                                <?php if ($payment->authorized): ?>
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
+                                    <?php if ($payment->authorized_by_user): ?>
+                                    <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
+                                <?php endif; ?>
+                            </td>
                             <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
                         </tr>
                         <?php endforeach; ?>
@@ -347,7 +335,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
                     <tfoot class="table-light">
                         <tr>
                             <th>Total Pagado</th>
-                            <th colspan="3">$ <?= number_format(array_sum(array_map(fn($p) => (float)$p->amount, $invoice->invoice_payments)), 0, ',', '.') ?></th>
+                            <th colspan="4">$ <?= number_format(array_sum(array_map(fn($p) => (float)$p->amount, $invoice->invoice_payments)), 0, ',', '.') ?></th>
                         </tr>
                     </tfoot>
                 </table>

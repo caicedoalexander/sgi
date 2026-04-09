@@ -1,0 +1,108 @@
+<?php
+/**
+ * @var \App\View\AppView $this
+ * @var iterable $records
+ * @var string $roleName
+ */
+$this->assign('title', 'Programación');
+
+use App\Constants\PaymentSchedulingConstants;
+
+$statusBadge = [
+    PaymentSchedulingConstants::STATUS_BORRADOR => 'bg-secondary',
+    PaymentSchedulingConstants::STATUS_TESORERIA => 'bg-warning text-dark',
+    PaymentSchedulingConstants::STATUS_AUT_PAGO => 'bg-info text-dark',
+    PaymentSchedulingConstants::STATUS_PAGADA => 'bg-success',
+];
+$statusLabels = PaymentSchedulingConstants::STATUS_LABELS;
+
+$params = $this->request->getQueryParams();
+?>
+
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Programación de Pagos</span>
+    <?php if (!empty($userPermissions['payment_schedulings']['can_create'])): ?>
+    <div>
+        <?= $this->Html->link(
+            '<i class="bi bi-plus-lg me-1"></i>Nueva Programación',
+            ['action' => 'add'],
+            ['class' => 'sgi-btn-primary btn btn-sm', 'escape' => false]
+        ) ?>
+    </div>
+    <?php endif; ?>
+</div>
+
+<!-- Filtros -->
+<div class="card card-primary mb-4">
+    <div class="card-body py-2 px-3">
+        <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label mb-1" style="font-size:.75rem;">Código</label>
+                <input type="text" name="code" class="form-control form-control-sm"
+                       value="<?= h($params['code'] ?? '') ?>" placeholder="PRO-...">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label mb-1" style="font-size:.75rem;">Estado</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <?php foreach ($statusLabels as $val => $label): ?>
+                    <option value="<?= $val ?>" <?= ($params['status'] ?? '') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Filtrar</button>
+                <?= $this->Html->link('Limpiar', ['action' => 'index'], ['class' => 'btn btn-sm btn-outline-secondary']) ?>
+            </div>
+        </div>
+        <?= $this->Form->end() ?>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card card-primary">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Título</th>
+                    <th>Estado</th>
+                    <th class="text-center"># Facturas</th>
+                    <th>Creado por</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($records) || $records->count() === 0): ?>
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">No hay programaciones.</td>
+                </tr>
+                <?php else: ?>
+                <?php foreach ($records as $record): ?>
+                <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'edit', $record->id]) ?>">
+                    <td>
+                        <span style="font-family:monospace;font-weight:600;font-size:.85rem;">
+                            <?= h($record->code) ?>
+                        </span>
+                    </td>
+                    <td><?= h($record->title) ?></td>
+                    <td>
+                        <span class="badge <?= $statusBadge[$record->pipeline_status] ?? 'bg-dark' ?>">
+                            <?= $statusLabels[$record->pipeline_status] ?? $record->pipeline_status ?>
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <?= count($record->payment_scheduling_items ?? []) ?>
+                    </td>
+                    <td><?= $record->hasValue('created_by_user') ? h($record->created_by_user->full_name) : '—' ?></td>
+                    <td><?= $record->created?->format('d/m/Y') ?? '—' ?></td>
+                </tr>
+                <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+    <?= $this->element('pagination') ?>
+</div>
