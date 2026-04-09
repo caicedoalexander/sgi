@@ -884,7 +884,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         </div><!-- /sgi-form-sections -->
 
         <!-- Botones de acción (sticky) -->
-        <?php if (!empty($editableFields)): ?>
+        <?php if (!empty($editableFields) || $canAdvance): ?>
         <div class="sgi-sticky-actions">
             <button type="submit" class="<?= $btnClass ?>">
                 <?= $btnLabel ?>
