@@ -49,7 +49,7 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 ### Layer Summary
 
 - **Controller** → HTTP concerns, input validation, delegates to services. One per resource, extends `AppController`.
-- **Service** (`src/Service/`) → Business logic, state transitions, DB transactions. 30 services.
+- **Service** (`src/Service/`) → Business logic, state transitions, DB transactions. ~36 services. Retornan `ServiceResult`.
 - **Table/Entity** (`src/Model/`) → ORM associations, validation rules, custom finders.
 - **Constants** (`src/Constants/`) → Domain values (states, roles, types). Never hardcode strings like `'Rechazada'` — use constants.
 - **Templates** (`templates/`) → PHP views. Layouts: `default.php` (authenticated), `login.php` (split-panel), `external.php` (approval tokens).
@@ -58,7 +58,8 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 
 | Service | Purpose |
 |---------|---------|
-| `InvoicePipelineService` | 4-state workflow: aprobacion → contabilidad → tesoreria → pagada |
+| `InvoicePipelineService` | 5-state workflow: aprobacion → contabilidad → tesoreria → autorizacion_pago → pagada |
+| `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation |
 | `NoveltyPipelineService` | Novelty state workflow (similar pattern to invoices) |
 | `AuthorizationService` | RBAC via `permissions` table. Admin bypasses all. |
 | `InvoiceHistoryService` | Field-by-field audit trail in `invoice_histories` |
@@ -76,14 +77,21 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 - Plugin: `cakephp/authentication ^3.0`. Custom finder `UsersTable::findAuth()` (active=true, contain Roles).
 - RBAC enforced in `AppController::beforeFilter()` via `_enforcePermission()`.
 - `$controllerModuleMap` maps controller → module. Actions map to can_view/can_create/can_edit/can_delete.
-- Roles: Admin(1), Contabilidad(2), Tesorería(3), Registro/Revisión(5).
+- Roles (ver `RoleConstants.php`): Administrador, Contabilidad, Tesorería, Registro/Revisión, Contador, Auxiliar de Personal, Asistente de Personal, Coordinador Administrativo y Financiero.
+- **Contador** ve y autoriza pagos en estado `autorizacion_pago` del pipeline de facturas.
 
 ### Invoice Pipeline
 
-States: `aprobacion` → `contabilidad` → `tesoreria` → `pagada`. Each role sees/edits only its states. Treasury→paid requires `payment_status='Pago total'` + `payment_date`. Rejected invoices (`area_approval='Rechazada'`) block advancement.
+States: `aprobacion` → `contabilidad` → `tesoreria` → `autorizacion_pago` → `pagada` (5 estados).
+- Tesorería registra pagos → avanza a `autorizacion_pago` (requiere ≥1 pago pendiente vía `InvoicePaymentService`)
+- Contador autoriza en `autorizacion_pago` → avanza a `pagada`
+- Pago parcial tras autorización → **regresa automáticamente** a `tesoreria`
+- Facturas rechazadas (`area_approval='Rechazada'`) bloquean todo avance
+- Secciones del formulario: `general`, `dates`, `classification`, `revision`, `accounting`, `treasury`, `payment_authorization`
 
 ## Key Conventions
 
+- **`ServiceResult`:** Servicios retornan `ServiceResult::ok($data)` / `ServiceResult::fail($errors)`. Verificar `->success` antes de usar `->data`.
 - **Pagination:** Fixed 15 items per page across all controllers.
 - **Custom finders:** Don't override `findList()` in CakePHP 5 (incompatible signature). Use custom finders like `findCodeList()`.
 - **Private methods:** Prefixed with underscore: `_buildInvoiceQuery()`.
@@ -107,6 +115,7 @@ States: `aprobacion` → `contabilidad` → `tesoreria` → `pagada`. Each role 
 - Colors: dark (#212529), green (#469D61), orange (#CD6A15).
 - JS common: `webroot/js/sgi-common.js` auto-initializes Flatpickr, AutoNumeric, Select2.
 - PDF: TCPDF + FPDI. Excel: PhpSpreadsheet.
+- Pipeline elements: `pipeline_progress.php` (facturas), `legalization_progress.php`, `petty_cash_progress.php`. Todos aceptan `isRejected` (bool).
 
 ## New Module Checklist
 
@@ -116,7 +125,7 @@ States: `aprobacion` → `contabilidad` → `tesoreria` → `pagada`. Each role 
 4. Table → `src/Model/Table/` (associations, validation, finders)
 5. Service → `src/Service/` (business logic)
 6. Controller → `src/Controller/` (extends AppController)
-7. Permissions → Add to `$controllerModuleMap`, `AuthorizationService::MODULES`, `permissions` table
+7. Permissions → Add to `$controllerModuleMap` (AppController), `AuthorizationService::MODULES` (key=slug, value=nombre display), `permissions` table
 8. Templates → `templates/{Controller}/` (index, add, edit, view)
 9. Sidebar → Add nav-link in `templates/layout/default.php` under the correct section
 10. Routes → Custom routes before `$builder->fallbacks()` if needed
