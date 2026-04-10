@@ -66,8 +66,9 @@ class PaymentSchedulingService
     }
 
     /**
-     * Parsea el Excel en formato Siesa (preprogramación de pagos).
-     * Formato multi-fila: encabezado proveedor → cuenta bancaria → factura(s).
+     * Parsea el Excel de preprogramación de pagos (5 columnas).
+     * Formato multi-fila: encabezado proveedor → factura(s).
+     * Columnas: Banco aprovador (A), Proveedor/NIT (B), Razón Social (C), Saldo (D), Programado (E).
      * Retorna ['valid' => [...], 'errors' => [...]]
      */
     public function parseExcel(string $filePath): array
@@ -99,11 +100,10 @@ class PaymentSchedulingService
 
             $colA = trim((string)($row['A'] ?? ''));
             $colB = trim((string)($row['B'] ?? ''));
-            $colE = trim((string)($row['E'] ?? ''));
-            $colH = $row['H'] ?? null;
+            $colE = $row['E'] ?? null;
 
             // Fila vacía
-            if (empty($colA) && empty($colB) && empty($colE)) {
+            if (empty($colA) && empty($colB) && ($colE === null || trim((string)$colE) === '')) {
                 continue;
             }
 
@@ -136,15 +136,10 @@ class PaymentSchedulingService
                 continue;
             }
 
-            // --- TIPO 2: Fila de cuenta bancaria (tiene paréntesis en col E) ---
-            if (str_contains($colE, '(')) {
-                continue;
-            }
-
-            // --- TIPO 3: Fila de factura ---
-            // Col B tiene número de factura Siesa, Col H tiene monto programado
-            if (!empty($colB) && $colH !== null && $colH !== '') {
-                $amount = (float)$colH;
+            // --- TIPO 2: Fila de factura ---
+            // Col B tiene número de factura Siesa, Col E tiene monto programado
+            if (!empty($colB) && $colE !== null && trim((string)$colE) !== '') {
+                $amount = (float)$colE;
 
                 // Si no hay proveedor/banco válido del encabezado, saltar
                 if (!$currentProvider) {
