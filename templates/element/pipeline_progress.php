@@ -11,90 +11,87 @@
 
 use App\Constants\InvoiceConstants;
 use App\Service\InvoicePipelineService;
-$isRejected   = $isRejected ?? false;
-$isApproved   = $isApproved ?? false;
+$isRejected    = $isRejected ?? false;
+$isApproved    = $isApproved ?? false;
 $paymentStatus = $paymentStatus ?? null;
 
-$statusIcons = $statusIcons ?? InvoicePipelineService::STATUS_ICONS;
+$statusIcons  = $statusIcons ?? InvoicePipelineService::STATUS_ICONS;
 $currentIndex = array_search($currentStatus, $pipelineStatuses);
 $isPartialPayment = ($currentStatus === InvoiceConstants::STATUS_TESORERIA && $paymentStatus === InvoiceConstants::PAYMENT_PARTIAL);
 ?>
-<?php
-$totalSteps = count($pipelineStatuses);
-$circleSize = $totalSteps >= 5 ? '40px' : '48px';
-$fontSize = $totalSteps >= 5 ? '0.95rem' : '1.1rem';
-$lineTop = $totalSteps >= 5 ? '20px' : '24px';
-// Lines start at center of first circle, end at center of last circle
-// Each flex:1 item = 100/N wide, center of item i = (i+0.5)*100/N
-$lineOffset = $totalSteps > 1 ? 50 / $totalSteps : 0;
-$progressPercent = $totalSteps > 1 ? ($currentIndex / ($totalSteps - 1)) * 100 : 0;
-$progressColor = $isRejected ? '#dc3545' : 'var(--primary-color)';
-?>
 <div class="pipeline-progress">
-    <div class="d-flex align-items-center justify-content-between position-relative">
-        <!-- Base line (gray): center of first to center of last -->
-        <div class="position-absolute"
-             style="top:<?= $lineTop ?>;left:<?= $lineOffset ?>%;right:<?= $lineOffset ?>%;height:3px;background:#dee2e6;z-index:0;"></div>
-        <!-- Progress line (colored): same origin, width as % of line span -->
-        <div class="position-absolute"
-             style="top:<?= $lineTop ?>;left:<?= $lineOffset ?>%;width:calc((100% - <?= 2 * $lineOffset ?>%) * <?= $progressPercent / 100 ?>);height:3px;background:<?= $progressColor ?>;z-index:0;transition:width .5s ease,background .3s ease;"></div>
-
+    <div class="d-flex align-items-center justify-content-between">
         <?php foreach ($pipelineStatuses as $i => $status): ?>
-            <?php
-                $isPast    = $i < $currentIndex;
-                $isCurrent = $i === $currentIndex;
-                $isFuture  = $i > $currentIndex;
-                $rejectedHere = $isRejected && $isCurrent;
+        <?php
+            $isPast    = $i < $currentIndex;
+            $isCurrent = $i === $currentIndex;
+            $isFuture  = $i > $currentIndex;
+            $rejectedHere = $isRejected && $isCurrent;
+            $icon = $statusIcons[$status] ?? 'bi-circle';
 
-                if ($rejectedHere) {
-                    $circleStyle = 'background:#dc3545;color:#fff;border:2px solid #dc3545;';
-                    $labelClass  = 'text-danger fw-bold';
-                } elseif ($isPast) {
-                    $circleStyle = 'background:var(--primary-color);color:#fff;border:2px solid var(--primary-color);';
-                    $labelClass  = 'fw-semibold';
-                    $labelStyle  = 'color:var(--primary-color);';
-                } elseif ($isCurrent) {
-                    $circleStyle = 'background:var(--primary-color);color:#fff;border:2px solid var(--primary-color);';
-                    $labelClass  = 'fw-bold';
-                    $labelStyle  = 'color:var(--primary-color);';
-                } else {
-                    $circleStyle = 'background:#fff;color:#aaa;border:2px solid #dee2e6;';
-                    $labelClass  = 'text-muted';
-                    $labelStyle  = '';
-                }
-                if ($isRejected && $isFuture) {
-                    $circleStyle = 'background:#fff;color:#ccc;border:2px solid rgba(220,53,69,.25);';
-                    $labelClass  = 'text-muted';
-                    $labelStyle  = 'opacity:.5;';
-                }
-                if (!isset($labelStyle)) {
-                    $labelStyle = '';
-                }
-            ?>
-            <div class="d-flex flex-column align-items-center position-relative" style="z-index:1;flex:1;">
-                <div class="d-flex align-items-center justify-content-center mb-1"
-                     style="width:<?= $circleSize ?>;height:<?= $circleSize ?>;font-size:<?= $fontSize ?>;transition:all .3s ease;<?= $circleStyle ?>">
-                    <?php if ($rejectedHere): ?>
-                        <i class="bi bi-x-lg fw-bold"></i>
-                    <?php elseif ($isPast): ?>
-                        <i class="bi bi-check-lg"></i>
-                    <?php else: ?>
-                        <i class="bi <?= $statusIcons[$status] ?? 'bi-circle' ?>"></i>
-                    <?php endif; ?>
-                </div>
+            if ($rejectedHere) {
+                $borderColor = '#dc3545';
+                $bgColor     = '#dc3545';
+                $iconColor   = '#fff';
+                $labelColor  = '#dc3545';
+                $labelWeight = '700';
+            } elseif ($isPast) {
+                $borderColor = 'var(--primary-color)';
+                $bgColor     = 'var(--primary-color)';
+                $iconColor   = '#fff';
+                $labelColor  = 'var(--primary-color)';
+                $labelWeight = '500';
+            } elseif ($isCurrent) {
+                $borderColor = 'var(--primary-color)';
+                $bgColor     = 'var(--primary-color)';
+                $iconColor   = '#fff';
+                $labelColor  = '#111';
+                $labelWeight = '700';
+            } else {
+                $borderColor = '#ddd';
+                $bgColor     = '#fff';
+                $iconColor   = '#bbb';
+                $labelColor  = '#aaa';
+                $labelWeight = '500';
+            }
 
-                <small class="<?= $labelClass ?> text-center" style="font-size:.7rem;white-space:nowrap;<?= $labelStyle ?>">
-                    <?= h($pipelineLabels[$status] ?? $status) ?>
-                </small>
+            if ($isRejected && $isFuture) {
+                $borderColor = 'rgba(220,53,69,.25)';
+                $bgColor     = '#fff';
+                $iconColor   = '#ccc';
+                $labelColor  = '#ccc';
+                $labelWeight = '500';
+            }
 
-                <?php if ($isCurrent && $isRejected): ?>
-                    <span class="badge bg-danger mt-1" style="font-size:.6rem;">Rechazada</span>
-                <?php elseif ($isCurrent && $isApproved): ?>
-                    <span class="badge bg-success mt-1" style="font-size:.6rem;">Aprobada</span>
-                <?php elseif ($status === InvoiceConstants::STATUS_TESORERIA && $isPartialPayment): ?>
-                    <span class="badge bg-warning text-dark mt-1" style="font-size:.6rem;">Pago Parcial</span>
+            $opacity = (!$isCurrent && !$isPast && !$isRejected) ? 'opacity:.4;' : '';
+        ?>
+        <div class="d-flex align-items-center gap-2" style="<?= $opacity ?>">
+            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                 style="width:32px;height:32px;border:2px solid <?= $borderColor ?>;background:<?= $bgColor ?>;color:<?= $iconColor ?>;font-size:.85rem;transition:all .3s ease;">
+                <?php if ($rejectedHere): ?>
+                    <i class="bi bi-x-lg fw-bold"></i>
+                <?php elseif ($isPast): ?>
+                    <i class="bi bi-check-lg"></i>
+                <?php else: ?>
+                    <i class="bi <?= $icon ?>"></i>
                 <?php endif; ?>
             </div>
+            <div>
+                <span style="font-size:.75rem;font-weight:<?= $labelWeight ?>;color:<?= $labelColor ?>;white-space:nowrap;">
+                    <?= h($pipelineLabels[$status] ?? $status) ?>
+                </span>
+                <?php if ($isCurrent && $isRejected): ?>
+                    <br><span class="badge bg-danger" style="font-size:.55rem;">Rechazada</span>
+                <?php elseif ($isCurrent && $isApproved): ?>
+                    <br><span class="badge bg-success" style="font-size:.55rem;">Aprobada</span>
+                <?php elseif ($status === InvoiceConstants::STATUS_TESORERIA && $isPartialPayment): ?>
+                    <br><span class="badge bg-warning text-dark" style="font-size:.55rem;">Pago Parcial</span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php if ($i < count($pipelineStatuses) - 1): ?>
+        <div style="flex:1;height:2px;margin:0 .75rem;background:<?= $isPast ? ($isRejected ? '#dc3545' : 'var(--primary-color)') : '#e0e0e0' ?>;transition:background .3s ease;"></div>
+        <?php endif; ?>
         <?php endforeach; ?>
     </div>
 
