@@ -65,6 +65,7 @@ class InvoicePaymentService
                 'invoice_id' => $invoiceId,
                 'authorized' => true,
             ])
+            ->all()
             ->sumOf('amount');
 
         return max(0, (float)$invoice->amount - $totalPaid);
