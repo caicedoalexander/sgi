@@ -535,7 +535,7 @@ class InvoicesController extends AppController
             ->where(['active' => true]);
 
         return [
-            'providers' => $this->Invoices->Providers->find('list', limit: 200)->all(),
+            'providers' => $this->Invoices->Providers->find('list')->order(['Providers.name' => 'ASC'])->all(),
             'operationCenters' => $this->Invoices->OperationCenters->find('codeList')->all(),
             'expenseTypes' => $this->Invoices->ExpenseTypes->find('list', limit: 200)->all(),
             'costCenters' => $this->Invoices->CostCenters->find('codeList')->all(),
