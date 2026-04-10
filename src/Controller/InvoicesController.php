@@ -385,7 +385,7 @@ class InvoicesController extends AppController
             'message' => $this->request->getData('message'),
         ]);
 
-        if ($this->request->is('ajax')) {
+        if ($this->_isJsonRequest()) {
             if ($observationsTable->save($observation)) {
                 return $this->_jsonResponse([
                     'success' => true,
@@ -564,7 +564,7 @@ class InvoicesController extends AppController
 
         $file = $this->request->getUploadedFile('file');
         if (!$file) {
-            if ($this->request->is('ajax')) {
+            if ($this->_isJsonRequest()) {
                 return $this->_jsonResponse(['success' => false, 'error' => 'No se recibió ningún archivo válido.']);
             }
             $this->Flash->error(__('No se recibió ningún archivo válido.'));
@@ -581,7 +581,7 @@ class InvoicesController extends AppController
             $this->request->getData('document_type'),
         );
 
-        if ($this->request->is('ajax')) {
+        if ($this->_isJsonRequest()) {
             if (is_string($result)) {
                 return $this->_jsonResponse(['success' => false, 'error' => $result]);
             }
@@ -619,7 +619,7 @@ class InvoicesController extends AppController
         $document = $documentsTable->get($documentId);
 
         if (!$this->documentService->canDeleteDocument($document, $invoice->pipeline_status)) {
-            if ($this->request->is('ajax')) {
+            if ($this->_isJsonRequest()) {
                 return $this->_jsonResponse(['success' => false, 'error' => 'No se puede eliminar un soporte de un estado anterior.']);
             }
             $this->Flash->error(__('No se puede eliminar un soporte de un estado anterior.'));
@@ -629,7 +629,7 @@ class InvoicesController extends AppController
 
         $deleted = $this->documentService->deleteDocument((int)$documentId);
 
-        if ($this->request->is('ajax')) {
+        if ($this->_isJsonRequest()) {
             if ($deleted) {
                 return $this->_jsonResponse(['success' => true]);
             }

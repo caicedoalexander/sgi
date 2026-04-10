@@ -1279,8 +1279,9 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             var fd = new FormData(uploadForm);
             fetch(uploadForm.dataset.url, {
                 method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrfToken },
-                body: fd
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrfToken, 'Accept': 'application/json' },
+                body: fd,
+                redirect: 'follow'
             })
             .then(function(r) { return r.json(); })
             .then(function(data) {
@@ -1312,7 +1313,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         btn.disabled = true;
         fetch(btn.dataset.url, {
             method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrfToken }
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrfToken, 'Accept': 'application/json' }
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {

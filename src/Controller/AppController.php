@@ -184,6 +184,12 @@ class AppController extends Controller
         return $authService->isAllowed((int)$user->role_id, $roleName, $module, $action);
     }
 
+    protected function _isJsonRequest(): bool
+    {
+        return $this->request->is('ajax')
+            || str_contains($this->request->getHeaderLine('Accept'), 'application/json');
+    }
+
     protected function _jsonResponse(array $data): Response
     {
         $this->autoRender = false;
