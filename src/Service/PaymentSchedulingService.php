@@ -75,7 +75,7 @@ class PaymentSchedulingService
     {
         $spreadsheet = IOFactory::load($filePath);
         $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray(null, true, true, true);
+        $rows = $sheet->toArray(null, true, false, true);
 
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $providersTable = TableRegistry::getTableLocator()->get('Providers');
