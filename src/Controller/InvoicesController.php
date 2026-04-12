@@ -656,7 +656,6 @@ class InvoicesController extends AppController
         $roleName = $this->_getRoleName();
         $currentStatus = $invoice->pipeline_status;
 
-        // Only Tesorería (or Admin) can add payments in tesoreria state
         if (
             $roleName !== RoleConstants::ADMIN && (
             $roleName !== RoleConstants::TESORERIA ||
@@ -668,33 +667,16 @@ class InvoicesController extends AppController
             return $this->redirect(['action' => 'edit', $invoiceId]);
         }
 
-        $paymentsTable = $this->fetchTable('InvoicePayments');
-        $payment = $paymentsTable->newEntity([
-            'invoice_id' => $invoiceId,
-            'banking_entity_id' => $this->request->getData('banking_entity_id'),
-            'amount' => $this->request->getData('amount'),
-            'payment_date' => $this->request->getData('payment_date'),
-            'created_by' => $this->_getCurrentUser()->id,
-        ]);
+        $result = $this->paymentService->registerPayment(
+            (int)$invoiceId,
+            $this->request->getData(),
+            (int)$this->_getCurrentUser()->id,
+        );
 
-        if ($paymentsTable->save($payment)) {
-            // Avanzar factura a autorizacion_pago
-            $invoice->pipeline_status = InvoiceConstants::STATUS_AUTORIZACION_PAGO;
-            $this->Invoices->save($invoice);
-            $this->Flash->success('Pago registrado. La factura pasó a Autorización de Pago.');
+        if ($result->success) {
+            $this->Flash->success($result->data);
         } else {
-            $errors = $payment->getErrors();
-            $errorMsg = 'No se pudo registrar el pago.';
-            if (!empty($errors)) {
-                $details = [];
-                foreach ($errors as $field => $fieldErrors) {
-                    foreach ($fieldErrors as $rule => $msg) {
-                        $details[] = "$field: $msg";
-                    }
-                }
-                $errorMsg .= ' ' . implode(', ', $details);
-            }
-            $this->Flash->error($errorMsg);
+            $this->Flash->error($result->data);
         }
 
         return $this->redirect(['action' => 'edit', $invoiceId]);
@@ -703,8 +685,6 @@ class InvoicesController extends AppController
     public function authorizePayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
-        $invoice = $this->Invoices->get($invoiceId);
-        $user = $this->_getCurrentUser();
         $roleName = $this->_getRoleName();
 
         if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
@@ -713,16 +693,12 @@ class InvoicesController extends AppController
             return $this->redirect(['action' => 'edit', $invoiceId]);
         }
 
-        $result = $this->paymentService->authorizePayment((int)$paymentId, (int)$user->id);
+        $result = $this->paymentService->authorizePayment((int)$paymentId, (int)$this->_getCurrentUser()->id);
 
         if ($result['success']) {
-            if ($result['paymentStatus'] === InvoiceConstants::PAYMENT_FULL) {
-                $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
-                $this->Invoices->save($invoice);
+            if ($result['newPipelineStatus'] === InvoiceConstants::STATUS_PAGADA) {
                 $this->Flash->success('Pago autorizado. Factura marcada como Pagada.');
             } else {
-                $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
-                $this->Invoices->save($invoice);
                 $this->Flash->success('Pago autorizado. Factura devuelta a Tesorería (Pago Parcial).');
             }
         } else {
@@ -735,7 +711,6 @@ class InvoicesController extends AppController
     public function rejectPayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
-        $invoice = $this->Invoices->get($invoiceId);
         $roleName = $this->_getRoleName();
 
         if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
@@ -744,21 +719,12 @@ class InvoicesController extends AppController
             return $this->redirect(['action' => 'edit', $invoiceId]);
         }
 
-        $paymentsTable = $this->fetchTable('InvoicePayments');
-        $payment = $paymentsTable->get($paymentId);
+        $result = $this->paymentService->rejectPayment((int)$paymentId, (int)$this->_getCurrentUser()->id);
 
-        if ($payment->authorized) {
-            $this->Flash->error('No se puede rechazar un pago ya autorizado.');
-
-            return $this->redirect(['action' => 'edit', $invoiceId]);
-        }
-
-        if ($paymentsTable->delete($payment)) {
-            $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
-            $this->Invoices->save($invoice);
-            $this->Flash->success('Pago rechazado. Factura devuelta a Tesorería.');
+        if ($result->success) {
+            $this->Flash->success($result->data);
         } else {
-            $this->Flash->error('No se pudo rechazar el pago.');
+            $this->Flash->error($result->data);
         }
 
         return $this->redirect(['action' => 'edit', $invoiceId]);
