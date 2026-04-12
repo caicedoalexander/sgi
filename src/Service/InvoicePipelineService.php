@@ -13,13 +13,16 @@ class InvoicePipelineService
 {
     private InvoiceHistoryService $historyService;
     private NotificationService $notificationService;
+    private InvoicePaymentService $paymentService;
 
     public function __construct(
         ?InvoiceHistoryService $historyService = null,
         ?NotificationService $notificationService = null,
+        ?InvoicePaymentService $paymentService = null,
     ) {
         $this->historyService = $historyService ?? new InvoiceHistoryService();
         $this->notificationService = $notificationService ?? new NotificationService();
+        $this->paymentService = $paymentService ?? new InvoicePaymentService();
     }
 
     // Pipeline statuses in order
@@ -232,13 +235,12 @@ class InvoicePipelineService
         $errors = [];
         foreach (self::TRANSITION_REQUIREMENTS[$fromStatus] ?? [] as $rule) {
             if (!empty($rule['custom'])) {
-                $paymentService = new InvoicePaymentService();
                 if ($rule['field'] === '_has_pending_payment') {
-                    if (!$paymentService->hasPendingAuthorization($invoice->id)) {
+                    if (!$this->paymentService->hasPendingAuthorization($invoice->id)) {
                         $errors[] = $rule['label'];
                     }
                 } elseif ($rule['field'] === '_payment_authorized') {
-                    if ($paymentService->hasPendingAuthorization($invoice->id)) {
+                    if ($this->paymentService->hasPendingAuthorization($invoice->id)) {
                         $errors[] = $rule['label'];
                     }
                 }
@@ -377,8 +379,7 @@ class InvoicePipelineService
                     // After advancing from autorizacion_pago: check payment_status
                     // If partial, regress to tesoreria for more payments
                     if ($currentStatus === InvoiceConstants::STATUS_AUTORIZACION_PAGO) {
-                        $paymentService = new InvoicePaymentService();
-                        $paymentService->recalculatePaymentStatus($invoice->id);
+                        $this->paymentService->recalculatePaymentStatus($invoice->id);
                         $refreshed = $invoicesTable->get($invoice->id);
 
                         if ($refreshed->payment_status === InvoiceConstants::PAYMENT_PARTIAL) {

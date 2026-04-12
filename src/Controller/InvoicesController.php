@@ -25,6 +25,7 @@ class InvoicesController extends AppController
     private InvoiceFilterService $filterService;
     private InvoiceDocumentService $documentService;
     private InvoiceApprovalService $approvalService;
+    private InvoicePaymentService $paymentService;
 
     public function initialize(): void
     {
@@ -33,6 +34,7 @@ class InvoicesController extends AppController
         $this->filterService = new InvoiceFilterService();
         $this->documentService = new InvoiceDocumentService();
         $this->approvalService = new InvoiceApprovalService();
+        $this->paymentService = new InvoicePaymentService();
     }
 
     private function _getCurrentUser(): object
@@ -711,8 +713,7 @@ class InvoicesController extends AppController
             return $this->redirect(['action' => 'edit', $invoiceId]);
         }
 
-        $paymentService = new InvoicePaymentService();
-        $result = $paymentService->authorizePayment((int)$paymentId, (int)$user->id);
+        $result = $this->paymentService->authorizePayment((int)$paymentId, (int)$user->id);
 
         if ($result['success']) {
             if ($result['paymentStatus'] === InvoiceConstants::PAYMENT_FULL) {

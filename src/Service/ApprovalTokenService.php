@@ -14,13 +14,16 @@ class ApprovalTokenService
 {
     private InvoiceHistoryService $historyService;
     private NotificationService $notificationService;
+    private NoveltyObservationService $observationService;
 
     public function __construct(
         ?InvoiceHistoryService $historyService = null,
         ?NotificationService $notificationService = null,
+        ?NoveltyObservationService $observationService = null,
     ) {
         $this->historyService = $historyService ?? new InvoiceHistoryService();
         $this->notificationService = $notificationService ?? new NotificationService();
+        $this->observationService = $observationService ?? new NoveltyObservationService();
     }
 
     public function generateToken(string $entityType, int $entityId, int $createdBy, int $hoursValid = InvoiceConstants::APPROVAL_TOKEN_HOURS): string
@@ -189,8 +192,7 @@ class ApprovalTokenService
 
         if ($saved && !empty($observations)) {
             $userId = $createdBy ?? $novelty->approver_id ?? 0;
-            $observationService = new NoveltyObservationService();
-            $observationService->addToNovelty($noveltyId, $userId, $observations);
+            $this->observationService->addToNovelty($noveltyId, $userId, $observations);
         }
 
         return $saved;
