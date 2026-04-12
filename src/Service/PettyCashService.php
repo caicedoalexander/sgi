@@ -11,6 +11,13 @@ use Cake\ORM\TableRegistry;
 
 class PettyCashService
 {
+    private InvoiceHistoryService $historyService;
+
+    public function __construct(?InvoiceHistoryService $historyService = null)
+    {
+        $this->historyService = $historyService ?? new InvoiceHistoryService();
+    }
+
     public function validateGrouping(array $invoiceIds): array
     {
         $errors = [];
@@ -135,17 +142,15 @@ class PettyCashService
 
         $connection = $invoicesTable->getConnection();
 
-        return $connection->transactional(function () use ($record, $nextStatus, $currentStatus, $invoicesTable) {
+        return $connection->transactional(function () use ($record, $nextStatus, $currentStatus, $invoicesTable, $userId) {
             $today = date('Y-m-d');
             $updateData = [];
 
             if ($nextStatus === PettyCashConstants::STATUS_CONTABILIDAD) {
-                // Agrupación → Contabilidad: advance invoices to contabilidad
                 $updateData = [
                     'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
                 ];
             } elseif ($nextStatus === PettyCashConstants::STATUS_TESORERIA) {
-                // Contabilidad → Tesorería: apply accounting fields from record to invoices
                 $updateData = [
                     'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
                     'accrued' => (bool)$record->accrued,
@@ -153,7 +158,6 @@ class PettyCashService
                     'ready_for_payment' => $record->ready_for_payment,
                 ];
             } elseif ($nextStatus === PettyCashConstants::STATUS_PAGADO) {
-                // Tesorería → Pagado: apply treasury fields from record to invoices
                 $updateData = [
                     'pipeline_status' => InvoiceConstants::STATUS_PAGADA,
                     'payment_status' => $record->payment_status ?? InvoiceConstants::PAYMENT_FULL,
@@ -161,11 +165,31 @@ class PettyCashService
                 ];
             }
 
+            // Capture invoice states before bulk update for history
+            $invoicesBefore = $invoicesTable->find()
+                ->select(['id', 'pipeline_status'])
+                ->where(['petty_cash_record_id' => $record->id])
+                ->all()
+                ->toArray();
+
             if (!empty($updateData)) {
                 $invoicesTable->updateAll(
                     $updateData,
                     ['petty_cash_record_id' => $record->id],
                 );
+
+                // Record per-invoice audit trail
+                $newPipelineStatus = $updateData['pipeline_status'] ?? null;
+                if ($newPipelineStatus) {
+                    foreach ($invoicesBefore as $inv) {
+                        $this->historyService->recordStatusChange(
+                            $inv->id,
+                            $inv->pipeline_status,
+                            $newPipelineStatus,
+                            $userId,
+                        );
+                    }
+                }
             }
 
             $table = TableRegistry::getTableLocator()->get('PettyCashRecords');

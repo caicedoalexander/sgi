@@ -11,6 +11,13 @@ use Cake\ORM\TableRegistry;
 
 class LegalizationService
 {
+    private InvoiceHistoryService $historyService;
+
+    public function __construct(?InvoiceHistoryService $historyService = null)
+    {
+        $this->historyService = $historyService ?? new InvoiceHistoryService();
+    }
+
     public function validateGrouping(array $invoiceIds): array
     {
         $errors = [];
@@ -134,7 +141,7 @@ class LegalizationService
 
         $connection = $invoicesTable->getConnection();
 
-        return $connection->transactional(function () use ($record, $nextStatus, $currentStatus, $invoicesTable) {
+        return $connection->transactional(function () use ($record, $nextStatus, $currentStatus, $invoicesTable, $userId) {
             $today = date('Y-m-d');
             $updateData = [];
 
@@ -157,11 +164,31 @@ class LegalizationService
                 ];
             }
 
+            // Capture invoice states before bulk update for history
+            $invoicesBefore = $invoicesTable->find()
+                ->select(['id', 'pipeline_status'])
+                ->where(['legalization_record_id' => $record->id])
+                ->all()
+                ->toArray();
+
             if (!empty($updateData)) {
                 $invoicesTable->updateAll(
                     $updateData,
                     ['legalization_record_id' => $record->id],
                 );
+
+                // Record per-invoice audit trail
+                $newPipelineStatus = $updateData['pipeline_status'] ?? null;
+                if ($newPipelineStatus) {
+                    foreach ($invoicesBefore as $inv) {
+                        $this->historyService->recordStatusChange(
+                            $inv->id,
+                            $inv->pipeline_status,
+                            $newPipelineStatus,
+                            $userId,
+                        );
+                    }
+                }
             }
 
             $table = TableRegistry::getTableLocator()->get('LegalizationRecords');
