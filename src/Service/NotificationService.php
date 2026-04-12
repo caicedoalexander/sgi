@@ -15,10 +15,12 @@ use Exception;
 class NotificationService
 {
     private SystemSettingsService $settings;
+    private CircuitBreaker $smtpCircuitBreaker;
 
     public function __construct(?SystemSettingsService $settings = null)
     {
         $this->settings = $settings ?? new SystemSettingsService();
+        $this->smtpCircuitBreaker = new CircuitBreaker('smtp', failureThreshold: 3, recoveryTimeoutSeconds: 300);
     }
 
     /**
@@ -71,9 +73,11 @@ class NotificationService
                 $mailer->viewBuilder()
                     ->setTemplate('invoice_status_changed')
                     ->setLayout('default');
-                $mailer->deliver();
+                $this->smtpCircuitBreaker->call(function () use ($mailer) {
+                    $mailer->deliver();
+                });
                 $sent++;
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
                 Log::error("Email notification failed for {$recipient->email}: " . $e->getMessage());
                 $failed[] = $recipient->email . ': ' . $e->getMessage();
             }
@@ -130,7 +134,9 @@ class NotificationService
             $mailer->viewBuilder()
                 ->setTemplate('invoice_approval_request')
                 ->setLayout('default');
-            $mailer->deliver();
+            $this->smtpCircuitBreaker->call(function () use ($mailer) {
+                $mailer->deliver();
+            });
 
             Log::info("Approval link sent to {$recipient->email} for invoice #{$invoice->id}");
         }
@@ -174,7 +180,9 @@ class NotificationService
             $mailer->viewBuilder()
                 ->setTemplate('novelty_approval_request')
                 ->setLayout('default');
-            $mailer->deliver();
+            $this->smtpCircuitBreaker->call(function () use ($mailer) {
+                $mailer->deliver();
+            });
 
             Log::info("Novelty approval link sent to {$approver->email} for novelty #{$novelty->id}");
         } catch (Exception $e) {

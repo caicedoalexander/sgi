@@ -14,6 +14,7 @@ class WebhookService
 
     private Client $client;
     private int $maxRetries;
+    private CircuitBreaker $circuitBreaker;
 
     /**
      * @param int $timeout Request timeout in seconds.
@@ -25,6 +26,7 @@ class WebhookService
             'timeout' => $timeout,
         ]);
         $this->maxRetries = $maxRetries;
+        $this->circuitBreaker = new CircuitBreaker('webhook', failureThreshold: 3, recoveryTimeoutSeconds: 120);
     }
 
     /**
@@ -86,44 +88,47 @@ class WebhookService
      */
     private function executeWithRetry(callable $request): array
     {
-        $lastException = null;
+        return $this->circuitBreaker->call(
+            function () use ($request) {
+                $lastException = null;
 
-        for ($attempt = 0; $attempt <= $this->maxRetries; $attempt++) {
-            try {
-                $response = $request();
+                for ($attempt = 0; $attempt <= $this->maxRetries; $attempt++) {
+                    try {
+                        $response = $request();
 
-                // Don't retry client errors (4xx), only server errors (5xx) and timeouts
-                if ($response->isOk() || ($response->getStatusCode() >= 400 && $response->getStatusCode() < 500)) {
-                    return [
-                        'success' => $response->isOk(),
-                        'statusCode' => $response->getStatusCode(),
-                        'body' => (string)$response->getBody(),
-                        'error' => $response->isOk() ? null : "HTTP {$response->getStatusCode()}",
-                    ];
+                        if ($response->isOk() || ($response->getStatusCode() >= 400 && $response->getStatusCode() < 500)) {
+                            return [
+                                'success' => $response->isOk(),
+                                'statusCode' => $response->getStatusCode(),
+                                'body' => (string)$response->getBody(),
+                                'error' => $response->isOk() ? null : "HTTP {$response->getStatusCode()}",
+                            ];
+                        }
+
+                        $lastException = new Exception("HTTP {$response->getStatusCode()}");
+                    } catch (Exception $e) {
+                        $lastException = $e;
+                    }
+
+                    if ($attempt < $this->maxRetries) {
+                        $delayMs = self::BASE_DELAY_MS * (2 ** $attempt);
+                        usleep($delayMs * 1000);
+                        $msg = $lastException->getMessage();
+                        $retryNum = $attempt + 1;
+                        Log::warning("WebhookService: retry #{$retryNum} after {$delayMs}ms — {$msg}");
+                    }
                 }
 
-                // Server error — will retry
-                $lastException = new Exception("HTTP {$response->getStatusCode()}");
-            } catch (Exception $e) {
-                $lastException = $e;
-            }
-
-            // Exponential backoff: 1s, 2s, 4s
-            if ($attempt < $this->maxRetries) {
-                $delayMs = self::BASE_DELAY_MS * (2 ** $attempt);
-                usleep($delayMs * 1000);
-                $msg = $lastException->getMessage();
-                Log::warning("WebhookService: retry #{$attempt + 1} after {$delayMs}ms — {$msg}");
-            }
-        }
-
-        Log::error("WebhookService: all {$this->maxRetries} retries exhausted — {$lastException->getMessage()}");
-
-        return [
-            'success' => false,
-            'statusCode' => 0,
-            'body' => '',
-            'error' => "Retries exhausted: {$lastException->getMessage()}",
-        ];
+                throw new Exception("Retries exhausted: {$lastException->getMessage()}");
+            },
+            function () {
+                return [
+                    'success' => false,
+                    'statusCode' => 0,
+                    'body' => '',
+                    'error' => 'Circuit breaker is open — external service unavailable',
+                ];
+            },
+        );
     }
 }
