@@ -14,15 +14,18 @@ class InvoicePipelineService
     private InvoiceHistoryService $historyService;
     private NotificationService $notificationService;
     private InvoicePaymentService $paymentService;
+    private InvoiceFieldAccessPolicy $fieldPolicy;
 
     public function __construct(
         ?InvoiceHistoryService $historyService = null,
         ?NotificationService $notificationService = null,
         ?InvoicePaymentService $paymentService = null,
+        ?InvoiceFieldAccessPolicy $fieldPolicy = null,
     ) {
         $this->historyService = $historyService ?? new InvoiceHistoryService();
         $this->notificationService = $notificationService ?? new NotificationService();
         $this->paymentService = $paymentService ?? new InvoicePaymentService();
+        $this->fieldPolicy = $fieldPolicy ?? new InvoiceFieldAccessPolicy();
     }
 
     // Pipeline statuses in order
@@ -54,55 +57,6 @@ class InvoicePipelineService
     ];
 
     // All fields available for Admin in any status
-    private const ALL_FIELDS = [
-        'invoice_number', 'issue_date', 'due_date',
-        'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
-        'detail', 'amount', 'expense_type_id', 'cost_center_id',
-        'confirmed_by', 'approver_id', 'area_approval',
-        'dian_validation', 'accrued', 'ready_for_payment',
-        'payment_status', 'full_payment_date', 'pipeline_status',
-    ];
-
-    // Fields editable by role in each status
-    private const EDITABLE_FIELDS = [
-        RoleConstants::REGISTRO_REVISION => [
-            InvoiceConstants::STATUS_APROBACION => [
-                'invoice_number', 'issue_date', 'due_date',
-                'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
-                'detail', 'amount', 'expense_type_id', 'cost_center_id',
-                'confirmed_by',
-                'dian_validation',
-            ],
-        ],
-        RoleConstants::CONTABILIDAD => [
-            InvoiceConstants::STATUS_CONTABILIDAD => [
-                'accrued', 'accrual_date', 'ready_for_payment',
-            ],
-        ],
-        RoleConstants::TESORERIA => [
-            InvoiceConstants::STATUS_TESORERIA => [],
-            InvoiceConstants::STATUS_AUTORIZACION_PAGO => [],
-        ],
-        RoleConstants::CONTADOR => [
-            InvoiceConstants::STATUS_AUTORIZACION_PAGO => [],
-        ],
-    ];
-
-    // Sections visible per role (non-Admin roles have fixed sections)
-    private const VISIBLE_SECTIONS_BY_ROLE = [
-        RoleConstants::REGISTRO_REVISION => ['general', 'dates', 'classification', 'revision'],
-        RoleConstants::CONTABILIDAD      => ['general', 'dates', 'classification', 'accounting'],
-        RoleConstants::TESORERIA         => ['general', 'treasury'],
-        RoleConstants::CONTADOR          => ['general', 'dates', 'classification', 'revision', 'accounting', 'treasury', 'payment_authorization'],
-    ];
-
-    // Sections collapsed by default (accordion) per role/status
-    private const COLLAPSIBLE_SECTIONS_BY_ROLE = [
-        RoleConstants::REGISTRO_REVISION => [
-            InvoiceConstants::STATUS_APROBACION => ['general', 'dates', 'classification'],
-        ],
-    ];
-
     // Fields required before advancing from each status
     private const TRANSITION_REQUIREMENTS = [
         InvoiceConstants::STATUS_APROBACION => [
@@ -166,47 +120,17 @@ class InvoicePipelineService
 
     public function getEditableFields(string $roleName, string $status): array
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return self::ALL_FIELDS;
-        }
-
-        return self::EDITABLE_FIELDS[$roleName][$status] ?? [];
+        return $this->fieldPolicy->getEditableFields($roleName, $status);
     }
 
-    /**
-     * Returns sections visible in the edit form for the given role and current status.
-     * For non-Admin roles: fixed sections regardless of status.
-     * For Admin: sections depend on how far the invoice has progressed.
-     */
     public function getVisibleSections(string $roleName, string $status): array
     {
-        if ($roleName !== RoleConstants::ADMIN) {
-            return self::VISIBLE_SECTIONS_BY_ROLE[$roleName] ?? ['general'];
-        }
-
-        // Admin: show sections up to the current state
-        // STATUSES: aprobacion(0), contabilidad(1), tesoreria(2), autorizacion_pago(3), pagada(4)
-        $statusIndex = $this->getStatusIndex($status);
-        $sections = ['general', 'dates', 'classification', 'revision'];
-        if ($statusIndex >= 1) {
-            $sections[] = 'accounting';
-        }
-        if ($statusIndex >= 2) {
-            $sections[] = 'treasury';
-        }
-        if ($statusIndex >= 3) {
-            $sections[] = 'payment_authorization';
-        }
-
-        return $sections;
+        return $this->fieldPolicy->getVisibleSections($roleName, $status);
     }
 
-    /**
-     * Returns sections that should be collapsed (accordion) in the edit form.
-     */
     public function getCollapsibleSections(string $roleName, string $status): array
     {
-        return self::COLLAPSIBLE_SECTIONS_BY_ROLE[$roleName][$status] ?? [];
+        return $this->fieldPolicy->getCollapsibleSections($roleName, $status);
     }
 
     /**
@@ -291,13 +215,7 @@ class InvoicePipelineService
 
     public function filterEntityData(array $data, string $roleName, string $status): array
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return $data;
-        }
-
-        $allowed = $this->getEditableFields($roleName, $status);
-
-        return array_intersect_key($data, array_flip($allowed));
+        return $this->fieldPolicy->filterEntityData($data, $roleName, $status);
     }
 
     public function getStatusIndex(string $status): int
