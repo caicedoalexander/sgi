@@ -855,62 +855,6 @@ class EmployeeNoveltiesController extends AppController
     }
 
     /**
-     * @param string|null $id Novelty ID.
-     * @return \Cake\Http\Response|null
-     */
-    public function uploadDocument(?string $id = null)
-    {
-        $this->request->allowMethod(['post']);
-        $novelty = $this->EmployeeNovelties->get($id);
-        $user = $this->Authentication->getIdentity()->getOriginalData();
-        $file = $this->request->getUploadedFile('document');
-
-        if (!$file) {
-            $this->Flash->error('No se seleccionó ningún archivo.');
-
-            return $this->redirect(['action' => 'edit', $id]);
-        }
-
-        $result = $this->documentService->uploadForNovelty($novelty->id, $novelty->pipeline_status, $file, $user->id);
-
-        if (is_string($result)) {
-            $this->Flash->error($result);
-        } else {
-            $this->Flash->success('Documento subido exitosamente.');
-        }
-
-        return $this->redirect(['action' => 'edit', $id]);
-    }
-
-    /**
-     * @param string|null $noveltyId Novelty ID.
-     * @param string|null $documentId Document ID.
-     * @return \Cake\Http\Response|null
-     */
-    public function deleteDocument(?string $noveltyId = null, ?string $documentId = null)
-    {
-        $this->request->allowMethod(['post', 'delete']);
-        $novelty = $this->EmployeeNovelties->get($noveltyId);
-
-        $documentsTable = $this->fetchTable('NoveltyDocuments');
-        $document = $documentsTable->get($documentId);
-
-        if (!$this->documentService->canDeleteDocument($document, $novelty->pipeline_status)) {
-            $this->Flash->error('Solo puede eliminar documentos de la etapa actual.');
-
-            return $this->redirect(['action' => 'edit', $noveltyId]);
-        }
-
-        if ($this->documentService->deleteDocument((int)$documentId)) {
-            $this->Flash->success('Documento eliminado.');
-        } else {
-            $this->Flash->error('No se pudo eliminar el documento.');
-        }
-
-        return $this->redirect(['action' => 'edit', $noveltyId]);
-    }
-
-    /**
      * @return array
      */
     private function _getNoveltyTypesGrouped(): array

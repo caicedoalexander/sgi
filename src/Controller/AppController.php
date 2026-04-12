@@ -42,6 +42,7 @@ class AppController extends Controller
         'TemporaryOrganizations' => 'temporary_organizations',
         'DianCrosschecks' => 'dian_crosschecks',
         'EmployeeNovelties' => 'employee_novelties',
+        'NoveltyDocuments' => 'employee_novelties',
         'NoveltyTypes' => 'novelty_types',
         'LeaveDocumentTemplates' => 'leave_document_templates',
         'PettyCashRecords' => 'petty_cash',

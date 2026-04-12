@@ -169,12 +169,12 @@ return function (RouteBuilder $routes): void {
         );
         $builder->connect(
             '/employee-novelties/upload-document/{id}',
-            ['controller' => 'EmployeeNovelties', 'action' => 'uploadDocument'],
+            ['controller' => 'NoveltyDocuments', 'action' => 'upload'],
             ['id' => '\d+', 'pass' => ['id']]
         );
         $builder->connect(
             '/employee-novelties/delete-document/{noveltyId}/{documentId}',
-            ['controller' => 'EmployeeNovelties', 'action' => 'deleteDocument'],
+            ['controller' => 'NoveltyDocuments', 'action' => 'delete'],
             ['noveltyId' => '\d+', 'documentId' => '\d+', 'pass' => ['noveltyId', 'documentId']]
         );
 
