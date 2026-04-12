@@ -243,52 +243,61 @@ class PaymentSchedulingService
             ->where(['payment_scheduling_id' => $schedulingId])
             ->all();
 
-        $appliedInvoiceIds = [];
-        $errors = [];
+        $connection = $paymentsTable->getConnection();
 
-        foreach ($items as $item) {
-            $payment = $paymentsTable->newEntity([
-                'invoice_id' => $item->invoice_id,
-                'banking_entity_id' => $item->banking_entity_id,
-                'amount' => $item->amount,
-                'payment_date' => date('Y-m-d'),
-                'payment_scheduling_id' => $schedulingId,
-                'authorized' => true,
-                'authorized_by' => $authorizedBy,
-                'authorized_date' => date('Y-m-d'),
-                'created_by' => $scheduling->created_by,
-            ]);
+        return $connection->transactional(function () use (
+            $items, $paymentsTable, $invoicesTable, $scheduling, $schedulingId, $authorizedBy
+        ) {
+            $appliedInvoiceIds = [];
+            $errors = [];
 
-            if (!$paymentsTable->save($payment)) {
-                $errors[] = "No se pudo crear pago para factura ID {$item->invoice_id}";
-                continue;
+            foreach ($items as $item) {
+                $payment = $paymentsTable->newEntity([
+                    'invoice_id' => $item->invoice_id,
+                    'banking_entity_id' => $item->banking_entity_id,
+                    'amount' => $item->amount,
+                    'payment_date' => date('Y-m-d'),
+                    'payment_scheduling_id' => $schedulingId,
+                    'authorized' => true,
+                    'authorized_by' => $authorizedBy,
+                    'authorized_date' => date('Y-m-d'),
+                    'created_by' => $scheduling->created_by,
+                ]);
+
+                if (!$paymentsTable->save($payment)) {
+                    $errors[] = "No se pudo crear pago para factura ID {$item->invoice_id}";
+                    continue;
+                }
+
+                $appliedInvoiceIds[] = $item->invoice_id;
             }
 
-            $appliedInvoiceIds[] = $item->invoice_id;
-        }
-
-        // Recalcular payment_status y avanzar facturas
-        $advanced = [];
-        $partial = [];
-        foreach (array_unique($appliedInvoiceIds) as $invoiceId) {
-            $this->paymentService->recalculatePaymentStatus($invoiceId);
-
-            $invoice = $invoicesTable->get($invoiceId);
-            if ($invoice->payment_status === InvoiceConstants::PAYMENT_FULL) {
-                $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
-                $invoicesTable->save($invoice);
-                $advanced[] = $invoiceId;
-            } else {
-                $partial[] = $invoiceId;
+            if (!empty($errors)) {
+                return ['success' => false, 'errors' => $errors, 'advanced_to_pagada' => [], 'partial_payment' => []];
             }
-        }
 
-        return [
-            'success' => empty($errors),
-            'errors' => $errors,
-            'advanced_to_pagada' => $advanced,
-            'partial_payment' => $partial,
-        ];
+            $advanced = [];
+            $partial = [];
+            foreach (array_unique($appliedInvoiceIds) as $invoiceId) {
+                $this->paymentService->recalculatePaymentStatus($invoiceId);
+
+                $invoice = $invoicesTable->get($invoiceId);
+                if ($invoice->payment_status === InvoiceConstants::PAYMENT_FULL) {
+                    $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+                    $invoicesTable->save($invoice);
+                    $advanced[] = $invoiceId;
+                } else {
+                    $partial[] = $invoiceId;
+                }
+            }
+
+            return [
+                'success' => true,
+                'errors' => [],
+                'advanced_to_pagada' => $advanced,
+                'partial_payment' => $partial,
+            ];
+        });
     }
 
     /**
