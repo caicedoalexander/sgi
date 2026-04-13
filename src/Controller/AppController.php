@@ -49,6 +49,7 @@ class AppController extends Controller
         'LegalizationRecords' => 'legalizations',
         'NoveltyLiquidationDocs' => 'novelty_liquidation_docs',
         'BankingEntities' => 'banking_entities',
+        'InvoicePayments' => 'invoices',
         'PaymentSchedulings' => 'payment_schedulings',
     ];
 

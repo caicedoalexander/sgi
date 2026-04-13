@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use Cake\Http\Client;
-use Cake\Log\Log;
 use Exception;
 
 class WebhookService
@@ -15,6 +14,7 @@ class WebhookService
     private Client $client;
     private int $maxRetries;
     private CircuitBreaker $circuitBreaker;
+    private StructuredLogger $logger;
 
     /**
      * @param int $timeout Request timeout in seconds.
@@ -27,6 +27,7 @@ class WebhookService
         ]);
         $this->maxRetries = $maxRetries;
         $this->circuitBreaker = new CircuitBreaker('webhook', failureThreshold: 3, recoveryTimeoutSeconds: 120);
+        $this->logger = new StructuredLogger('Webhook');
     }
 
     /**
@@ -115,7 +116,7 @@ class WebhookService
                         usleep($delayMs * 1000);
                         $msg = $lastException->getMessage();
                         $retryNum = $attempt + 1;
-                        Log::warning("WebhookService: retry #{$retryNum} after {$delayMs}ms — {$msg}");
+                        $this->logger->warning("Retry #{$retryNum} after {$delayMs}ms", ['error' => $msg]);
                     }
                 }
 

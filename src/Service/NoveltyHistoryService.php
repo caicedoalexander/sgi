@@ -4,13 +4,14 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\NoveltyConstants;
+use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Trait\HistoryNormalizationTrait;
 use Cake\ORM\TableRegistry;
 
 /**
  * Records field-by-field audit trail for employee novelties.
  */
-class NoveltyHistoryService
+class NoveltyHistoryService implements HistoryServiceInterface
 {
     use HistoryNormalizationTrait;
 

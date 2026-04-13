@@ -3,335 +3,135 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Constants\ContractTypeConstants;
-use App\Constants\EmployeeStatusConstants;
-use App\Constants\InvoiceConstants;
-use App\Constants\NoveltyConstants;
+use App\Service\Dashboard\EmployeeStatisticsService;
+use App\Service\Dashboard\InvoiceStatisticsService;
 use Cake\ORM\TableRegistry;
 use Exception;
 
+/**
+ * Facade for domain-specific dashboard statistics services.
+ */
 class DashboardStatisticsService
 {
+    private InvoiceStatisticsService $invoiceStats;
+    private EmployeeStatisticsService $employeeStats;
+
     /**
-     * Get invoice pipeline status counts.
+     * @param \App\Service\Dashboard\InvoiceStatisticsService|null $invoiceStats Invoice stats.
+     * @param \App\Service\Dashboard\EmployeeStatisticsService|null $employeeStats Employee stats.
+     */
+    public function __construct(
+        ?InvoiceStatisticsService $invoiceStats = null,
+        ?EmployeeStatisticsService $employeeStats = null,
+    ) {
+        $this->invoiceStats = $invoiceStats ?? new InvoiceStatisticsService();
+        $this->employeeStats = $employeeStats ?? new EmployeeStatisticsService();
+    }
+
+    /**
+     * @return array
      */
     public function getInvoiceStats(): array
     {
-        return [
-            'total' => $this->safeCount('Invoices'),
-            'aprobacion' => $this->safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_APROBACION]),
-            'contabilidad' => $this->safeCount(
-                'Invoices',
-                ['pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD],
-            ),
-            'tesoreria' => $this->safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_TESORERIA]),
-            'pagada' => $this->safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_PAGADA]),
-            'rechazada' => $this->safeCount('Invoices', ['area_approval' => InvoiceConstants::APPROVAL_REJECTED]),
-        ];
+        return $this->invoiceStats->getStats();
     }
 
     /**
-     * Get recent invoices for dashboard widget.
+     * @param int $limit Limit.
+     * @return array
      */
     public function getRecentInvoices(int $limit = 5): array
     {
-        try {
-            return TableRegistry::getTableLocator()->get('Invoices')
-                ->find()
-                ->select(['id', 'invoice_number', 'pipeline_status', 'area_approval', 'modified'])
-                ->contain(['Providers' => ['fields' => ['id', 'name']]])
-                ->orderByDesc('modified')
-                ->limit($limit)
-                ->toArray();
-        } catch (Exception $e) {
-            return [];
-        }
+        return $this->invoiceStats->getRecent($limit);
     }
 
     /**
-     * Get invoice financial stats for a date range.
+     * @param string $from Start date.
+     * @param string $to End date.
+     * @return array
      */
     public function getInvoiceFinancialStats(string $from, string $to): array
     {
-        try {
-            $table = TableRegistry::getTableLocator()->get('Invoices');
-            $dateConditions = [
-                'Invoices.created >=' => $from,
-                'Invoices.created <=' => $to . ' 23:59:59',
-            ];
-
-            $totalPaid = $table->find()
-                ->where(array_merge(
-                    ['pipeline_status' => InvoiceConstants::STATUS_PAGADA],
-                    $dateConditions,
-                ))
-                ->select(['total' => $table->find()->func()->sum('amount')])
-                ->first();
-
-            $totalInProcess = $table->find()
-                ->where(array_merge([
-                    'pipeline_status IN' => [
-                        InvoiceConstants::STATUS_APROBACION,
-                        InvoiceConstants::STATUS_CONTABILIDAD,
-                        InvoiceConstants::STATUS_TESORERIA,
-                    ],
-                    'OR' => [
-                        'area_approval IS' => null,
-                        'area_approval !=' => InvoiceConstants::APPROVAL_REJECTED,
-                    ],
-                ], $dateConditions))
-                ->select(['total' => $table->find()->func()->sum('amount')])
-                ->first();
-
-            $avgAmount = $table->find()
-                ->where($dateConditions)
-                ->select(['avg' => $table->find()->func()->avg('amount')])
-                ->first();
-
-            $overdue = $table->find()
-                ->where([
-                    'due_date <' => date('Y-m-d'),
-                    'pipeline_status !=' => InvoiceConstants::STATUS_PAGADA,
-                    'OR' => [
-                        'area_approval IS' => null,
-                        'area_approval !=' => InvoiceConstants::APPROVAL_REJECTED,
-                    ],
-                ])
-                ->count();
-
-            return [
-                'total_paid' => (float)($totalPaid->total ?? 0),
-                'total_in_process' => (float)($totalInProcess->total ?? 0),
-                'avg_amount' => (float)($avgAmount->avg ?? 0),
-                'overdue' => $overdue,
-            ];
-        } catch (Exception $e) {
-            return [];
-        }
+        return $this->invoiceStats->getFinancialStats($from, $to);
     }
 
     /**
-     * Get invoice chart data for a date range.
+     * @param string $from Start date.
+     * @param string $to End date.
+     * @return array
      */
     public function getInvoiceChartData(string $from, string $to): array
     {
-        try {
-            $table = TableRegistry::getTableLocator()->get('Invoices');
-            $dateConditions = [
-                'Invoices.created >=' => $from,
-                'Invoices.created <=' => $to . ' 23:59:59',
-            ];
-
-            $statusAmounts = [];
-            foreach (InvoiceConstants::PIPELINE_STATUSES as $status) {
-                $result = $table->find()
-                    ->where(array_merge(['pipeline_status' => $status], $dateConditions))
-                    ->select(['total' => $table->find()->func()->sum('amount')])
-                    ->first();
-                $statusAmounts[$status] = (float)($result->total ?? 0);
-            }
-
-            $rejected = $table->find()
-                ->where(array_merge(
-                    ['area_approval' => InvoiceConstants::APPROVAL_REJECTED],
-                    $dateConditions,
-                ))
-                ->select(['total' => $table->find()->func()->sum('amount')])
-                ->first();
-            $statusAmounts['rechazada'] = (float)($rejected->total ?? 0);
-
-            $monthlyData = $table->getConnection()->execute(
-                "SELECT DATE_FORMAT(created, '%Y-%m') as month,
-                        COUNT(*) as count,
-                        COALESCE(SUM(amount), 0) as total
-                 FROM invoices
-                 WHERE created >= ? AND created <= ?
-                 GROUP BY DATE_FORMAT(created, '%Y-%m')
-                 ORDER BY month ASC",
-                [$from, $to . ' 23:59:59'],
-            )->fetchAll('assoc');
-
-            return [
-                'donut_status' => $statusAmounts,
-                'monthly' => $monthlyData,
-            ];
-        } catch (Exception $e) {
-            return [];
-        }
+        return $this->invoiceStats->getChartData($from, $to);
     }
 
     /**
-     * Get recent novelties for dashboard widget.
+     * @param int $limit Limit.
+     * @return array
      */
     public function getRecentNovelties(int $limit = 5): array
     {
-        try {
-            return TableRegistry::getTableLocator()->get('EmployeeNovelties')
-                ->find()
-                ->select(['id', 'employee_id', 'novelty_type_id', 'created'])
-                ->contain([
-                    'Employees' => ['fields' => ['id', 'first_name', 'last_name1', 'last_name2']],
-                    'NoveltyTypes' => ['fields' => ['id', 'name']],
-                ])
-                ->orderByDesc('created')
-                ->limit($limit)
-                ->toArray();
-        } catch (Exception $e) {
-            return [];
-        }
+        return $this->employeeStats->getRecentNovelties($limit);
     }
 
     /**
-     * Get RRHH basic stats.
+     * @return array
      */
     public function getRrhhBasicStats(): array
     {
-        $stats = [];
-        $stats['active_employees'] = $this->safeCount(
-            'Employees',
-            ['employee_status_id' => EmployeeStatusConstants::ACTIVO],
-        );
-
-        $monthStart = date('Y-m-01 00:00:00');
-        $stats['novelties_month'] = $this->safeCount('EmployeeNovelties', ['created >=' => $monthStart]);
-
-        $today = date('Y-m-d');
-        try {
-            $stats['active_novelties'] = TableRegistry::getTableLocator()->get('EmployeeNovelties')
-                ->find()
-                ->where(['pipeline_status IN' => NoveltyConstants::ACTIVE_STATUSES])
-                ->where(function ($exp) use ($today) {
-                    return $exp->or([
-                        $exp->and([
-                            'schedule_type' => NoveltyConstants::SCHEDULE_DAYS,
-                            'start_date <=' => $today,
-                            'end_date >=' => $today,
-                        ]),
-                        $exp->and([
-                            'schedule_type' => NoveltyConstants::SCHEDULE_HOURS,
-                            'permission_date' => $today,
-                        ]),
-                    ]);
-                })
-                ->count();
-        } catch (Exception $e) {
-            $stats['active_novelties'] = 0;
-        }
-
-        return $stats;
+        return $this->employeeStats->getBasicStats();
     }
 
     /**
-     * Get RRHH extended statistics for a date range.
+     * @param string $from Start date.
+     * @param string $to End date.
+     * @return array
      */
     public function getRrhhExtendedStats(string $from, string $to): array
     {
-        try {
-            $empTable = TableRegistry::getTableLocator()->get('Employees');
-
-            $avgAge = $empTable->getConnection()->execute(
-                "SELECT AVG(TIMESTAMPDIFF(YEAR, birth_date, CURDATE())) as avg_age
-                 FROM employees
-                 WHERE employee_status_id = ? AND birth_date IS NOT NULL",
-                [EmployeeStatusConstants::ACTIVO],
-            )->fetch('assoc');
-
-            $avgTenure = $empTable->getConnection()->execute(
-                "SELECT AVG(TIMESTAMPDIFF(YEAR, hire_date, CURDATE())) as avg_tenure
-                 FROM employees
-                 WHERE employee_status_id = ? AND hire_date IS NOT NULL",
-                [EmployeeStatusConstants::ACTIVO],
-            )->fetch('assoc');
-
-            $newHires = $empTable->find()
-                ->where([
-                    'employee_status_id' => EmployeeStatusConstants::ACTIVO,
-                    'hire_date >=' => $from,
-                    'hire_date <=' => $to,
-                ])
-                ->count();
-
-            $terminations = $empTable->find()
-                ->where([
-                    'termination_date >=' => $from,
-                    'termination_date <=' => $to,
-                ])
-                ->count();
-
-            return [
-                'avg_age' => round((float)($avgAge['avg_age'] ?? 0), 1),
-                'avg_tenure' => round((float)($avgTenure['avg_tenure'] ?? 0), 1),
-                'new_hires' => $newHires,
-                'terminations' => $terminations,
-            ];
-        } catch (Exception $e) {
-            return [];
-        }
+        return $this->employeeStats->getExtendedStats($from, $to);
     }
 
     /**
-     * Get RRHH chart data for a date range.
+     * @param string $from Start date.
+     * @param string $to End date.
+     * @return array
      */
     public function getRrhhChartData(string $from, string $to): array
     {
-        try {
-            $empTable = TableRegistry::getTableLocator()->get('Employees');
-
-            $contractTypes = [];
-            foreach (ContractTypeConstants::ALL as $type) {
-                $contractTypes[$type] = $empTable->find()
-                    ->where([
-                        'employee_status_id' => EmployeeStatusConstants::ACTIVO,
-                        'contract_type' => $type,
-                    ])
-                    ->count();
-            }
-
-            $monthlyNovelties = TableRegistry::getTableLocator()->get('EmployeeNovelties')
-                ->getConnection()->execute(
-                    "SELECT DATE_FORMAT(created, '%Y-%m') as month,
-                            COUNT(*) as count
-                     FROM employee_novelties
-                     WHERE created >= ? AND created <= ?
-                     GROUP BY DATE_FORMAT(created, '%Y-%m')
-                     ORDER BY month ASC",
-                    [$from, $to . ' 23:59:59'],
-                )->fetchAll('assoc');
-
-            return [
-                'donut_contract' => $contractTypes,
-                'monthly_novelties' => $monthlyNovelties,
-            ];
-        } catch (Exception $e) {
-            return [];
-        }
+        return $this->employeeStats->getChartData($from, $to);
     }
 
     /**
-     * Get catalog counts.
+     * @return array
      */
     public function getCatalogStats(): array
     {
         return [
-            'providers' => $this->safeCount('Providers', ['active' => true]),
-            'operation_centers' => $this->safeCount('OperationCenters'),
-            'expense_types' => $this->safeCount('ExpenseTypes'),
-            'cost_centers' => $this->safeCount('CostCenters'),
+            'providers' => $this->_safeCount('Providers', ['active' => true]),
+            'operation_centers' => $this->_safeCount('OperationCenters'),
+            'expense_types' => $this->_safeCount('ExpenseTypes'),
+            'cost_centers' => $this->_safeCount('CostCenters'),
         ];
     }
 
     /**
-     * Get admin stats.
+     * @return array
      */
     public function getAdminStats(): array
     {
         return [
-            'users' => $this->safeCount('Users', ['active' => true]),
-            'roles' => $this->safeCount('Roles'),
+            'users' => $this->_safeCount('Users', ['active' => true]),
+            'roles' => $this->_safeCount('Roles'),
         ];
     }
 
-    private function safeCount(string $tableName, array $conditions = []): int
+    /**
+     * @param string $tableName Table name.
+     * @param array $conditions Query conditions.
+     * @return int
+     */
+    private function _safeCount(string $tableName, array $conditions = []): int
     {
         try {
             $query = TableRegistry::getTableLocator()->get($tableName)->find();

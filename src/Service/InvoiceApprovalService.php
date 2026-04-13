@@ -10,6 +10,16 @@ use Cake\I18n\DateTime;
 use Cake\ORM\TableRegistry;
 use Exception;
 
+/**
+ * Multi-approver invoice approval workflow (invoice_approvals table).
+ *
+ * Manages per-approver tokens with batch tracking, quorum detection
+ * (all must approve), and rejection cascading. Uses SELECT FOR UPDATE
+ * to prevent TOCTOU race conditions on token consumption.
+ *
+ * For generic single-entity external approvals, see ApprovalTokenService
+ * which uses the approval_tokens table.
+ */
 class InvoiceApprovalService
 {
     private $invoiceApprovalsTable;
@@ -145,54 +155,87 @@ class InvoiceApprovalService
         ?string $ipAddress,
         ?string $userAgent,
     ): array {
-        $approval = $this->validateToken($token);
-        if (!$approval) {
-            return ['success' => false, 'allApproved' => false, 'rejected' => false, 'errors' => ['Token inválido o expirado']];
-        }
+        $connection = $this->invoiceApprovalsTable->getConnection();
 
-        $newStatus = $action === 'approve'
-            ? InvoiceConstants::APPROVER_STATUS_APPROVED
-            : InvoiceConstants::APPROVER_STATUS_REJECTED;
+        return $connection->transactional(function () use ($token, $action, $observations, $ipAddress, $userAgent) {
+            // Lock the row to prevent concurrent consumption (FOR UPDATE)
+            $approval = $this->invoiceApprovalsTable->find()
+                ->where([
+                    'token' => $token,
+                    'status' => InvoiceConstants::APPROVER_STATUS_PENDING,
+                    'token_expires_at >' => new DateTime(),
+                ])
+                ->contain(['Invoices' => ['Providers', 'InvoiceDocuments'], 'Users'])
+                ->epilog('FOR UPDATE')
+                ->first();
 
-        $approval->status = $newStatus;
-        $approval->responded_at = new DateTime();
-        $approval->observations = $observations;
-        $approval->ip_address = $ipAddress;
-        $approval->user_agent = $userAgent;
-        $approval->token = null; // Invalidate token after use
+            if (!$approval) {
+                return [
+                    'success' => false,
+                    'allApproved' => false,
+                    'rejected' => false,
+                    'errors' => ['Token inválido o expirado'],
+                ];
+            }
 
-        if (!$this->invoiceApprovalsTable->save($approval)) {
-            return ['success' => false, 'allApproved' => false, 'rejected' => false, 'errors' => ['Error al guardar respuesta']];
-        }
+            $newStatus = $action === 'approve'
+                ? InvoiceConstants::APPROVER_STATUS_APPROVED
+                : InvoiceConstants::APPROVER_STATUS_REJECTED;
 
-        $invoiceId = $approval->invoice_id;
+            $approval->status = $newStatus;
+            $approval->responded_at = new DateTime();
+            $approval->observations = $observations;
+            $approval->ip_address = $ipAddress;
+            $approval->user_agent = $userAgent;
+            $approval->token = null;
 
-        if ($action === 'reject') {
-            // Invalidate all other pending tokens for this invoice
-            $this->_invalidatePendingTokens($invoiceId, $approval->id);
+            if (!$this->invoiceApprovalsTable->save($approval)) {
+                return [
+                    'success' => false,
+                    'allApproved' => false,
+                    'rejected' => false,
+                    'errors' => ['Error al guardar respuesta'],
+                ];
+            }
 
-            // Update invoice area_approval
-            $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-            $invoice = $invoicesTable->get($invoiceId);
-            $invoice->area_approval = InvoiceConstants::APPROVAL_REJECTED;
-            $invoice->area_approval_date = new DateTime();
-            $invoicesTable->save($invoice);
+            $invoiceId = $approval->invoice_id;
 
-            return ['success' => true, 'allApproved' => false, 'rejected' => true, 'errors' => [], 'invoice_id' => $invoiceId];
-        }
+            if ($action === 'reject') {
+                $this->_invalidatePendingTokens($invoiceId, $approval->id);
 
-        // Check if all approvers in this batch have approved
-        $allApproved = $this->areAllApproved($invoiceId);
+                $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+                $invoice = $invoicesTable->get($invoiceId);
+                $invoice->area_approval = InvoiceConstants::APPROVAL_REJECTED;
+                $invoice->area_approval_date = new DateTime();
+                $invoicesTable->save($invoice);
 
-        if ($allApproved) {
-            $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-            $invoice = $invoicesTable->get($invoiceId);
-            $invoice->area_approval = InvoiceConstants::APPROVAL_APPROVED;
-            $invoice->area_approval_date = new DateTime();
-            $invoicesTable->save($invoice);
-        }
+                return [
+                    'success' => true,
+                    'allApproved' => false,
+                    'rejected' => true,
+                    'errors' => [],
+                    'invoice_id' => $invoiceId,
+                ];
+            }
 
-        return ['success' => true, 'allApproved' => $allApproved, 'rejected' => false, 'errors' => [], 'invoice_id' => $invoiceId];
+            $allApproved = $this->areAllApproved($invoiceId);
+
+            if ($allApproved) {
+                $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+                $invoice = $invoicesTable->get($invoiceId);
+                $invoice->area_approval = InvoiceConstants::APPROVAL_APPROVED;
+                $invoice->area_approval_date = new DateTime();
+                $invoicesTable->save($invoice);
+            }
+
+            return [
+                'success' => true,
+                'allApproved' => $allApproved,
+                'rejected' => false,
+                'errors' => [],
+                'invoice_id' => $invoiceId,
+            ];
+        });
     }
 
     /**

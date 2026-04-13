@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Middleware\CorrelationIdMiddleware;
 use App\Middleware\HostHeaderMiddleware;
 use Authentication\AuthenticationService;
 use Authentication\AuthenticationServiceInterface;
@@ -37,6 +38,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
     public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
     {
         $middlewareQueue
+            ->add(new CorrelationIdMiddleware())
             ->add(new ErrorHandlerMiddleware(Configure::read('Error'), $this))
             ->add(new HostHeaderMiddleware())
             ->add(new AssetMiddleware([

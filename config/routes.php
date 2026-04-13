@@ -21,6 +21,7 @@
  * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 
+use App\Middleware\RateLimitMiddleware;
 use Cake\Routing\Route\DashedRoute;
 use Cake\Routing\RouteBuilder;
 
@@ -53,6 +54,7 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/', ['controller' => 'Dashboard', 'action' => 'index']);
         $builder->connect('/login', ['controller' => 'Users', 'action' => 'login']);
         $builder->connect('/logout', ['controller' => 'Users', 'action' => 'logout']);
+        $builder->connect('/health', ['controller' => 'Health', 'action' => 'index']);
 
         $builder->connect('/pages/*', 'Pages::display');
 
@@ -88,17 +90,24 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']]
         );
 
-        // External approval tokens
-        $builder->connect(
-            '/approve/{token}',
-            ['controller' => 'ExternalApprovals', 'action' => 'review'],
-            ['token' => '[a-f0-9]{64}', 'pass' => ['token']]
+        // External approval tokens (rate-limited)
+        $builder->registerMiddleware(
+            'rateLimit',
+            new RateLimitMiddleware(10, 60),
         );
-        $builder->connect(
-            '/approve/{token}/process',
-            ['controller' => 'ExternalApprovals', 'action' => 'process'],
-            ['token' => '[a-f0-9]{64}', 'pass' => ['token']]
-        );
+        $builder->scope('/approve', function (RouteBuilder $approveBuilder): void {
+            $approveBuilder->applyMiddleware('rateLimit');
+            $approveBuilder->connect(
+                '/{token}',
+                ['controller' => 'ExternalApprovals', 'action' => 'review'],
+                ['token' => '[a-f0-9]{64}', 'pass' => ['token']],
+            );
+            $approveBuilder->connect(
+                '/{token}/process',
+                ['controller' => 'ExternalApprovals', 'action' => 'process'],
+                ['token' => '[a-f0-9]{64}', 'pass' => ['token']],
+            );
+        });
 
         // Invoice document management
         $builder->connect(
@@ -329,23 +338,23 @@ return function (RouteBuilder $routes): void {
         // Invoice payments
         $builder->connect(
             '/invoices/add-payment/{invoiceId}',
-            ['controller' => 'Invoices', 'action' => 'addPayment'],
+            ['controller' => 'InvoicePayments', 'action' => 'addPayment'],
             ['pass' => ['invoiceId']],
         );
         $builder->connect(
             '/invoices/delete-payment/{invoiceId}/{paymentId}',
-            ['controller' => 'Invoices', 'action' => 'deletePayment'],
+            ['controller' => 'InvoicePayments', 'action' => 'deletePayment'],
             ['pass' => ['invoiceId', 'paymentId']],
         );
         $builder->connect(
             '/invoices/authorize-payment/{invoiceId}/{paymentId}',
-            ['controller' => 'Invoices', 'action' => 'authorizePayment'],
+            ['controller' => 'InvoicePayments', 'action' => 'authorizePayment'],
             ['pass' => ['invoiceId', 'paymentId']],
         );
 
         $builder->connect(
             '/invoices/reject-payment/{invoiceId}/{paymentId}',
-            ['controller' => 'Invoices', 'action' => 'rejectPayment'],
+            ['controller' => 'InvoicePayments', 'action' => 'rejectPayment'],
             ['pass' => ['invoiceId', 'paymentId']],
         );
 

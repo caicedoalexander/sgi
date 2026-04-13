@@ -4,30 +4,56 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
-use App\Constants\NoveltyConstants;
-use App\Constants\RoleConstants;
+use App\Service\Strategy\InvoiceApprovalStrategy;
+use App\Service\Strategy\NoveltyApprovalStrategy;
 use Cake\ORM\TableRegistry;
 use DateTime;
-use Exception;
 
+/**
+ * Generic single-entity external approval via SHA256 tokens (approval_tokens table).
+ *
+ * Handles one token per entity (invoice or novelty). Uses Strategy pattern
+ * to delegate entity-specific approval logic.
+ *
+ * For multi-approver invoice workflows, see InvoiceApprovalService which
+ * manages its own tokens in the invoice_approvals table.
+ */
 class ApprovalTokenService
 {
-    private InvoiceHistoryService $historyService;
-    private NotificationService $notificationService;
-    private NoveltyObservationService $observationService;
+    /**
+     * @var array<string, \App\Service\Strategy\ApprovalStrategyInterface>
+     */
+    private array $strategies;
 
+    /**
+     * @param \App\Service\InvoiceHistoryService|null $historyService History service.
+     * @param \App\Service\NotificationService|null $notificationService Notification service.
+     * @param \App\Service\NoveltyObservationService|null $observationService Observation service.
+     */
     public function __construct(
         ?InvoiceHistoryService $historyService = null,
         ?NotificationService $notificationService = null,
         ?NoveltyObservationService $observationService = null,
     ) {
-        $this->historyService = $historyService ?? new InvoiceHistoryService();
-        $this->notificationService = $notificationService ?? new NotificationService();
-        $this->observationService = $observationService ?? new NoveltyObservationService();
+        $this->strategies = [
+            'invoices' => new InvoiceApprovalStrategy($historyService, $notificationService),
+            'employee_novelties' => new NoveltyApprovalStrategy($observationService),
+        ];
     }
 
-    public function generateToken(string $entityType, int $entityId, int $createdBy, int $hoursValid = InvoiceConstants::APPROVAL_TOKEN_HOURS): string
-    {
+    /**
+     * @param string $entityType Entity type key.
+     * @param int $entityId Entity ID.
+     * @param int $createdBy User who created the token.
+     * @param int $hoursValid Token validity in hours.
+     * @return string The generated token.
+     */
+    public function generateToken(
+        string $entityType,
+        int $entityId,
+        int $createdBy,
+        int $hoursValid = InvoiceConstants::APPROVAL_TOKEN_HOURS,
+    ): string {
         $token = bin2hex(random_bytes(32));
         $expiresAt = new DateTime("+{$hoursValid} hours");
 
@@ -45,6 +71,10 @@ class ApprovalTokenService
         return $token;
     }
 
+    /**
+     * @param string $token The token string.
+     * @return object|null
+     */
     public function validateToken(string $token): ?object
     {
         $table = TableRegistry::getTableLocator()->get('ApprovalTokens');
@@ -56,12 +86,10 @@ class ApprovalTokenService
             return null;
         }
 
-        // Check if already used
         if ($record->used_at !== null) {
             return null;
         }
 
-        // Check expiration
         if ($record->expires_at < new DateTime()) {
             return null;
         }
@@ -69,6 +97,16 @@ class ApprovalTokenService
         return $record;
     }
 
+    /**
+     * @param string $token The token string.
+     * @param string $action The action (approve/reject).
+     * @param string|null $observations Optional observations.
+     * @param string|null $ip Client IP address.
+     * @param string|null $userAgent Client user agent.
+     * @param string|null $approvalDate Optional approval date.
+     * @param int|null $approvedByUserId Optional approver user ID.
+     * @return bool
+     */
     public function consumeToken(
         string $token,
         string $action,
@@ -98,131 +136,22 @@ class ApprovalTokenService
             return false;
         }
 
-        // Apply action to the entity
-        return $this->applyAction($record->entity_type, $record->entity_id, $action, $observations, $approvedByUserId, $approvalDate);
+        $strategy = $this->strategies[$record->entity_type] ?? null;
+
+        return $strategy
+            ? $strategy->apply($record->entity_id, $action, $observations, $approvedByUserId, $approvalDate)
+            : false;
     }
 
-    private function applyAction(string $entityType, int $entityId, string $action, ?string $observations, ?int $createdBy, ?string $approvalDate): bool
-    {
-        switch ($entityType) {
-            case 'invoices':
-                return $this->applyInvoiceAction($entityId, $action, $observations, $createdBy, $approvalDate);
-            case 'employee_novelties':
-                return $this->applyNoveltyAction($entityId, $action, $observations, $createdBy);
-            default:
-                return false;
-        }
-    }
-
-    private function applyInvoiceAction(int $invoiceId, string $action, ?string $observations, ?int $createdBy, ?string $approvalDate): bool
-    {
-        $table = TableRegistry::getTableLocator()->get('Invoices');
-        $invoice = $table->get($invoiceId, contain: ['Providers']);
-
-        $userId = $createdBy ?? 0;
-        $parsedDate = !empty($approvalDate) ? new DateTime($approvalDate) : new DateTime();
-
-        if ($action === 'approve') {
-            // Delegate to pipeline: save approval fields + auto-advance + history + notification
-            $pipeline = new InvoicePipelineService($this->historyService, $this->notificationService);
-            $result = $pipeline->saveAndAdvance(
-                $invoice,
-                [
-                    'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
-                    'area_approval_date' => $parsedDate,
-                ],
-                RoleConstants::ADMIN,
-                $userId,
-            );
-
-            if ($result['saved'] && !empty($observations)) {
-                $this->saveInvoiceObservation($invoiceId, $observations, $userId);
-            }
-
-            return $result['saved'];
-        }
-
-        if ($action === 'reject') {
-            $invoice->area_approval = InvoiceConstants::APPROVAL_REJECTED;
-            $invoice->area_approval_date = $parsedDate;
-
-            if (!$table->save($invoice)) {
-                return false;
-            }
-
-            $this->historyService->recordFieldChange($invoiceId, 'area_approval', InvoiceConstants::APPROVAL_PENDING, InvoiceConstants::APPROVAL_REJECTED, $userId);
-
-            if (!empty($observations)) {
-                $this->saveInvoiceObservation($invoiceId, $observations, $userId);
-            }
-
-            return true;
-        }
-
-        return true;
-    }
-
-    private function saveInvoiceObservation(int $invoiceId, string $message, int $userId): void
-    {
-        $observationsTable = TableRegistry::getTableLocator()->get('InvoiceObservations');
-        $observation = $observationsTable->newEntity([
-            'invoice_id' => $invoiceId,
-            'user_id' => $userId,
-            'message' => $message,
-        ]);
-        $observationsTable->save($observation);
-    }
-
-    private function applyNoveltyAction(int $noveltyId, string $action, ?string $observations = null, ?int $createdBy = null): bool
-    {
-        $table = TableRegistry::getTableLocator()->get('EmployeeNovelties');
-        $novelty = $table->get($noveltyId);
-
-        if ($action === 'approve') {
-            $novelty->pipeline_status = NoveltyConstants::STATUS_RRHH;
-            $novelty->area_approval = NoveltyConstants::APPROVAL_APPROVED;
-            $novelty->approved_by = $novelty->approver_id;
-            $novelty->approved_at = new DateTime();
-        } elseif ($action === 'reject') {
-            $novelty->area_approval = NoveltyConstants::APPROVAL_REJECTED;
-            // Stay in aprobacion status — RRHH can edit and resend
-        }
-
-        $saved = (bool)$table->save($novelty);
-
-        if ($saved && !empty($observations)) {
-            $userId = $createdBy ?? $novelty->approver_id ?? 0;
-            $this->observationService->addToNovelty($noveltyId, $userId, $observations);
-        }
-
-        return $saved;
-    }
-
+    /**
+     * @param string $entityType Entity type key.
+     * @param int $entityId Entity ID.
+     * @return object|null
+     */
     public function getEntity(string $entityType, int $entityId): ?object
     {
-        $tableMap = [
-            'invoices' => 'Invoices',
-            'employee_novelties' => 'EmployeeNovelties',
-        ];
+        $strategy = $this->strategies[$entityType] ?? null;
 
-        $tableName = $tableMap[$entityType] ?? null;
-        if (!$tableName) {
-            return null;
-        }
-
-        $table = TableRegistry::getTableLocator()->get($tableName);
-
-        try {
-            $contain = [];
-            if ($entityType === 'invoices') {
-                $contain = ['Providers', 'InvoiceDocuments'];
-            } elseif ($entityType === 'employee_novelties') {
-                $contain = ['Employees', 'NoveltyTypes', 'Approvers'];
-            }
-
-            return $table->get($entityId, contain: $contain);
-        } catch (Exception $e) {
-            return null;
-        }
+        return $strategy ? $strategy->getEntity($entityId) : null;
     }
 }

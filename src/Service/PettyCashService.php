@@ -11,107 +11,74 @@ use Cake\ORM\TableRegistry;
 
 class PettyCashService
 {
-    private InvoiceHistoryService $historyService;
+    private GroupedInvoiceService $grouped;
 
+    /**
+     * @param \App\Service\InvoiceHistoryService|null $historyService History service.
+     */
     public function __construct(?InvoiceHistoryService $historyService = null)
     {
-        $this->historyService = $historyService ?? new InvoiceHistoryService();
+        $this->grouped = new GroupedInvoiceService(
+            InvoiceConstants::DOCTYPE_CAJA_MENOR,
+            'petty_cash_record_id',
+            'PettyCashRecords',
+            'Caja Menor',
+            $historyService,
+        );
     }
 
+    /**
+     * @param array $invoiceIds Invoice IDs to validate.
+     * @return array
+     */
     public function validateGrouping(array $invoiceIds): array
     {
-        $errors = [];
-        if (empty($invoiceIds)) {
-            return ['Debe seleccionar al menos una factura.'];
-        }
-
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $invoices = $invoicesTable->find()
-            ->where(['Invoices.id IN' => $invoiceIds])
-            ->all();
-
-        $foundIds = [];
-        foreach ($invoices as $invoice) {
-            $foundIds[] = $invoice->id;
-
-            if ($invoice->document_type !== InvoiceConstants::DOCTYPE_CAJA_MENOR) {
-                $errors[] = sprintf(
-                    'La factura #%s no es de tipo "Caja menor".',
-                    $invoice->invoice_number ?? $invoice->id,
-                );
-            }
-            if ($invoice->pipeline_status !== InvoiceConstants::STATUS_CONTABILIDAD) {
-                $errors[] = sprintf(
-                    'La factura #%s no está en estado "contabilidad".',
-                    $invoice->invoice_number ?? $invoice->id,
-                );
-            }
-            if (!empty($invoice->petty_cash_record_id)) {
-                $errors[] = sprintf(
-                    'La factura #%s ya pertenece a otro registro de Caja Menor.',
-                    $invoice->invoice_number ?? $invoice->id,
-                );
-            }
-        }
-
-        $missingIds = array_diff($invoiceIds, $foundIds);
-        foreach ($missingIds as $missingId) {
-            $errors[] = sprintf('La factura con ID %d no fue encontrada.', $missingId);
-        }
-
-        return $errors;
+        return $this->grouped->validateGrouping($invoiceIds);
     }
 
+    /**
+     * @param \App\Model\Entity\PettyCashRecord $record Record.
+     * @param array $invoiceIds Invoice IDs.
+     * @return array
+     */
     public function addInvoices(PettyCashRecord $record, array $invoiceIds): array
     {
-        $errors = $this->validateGrouping($invoiceIds);
-        if (!empty($errors)) {
-            return $errors;
-        }
-
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        foreach ($invoiceIds as $invoiceId) {
-            $invoicesTable->updateAll(
-                ['petty_cash_record_id' => $record->id],
-                ['id' => $invoiceId],
-            );
-        }
-
-        $this->calculateAndSaveTotal($record);
-
-        return [];
+        return $this->grouped->addInvoices($record, $invoiceIds);
     }
 
+    /**
+     * @param \App\Model\Entity\PettyCashRecord $record Record.
+     * @param int $invoiceId Invoice ID.
+     * @return bool
+     */
     public function removeInvoice(PettyCashRecord $record, int $invoiceId): bool
     {
-        if (!$record->isAgrupacion()) {
-            return false;
-        }
-
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $invoicesTable->updateAll(
-            ['petty_cash_record_id' => null],
-            ['id' => $invoiceId, 'petty_cash_record_id' => $record->id],
-        );
-
-        $this->calculateAndSaveTotal($record);
-
-        return true;
+        return $this->grouped->removeInvoice($record, $invoiceId);
     }
 
+    /**
+     * @param \App\Model\Entity\PettyCashRecord $record Record.
+     * @return void
+     */
     public function calculateAndSaveTotal(PettyCashRecord $record): void
     {
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $result = $invoicesTable->find()
-            ->where(['petty_cash_record_id' => $record->id])
-            ->select(['total' => $invoicesTable->find()->func()->sum('amount')])
-            ->first();
-
-        $table = TableRegistry::getTableLocator()->get('PettyCashRecords');
-        $record->total_amount = (float)($result->total ?? 0);
-        $table->save($record);
+        $this->grouped->calculateAndSaveTotal($record);
     }
 
+    /**
+     * @param array $filters Filters.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
+    public function getAvailableInvoices(array $filters = []): SelectQuery
+    {
+        return $this->grouped->getAvailableInvoices($filters);
+    }
+
+    /**
+     * @param \App\Model\Entity\PettyCashRecord $record Record.
+     * @param int $userId User ID.
+     * @return array
+     */
     public function advanceStatus(PettyCashRecord $record, int $userId): array
     {
         $currentStatus = $record->status;
@@ -122,8 +89,9 @@ class PettyCashService
         }
 
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $fkField = $this->grouped->getFkField();
         $invoices = $invoicesTable->find()
-            ->where(['petty_cash_record_id' => $record->id])
+            ->where([$fkField => $record->id])
             ->all()
             ->toArray();
 
@@ -131,8 +99,7 @@ class PettyCashService
             return ['success' => false, 'error' => 'El registro debe tener al menos una factura agrupada.'];
         }
 
-        // Validate transition requirements specific to each petty cash step
-        $validationErrors = $this->validatePettyCashTransition($currentStatus, $invoices, $record);
+        $validationErrors = $this->_validateTransition($currentStatus, $record);
         if (!empty($validationErrors)) {
             return [
                 'success' => false,
@@ -142,7 +109,7 @@ class PettyCashService
 
         $connection = $invoicesTable->getConnection();
 
-        return $connection->transactional(function () use ($record, $nextStatus, $currentStatus, $invoicesTable, $userId) {
+        return $connection->transactional(function () use ($record, $nextStatus, $invoicesTable, $fkField, $userId) {
             $today = date('Y-m-d');
             $updateData = [];
 
@@ -165,30 +132,21 @@ class PettyCashService
                 ];
             }
 
-            // Capture invoice states before bulk update for history
             $invoicesBefore = $invoicesTable->find()
                 ->select(['id', 'pipeline_status'])
-                ->where(['petty_cash_record_id' => $record->id])
+                ->where([$fkField => $record->id])
                 ->all()
                 ->toArray();
 
             if (!empty($updateData)) {
                 $invoicesTable->updateAll(
                     $updateData,
-                    ['petty_cash_record_id' => $record->id],
+                    [$fkField => $record->id],
                 );
 
-                // Record per-invoice audit trail
                 $newPipelineStatus = $updateData['pipeline_status'] ?? null;
                 if ($newPipelineStatus) {
-                    foreach ($invoicesBefore as $inv) {
-                        $this->historyService->recordStatusChange(
-                            $inv->id,
-                            $inv->pipeline_status,
-                            $newPipelineStatus,
-                            $userId,
-                        );
-                    }
+                    $this->grouped->recordBulkHistory($record->id, $invoicesBefore, $newPipelineStatus, $userId);
                 }
             }
 
@@ -205,12 +163,15 @@ class PettyCashService
 
     /**
      * Get transition validation errors for the current record (used by views).
+     *
+     * @param \App\Model\Entity\PettyCashRecord $record Record.
+     * @return array
      */
     public function getTransitionErrors(PettyCashRecord $record): array
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $invoices = $invoicesTable->find()
-            ->where(['petty_cash_record_id' => $record->id])
+            ->where([$this->grouped->getFkField() => $record->id])
             ->all()
             ->toArray();
 
@@ -218,20 +179,22 @@ class PettyCashService
             return ['El registro debe tener al menos una factura agrupada.'];
         }
 
-        return $this->validatePettyCashTransition($record->status, $invoices, $record);
+        return $this->_validateTransition($record->status, $record);
     }
 
     /**
      * Validate petty cash specific transition requirements.
-     * Petty cash invoices bypass normal pipeline approval requirements.
+     *
+     * @param string $fromStatus Current status.
+     * @param \App\Model\Entity\PettyCashRecord $record Record.
+     * @return array
      */
-    private function validatePettyCashTransition(string $fromStatus, array $invoices, PettyCashRecord $record): array
+    private function _validateTransition(string $fromStatus, PettyCashRecord $record): array
     {
         $errors = [];
 
         switch ($fromStatus) {
             case PettyCashConstants::STATUS_AGRUPACION:
-                // No special requirements - just need invoices grouped
                 break;
 
             case PettyCashConstants::STATUS_CONTABILIDAD:
@@ -256,32 +219,10 @@ class PettyCashService
         return $errors;
     }
 
-    public function getAvailableInvoices(array $filters = []): SelectQuery
-    {
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-
-        $query = $invoicesTable->find()
-            ->contain(['Providers', 'OperationCenters'])
-            ->where([
-                'Invoices.document_type' => InvoiceConstants::DOCTYPE_CAJA_MENOR,
-                'Invoices.pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
-                'Invoices.petty_cash_record_id IS' => null,
-            ])
-            ->order(['Invoices.issue_date' => 'ASC']);
-
-        if (!empty($filters['date_from'])) {
-            $query->where(['Invoices.issue_date >=' => $filters['date_from']]);
-        }
-        if (!empty($filters['date_to'])) {
-            $query->where(['Invoices.issue_date <=' => $filters['date_to']]);
-        }
-        if (!empty($filters['operation_center_id'])) {
-            $query->where(['Invoices.operation_center_id' => $filters['operation_center_id']]);
-        }
-
-        return $query;
-    }
-
+    /**
+     * @param \App\Model\Entity\PettyCashRecord $record Record.
+     * @return bool
+     */
     public function canDelete(PettyCashRecord $record): bool
     {
         return $record->isAgrupacion();

@@ -5,13 +5,11 @@ namespace App\Controller;
 
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
-use App\Constants\RoleConstants;
 use App\Service\ExcelService;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
 use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
-use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
 use ArrayObject;
 use Cake\ORM\Query\SelectQuery;
@@ -25,7 +23,6 @@ class InvoicesController extends AppController
     private InvoiceFilterService $filterService;
     private InvoiceDocumentService $documentService;
     private InvoiceApprovalService $approvalService;
-    private InvoicePaymentService $paymentService;
 
     public function initialize(): void
     {
@@ -34,7 +31,6 @@ class InvoicesController extends AppController
         $this->filterService = new InvoiceFilterService();
         $this->documentService = new InvoiceDocumentService();
         $this->approvalService = new InvoiceApprovalService();
-        $this->paymentService = new InvoicePaymentService();
     }
 
     private function _getCurrentUser(): object
@@ -648,116 +644,4 @@ class InvoicesController extends AppController
         return $this->redirect(['action' => 'view', $invoiceId]);
     }
 
-    public function addPayment($invoiceId = null)
-    {
-        $this->request->allowMethod(['post']);
-        $invoice = $this->Invoices->get($invoiceId);
-
-        $roleName = $this->_getRoleName();
-        $currentStatus = $invoice->pipeline_status;
-
-        if (
-            $roleName !== RoleConstants::ADMIN && (
-            $roleName !== RoleConstants::TESORERIA ||
-            $currentStatus !== InvoiceConstants::STATUS_TESORERIA
-            )
-        ) {
-            $this->Flash->error('No tiene permisos para registrar pagos en este estado.');
-
-            return $this->redirect(['action' => 'edit', $invoiceId]);
-        }
-
-        $result = $this->paymentService->registerPayment(
-            (int)$invoiceId,
-            $this->request->getData(),
-            (int)$this->_getCurrentUser()->id,
-        );
-
-        if ($result->success) {
-            $this->Flash->success($result->data);
-        } else {
-            $this->Flash->error($result->data);
-        }
-
-        return $this->redirect(['action' => 'edit', $invoiceId]);
-    }
-
-    public function authorizePayment($invoiceId = null, $paymentId = null)
-    {
-        $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
-
-        if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
-            $this->Flash->error('Solo el Contador puede autorizar pagos.');
-
-            return $this->redirect(['action' => 'edit', $invoiceId]);
-        }
-
-        $result = $this->paymentService->authorizePayment((int)$paymentId, (int)$this->_getCurrentUser()->id);
-
-        if ($result['success']) {
-            if ($result['newPipelineStatus'] === InvoiceConstants::STATUS_PAGADA) {
-                $this->Flash->success('Pago autorizado. Factura marcada como Pagada.');
-            } else {
-                $this->Flash->success('Pago autorizado. Factura devuelta a Tesorería (Pago Parcial).');
-            }
-        } else {
-            $this->Flash->error('No se pudo autorizar el pago.');
-        }
-
-        return $this->redirect(['action' => 'edit', $invoiceId]);
-    }
-
-    public function rejectPayment($invoiceId = null, $paymentId = null)
-    {
-        $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
-
-        if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
-            $this->Flash->error('Solo el Contador puede rechazar pagos.');
-
-            return $this->redirect(['action' => 'edit', $invoiceId]);
-        }
-
-        $result = $this->paymentService->rejectPayment((int)$paymentId, (int)$this->_getCurrentUser()->id);
-
-        if ($result->success) {
-            $this->Flash->success($result->data);
-        } else {
-            $this->Flash->error($result->data);
-        }
-
-        return $this->redirect(['action' => 'edit', $invoiceId]);
-    }
-
-    public function deletePayment($invoiceId = null, $paymentId = null)
-    {
-        $this->request->allowMethod(['post', 'delete']);
-        $invoice = $this->Invoices->get($invoiceId);
-
-        $roleName = $this->_getRoleName();
-        $currentStatus = $invoice->pipeline_status;
-
-        if (
-            $roleName !== RoleConstants::ADMIN && (
-            $roleName !== RoleConstants::TESORERIA ||
-            $currentStatus !== InvoiceConstants::STATUS_TESORERIA
-            )
-        ) {
-            $this->Flash->error('No tiene permisos para eliminar pagos en este estado.');
-
-            return $this->redirect(['action' => 'edit', $invoiceId]);
-        }
-
-        $paymentsTable = $this->fetchTable('InvoicePayments');
-        $payment = $paymentsTable->get($paymentId);
-
-        if ($paymentsTable->delete($payment)) {
-            $this->Flash->success('Pago eliminado.');
-        } else {
-            $this->Flash->error('No se pudo eliminar el pago.');
-        }
-
-        return $this->redirect(['action' => 'edit', $invoiceId]);
-    }
 }

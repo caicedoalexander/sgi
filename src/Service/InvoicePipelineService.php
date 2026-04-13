@@ -6,19 +6,21 @@ namespace App\Service;
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\Invoice;
-use Cake\Log\Log;
+use App\Service\Interface\HistoryServiceInterface;
+use App\Service\Interface\NotificationServiceInterface;
 use Cake\ORM\TableRegistry;
 
 class InvoicePipelineService
 {
-    private InvoiceHistoryService $historyService;
-    private NotificationService $notificationService;
+    private HistoryServiceInterface $historyService;
+    private NotificationServiceInterface $notificationService;
     private InvoicePaymentService $paymentService;
     private InvoiceFieldAccessPolicy $fieldPolicy;
+    private StructuredLogger $logger;
 
     public function __construct(
-        ?InvoiceHistoryService $historyService = null,
-        ?NotificationService $notificationService = null,
+        ?HistoryServiceInterface $historyService = null,
+        ?NotificationServiceInterface $notificationService = null,
         ?InvoicePaymentService $paymentService = null,
         ?InvoiceFieldAccessPolicy $fieldPolicy = null,
     ) {
@@ -26,6 +28,7 @@ class InvoicePipelineService
         $this->notificationService = $notificationService ?? new NotificationService();
         $this->paymentService = $paymentService ?? new InvoicePaymentService();
         $this->fieldPolicy = $fieldPolicy ?? new InvoiceFieldAccessPolicy();
+        $this->logger = new StructuredLogger('InvoicePipeline');
     }
 
     // Pipeline statuses in order
@@ -398,7 +401,10 @@ class InvoicePipelineService
 
         if (!empty($notifResult['failed'])) {
             $errorMsg = implode('; ', $notifResult['failed']);
-            Log::error('Error enviando notificación de cambio de estado para factura #' . $invoice->id . ': ' . $errorMsg);
+            $this->logger->error('Error enviando notificación de cambio de estado', [
+                'invoiceId' => $invoice->id,
+                'error' => $errorMsg,
+            ]);
 
             return ['success' => false, 'error' => 'No se pudo enviar la notificación de cambio de estado: ' . $errorMsg];
         }

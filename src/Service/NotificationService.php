@@ -6,13 +6,14 @@ namespace App\Service;
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\Invoice;
+use App\Service\Interface\NotificationServiceInterface;
 use Cake\Log\Log;
 use Cake\Mailer\Mailer;
 use Cake\Mailer\TransportFactory;
 use Cake\ORM\TableRegistry;
 use Exception;
 
-class NotificationService
+class NotificationService implements NotificationServiceInterface
 {
     private SystemSettingsService $settings;
     private CircuitBreaker $smtpCircuitBreaker;

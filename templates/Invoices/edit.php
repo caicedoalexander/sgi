@@ -815,19 +815,19 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                                 <td class="text-end">
                                     <?php if ($isContadorAutPago && !$payment->authorized && empty($payment->payment_scheduling_id)): ?>
                                     <button type="button" class="btn btn-sm btn-outline-success btn-post-action"
-                                            data-url="<?= $this->Url->build(['action' => 'authorizePayment', $invoice->id, $payment->id]) ?>"
+                                            data-url="<?= $this->Url->build(['controller' => 'InvoicePayments', 'action' => 'authorizePayment', $invoice->id, $payment->id]) ?>"
                                             data-confirm="¿Autorizar este pago?">
                                         <i class="bi bi-shield-check me-1"></i>Autorizar
                                     </button>
                                     <button type="button" class="btn btn-sm btn-outline-danger btn-post-action"
-                                            data-url="<?= $this->Url->build(['action' => 'rejectPayment', $invoice->id, $payment->id]) ?>"
+                                            data-url="<?= $this->Url->build(['controller' => 'InvoicePayments', 'action' => 'rejectPayment', $invoice->id, $payment->id]) ?>"
                                             data-confirm="¿Rechazar este pago? Se eliminará y la factura volverá a Tesorería.">
                                         <i class="bi bi-x-circle me-1"></i>Rechazar
                                     </button>
                                     <?php endif; ?>
                                     <?php if ($isTesoreriaEdit && !$payment->authorized): ?>
                                     <button type="button" class="btn btn-sm btn-outline-danger btn-post-action"
-                                            data-url="<?= $this->Url->build(['action' => 'deletePayment', $invoice->id, $payment->id]) ?>"
+                                            data-url="<?= $this->Url->build(['controller' => 'InvoicePayments', 'action' => 'deletePayment', $invoice->id, $payment->id]) ?>"
                                             data-confirm="¿Eliminar este pago?">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -1349,7 +1349,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
 
             var form = document.createElement('form');
             form.method = 'POST';
-            form.action = '<?= $this->Url->build(['action' => 'addPayment', $invoice->id]) ?>';
+            form.action = '<?= $this->Url->build(['controller' => 'InvoicePayments', 'action' => 'addPayment', $invoice->id]) ?>';
             form.style.display = 'none';
 
             var csrf = document.querySelector('input[name="_csrfToken"]');

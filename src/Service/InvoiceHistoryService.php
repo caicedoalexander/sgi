@@ -4,10 +4,11 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Model\Entity\Invoice;
+use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Trait\HistoryNormalizationTrait;
 use Cake\ORM\TableRegistry;
 
-class InvoiceHistoryService
+class InvoiceHistoryService implements HistoryServiceInterface
 {
     use HistoryNormalizationTrait;
 
