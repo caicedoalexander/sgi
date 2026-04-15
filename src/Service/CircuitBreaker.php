@@ -106,33 +106,33 @@ class CircuitBreaker
 
     private function _getState(): string
     {
-        return Cache::read($this->_cacheKey('state'), '_cake_core_') ?: self::STATE_CLOSED;
+        return Cache::read($this->_cacheKey('state'), 'default') ?: self::STATE_CLOSED;
     }
 
     private function _setState(string $state): void
     {
-        Cache::write($this->_cacheKey('state'), $state, '_cake_core_');
+        Cache::write($this->_cacheKey('state'), $state, 'default');
     }
 
     private function _getFailureCount(): int
     {
-        return (int)(Cache::read($this->_cacheKey('failures'), '_cake_core_') ?: 0);
+        return (int)(Cache::read($this->_cacheKey('failures'), 'default') ?: 0);
     }
 
     private function _setFailureCount(int $count): void
     {
-        Cache::write($this->_cacheKey('failures'), $count, '_cake_core_');
+        Cache::write($this->_cacheKey('failures'), $count, 'default');
     }
 
     private function _getOpenedAt(): ?int
     {
-        $val = Cache::read($this->_cacheKey('opened_at'), '_cake_core_');
+        $val = Cache::read($this->_cacheKey('opened_at'), 'default');
 
         return $val ? (int)$val : null;
     }
 
     private function _setOpenedAt(int $timestamp): void
     {
-        Cache::write($this->_cacheKey('opened_at'), $timestamp, '_cake_core_');
+        Cache::write($this->_cacheKey('opened_at'), $timestamp, 'default');
     }
 }

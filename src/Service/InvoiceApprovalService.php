@@ -75,7 +75,7 @@ class InvoiceApprovalService
             try {
                 $this->notificationService->sendApprovalLinkNotification($invoice, $approvalUrl, (int)$userId);
             } catch (Exception $e) {
-                // Log but don't block — approval record was created
+                \Cake\Log\Log::error("Approval email failed for user {$userId}: " . $e->getMessage());
             }
         }
 
