@@ -143,10 +143,17 @@ class LegalizationRecordsController extends AppController
 
             // Accounting fields: editable in contabilidad
             if ($record->isContabilidad()) {
-                $patchData['accrued'] = !empty($data['accrued']);
-                if (!empty($data['accrued']) && empty($record->accrual_date)) {
-                    $patchData['accrual_date'] = date('Y-m-d');
-                } elseif (empty($data['accrued'])) {
+                $isAccrued = !empty($data['accrued']);
+                $patchData['accrued'] = $isAccrued;
+                if ($isAccrued) {
+                    $submittedDate = !empty($data['accrual_date']) ? $data['accrual_date'] : null;
+                    if (empty($submittedDate)) {
+                        $this->Flash->error('La fecha de causación es requerida cuando el registro está marcado como causado.');
+                        $this->redirect(['action' => 'edit', $id]);
+                        return;
+                    }
+                    $patchData['accrual_date'] = $submittedDate;
+                } else {
                     $patchData['accrual_date'] = null;
                 }
                 $patchData['ready_for_payment'] = $data['ready_for_payment'] ?? null;

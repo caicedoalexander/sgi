@@ -377,9 +377,14 @@ $invoiceCount = count($record->invoices ?? []);
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Fecha de Causación</label>
+                    <label class="form-label">Fecha de Causación<?= $canEditAccounting ? ' <span class="text-danger">*</span>' : '' ?></label>
+                    <?php if ($canEditAccounting): ?>
+                    <input type="text" name="accrual_date" class="form-control flatpickr-date"
+                           value="<?= $record->accrual_date ? (is_string($record->accrual_date) ? $record->accrual_date : $record->accrual_date->format('Y-m-d')) : '' ?>">
+                    <?php else: ?>
                     <input type="text" class="form-control" disabled
                            value="<?= $record->accrual_date ? (is_string($record->accrual_date) ? $record->accrual_date : $record->accrual_date->format('d/m/Y')) : '' ?>">
+                    <?php endif; ?>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Lista para Pago</label>
