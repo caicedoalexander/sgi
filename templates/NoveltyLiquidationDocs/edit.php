@@ -360,7 +360,7 @@ $noveltyCount = count($doc->employee_novelties);
                     </select>
                 </div>
                 <?php endif; ?>
-                <button type="submit" class="btn btn-success flex-shrink-0"<?= empty($groupErrors) ? '' : ' disabled' ?>>
+                <button type="submit" class="btn btn-success flex-shrink-0">
                     <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
                 </button>
             </div>
