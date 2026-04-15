@@ -36,7 +36,7 @@ class RateLimitMiddleware implements MiddlewareInterface
         $path = $request->getUri()->getPath();
         $key = 'rate_limit_' . md5($ip . $path);
 
-        $current = (int)(Cache::read($key, '_cake_core_') ?: 0);
+        $current = (int)(Cache::read($key, 'default') ?: 0);
 
         if ($current >= $this->maxRequests) {
             $response = new Response();
@@ -47,7 +47,7 @@ class RateLimitMiddleware implements MiddlewareInterface
                 ->withStringBody((string)json_encode(['error' => 'Too many requests']));
         }
 
-        Cache::write($key, $current + 1, '_cake_core_');
+        Cache::write($key, $current + 1, 'default');
 
         return $handler->handle($request);
     }
