@@ -171,17 +171,17 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                                 ) ?>
                             </li>
                             <?php endif; ?>
-                            <?php if ($canView('payment_registry')): ?>
-                            <li class="nav-item">
-                                <?= $this->Html->link(
-                                    '<i class="bi bi-cash-stack me-2"></i>Registro de Pagos',
-                                    ['controller' => 'PaymentRegistry', 'action' => 'index'],
-                                    ['class' => $navLink('PaymentRegistry') . ' d-flex align-items-center', 'escape' => false]
-                                ) ?>
-                            </li>
-                            <?php endif; ?>
                         </ul>
                     </div>
+                </li>
+                <?php endif; ?>
+                <?php if ($canView('payment_registry')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-cash-stack me-2"></i>Registro de Pagos',
+                        ['controller' => 'PaymentRegistry', 'action' => 'index'],
+                        ['class' => $navLink('PaymentRegistry') . ' d-flex align-items-center', 'escape' => false]
+                    ) ?>
                 </li>
                 <?php endif; ?>
                 <?php if ($canView('novelty_liquidation_docs')): ?>
