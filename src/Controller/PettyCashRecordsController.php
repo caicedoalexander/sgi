@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\PettyCashConstants;
+use App\Constants\RoleConstants;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
 
@@ -124,6 +125,7 @@ class PettyCashRecordsController extends AppController
                 'Users',
                 'sort' => ['PettyCashObservations.created' => 'ASC'],
             ],
+            'PettyCashPayments' => ['BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'],
         ]);
 
         if ($this->request->is(['patch', 'post', 'put'])) {
@@ -202,7 +204,15 @@ class PettyCashRecordsController extends AppController
         $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
         $canDeleteDocuments = $this->_checkPermission('petty_cash', 'delete');
 
-        $this->set(compact('record', 'availableInvoices', 'operationCenters', 'canDeleteDocuments', 'groupFilters', 'nextStatus', 'advanceErrors'));
+        $user = $this->_getCurrentUser();
+        $roleName = $this->_getUserRoleName($user);
+        $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
+        $isTesoreriaEdit = ($roleName === RoleConstants::TESORERIA || $roleName === RoleConstants::ADMIN)
+            && $record->status === PettyCashConstants::STATUS_TESORERIA;
+        $isContadorAutPago = ($roleName === RoleConstants::CONTADOR || $roleName === RoleConstants::ADMIN)
+            && $record->status === PettyCashConstants::STATUS_AUT_PAGO;
+
+        $this->set(compact('record', 'availableInvoices', 'operationCenters', 'canDeleteDocuments', 'groupFilters', 'nextStatus', 'advanceErrors', 'roleName', 'bankingEntities', 'isTesoreriaEdit', 'isContadorAutPago'));
     }
 
     public function advanceStatus($id = null)

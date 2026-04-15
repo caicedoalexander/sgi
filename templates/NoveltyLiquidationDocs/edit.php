@@ -30,6 +30,7 @@ $statusBadgeMap = [
     'revision_firmas'  => 'bg-warning text-dark',
     'gdp'              => 'bg-dark',
     'tesoreria'        => 'bg-info',
+    'aut_pago'         => 'bg-info',
     'pagada'           => 'bg-success',
     'rechazada'        => 'bg-danger',
 ];
@@ -55,7 +56,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
 $badgeColors = [
     'rrhh' => 'bg-secondary', 'contabilidad' => 'bg-primary',
     'aprobacion' => 'bg-warning text-dark', 'revision_firmas' => 'bg-warning text-dark',
-    'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'pagada' => 'bg-success',
+    'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'aut_pago' => 'bg-info', 'pagada' => 'bg-success',
 ];
 $noveltyCount = count($doc->employee_novelties);
 ?>
@@ -305,25 +306,29 @@ $noveltyCount = count($doc->employee_novelties);
             </div>
             <?= $this->Form->end() ?>
 
-            <?php elseif ($currentStatus === NoveltyConstants::STATUS_TESORERIA): ?>
-            <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id]]) ?>
+            <?php elseif ($currentStatus === NoveltyConstants::STATUS_TESORERIA && ($isTesoreriaEdit ?? false)): ?>
+            <!-- Payment registration form -->
+            <?= $this->Form->create(null, ['url' => ['controller' => 'LiquidationDocPayments', 'action' => 'addPayment', $doc->id]]) ?>
             <div class="d-flex flex-wrap gap-3 align-items-end">
-                <div style="min-width:180px;">
-                    <label class="form-label">Estado de Pago</label>
-                    <select name="payment_status" class="form-select" required>
+                <div style="min-width:200px;">
+                    <label class="form-label">Entidad Bancaria</label>
+                    <select name="banking_entity_id" class="form-select select2-enable" required>
                         <option value="">-- Seleccione --</option>
-                        <?php foreach ($paymentLabels as $val => $label): ?>
-                        <option value="<?= $val ?>" <?= ($doc->payment_status ?? '') === $val ? 'selected' : '' ?>><?= $label ?></option>
+                        <?php foreach ($bankingEntities as $beId => $beName): ?>
+                        <option value="<?= $beId ?>"><?= h($beName) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div style="min-width:160px;">
+                    <label class="form-label">Monto (COP)</label>
+                    <input type="text" name="amount" class="form-control currency-input" required>
+                </div>
+                <div style="min-width:160px;">
                     <label class="form-label">Fecha de Pago</label>
-                    <input type="text" name="payment_date" class="form-control flatpickr-date"
-                           value="<?= h($doc->payment_date?->format('Y-m-d') ?? '') ?>">
+                    <input type="text" name="payment_date" class="form-control flatpickr-date" required>
                 </div>
                 <button type="submit" class="btn btn-success flex-shrink-0">
-                    <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
+                    <i class="bi bi-cash-stack me-1"></i>Registrar Pago
                 </button>
             </div>
             <?= $this->Form->end() ?>
@@ -373,6 +378,78 @@ $noveltyCount = count($doc->employee_novelties);
         <?php endif; ?>
 
     </div>
+
+    <!-- Payments section -->
+    <?php
+    $showPayments = in_array($currentStatus, [
+        NoveltyConstants::STATUS_TESORERIA,
+        NoveltyConstants::STATUS_AUT_PAGO,
+        NoveltyConstants::STATUS_PAGADA,
+    ]);
+    ?>
+    <?php if ($showPayments && !empty($doc->liquidation_doc_payments)): ?>
+    <div class="card mt-3" style="border-top:2px solid var(--primary-color);">
+        <div class="card-header">
+            <span class="d-flex align-items-center gap-2">
+                <i class="bi bi-credit-card" style="font-size:.85rem;"></i>
+                <span style="font-size:.85rem;font-weight:600;">Pagos Registrados</span>
+            </span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Entidad Bancaria</th>
+                        <th>Monto</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Registrado por</th>
+                        <?php if ($isContadorAutPago ?? false): ?>
+                        <th class="text-end">Acciones</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($doc->liquidation_doc_payments as $payment): ?>
+                    <tr>
+                        <td><?= h($payment->banking_entity->name ?? '—') ?></td>
+                        <td>$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
+                        <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
+                        <td>
+                            <?php if ($payment->authorized): ?>
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
+                                <?php if ($payment->authorized_by_user): ?>
+                                <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
+                            <?php endif; ?>
+                        </td>
+                        <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
+                        <?php if ($isContadorAutPago ?? false): ?>
+                        <td class="text-end">
+                            <?php if (!$payment->authorized): ?>
+                            <?= $this->Form->postLink(
+                                '<i class="bi bi-check-lg me-1"></i>Autorizar',
+                                ['controller' => 'LiquidationDocPayments', 'action' => 'authorizePayment', $doc->id, $payment->id],
+                                ['class' => 'btn btn-sm btn-outline-success', 'escape' => false, 'confirm' => '¿Autorizar este pago?']
+                            ) ?>
+                            <?= $this->Form->postLink(
+                                '<i class="bi bi-x-lg me-1"></i>Rechazar',
+                                ['controller' => 'LiquidationDocPayments', 'action' => 'rejectPayment', $doc->id, $payment->id],
+                                ['class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'confirm' => '¿Rechazar este pago? El documento volverá a Tesorería.']
+                            ) ?>
+                            <?php endif; ?>
+                        </td>
+                        <?php endif; ?>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <?php endif; ?>
+
 </div>
 </div><!-- /left column -->
 

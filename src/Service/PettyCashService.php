@@ -88,6 +88,14 @@ class PettyCashService
             return ['success' => false, 'error' => 'Este registro ya está en su estado final.'];
         }
 
+        if ($nextStatus === PettyCashConstants::STATUS_AUT_PAGO) {
+            return ['success' => false, 'error' => 'Debe registrar un pago para avanzar desde Tesorería.'];
+        }
+
+        if ($currentStatus === PettyCashConstants::STATUS_AUT_PAGO) {
+            return ['success' => false, 'error' => 'La autorización de pago se gestiona desde la sección de pagos.'];
+        }
+
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $fkField = $this->grouped->getFkField();
         $invoices = $invoicesTable->find()
@@ -123,12 +131,6 @@ class PettyCashService
                     'accrued' => (bool)$record->accrued,
                     'accrual_date' => $record->accrual_date ?? $today,
                     'ready_for_payment' => $record->ready_for_payment,
-                ];
-            } elseif ($nextStatus === PettyCashConstants::STATUS_PAGADO) {
-                $updateData = [
-                    'pipeline_status' => InvoiceConstants::STATUS_PAGADA,
-                    'payment_status' => $record->payment_status ?? InvoiceConstants::PAYMENT_FULL,
-                    'payment_date' => $record->payment_date ?? $today,
                 ];
             }
 
@@ -207,12 +209,6 @@ class PettyCashService
                 break;
 
             case PettyCashConstants::STATUS_TESORERIA:
-                if (empty($record->payment_status)) {
-                    $errors[] = 'Debe seleccionar un Estado de Pago.';
-                }
-                if (empty($record->payment_date)) {
-                    $errors[] = 'Debe ingresar una Fecha de Pago.';
-                }
                 break;
         }
 

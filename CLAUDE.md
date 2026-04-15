@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SGI (Sistema de Gestión Interna) — internal management system built with CakePHP 5.3 on PHP 8.2+. Manages invoices (4-state pipeline), employees, petty cash, legalizations, novelties, and catalog modules. MySQL/MariaDB backend. Spanish-language UI.
+SGI (Sistema de Gestión Interna) — internal management system built with CakePHP 5.3 on PHP 8.2+. Manages invoices (5-state pipeline), employees, petty cash, legalizations, novelties, payment schedulings, and catalog modules. MySQL/MariaDB backend. Spanish-language UI.
 
 ## Commands
 
@@ -59,8 +59,13 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 | Service | Purpose |
 |---------|---------|
 | `InvoicePipelineService` | 5-state workflow: aprobacion → contabilidad → tesoreria → autorizacion_pago → pagada |
+| `InvoiceFieldAccessPolicy` | Editable fields and visible sections per role/state (extracted from pipeline service) |
 | `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation |
+| `InvoiceApprovalService` | Invoice approval operations and area approval handling |
+| `GroupedInvoiceService` | Grouped invoice batch operations |
 | `NoveltyPipelineService` | Novelty state workflow (similar pattern to invoices) |
+| `PaymentSchedulingPipelineService` | Payment scheduling pipeline: borrador → tesoreria → aut_pago → pagada |
+| `PaymentSchedulingService` | Payment scheduling records management |
 | `AuthorizationService` | RBAC via `permissions` table. Admin bypasses all. |
 | `InvoiceHistoryService` | Field-by-field audit trail in `invoice_histories` |
 | `ApprovalTokenService` | External approval via SHA256 tokens (48h TTL) |
@@ -69,8 +74,27 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 | `PettyCashService` | Petty cash records management |
 | `DianCrosscheckService` | DIAN crosscheck validation |
 | `N8nService` | n8n workflow integration |
-| `WebhookService` | Outbound webhook dispatch |
+| `WebhookService` | Outbound webhook dispatch (circuit breaker enabled) |
 | `SystemSettingsService` | Application-wide configuration |
+| `SidebarCounterService` | Badge counters for pending items in sidebar nav |
+| `StructuredLogger` | Structured logging with correlation IDs (via `CorrelationIdMiddleware`) |
+| `CircuitBreaker` | Circuit breaker pattern — used by WebhookService and NotificationService |
+| `DashboardStatisticsService` | Coordinates dashboard stats; delegates to `Dashboard/` sub-services |
+
+### Service Subdirectories
+
+- `Service/Interface/` — `HistoryServiceInterface`, `MailerInterface`, `NotificationServiceInterface`, `SpreadsheetReaderInterface`
+- `Service/Adapter/` — `CakeMailerAdapter`, `PhpSpreadsheetAdapter` (adapter pattern for external libs)
+- `Service/Strategy/` — `InvoiceApprovalStrategy`, `NoveltyApprovalStrategy` (strategy pattern for approval logic)
+- `Service/Trait/` — `DocumentUploadTrait`, `HistoryNormalizationTrait`
+- `Service/Dashboard/` — `EmployeeStatisticsService`, `InvoiceStatisticsService`
+
+### Middlewares
+
+Located in `src/Middleware/`:
+- `CorrelationIdMiddleware` — Injects/propagates `X-Correlation-ID` header; used by `StructuredLogger`
+- `RateLimitMiddleware` — Rate limiting per IP/route
+- `HostHeaderMiddleware` — Host header validation
 
 ### Auth & Permissions
 

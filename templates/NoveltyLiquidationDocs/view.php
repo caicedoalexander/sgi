@@ -29,6 +29,7 @@ $statusBadgeMap = [
     'revision_firmas' => 'bg-warning text-dark',
     'gdp' => 'bg-dark',
     'tesoreria' => 'bg-info',
+    'aut_pago' => 'bg-info',
     'pagada' => 'bg-success',
     'rechazada' => 'bg-danger',
 ];
@@ -52,7 +53,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
 $badgeColors = [
     'aprobacion' => 'bg-warning text-dark', 'rrhh' => 'bg-secondary',
     'contabilidad' => 'bg-primary', 'revision_firmas' => 'bg-warning text-dark',
-    'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'pagada' => 'bg-success',
+    'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'aut_pago' => 'bg-info', 'pagada' => 'bg-success',
 ];
 ?>
 
@@ -213,6 +214,46 @@ $badgeColors = [
                 </div>
                 <?php endforeach; ?>
             </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Payments (read-only) -->
+    <?php if (!empty($doc->liquidation_doc_payments)): ?>
+    <div style="border-bottom:1px solid var(--border-color);">
+        <div class="sgi-section-title">Pagos Registrados</div>
+        <div style="padding:0 1.25rem .875rem;">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Entidad Bancaria</th>
+                        <th>Monto</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Registrado por</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($doc->liquidation_doc_payments as $payment): ?>
+                    <tr>
+                        <td><?= h($payment->banking_entity->name ?? '—') ?></td>
+                        <td>$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
+                        <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
+                        <td>
+                            <?php if ($payment->authorized): ?>
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
+                                <?php if ($payment->authorized_by_user): ?>
+                                <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
+                            <?php endif; ?>
+                        </td>
+                        <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </div>
     <?php endif; ?>

@@ -149,6 +149,7 @@ class SidebarCounterService
         $statuses = [
             NoveltyConstants::STATUS_CONTABILIDAD,
             NoveltyConstants::STATUS_TESORERIA,
+            NoveltyConstants::STATUS_AUT_PAGO,
             NoveltyConstants::STATUS_REVISION_FIRMAS,
             NoveltyConstants::STATUS_GDP,
         ];

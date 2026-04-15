@@ -17,6 +17,7 @@ $statusBadge = [
     'agrupacion' => 'bg-info text-dark',
     'contabilidad' => 'bg-primary',
     'tesoreria' => 'bg-warning text-dark',
+    'aut_pago' => 'bg-info text-dark',
     'pagado' => 'bg-success',
 ];
 $statusLabels = PettyCashConstants::STATUS_LABELS;
@@ -397,39 +398,100 @@ $invoiceCount = count($record->invoices ?? []);
         <?php endif; ?>
 
         <?php if ($section['key'] === 'treasury'): ?>
-        <!-- ── Sección: Tesorería ── -->
+        <!-- ── Sección: Tesorería — Registro de Pagos ── -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-bank me-1"></i>Tesorería
+                    <i class="bi bi-bank me-1"></i>Tesorería — Pagos
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Estado de Pago</label>
-                    <?php if ($canEditTreasury): ?>
-                    <select name="payment_status" class="form-select">
-                        <?php foreach ($paymentStatusOptions as $val => $lbl): ?>
-                        <option value="<?= $val ?>" <?= ($record->payment_status ?? '') === $val ? 'selected' : '' ?>><?= $lbl ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <?php else: ?>
-                    <input type="text" class="form-control" disabled value="<?= h($record->payment_status ?? '') ?>">
-                    <?php endif; ?>
+
+            <?php if ($isTesoreriaEdit ?? false): ?>
+            <!-- Payment registration form -->
+            <div class="card card-body mb-3" style="border-top:2px solid var(--primary-color);">
+                <?= $this->Form->create(null, ['url' => ['controller' => 'PettyCashPayments', 'action' => 'addPayment', $record->id]]) ?>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Entidad Bancaria</label>
+                        <select name="banking_entity_id" class="form-select select2-enable" required>
+                            <option value="">-- Seleccione --</option>
+                            <?php foreach ($bankingEntities as $beId => $beName): ?>
+                            <option value="<?= $beId ?>"><?= h($beName) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Monto (COP)</label>
+                        <input type="text" name="amount" class="form-control currency-input" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha de Pago</label>
+                        <input type="text" name="payment_date" class="form-control flatpickr-date" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-cash-stack me-1"></i>Registrar</button>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Fecha de Pago</label>
-                    <?php if ($canEditTreasury): ?>
-                    <input type="text" name="payment_date" class="form-control flatpickr-date"
-                           value="<?= $record->payment_date ? (is_string($record->payment_date) ? $record->payment_date : $record->payment_date->format('Y-m-d')) : '' ?>">
-                    <?php else: ?>
-                    <input type="text" class="form-control" disabled
-                           value="<?= $record->payment_date ? (is_string($record->payment_date) ? $record->payment_date : $record->payment_date->format('d/m/Y')) : '' ?>">
-                    <?php endif; ?>
-                </div>
+                <?= $this->Form->end() ?>
             </div>
+            <?php endif; ?>
+
+            <?php if (!empty($record->petty_cash_payments)): ?>
+            <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Entidad Bancaria</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Registrado por</th>
+                            <?php if ($isContadorAutPago ?? false): ?>
+                            <th class="text-end">Acciones</th>
+                            <?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($record->petty_cash_payments as $payment): ?>
+                        <tr>
+                            <td><?= h($payment->banking_entity->name ?? '—') ?></td>
+                            <td>$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
+                            <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
+                            <td>
+                                <?php if ($payment->authorized): ?>
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
+                                    <?php if ($payment->authorized_by_user): ?>
+                                    <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
+                            <?php if ($isContadorAutPago ?? false): ?>
+                            <td class="text-end">
+                                <?php if (!$payment->authorized): ?>
+                                <?= $this->Form->postLink(
+                                    '<i class="bi bi-check-lg me-1"></i>Autorizar',
+                                    ['controller' => 'PettyCashPayments', 'action' => 'authorizePayment', $record->id, $payment->id],
+                                    ['class' => 'btn btn-sm btn-outline-success', 'escape' => false, 'confirm' => '¿Autorizar este pago?']
+                                ) ?>
+                                <?= $this->Form->postLink(
+                                    '<i class="bi bi-x-lg me-1"></i>Rechazar',
+                                    ['controller' => 'PettyCashPayments', 'action' => 'rejectPayment', $record->id, $payment->id],
+                                    ['class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'confirm' => '¿Rechazar este pago? El registro volverá a Tesorería.']
+                                ) ?>
+                                <?php endif; ?>
+                            </td>
+                            <?php endif; ?>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
         </div>
         <?php endif; ?>
 

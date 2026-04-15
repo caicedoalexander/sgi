@@ -26,9 +26,15 @@ class NoveltyPipelineService
             NoveltyConstants::STATUS_GDP,
         ],
         RoleConstants::CONTABILIDAD => [NoveltyConstants::STATUS_CONTABILIDAD],
-        RoleConstants::CONTADOR => [NoveltyConstants::STATUS_REVISION_FIRMAS],
+        RoleConstants::CONTADOR => [
+            NoveltyConstants::STATUS_REVISION_FIRMAS,
+            NoveltyConstants::STATUS_AUT_PAGO,
+        ],
         RoleConstants::COORDINADOR_ADMIN => [NoveltyConstants::STATUS_REVISION_FIRMAS],
-        RoleConstants::TESORERIA => [NoveltyConstants::STATUS_TESORERIA],
+        RoleConstants::TESORERIA => [
+            NoveltyConstants::STATUS_TESORERIA,
+            NoveltyConstants::STATUS_AUT_PAGO,
+        ],
         RoleConstants::ADMIN => NoveltyConstants::PIPELINE_STATUSES,
     ];
 
@@ -90,6 +96,9 @@ class NoveltyPipelineService
             'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
         ],
         NoveltyConstants::STATUS_TESORERIA => [
+            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
+        ],
+        NoveltyConstants::STATUS_AUT_PAGO => [
             'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
         ],
         NoveltyConstants::STATUS_PAGADA => [
@@ -400,15 +409,11 @@ class NoveltyPipelineService
                 break;
 
             case NoveltyConstants::STATUS_TESORERIA:
-                if (empty($liquidationDoc->payment_status)) {
-                    $errors[] = 'Estado de pago es requerido.';
-                }
-                if (
-                    $liquidationDoc->payment_status === NoveltyConstants::PAYMENT_PAGADO
-                    && empty($liquidationDoc->payment_date)
-                ) {
-                    $errors[] = 'Fecha de pago es requerida cuando el estado es "Pagado".';
-                }
+                $errors[] = 'Debe registrar un pago para avanzar desde Tesorería.';
+                break;
+
+            case NoveltyConstants::STATUS_AUT_PAGO:
+                $errors[] = 'La autorización de pago se gestiona desde la sección de pagos.';
                 break;
         }
 

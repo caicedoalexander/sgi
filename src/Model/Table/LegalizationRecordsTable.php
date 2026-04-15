@@ -38,6 +38,10 @@ class LegalizationRecordsTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->hasMany('LegalizationPayments', [
+            'foreignKey' => 'legalization_record_id',
+            'dependent' => true,
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator

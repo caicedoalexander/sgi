@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\LegalizationConstants;
+use App\Constants\RoleConstants;
 use App\Service\LegalizationDocumentService;
 use App\Service\LegalizationService;
 
@@ -123,6 +124,7 @@ class LegalizationRecordsController extends AppController
                 'Users',
                 'sort' => ['LegalizationObservations.created' => 'ASC'],
             ],
+            'LegalizationPayments' => ['BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'],
         ]);
 
         if ($this->request->is(['patch', 'post', 'put'])) {
@@ -201,6 +203,14 @@ class LegalizationRecordsController extends AppController
         $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
         $canDeleteDocuments = $this->_checkPermission('legalizations', 'delete');
 
+        $user = $this->_getCurrentUser();
+        $roleName = $this->_getUserRoleName($user);
+        $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
+        $isTesoreriaEdit = ($roleName === RoleConstants::TESORERIA || $roleName === RoleConstants::ADMIN)
+            && $record->status === LegalizationConstants::STATUS_TESORERIA;
+        $isContadorAutPago = ($roleName === RoleConstants::CONTADOR || $roleName === RoleConstants::ADMIN)
+            && $record->status === LegalizationConstants::STATUS_AUT_PAGO;
+
         $this->set(compact(
             'record',
             'availableInvoices',
@@ -209,6 +219,10 @@ class LegalizationRecordsController extends AppController
             'groupFilters',
             'nextStatus',
             'advanceErrors',
+            'roleName',
+            'bankingEntities',
+            'isTesoreriaEdit',
+            'isContadorAutPago',
         ));
     }
 

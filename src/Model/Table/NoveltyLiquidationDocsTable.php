@@ -49,6 +49,10 @@ class NoveltyLiquidationDocsTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->hasMany('LiquidationDocPayments', [
+            'foreignKey' => 'liquidation_doc_id',
+            'dependent' => true,
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator

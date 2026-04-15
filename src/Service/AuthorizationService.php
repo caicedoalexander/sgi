@@ -38,6 +38,7 @@ class AuthorizationService
         'leave_document_templates' => 'Plantillas Documento',
         'banking_entities' => 'Entidades Bancarias',
         'payment_schedulings' => 'Programación',
+        'payment_registry' => 'Registro de Pagos',
     ];
 
     private array $cache = [];

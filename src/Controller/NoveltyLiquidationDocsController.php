@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
+use App\Constants\RoleConstants;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
@@ -69,6 +70,7 @@ class NoveltyLiquidationDocsController extends AppController
                 'UploadedByUsers',
                 'sort' => ['NoveltyDocuments.created' => 'DESC'],
             ],
+            'LiquidationDocPayments' => ['BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'],
         ]);
 
         $user = $this->Authentication->getIdentity()->getOriginalData();
@@ -77,7 +79,6 @@ class NoveltyLiquidationDocsController extends AppController
         $groupErrors = $this->pipelineService->validateGroupTransition($doc);
         $firstNovelty = $doc->employee_novelties[0] ?? null;
         $noveltyType = $firstNovelty?->novelty_type;
-        $skipsGdp = $noveltyType && !$noveltyType->requires_employee_signature_review;
         $effectiveStatuses = $this->pipelineService->getEffectiveStatuses($noveltyType);
 
         $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($doc->id);
@@ -129,6 +130,7 @@ class NoveltyLiquidationDocsController extends AppController
                 'UploadedByUsers',
                 'sort' => ['NoveltyDocuments.created' => 'DESC'],
             ],
+            'LiquidationDocPayments' => ['BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'],
         ]);
 
         $user = $this->Authentication->getIdentity()->getOriginalData();
@@ -143,6 +145,12 @@ class NoveltyLiquidationDocsController extends AppController
         $liquidationDocument = $this->documentService->getLiquidationDocument($doc->id);
 
         $currentUser = $user;
+        $roleName = $this->_getUserRoleName($user);
+        $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
+        $isTesoreriaEdit = ($roleName === RoleConstants::TESORERIA || $roleName === RoleConstants::ADMIN)
+            && $doc->pipeline_status === NoveltyConstants::STATUS_TESORERIA;
+        $isContadorAutPago = ($roleName === RoleConstants::CONTADOR || $roleName === RoleConstants::ADMIN)
+            && $doc->pipeline_status === NoveltyConstants::STATUS_AUT_PAGO;
         $this->set(compact(
             'doc',
             'groupErrors',
@@ -151,6 +159,10 @@ class NoveltyLiquidationDocsController extends AppController
             'liquidationDocument',
             'currentUser',
             'skipsGdp',
+            'roleName',
+            'bankingEntities',
+            'isTesoreriaEdit',
+            'isContadorAutPago',
         ));
     }
 

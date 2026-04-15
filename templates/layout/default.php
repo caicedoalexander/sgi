@@ -171,6 +171,15 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                                 ) ?>
                             </li>
                             <?php endif; ?>
+                            <?php if ($canView('payment_registry')): ?>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-cash-stack me-2"></i>Registro de Pagos',
+                                    ['controller' => 'PaymentRegistry', 'action' => 'index'],
+                                    ['class' => $navLink('PaymentRegistry') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
+                            <?php endif; ?>
                         </ul>
                     </div>
                 </li>
@@ -217,6 +226,14 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                                     (!empty($liquidationCounters['tesoreria']) ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $liquidationCounters['tesoreria'] . '</span>' : ''),
                                     ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index', '?' => ['pipeline_status' => 'tesoreria']],
                                     ['class' => $liqSubLink('tesoreria'), 'escape' => false]
+                                ) ?>
+                            </li>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-shield-check me-2"></i>Aut. Pago' .
+                                    (!empty($liquidationCounters['aut_pago']) ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $liquidationCounters['aut_pago'] . '</span>' : ''),
+                                    ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index', '?' => ['pipeline_status' => 'aut_pago']],
+                                    ['class' => $liqSubLink('aut_pago'), 'escape' => false]
                                 ) ?>
                             </li>
                             <li class="nav-item">

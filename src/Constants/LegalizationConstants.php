@@ -8,12 +8,14 @@ final class LegalizationConstants
     public const STATUS_AGRUPACION = 'agrupacion';
     public const STATUS_CONTABILIDAD = 'contabilidad';
     public const STATUS_TESORERIA = 'tesoreria';
+    public const STATUS_AUT_PAGO = 'aut_pago';
     public const STATUS_PAGADO = 'pagado';
 
     public const STATUSES = [
         self::STATUS_AGRUPACION,
         self::STATUS_CONTABILIDAD,
         self::STATUS_TESORERIA,
+        self::STATUS_AUT_PAGO,
         self::STATUS_PAGADO,
     ];
 
@@ -21,6 +23,7 @@ final class LegalizationConstants
         'agrupacion' => 'Agrupación',
         'contabilidad' => 'Contabilidad',
         'tesoreria' => 'Tesorería',
+        'aut_pago' => 'Aut. Pago',
         'pagado' => 'Pagado',
     ];
 
@@ -28,13 +31,15 @@ final class LegalizationConstants
         'agrupacion' => 'bi-collection',
         'contabilidad' => 'bi-calculator',
         'tesoreria' => 'bi-bank',
+        'aut_pago' => 'bi-shield-check',
         'pagado' => 'bi-cash-coin',
     ];
 
     public const TRANSITIONS = [
         'agrupacion' => 'contabilidad',
         'contabilidad' => 'tesoreria',
-        'tesoreria' => 'pagado',
+        'tesoreria' => 'aut_pago',
+        'aut_pago' => 'pagado',
         'pagado' => null,
     ];
 }
