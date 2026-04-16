@@ -705,152 +705,26 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         <?php endif; ?>
 
         <?php if ($sectionName === 'treasury' && in_array('treasury', $visibleSections)): ?>
-        <!-- ── Sección: Tesorería ── -->
         <?php
             $isTesoreriaEdit = ($roleName === \App\Constants\RoleConstants::TESORERIA || $roleName === \App\Constants\RoleConstants::ADMIN)
                 && $currentStatus === \App\Constants\InvoiceConstants::STATUS_TESORERIA;
             $isContadorAutPago = ($roleName === \App\Constants\RoleConstants::CONTADOR || $roleName === \App\Constants\RoleConstants::ADMIN)
                 && $currentStatus === \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO;
         ?>
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-bank me-1"></i>Tesorería
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Estado de Pago</label>
-                    <div class="py-1">
-                        <?php if ($invoice->payment_status === \App\Constants\InvoiceConstants::PAYMENT_FULL): ?>
-                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Pago total</span>
-                        <?php elseif ($invoice->payment_status === \App\Constants\InvoiceConstants::PAYMENT_PARTIAL): ?>
-                            <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pago Parcial</span>
-                        <?php else: ?>
-                            <span class="badge bg-secondary">Sin pagos</span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Fecha Pago Total</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= h($invoice->full_payment_date?->format('d/m/Y') ?? '') ?>">
-                </div>
-            </div>
-
-            <!-- Sub-sección: Pagos registrados -->
-            <div class="mt-4">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="text-uppercase fw-semibold" style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                        <i class="bi bi-credit-card me-1"></i>Pagos Registrados
-                    </span>
-                    <?php if ($isTesoreriaEdit): ?>
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#add-payment-form">
-                        <i class="bi bi-plus-lg me-1"></i>Agregar Pago
-                    </button>
-                    <?php endif; ?>
-                </div>
-
-                <?php if ($isTesoreriaEdit): ?>
-                <div class="collapse mb-3" id="add-payment-form">
-                    <div class="card card-body" style="border-top:2px solid var(--primary-color);">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Entidad Bancaria</label>
-                                <select id="pay-banking-entity" class="form-select select2-enable" required>
-                                    <option value="">-- Seleccione --</option>
-                                    <?php foreach ($bankingEntities as $beId => $beName): ?>
-                                        <option value="<?= $beId ?>"><?= h($beName) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Monto (COP)</label>
-                                <input type="text" id="pay-amount" class="form-control currency-input" required>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Fecha de Pago</label>
-                                <input type="text" id="pay-date" class="form-control flatpickr-date" required>
-                            </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button type="button" id="btn-register-payment" class="btn btn-primary w-100"><i class="bi bi-save me-1"></i>Registrar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-
-                <?php if (!empty($invoice->invoice_payments)): ?>
-                <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
-                    <table class="table table-sm mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Entidad Bancaria</th>
-                                <th>Monto</th>
-                                <th>Fecha</th>
-                                <th>Estado</th>
-                                <th>Registrado por</th>
-                                <th class="text-end">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($invoice->invoice_payments as $payment): ?>
-                            <tr>
-                                <td><?= h($payment->banking_entity->name ?? '—') ?></td>
-                                <td>$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
-                                <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
-                                <td>
-                                    <?php if ($payment->authorized): ?>
-                                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
-                                        <?php if ($payment->authorized_by_user): ?>
-                                        <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
-                                        <?php endif; ?>
-                                    <?php else: ?>
-                                        <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
-                                <td class="text-end">
-                                    <?php if ($isContadorAutPago && !$payment->authorized && empty($payment->payment_scheduling_id)): ?>
-                                    <button type="button" class="btn btn-sm btn-outline-success btn-post-action"
-                                            data-url="<?= $this->Url->build(['controller' => 'InvoicePayments', 'action' => 'authorizePayment', $invoice->id, $payment->id]) ?>"
-                                            data-confirm="¿Autorizar este pago?">
-                                        <i class="bi bi-shield-check me-1"></i>Autorizar
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-post-action"
-                                            data-url="<?= $this->Url->build(['controller' => 'InvoicePayments', 'action' => 'rejectPayment', $invoice->id, $payment->id]) ?>"
-                                            data-confirm="¿Rechazar este pago? Se eliminará y la factura volverá a Tesorería.">
-                                        <i class="bi bi-x-circle me-1"></i>Rechazar
-                                    </button>
-                                    <?php endif; ?>
-                                    <?php if ($isTesoreriaEdit && !$payment->authorized): ?>
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-post-action"
-                                            data-url="<?= $this->Url->build(['controller' => 'InvoicePayments', 'action' => 'deletePayment', $invoice->id, $payment->id]) ?>"
-                                            data-confirm="¿Eliminar este pago?">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                        <tfoot class="table-light">
-                            <tr>
-                                <th>Total Pagado</th>
-                                <th colspan="5">$ <?= number_format($paymentsTotal ?? 0, 0, ',', '.') ?></th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                <?php else: ?>
-                <div class="text-muted text-center py-3" style="font-size:.85rem;border:1px dashed var(--border-color);">
-                    <i class="bi bi-credit-card me-1"></i>No hay pagos registrados
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
+        <?= $this->element('payment_section', [
+            'payments'           => $invoice->invoice_payments ?? [],
+            'bankingEntities'    => $bankingEntities,
+            'addPaymentUrl'      => ['controller' => 'InvoicePayments', 'action' => 'addPayment', $invoice->id],
+            'authorizeUrlFn'     => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'authorizePayment', $invoice->id, $pId],
+            'rejectUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'rejectPayment', $invoice->id, $pId],
+            'deleteUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'deletePayment', $invoice->id, $pId],
+            'canRegisterPayment' => $isTesoreriaEdit,
+            'canAuthorize'       => $isContadorAutPago,
+            'canDelete'          => $isTesoreriaEdit,
+            'paymentStatus'      => $invoice->payment_status ?? null,
+            'totalAmount'        => $invoice->amount ?? null,
+            'rejectMessage'      => '¿Rechazar este pago? Se eliminará y la factura volverá a Tesorería.',
+        ]) ?>
         <?php endif; ?>
 
         <?php if ($sectionName === 'payment_authorization' && in_array('payment_authorization', $visibleSections)): ?>
@@ -1334,59 +1208,6 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             btn.disabled = false;
         });
     });
-    // ── Register Payment (outside nested form) ──
-    var btnPay = document.getElementById('btn-register-payment');
-    if (btnPay) {
-        btnPay.addEventListener('click', function() {
-            var bankingEntity = document.getElementById('pay-banking-entity');
-            var amount = document.getElementById('pay-amount');
-            var payDate = document.getElementById('pay-date');
-
-            if (!bankingEntity.value || !amount.value || !payDate.value) {
-                alert('Complete todos los campos del pago.');
-                return;
-            }
-
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '<?= $this->Url->build(['controller' => 'InvoicePayments', 'action' => 'addPayment', $invoice->id]) ?>';
-            form.style.display = 'none';
-
-            var csrf = document.querySelector('input[name="_csrfToken"]');
-            if (csrf) {
-                var csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_csrfToken';
-                csrfInput.value = csrf.value;
-                form.appendChild(csrfInput);
-            }
-
-            var fields = {
-                'banking_entity_id': bankingEntity.value,
-                'amount': (function() {
-                    try {
-                        var an = AutoNumeric.getAutoNumericElement(amount);
-                        return an.getNumericString();
-                    } catch(e) {
-                        return amount.value.replace(/\$\s?/g, '').replace(/\./g, '').replace(',', '.');
-                    }
-                })(),
-                'payment_date': payDate.value
-            };
-            for (var key in fields) {
-                var input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = fields[key];
-                form.appendChild(input);
-            }
-
-            document.body.appendChild(form);
-            btnPay.disabled = true;
-            form.submit();
-        });
-    }
-
     // ── Generic POST action buttons (authorize, reject, delete payments) ──
     document.querySelectorAll('.btn-post-action').forEach(function(btn) {
         btn.addEventListener('click', function() {
