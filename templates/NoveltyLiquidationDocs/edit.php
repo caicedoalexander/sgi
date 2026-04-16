@@ -350,8 +350,6 @@ $noveltyCount = count($doc->employee_novelties);
         </div>
         <?php endif; ?>
 
-    </div>
-
     <!-- Payments section -->
     <?php
     $showPayments = in_array($currentStatus, [
@@ -361,7 +359,7 @@ $noveltyCount = count($doc->employee_novelties);
     ]);
     ?>
     <?php if ($showPayments): ?>
-    <div class="mt-3">
+    <div class="mt-4">
         <?= $this->element('payment_section', [
             'payments'           => $doc->liquidation_doc_payments ?? [],
             'bankingEntities'    => $bankingEntities,
@@ -376,7 +374,8 @@ $noveltyCount = count($doc->employee_novelties);
     </div>
     <?php endif; ?>
 
-</div>
+</div><!-- /card-body -->
+</div><!-- /card -->
 </div><!-- /left column -->
 
 <!-- Right column: documents + observations -->
