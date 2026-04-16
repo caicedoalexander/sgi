@@ -183,9 +183,11 @@ class LegalizationRecordsController extends AppController
             $user = $this->_getCurrentUser();
             $nextTrans = LegalizationConstants::TRANSITIONS[$record->status] ?? null;
             $canAdvance = !$record->isPagado() && $nextTrans !== null;
+            $advanced = false;
             if ($canAdvance) {
                 $result = $this->legalizationService->advanceStatus($record, $user->id);
                 if ($result['success']) {
+                    $advanced = true;
                     $nextLabel = LegalizationConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
                     $this->Flash->success(sprintf('Registro guardado y avanzado a: %s', $nextLabel));
                 } else {
@@ -196,7 +198,7 @@ class LegalizationRecordsController extends AppController
                 $this->Flash->success('Registro actualizado.');
             }
 
-            return $this->redirect(['action' => 'edit', $id]);
+            return $this->redirect(['action' => $advanced ? 'index' : 'edit', ...($advanced ? [] : [$id])]);
         }
 
         $nextStatus = LegalizationConstants::TRANSITIONS[$record->status] ?? null;
@@ -244,9 +246,11 @@ class LegalizationRecordsController extends AppController
         if ($result['success']) {
             $nextLabel = LegalizationConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
             $this->Flash->success(sprintf('Registro avanzado a: %s', $nextLabel));
-        } else {
-            $this->Flash->error($result['error']);
+
+            return $this->redirect(['action' => 'index']);
         }
+
+        $this->Flash->error($result['error']);
 
         return $this->redirect(['action' => 'edit', $id]);
     }

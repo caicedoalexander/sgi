@@ -292,7 +292,8 @@ class InvoicesController extends AppController
                     }
                 }
 
-                return $this->redirect(['action' => 'edit', $id]);
+                $redirectAction = $result['advanced'] ? 'index' : 'edit';
+                return $this->redirect(['action' => $redirectAction, ...($redirectAction === 'edit' ? [$id] : [])]);
             }
 
             $this->Flash->error('No se pudo guardar la factura. Verifique los datos e intente de nuevo.');
@@ -356,7 +357,7 @@ class InvoicesController extends AppController
                 $this->Flash->warning($result['notificationError']);
             }
 
-            return $this->redirect(['action' => 'edit', $id]);
+            return $this->redirect(['action' => 'index']);
         }
 
         $this->Flash->error($result['error']);

@@ -188,10 +188,12 @@ class NoveltyLiquidationDocsController extends AppController
         if ($result['success']) {
             $label = NoveltyConstants::STATUS_LABELS[$result['nextStatus']];
             $this->Flash->success('Documento de liquidación avanzado a: ' . $label);
-        } else {
-            foreach ($result['errors'] as $error) {
-                $this->Flash->error($error);
-            }
+
+            return $this->redirect(['action' => 'index']);
+        }
+
+        foreach ($result['errors'] as $error) {
+            $this->Flash->error($error);
         }
 
         return $this->redirect(['action' => 'edit', $id]);

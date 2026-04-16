@@ -201,9 +201,11 @@ class PaymentSchedulingsController extends AppController
         if ($this->PaymentSchedulings->save($record)) {
             $label = PaymentSchedulingConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
             $this->Flash->success("Programación avanzada a: {$label}");
-        } else {
-            $this->Flash->error('No se pudo avanzar la programación.');
+
+            return $this->redirect(['action' => 'index']);
         }
+
+        $this->Flash->error('No se pudo avanzar la programación.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }

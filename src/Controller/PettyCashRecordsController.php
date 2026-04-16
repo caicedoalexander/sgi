@@ -183,9 +183,11 @@ class PettyCashRecordsController extends AppController
             // Try to advance automatically (save + advance unified)
             $user = $this->_getCurrentUser();
             $canAdvance = !$record->isPagado() && (PettyCashConstants::TRANSITIONS[$record->status] ?? null) !== null;
+            $advanced = false;
             if ($canAdvance) {
                 $result = $this->pettyCashService->advanceStatus($record, $user->id);
                 if ($result['success']) {
+                    $advanced = true;
                     $nextLabel = PettyCashConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
                     $this->Flash->success(sprintf('Registro guardado y avanzado a: %s', $nextLabel));
                 } else {
@@ -196,7 +198,7 @@ class PettyCashRecordsController extends AppController
                 $this->Flash->success('Registro actualizado.');
             }
 
-            return $this->redirect(['action' => 'edit', $id]);
+            return $this->redirect(['action' => $advanced ? 'index' : 'edit', ...($advanced ? [] : [$id])]);
         }
 
         // Compute advance errors for the view (to decide button label)
@@ -233,9 +235,11 @@ class PettyCashRecordsController extends AppController
         if ($result['success']) {
             $nextLabel = PettyCashConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
             $this->Flash->success(sprintf('Registro avanzado a: %s', $nextLabel));
-        } else {
-            $this->Flash->error($result['error']);
+
+            return $this->redirect(['action' => 'index']);
         }
+
+        $this->Flash->error($result['error']);
 
         return $this->redirect(['action' => 'edit', $id]);
     }
