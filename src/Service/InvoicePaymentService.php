@@ -31,7 +31,7 @@ class InvoicePaymentService
         $authorizedPayments = $paymentsTable->find()
             ->where([
                 'invoice_id' => $invoiceId,
-                'authorized' => true,
+                'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
             ])
             ->order(['payment_date' => 'ASC'])
             ->all();
@@ -70,7 +70,7 @@ class InvoicePaymentService
         $totalPaid = (float)$paymentsTable->find()
             ->where([
                 'invoice_id' => $invoiceId,
-                'authorized' => true,
+                'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
             ])
             ->all()
             ->sumOf('amount');
