@@ -87,7 +87,7 @@ class InvoicePaymentService
 
         return $paymentsTable->exists([
             'invoice_id' => $invoiceId,
-            'authorized' => false,
+            'status' => InvoiceConstants::PAYMENT_RECORD_PENDING,
             'payment_scheduling_id IS' => null, // Solo pagos individuales
         ]);
     }
