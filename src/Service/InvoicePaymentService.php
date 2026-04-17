@@ -142,47 +142,71 @@ class InvoicePaymentService
     }
 
     /**
-     * Registra un nuevo pago y avanza la factura a autorizacion_pago.
-     * Registra historial para el cambio de estado del pipeline.
+     * Registra un nuevo pago. Si $advanceAfter es true, avanza la factura a
+     * autorizacion_pago en la misma transacción; si false, la factura se
+     * mantiene en su estado actual (útil para registrar varios pagos parciales).
      */
-    public function registerPayment(int $invoiceId, array $paymentData, int $createdBy): ServiceResult
-    {
+    public function registerPayment(
+        int $invoiceId,
+        array $paymentData,
+        int $createdBy,
+        bool $advanceAfter = true
+    ): ServiceResult {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
 
         $invoice = $invoicesTable->get($invoiceId);
         $currentStatus = $invoice->pipeline_status;
 
-        $payment = $paymentsTable->newEntity([
-            'invoice_id' => $invoiceId,
-            'banking_entity_id' => $paymentData['banking_entity_id'] ?? null,
-            'amount' => $paymentData['amount'] ?? null,
-            'payment_date' => $paymentData['payment_date'] ?? null,
-            'created_by' => $createdBy,
-        ]);
+        $connection = $paymentsTable->getConnection();
 
-        if (!$paymentsTable->save($payment)) {
-            $errors = [];
-            foreach ($payment->getErrors() as $field => $fieldErrors) {
-                foreach ($fieldErrors as $msg) {
-                    $errors[] = "$field: $msg";
+        return $connection->transactional(function () use (
+            $paymentsTable,
+            $invoicesTable,
+            $invoice,
+            $invoiceId,
+            $paymentData,
+            $createdBy,
+            $currentStatus,
+            $advanceAfter
+        ) {
+            $payment = $paymentsTable->newEntity([
+                'invoice_id' => $invoiceId,
+                'banking_entity_id' => $paymentData['banking_entity_id'] ?? null,
+                'amount' => $paymentData['amount'] ?? null,
+                'payment_date' => $paymentData['payment_date'] ?? null,
+                'status' => InvoiceConstants::PAYMENT_RECORD_PENDING,
+                'authorized' => false,
+                'created_by' => $createdBy,
+            ]);
+
+            if (!$paymentsTable->save($payment)) {
+                $errors = [];
+                foreach ($payment->getErrors() as $field => $fieldErrors) {
+                    foreach ($fieldErrors as $msg) {
+                        $errors[] = "$field: $msg";
+                    }
                 }
+
+                return ServiceResult::fail('No se pudo registrar el pago.' . (!empty($errors) ? ' ' . implode(', ', $errors) : ''));
             }
 
-            return ServiceResult::fail('No se pudo registrar el pago.' . (!empty($errors) ? ' ' . implode(', ', $errors) : ''));
-        }
+            if (!$advanceAfter) {
+                return ServiceResult::ok('Pago registrado. La factura permanece en el estado actual.');
+            }
 
-        $invoice->pipeline_status = InvoiceConstants::STATUS_AUTORIZACION_PAGO;
-        $invoicesTable->save($invoice);
+            $invoice->pipeline_status = InvoiceConstants::STATUS_AUTORIZACION_PAGO;
+            $invoicesTable->save($invoice);
 
-        $this->historyService->recordStatusChange(
-            $invoiceId,
-            $currentStatus,
-            InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-            $createdBy,
-        );
+            $this->historyService->recordStatusChange(
+                $invoiceId,
+                $currentStatus,
+                InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+                $createdBy,
+            );
 
-        return ServiceResult::ok('Pago registrado. La factura pasó a Autorización de Pago.');
+            return ServiceResult::ok('Pago registrado. La factura pasó a Autorización de Pago.');
+        });
     }
 
     /**
