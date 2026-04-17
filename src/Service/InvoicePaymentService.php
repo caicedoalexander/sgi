@@ -103,6 +103,7 @@ class InvoicePaymentService
         $payment = $paymentsTable->get($paymentId);
 
         $payment->authorized = true;
+        $payment->status = InvoiceConstants::PAYMENT_RECORD_AUTHORIZED;
         $payment->authorized_by = $authorizedBy;
         $payment->authorized_date = date('Y-m-d');
 
@@ -185,16 +186,20 @@ class InvoicePaymentService
     }
 
     /**
-     * Rechaza (elimina) un pago pendiente y devuelve la factura a tesorería.
-     * Registra historial para el cambio de estado.
+     * Rechaza un pago pendiente marcando status=rejected con motivo,
+     * y devuelve la factura a tesorería. No elimina el registro.
      */
-    public function rejectPayment(int $paymentId, int $rejectedBy): ServiceResult
+    public function rejectPayment(int $paymentId, int $rejectedBy, string $reason): ServiceResult
     {
+        if (trim($reason) === '') {
+            return ServiceResult::fail('El motivo de rechazo es obligatorio.');
+        }
+
         $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $payment = $paymentsTable->get($paymentId);
 
-        if ($payment->authorized) {
+        if ($payment->status === InvoiceConstants::PAYMENT_RECORD_AUTHORIZED) {
             return ServiceResult::fail('No se puede rechazar un pago ya autorizado.');
         }
 
@@ -202,7 +207,10 @@ class InvoicePaymentService
         $invoice = $invoicesTable->get($invoiceId);
         $previousStatus = $invoice->pipeline_status;
 
-        if (!$paymentsTable->delete($payment)) {
+        $payment->status = InvoiceConstants::PAYMENT_RECORD_REJECTED;
+        $payment->rejection_reason = $reason;
+
+        if (!$paymentsTable->save($payment)) {
             return ServiceResult::fail('No se pudo rechazar el pago.');
         }
 
