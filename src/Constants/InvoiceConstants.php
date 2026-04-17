@@ -70,6 +70,17 @@ final class InvoiceConstants
     public const PAYMENT_PARTIAL = 'Pago Parcial';
     public const PAYMENT_STATUSES = [self::PAYMENT_FULL, self::PAYMENT_PARTIAL];
 
+    // Estado de cada registro de pago (invoice_payments.status)
+    public const PAYMENT_RECORD_PENDING = 'pending';
+    public const PAYMENT_RECORD_AUTHORIZED = 'authorized';
+    public const PAYMENT_RECORD_REJECTED = 'rejected';
+
+    public const PAYMENT_RECORD_STATUSES = [
+        self::PAYMENT_RECORD_PENDING,
+        self::PAYMENT_RECORD_AUTHORIZED,
+        self::PAYMENT_RECORD_REJECTED,
+    ];
+
     // Lista para pago
     public const READY_FOR_PAYMENT_OPTIONS = [
         'Si', 'No', 'Anticipo Empleado', 'Anticipo Proveedor',
