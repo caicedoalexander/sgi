@@ -243,8 +243,10 @@ class InvoicesController extends AppController
         $advanceErrors = [];
         $nextStatus = null;
         if ($canAdvance && !$isRejected) {
-            $advanceErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
-            if (empty($advanceErrors)) {
+            $rawErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
+            $rules = $this->pipeline->getTransitionRules($currentStatus);
+            $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleName, $currentStatus);
+            if (empty($rawErrors)) {
                 $nextStatus = $this->pipeline->getNextStatus($currentStatus);
             }
         }
@@ -270,7 +272,14 @@ class InvoicesController extends AppController
                     $this->Flash->success(sprintf('Factura guardada y avanzada a: %s', $nextLabel));
                 } else {
                     $this->Flash->success('La factura ha sido actualizada.');
-                    foreach ($result['advanceErrors'] as $err) {
+                    $rules = $this->pipeline->getTransitionRules($currentStatus);
+                    $filteredErrors = $this->pipeline->filterAdvanceErrorsForRole(
+                        $result['advanceErrors'],
+                        $rules,
+                        $roleName,
+                        $currentStatus,
+                    );
+                    foreach ($filteredErrors as $err) {
                         $this->Flash->warning($err);
                     }
                 }
