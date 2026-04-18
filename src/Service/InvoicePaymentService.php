@@ -250,4 +250,104 @@ class InvoicePaymentService
 
         return ServiceResult::ok('Pago rechazado. Factura devuelta a Tesorería.');
     }
+
+    /**
+     * Edita un pago pendiente. Requiere motivo obligatorio, que queda
+     * registrado como observación de la factura. Los cambios por campo
+     * se asientan en invoice_histories.
+     */
+    public function editPayment(int $paymentId, array $data, string $reason, int $userId): ServiceResult
+    {
+        if (trim($reason) === '') {
+            return ServiceResult::fail('La observación es obligatoria.');
+        }
+
+        $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+        $payment = $paymentsTable->get($paymentId);
+
+        if ($payment->status === InvoiceConstants::PAYMENT_RECORD_AUTHORIZED) {
+            return ServiceResult::fail('No se puede editar un pago autorizado.');
+        }
+        if ($payment->status === InvoiceConstants::PAYMENT_RECORD_REJECTED) {
+            return ServiceResult::fail('No se puede editar un pago rechazado.');
+        }
+
+        $allowed = array_intersect_key($data, array_flip(['banking_entity_id', 'amount', 'payment_date']));
+        if (empty($allowed)) {
+            return ServiceResult::fail('No se recibieron datos a modificar.');
+        }
+
+        $connection = $paymentsTable->getConnection();
+
+        return $connection->transactional(function () use (
+            $paymentsTable,
+            $payment,
+            $allowed,
+            $reason,
+            $userId
+        ) {
+            $changes = [];
+            foreach ($allowed as $field => $newValue) {
+                $oldValue = $payment->get($field);
+                $oldNorm = $oldValue instanceof \DateTimeInterface ? $oldValue->format('Y-m-d') : $oldValue;
+                $newNorm = $newValue;
+                if ($field === 'payment_date' && is_string($newNorm) && $newNorm !== '') {
+                    $newNorm = date('Y-m-d', strtotime($newNorm));
+                }
+                if ((string)$oldNorm !== (string)$newNorm) {
+                    $changes[$field] = ['old' => $oldNorm, 'new' => $newNorm];
+                }
+            }
+
+            if (empty($changes)) {
+                return ServiceResult::fail('No hay cambios por aplicar.');
+            }
+
+            $paymentsTable->patchEntity($payment, $allowed, [
+                'fields' => ['banking_entity_id', 'amount', 'payment_date'],
+            ]);
+
+            if (!$paymentsTable->save($payment)) {
+                return ServiceResult::fail('No se pudo guardar el pago.');
+            }
+
+            $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
+            foreach ($changes as $field => $vals) {
+                $historiesTable->save($historiesTable->newEntity([
+                    'invoice_id' => $payment->invoice_id,
+                    'user_id' => $userId,
+                    'field_changed' => 'payment.' . $field,
+                    'old_value' => $vals['old'] !== null ? (string)$vals['old'] : null,
+                    'new_value' => $vals['new'] !== null ? (string)$vals['new'] : null,
+                ]));
+            }
+
+            $observationsTable = TableRegistry::getTableLocator()->get('InvoiceObservations');
+            $observationsTable->save($observationsTable->newEntity([
+                'invoice_id' => $payment->invoice_id,
+                'user_id' => $userId,
+                'message' => 'Edición de pago #' . $payment->id . ': ' . $reason,
+            ]));
+
+            return ServiceResult::ok('Pago actualizado.');
+        });
+    }
+
+    /**
+     * Indica si la factura tiene al menos un soporte de pago adjunto
+     * asociado a un pago autorizado.
+     */
+    public function hasPaymentSupports(int $invoiceId): bool
+    {
+        $attachmentsTable = TableRegistry::getTableLocator()->get('InvoicePaymentAttachments');
+
+        return $attachmentsTable->find()
+            ->innerJoinWith('InvoicePayments', function ($q) use ($invoiceId) {
+                return $q->where([
+                    'InvoicePayments.invoice_id' => $invoiceId,
+                    'InvoicePayments.status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
+                ]);
+            })
+            ->count() > 0;
+    }
 }
