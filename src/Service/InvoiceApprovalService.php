@@ -295,6 +295,108 @@ class InvoiceApprovalService
     }
 
     /**
+     * Sends approval links without touching existing active approvals.
+     * Fails if there are pending approvals already (caller should use modifyApprovers).
+     *
+     * @return array ['success' => bool, 'errors' => array, 'approvals' => array]
+     */
+    public function sendApprovalLinks(Invoice $invoice, array $approverUserIds, string $baseUrl, int $createdByUserId): array
+    {
+        if ($this->hasPendingApprovals($invoice->id)) {
+            return [
+                'success' => false,
+                'errors' => ['Ya hay aprobaciones activas; use Modificar aprobadores.'],
+                'approvals' => [],
+            ];
+        }
+
+        return $this->assignApprovers($invoice, $approverUserIds, $baseUrl, $createdByUserId);
+    }
+
+    /**
+     * Replaces the current approver set: invalidates pending tokens, records the
+     * reason in invoice history, and creates new approvals.
+     *
+     * @return array ['success' => bool, 'errors' => array, 'approvals' => array]
+     */
+    public function modifyApprovers(
+        Invoice $invoice,
+        array $newApproverIds,
+        string $reason,
+        string $baseUrl,
+        int $userId,
+    ): array {
+        if (trim($reason) === '') {
+            return ['success' => false, 'errors' => ['El motivo es obligatorio.'], 'approvals' => []];
+        }
+        if (empty($newApproverIds)) {
+            return ['success' => false, 'errors' => ['Debe seleccionar al menos un aprobador.'], 'approvals' => []];
+        }
+
+        $connection = $this->invoiceApprovalsTable->getConnection();
+
+        return $connection->transactional(function () use ($invoice, $newApproverIds, $reason, $baseUrl, $userId) {
+            $previous = $this->getCurrentApprovals($invoice->id);
+            $previousIds = array_map(fn($a) => $a->user_id, $previous);
+
+            $this->_invalidatePendingTokens($invoice->id);
+
+            $observationsTable = TableRegistry::getTableLocator()->get('InvoiceObservations');
+            $observationsTable->save($observationsTable->newEntity([
+                'invoice_id' => $invoice->id,
+                'user_id' => $userId,
+                'message' => 'Aprobadores modificados: ' . $reason
+                    . ' (previos: ' . implode(',', $previousIds)
+                    . ' → nuevos: ' . implode(',', $newApproverIds) . ')',
+            ]));
+
+            $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
+            $historiesTable->save($historiesTable->newEntity([
+                'invoice_id' => $invoice->id,
+                'user_id' => $userId,
+                'field_changed' => 'approvers_modified',
+                'old_value' => json_encode($previousIds),
+                'new_value' => json_encode(array_map('intval', $newApproverIds)),
+            ]));
+
+            return $this->assignApprovers($invoice, $newApproverIds, $baseUrl, $userId);
+        });
+    }
+
+    /**
+     * Resets the approval flow on a rejected invoice: clears approvals and
+     * sets area_approval back to pending.
+     */
+    public function resetFlow(Invoice $invoice, int $userId): ServiceResult
+    {
+        if ($invoice->area_approval !== InvoiceConstants::APPROVAL_REJECTED) {
+            return ServiceResult::fail('La factura no está rechazada; no se puede reiniciar el flujo.');
+        }
+
+        $connection = $this->invoiceApprovalsTable->getConnection();
+
+        $connection->transactional(function () use ($invoice, $userId) {
+            $this->invoiceApprovalsTable->deleteAll(['invoice_id' => $invoice->id]);
+
+            $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+            $invoice->area_approval = InvoiceConstants::APPROVAL_PENDING;
+            $invoice->area_approval_date = null;
+            $invoicesTable->save($invoice);
+
+            $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
+            $historiesTable->save($historiesTable->newEntity([
+                'invoice_id' => $invoice->id,
+                'user_id' => $userId,
+                'field_changed' => 'area_approval',
+                'old_value' => InvoiceConstants::APPROVAL_REJECTED,
+                'new_value' => InvoiceConstants::APPROVAL_PENDING,
+            ]));
+        });
+
+        return ServiceResult::ok('Flujo de aprobación reiniciado.');
+    }
+
+    /**
      * Invalidate all pending tokens for an invoice (except excludeId).
      */
     private function _invalidatePendingTokens(int $invoiceId, ?int $excludeId = null): void
