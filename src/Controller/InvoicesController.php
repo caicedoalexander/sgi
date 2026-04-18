@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
+use App\Constants\RoleConstants;
 use App\Service\ExcelService;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
@@ -226,6 +227,14 @@ class InvoicesController extends AppController
                 'Esta factura pertenece al registro de Caja Menor %s. Los cambios de estado se gestionan desde allí.',
                 $invoice->petty_cash_record->code ?? '#' . $invoice->petty_cash_record_id,
             ));
+        }
+
+        // Paid invoices are read-only for non-admin roles: redirect to view.
+        if (
+            $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
+            && $this->_getRoleName() !== RoleConstants::ADMIN
+        ) {
+            return $this->redirect(['action' => 'view', $id]);
         }
 
         $roleName = $this->_getRoleName();
@@ -652,6 +661,86 @@ class InvoicesController extends AppController
         }
 
         return $this->redirect(['action' => 'view', $invoiceId]);
+    }
+
+    /**
+     * Sends approval links to the selected approvers. Fails if there are
+     * pending approvals already active.
+     */
+    public function sendApprovalLinks($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($id);
+        $user = $this->_getCurrentUser();
+        $approverIds = (array)$this->request->getData('approver_ids');
+
+        $result = $this->approvalService->sendApprovalLinks(
+            $invoice,
+            $approverIds,
+            $this->_getBaseUrl(),
+            (int)$user->id,
+        );
+
+        if (!empty($result['success'])) {
+            $this->Flash->success('Enlaces de aprobación enviados.');
+        } else {
+            foreach ($result['errors'] ?? [] as $error) {
+                $this->Flash->error($error);
+            }
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    /**
+     * Replaces the current approver set. Requires a reason and invalidates
+     * any active tokens.
+     */
+    public function modifyApprovers($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($id);
+        $user = $this->_getCurrentUser();
+        $reason = trim((string)$this->request->getData('reason'));
+        $approverIds = (array)$this->request->getData('approver_ids');
+
+        $result = $this->approvalService->modifyApprovers(
+            $invoice,
+            $approverIds,
+            $reason,
+            $this->_getBaseUrl(),
+            (int)$user->id,
+        );
+
+        if (!empty($result['success'])) {
+            $this->Flash->success('Aprobadores actualizados. Se enviaron los nuevos enlaces.');
+        } else {
+            foreach ($result['errors'] ?? [] as $error) {
+                $this->Flash->error($error);
+            }
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    /**
+     * Resets a rejected approval flow back to pending.
+     */
+    public function resetFlow($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($id);
+        $user = $this->_getCurrentUser();
+
+        $result = $this->approvalService->resetFlow($invoice, (int)$user->id);
+
+        if ($result->success) {
+            $this->Flash->success($result->data ?? 'Flujo reiniciado.');
+        } else {
+            $this->Flash->error(is_array($result->errors) ? implode(' ', $result->errors) : (string)$result->errors);
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
 }

@@ -357,6 +357,40 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'InvoicePayments', 'action' => 'rejectPayment'],
             ['pass' => ['invoiceId', 'paymentId']],
         );
+        $builder->connect(
+            '/invoices/edit-payment/{invoiceId}/{paymentId}',
+            ['controller' => 'InvoicePayments', 'action' => 'editPayment'],
+            ['pass' => ['invoiceId', 'paymentId']],
+        );
+
+        // Invoice approval workflow
+        $builder->connect(
+            '/invoices/send-approval-links/{id}',
+            ['controller' => 'Invoices', 'action' => 'sendApprovalLinks'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/invoices/modify-approvers/{id}',
+            ['controller' => 'Invoices', 'action' => 'modifyApprovers'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/invoices/reset-flow/{id}',
+            ['controller' => 'Invoices', 'action' => 'resetFlow'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+
+        // Invoice payment supports (attachments)
+        $builder->connect(
+            '/invoices/upload-payment-support/{invoiceId}',
+            ['controller' => 'InvoicePaymentAttachments', 'action' => 'upload'],
+            ['invoiceId' => '\d+', 'pass' => ['invoiceId']],
+        );
+        $builder->connect(
+            '/invoices/delete-payment-support/{invoiceId}/{attachmentId}',
+            ['controller' => 'InvoicePaymentAttachments', 'action' => 'delete'],
+            ['invoiceId' => '\d+', 'attachmentId' => '\d+', 'pass' => ['invoiceId', 'attachmentId']],
+        );
 
         // Payment Schedulings (Programación)
         $builder->connect(
