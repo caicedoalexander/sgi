@@ -47,16 +47,61 @@ class InvoicePaymentsController extends AppController
             return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
         }
 
+        $data = $this->request->getData();
+        $advanceAfter = (bool)($data['advance_after'] ?? false);
+
+        if (!empty($data['full_payment'])) {
+            $data['amount'] = $this->paymentService->getPendingBalance((int)$invoiceId);
+        }
+
         $result = $this->paymentService->registerPayment(
             (int)$invoiceId,
+            $data,
+            (int)$this->_getCurrentUser()->id,
+            $advanceAfter,
+        );
+
+        if ($result->success) {
+            $this->Flash->success($result->data);
+        } else {
+            $this->Flash->error(implode(' ', (array)$result->errors));
+        }
+
+        return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+    }
+
+    /**
+     * Edit a pending payment. Requires non-empty reason; records field changes
+     * in invoice_histories and persists the reason as an invoice observation.
+     */
+    public function editPayment($invoiceId = null, $paymentId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $roleName = $this->_getRoleName();
+
+        if ($roleName !== RoleConstants::TESORERIA && $roleName !== RoleConstants::ADMIN) {
+            $this->Flash->error('Solo Tesorería puede editar pagos.');
+
+            return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+        }
+
+        $data = array_intersect_key(
             $this->request->getData(),
+            array_flip(['banking_entity_id', 'amount', 'payment_date']),
+        );
+        $reason = (string)$this->request->getData('reason');
+
+        $result = $this->paymentService->editPayment(
+            (int)$paymentId,
+            $data,
+            $reason,
             (int)$this->_getCurrentUser()->id,
         );
 
         if ($result->success) {
             $this->Flash->success($result->data);
         } else {
-            $this->Flash->error($result->data);
+            $this->Flash->error(implode(' ', (array)$result->errors));
         }
 
         return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
@@ -99,12 +144,17 @@ class InvoicePaymentsController extends AppController
             return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
         }
 
-        $result = $this->paymentService->rejectPayment((int)$paymentId, (int)$this->_getCurrentUser()->id);
+        $reason = (string)$this->request->getData('reason');
+        $result = $this->paymentService->rejectPayment(
+            (int)$paymentId,
+            (int)$this->_getCurrentUser()->id,
+            $reason,
+        );
 
         if ($result->success) {
             $this->Flash->success($result->data);
         } else {
-            $this->Flash->error($result->data);
+            $this->Flash->error(implode(' ', (array)$result->errors));
         }
 
         return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
