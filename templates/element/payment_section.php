@@ -15,6 +15,9 @@
  * @var string|null $paymentStatus Payment status string (e.g. 'Pago total', 'Pago Parcial') or null
  * @var float|null  $totalAmount   Total amount of the parent record (for remaining calculation)
  * @var string $rejectMessage      Confirmation message for reject action
+ * @var string $mode                One of 'tesoreria_register','authorize','close','view' (default 'view')
+ * @var callable|null $editUrlFn    fn(paymentId) => URL array for editPayment (sub-fase tesoreria_register)
+ * @var callable|null $rejectUrlReasonFn fn(paymentId) => URL array for rejectPayment with reason modal
  */
 
 // Defaults
@@ -23,9 +26,12 @@ $canRegisterPayment = $canRegisterPayment ?? false;
 $canAuthorize = $canAuthorize ?? false;
 $canDelete = $canDelete ?? false;
 $deleteUrlFn = $deleteUrlFn ?? null;
+$editUrlFn = $editUrlFn ?? null;
+$rejectUrlReasonFn = $rejectUrlReasonFn ?? null;
 $paymentStatus = $paymentStatus ?? null;
 $totalAmount = (float)($totalAmount ?? 0);
 $rejectMessage = $rejectMessage ?? '¿Rechazar este pago? El registro volverá a Tesorería.';
+$mode = $mode ?? 'view';
 
 // Compute totals
 $paymentsTotal = 0;
@@ -76,11 +82,6 @@ $addUrl = $this->Url->build($addPaymentUrl);
             </span>
             <?php if ($canRegisterPayment): ?>
             <div class="d-flex gap-2">
-                <?php if ($remainingAmount > 0): ?>
-                <button type="button" class="btn btn-sm btn-outline-success" data-btn-full-pay>
-                    <i class="bi bi-check2-all me-1"></i>Pago Total
-                </button>
-                <?php endif; ?>
                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#add-payment-form">
                     <i class="bi bi-plus-lg me-1"></i>Agregar Pago
                 </button>
@@ -109,9 +110,22 @@ $addUrl = $this->Url->build($addPaymentUrl);
                         <label class="form-label">Fecha de Pago</label>
                         <input type="text" data-pay-date class="form-control flatpickr-date" required>
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="button" data-btn-register class="btn btn-primary w-100">
-                            <i class="bi bi-save me-1"></i>Registrar
+                    <?php if ($remainingAmount > 0): ?>
+                    <div class="col-md-12">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="pay-full-check" data-pay-full>
+                            <label class="form-check-label" for="pay-full-check">
+                                Pago total (usa monto restante: $<?= number_format($remainingAmount, 0, ',', '.') ?>)
+                            </label>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    <div class="col-md-12 d-flex gap-2 justify-content-end">
+                        <button type="button" data-btn-register-only class="btn btn-outline-primary">
+                            <i class="bi bi-save me-1"></i>Solo registrar
+                        </button>
+                        <button type="button" data-btn-register-advance class="btn btn-success">
+                            <i class="bi bi-send-check me-1"></i>Registrar y enviar a autorización
                         </button>
                     </div>
                 </div>
@@ -141,10 +155,16 @@ $addUrl = $this->Url->build($addPaymentUrl);
                         <td>$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
                         <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
                         <td>
-                            <?php if ($payment->authorized): ?>
+                            <?php $pStatus = $payment->status ?? ($payment->authorized ? 'authorized' : 'pending'); ?>
+                            <?php if ($pStatus === 'authorized'): ?>
                                 <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
                                 <?php if ($payment->authorized_by_user): ?>
                                 <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
+                                <?php endif; ?>
+                            <?php elseif ($pStatus === 'rejected'): ?>
+                                <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Rechazado</span>
+                                <?php if (!empty($payment->rejection_reason)): ?>
+                                <br><small class="text-muted"><?= h($payment->rejection_reason) ?></small>
                                 <?php endif; ?>
                             <?php else: ?>
                                 <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
@@ -161,9 +181,8 @@ $addUrl = $this->Url->build($addPaymentUrl);
                             </button>
                             <?php endif; ?>
                             <?php if ($canAuthorize && !$payment->authorized && $rejectUrlFn): ?>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-post-action"
-                                    data-url="<?= $this->Url->build($rejectUrlFn($payment->id)) ?>"
-                                    data-confirm="<?= h($rejectMessage) ?>">
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-reject-payment"
+                                    data-url="<?= $this->Url->build($rejectUrlFn($payment->id)) ?>">
                                 <i class="bi bi-x-circle me-1"></i>Rechazar
                             </button>
                             <?php endif; ?>

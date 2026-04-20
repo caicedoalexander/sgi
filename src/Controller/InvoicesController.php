@@ -5,11 +5,13 @@ namespace App\Controller;
 
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
+use App\Constants\RoleConstants;
 use App\Service\ExcelService;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
 use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
+use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
 use ArrayObject;
 use Cake\ORM\Query\SelectQuery;
@@ -23,6 +25,7 @@ class InvoicesController extends AppController
     private InvoiceFilterService $filterService;
     private InvoiceDocumentService $documentService;
     private InvoiceApprovalService $approvalService;
+    private InvoicePaymentService $paymentService;
 
     public function initialize(): void
     {
@@ -31,6 +34,7 @@ class InvoicesController extends AppController
         $this->filterService = new InvoiceFilterService();
         $this->documentService = new InvoiceDocumentService();
         $this->approvalService = new InvoiceApprovalService();
+        $this->paymentService = new InvoicePaymentService();
     }
 
     private function _getCurrentUser(): object
@@ -154,6 +158,7 @@ class InvoicesController extends AppController
                 'BankingEntities',
                 'CreatedByUsers',
                 'AuthorizedByUsers',
+                'InvoicePaymentAttachments',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -170,7 +175,8 @@ class InvoicesController extends AppController
         }
 
         $fieldLabels = InvoiceHistoryService::FIELD_LABELS;
-        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
+        $timeline = (new InvoiceHistoryService())->buildPipelineTimeline((int)$invoice->id);
+        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels', 'timeline'));
     }
 
     public function add()
@@ -217,6 +223,7 @@ class InvoicesController extends AppController
                 'BankingEntities',
                 'CreatedByUsers',
                 'AuthorizedByUsers',
+                'InvoicePaymentAttachments',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -226,6 +233,14 @@ class InvoicesController extends AppController
                 'Esta factura pertenece al registro de Caja Menor %s. Los cambios de estado se gestionan desde allí.',
                 $invoice->petty_cash_record->code ?? '#' . $invoice->petty_cash_record_id,
             ));
+        }
+
+        // Paid invoices are read-only for non-admin roles: redirect to view.
+        if (
+            $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
+            && $this->_getRoleName() !== RoleConstants::ADMIN
+        ) {
+            return $this->redirect(['action' => 'view', $id]);
         }
 
         $roleName = $this->_getRoleName();
@@ -243,8 +258,10 @@ class InvoicesController extends AppController
         $advanceErrors = [];
         $nextStatus = null;
         if ($canAdvance && !$isRejected) {
-            $advanceErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
-            if (empty($advanceErrors)) {
+            $rawErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
+            $rules = $this->pipeline->getTransitionRules($currentStatus);
+            $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleName, $currentStatus);
+            if (empty($rawErrors)) {
                 $nextStatus = $this->pipeline->getNextStatus($currentStatus);
             }
         }
@@ -270,7 +287,14 @@ class InvoicesController extends AppController
                     $this->Flash->success(sprintf('Factura guardada y avanzada a: %s', $nextLabel));
                 } else {
                     $this->Flash->success('La factura ha sido actualizada.');
-                    foreach ($result['advanceErrors'] as $err) {
+                    $rules = $this->pipeline->getTransitionRules($currentStatus);
+                    $filteredErrors = $this->pipeline->filterAdvanceErrorsForRole(
+                        $result['advanceErrors'],
+                        $rules,
+                        $roleName,
+                        $currentStatus,
+                    );
+                    foreach ($filteredErrors as $err) {
                         $this->Flash->warning($err);
                     }
                 }
@@ -313,6 +337,24 @@ class InvoicesController extends AppController
             $invoice->invoice_payments ?? [],
         ));
 
+        // Sub-fase B detection: en autorizacion_pago todos los pagos están autorizados
+        // (no queda ninguno pendiente) y existe al menos un autorizado -> cierre por Tesorería.
+        $subPhaseB = false;
+        if ($currentStatus === InvoiceConstants::STATUS_AUTORIZACION_PAGO) {
+            $hasPending = $this->paymentService->hasPendingAuthorization($invoice->id);
+            $hasAuthorized = false;
+            foreach (($invoice->invoice_payments ?? []) as $p) {
+                $st = $p->status ?? ($p->authorized ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED : InvoiceConstants::PAYMENT_RECORD_PENDING);
+                if ($st === InvoiceConstants::PAYMENT_RECORD_AUTHORIZED) {
+                    $hasAuthorized = true;
+                    break;
+                }
+            }
+            $subPhaseB = !$hasPending && $hasAuthorized;
+        }
+
+        $timeline = (new \App\Service\InvoiceHistoryService())->buildPipelineTimeline((int)$invoice->id);
+
         $this->set(compact(
             'invoice',
             'editableFields',
@@ -331,6 +373,8 @@ class InvoicesController extends AppController
             'currentApprovals',
             'hasPendingApprovals',
             'paymentsTotal',
+            'subPhaseB',
+            'timeline',
         ));
         $this->set($this->_getFormDropdowns());
     }
@@ -643,6 +687,86 @@ class InvoicesController extends AppController
         }
 
         return $this->redirect(['action' => 'view', $invoiceId]);
+    }
+
+    /**
+     * Sends approval links to the selected approvers. Fails if there are
+     * pending approvals already active.
+     */
+    public function sendApprovalLinks($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($id);
+        $user = $this->_getCurrentUser();
+        $approverIds = (array)$this->request->getData('approver_ids');
+
+        $result = $this->approvalService->sendApprovalLinks(
+            $invoice,
+            $approverIds,
+            $this->_getBaseUrl(),
+            (int)$user->id,
+        );
+
+        if (!empty($result['success'])) {
+            $this->Flash->success('Enlaces de aprobación enviados.');
+        } else {
+            foreach ($result['errors'] ?? [] as $error) {
+                $this->Flash->error($error);
+            }
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    /**
+     * Replaces the current approver set. Requires a reason and invalidates
+     * any active tokens.
+     */
+    public function modifyApprovers($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($id);
+        $user = $this->_getCurrentUser();
+        $reason = trim((string)$this->request->getData('reason'));
+        $approverIds = (array)$this->request->getData('approver_ids');
+
+        $result = $this->approvalService->modifyApprovers(
+            $invoice,
+            $approverIds,
+            $reason,
+            $this->_getBaseUrl(),
+            (int)$user->id,
+        );
+
+        if (!empty($result['success'])) {
+            $this->Flash->success('Aprobadores actualizados. Se enviaron los nuevos enlaces.');
+        } else {
+            foreach ($result['errors'] ?? [] as $error) {
+                $this->Flash->error($error);
+            }
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    /**
+     * Resets a rejected approval flow back to pending.
+     */
+    public function resetFlow($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($id);
+        $user = $this->_getCurrentUser();
+
+        $result = $this->approvalService->resetFlow($invoice, (int)$user->id);
+
+        if ($result->success) {
+            $this->Flash->success($result->data ?? 'Flujo reiniciado.');
+        } else {
+            $this->Flash->error(is_array($result->errors) ? implode(' ', $result->errors) : (string)$result->errors);
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
     }
 
 }

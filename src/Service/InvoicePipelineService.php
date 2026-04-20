@@ -104,7 +104,27 @@ class InvoicePipelineService
                 'custom' => true,
                 'label' => 'El pago pendiente debe ser autorizado por el Contador',
             ],
+            [
+                'field' => '_has_payment_supports',
+                'custom' => true,
+                'label' => 'Debe subir al menos un soporte de pago para cerrar la factura',
+            ],
         ],
+    ];
+
+    /**
+     * Maps each transition requirement field to the invoice fields that resolve it.
+     * An empty array means the requirement is resolved by actions (not by editing fields).
+     */
+    private const REQUIREMENT_FIELDS = [
+        'area_approval'         => [],
+        'dian_validation'       => ['dian_validation'],
+        'accrued'               => ['accrued', 'accrual_date'],
+        'accrual_date'          => ['accrual_date'],
+        'ready_for_payment'     => ['ready_for_payment'],
+        '_has_pending_payment'  => [],
+        '_payment_authorized'   => [],
+        '_has_payment_supports' => [],
     ];
 
     // Next status transitions
@@ -170,6 +190,10 @@ class InvoicePipelineService
                     if ($this->paymentService->hasPendingAuthorization($invoice->id)) {
                         $errors[] = $rule['label'];
                     }
+                } elseif ($rule['field'] === '_has_payment_supports') {
+                    if (!$this->paymentService->hasPaymentSupports($invoice->id)) {
+                        $errors[] = $rule['label'];
+                    }
                 }
                 continue;
             }
@@ -195,6 +219,63 @@ class InvoicePipelineService
         }
 
         return $errors;
+    }
+
+    /**
+     * Returns the transition requirement rules for a status (raw definitions).
+     *
+     * @return array<int, array{field:string, label:string}>
+     */
+    public function getTransitionRules(string $fromStatus): array
+    {
+        $rules = [];
+        foreach (self::TRANSITION_REQUIREMENTS[$fromStatus] ?? [] as $rule) {
+            $rules[] = ['field' => $rule['field'], 'label' => $rule['label']];
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Filters advanceErrors so only those the given role can resolve remain.
+     * Requirements driven by actions (empty REQUIREMENT_FIELDS entry) are kept
+     * when the role has visibility over the current status.
+     *
+     * @param string[] $errors error messages aligned positionally with $rules
+     * @param array<int, array{field:string, label:string}> $rules
+     * @return string[]
+     */
+    public function filterAdvanceErrorsForRole(array $errors, array $rules, string $roleName, string $status): array
+    {
+        if ($roleName === RoleConstants::ADMIN) {
+            return array_values($errors);
+        }
+
+        $editable = $this->getEditableFields($roleName, $status);
+        $visibleStatuses = $this->getVisibleStatuses($roleName);
+        $statusVisible = in_array($status, $visibleStatuses, true);
+
+        $filtered = [];
+        foreach ($rules as $i => $rule) {
+            if (!isset($errors[$i])) {
+                continue;
+            }
+            $field = $rule['field'];
+            $responsible = self::REQUIREMENT_FIELDS[$field] ?? [$field];
+
+            if ($responsible === []) {
+                if ($statusVisible) {
+                    $filtered[] = $errors[$i];
+                }
+                continue;
+            }
+
+            if (array_intersect($responsible, $editable)) {
+                $filtered[] = $errors[$i];
+            }
+        }
+
+        return $filtered;
     }
 
     public function canAdvance(string $roleName, string $currentStatus): bool

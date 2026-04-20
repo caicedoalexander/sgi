@@ -12,8 +12,8 @@ class InvoiceFieldAccessPolicy
         'invoice_number', 'issue_date', 'due_date',
         'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
         'detail', 'amount', 'expense_type_id', 'cost_center_id',
-        'confirmed_by', 'approver_id', 'area_approval',
-        'dian_validation', 'accrued', 'ready_for_payment',
+        'confirmed_by', 'area_approval',
+        'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
         'payment_status', 'full_payment_date', 'pipeline_status',
     ];
 
@@ -42,17 +42,13 @@ class InvoiceFieldAccessPolicy
     ];
 
     private const VISIBLE_SECTIONS_BY_ROLE = [
-        RoleConstants::REGISTRO_REVISION => ['general', 'dates', 'classification', 'revision'],
-        RoleConstants::CONTABILIDAD      => ['general', 'dates', 'classification', 'accounting'],
-        RoleConstants::TESORERIA         => ['general', 'treasury'],
-        RoleConstants::CONTADOR          => ['general', 'dates', 'classification', 'revision', 'accounting', 'treasury', 'payment_authorization'],
+        RoleConstants::REGISTRO_REVISION => ['ledger', 'revision'],
+        RoleConstants::CONTABILIDAD      => ['ledger', 'accounting'],
+        RoleConstants::TESORERIA         => ['ledger', 'treasury', 'payment_supports'],
+        RoleConstants::CONTADOR          => ['ledger', 'payment_authorization'],
     ];
 
-    private const COLLAPSIBLE_SECTIONS_BY_ROLE = [
-        RoleConstants::REGISTRO_REVISION => [
-            InvoiceConstants::STATUS_APROBACION => ['general', 'dates', 'classification'],
-        ],
-    ];
+    private const COLLAPSIBLE_SECTIONS_BY_ROLE = [];
 
     public function getEditableFields(string $roleName, string $status): array
     {

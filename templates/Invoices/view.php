@@ -128,6 +128,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
             'isRejected'       => $isRejected,
             'isApproved'       => $isApproved ?? false,
             'paymentStatus'    => $invoice->payment_status,
+            'timeline'         => $timeline ?? [],
         ]) ?>
     </div>
 
@@ -319,16 +320,32 @@ $dianClass = match($invoice->dian_validation ?? '') {
                             <td>$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
                             <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
                             <td>
-                                <?php if ($payment->authorized): ?>
+                                <?php $pSt = $payment->status ?? ($payment->authorized ? 'authorized' : 'pending'); ?>
+                                <?php if ($pSt === 'authorized'): ?>
                                     <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
                                     <?php if ($payment->authorized_by_user): ?>
                                     <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
+                                    <?php endif; ?>
+                                <?php elseif ($pSt === 'rejected'): ?>
+                                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Rechazado</span>
+                                    <?php if (!empty($payment->rejection_reason)): ?>
+                                    <br><small class="text-muted"><?= h($payment->rejection_reason) ?></small>
                                     <?php endif; ?>
                                 <?php else: ?>
                                     <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
+                            <td>
+                                <?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?>
+                                <?php if (!empty($payment->invoice_payment_attachments)): ?>
+                                    <br>
+                                    <?php foreach ($payment->invoice_payment_attachments as $att): ?>
+                                        <a href="/<?= h($att->file_path) ?>" target="_blank" class="small me-2">
+                                            <i class="bi bi-paperclip"></i> <?= h($att->file_name) ?>
+                                        </a>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>

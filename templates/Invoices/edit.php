@@ -207,6 +207,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             'isRejected'       => $isRejected,
             'isApproved'       => $isApproved ?? false,
             'paymentStatus'    => $invoice->payment_status,
+            'timeline'         => $timeline ?? [],
         ]) ?>
     </div>
 
@@ -563,10 +564,27 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                     <?php elseif ($hasPendingApprovals): ?>
                         <div class="d-flex align-items-center gap-2 py-2">
                             <span class="spinner-border spinner-border-sm text-warning" role="status" style="width:.9rem;height:.9rem;"></span>
-                            <span style="font-size:.85rem;color:#888;">Aprobaciones en curso — no se puede modificar</span>
+                            <span style="font-size:.85rem;color:#888;">Aprobaciones en curso</span>
                         </div>
+                        <?php if (!empty($editableFields) && $currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION): ?>
+                        <button type="button" class="btn btn-sm btn-outline-warning mt-1" data-bs-toggle="modal" data-bs-target="#modifyApproversModal">
+                            <i class="bi bi-pencil-square me-1"></i>Modificar aprobadores
+                        </button>
+                        <?php endif; ?>
                     <?php else: ?>
                         <div class="py-2" style="font-size:.85rem;color:#aaa;">No editable en este estado</div>
+                    <?php endif; ?>
+
+                    <?php if (($invoice->area_approval ?? '') === \App\Constants\InvoiceConstants::APPROVAL_REJECTED
+                        && !empty($editableFields)
+                        && $currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION): ?>
+                    <form method="post" action="<?= $this->Url->build(['action' => 'resetFlow', $invoice->id]) ?>"
+                          class="mt-2" onsubmit="return confirm('¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.');">
+                        <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
+                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Reiniciar flujo
+                        </button>
+                    </form>
                     <?php endif; ?>
                 </div>
                 <div class="col-md-3">
@@ -711,6 +729,11 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             $isContadorAutPago = ($roleName === \App\Constants\RoleConstants::CONTADOR || $roleName === \App\Constants\RoleConstants::ADMIN)
                 && $currentStatus === \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO;
         ?>
+        <?php
+            $paymentMode = $isTesoreriaEdit ? 'tesoreria_register'
+                         : ($isContadorAutPago ? 'authorize'
+                         : (($subPhaseB ?? false) ? 'close' : 'view'));
+        ?>
         <?= $this->element('payment_section', [
             'payments'           => $invoice->invoice_payments ?? [],
             'bankingEntities'    => $bankingEntities,
@@ -723,8 +746,85 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             'canDelete'          => $isTesoreriaEdit,
             'paymentStatus'      => $invoice->payment_status ?? null,
             'totalAmount'        => $invoice->amount ?? null,
-            'rejectMessage'      => '¿Rechazar este pago? Se eliminará y la factura volverá a Tesorería.',
+            'rejectMessage'      => '¿Rechazar este pago? El registro volverá a Tesorería.',
+            'mode'               => $paymentMode,
         ]) ?>
+
+        <?php if (($subPhaseB ?? false) && ($roleName === \App\Constants\RoleConstants::TESORERIA || $roleName === \App\Constants\RoleConstants::ADMIN)): ?>
+        <?php
+            $authorizedPayments = array_values(array_filter($invoice->invoice_payments ?? [], function ($p) {
+                $st = $p->status ?? ($p->authorized ? 'authorized' : 'pending');
+                return $st === 'authorized';
+            }));
+            $hasAnyAttachment = false;
+            foreach ($authorizedPayments as $ap) {
+                if (!empty($ap->invoice_payment_attachments)) { $hasAnyAttachment = true; break; }
+            }
+        ?>
+        <div class="mt-4 p-3" style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);background:#f8f9fa;">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-paperclip"></i>
+                <strong style="font-size:.9rem;">Soportes de pago</strong>
+            </div>
+            <form action="<?= $this->Url->build(['controller' => 'InvoicePaymentAttachments', 'action' => 'upload', $invoice->id]) ?>"
+                  method="post" enctype="multipart/form-data" class="row g-2 align-items-end mb-2">
+                <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
+                <div class="col-md-5">
+                    <label class="form-label">Pago asociado</label>
+                    <select name="invoice_payment_id" class="form-select" required>
+                        <?php foreach ($authorizedPayments as $ap): ?>
+                            <option value="<?= $ap->id ?>">
+                                <?= h($ap->banking_entity->name ?? '—') ?> —
+                                $<?= number_format((float)$ap->amount, 0, ',', '.') ?> —
+                                <?= $ap->payment_date?->format('d/m/Y') ?? '' ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Archivo</label>
+                    <input type="file" name="file" class="form-control" required>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-upload me-1"></i>Subir
+                    </button>
+                </div>
+            </form>
+
+            <?php if (!empty($authorizedPayments)): ?>
+            <div class="mt-2">
+                <?php foreach ($authorizedPayments as $ap): ?>
+                    <?php if (!empty($ap->invoice_payment_attachments)): ?>
+                    <div class="mb-1" style="font-size:.8rem;">
+                        <strong>Pago #<?= $ap->id ?>:</strong>
+                        <?php foreach ($ap->invoice_payment_attachments as $att): ?>
+                            <a href="/<?= h($att->file_path) ?>" target="_blank" class="me-2">
+                                <i class="bi bi-file-earmark"></i> <?= h($att->file_name) ?>
+                            </a>
+                            <form method="post" action="<?= $this->Url->build(['controller' => 'InvoicePaymentAttachments', 'action' => 'delete', $invoice->id, $att->id]) ?>"
+                                  class="d-inline" onsubmit="return confirm('¿Eliminar soporte?');">
+                                <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
+                                <button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                            </form>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
+            <div class="mt-3 d-flex justify-content-end">
+                <form method="post" action="<?= $this->Url->build(['action' => 'advanceStatus', $invoice->id]) ?>">
+                    <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
+                    <button type="submit" class="btn btn-success"
+                            <?= $hasAnyAttachment ? '' : 'disabled title="Sube al menos un soporte para cerrar."' ?>>
+                        <i class="bi bi-check2-circle me-1"></i>Cerrar Factura
+                    </button>
+                </form>
+            </div>
+        </div>
+        <?php endif; ?>
         <?php endif; ?>
 
         <?php if ($sectionName === 'payment_authorization' && in_array('payment_authorization', $visibleSections)): ?>
@@ -782,6 +882,10 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         <?php endif; ?>
 
         <?= $this->Form->end() ?>
+
+        <?php if ($currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION && !empty($editableFields)): ?>
+        <?= $this->element('invoice_edit/modify_approvers_modal', ['invoice' => $invoice, 'approvers' => $approvers]) ?>
+        <?php endif; ?>
         <?php else: ?>
         <!-- Factura en Caja Menor: solo lectura -->
         <div class="text-center py-4" style="color:#aaa;">
@@ -1206,6 +1310,32 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         .catch(function() {
             alert('Error de conexión. Intente nuevamente.');
             btn.disabled = false;
+        });
+    });
+    // ── Reject payment: capture reason via prompt then POST ──
+    document.querySelectorAll('.btn-reject-payment').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var reason = prompt('Motivo del rechazo (obligatorio):');
+            if (reason === null) return;
+            reason = reason.trim();
+            if (!reason) { alert('Debe indicar un motivo.'); return; }
+
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = btn.getAttribute('data-url');
+            form.style.display = 'none';
+            var csrf = document.querySelector('input[name="_csrfToken"]');
+            if (csrf) {
+                var ci = document.createElement('input');
+                ci.type = 'hidden'; ci.name = '_csrfToken'; ci.value = csrf.value;
+                form.appendChild(ci);
+            }
+            var ri = document.createElement('input');
+            ri.type = 'hidden'; ri.name = 'reason'; ri.value = reason;
+            form.appendChild(ri);
+            document.body.appendChild(form);
+            btn.disabled = true;
+            form.submit();
         });
     });
     // ── Generic POST action buttons (authorize, reject, delete payments) ──

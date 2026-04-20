@@ -31,7 +31,7 @@ class InvoicePaymentService
         $authorizedPayments = $paymentsTable->find()
             ->where([
                 'invoice_id' => $invoiceId,
-                'authorized' => true,
+                'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
             ])
             ->order(['payment_date' => 'ASC'])
             ->all();
@@ -70,7 +70,7 @@ class InvoicePaymentService
         $totalPaid = (float)$paymentsTable->find()
             ->where([
                 'invoice_id' => $invoiceId,
-                'authorized' => true,
+                'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
             ])
             ->all()
             ->sumOf('amount');
@@ -87,7 +87,7 @@ class InvoicePaymentService
 
         return $paymentsTable->exists([
             'invoice_id' => $invoiceId,
-            'authorized' => false,
+            'status' => InvoiceConstants::PAYMENT_RECORD_PENDING,
             'payment_scheduling_id IS' => null, // Solo pagos individuales
         ]);
     }
@@ -103,6 +103,7 @@ class InvoicePaymentService
         $payment = $paymentsTable->get($paymentId);
 
         $payment->authorized = true;
+        $payment->status = InvoiceConstants::PAYMENT_RECORD_AUTHORIZED;
         $payment->authorized_by = $authorizedBy;
         $payment->authorized_date = date('Y-m-d');
 
@@ -141,60 +142,88 @@ class InvoicePaymentService
     }
 
     /**
-     * Registra un nuevo pago y avanza la factura a autorizacion_pago.
-     * Registra historial para el cambio de estado del pipeline.
+     * Registra un nuevo pago. Si $advanceAfter es true, avanza la factura a
+     * autorizacion_pago en la misma transacción; si false, la factura se
+     * mantiene en su estado actual (útil para registrar varios pagos parciales).
      */
-    public function registerPayment(int $invoiceId, array $paymentData, int $createdBy): ServiceResult
-    {
+    public function registerPayment(
+        int $invoiceId,
+        array $paymentData,
+        int $createdBy,
+        bool $advanceAfter = true
+    ): ServiceResult {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
 
         $invoice = $invoicesTable->get($invoiceId);
         $currentStatus = $invoice->pipeline_status;
 
-        $payment = $paymentsTable->newEntity([
-            'invoice_id' => $invoiceId,
-            'banking_entity_id' => $paymentData['banking_entity_id'] ?? null,
-            'amount' => $paymentData['amount'] ?? null,
-            'payment_date' => $paymentData['payment_date'] ?? null,
-            'created_by' => $createdBy,
-        ]);
+        $connection = $paymentsTable->getConnection();
 
-        if (!$paymentsTable->save($payment)) {
-            $errors = [];
-            foreach ($payment->getErrors() as $field => $fieldErrors) {
-                foreach ($fieldErrors as $msg) {
-                    $errors[] = "$field: $msg";
+        return $connection->transactional(function () use (
+            $paymentsTable,
+            $invoicesTable,
+            $invoice,
+            $invoiceId,
+            $paymentData,
+            $createdBy,
+            $currentStatus,
+            $advanceAfter
+        ) {
+            $payment = $paymentsTable->newEntity([
+                'invoice_id' => $invoiceId,
+                'banking_entity_id' => $paymentData['banking_entity_id'] ?? null,
+                'amount' => $paymentData['amount'] ?? null,
+                'payment_date' => $paymentData['payment_date'] ?? null,
+                'status' => InvoiceConstants::PAYMENT_RECORD_PENDING,
+                'authorized' => false,
+                'created_by' => $createdBy,
+            ]);
+
+            if (!$paymentsTable->save($payment)) {
+                $errors = [];
+                foreach ($payment->getErrors() as $field => $fieldErrors) {
+                    foreach ($fieldErrors as $msg) {
+                        $errors[] = "$field: $msg";
+                    }
                 }
+
+                return ServiceResult::fail('No se pudo registrar el pago.' . (!empty($errors) ? ' ' . implode(', ', $errors) : ''));
             }
 
-            return ServiceResult::fail('No se pudo registrar el pago.' . (!empty($errors) ? ' ' . implode(', ', $errors) : ''));
-        }
+            if (!$advanceAfter) {
+                return ServiceResult::ok('Pago registrado. La factura permanece en el estado actual.');
+            }
 
-        $invoice->pipeline_status = InvoiceConstants::STATUS_AUTORIZACION_PAGO;
-        $invoicesTable->save($invoice);
+            $invoice->pipeline_status = InvoiceConstants::STATUS_AUTORIZACION_PAGO;
+            $invoicesTable->save($invoice);
 
-        $this->historyService->recordStatusChange(
-            $invoiceId,
-            $currentStatus,
-            InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-            $createdBy,
-        );
+            $this->historyService->recordStatusChange(
+                $invoiceId,
+                $currentStatus,
+                InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+                $createdBy,
+            );
 
-        return ServiceResult::ok('Pago registrado. La factura pasó a Autorización de Pago.');
+            return ServiceResult::ok('Pago registrado. La factura pasó a Autorización de Pago.');
+        });
     }
 
     /**
-     * Rechaza (elimina) un pago pendiente y devuelve la factura a tesorería.
-     * Registra historial para el cambio de estado.
+     * Rechaza un pago pendiente marcando status=rejected con motivo,
+     * y devuelve la factura a tesorería. No elimina el registro.
      */
-    public function rejectPayment(int $paymentId, int $rejectedBy): ServiceResult
+    public function rejectPayment(int $paymentId, int $rejectedBy, string $reason): ServiceResult
     {
+        if (trim($reason) === '') {
+            return ServiceResult::fail('El motivo de rechazo es obligatorio.');
+        }
+
         $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $payment = $paymentsTable->get($paymentId);
 
-        if ($payment->authorized) {
+        if ($payment->status === InvoiceConstants::PAYMENT_RECORD_AUTHORIZED) {
             return ServiceResult::fail('No se puede rechazar un pago ya autorizado.');
         }
 
@@ -202,7 +231,10 @@ class InvoicePaymentService
         $invoice = $invoicesTable->get($invoiceId);
         $previousStatus = $invoice->pipeline_status;
 
-        if (!$paymentsTable->delete($payment)) {
+        $payment->status = InvoiceConstants::PAYMENT_RECORD_REJECTED;
+        $payment->rejection_reason = $reason;
+
+        if (!$paymentsTable->save($payment)) {
             return ServiceResult::fail('No se pudo rechazar el pago.');
         }
 
@@ -217,5 +249,105 @@ class InvoicePaymentService
         );
 
         return ServiceResult::ok('Pago rechazado. Factura devuelta a Tesorería.');
+    }
+
+    /**
+     * Edita un pago pendiente. Requiere motivo obligatorio, que queda
+     * registrado como observación de la factura. Los cambios por campo
+     * se asientan en invoice_histories.
+     */
+    public function editPayment(int $paymentId, array $data, string $reason, int $userId): ServiceResult
+    {
+        if (trim($reason) === '') {
+            return ServiceResult::fail('La observación es obligatoria.');
+        }
+
+        $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+        $payment = $paymentsTable->get($paymentId);
+
+        if ($payment->status === InvoiceConstants::PAYMENT_RECORD_AUTHORIZED) {
+            return ServiceResult::fail('No se puede editar un pago autorizado.');
+        }
+        if ($payment->status === InvoiceConstants::PAYMENT_RECORD_REJECTED) {
+            return ServiceResult::fail('No se puede editar un pago rechazado.');
+        }
+
+        $allowed = array_intersect_key($data, array_flip(['banking_entity_id', 'amount', 'payment_date']));
+        if (empty($allowed)) {
+            return ServiceResult::fail('No se recibieron datos a modificar.');
+        }
+
+        $connection = $paymentsTable->getConnection();
+
+        return $connection->transactional(function () use (
+            $paymentsTable,
+            $payment,
+            $allowed,
+            $reason,
+            $userId
+        ) {
+            $changes = [];
+            foreach ($allowed as $field => $newValue) {
+                $oldValue = $payment->get($field);
+                $oldNorm = $oldValue instanceof \DateTimeInterface ? $oldValue->format('Y-m-d') : $oldValue;
+                $newNorm = $newValue;
+                if ($field === 'payment_date' && is_string($newNorm) && $newNorm !== '') {
+                    $newNorm = date('Y-m-d', strtotime($newNorm));
+                }
+                if ((string)$oldNorm !== (string)$newNorm) {
+                    $changes[$field] = ['old' => $oldNorm, 'new' => $newNorm];
+                }
+            }
+
+            if (empty($changes)) {
+                return ServiceResult::fail('No hay cambios por aplicar.');
+            }
+
+            $paymentsTable->patchEntity($payment, $allowed, [
+                'fields' => ['banking_entity_id', 'amount', 'payment_date'],
+            ]);
+
+            if (!$paymentsTable->save($payment)) {
+                return ServiceResult::fail('No se pudo guardar el pago.');
+            }
+
+            $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
+            foreach ($changes as $field => $vals) {
+                $historiesTable->save($historiesTable->newEntity([
+                    'invoice_id' => $payment->invoice_id,
+                    'user_id' => $userId,
+                    'field_changed' => 'payment.' . $field,
+                    'old_value' => $vals['old'] !== null ? (string)$vals['old'] : null,
+                    'new_value' => $vals['new'] !== null ? (string)$vals['new'] : null,
+                ]));
+            }
+
+            $observationsTable = TableRegistry::getTableLocator()->get('InvoiceObservations');
+            $observationsTable->save($observationsTable->newEntity([
+                'invoice_id' => $payment->invoice_id,
+                'user_id' => $userId,
+                'message' => 'Edición de pago #' . $payment->id . ': ' . $reason,
+            ]));
+
+            return ServiceResult::ok('Pago actualizado.');
+        });
+    }
+
+    /**
+     * Indica si la factura tiene al menos un soporte de pago adjunto
+     * asociado a un pago autorizado.
+     */
+    public function hasPaymentSupports(int $invoiceId): bool
+    {
+        $attachmentsTable = TableRegistry::getTableLocator()->get('InvoicePaymentAttachments');
+
+        return $attachmentsTable->find()
+            ->innerJoinWith('InvoicePayments', function ($q) use ($invoiceId) {
+                return $q->where([
+                    'InvoicePayments.invoice_id' => $invoiceId,
+                    'InvoicePayments.status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
+                ]);
+            })
+            ->count() > 0;
     }
 }

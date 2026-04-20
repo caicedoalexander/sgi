@@ -19,6 +19,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ── Tooltips Bootstrap en botones deshabilitados con title ──
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        document.querySelectorAll('button[disabled][title], a.disabled[title]').forEach(function (el) {
+            var wrapper = document.createElement('span');
+            wrapper.setAttribute('data-bs-toggle', 'tooltip');
+            wrapper.setAttribute('title', el.getAttribute('title'));
+            wrapper.style.display = 'inline-block';
+            el.parentNode.insertBefore(wrapper, el);
+            wrapper.appendChild(el);
+            new bootstrap.Tooltip(wrapper);
+        });
+    }
+
     // ── AutoNumeric para campo de monto COP ─────────────────────────────────
     if (typeof AutoNumeric !== 'undefined') {
         document.querySelectorAll('input.currency-input').forEach(function (el) {

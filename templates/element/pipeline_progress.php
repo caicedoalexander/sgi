@@ -7,6 +7,7 @@
  * @var bool $isRejected      (optional) true when area_approval = 'Rechazada'
  * @var bool $isApproved      (optional) true when area_approval = 'Aprobada' and still in aprobacion
  * @var string|null $paymentStatus  (optional) invoice payment_status value
+ * @var array $timeline  (optional) map status => ['user_name' => ..., 'date' => ...]
  */
 
 use App\Constants\InvoiceConstants;
@@ -14,6 +15,7 @@ use App\Service\InvoicePipelineService;
 $isRejected    = $isRejected ?? false;
 $isApproved    = $isApproved ?? false;
 $paymentStatus = $paymentStatus ?? null;
+$timeline      = $timeline ?? [];
 
 $statusIcons  = $statusIcons ?? InvoicePipelineService::STATUS_ICONS;
 $currentIndex = array_search($currentStatus, $pipelineStatuses);
@@ -86,6 +88,11 @@ $isPartialPayment = ($currentStatus === InvoiceConstants::STATUS_TESORERIA && $p
                     <br><span class="badge bg-success" style="font-size:.55rem;">Aprobada</span>
                 <?php elseif ($status === InvoiceConstants::STATUS_TESORERIA && $isPartialPayment): ?>
                     <br><span class="badge bg-warning text-dark" style="font-size:.55rem;">Pago Parcial</span>
+                <?php endif; ?>
+                <?php if (!empty($timeline[$status])): ?>
+                    <br><small style="font-size:.55rem;color:#777;line-height:1.1;display:block;">
+                        <?= h($timeline[$status]['user_name'] ?? '') ?><?php if (!empty($timeline[$status]['date'])): ?><br><?= h($timeline[$status]['date']) ?><?php endif; ?>
+                    </small>
                 <?php endif; ?>
             </div>
         </div>

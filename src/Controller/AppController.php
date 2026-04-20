@@ -55,6 +55,7 @@ class AppController extends Controller
         'LegalizationPayments' => 'legalizations',
         'PaymentSchedulings' => 'payment_schedulings',
         'PaymentRegistry' => 'payment_registry',
+        'InvoicePaymentAttachments' => 'invoices',
     ];
 
     /**
@@ -65,7 +66,7 @@ class AppController extends Controller
         return match ($action) {
             'index', 'view', 'export', 'all', 'rejected', 'exportPdf', 'preview', 'active', 'activeEvents', 'allEvents' => 'view',
             'add', 'addFolder', 'uploadDocument', 'import', 'importExcel', 'previewImport', 'confirmImport', 'addItem', 'uploadAttachment', 'addPayment' => 'add',
-            'edit', 'advanceStatus', 'addObservation', 'testSmtp', 'approve', 'reject', 'deactivate', 'saveFields', 'removeInvoice', 'advance', 'advanceGroup', 'addSignature', 'assignLiquidation', 'getFlags', 'authorizePayment', 'rejectPayment' => 'edit',
+            'edit', 'advanceStatus', 'addObservation', 'testSmtp', 'approve', 'reject', 'deactivate', 'saveFields', 'removeInvoice', 'advance', 'advanceGroup', 'addSignature', 'assignLiquidation', 'getFlags', 'authorizePayment', 'rejectPayment', 'editPayment', 'sendApprovalLinks', 'modifyApprovers', 'resetFlow', 'upload' => 'edit',
             'delete', 'deleteDocument', 'removeItem', 'deleteAttachment' => 'delete',
             default => 'view',
         };

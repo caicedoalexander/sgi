@@ -93,6 +93,35 @@ class InvoiceHistoryService implements HistoryServiceInterface
         $historiesTable->save($history);
     }
 
+    /**
+     * Builds a map of pipeline_status => ['user_name' => ..., 'date' => d/m/Y]
+     * using the most recent history entry that advanced to each status.
+     *
+     * @return array<string, array{user_name:string, date:string}>
+     */
+    public function buildPipelineTimeline(int $invoiceId): array
+    {
+        $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
+        $labels = InvoicePipelineService::STATUS_LABELS;
+        $labelToStatus = array_flip($labels);
+
+        $rows = $historiesTable->find()
+            ->where(['invoice_id' => $invoiceId, 'field_changed' => 'pipeline_status'])
+            ->contain(['Users'])
+            ->orderBy(['InvoiceHistories.created' => 'ASC'])
+            ->all();
+
+        $timeline = [];
+        foreach ($rows as $row) {
+            $statusKey = $labelToStatus[$row->new_value] ?? $row->new_value;
+            $userName = $row->user->full_name ?? ($row->user->username ?? '');
+            $date = $row->created?->format('d/m/Y') ?? '';
+            $timeline[$statusKey] = ['user_name' => (string)$userName, 'date' => $date];
+        }
+
+        return $timeline;
+    }
+
     public function recordStatusChange(int $invoiceId, string $fromStatus, string $toStatus, int $userId): void
     {
         $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
