@@ -353,7 +353,10 @@ class InvoiceApprovalService
 
         return $connection->transactional(function () use ($invoice, $newApproverIds, $reason, $baseUrl, $userId) {
             $previous = $this->getCurrentApprovals($invoice->id);
-            $previousIds = array_map(fn($a) => $a->user_id, $previous);
+            $previousNames = array_map(
+                fn($a) => $a->user->full_name ?? $a->user->username ?? ('Usuario #' . $a->user_id),
+                $previous,
+            );
 
             // Marca todas las aprobaciones vigentes (pendientes, aprobadas, rechazadas)
             // como Reemplazadas para que no cuenten en el nuevo batch.
@@ -376,22 +379,23 @@ class InvoiceApprovalService
                 ['id' => $invoice->id],
             );
 
-            $observationsTable = TableRegistry::getTableLocator()->get('InvoiceObservations');
-            $observationsTable->save($observationsTable->newEntity([
-                'invoice_id' => $invoice->id,
-                'user_id' => $userId,
-                'message' => 'Aprobadores modificados: ' . $reason
-                    . ' (previos: ' . implode(',', $previousIds)
-                    . ' → nuevos: ' . implode(',', $newApproverIds) . ')',
-            ]));
+            $usersTable = TableRegistry::getTableLocator()->get('Users');
+            $newUsers = $usersTable->find()
+                ->where(['id IN' => array_map('intval', $newApproverIds)])
+                ->all()
+                ->toArray();
+            $newNames = array_map(
+                fn($u) => $u->full_name ?? $u->username ?? ('Usuario #' . $u->id),
+                $newUsers,
+            );
 
             $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
             $historiesTable->save($historiesTable->newEntity([
                 'invoice_id' => $invoice->id,
                 'user_id' => $userId,
                 'field_changed' => 'approvers_modified',
-                'old_value' => json_encode($previousIds),
-                'new_value' => json_encode(array_map('intval', $newApproverIds)),
+                'old_value' => implode(', ', $previousNames) ?: '—',
+                'new_value' => (implode(', ', $newNames) ?: '—') . ' (Motivo: ' . $reason . ')',
             ]));
 
             return $this->assignApprovers($invoice, $newApproverIds, $baseUrl, $userId);
