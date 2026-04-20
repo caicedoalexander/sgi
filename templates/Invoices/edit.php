@@ -525,14 +525,15 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
 
         <?php if ($sectionName === 'revision' && in_array('revision', $visibleSections)): ?>
         <!-- ── Sección: Revisión ── -->
-        <div class="mb-4 ">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-search me-1"></i>Revisión
+        <div class="mb-5">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <span class="text-uppercase fw-bold flex-shrink-0"
+                      style="font-size:.65rem;letter-spacing:.15em;color:var(--primary-color);">
+                    <i class="bi bi-shield-check me-2"></i>Flujo de Revisión
                 </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+                <div style="flex:1;height:1px;background:linear-gradient(to right, var(--border-color), transparent);"></div>
             </div>
+
             <?php if (($invoice->area_approval ?? '') === \App\Constants\InvoiceConstants::APPROVAL_REJECTED): ?>
                 <?php
                 $rejector = null;
@@ -540,156 +541,171 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                     if ($a->status === \App\Constants\InvoiceConstants::APPROVER_STATUS_REJECTED) { $rejector = $a; break; }
                 }
                 ?>
-                <div class="alert alert-warning mb-3" style="border:1px solid #ffc107;border-left:3px solid #CD6A15;border-radius:0;">
-                    <div class="d-flex align-items-start gap-2">
-                        <i class="bi bi-exclamation-triangle-fill" style="color:#CD6A15;font-size:1.1rem;margin-top:1px;"></i>
+                <div class="alert alert-warning mb-4 shadow-sm" style="border-radius:0; border-left-width:4px;">
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-exclamation-octagon-fill fs-4" style="color:#CD6A15;"></i>
                         <div>
-                            <strong>Rechazada por <?= h($rejector->user->full_name ?? $rejector->user->username ?? 'Aprobador') ?></strong>
+                            <div class="fw-bold text-uppercase mb-1" style="font-size:.75rem;letter-spacing:.02em;">Solicitud Rechazada</div>
+                            <div class="mb-2">Por: <strong><?= h($rejector->user->full_name ?? $rejector->user->username ?? 'Aprobador') ?></strong></div>
                             <?php if ($rejector && $rejector->observations): ?>
-                                <div class="mt-1" style="font-size:.85rem;color:#555;"><?= h($rejector->observations) ?></div>
+                                <div class="p-2 bg-white border mb-2" style="font-size:.85rem;color:#444;border-left:2px solid #CD6A15 !important;">
+                                    "<?= h($rejector->observations) ?>"
+                                </div>
                             <?php endif; ?>
-                            <div class="mt-1" style="font-size:.8rem;color:#888;">Corrija los datos y re-asigne aprobadores para reiniciar el flujo.</div>
+                            <div style="font-size:.8rem;color:#666;">Por favor, corrija los hallazgos y reinicie el flujo de aprobación para continuar.</div>
                         </div>
                     </div>
                 </div>
             <?php endif; ?>
 
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">Aprobadores</label>
-                    <?php if ($canSendLinks): ?>
-                        <select name="approver_ids[]" id="approver-ids" class="form-select select2-enable" multiple
-                                form="sendApprovalLinksForm"
-                                data-placeholder="Seleccione los aprobadores...">
-                            <?php foreach ($approvers as $appId => $appName): ?>
-                                <option value="<?= $appId ?>"><?= h($appName) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <button type="submit" form="sendApprovalLinksForm"
-                                class="btn btn-primary btn-sm mt-2"
-                                onclick="return confirm('¿Enviar enlaces de aprobación a los aprobadores seleccionados?');">
-                            <i class="bi bi-send me-1"></i>Enviar link de aprobación
-                        </button>
-                        <small class="text-muted mt-1 d-block">
-                            <i class="bi bi-info-circle me-1"></i>El envío de enlaces es independiente del botón Guardar
-                        </small>
-                    <?php elseif ($canModifyApprovers): ?>
-                        <?php if ($hasPendingApprovals): ?>
-                        <div class="d-flex align-items-center gap-2 py-2">
-                            <span class="spinner-border spinner-border-sm text-warning" role="status" style="width:.9rem;height:.9rem;"></span>
-                            <span style="font-size:.85rem;color:#888;">Aprobaciones en curso</span>
+            <div class="row g-4">
+                <div class="col-md-7">
+                    <div class="sgi-revision-card">
+                        <div class="card-label">
+                            <i class="bi bi-people"></i>Asignación de Aprobadores
                         </div>
-                        <?php else: ?>
-                        <div class="py-2" style="font-size:.85rem;color:#666;">
-                            <i class="bi bi-check2-circle me-1"></i>Aprobaciones registradas
-                        </div>
-                        <?php endif; ?>
-                        <button type="button" class="btn btn-sm btn-outline-warning mt-1" data-bs-toggle="modal" data-bs-target="#modifyApproversModal">
-                            <i class="bi bi-pencil-square me-1"></i>Modificar aprobadores
-                        </button>
-                        <small class="text-muted mt-1 d-block">
-                            <i class="bi bi-info-circle me-1"></i>Modificar reemplaza el conjunto y reinicia la aprobación
-                        </small>
-                    <?php else: ?>
-                        <div class="py-2" style="font-size:.85rem;color:#aaa;">No editable en este estado</div>
-                    <?php endif; ?>
 
-                    <?php if (($invoice->area_approval ?? '') === \App\Constants\InvoiceConstants::APPROVAL_REJECTED
-                        && !empty($editableFields)
-                        && $currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION): ?>
-                    <form method="post" action="<?= $this->Url->build(['action' => 'resetFlow', $invoice->id]) ?>"
-                          class="mt-2" onsubmit="return confirm('¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.');">
-                        <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
-                        <button type="submit" class="btn btn-sm btn-outline-warning">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i>Reiniciar flujo
-                        </button>
-                    </form>
-                    <?php endif; ?>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Aprobación Área</label>
-                    <?= $this->Form->control('area_approval', [
-                        'label' => false,
-                        'options' => $approvalOptions,
-                        'class' => 'form-select',
-                        'disabled' => true,
-                    ]) ?>
-                    <small class="text-muted">Se actualiza desde el enlace de aprobación</small>
-                </div>
-                <?php if ($invoice->area_approval_date): ?>
-                <div class="col-md-3">
-                    <label class="form-label">Fecha Aprobación</label>
-                    <input type="text" class="form-control" disabled
-                           value="<?= h($invoice->area_approval_date?->format('d/m/Y') ?? '') ?>">
-                </div>
-                <?php endif; ?>
-
-                <?php if (!empty($currentApprovals)): ?>
-                <div class="col-12 mt-2">
-                    <?php
-                    $totalApprovals = count($currentApprovals);
-                    $approvedCount = 0;
-                    $rejectedCount = 0;
-                    $pendingCount = 0;
-                    foreach ($currentApprovals as $a) {
-                        match ($a->status) {
-                            \App\Constants\InvoiceConstants::APPROVER_STATUS_APPROVED => $approvedCount++,
-                            \App\Constants\InvoiceConstants::APPROVER_STATUS_REJECTED => $rejectedCount++,
-                            default => $pendingCount++,
-                        };
-                    }
-                    ?>
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <label class="form-label mb-0">Estado de Aprobaciones</label>
-                        <div class="d-flex gap-2" style="font-size:.75rem;">
-                            <?php if ($approvedCount > 0): ?>
-                                <span class="badge bg-success"><?= $approvedCount ?> aprobada<?= $approvedCount > 1 ? 's' : '' ?></span>
-                            <?php endif; ?>
-                            <?php if ($pendingCount > 0): ?>
-                                <span class="badge bg-secondary"><?= $pendingCount ?> pendiente<?= $pendingCount > 1 ? 's' : '' ?></span>
-                            <?php endif; ?>
-                            <?php if ($rejectedCount > 0): ?>
-                                <span class="badge bg-danger"><?= $rejectedCount ?> rechazada<?= $rejectedCount > 1 ? 's' : '' ?></span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
-                        <?php foreach ($currentApprovals as $i => $approval): ?>
-                            <?php
-                            $statusIcon = match ($approval->status) {
-                                \App\Constants\InvoiceConstants::APPROVER_STATUS_APPROVED => '<i class="bi bi-check-circle-fill" style="color:#469D61;"></i>',
-                                \App\Constants\InvoiceConstants::APPROVER_STATUS_REJECTED => '<i class="bi bi-x-circle-fill" style="color:#dc3545;"></i>',
-                                default => '<i class="bi bi-clock" style="color:#888;"></i>',
-                            };
-                            $borderBottom = $i < $totalApprovals - 1 ? 'border-bottom:1px solid var(--border-color);' : '';
-                            ?>
-                            <div class="d-flex align-items-center gap-3 px-3 py-2" style="<?= $borderBottom ?>font-size:.875rem;">
-                                <div style="flex:0 0 20px;"><?= $statusIcon ?></div>
-                                <div style="flex:1;min-width:0;">
-                                    <div class="fw-medium"><?= h($approval->user->full_name ?? $approval->user->username) ?></div>
-                                    <?php if ($approval->observations): ?>
-                                        <div style="font-size:.78rem;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="<?= h($approval->observations) ?>">
-                                            <?= h($approval->observations) ?>
-                                        </div>
-                                    <?php endif; ?>
+                        <?php if ($canSendLinks): ?>
+                            <div class="mb-3">
+                                <select name="approver_ids[]" id="approver-ids" class="form-select select2-enable" multiple
+                                        form="sendApprovalLinksForm"
+                                        data-placeholder="Seleccione los responsables de aprobación...">
+                                    <?php foreach ($approvers as $appId => $appName): ?>
+                                        <option value="<?= $appId ?>"><?= h($appName) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between mt-auto pt-3 border-top">
+                                <div class="sgi-info-helper me-3">
+                                    <i class="bi bi-info-circle"></i>
+                                    <span>Se notificará por correo a los usuarios seleccionados para que realicen la revisión.</span>
                                 </div>
-                                <div class="text-end" style="flex:0 0 auto;font-size:.78rem;color:#888;">
-                                    <?= $approval->responded_at ? $approval->responded_at->format('d/m/Y H:i') : 'Pendiente' ?>
+                                <button type="submit" form="sendApprovalLinksForm"
+                                        class="btn btn-primary btn-sm px-3"
+                                        onclick="return confirm('¿Enviar enlaces de aprobación a los aprobadores seleccionados?');">
+                                    <i class="bi bi-send-fill me-2"></i>Enviar links
+                                </button>
+                            </div>
+                        <?php elseif ($canModifyApprovers): ?>
+                            <div class="d-flex flex-column justify-content-center align-items-center py-4 text-center">
+                                <?php if ($hasPendingApprovals): ?>
+                                    <div class="mb-3">
+                                        <div class="spinner-border text-warning" role="status" style="width:1.5rem;height:1.5rem;border-width:.15em;"></div>
+                                    </div>
+                                    <div class="fw-medium text-dark mb-1">Aprobaciones en Curso</div>
+                                    <div class="text-muted mb-3" style="font-size:.8rem;">Esperando respuesta de los aprobadores asignados.</div>
+                                <?php else: ?>
+                                    <div class="mb-3">
+                                        <i class="bi bi-check-all text-success fs-1"></i>
+                                    </div>
+                                    <div class="fw-medium text-dark mb-1">Aprobaciones Registradas</div>
+                                    <div class="text-muted mb-3" style="font-size:.8rem;">El proceso de revisión para este estado ha finalizado.</div>
+                                <?php endif; ?>
+
+                                <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modifyApproversModal">
+                                    <i class="bi bi-pencil-square me-2"></i>Modificar / Re-enviar
+                                </button>
+                                <div class="sgi-info-helper mt-3">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <span>Modificar los aprobadores invalidará las respuestas actuales y reiniciará el flujo.</span>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="d-flex flex-column justify-content-center align-items-center py-5 text-center bg-light border-dashed">
+                                <i class="bi bi-lock text-muted mb-2 fs-3"></i>
+                                <div class="text-muted" style="font-size:.85rem;">La gestión de aprobadores no está disponible en este estado.</div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (($invoice->area_approval ?? '') === \App\Constants\InvoiceConstants::APPROVAL_REJECTED
+                            && !empty($editableFields)
+                            && $currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION): ?>
+                        <div class="mt-4 pt-3 border-top">
+                            <form method="post" action="<?= $this->Url->build(['action' => 'resetFlow', $invoice->id]) ?>"
+                                  onsubmit="return confirm('¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.');">
+                                <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
+                                <button type="submit" class="btn btn-dark btn-sm w-100">
+                                    <i class="bi bi-arrow-counterclockwise me-2"></i>Reiniciar Flujo de Aprobación
+                                </button>
+                            </form>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
-                <?php endif; ?>
 
-                <div class="col-md-4">
-                    <label class="form-label">Validación DIAN</label>
-                    <?= $this->Form->control('dian_validation', array_merge(
-                        ['label' => false, 'options' => $dianOptions],
-                        $canEdit('dian_validation')
-                            ? ['class' => 'form-select']
-                            : ['class' => 'form-select', 'disabled' => true]
-                    )) ?>
+                <div class="col-md-5">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing:.05em;">Validación DIAN</label>
+                            <?= $this->Form->control('dian_validation', array_merge(
+                                ['label' => false, 'options' => $dianOptions],
+                                $canEdit('dian_validation')
+                                    ? ['class' => 'form-select']
+                                    : ['class' => 'form-select', 'disabled' => true]
+                            )) ?>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing:.05em;">Estado Área</label>
+                            <div class="form-control bg-light border-0 fw-bold" style="font-size:.85rem;">
+                                <?php
+                                $badgeClass = match($invoice->area_approval) {
+                                    \App\Constants\InvoiceConstants::APPROVAL_APPROVED => 'text-success',
+                                    \App\Constants\InvoiceConstants::APPROVAL_REJECTED => 'text-danger',
+                                    default => 'text-warning'
+                                };
+                                $statusLabel = $approvalOptions[$invoice->area_approval] ?? 'Pendiente';
+                                ?>
+                                <i class="bi bi-circle-fill me-2" style="font-size:.5rem; vertical-align:middle; color:<?= match($invoice->area_approval){ \App\Constants\InvoiceConstants::APPROVAL_APPROVED=>'#469D61', \App\Constants\InvoiceConstants::APPROVAL_REJECTED=>'#dc3545', default=>'#ffc107' } ?>;"></i>
+                                <span class="<?= $badgeClass ?>"><?= h($statusLabel) ?></span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing:.05em;">Última Actividad</label>
+                            <div class="form-control bg-light border-0" style="font-size:.85rem; color:#666;">
+                                <i class="bi bi-calendar3 me-2"></i>
+                                <?= $invoice->area_approval_date ? h($invoice->area_approval_date->format('d/m/Y')) : 'Sin fecha' ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <?php if (!empty($currentApprovals)): ?>
+                    <div class="mt-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <label class="form-label text-muted small text-uppercase fw-bold mb-0" style="letter-spacing:.05em;">Historial de Aprobación</label>
+                            <span class="badge bg-light border text-dark" style="font-size:.6rem;"><?= count($currentApprovals) ?> USUARIOS</span>
+                        </div>
+                        <div class="sgi-approval-timeline">
+                            <?php foreach ($currentApprovals as $approval): ?>
+                                <?php
+                                $itemClass = match ($approval->status) {
+                                    \App\Constants\InvoiceConstants::APPROVER_STATUS_APPROVED => 'approved',
+                                    \App\Constants\InvoiceConstants::APPROVER_STATUS_REJECTED => 'rejected',
+                                    default => 'pending',
+                                };
+                                ?>
+                                <div class="sgi-approval-item <?= $itemClass ?>">
+                                    <div class="sgi-approval-indicator"></div>
+                                    <div class="sgi-approval-content">
+                                        <div class="sgi-approval-user-info">
+                                            <div class="sgi-approval-user"><?= h($approval->user->full_name ?? $approval->user->username) ?></div>
+                                            <?php if ($approval->observations): ?>
+                                                <div class="sgi-approval-obs">
+                                                    <?= h($approval->observations) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="sgi-approval-date">
+                                            <?= $approval->responded_at ? $approval->responded_at->format('d/m/Y') : '<span class="text-warning">Pendiente</span>' ?>
+                                            <?php if ($approval->responded_at): ?>
+                                                <div style="font-size:.65rem; opacity:.7;"><?= $approval->responded_at->format('H:i') ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
