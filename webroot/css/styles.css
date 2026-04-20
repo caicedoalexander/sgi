@@ -1968,11 +1968,10 @@ textarea.form-control {
    Revisión & Aprobaciones — Componentes Especializados
    ============================================= */
 
-/* Contenedor de acción de revisión (estilo stat-card) */
+/* Contenedor de acción de revisión */
 .sgi-revision-card {
     background: #fff;
     border: 1px solid var(--border-color);
-    border-top: 2px solid var(--primary-color);
     padding: 1.25rem;
     height: 100%;
     display: flex;
@@ -1982,26 +1981,31 @@ textarea.form-control {
 .sgi-revision-card .card-label {
     font-size: .62rem;
     text-transform: uppercase;
-    letter-spacing: .14em;
-    color: #aaa;
+    letter-spacing: .12em;
+    color: #999;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin-bottom: .85rem;
     display: flex;
     align-items: center;
     gap: .5rem;
 }
 
-/* Timeline de aprobaciones (estilo minimalista de bordes) */
+.sgi-revision-card .card-label i {
+    font-size: .85rem;
+    color: var(--primary-color);
+}
+
+/* Timeline de aprobaciones */
 .sgi-approval-timeline {
     position: relative;
-    padding-left: 1.2rem;
+    padding-left: 1.5rem;
     margin-top: .5rem;
 }
 
 .sgi-approval-timeline::before {
     content: '';
     position: absolute;
-    left: 0;
+    left: 4px;
     top: 0;
     bottom: 0;
     width: 1px;
@@ -2010,7 +2014,7 @@ textarea.form-control {
 
 .sgi-approval-item {
     position: relative;
-    padding-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
 }
 
 .sgi-approval-item:last-child {
@@ -2019,14 +2023,14 @@ textarea.form-control {
 
 .sgi-approval-indicator {
     position: absolute;
-    left: -1.2rem;
+    left: -1.5rem;
     top: .25rem;
-    width: 7px;
-    height: 7px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
     background: #fff;
     border: 1px solid #ccc;
     z-index: 1;
-    /* Cuadrado según STYLES.md (sin rounded-circle) */
 }
 
 .sgi-approval-item.approved .sgi-approval-indicator {
@@ -2057,7 +2061,7 @@ textarea.form-control {
 }
 
 .sgi-approval-user {
-    font-size: .875rem;
+    font-size: .85rem;
     font-weight: 500;
     color: #333;
     line-height: 1.2;
@@ -2072,12 +2076,13 @@ textarea.form-control {
 }
 
 .sgi-approval-obs {
-    font-size: .78rem;
-    color: #666;
-    margin-top: .5rem;
-    padding: .6rem .85rem;
-    background: #fcfcfc;
-    border: 1px solid var(--border-color);
+    font-size: .75rem;
+    color: #777;
+    margin-top: .35rem;
+    font-style: italic;
+    line-height: 1.4;
+    padding: .5rem .75rem;
+    background: #fafafa;
     border-left: 2px solid var(--border-color);
 }
 
@@ -2094,7 +2099,7 @@ textarea.form-control {
 
 .sgi-info-helper i {
     font-size: .85rem;
-    color: #ccc;
+    color: #bbb;
 }
 
 /* =============================================

@@ -528,10 +528,10 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         <div class="mb-5">
             <div class="d-flex align-items-center gap-3 mb-4">
                 <span class="text-uppercase fw-bold flex-shrink-0"
-                      style="font-size:.65rem;letter-spacing:.14em;color:var(--primary-color);">
+                      style="font-size:.65rem;letter-spacing:.15em;color:var(--primary-color);">
                     <i class="bi bi-shield-check me-2"></i>Flujo de Revisión
                 </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+                <div style="flex:1;height:1px;background:linear-gradient(to right, var(--border-color), transparent);"></div>
             </div>
 
             <?php if (($invoice->area_approval ?? '') === \App\Constants\InvoiceConstants::APPROVAL_REJECTED): ?>
@@ -541,18 +541,18 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                     if ($a->status === \App\Constants\InvoiceConstants::APPROVER_STATUS_REJECTED) { $rejector = $a; break; }
                 }
                 ?>
-                <div class="alert alert-warning mb-4" style="border-radius:0; border:1px solid rgba(205, 106, 21, 0.2); border-left:4px solid #CD6A15;">
+                <div class="alert alert-warning mb-4 shadow-sm" style="border-radius:0; border-left-width:4px;">
                     <div class="d-flex align-items-start gap-3">
                         <i class="bi bi-exclamation-octagon-fill fs-4" style="color:#CD6A15;"></i>
                         <div>
-                            <div class="fw-bold text-uppercase mb-1" style="font-size:.65rem;letter-spacing:.12em;color:#9a5011;">Solicitud Rechazada</div>
-                            <div class="mb-2" style="font-size:.875rem;">Por: <strong><?= h($rejector->user->full_name ?? $rejector->user->username ?? 'Aprobador') ?></strong></div>
+                            <div class="fw-bold text-uppercase mb-1" style="font-size:.75rem;letter-spacing:.02em;">Solicitud Rechazada</div>
+                            <div class="mb-2">Por: <strong><?= h($rejector->user->full_name ?? $rejector->user->username ?? 'Aprobador') ?></strong></div>
                             <?php if ($rejector && $rejector->observations): ?>
-                                <div class="p-2 bg-white border mb-2" style="font-size:.85rem;color:#444;border-left:2px solid #CD6A15;">
+                                <div class="p-2 bg-white border mb-2" style="font-size:.85rem;color:#444;border-left:2px solid #CD6A15 !important;">
                                     "<?= h($rejector->observations) ?>"
                                 </div>
                             <?php endif; ?>
-                            <div style="font-size:.75rem;color:#842029;opacity:.8;">Corrija los hallazgos y reinicie el flujo de aprobación para continuar.</div>
+                            <div style="font-size:.8rem;color:#666;">Por favor, corrija los hallazgos y reinicie el flujo de aprobación para continuar.</div>
                         </div>
                     </div>
                 </div>
@@ -562,7 +562,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                 <div class="col-md-7">
                     <div class="sgi-revision-card">
                         <div class="card-label">
-                            <i class="bi bi-people-fill"></i>Gestión de Aprobadores
+                            <i class="bi bi-people"></i>Asignación de Aprobadores
                         </div>
 
                         <?php if ($canSendLinks): ?>
@@ -578,11 +578,10 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                             <div class="d-flex align-items-center justify-content-between mt-auto pt-3 border-top">
                                 <div class="sgi-info-helper me-3">
                                     <i class="bi bi-info-circle"></i>
-                                    <span>Se notificará por correo para revisión externa.</span>
+                                    <span>Se notificará por correo a los usuarios seleccionados para que realicen la revisión.</span>
                                 </div>
                                 <button type="submit" form="sendApprovalLinksForm"
-                                        class="btn btn-primary btn-sm"
-                                        style="font-weight:600; padding-left:1.5rem; padding-right:1.5rem;"
+                                        class="btn btn-primary btn-sm px-3"
                                         onclick="return confirm('¿Enviar enlaces de aprobación a los aprobadores seleccionados?');">
                                     <i class="bi bi-send-fill me-2"></i>Enviar links
                                 </button>
@@ -591,30 +590,30 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                             <div class="d-flex flex-column justify-content-center align-items-center py-4 text-center">
                                 <?php if ($hasPendingApprovals): ?>
                                     <div class="mb-3">
-                                        <div class="spinner-border text-warning" role="status" style="width:1.5rem;height:1.5rem;border-width:.15em;border-radius:50%;"></div>
+                                        <div class="spinner-border text-warning" role="status" style="width:1.5rem;height:1.5rem;border-width:.15em;"></div>
                                     </div>
-                                    <div class="fw-bold text-dark mb-1" style="font-size:.875rem;">Aprobaciones en Curso</div>
-                                    <div class="text-muted mb-3" style="font-size:.75rem;">Esperando respuesta de los aprobadores.</div>
+                                    <div class="fw-medium text-dark mb-1">Aprobaciones en Curso</div>
+                                    <div class="text-muted mb-3" style="font-size:.8rem;">Esperando respuesta de los aprobadores asignados.</div>
                                 <?php else: ?>
                                     <div class="mb-3">
-                                        <i class="bi bi-check-all text-success" style="font-size:2.5rem;"></i>
+                                        <i class="bi bi-check-all text-success fs-1"></i>
                                     </div>
-                                    <div class="fw-bold text-dark mb-1" style="font-size:.875rem;">Proceso Finalizado</div>
-                                    <div class="text-muted mb-3" style="font-size:.75rem;">Las aprobaciones han sido registradas.</div>
+                                    <div class="fw-medium text-dark mb-1">Aprobaciones Registradas</div>
+                                    <div class="text-muted mb-3" style="font-size:.8rem;">El proceso de revisión para este estado ha finalizado.</div>
                                 <?php endif; ?>
 
                                 <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modifyApproversModal">
                                     <i class="bi bi-pencil-square me-2"></i>Modificar / Re-enviar
                                 </button>
                                 <div class="sgi-info-helper mt-3">
-                                    <i class="bi bi-exclamation-triangle-fill"></i>
-                                    <span>Esta acción reinicia el flujo de este estado.</span>
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <span>Modificar los aprobadores invalidará las respuestas actuales y reiniciará el flujo.</span>
                                 </div>
                             </div>
                         <?php else: ?>
-                            <div class="d-flex flex-column justify-content-center align-items-center py-5 text-center bg-light border">
+                            <div class="d-flex flex-column justify-content-center align-items-center py-5 text-center bg-light border-dashed">
                                 <i class="bi bi-lock text-muted mb-2 fs-3"></i>
-                                <div class="text-muted" style="font-size:.85rem;">Gestión no disponible en este estado.</div>
+                                <div class="text-muted" style="font-size:.85rem;">La gestión de aprobadores no está disponible en este estado.</div>
                             </div>
                         <?php endif; ?>
 
@@ -625,8 +624,8 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                             <form method="post" action="<?= $this->Url->build(['action' => 'resetFlow', $invoice->id]) ?>"
                                   onsubmit="return confirm('¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.');">
                                 <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
-                                <button type="submit" class="btn btn-dark btn-sm w-100" style="font-weight:600;">
-                                    <i class="bi bi-arrow-counterclockwise me-2"></i>Reiniciar Flujo
+                                <button type="submit" class="btn btn-dark btn-sm w-100">
+                                    <i class="bi bi-arrow-counterclockwise me-2"></i>Reiniciar Flujo de Aprobación
                                 </button>
                             </form>
                         </div>
@@ -637,7 +636,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                 <div class="col-md-5">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label text-muted" style="font-size:.62rem; text-transform:uppercase; letter-spacing:.12em; font-weight:600;">Validación DIAN</label>
+                            <label class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing:.05em;">Validación DIAN</label>
                             <?= $this->Form->control('dian_validation', array_merge(
                                 ['label' => false, 'options' => $dianOptions],
                                 $canEdit('dian_validation')
@@ -646,23 +645,23 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                             )) ?>
                         </div>
                         <div class="col-sm-6">
-                            <label class="form-label text-muted" style="font-size:.62rem; text-transform:uppercase; letter-spacing:.12em; font-weight:600;">Estado Área</label>
-                            <div class="form-control bg-light border-0 fw-bold" style="font-size:.875rem;">
+                            <label class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing:.05em;">Estado Área</label>
+                            <div class="form-control bg-light border-0 fw-bold" style="font-size:.85rem;">
                                 <?php
-                                $badgeColor = match($invoice->area_approval) {
-                                    \App\Constants\InvoiceConstants::APPROVAL_APPROVED => '#469D61',
-                                    \App\Constants\InvoiceConstants::APPROVAL_REJECTED => '#dc3545',
-                                    default => '#ffc107'
+                                $badgeClass = match($invoice->area_approval) {
+                                    \App\Constants\InvoiceConstants::APPROVAL_APPROVED => 'text-success',
+                                    \App\Constants\InvoiceConstants::APPROVAL_REJECTED => 'text-danger',
+                                    default => 'text-warning'
                                 };
                                 $statusLabel = $approvalOptions[$invoice->area_approval] ?? 'Pendiente';
                                 ?>
-                                <i class="bi bi-square-fill me-2" style="font-size:.45rem; vertical-align:middle; color:<?= $badgeColor ?>;"></i>
-                                <span style="color:<?= $badgeColor ?>;"><?= h($statusLabel) ?></span>
+                                <i class="bi bi-circle-fill me-2" style="font-size:.5rem; vertical-align:middle; color:<?= match($invoice->area_approval){ \App\Constants\InvoiceConstants::APPROVAL_APPROVED=>'#469D61', \App\Constants\InvoiceConstants::APPROVAL_REJECTED=>'#dc3545', default=>'#ffc107' } ?>;"></i>
+                                <span class="<?= $badgeClass ?>"><?= h($statusLabel) ?></span>
                             </div>
                         </div>
                         <div class="col-sm-6">
-                            <label class="form-label text-muted" style="font-size:.62rem; text-transform:uppercase; letter-spacing:.12em; font-weight:600;">Última Actividad</label>
-                            <div class="form-control bg-light border-0" style="font-size:.875rem; color:#666;">
+                            <label class="form-label text-muted small text-uppercase fw-bold" style="letter-spacing:.05em;">Última Actividad</label>
+                            <div class="form-control bg-light border-0" style="font-size:.85rem; color:#666;">
                                 <i class="bi bi-calendar3 me-2"></i>
                                 <?= $invoice->area_approval_date ? h($invoice->area_approval_date->format('d/m/Y')) : 'Sin fecha' ?>
                             </div>
@@ -672,8 +671,8 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                     <?php if (!empty($currentApprovals)): ?>
                     <div class="mt-4">
                         <div class="d-flex align-items-center justify-content-between mb-3">
-                            <label class="form-label text-muted mb-0" style="font-size:.62rem; text-transform:uppercase; letter-spacing:.12em; font-weight:600;">Historial</label>
-                            <span style="font-size:.6rem; font-weight:700; color:#aaa; letter-spacing:.05em;"><?= count($currentApprovals) ?> RESPONSABLES</span>
+                            <label class="form-label text-muted small text-uppercase fw-bold mb-0" style="letter-spacing:.05em;">Historial de Aprobación</label>
+                            <span class="badge bg-light border text-dark" style="font-size:.6rem;"><?= count($currentApprovals) ?> USUARIOS</span>
                         </div>
                         <div class="sgi-approval-timeline">
                             <?php foreach ($currentApprovals as $approval): ?>
@@ -696,9 +695,9 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                                             <?php endif; ?>
                                         </div>
                                         <div class="sgi-approval-date">
-                                            <?= $approval->responded_at ? $approval->responded_at->format('d/m/Y') : '<span class="text-warning" style="font-weight:600;">Pendiente</span>' ?>
+                                            <?= $approval->responded_at ? $approval->responded_at->format('d/m/Y') : '<span class="text-warning">Pendiente</span>' ?>
                                             <?php if ($approval->responded_at): ?>
-                                                <div style="font-size:.65rem; opacity:.6;"><?= $approval->responded_at->format('H:i') ?></div>
+                                                <div style="font-size:.65rem; opacity:.7;"><?= $approval->responded_at->format('H:i') ?></div>
                                             <?php endif; ?>
                                         </div>
                                     </div>
