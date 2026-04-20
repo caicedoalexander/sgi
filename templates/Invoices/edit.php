@@ -71,9 +71,10 @@ $sectionFieldMap = [
     'accounting'            => ['accrued', 'ready_for_payment'],
     'treasury'              => [],
     'payment_authorization' => [],
+    'payment_supports'      => [],
 ];
 // Sections with their own internal permission logic — never skip as read-only
-$functionalSections = ['treasury', 'payment_authorization'];
+$functionalSections = ['treasury', 'payment_authorization', 'payment_supports'];
 $editableSectionKeys = [];
 $readOnlySectionKeys = [];
 foreach ($visibleSections as $s) {
@@ -742,35 +743,53 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         </div>
         <?php endif; ?>
 
-        <?php if ($sectionName === 'treasury' && in_array('treasury', $visibleSections)): ?>
+        <?php
+            // Shared payment-section params (reused by treasury and payment_authorization)
+            $sharedPaymentParams = [
+                'payments'           => $invoice->invoice_payments ?? [],
+                'bankingEntities'    => $bankingEntities,
+                'addPaymentUrl'      => ['controller' => 'InvoicePayments', 'action' => 'addPayment', $invoice->id],
+                'authorizeUrlFn'     => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'authorizePayment', $invoice->id, $pId],
+                'rejectUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'rejectPayment', $invoice->id, $pId],
+                'deleteUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'deletePayment', $invoice->id, $pId],
+                'paymentStatus'      => $invoice->payment_status ?? null,
+                'totalAmount'        => $invoice->amount ?? null,
+                'rejectMessage'      => '¿Rechazar este pago? El registro volverá a Tesorería.',
+            ];
+        ?>
+
+        <?php if ($sectionName === 'treasury' && in_array('treasury', $visibleSections)
+                  && $currentStatus !== \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO): ?>
         <?php
             $isTesoreriaEdit = ($roleName === \App\Constants\RoleConstants::TESORERIA || $roleName === \App\Constants\RoleConstants::ADMIN)
                 && $currentStatus === \App\Constants\InvoiceConstants::STATUS_TESORERIA;
-            $isContadorAutPago = ($roleName === \App\Constants\RoleConstants::CONTADOR || $roleName === \App\Constants\RoleConstants::ADMIN)
-                && $currentStatus === \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO;
+            $paymentMode = $isTesoreriaEdit ? 'tesoreria_register' : 'view';
         ?>
-        <?php
-            $paymentMode = $isTesoreriaEdit ? 'tesoreria_register'
-                         : ($isContadorAutPago ? 'authorize'
-                         : (($subPhaseB ?? false) ? 'close' : 'view'));
-        ?>
-        <?= $this->element('payment_section', [
-            'payments'           => $invoice->invoice_payments ?? [],
-            'bankingEntities'    => $bankingEntities,
-            'addPaymentUrl'      => ['controller' => 'InvoicePayments', 'action' => 'addPayment', $invoice->id],
-            'authorizeUrlFn'     => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'authorizePayment', $invoice->id, $pId],
-            'rejectUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'rejectPayment', $invoice->id, $pId],
-            'deleteUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'deletePayment', $invoice->id, $pId],
+        <?= $this->element('payment_section', $sharedPaymentParams + [
             'canRegisterPayment' => $isTesoreriaEdit,
-            'canAuthorize'       => $isContadorAutPago,
+            'canAuthorize'       => false,
             'canDelete'          => $isTesoreriaEdit,
-            'paymentStatus'      => $invoice->payment_status ?? null,
-            'totalAmount'        => $invoice->amount ?? null,
-            'rejectMessage'      => '¿Rechazar este pago? El registro volverá a Tesorería.',
             'mode'               => $paymentMode,
         ]) ?>
+        <?php endif; ?>
 
-        <?php if (($subPhaseB ?? false) && ($roleName === \App\Constants\RoleConstants::TESORERIA || $roleName === \App\Constants\RoleConstants::ADMIN)): ?>
+        <?php if ($sectionName === 'payment_authorization' && in_array('payment_authorization', $visibleSections)): ?>
+        <?php
+            $isContadorAutPago = ($roleName === \App\Constants\RoleConstants::CONTADOR || $roleName === \App\Constants\RoleConstants::ADMIN)
+                && $currentStatus === \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO;
+            $paymentMode = $isContadorAutPago ? 'authorize' : 'view';
+        ?>
+        <?= $this->element('payment_section', $sharedPaymentParams + [
+            'canRegisterPayment' => false,
+            'canAuthorize'       => $isContadorAutPago,
+            'canDelete'          => false,
+            'mode'               => $paymentMode,
+            'sectionTitle'       => 'Autorización de Pago',
+            'sectionIcon'        => 'bi-shield-check',
+        ]) ?>
+        <?php endif; ?>
+
+        <?php if ($sectionName === 'payment_supports' && in_array('payment_supports', $visibleSections)): ?>
         <?php
             $authorizedPayments = array_values(array_filter($invoice->invoice_payments ?? [], function ($p) {
                 $st = $p->status ?? ($p->authorized ? 'authorized' : 'pending');
@@ -780,95 +799,86 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             foreach ($authorizedPayments as $ap) {
                 if (!empty($ap->invoice_payment_attachments)) { $hasAnyAttachment = true; break; }
             }
+            $canManageSupports = ($subPhaseB ?? false)
+                && ($roleName === \App\Constants\RoleConstants::TESORERIA || $roleName === \App\Constants\RoleConstants::ADMIN);
         ?>
-        <div class="mt-4 p-3" style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);background:#f8f9fa;">
-            <div class="d-flex align-items-center gap-2 mb-2">
-                <i class="bi bi-paperclip"></i>
-                <strong style="font-size:.9rem;">Soportes de pago</strong>
-            </div>
-            <form action="<?= $this->Url->build(['controller' => 'InvoicePaymentAttachments', 'action' => 'upload', $invoice->id]) ?>"
-                  method="post" enctype="multipart/form-data" class="row g-2 align-items-end mb-2">
-                <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
-                <div class="col-md-5">
-                    <label class="form-label">Pago asociado</label>
-                    <select name="invoice_payment_id" class="form-select" required>
-                        <?php foreach ($authorizedPayments as $ap): ?>
-                            <option value="<?= $ap->id ?>">
-                                <?= h($ap->banking_entity->name ?? '—') ?> —
-                                $<?= number_format((float)$ap->amount, 0, ',', '.') ?> —
-                                <?= $ap->payment_date?->format('d/m/Y') ?? '' ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label">Archivo</label>
-                    <input type="file" name="file" class="form-control" required>
-                </div>
-                <div class="col-md-2 d-grid">
-                    <button type="submit" class="btn btn-outline-primary">
-                        <i class="bi bi-upload me-1"></i>Subir
-                    </button>
-                </div>
-            </form>
-
-            <?php if (!empty($authorizedPayments)): ?>
-            <div class="mt-2">
-                <?php foreach ($authorizedPayments as $ap): ?>
-                    <?php if (!empty($ap->invoice_payment_attachments)): ?>
-                    <div class="mb-1" style="font-size:.8rem;">
-                        <strong>Pago #<?= $ap->id ?>:</strong>
-                        <?php foreach ($ap->invoice_payment_attachments as $att): ?>
-                            <a href="/<?= h($att->file_path) ?>" target="_blank" class="me-2">
-                                <i class="bi bi-file-earmark"></i> <?= h($att->file_name) ?>
-                            </a>
-                            <form method="post" action="<?= $this->Url->build(['controller' => 'InvoicePaymentAttachments', 'action' => 'delete', $invoice->id, $att->id]) ?>"
-                                  class="d-inline" onsubmit="return confirm('¿Eliminar soporte?');">
-                                <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
-                                <button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
-                            </form>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
-
-            <div class="mt-3 d-flex justify-content-end">
-                <form method="post" action="<?= $this->Url->build(['action' => 'advanceStatus', $invoice->id]) ?>">
-                    <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
-                    <button type="submit" class="btn btn-success"
-                            <?= $hasAnyAttachment ? '' : 'disabled title="Sube al menos un soporte para cerrar."' ?>>
-                        <i class="bi bi-check2-circle me-1"></i>Cerrar Factura
-                    </button>
-                </form>
-            </div>
-        </div>
-        <?php endif; ?>
-        <?php endif; ?>
-
-        <?php if ($sectionName === 'payment_authorization' && in_array('payment_authorization', $visibleSections)): ?>
-        <!-- ── Sección: Autorización de Pago ── -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-shield-check me-1"></i>Autorización de Pago
+                    <i class="bi bi-paperclip me-1"></i>Soportes de Pago
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
-            <div class="row g-3">
-                <div class="col-md-12">
-                    <?php if ($currentStatus === \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO): ?>
-                        <div class="alert alert-info mb-0">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Los pagos pendientes de esta factura requieren autorización del Contador.
-                            La autorización se realiza desde la tabla de pagos en la sección Tesorería.
+            <div class="p-3" style="border:1px solid var(--border-color);background:#f8f9fa;">
+                <?php if ($canManageSupports): ?>
+                <form action="<?= $this->Url->build(['controller' => 'InvoicePaymentAttachments', 'action' => 'upload', $invoice->id]) ?>"
+                      method="post" enctype="multipart/form-data" class="row g-2 align-items-end mb-3">
+                    <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
+                    <div class="col-md-5">
+                        <label class="form-label">Pago asociado</label>
+                        <select name="invoice_payment_id" class="form-select" required>
+                            <?php foreach ($authorizedPayments as $ap): ?>
+                                <option value="<?= $ap->id ?>">
+                                    <?= h($ap->banking_entity->name ?? '—') ?> —
+                                    $<?= number_format((float)$ap->amount, 0, ',', '.') ?> —
+                                    <?= $ap->payment_date?->format('d/m/Y') ?? '' ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Archivo</label>
+                        <input type="file" name="file" class="form-control" required>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-upload me-1"></i>Subir
+                        </button>
+                    </div>
+                </form>
+                <?php endif; ?>
+
+                <?php if (!empty($authorizedPayments) && $hasAnyAttachment): ?>
+                <div>
+                    <?php foreach ($authorizedPayments as $ap): ?>
+                        <?php if (!empty($ap->invoice_payment_attachments)): ?>
+                        <div class="mb-1" style="font-size:.8rem;">
+                            <strong>Pago #<?= $ap->id ?>:</strong>
+                            <?php foreach ($ap->invoice_payment_attachments as $att): ?>
+                                <a href="/<?= h($att->file_path) ?>" target="_blank" class="me-2">
+                                    <i class="bi bi-file-earmark"></i> <?= h($att->file_name) ?>
+                                </a>
+                                <?php if ($canManageSupports): ?>
+                                <form method="post" action="<?= $this->Url->build(['controller' => 'InvoicePaymentAttachments', 'action' => 'delete', $invoice->id, $att->id]) ?>"
+                                      class="d-inline" onsubmit="return confirm('¿Eliminar soporte?');">
+                                    <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
+                                    <button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                                </form>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
                         </div>
-                    <?php else: ?>
-                        <p class="text-muted mb-0">La autorización de pagos se gestiona individualmente desde la sección de Tesorería.</p>
-                    <?php endif; ?>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
                 </div>
+                <?php else: ?>
+                <div class="text-center py-2" style="color:#aaa;font-size:.8rem;">
+                    <i class="bi bi-file-earmark-x d-block mb-1" style="font-size:1.2rem;"></i>
+                    Sin soportes adjuntos aún
+                </div>
+                <?php endif; ?>
+
+                <?php if ($canManageSupports): ?>
+                <div class="mt-3 d-flex justify-content-end">
+                    <form method="post" action="<?= $this->Url->build(['action' => 'advanceStatus', $invoice->id]) ?>">
+                        <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
+                        <button type="submit" class="btn btn-success"
+                                <?= $hasAnyAttachment ? '' : 'disabled title="Sube al menos un soporte para cerrar."' ?>>
+                            <i class="bi bi-check2-circle me-1"></i>Cerrar Factura
+                        </button>
+                    </form>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>

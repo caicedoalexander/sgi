@@ -32,6 +32,8 @@ $paymentStatus = $paymentStatus ?? null;
 $totalAmount = (float)($totalAmount ?? 0);
 $rejectMessage = $rejectMessage ?? '¿Rechazar este pago? El registro volverá a Tesorería.';
 $mode = $mode ?? 'view';
+$sectionTitle = $sectionTitle ?? 'Tesorería — Pagos';
+$sectionIcon = $sectionIcon ?? 'bi-bank';
 
 // Compute totals
 $paymentsTotal = 0;
@@ -51,7 +53,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
     <div class="d-flex align-items-center gap-3 mb-3">
         <span class="text-uppercase fw-semibold flex-shrink-0"
               style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-            <i class="bi bi-bank me-1"></i>Tesorería — Pagos
+            <i class="bi <?= h($sectionIcon) ?> me-1"></i><?= h($sectionTitle) ?>
         </span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>
