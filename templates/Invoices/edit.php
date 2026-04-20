@@ -169,7 +169,6 @@ $docIconColor = fn(?string $mime): string => match(true) {
     default                                                                                           => '#aaa',
 };
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
-$hasSoportes = $showUploadSection || !empty($documentsByStatus);
 ?>
 
 <!-- Layout: formulario izquierda + soportes derecha -->
@@ -835,7 +834,6 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
 <!-- ── Columna derecha: soportes + observaciones ── -->
 <div class="sgi-invoice-sidebar">
 
-<?php if ($hasSoportes): ?>
 <div class="card card-primary">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
@@ -915,7 +913,6 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
         <?php endforeach; ?>
     </div>
 </div>
-<?php endif; ?>
 
 <!-- Observaciones: chat -->
 <?php $obsCount = count($invoice->invoice_observations ?? []); ?>
