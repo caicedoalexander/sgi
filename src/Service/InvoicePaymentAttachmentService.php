@@ -11,6 +11,9 @@ class InvoicePaymentAttachmentService
 {
     use DocumentUploadTrait;
 
+    /**
+     * Upload a payment support document.
+     */
     public function upload(int $invoiceId, int $paymentId, UploadedFile $file, int $uploadedBy): ServiceResult
     {
         $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
@@ -40,6 +43,9 @@ class InvoicePaymentAttachmentService
         return ServiceResult::ok('Soporte subido correctamente.');
     }
 
+    /**
+     * Delete a payment support document.
+     */
     public function delete(int $invoiceId, int $attachmentId): ServiceResult
     {
         $attachmentsTable = TableRegistry::getTableLocator()->get('InvoicePaymentAttachments');

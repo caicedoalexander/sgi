@@ -6,28 +6,44 @@ namespace App\Controller;
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Service\InvoicePaymentAttachmentService;
+use Cake\Http\Response;
 
 class InvoicePaymentAttachmentsController extends AppController
 {
     private InvoicePaymentAttachmentService $attachmentService;
 
+    /**
+     * @inheritDoc
+     */
     public function initialize(): void
     {
         parent::initialize();
         $this->attachmentService = new InvoicePaymentAttachmentService();
     }
 
+    /**
+     * Return current authenticated user entity.
+     */
     private function _getCurrentUser(): object
     {
         return $this->Authentication->getIdentity()->getOriginalData();
     }
 
+    /**
+     * Return current user role name.
+     */
     private function _getRoleName(): string
     {
         return $this->_getUserRoleName($this->_getCurrentUser());
     }
 
-    public function upload($invoiceId = null)
+    /**
+     * Upload a payment attachment.
+     *
+     * @param int|null $invoiceId Invoice id
+     * @return \Cake\Http\Response|null
+     */
+    public function upload(?int $invoiceId = null): ?Response
     {
         $this->request->allowMethod(['post']);
 
@@ -72,7 +88,14 @@ class InvoicePaymentAttachmentsController extends AppController
         return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
     }
 
-    public function delete($invoiceId = null, $attachmentId = null)
+    /**
+     * Delete a payment attachment.
+     *
+     * @param int|null $invoiceId Invoice id
+     * @param int|null $attachmentId Attachment id
+     * @return \Cake\Http\Response|null
+     */
+    public function delete(?int $invoiceId = null, ?int $attachmentId = null): ?Response
     {
         $this->request->allowMethod(['post', 'delete']);
 
