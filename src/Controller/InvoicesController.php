@@ -303,19 +303,6 @@ class InvoicesController extends AppController
                     $this->Flash->warning($notifErr);
                 }
 
-                // Handle multi-approver assignment
-                $submittedApproverIds = $this->request->getData('approver_ids') ?? [];
-                if (!empty($submittedApproverIds) && $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION) {
-                    $baseUrl = $this->_getBaseUrl();
-                    $approvalResult = $this->approvalService->assignApprovers($invoice, $submittedApproverIds, $baseUrl, $user->id);
-                    if ($approvalResult['success']) {
-                        $this->Flash->success('Se enviaron los enlaces de aprobación a los aprobadores seleccionados.');
-                    }
-                    foreach ($approvalResult['errors'] as $approvalErr) {
-                        $this->Flash->error($approvalErr);
-                    }
-                }
-
                 $redirectAction = $result['advanced'] ? 'index' : 'edit';
                 return $this->redirect(['action' => $redirectAction, ...($redirectAction === 'edit' ? [$id] : [])]);
             }

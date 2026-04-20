@@ -283,6 +283,14 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
 
     <div class="card-body p-4" style="padding-top:0 !important;">
         <?php if (!$inPettyCash): ?>
+        <?php if (!$hasPendingApprovals && !empty($editableFields) && $currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION): ?>
+        <?= $this->Form->create(null, [
+            'url' => ['action' => 'sendApprovalLinks', $invoice->id],
+            'id' => 'sendApprovalLinksForm',
+            'style' => 'display:none',
+        ]) ?>
+        <?= $this->Form->end() ?>
+        <?php endif; ?>
         <?= $this->Form->create($invoice) ?>
 
         <div class="sgi-form-sections">
@@ -553,13 +561,19 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                     <label class="form-label">Aprobadores</label>
                     <?php if (!$hasPendingApprovals && !empty($editableFields) && $currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION): ?>
                         <select name="approver_ids[]" id="approver-ids" class="form-select select2-enable" multiple
+                                form="sendApprovalLinksForm"
                                 data-placeholder="Seleccione los aprobadores...">
                             <?php foreach ($approvers as $appId => $appName): ?>
                                 <option value="<?= $appId ?>"><?= h($appName) ?></option>
                             <?php endforeach; ?>
                         </select>
+                        <button type="submit" form="sendApprovalLinksForm"
+                                class="btn btn-primary btn-sm mt-2"
+                                onclick="return confirm('¿Enviar enlaces de aprobación a los aprobadores seleccionados?');">
+                            <i class="bi bi-send me-1"></i>Enviar link de aprobación
+                        </button>
                         <small class="text-muted mt-1 d-block">
-                            <i class="bi bi-info-circle me-1"></i>Al guardar se enviarán los enlaces de aprobación
+                            <i class="bi bi-info-circle me-1"></i>El envío de enlaces es independiente del botón Guardar
                         </small>
                     <?php elseif ($hasPendingApprovals): ?>
                         <div class="d-flex align-items-center gap-2 py-2">
