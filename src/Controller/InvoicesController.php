@@ -11,6 +11,7 @@ use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
 use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
+use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
 use ArrayObject;
 use Cake\ORM\Query\SelectQuery;
@@ -24,6 +25,7 @@ class InvoicesController extends AppController
     private InvoiceFilterService $filterService;
     private InvoiceDocumentService $documentService;
     private InvoiceApprovalService $approvalService;
+    private InvoicePaymentService $paymentService;
 
     public function initialize(): void
     {
@@ -32,6 +34,7 @@ class InvoicesController extends AppController
         $this->filterService = new InvoiceFilterService();
         $this->documentService = new InvoiceDocumentService();
         $this->approvalService = new InvoiceApprovalService();
+        $this->paymentService = new InvoicePaymentService();
     }
 
     private function _getCurrentUser(): object
@@ -155,6 +158,7 @@ class InvoicesController extends AppController
                 'BankingEntities',
                 'CreatedByUsers',
                 'AuthorizedByUsers',
+                'InvoicePaymentAttachments',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -218,6 +222,7 @@ class InvoicesController extends AppController
                 'BankingEntities',
                 'CreatedByUsers',
                 'AuthorizedByUsers',
+                'InvoicePaymentAttachments',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -331,6 +336,24 @@ class InvoicesController extends AppController
             $invoice->invoice_payments ?? [],
         ));
 
+        // Sub-fase B detection: en autorizacion_pago todos los pagos están autorizados
+        // (no queda ninguno pendiente) y existe al menos un autorizado -> cierre por Tesorería.
+        $subPhaseB = false;
+        if ($currentStatus === InvoiceConstants::STATUS_AUTORIZACION_PAGO) {
+            $hasPending = $this->paymentService->hasPendingAuthorization($invoice->id);
+            $hasAuthorized = false;
+            foreach (($invoice->invoice_payments ?? []) as $p) {
+                $st = $p->status ?? ($p->authorized ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED : InvoiceConstants::PAYMENT_RECORD_PENDING);
+                if ($st === InvoiceConstants::PAYMENT_RECORD_AUTHORIZED) {
+                    $hasAuthorized = true;
+                    break;
+                }
+            }
+            $subPhaseB = !$hasPending && $hasAuthorized;
+        }
+
+        $timeline = (new \App\Service\InvoiceHistoryService())->buildPipelineTimeline((int)$invoice->id);
+
         $this->set(compact(
             'invoice',
             'editableFields',
@@ -349,6 +372,8 @@ class InvoicesController extends AppController
             'currentApprovals',
             'hasPendingApprovals',
             'paymentsTotal',
+            'subPhaseB',
+            'timeline',
         ));
         $this->set($this->_getFormDropdowns());
     }

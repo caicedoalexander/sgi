@@ -2,7 +2,7 @@
  * SGI Payment Section — shared JS module.
  *
  * Initialises on any container with [data-payment-section].
- * Handles: register payment (dynamic form POST), full-payment shortcut.
+ * Handles: register payment with advance_after flag, full-payment checkbox.
  */
 (function () {
     'use strict';
@@ -11,92 +11,89 @@
         var addUrl = section.dataset.addUrl;
         var remainingAmount = parseFloat(section.dataset.remainingAmount) || 0;
 
-        // ── Elements ──
-        var btnRegister = section.querySelector('[data-btn-register]');
-        var btnFullPay  = section.querySelector('[data-btn-full-pay]');
+        var btnRegisterAdvance = section.querySelector('[data-btn-register-advance]');
+        var btnRegisterOnly    = section.querySelector('[data-btn-register-only]');
+        var fullPayCheck       = section.querySelector('[data-pay-full]');
         var bankInput   = section.querySelector('[data-pay-bank]');
         var amountInput = section.querySelector('[data-pay-amount]');
         var dateInput   = section.querySelector('[data-pay-date]');
-        var collapseEl  = section.querySelector('.collapse');
 
-        // ── Register Payment ──
-        if (btnRegister && addUrl) {
-            btnRegister.addEventListener('click', function () {
-                if (!bankInput.value || !amountInput.value || !dateInput.value) {
-                    alert('Complete todos los campos del pago.');
-                    return;
-                }
+        function getRawAmount() {
+            try {
+                var an = AutoNumeric.getAutoNumericElement(amountInput);
+                return an.getNumericString();
+            } catch (e) {
+                return amountInput.value.replace(/\$\s?/g, '').replace(/\./g, '').replace(',', '.');
+            }
+        }
 
-                var rawAmount;
-                try {
-                    var an = AutoNumeric.getAutoNumericElement(amountInput);
-                    rawAmount = an.getNumericString();
-                } catch (e) {
-                    rawAmount = amountInput.value.replace(/\$\s?/g, '').replace(/\./g, '').replace(',', '.');
-                }
+        function setAmount(val) {
+            try {
+                var an = AutoNumeric.getAutoNumericElement(amountInput);
+                an.set(val);
+            } catch (e) {
+                amountInput.value = val;
+            }
+        }
 
-                _submitDynamicForm(addUrl, {
-                    'banking_entity_id': bankInput.value,
-                    'amount': rawAmount,
-                    'payment_date': dateInput.value,
-                });
+        function validate() {
+            if (!bankInput.value || !amountInput.value || !dateInput.value) {
+                alert('Complete todos los campos del pago.');
+                return false;
+            }
+            return true;
+        }
 
-                btnRegister.disabled = true;
+        function submitPayment(advanceAfter) {
+            if (!validate()) return;
+            var fields = {
+                'banking_entity_id': bankInput.value,
+                'amount': getRawAmount(),
+                'payment_date': dateInput.value,
+            };
+            if (advanceAfter) {
+                fields['advance_after'] = '1';
+            }
+            if (fullPayCheck && fullPayCheck.checked) {
+                fields['full_payment'] = '1';
+            }
+            _submitDynamicForm(addUrl, fields);
+        }
+
+        if (btnRegisterAdvance && addUrl) {
+            btnRegisterAdvance.addEventListener('click', function () {
+                if (!validate()) return;
+                if (!confirm('Este pago se registrará y la factura pasará inmediatamente al estado de Autorización de Pago. ¿Continuar?')) return;
+                btnRegisterAdvance.disabled = true;
+                submitPayment(true);
             });
         }
 
-        // ── Full Payment shortcut ──
-        if (btnFullPay && remainingAmount > 0) {
-            btnFullPay.addEventListener('click', function () {
-                // Open the collapse if closed
-                if (collapseEl) {
-                    var bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
-                    bsCollapse.show();
-                }
+        if (btnRegisterOnly && addUrl) {
+            btnRegisterOnly.addEventListener('click', function () {
+                btnRegisterOnly.disabled = true;
+                submitPayment(false);
+            });
+        }
 
-                // Fill amount
-                if (amountInput) {
-                    try {
-                        var an = AutoNumeric.getAutoNumericElement(amountInput);
-                        an.set(remainingAmount);
-                    } catch (e) {
-                        amountInput.value = remainingAmount;
-                    }
-                }
-
-                // Fill date with today
-                if (dateInput) {
-                    var today = new Date();
-                    var y = today.getFullYear();
-                    var m = String(today.getMonth() + 1).padStart(2, '0');
-                    var d = String(today.getDate()).padStart(2, '0');
-                    var todayStr = y + '-' + m + '-' + d;
-
-                    if (dateInput._flatpickr) {
-                        dateInput._flatpickr.setDate(todayStr, true);
-                    } else {
-                        dateInput.value = todayStr;
-                    }
-                }
-
-                // Focus on bank selector
-                if (bankInput) {
-                    bankInput.focus();
+        if (fullPayCheck && amountInput) {
+            fullPayCheck.addEventListener('change', function () {
+                if (fullPayCheck.checked) {
+                    setAmount(remainingAmount);
+                    amountInput.setAttribute('readonly', 'readonly');
+                } else {
+                    amountInput.removeAttribute('readonly');
                 }
             });
         }
     });
 
-    /**
-     * Create a hidden form and submit it (avoids nested-form issues).
-     */
     function _submitDynamicForm(action, fields) {
         var form = document.createElement('form');
         form.method = 'POST';
         form.action = action;
         form.style.display = 'none';
 
-        // CSRF token
         var csrf = document.querySelector('input[name="_csrfToken"]');
         if (csrf) {
             var csrfInput = document.createElement('input');
