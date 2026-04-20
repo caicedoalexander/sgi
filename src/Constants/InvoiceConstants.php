@@ -27,8 +27,16 @@ final class InvoiceConstants
     public const APPROVER_STATUS_PENDING = 'Pendiente';
     public const APPROVER_STATUS_APPROVED = 'Aprobada';
     public const APPROVER_STATUS_REJECTED = 'Rechazada';
+    public const APPROVER_STATUS_SUPERSEDED = 'Reemplazada';
 
     public const APPROVER_STATUSES = [
+        self::APPROVER_STATUS_PENDING,
+        self::APPROVER_STATUS_APPROVED,
+        self::APPROVER_STATUS_REJECTED,
+        self::APPROVER_STATUS_SUPERSEDED,
+    ];
+
+    public const APPROVER_STATUSES_ACTIVE = [
         self::APPROVER_STATUS_PENDING,
         self::APPROVER_STATUS_APPROVED,
         self::APPROVER_STATUS_REJECTED,

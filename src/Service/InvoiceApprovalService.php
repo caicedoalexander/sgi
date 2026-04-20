@@ -101,26 +101,14 @@ class InvoiceApprovalService
     }
 
     /**
-     * Get all approvals for the current approval round (most recent batch).
+     * Get all active approvals for the current round (not superseded).
      */
     public function getCurrentApprovals(int $invoiceId): array
     {
-        $latestCreated = $this->invoiceApprovalsTable->find()
-            ->where(['invoice_id' => $invoiceId])
-            ->orderBy(['created' => 'DESC'])
-            ->first();
-
-        if (!$latestCreated) {
-            return [];
-        }
-
-        // All approvals created within 1 minute of the latest = same batch
-        $batchStart = (new DateTime($latestCreated->created->format('Y-m-d H:i:s')))->modify('-1 minute');
-
         return $this->invoiceApprovalsTable->find()
             ->where([
                 'InvoiceApprovals.invoice_id' => $invoiceId,
-                'InvoiceApprovals.created >=' => $batchStart,
+                'InvoiceApprovals.status IN' => InvoiceConstants::APPROVER_STATUSES_ACTIVE,
             ])
             ->contain(['Users'])
             ->orderBy(['InvoiceApprovals.created' => 'ASC'])
@@ -273,6 +261,20 @@ class InvoiceApprovalService
     }
 
     /**
+     * Check if invoice has any active approvals (pending/approved/rejected,
+     * i.e. not superseded).
+     */
+    public function hasAnyActiveApprovals(int $invoiceId): bool
+    {
+        return $this->invoiceApprovalsTable->find()
+            ->where([
+                'invoice_id' => $invoiceId,
+                'status IN' => InvoiceConstants::APPROVER_STATUSES_ACTIVE,
+            ])
+            ->count() > 0;
+    }
+
+    /**
      * Get approval summary for display (e.g., "2/3 aprobados").
      */
     public function getApprovalSummary(int $invoiceId): array
@@ -302,10 +304,17 @@ class InvoiceApprovalService
      */
     public function sendApprovalLinks(Invoice $invoice, array $approverUserIds, string $baseUrl, int $createdByUserId): array
     {
-        if ($this->hasPendingApprovals($invoice->id)) {
+        if ($invoice->pipeline_status !== InvoiceConstants::STATUS_APROBACION) {
             return [
                 'success' => false,
-                'errors' => ['Ya hay aprobaciones activas; use Modificar aprobadores.'],
+                'errors' => ['Solo se pueden enviar enlaces mientras la factura esté en Aprobación.'],
+                'approvals' => [],
+            ];
+        }
+        if ($this->hasAnyActiveApprovals($invoice->id)) {
+            return [
+                'success' => false,
+                'errors' => ['Ya existen aprobaciones para esta factura; use Modificar aprobadores.'],
                 'approvals' => [],
             ];
         }
@@ -326,6 +335,13 @@ class InvoiceApprovalService
         string $baseUrl,
         int $userId,
     ): array {
+        if ($invoice->pipeline_status !== InvoiceConstants::STATUS_APROBACION) {
+            return [
+                'success' => false,
+                'errors' => ['No se pueden modificar aprobadores fuera del estado Aprobación.'],
+                'approvals' => [],
+            ];
+        }
         if (trim($reason) === '') {
             return ['success' => false, 'errors' => ['El motivo es obligatorio.'], 'approvals' => []];
         }
@@ -339,7 +355,26 @@ class InvoiceApprovalService
             $previous = $this->getCurrentApprovals($invoice->id);
             $previousIds = array_map(fn($a) => $a->user_id, $previous);
 
-            $this->_invalidatePendingTokens($invoice->id);
+            // Marca todas las aprobaciones vigentes (pendientes, aprobadas, rechazadas)
+            // como Reemplazadas para que no cuenten en el nuevo batch.
+            $this->invoiceApprovalsTable->updateAll(
+                [
+                    'status' => InvoiceConstants::APPROVER_STATUS_SUPERSEDED,
+                    'token' => null,
+                    'token_expires_at' => null,
+                ],
+                [
+                    'invoice_id' => $invoice->id,
+                    'status IN' => InvoiceConstants::APPROVER_STATUSES_ACTIVE,
+                ],
+            );
+
+            // Los votos previos quedan invalidados: resetea area_approval.
+            $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+            $invoicesTable->updateAll(
+                ['area_approval' => InvoiceConstants::APPROVAL_PENDING, 'area_approval_date' => null],
+                ['id' => $invoice->id],
+            );
 
             $observationsTable = TableRegistry::getTableLocator()->get('InvoiceObservations');
             $observationsTable->save($observationsTable->newEntity([

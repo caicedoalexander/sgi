@@ -318,6 +318,10 @@ class InvoicesController extends AppController
         // Multi-approver data
         $currentApprovals = $this->approvalService->getCurrentApprovals($invoice->id);
         $hasPendingApprovals = $this->approvalService->hasPendingApprovals($invoice->id);
+        $hasAnyActiveApprovals = $this->approvalService->hasAnyActiveApprovals($invoice->id);
+        $isApprovalEditableState = $currentStatus === InvoiceConstants::STATUS_APROBACION && !empty($editableFields);
+        $canSendLinks = $isApprovalEditableState && !$hasAnyActiveApprovals;
+        $canModifyApprovers = $isApprovalEditableState && $hasAnyActiveApprovals;
 
         $paymentsTotal = array_sum(array_map(
             fn($p) => (float)$p->amount,
@@ -359,6 +363,8 @@ class InvoicesController extends AppController
             'nextStatus',
             'currentApprovals',
             'hasPendingApprovals',
+            'canSendLinks',
+            'canModifyApprovers',
             'paymentsTotal',
             'subPhaseB',
             'timeline',

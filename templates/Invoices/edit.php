@@ -283,7 +283,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
 
     <div class="card-body p-4" style="padding-top:0 !important;">
         <?php if (!$inPettyCash): ?>
-        <?php if (!$hasPendingApprovals && !empty($editableFields) && $currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION): ?>
+        <?php if ($canSendLinks): ?>
         <?= $this->Form->create(null, [
             'url' => ['action' => 'sendApprovalLinks', $invoice->id],
             'id' => 'sendApprovalLinksForm',
@@ -559,7 +559,7 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Aprobadores</label>
-                    <?php if (!$hasPendingApprovals && !empty($editableFields) && $currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION): ?>
+                    <?php if ($canSendLinks): ?>
                         <select name="approver_ids[]" id="approver-ids" class="form-select select2-enable" multiple
                                 form="sendApprovalLinksForm"
                                 data-placeholder="Seleccione los aprobadores...">
@@ -575,16 +575,23 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
                         <small class="text-muted mt-1 d-block">
                             <i class="bi bi-info-circle me-1"></i>El envío de enlaces es independiente del botón Guardar
                         </small>
-                    <?php elseif ($hasPendingApprovals): ?>
+                    <?php elseif ($canModifyApprovers): ?>
+                        <?php if ($hasPendingApprovals): ?>
                         <div class="d-flex align-items-center gap-2 py-2">
                             <span class="spinner-border spinner-border-sm text-warning" role="status" style="width:.9rem;height:.9rem;"></span>
                             <span style="font-size:.85rem;color:#888;">Aprobaciones en curso</span>
                         </div>
-                        <?php if (!empty($editableFields) && $currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION): ?>
+                        <?php else: ?>
+                        <div class="py-2" style="font-size:.85rem;color:#666;">
+                            <i class="bi bi-check2-circle me-1"></i>Aprobaciones registradas
+                        </div>
+                        <?php endif; ?>
                         <button type="button" class="btn btn-sm btn-outline-warning mt-1" data-bs-toggle="modal" data-bs-target="#modifyApproversModal">
                             <i class="bi bi-pencil-square me-1"></i>Modificar aprobadores
                         </button>
-                        <?php endif; ?>
+                        <small class="text-muted mt-1 d-block">
+                            <i class="bi bi-info-circle me-1"></i>Modificar reemplaza el conjunto y reinicia la aprobación
+                        </small>
                     <?php else: ?>
                         <div class="py-2" style="font-size:.85rem;color:#aaa;">No editable en este estado</div>
                     <?php endif; ?>
