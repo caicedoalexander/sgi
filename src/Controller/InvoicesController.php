@@ -175,8 +175,7 @@ class InvoicesController extends AppController
         }
 
         $fieldLabels = InvoiceHistoryService::FIELD_LABELS;
-        $timeline = (new InvoiceHistoryService())->buildPipelineTimeline((int)$invoice->id);
-        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels', 'timeline'));
+        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
     }
 
     public function add()
@@ -344,8 +343,6 @@ class InvoicesController extends AppController
             $subPhaseB = !$hasPending && $hasAuthorized;
         }
 
-        $timeline = (new \App\Service\InvoiceHistoryService())->buildPipelineTimeline((int)$invoice->id);
-
         $this->set(compact(
             'invoice',
             'editableFields',
@@ -367,7 +364,6 @@ class InvoicesController extends AppController
             'canModifyApprovers',
             'paymentsTotal',
             'subPhaseB',
-            'timeline',
         ));
         $this->set($this->_getFormDropdowns());
     }

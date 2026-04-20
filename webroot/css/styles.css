@@ -29,17 +29,6 @@ body {
 }
 
 /* =============================================
-   Componentes — Ledger Context (resumen factura)
-   ============================================= */
-.sgi-ledger {
-    background: #f8f9fa;
-    border: 1px solid var(--border-color);
-    border-left: 2px solid var(--primary-color);
-    padding: 1rem;
-}
-.sgi-ledger small { font-size: .68rem; letter-spacing: .04em; }
-
-/* =============================================
    Componentes — Stat Cards
    ============================================= */
 .sgi-stat-card {

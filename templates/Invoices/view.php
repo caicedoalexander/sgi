@@ -128,7 +128,6 @@ $dianClass = match($invoice->dian_validation ?? '') {
             'isRejected'       => $isRejected,
             'isApproved'       => $isApproved ?? false,
             'paymentStatus'    => $invoice->payment_status,
-            'timeline'         => $timeline ?? [],
         ]) ?>
     </div>
 

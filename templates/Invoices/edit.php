@@ -207,7 +207,6 @@ $hasSoportes = $showUploadSection || !empty($documentsByStatus);
             'isRejected'       => $isRejected,
             'isApproved'       => $isApproved ?? false,
             'paymentStatus'    => $invoice->payment_status,
-            'timeline'         => $timeline ?? [],
         ]) ?>
     </div>
 
