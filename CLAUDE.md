@@ -60,8 +60,9 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 |---------|---------|
 | `InvoicePipelineService` | 5-state workflow: aprobacion → contabilidad → tesoreria → autorizacion_pago → pagada |
 | `InvoiceFieldAccessPolicy` | Editable fields and visible sections per role/state (extracted from pipeline service) |
-| `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation |
-| `InvoiceApprovalService` | Invoice approval operations and area approval handling |
+| `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation. `registerPayment()` acepta `advance_after` flag. `editPayment()` requiere motivo. `rejectPayment()` persiste `rejection_reason` (no elimina). `hasPaymentSupports()` valida adjuntos para cerrar |
+| `InvoicePaymentAttachmentService` | Upload/delete soportes de pago (sub-fase B Tesorería en `autorizacion_pago`) |
+| `InvoiceApprovalService` | Invoice approval operations. `sendApprovalLinks()`, `modifyApprovers()` (con motivo obligatorio), `resetFlow()` cuando `area_approval='Rechazada'` |
 | `GroupedInvoiceService` | Grouped invoice batch operations |
 | `NoveltyPipelineService` | Novelty state workflow (similar pattern to invoices) |
 | `PaymentSchedulingPipelineService` | Payment scheduling pipeline: borrador → tesoreria → aut_pago → pagada |
@@ -110,7 +111,10 @@ States: `aprobacion` → `contabilidad` → `tesoreria` → `autorizacion_pago` 
 - Tesorería registra pagos → avanza a `autorizacion_pago` (requiere ≥1 pago pendiente vía `InvoicePaymentService`)
 - Contador autoriza en `autorizacion_pago` → avanza a `pagada`
 - Pago parcial tras autorización → **regresa automáticamente** a `tesoreria`
-- Facturas rechazadas (`area_approval='Rechazada'`) bloquean todo avance
+- Facturas rechazadas (`area_approval='Rechazada'`) bloquean todo avance; Registro puede `resetFlow` para reiniciar
+- `autorizacion_pago` tiene dos sub-fases derivadas en runtime: **sub-A** (Contador autoriza/rechaza por pago) y **sub-B** (Tesorería sube soportes y cierra). `subPhaseB = !hasPendingAuthorization && hasAuthorized`
+- Cerrar factura en sub-B requiere ≥1 soporte (`invoice_payment_attachments`) adjunto a un pago autorizado
+- Facturas en `pagada` redireccionan a `view` para no-admins
 - Secciones del formulario: `general`, `dates`, `classification`, `revision`, `accounting`, `treasury`, `payment_authorization`
 
 ## Key Conventions
