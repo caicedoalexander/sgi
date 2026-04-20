@@ -158,7 +158,6 @@ class InvoicesController extends AppController
                 'BankingEntities',
                 'CreatedByUsers',
                 'AuthorizedByUsers',
-                'InvoicePaymentAttachments',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -222,7 +221,6 @@ class InvoicesController extends AppController
                 'BankingEntities',
                 'CreatedByUsers',
                 'AuthorizedByUsers',
-                'InvoicePaymentAttachments',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -327,22 +325,6 @@ class InvoicesController extends AppController
             $invoice->invoice_payments ?? [],
         ));
 
-        // Sub-fase B detection: en autorizacion_pago todos los pagos están autorizados
-        // (no queda ninguno pendiente) y existe al menos un autorizado -> cierre por Tesorería.
-        $subPhaseB = false;
-        if ($currentStatus === InvoiceConstants::STATUS_AUTORIZACION_PAGO) {
-            $hasPending = $this->paymentService->hasPendingAuthorization($invoice->id);
-            $hasAuthorized = false;
-            foreach (($invoice->invoice_payments ?? []) as $p) {
-                $st = $p->status ?? ($p->authorized ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED : InvoiceConstants::PAYMENT_RECORD_PENDING);
-                if ($st === InvoiceConstants::PAYMENT_RECORD_AUTHORIZED) {
-                    $hasAuthorized = true;
-                    break;
-                }
-            }
-            $subPhaseB = !$hasPending && $hasAuthorized;
-        }
-
         $this->set(compact(
             'invoice',
             'editableFields',
@@ -363,7 +345,6 @@ class InvoicesController extends AppController
             'canSendLinks',
             'canModifyApprovers',
             'paymentsTotal',
-            'subPhaseB',
         ));
         $this->set($this->_getFormDropdowns());
     }

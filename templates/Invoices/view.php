@@ -336,14 +336,6 @@ $dianClass = match($invoice->dian_validation ?? '') {
                             </td>
                             <td>
                                 <?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?>
-                                <?php if (!empty($payment->invoice_payment_attachments)): ?>
-                                    <br>
-                                    <?php foreach ($payment->invoice_payment_attachments as $att): ?>
-                                        <a href="/<?= h($att->file_path) ?>" target="_blank" class="small me-2">
-                                            <i class="bi bi-paperclip"></i> <?= h($att->file_name) ?>
-                                        </a>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>

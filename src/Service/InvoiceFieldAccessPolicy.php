@@ -44,8 +44,8 @@ class InvoiceFieldAccessPolicy
     private const VISIBLE_SECTIONS_BY_ROLE = [
         RoleConstants::REGISTRO_REVISION => ['ledger', 'revision'],
         RoleConstants::CONTABILIDAD      => ['ledger', 'accounting'],
-        RoleConstants::TESORERIA         => ['ledger', 'treasury', 'payment_supports'],
-        RoleConstants::CONTADOR          => ['ledger', 'payment_authorization', 'payment_supports'],
+        RoleConstants::TESORERIA         => ['ledger', 'treasury'],
+        RoleConstants::CONTADOR          => ['ledger', 'payment_authorization'],
     ];
 
     private const COLLAPSIBLE_SECTIONS_BY_ROLE = [];
@@ -75,7 +75,6 @@ class InvoiceFieldAccessPolicy
         }
         if ($statusIndex >= 3) {
             $sections[] = 'payment_authorization';
-            $sections[] = 'payment_supports';
         }
 
         return $sections;

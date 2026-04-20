@@ -333,21 +333,4 @@ class InvoicePaymentService
         });
     }
 
-    /**
-     * Indica si la factura tiene al menos un soporte de pago adjunto
-     * asociado a un pago autorizado.
-     */
-    public function hasPaymentSupports(int $invoiceId): bool
-    {
-        $attachmentsTable = TableRegistry::getTableLocator()->get('InvoicePaymentAttachments');
-
-        return $attachmentsTable->find()
-            ->innerJoinWith('InvoicePayments', function ($q) use ($invoiceId) {
-                return $q->where([
-                    'InvoicePayments.invoice_id' => $invoiceId,
-                    'InvoicePayments.status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
-                ]);
-            })
-            ->count() > 0;
-    }
 }

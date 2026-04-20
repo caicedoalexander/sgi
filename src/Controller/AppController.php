@@ -55,7 +55,6 @@ class AppController extends Controller
         'LegalizationPayments' => 'legalizations',
         'PaymentSchedulings' => 'payment_schedulings',
         'PaymentRegistry' => 'payment_registry',
-        'InvoicePaymentAttachments' => 'invoices',
     ];
 
     /**

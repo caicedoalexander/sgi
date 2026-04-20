@@ -380,18 +380,6 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
 
-        // Invoice payment supports (attachments)
-        $builder->connect(
-            '/invoices/upload-payment-support/{invoiceId}',
-            ['controller' => 'InvoicePaymentAttachments', 'action' => 'upload'],
-            ['invoiceId' => '\d+', 'pass' => ['invoiceId']],
-        );
-        $builder->connect(
-            '/invoices/delete-payment-support/{invoiceId}/{attachmentId}',
-            ['controller' => 'InvoicePaymentAttachments', 'action' => 'delete'],
-            ['invoiceId' => '\d+', 'attachmentId' => '\d+', 'pass' => ['invoiceId', 'attachmentId']],
-        );
-
         // Payment Schedulings (Programación)
         $builder->connect(
             '/payment-schedulings/advance/{id}',

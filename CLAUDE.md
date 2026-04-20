@@ -60,8 +60,7 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 |---------|---------|
 | `InvoicePipelineService` | 5-state workflow: aprobacion → contabilidad → tesoreria → autorizacion_pago → pagada |
 | `InvoiceFieldAccessPolicy` | Editable fields and visible sections per role/state (extracted from pipeline service) |
-| `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation. `registerPayment()` acepta `advance_after` flag. `editPayment()` requiere motivo. `rejectPayment()` persiste `rejection_reason` (no elimina). `hasPaymentSupports()` valida adjuntos para cerrar |
-| `InvoicePaymentAttachmentService` | Upload/delete soportes de pago (sub-fase B Tesorería en `autorizacion_pago`) |
+| `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation. `registerPayment()` acepta `advance_after` flag. `editPayment()` requiere motivo. `rejectPayment()` persiste `rejection_reason` (no elimina) |
 | `InvoiceApprovalService` | Invoice approval operations. `sendApprovalLinks()`, `modifyApprovers()` (con motivo obligatorio), `resetFlow()` cuando `area_approval='Rechazada'` |
 | `GroupedInvoiceService` | Grouped invoice batch operations |
 | `NoveltyPipelineService` | Novelty state workflow (similar pattern to invoices) |
@@ -112,8 +111,7 @@ States: `aprobacion` → `contabilidad` → `tesoreria` → `autorizacion_pago` 
 - Contador autoriza en `autorizacion_pago` → avanza a `pagada`
 - Pago parcial tras autorización → **regresa automáticamente** a `tesoreria`
 - Facturas rechazadas (`area_approval='Rechazada'`) bloquean todo avance; Registro puede `resetFlow` para reiniciar
-- `autorizacion_pago` tiene dos sub-fases derivadas en runtime: **sub-A** (Contador autoriza/rechaza por pago) y **sub-B** (Tesorería sube soportes y cierra). `subPhaseB = !hasPendingAuthorization && hasAuthorized`
-- Cerrar factura en sub-B requiere ≥1 soporte (`invoice_payment_attachments`) adjunto a un pago autorizado
+- En `autorizacion_pago` el Contador autoriza/rechaza cada pago; al quedar todos autorizados, la factura puede avanzar a `pagada`. Los soportes de pago se cargan como documentos normales del pipeline en `tesoreria` (`InvoiceDocuments`)
 - Facturas en `pagada` redireccionan a `view` para no-admins
 - Secciones del formulario: `general`, `dates`, `classification`, `revision`, `accounting`, `treasury`, `payment_authorization`
 

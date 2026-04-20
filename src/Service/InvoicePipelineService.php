@@ -104,11 +104,6 @@ class InvoicePipelineService
                 'custom' => true,
                 'label' => 'El pago pendiente debe ser autorizado por el Contador',
             ],
-            [
-                'field' => '_has_payment_supports',
-                'custom' => true,
-                'label' => 'Debe subir al menos un soporte de pago para cerrar la factura',
-            ],
         ],
     ];
 
@@ -124,7 +119,6 @@ class InvoicePipelineService
         'ready_for_payment'     => ['ready_for_payment'],
         '_has_pending_payment'  => [],
         '_payment_authorized'   => [],
-        '_has_payment_supports' => [],
     ];
 
     // Next status transitions
@@ -188,10 +182,6 @@ class InvoicePipelineService
                     }
                 } elseif ($rule['field'] === '_payment_authorized') {
                     if ($this->paymentService->hasPendingAuthorization($invoice->id)) {
-                        $errors[] = $rule['label'];
-                    }
-                } elseif ($rule['field'] === '_has_payment_supports') {
-                    if (!$this->paymentService->hasPaymentSupports($invoice->id)) {
                         $errors[] = $rule['label'];
                     }
                 }

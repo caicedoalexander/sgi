@@ -41,11 +41,6 @@ class InvoicePaymentsTable extends Table
             'foreignKey' => 'authorized_by',
             'joinType' => 'LEFT',
         ]);
-        $this->hasMany('InvoicePaymentAttachments', [
-            'foreignKey' => 'invoice_payment_id',
-            'dependent' => true,
-            'cascadeCallbacks' => true,
-        ]);
     }
 
     public function validationDefault(Validator $validator): Validator
