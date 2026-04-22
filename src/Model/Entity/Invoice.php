@@ -46,6 +46,11 @@ class Invoice extends Entity
         return !empty($this->petty_cash_record_id);
     }
 
+    public function isInLegalization(): bool
+    {
+        return !empty($this->legalization_record_id);
+    }
+
     public function isRejected(): bool
     {
         return ($this->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED;

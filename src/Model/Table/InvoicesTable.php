@@ -72,6 +72,10 @@ class InvoicesTable extends Table
             'foreignKey' => 'petty_cash_record_id',
             'joinType' => 'LEFT',
         ]);
+        $this->belongsTo('LegalizationRecords', [
+            'foreignKey' => 'legalization_record_id',
+            'joinType' => 'LEFT',
+        ]);
         $this->belongsTo('Employees', [
             'foreignKey' => 'employee_id',
             'joinType' => 'LEFT',

@@ -145,6 +145,7 @@ class InvoicesController extends AppController
             'RegisteredByUsers',
             'ApproverUsers',
             'PettyCashRecords',
+            'LegalizationRecords',
             'InvoiceHistories' => ['Users'],
             'InvoiceObservations' => [
                 'Users',
@@ -166,7 +167,10 @@ class InvoicesController extends AppController
         $roleName = $this->_getRoleName();
         $isRejected = $this->pipeline->isRejected($invoice);
         $isApproved = $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
+        $isLockedByPettyCash = $this->pipeline->isLockedByPettyCash($invoice);
+        $isLockedByLegalization = $this->pipeline->isLockedByLegalization($invoice);
         $isLockedByScheduling = $this->pipeline->isLockedByPaidScheduling((int)$id);
+        $isLocked = $isLockedByPettyCash || $isLockedByLegalization || $isLockedByScheduling;
         $pipelineStatuses = InvoicePipelineService::STATUSES;
         $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
 
@@ -176,7 +180,7 @@ class InvoicesController extends AppController
         }
 
         $fieldLabels = InvoiceHistoryService::FIELD_LABELS;
-        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByScheduling', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
+        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByLegalization', 'isLockedByScheduling', 'isLocked', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
     }
 
     public function add()
@@ -211,6 +215,7 @@ class InvoicesController extends AppController
             'Employees',
             'OperationCenters',
             'PettyCashRecords',
+            'LegalizationRecords',
             'InvoiceObservations' => [
                 'Users',
                 'sort' => ['InvoiceObservations.created' => 'ASC'],
@@ -228,13 +233,6 @@ class InvoicesController extends AppController
             ],
         ]);
 
-        if ($invoice->isInPettyCash()) {
-            $this->Flash->warning(sprintf(
-                'Esta factura pertenece al registro de Caja Menor %s. Los cambios de estado se gestionan desde allí.',
-                $invoice->petty_cash_record->code ?? '#' . $invoice->petty_cash_record_id,
-            ));
-        }
-
         // Paid invoices are read-only for non-admin roles: redirect to view.
         if (
             $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
@@ -243,22 +241,21 @@ class InvoicesController extends AppController
             return $this->redirect(['action' => 'view', $id]);
         }
 
-        // Locked when any payment is linked to a paid PaymentScheduling (non-admin only).
-        if (
-            $this->_getRoleName() !== RoleConstants::ADMIN
-            && $this->pipeline->isLockedByPaidScheduling((int)$id)
-        ) {
-            $this->Flash->warning('Factura bloqueada: tiene pagos de una programación ya pagada.');
+        // Unified lock: petty cash, legalization or paid scheduling (non-admin only).
+        if ($this->_getRoleName() !== RoleConstants::ADMIN) {
+            $lockMessage = $this->pipeline->getEditLockMessage($invoice);
+            if ($lockMessage !== null) {
+                $this->Flash->warning($lockMessage);
 
-            return $this->redirect(['action' => 'view', $id]);
+                return $this->redirect(['action' => 'view', $id]);
+            }
         }
 
         $roleName = $this->_getRoleName();
         $currentStatus = $invoice->pipeline_status;
 
-        // Block editing when invoice belongs to a Petty Cash record
-        $editableFields = $invoice->isInPettyCash() ? [] : $this->pipeline->getEditableFields($roleName, $currentStatus);
-        $canAdvance = $invoice->isInPettyCash() ? false : $this->pipeline->canAdvance($roleName, $currentStatus);
+        $editableFields = $this->pipeline->getEditableFields($roleName, $currentStatus);
+        $canAdvance = $this->pipeline->canAdvance($roleName, $currentStatus);
         $visibleSections = $this->pipeline->getVisibleSections($roleName, $currentStatus);
         $collapsibleSections = $this->pipeline->getCollapsibleSections($roleName, $currentStatus);
         $isRejected = $this->pipeline->isRejected($invoice);
@@ -277,11 +274,6 @@ class InvoicesController extends AppController
         }
 
         if ($this->request->is(['patch', 'post', 'put'])) {
-            if ($invoice->isInPettyCash()) {
-                $this->Flash->error('No se puede editar una factura agrupada en Caja Menor.');
-
-                return $this->redirect(['action' => 'edit', $id]);
-            }
             $user = $this->_getCurrentUser();
             $result = $this->pipeline->saveAndAdvance(
                 $invoice,
@@ -367,10 +359,13 @@ class InvoicesController extends AppController
         $this->request->allowMethod(['post']);
         $invoice = $this->Invoices->get($id);
 
-        if ($invoice->isInPettyCash()) {
-            $this->Flash->error('No se puede avanzar individualmente una factura agrupada en Caja Menor.');
+        if ($this->_getRoleName() !== RoleConstants::ADMIN) {
+            $lockMessage = $this->pipeline->getEditLockMessage($invoice);
+            if ($lockMessage !== null) {
+                $this->Flash->error($lockMessage);
 
-            return $this->redirect(['action' => 'edit', $id]);
+                return $this->redirect(['action' => 'view', $id]);
+            }
         }
 
         $user = $this->_getCurrentUser();

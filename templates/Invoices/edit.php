@@ -109,22 +109,6 @@ $isCollapsibleSection = fn(string $s): bool => in_array($s, $collapsible, true);
     </div>
 </div>
 
-<?php $inPettyCash = $invoice->isInPettyCash(); ?>
-<?php if ($inPettyCash): ?>
-<div class="alert alert-info d-flex align-items-center gap-2 mb-4" style="border-left:3px solid #0dcaf0;">
-    <i class="bi bi-wallet2 fs-5"></i>
-    <div>
-        Esta factura pertenece al registro de Caja Menor
-        <strong><?= $this->Html->link(
-            h($invoice->petty_cash_record->code ?? '#' . $invoice->petty_cash_record_id),
-            ['controller' => 'PettyCashRecords', 'action' => 'edit', $invoice->petty_cash_record_id],
-            ['class' => 'alert-link']
-        ) ?></strong>.
-        Los cambios de estado se gestionan desde allí.
-    </div>
-</div>
-<?php endif; ?>
-
 <!-- Alerta de avance pendiente -->
 <?php if ($canAdvance && !$isRejected && !empty($advanceErrors)): ?>
 <div class="alert alert-warning mb-4">
@@ -280,7 +264,6 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
     </div>
 
     <div class="card-body p-4" style="padding-top:0 !important;">
-        <?php if (!$inPettyCash): ?>
         <?php if ($canSendLinks): ?>
         <?= $this->Form->create(null, [
             'url' => ['action' => 'sendApprovalLinks', $invoice->id],
@@ -819,13 +802,6 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
 
         <?php if ($currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION && !empty($editableFields)): ?>
         <?= $this->element('invoice_edit/modify_approvers_modal', ['invoice' => $invoice, 'approvers' => $approvers]) ?>
-        <?php endif; ?>
-        <?php else: ?>
-        <!-- Factura en Caja Menor: solo lectura -->
-        <div class="text-center py-4" style="color:#aaa;">
-            <i class="bi bi-lock d-block mb-2" style="font-size:1.5rem;"></i>
-            <span style="font-size:.82rem;">Los campos de esta factura se gestionan desde el registro de Caja Menor.</span>
-        </div>
         <?php endif; ?>
     </div>
 </div>

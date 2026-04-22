@@ -45,8 +45,9 @@ $dianClass = match($invoice->dian_validation ?? '') {
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?php
+        $isAdmin = $roleName === \App\Constants\RoleConstants::ADMIN;
         $canShowEdit = !empty($userPermissions['invoices']['can_edit'])
-            && ($roleName === \App\Constants\RoleConstants::ADMIN || empty($isLockedByScheduling));
+            && ($isAdmin || empty($isLocked));
         ?>
         <?php if ($canShowEdit): ?>
         <?= $this->Html->link(
@@ -58,26 +59,39 @@ $dianClass = match($invoice->dian_validation ?? '') {
     </div>
 </div>
 
-<?php if ($invoice->isInPettyCash()): ?>
-<div class="alert alert-info d-flex align-items-center gap-2 mb-4">
-    <i class="bi bi-wallet2 fs-5"></i>
+<?php if (!empty($isLockedByPettyCash) && !$isAdmin): ?>
+<div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
+    <i class="bi bi-lock-fill fs-5"></i>
     <div>
-        Esta factura pertenece al registro de Caja Menor
+        Factura bloqueada: pertenece al registro de Caja Menor
         <strong><?= $this->Html->link(
             h($invoice->petty_cash_record->code ?? '#' . $invoice->petty_cash_record_id),
             ['controller' => 'PettyCashRecords', 'action' => 'view', $invoice->petty_cash_record_id],
             ['class' => 'alert-link']
-        ) ?></strong>.
-        Los cambios de estado se gestionan desde allí.
+        ) ?></strong>. Los cambios se gestionan desde allí.
     </div>
 </div>
 <?php endif; ?>
 
-<?php if (!empty($isLockedByScheduling) && $roleName !== \App\Constants\RoleConstants::ADMIN): ?>
+<?php if (!empty($isLockedByLegalization) && !$isAdmin): ?>
 <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
     <i class="bi bi-lock-fill fs-5"></i>
     <div>
-        Esta factura tiene pagos aplicados desde una <strong>programación ya pagada</strong> y está bloqueada para edición.
+        Factura bloqueada: pertenece al registro de Legalización
+        <strong><?= $this->Html->link(
+            h($invoice->legalization_record->code ?? '#' . $invoice->legalization_record_id),
+            ['controller' => 'LegalizationRecords', 'action' => 'view', $invoice->legalization_record_id],
+            ['class' => 'alert-link']
+        ) ?></strong>. Los cambios se gestionan desde allí.
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($isLockedByScheduling) && !$isAdmin): ?>
+<div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
+    <i class="bi bi-lock-fill fs-5"></i>
+    <div>
+        Factura bloqueada: tiene pagos aplicados desde una <strong>programación ya pagada</strong>.
     </div>
 </div>
 <?php endif; ?>
