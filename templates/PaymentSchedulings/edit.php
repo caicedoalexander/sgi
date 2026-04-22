@@ -505,7 +505,7 @@ $docIconColor = fn(?string $name): string => match(true) {
                         'required' => true,
                         'accept' => '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx',
                     ]) ?>
-                    <div class="form-text">Máximo 10 MB — PDF, imágenes, Word o Excel.</div>
+                    <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
                 </div>
             </div>
             <div class="modal-footer">

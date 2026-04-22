@@ -1,6 +1,33 @@
 /**
  * SGI Common JS - Flatpickr + AutoNumeric + Row click
  */
+
+window.SGI_MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+window.SGI_MAX_UPLOAD_LABEL = '20 MB';
+
+// Global guard: bloquea el submit de cualquier formulario con un archivo >20 MB
+// para evitar el 413 de nginx. No interfiere con validaciones locales más estrictas
+// (DIAN 10 MB, Leaves 5 MB) porque esas se ejecutan en sus propios handlers.
+document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!form || !form.querySelectorAll) return;
+    var fileInputs = form.querySelectorAll('input[type="file"]');
+    if (!fileInputs.length) return;
+    var max = window.SGI_MAX_UPLOAD_BYTES;
+    var label = window.SGI_MAX_UPLOAD_LABEL;
+    for (var i = 0; i < fileInputs.length; i++) {
+        var files = fileInputs[i].files || [];
+        for (var j = 0; j < files.length; j++) {
+            if (files[j].size > max) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('El archivo "' + files[j].name + '" supera el tamaño máximo de ' + label + '.');
+                return;
+            }
+        }
+    }
+}, true);
+
 document.addEventListener('DOMContentLoaded', function () {
 
     // ── Flatpickr para inputs de fecha ──────────────────────────────────────

@@ -8,7 +8,7 @@ use Laminas\Diactoros\UploadedFile;
 
 trait DocumentUploadTrait
 {
-    private const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10 MB
+    private const MAX_DOC_SIZE = 20 * 1024 * 1024; // 20 MB
 
     private const ALLOWED_DOC_MIMES = [
         'application/pdf',
@@ -41,7 +41,7 @@ trait DocumentUploadTrait
         }
 
         if ($file->getSize() > self::MAX_DOC_SIZE) {
-            return 'El archivo excede el tamaño máximo de 10MB.';
+            return 'El archivo excede el tamaño máximo de 20 MB.';
         }
 
         $mimeType = $file->getClientMediaType();

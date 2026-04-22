@@ -1000,7 +1000,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                 <div class="mb-3">
                     <label class="form-label">Archivo</label>
                     <input type="file" name="file" class="form-control" required accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
-                    <div class="form-text">Máximo 10 MB — PDF, imágenes, Word o Excel.</div>
+                    <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1182,6 +1182,14 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             e.preventDefault();
             var fileInput = uploadForm.querySelector('input[type="file"]');
             if (!fileInput.files.length) return;
+
+            var file = fileInput.files[0];
+            var maxBytes = window.SGI_MAX_UPLOAD_BYTES || (20 * 1024 * 1024);
+            var maxLabel = window.SGI_MAX_UPLOAD_LABEL || '20 MB';
+            if (file.size > maxBytes) {
+                alert('El archivo supera el tamaño máximo de ' + maxLabel + '.');
+                return;
+            }
 
             uploadBtn.disabled = true;
             uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Subiendo...';

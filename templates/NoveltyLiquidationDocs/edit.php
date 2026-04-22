@@ -625,7 +625,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
                     <label class="form-label">Archivo</label>
                     <input type="file" name="document" class="form-control" required
                            accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
-                    <div class="form-text">Máximo 10 MB — PDF, imágenes, Word o Excel.</div>
+                    <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
                 </div>
             </div>
             <div class="modal-footer">

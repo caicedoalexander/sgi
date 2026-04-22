@@ -606,7 +606,7 @@ $novedades = $employee->employee_novelties ?? [];
                 </div>
                 <div class="mb-3">
                     <?= $this->Form->control('file', ['type' => 'file', 'class' => 'form-control', 'label' => ['text' => 'Archivo', 'class' => 'form-label'], 'required' => true, 'accept' => '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx,.txt']) ?>
-                    <div class="form-text">Máximo 10 MB — PDF, imágenes, Word, Excel o texto.</div>
+                    <div class="form-text">Máximo 20 MB — PDF, imágenes, Word, Excel o texto.</div>
                 </div>
             </div>
             <div class="modal-footer">
