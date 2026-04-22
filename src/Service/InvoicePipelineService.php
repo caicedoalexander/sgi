@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
+use App\Constants\PaymentSchedulingConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\Invoice;
 use App\Service\Interface\HistoryServiceInterface;
@@ -160,6 +161,25 @@ class InvoicePipelineService
         }
 
         return ($invoice->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED;
+    }
+
+    /**
+     * Returns true if the invoice has any payment linked to a payment
+     * scheduling already in "pagada" state. Used to lock the invoice from
+     * further edits (except for Admin).
+     */
+    public function isLockedByPaidScheduling(int $invoiceId): bool
+    {
+        $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+
+        return $paymentsTable->find()
+            ->matching('PaymentSchedulings', function ($q) {
+                return $q->where([
+                    'PaymentSchedulings.pipeline_status' => PaymentSchedulingConstants::STATUS_PAGADA,
+                ]);
+            })
+            ->where(['InvoicePayments.invoice_id' => $invoiceId])
+            ->count() > 0;
     }
 
     /**

@@ -258,6 +258,7 @@ class PaymentSchedulingService
                     'amount' => $item->amount,
                     'payment_date' => date('Y-m-d'),
                     'payment_scheduling_id' => $schedulingId,
+                    'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
                     'authorized' => true,
                     'authorized_by' => $authorizedBy,
                     'authorized_date' => date('Y-m-d'),

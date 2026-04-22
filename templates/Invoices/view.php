@@ -44,7 +44,11 @@ $dianClass = match($invoice->dian_validation ?? '') {
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
-        <?php if (!empty($userPermissions['invoices']['can_edit'])): ?>
+        <?php
+        $canShowEdit = !empty($userPermissions['invoices']['can_edit'])
+            && ($roleName === \App\Constants\RoleConstants::ADMIN || empty($isLockedByScheduling));
+        ?>
+        <?php if ($canShowEdit): ?>
         <?= $this->Html->link(
             '<i class="bi bi-pencil me-1"></i>Editar',
             ['action' => 'edit', $invoice->id],
@@ -65,6 +69,15 @@ $dianClass = match($invoice->dian_validation ?? '') {
             ['class' => 'alert-link']
         ) ?></strong>.
         Los cambios de estado se gestionan desde allí.
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($isLockedByScheduling) && $roleName !== \App\Constants\RoleConstants::ADMIN): ?>
+<div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
+    <i class="bi bi-lock-fill fs-5"></i>
+    <div>
+        Esta factura tiene pagos aplicados desde una <strong>programación ya pagada</strong> y está bloqueada para edición.
     </div>
 </div>
 <?php endif; ?>

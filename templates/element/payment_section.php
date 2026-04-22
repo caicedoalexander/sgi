@@ -142,6 +142,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                         <th>Fecha</th>
                         <th>Estado</th>
                         <th>Registrado por</th>
+                        <th>Origen</th>
                         <?php if ($canAuthorize || $canDelete): ?>
                         <th class="text-end">Acciones</th>
                         <?php endif; ?>
@@ -170,6 +171,17 @@ $addUrl = $this->Url->build($addPaymentUrl);
                             <?php endif; ?>
                         </td>
                         <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
+                        <td>
+                            <?php if (!empty($payment->payment_scheduling_id)): ?>
+                                <?= $this->Html->link(
+                                    'Programación #' . h($payment->payment_scheduling->code ?? $payment->payment_scheduling_id),
+                                    ['controller' => 'PaymentSchedulings', 'action' => 'view', $payment->payment_scheduling_id],
+                                    ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
+                                ) ?>
+                            <?php else: ?>
+                                <span class="text-muted" style="font-size:.75rem;">Individual</span>
+                            <?php endif; ?>
+                        </td>
                         <?php if ($canAuthorize || $canDelete): ?>
                         <td class="text-end">
                             <?php if ($canAuthorize && !$payment->authorized && empty($payment->payment_scheduling_id ?? null) && $authorizeUrlFn): ?>
@@ -200,7 +212,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                 <tfoot class="table-light">
                     <tr>
                         <th>Total Pagado</th>
-                        <th colspan="<?= ($canAuthorize || $canDelete) ? 5 : 4 ?>">$ <?= number_format($paymentsTotal, 0, ',', '.') ?></th>
+                        <th colspan="<?= ($canAuthorize || $canDelete) ? 6 : 5 ?>">$ <?= number_format($paymentsTotal, 0, ',', '.') ?></th>
                     </tr>
                 </tfoot>
             </table>

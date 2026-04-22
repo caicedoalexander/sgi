@@ -158,6 +158,7 @@ class InvoicesController extends AppController
                 'BankingEntities',
                 'CreatedByUsers',
                 'AuthorizedByUsers',
+                'PaymentSchedulings',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -165,6 +166,7 @@ class InvoicesController extends AppController
         $roleName = $this->_getRoleName();
         $isRejected = $this->pipeline->isRejected($invoice);
         $isApproved = $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
+        $isLockedByScheduling = $this->pipeline->isLockedByPaidScheduling((int)$id);
         $pipelineStatuses = InvoicePipelineService::STATUSES;
         $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
 
@@ -174,7 +176,7 @@ class InvoicesController extends AppController
         }
 
         $fieldLabels = InvoiceHistoryService::FIELD_LABELS;
-        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
+        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByScheduling', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
     }
 
     public function add()
@@ -221,6 +223,7 @@ class InvoicesController extends AppController
                 'BankingEntities',
                 'CreatedByUsers',
                 'AuthorizedByUsers',
+                'PaymentSchedulings',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -237,6 +240,16 @@ class InvoicesController extends AppController
             $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
             && $this->_getRoleName() !== RoleConstants::ADMIN
         ) {
+            return $this->redirect(['action' => 'view', $id]);
+        }
+
+        // Locked when any payment is linked to a paid PaymentScheduling (non-admin only).
+        if (
+            $this->_getRoleName() !== RoleConstants::ADMIN
+            && $this->pipeline->isLockedByPaidScheduling((int)$id)
+        ) {
+            $this->Flash->warning('Factura bloqueada: tiene pagos de una programación ya pagada.');
+
             return $this->redirect(['action' => 'view', $id]);
         }
 
