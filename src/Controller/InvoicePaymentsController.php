@@ -48,7 +48,6 @@ class InvoicePaymentsController extends AppController
         }
 
         $data = $this->request->getData();
-        $advanceAfter = (bool)($data['advance_after'] ?? false);
 
         if (!empty($data['full_payment'])) {
             $data['amount'] = $this->paymentService->getPendingBalance((int)$invoiceId);
@@ -58,7 +57,6 @@ class InvoicePaymentsController extends AppController
             (int)$invoiceId,
             $data,
             (int)$this->_getCurrentUser()->id,
-            $advanceAfter,
         );
 
         if ($result->success) {

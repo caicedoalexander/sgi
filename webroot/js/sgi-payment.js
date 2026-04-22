@@ -2,7 +2,7 @@
  * SGI Payment Section — shared JS module.
  *
  * Initialises on any container with [data-payment-section].
- * Handles: register payment with advance_after flag, full-payment checkbox.
+ * Handles: register payment (advances invoice to autorizacion_pago), full-payment checkbox.
  */
 (function () {
     'use strict';
@@ -18,7 +18,6 @@
             var remainingAmount = parseFloat(section.dataset.remainingAmount) || 0;
 
             var btnRegisterAdvance = section.querySelector('[data-btn-register-advance]');
-            var btnRegisterOnly    = section.querySelector('[data-btn-register-only]');
             var fullPayCheck       = section.querySelector('[data-pay-full]');
             var bankInput   = section.querySelector('[data-pay-bank]');
             var amountInput = section.querySelector('[data-pay-amount]');
@@ -28,7 +27,7 @@
                 console.error('[sgi-payment] Falta data-add-url en la sección de pagos.');
                 return;
             }
-            if (!btnRegisterAdvance && !btnRegisterOnly) {
+            if (!btnRegisterAdvance) {
                 // No permission to register — nothing to wire.
                 return;
             }
@@ -87,40 +86,26 @@
                 return any ? any.value : '';
             }
 
-            function submitPayment(advanceAfter) {
+            function submitPayment() {
                 if (!validate()) return;
                 var fields = {
                     'banking_entity_id': bankInput.value,
                     'amount': getRawAmount(),
                     'payment_date': dateInput.value,
                 };
-                if (advanceAfter) {
-                    fields['advance_after'] = '1';
-                }
                 if (fullPayCheck && fullPayCheck.checked) {
                     fields['full_payment'] = '1';
                 }
                 _submitDynamicForm(addUrl, fields, findCsrfToken());
             }
 
-            if (btnRegisterAdvance) {
-                btnRegisterAdvance.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    if (!validate()) return;
-                    if (!confirm('Este pago se registrará y la factura pasará inmediatamente al estado de Autorización de Pago. ¿Continuar?')) return;
-                    btnRegisterAdvance.disabled = true;
-                    submitPayment(true);
-                });
-            }
-
-            if (btnRegisterOnly) {
-                btnRegisterOnly.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    if (!validate()) return;
-                    btnRegisterOnly.disabled = true;
-                    submitPayment(false);
-                });
-            }
+            btnRegisterAdvance.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (!validate()) return;
+                if (!confirm('Este pago se registrará y la factura pasará inmediatamente al estado de Autorización de Pago. ¿Continuar?')) return;
+                btnRegisterAdvance.disabled = true;
+                submitPayment();
+            });
 
             if (fullPayCheck && amountInput) {
                 fullPayCheck.addEventListener('change', function () {

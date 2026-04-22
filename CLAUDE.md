@@ -60,7 +60,7 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 |---------|---------|
 | `InvoicePipelineService` | 5-state workflow: aprobacion → contabilidad → tesoreria → autorizacion_pago → pagada |
 | `InvoiceFieldAccessPolicy` | Editable fields and visible sections per role/state (extracted from pipeline service) |
-| `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation. `registerPayment()` acepta `advance_after` flag. `editPayment()` requiere motivo. `rejectPayment()` persiste `rejection_reason` (no elimina) |
+| `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation. `registerPayment()` siempre avanza la factura a `autorizacion_pago`. `editPayment()` requiere motivo. `rejectPayment()` persiste `rejection_reason` (no elimina) |
 | `InvoiceApprovalService` | Invoice approval operations. `sendApprovalLinks()`, `modifyApprovers()` (con motivo obligatorio), `resetFlow()` cuando `area_approval='Rechazada'` |
 | `GroupedInvoiceService` | Grouped invoice batch operations |
 | `NoveltyPipelineService` | Novelty state workflow (similar pattern to invoices) |

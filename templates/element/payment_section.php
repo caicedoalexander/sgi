@@ -123,9 +123,6 @@ $addUrl = $this->Url->build($addPaymentUrl);
                     </div>
                     <?php endif; ?>
                     <div class="col-md-12 d-flex gap-2 justify-content-end">
-                        <button type="button" data-btn-register-only class="btn btn-outline-primary">
-                            <i class="bi bi-save me-1"></i>Solo registrar
-                        </button>
                         <button type="button" data-btn-register-advance class="btn btn-success">
                             <i class="bi bi-send-check me-1"></i>Registrar y enviar a autorización
                         </button>

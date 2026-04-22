@@ -142,15 +142,13 @@ class InvoicePaymentService
     }
 
     /**
-     * Registra un nuevo pago. Si $advanceAfter es true, avanza la factura a
-     * autorizacion_pago en la misma transacción; si false, la factura se
-     * mantiene en su estado actual (útil para registrar varios pagos parciales).
+     * Registra un nuevo pago y avanza la factura a autorizacion_pago en la
+     * misma transacción.
      */
     public function registerPayment(
         int $invoiceId,
         array $paymentData,
-        int $createdBy,
-        bool $advanceAfter = true
+        int $createdBy
     ): ServiceResult {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
@@ -167,8 +165,7 @@ class InvoicePaymentService
             $invoiceId,
             $paymentData,
             $createdBy,
-            $currentStatus,
-            $advanceAfter
+            $currentStatus
         ) {
             $payment = $paymentsTable->newEntity([
                 'invoice_id' => $invoiceId,
@@ -189,10 +186,6 @@ class InvoicePaymentService
                 }
 
                 return ServiceResult::fail('No se pudo registrar el pago.' . (!empty($errors) ? ' ' . implode(', ', $errors) : ''));
-            }
-
-            if (!$advanceAfter) {
-                return ServiceResult::ok('Pago registrado. La factura permanece en el estado actual.');
             }
 
             $invoice->pipeline_status = InvoiceConstants::STATUS_AUTORIZACION_PAGO;
