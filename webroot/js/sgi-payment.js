@@ -2,10 +2,50 @@
  * SGI Payment Section — shared JS module.
  *
  * Initialises on any container with [data-payment-section].
- * Handles: register payment (advances invoice to autorizacion_pago), full-payment checkbox.
+ * Handles:
+ *   - register payment (advances invoice/record to autorizacion_pago)
+ *   - full-payment checkbox
+ *   - authorize / delete actions via .btn-post-action
+ *   - reject payment with reason prompt via .btn-reject-payment
  */
 (function () {
     'use strict';
+
+    function findCsrfToken(section) {
+        var form = section.closest('form');
+        var input = form ? form.querySelector('input[name="_csrfToken"]') : null;
+        if (input) return input.value;
+        var any = document.querySelector('input[name="_csrfToken"]');
+        return any ? any.value : '';
+    }
+
+    function wireAuthorizeRejectButtons(section) {
+        // ── Generic POST action buttons (authorize, delete) ──
+        section.querySelectorAll('.btn-post-action').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var msg = btn.getAttribute('data-confirm');
+                if (msg && !confirm(msg)) return;
+                var url = btn.getAttribute('data-url');
+                if (!url) return;
+                btn.disabled = true;
+                _submitDynamicForm(url, {}, findCsrfToken(section));
+            });
+        });
+
+        // ── Reject payment: capture reason via prompt then POST ──
+        section.querySelectorAll('.btn-reject-payment').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var reason = prompt('Motivo del rechazo (obligatorio):');
+                if (reason === null) return;
+                reason = reason.trim();
+                if (!reason) { alert('Debe indicar un motivo.'); return; }
+                var url = btn.getAttribute('data-url');
+                if (!url) return;
+                btn.disabled = true;
+                _submitDynamicForm(url, { 'reason': reason }, findCsrfToken(section));
+            });
+        });
+    }
 
     function init() {
         document.querySelectorAll('[data-payment-section]').forEach(function (section) {
@@ -13,6 +53,9 @@
                 return;
             }
             section.dataset.paymentSectionInitialized = '1';
+
+            // Authorize/Reject buttons are present regardless of register permission.
+            wireAuthorizeRejectButtons(section);
 
             var addUrl = section.dataset.addUrl;
             var remainingAmount = parseFloat(section.dataset.remainingAmount) || 0;
@@ -28,7 +71,7 @@
                 return;
             }
             if (!btnRegisterAdvance) {
-                // No permission to register — nothing to wire.
+                // No permission to register — nothing more to wire.
                 return;
             }
             if (!bankInput || !amountInput || !dateInput) {
@@ -77,15 +120,6 @@
                 return true;
             }
 
-            function findCsrfToken() {
-                var input = section.closest('form')
-                    ? section.closest('form').querySelector('input[name="_csrfToken"]')
-                    : null;
-                if (input) return input.value;
-                var any = document.querySelector('input[name="_csrfToken"]');
-                return any ? any.value : '';
-            }
-
             function submitPayment() {
                 if (!validate()) return;
                 var fields = {
@@ -96,7 +130,7 @@
                 if (fullPayCheck && fullPayCheck.checked) {
                     fields['full_payment'] = '1';
                 }
-                _submitDynamicForm(addUrl, fields, findCsrfToken());
+                _submitDynamicForm(addUrl, fields, findCsrfToken(section));
             }
 
             btnRegisterAdvance.addEventListener('click', function (e) {

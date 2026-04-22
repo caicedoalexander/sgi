@@ -1228,57 +1228,6 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             btn.disabled = false;
         });
     });
-    // ── Reject payment: capture reason via prompt then POST ──
-    document.querySelectorAll('.btn-reject-payment').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var reason = prompt('Motivo del rechazo (obligatorio):');
-            if (reason === null) return;
-            reason = reason.trim();
-            if (!reason) { alert('Debe indicar un motivo.'); return; }
-
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = btn.getAttribute('data-url');
-            form.style.display = 'none';
-            var csrf = document.querySelector('input[name="_csrfToken"]');
-            if (csrf) {
-                var ci = document.createElement('input');
-                ci.type = 'hidden'; ci.name = '_csrfToken'; ci.value = csrf.value;
-                form.appendChild(ci);
-            }
-            var ri = document.createElement('input');
-            ri.type = 'hidden'; ri.name = 'reason'; ri.value = reason;
-            form.appendChild(ri);
-            document.body.appendChild(form);
-            btn.disabled = true;
-            form.submit();
-        });
-    });
-    // ── Generic POST action buttons (authorize, reject, delete payments) ──
-    document.querySelectorAll('.btn-post-action').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var msg = btn.getAttribute('data-confirm');
-            if (msg && !confirm(msg)) return;
-
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = btn.getAttribute('data-url');
-            form.style.display = 'none';
-
-            var csrf = document.querySelector('input[name="_csrfToken"]');
-            if (csrf) {
-                var csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_csrfToken';
-                csrfInput.value = csrf.value;
-                form.appendChild(csrfInput);
-            }
-
-            document.body.appendChild(form);
-            btn.disabled = true;
-            form.submit();
-        });
-    });
 })();
 </script>
 <?php $this->end() ?>
