@@ -98,7 +98,7 @@ class PettyCashPaymentService
             [
                 'pipeline_status' => InvoiceConstants::STATUS_PAGADA,
                 'payment_status' => InvoiceConstants::PAYMENT_FULL,
-                'payment_date' => $payment->payment_date,
+                'full_payment_date' => $payment->payment_date,
             ],
             ['petty_cash_record_id' => $record->id],
         );
