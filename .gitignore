@@ -7,7 +7,7 @@
 /vendor/*
 /webroot/uploads/*
 .env
-GEMINI.md
+AGENTS.md
 
 # OS generated files #
 ######################
