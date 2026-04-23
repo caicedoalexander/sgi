@@ -194,9 +194,12 @@ $addUrl = $this->Url->build($addPaymentUrl);
                                 <span class="text-muted" style="font-size:.75rem;">Individual</span>
                             <?php endif; ?>
                         </td>
-                        <?php $isFromModule = !empty($payment->payment_scheduling_id)
+                        <?php $isInvoicePayment = isset($payment->invoice_id);
+                        $isFromModule = $isInvoicePayment && (
+                            !empty($payment->payment_scheduling_id)
                             || !empty($payment->petty_cash_record_id)
-                            || !empty($payment->legalization_record_id); ?>
+                            || !empty($payment->legalization_record_id)
+                        ); ?>
                         <?php if ($canAuthorize || $canDelete): ?>
                         <td class="text-end">
                             <?php if ($canAuthorize && !$payment->authorized && !$isFromModule && $authorizeUrlFn): ?>
