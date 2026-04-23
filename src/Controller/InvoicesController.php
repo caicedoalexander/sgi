@@ -160,6 +160,8 @@ class InvoicesController extends AppController
                 'CreatedByUsers',
                 'AuthorizedByUsers',
                 'PaymentSchedulings',
+                'PettyCashRecords',
+                'LegalizationRecords',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -229,6 +231,8 @@ class InvoicesController extends AppController
                 'CreatedByUsers',
                 'AuthorizedByUsers',
                 'PaymentSchedulings',
+                'PettyCashRecords',
+                'LegalizationRecords',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
