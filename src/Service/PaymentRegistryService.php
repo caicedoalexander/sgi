@@ -43,7 +43,7 @@ class PaymentRegistryService
 
         $table = TableRegistry::getTableLocator()->get('InvoicePayments');
         $query = $table->find()
-            ->contain(['Invoices', 'BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'])
+            ->contain(['Invoices', 'BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers', 'PaymentSchedulings', 'PettyCashRecords', 'LegalizationRecords'])
             ->order(['InvoicePayments.created' => 'DESC']);
 
         $this->_applyCommonFilters($query, $filters, 'InvoicePayments');
@@ -61,6 +61,24 @@ class PaymentRegistryService
             'authorized_date' => $p->authorized_date?->format('Y-m-d'),
             'created_by' => $p->created_by_user->full_name
                 ?? $p->created_by_user->username ?? '—',
+            'source_type' => match (true) {
+                !empty($p->payment_scheduling_id) => 'scheduling',
+                !empty($p->petty_cash_record_id) => 'petty_cash',
+                !empty($p->legalization_record_id) => 'legalization',
+                default => 'individual',
+            },
+            'source_label' => match (true) {
+                !empty($p->payment_scheduling_id) => 'Programación ' . ($p->payment_scheduling->code ?? '#' . $p->payment_scheduling_id),
+                !empty($p->petty_cash_record_id) => 'Caja Menor ' . ($p->petty_cash_record->code ?? '#' . $p->petty_cash_record_id),
+                !empty($p->legalization_record_id) => 'Legalización ' . ($p->legalization_record->code ?? '#' . $p->legalization_record_id),
+                default => 'Individual',
+            },
+            'source_url' => match (true) {
+                !empty($p->payment_scheduling_id) => ['controller' => 'PaymentSchedulings', 'action' => 'view', $p->payment_scheduling_id],
+                !empty($p->petty_cash_record_id) => ['controller' => 'PettyCashRecords', 'action' => 'view', $p->petty_cash_record_id],
+                !empty($p->legalization_record_id) => ['controller' => 'LegalizationRecords', 'action' => 'view', $p->legalization_record_id],
+                default => null,
+            },
             'created' => $p->created?->format('Y-m-d H:i:s') ?? '',
         ], $query->all()->toArray());
     }
@@ -98,6 +116,9 @@ class PaymentRegistryService
             'authorized_date' => $p->authorized_date?->format('Y-m-d'),
             'created_by' => $p->created_by_user->full_name
                 ?? $p->created_by_user->username ?? '—',
+            'source_type' => 'legacy',
+            'source_label' => null,
+            'source_url' => null,
             'created' => $p->created?->format('Y-m-d H:i:s') ?? '',
         ], $query->all()->toArray());
     }
@@ -121,6 +142,19 @@ class PaymentRegistryService
 
         $this->_applyCommonFilters($query, $filters, 'PettyCashPayments');
 
+        $invoicePaymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+        $childRecordIds = $invoicePaymentsTable->find()
+            ->select(['petty_cash_record_id'])
+            ->where(['petty_cash_record_id IS NOT' => null])
+            ->distinct(['petty_cash_record_id'])
+            ->all()
+            ->extract('petty_cash_record_id')
+            ->toArray();
+
+        if (!empty($childRecordIds)) {
+            $query->where(['PettyCashPayments.petty_cash_record_id NOT IN' => $childRecordIds]);
+        }
+
         return array_map(fn($p) => [
             'type' => 'petty_cash',
             'type_label' => 'Caja Menor',
@@ -134,6 +168,9 @@ class PaymentRegistryService
             'authorized_date' => $p->authorized_date?->format('Y-m-d'),
             'created_by' => $p->created_by_user->full_name
                 ?? $p->created_by_user->username ?? '—',
+            'source_type' => 'legacy',
+            'source_label' => null,
+            'source_url' => null,
             'created' => $p->created?->format('Y-m-d H:i:s') ?? '',
         ], $query->all()->toArray());
     }
@@ -157,6 +194,19 @@ class PaymentRegistryService
 
         $this->_applyCommonFilters($query, $filters, 'LegalizationPayments');
 
+        $invoicePaymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+        $childRecordIds = $invoicePaymentsTable->find()
+            ->select(['legalization_record_id'])
+            ->where(['legalization_record_id IS NOT' => null])
+            ->distinct(['legalization_record_id'])
+            ->all()
+            ->extract('legalization_record_id')
+            ->toArray();
+
+        if (!empty($childRecordIds)) {
+            $query->where(['LegalizationPayments.legalization_record_id NOT IN' => $childRecordIds]);
+        }
+
         return array_map(fn($p) => [
             'type' => 'legalization',
             'type_label' => 'Legalización',
@@ -170,6 +220,9 @@ class PaymentRegistryService
             'authorized_date' => $p->authorized_date?->format('Y-m-d'),
             'created_by' => $p->created_by_user->full_name
                 ?? $p->created_by_user->username ?? '—',
+            'source_type' => 'legacy',
+            'source_label' => null,
+            'source_url' => null,
             'created' => $p->created?->format('Y-m-d H:i:s') ?? '',
         ], $query->all()->toArray());
     }

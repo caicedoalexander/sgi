@@ -93,12 +93,13 @@ $typeBadge = [
                     <th>Estado</th>
                     <th>Autorizado por</th>
                     <th>Registrado por</th>
+                    <th>Origen</th>
                     <th>Fecha Registro</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($payments)): ?>
-                <tr><td colspan="9" class="text-center text-muted py-4">No se encontraron pagos.</td></tr>
+                <tr><td colspan="10" class="text-center text-muted py-4">No se encontraron pagos.</td></tr>
                 <?php else: ?>
                 <?php foreach ($payments as $p): ?>
                 <tr>
@@ -125,6 +126,22 @@ $typeBadge = [
                         <?php endif; ?>
                     </td>
                     <td><?= h($p['created_by']) ?></td>
+                    <td>
+                        <?php if (!empty($p['source_url'])): ?>
+                            <?= $this->Html->link(
+                                '<i class="bi bi-' . h(match ($p['source_type']) {
+                                    'scheduling' => 'calendar-check',
+                                    'petty_cash' => 'wallet2',
+                                    'legalization' => 'journal-check',
+                                    default => 'dash',
+                                }) . ' me-1"></i>' . h($p['source_label']),
+                                $p['source_url'],
+                                ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
+                            ) ?>
+                        <?php else: ?>
+                            —
+                        <?php endif; ?>
+                    </td>
                     <td><?= $p['created'] ? date('d/m/Y H:i', strtotime($p['created'])) : '—' ?></td>
                 </tr>
                 <?php endforeach; ?>
