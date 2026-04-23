@@ -77,33 +77,72 @@ class LegalizationPaymentService
         $paymentsTable = TableRegistry::getTableLocator()->get('LegalizationPayments');
         $recordsTable = TableRegistry::getTableLocator()->get('LegalizationRecords');
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $invoicePaymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
 
         $payment = $paymentsTable->get($paymentId);
-        $payment->authorized = true;
-        $payment->authorized_by = $authorizedBy;
-        $payment->authorized_date = date('Y-m-d');
+        $connection = $paymentsTable->getConnection();
 
-        if (!$paymentsTable->save($payment)) {
-            return ['success' => false];
-        }
+        return $connection->transactional(function () use (
+            $payment,
+            $authorizedBy,
+            $paymentsTable,
+            $recordsTable,
+            $invoicesTable,
+            $invoicePaymentsTable
+        ) {
+            $payment->authorized = true;
+            $payment->authorized_by = $authorizedBy;
+            $payment->authorized_date = date('Y-m-d');
 
-        $record = $recordsTable->get($payment->legalization_record_id);
-        $record->status = LegalizationConstants::STATUS_PAGADO;
-        $record->payment_status = InvoiceConstants::PAYMENT_FULL;
-        $record->payment_date = $payment->payment_date;
-        $recordsTable->save($record);
+            if (!$paymentsTable->save($payment)) {
+                return ['success' => false];
+            }
 
-        // Update child invoices to pagada
-        $invoicesTable->updateAll(
-            [
-                'pipeline_status' => InvoiceConstants::STATUS_PAGADA,
-                'payment_status' => InvoiceConstants::PAYMENT_FULL,
-                'full_payment_date' => $payment->payment_date,
-            ],
-            ['legalization_record_id' => $record->id],
-        );
+            $record = $recordsTable->get($payment->legalization_record_id);
+            $record->status = LegalizationConstants::STATUS_PAGADO;
+            $record->payment_status = InvoiceConstants::PAYMENT_FULL;
+            $record->payment_date = $payment->payment_date;
+            if (!$recordsTable->save($record)) {
+                return ['success' => false];
+            }
 
-        return ['success' => true, 'newPipelineStatus' => LegalizationConstants::STATUS_PAGADO];
+            $childInvoices = $invoicesTable->find()
+                ->where(['legalization_record_id' => $record->id])
+                ->all();
+
+            foreach ($childInvoices as $invoice) {
+                if ((float)$invoice->total_amount <= 0) {
+                    continue;
+                }
+
+                $invoicePayment = $invoicePaymentsTable->newEntity([
+                    'invoice_id' => $invoice->id,
+                    'banking_entity_id' => $payment->banking_entity_id,
+                    'amount' => $invoice->total_amount,
+                    'payment_date' => $payment->payment_date,
+                    'legalization_record_id' => $record->id,
+                    'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
+                    'authorized' => true,
+                    'authorized_by' => $authorizedBy,
+                    'authorized_date' => date('Y-m-d'),
+                    'created_by' => $payment->created_by,
+                ]);
+
+                if (!$invoicePaymentsTable->save($invoicePayment)) {
+                    return ['success' => false];
+                }
+
+                $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+                $invoice->payment_status = InvoiceConstants::PAYMENT_FULL;
+                $invoice->full_payment_date = $payment->payment_date;
+
+                if (!$invoicesTable->save($invoice)) {
+                    return ['success' => false];
+                }
+            }
+
+            return ['success' => true, 'newPipelineStatus' => LegalizationConstants::STATUS_PAGADO];
+        });
     }
 
     /**
