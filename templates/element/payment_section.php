@@ -174,30 +174,45 @@ $addUrl = $this->Url->build($addPaymentUrl);
                         <td>
                             <?php if (!empty($payment->payment_scheduling_id)): ?>
                                 <?= $this->Html->link(
-                                    'Programación #' . h($payment->payment_scheduling->code ?? $payment->payment_scheduling_id),
+                                    '<i class="bi bi-calendar-check me-1"></i>Programación ' . h($payment->payment_scheduling->code ?? '#' . $payment->payment_scheduling_id),
                                     ['controller' => 'PaymentSchedulings', 'action' => 'view', $payment->payment_scheduling_id],
+                                    ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
+                                ) ?>
+                            <?php elseif (!empty($payment->petty_cash_record_id)): ?>
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-wallet2 me-1"></i>Caja Menor ' . h($payment->petty_cash_record->code ?? '#' . $payment->petty_cash_record_id),
+                                    ['controller' => 'PettyCashRecords', 'action' => 'view', $payment->petty_cash_record_id],
+                                    ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
+                                ) ?>
+                            <?php elseif (!empty($payment->legalization_record_id)): ?>
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-journal-check me-1"></i>Legalización ' . h($payment->legalization_record->code ?? '#' . $payment->legalization_record_id),
+                                    ['controller' => 'LegalizationRecords', 'action' => 'view', $payment->legalization_record_id],
                                     ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
                                 ) ?>
                             <?php else: ?>
                                 <span class="text-muted" style="font-size:.75rem;">Individual</span>
                             <?php endif; ?>
                         </td>
+                        <?php $isFromModule = !empty($payment->payment_scheduling_id)
+                            || !empty($payment->petty_cash_record_id)
+                            || !empty($payment->legalization_record_id); ?>
                         <?php if ($canAuthorize || $canDelete): ?>
                         <td class="text-end">
-                            <?php if ($canAuthorize && !$payment->authorized && empty($payment->payment_scheduling_id ?? null) && $authorizeUrlFn): ?>
+                            <?php if ($canAuthorize && !$payment->authorized && !$isFromModule && $authorizeUrlFn): ?>
                             <button type="button" class="btn btn-sm btn-outline-success btn-post-action"
                                     data-url="<?= $this->Url->build($authorizeUrlFn($payment->id)) ?>"
                                     data-confirm="¿Autorizar este pago?">
                                 <i class="bi bi-shield-check me-1"></i>Autorizar
                             </button>
                             <?php endif; ?>
-                            <?php if ($canAuthorize && !$payment->authorized && $rejectUrlFn): ?>
+                            <?php if ($canAuthorize && !$payment->authorized && !$isFromModule && $rejectUrlFn): ?>
                             <button type="button" class="btn btn-sm btn-outline-danger btn-reject-payment"
                                     data-url="<?= $this->Url->build($rejectUrlFn($payment->id)) ?>">
                                 <i class="bi bi-x-circle me-1"></i>Rechazar
                             </button>
                             <?php endif; ?>
-                            <?php if ($canDelete && !$payment->authorized && $deleteUrlFn): ?>
+                            <?php if ($canDelete && !$payment->authorized && !$isFromModule && $deleteUrlFn): ?>
                             <button type="button" class="btn btn-sm btn-outline-danger btn-post-action"
                                     data-url="<?= $this->Url->build($deleteUrlFn($payment->id)) ?>"
                                     data-confirm="¿Eliminar este pago?">
