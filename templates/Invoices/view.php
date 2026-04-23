@@ -337,6 +337,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
                             <th>Fecha</th>
                             <th>Estado</th>
                             <th>Registrado por</th>
+                            <th>Origen</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -364,13 +365,36 @@ $dianClass = match($invoice->dian_validation ?? '') {
                             <td>
                                 <?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?>
                             </td>
+                            <td>
+                                <?php if (!empty($payment->payment_scheduling_id)): ?>
+                                    <?= $this->Html->link(
+                                        '<i class="bi bi-calendar-check me-1"></i>Programación ' . h($payment->payment_scheduling->code ?? '#' . $payment->payment_scheduling_id),
+                                        ['controller' => 'PaymentSchedulings', 'action' => 'view', $payment->payment_scheduling_id],
+                                        ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
+                                    ) ?>
+                                <?php elseif (!empty($payment->petty_cash_record_id)): ?>
+                                    <?= $this->Html->link(
+                                        '<i class="bi bi-wallet2 me-1"></i>Caja Menor ' . h($payment->petty_cash_record->code ?? '#' . $payment->petty_cash_record_id),
+                                        ['controller' => 'PettyCashRecords', 'action' => 'view', $payment->petty_cash_record_id],
+                                        ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
+                                    ) ?>
+                                <?php elseif (!empty($payment->legalization_record_id)): ?>
+                                    <?= $this->Html->link(
+                                        '<i class="bi bi-journal-check me-1"></i>Legalización ' . h($payment->legalization_record->code ?? '#' . $payment->legalization_record_id),
+                                        ['controller' => 'LegalizationRecords', 'action' => 'view', $payment->legalization_record_id],
+                                        ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
+                                    ) ?>
+                                <?php else: ?>
+                                    <span class="text-muted" style="font-size:.75rem;">Individual</span>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
                             <th>Total Pagado</th>
-                            <th colspan="4">$ <?= number_format(array_sum(array_map(fn($p) => (float)$p->amount, $invoice->invoice_payments)), 0, ',', '.') ?></th>
+                            <th colspan="5">$ <?= number_format(array_sum(array_map(fn($p) => (float)$p->amount, $invoice->invoice_payments)), 0, ',', '.') ?></th>
                         </tr>
                     </tfoot>
                 </table>
