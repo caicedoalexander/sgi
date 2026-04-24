@@ -223,4 +223,171 @@ class PettyCashService
     {
         return $record->isAgrupacion();
     }
+
+    /**
+     * Register a pending payment for a petty cash record in Tesorería.
+     * Moves the record to Aut. Pago.
+     *
+     * @param int $recordId Record ID.
+     * @param array $data Payment data (banking_entity_id, payment_amount, payment_date).
+     * @param int $createdBy User ID registering the payment.
+     * @return \App\Service\ServiceResult
+     */
+    public function registerPayment(int $recordId, array $data, int $createdBy): ServiceResult
+    {
+        $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
+        $record = $recordsTable->get($recordId);
+
+        if ($record->status !== PettyCashConstants::STATUS_TESORERIA) {
+            return ServiceResult::fail('Solo se pueden registrar pagos en estado Tesorería.');
+        }
+
+        if (!empty($record->banking_entity_id)) {
+            return ServiceResult::fail('Ya existe un pago pendiente de autorización.');
+        }
+
+        $record = $recordsTable->patchEntity($record, [
+            'banking_entity_id' => $data['banking_entity_id'] ?? null,
+            'payment_amount' => $data['payment_amount'] ?? null,
+            'payment_date' => $data['payment_date'] ?? null,
+            'payment_created_by' => $createdBy,
+            'payment_rejection_reason' => null,
+            'status' => PettyCashConstants::STATUS_AUT_PAGO,
+        ]);
+
+        if (!$recordsTable->save($record)) {
+            $errors = [];
+            foreach ($record->getErrors() as $field => $fieldErrors) {
+                foreach ($fieldErrors as $msg) {
+                    $errors[] = "$field: $msg";
+                }
+            }
+
+            $msg = 'No se pudo registrar el pago.';
+            if (!empty($errors)) {
+                $msg .= ' ' . implode(', ', $errors);
+            }
+
+            return ServiceResult::fail($msg);
+        }
+
+        return ServiceResult::ok('Pago registrado. Registro avanzado a Autorización de Pago.');
+    }
+
+    /**
+     * Authorize a pending petty cash payment.
+     * Materializes invoice_payments for child invoices and moves record to Pagado.
+     *
+     * @param int $recordId Record ID.
+     * @param int $authorizedBy User ID authorizing.
+     * @return \App\Service\ServiceResult
+     */
+    public function authorizePayment(int $recordId, int $authorizedBy): ServiceResult
+    {
+        $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $invoicePaymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+
+        $record = $recordsTable->get($recordId);
+
+        if ($record->status !== PettyCashConstants::STATUS_AUT_PAGO) {
+            return ServiceResult::fail('El registro no está en estado Autorización de Pago.');
+        }
+
+        if (empty($record->banking_entity_id)) {
+            return ServiceResult::fail('No hay un pago pendiente para autorizar.');
+        }
+
+        $connection = $recordsTable->getConnection();
+
+        $ok = $connection->transactional(function () use (
+            $record,
+            $authorizedBy,
+            $recordsTable,
+            $invoicesTable,
+            $invoicePaymentsTable
+        ) {
+            $childInvoices = $invoicesTable->find()
+                ->where(['petty_cash_record_id' => $record->id])
+                ->all();
+
+            foreach ($childInvoices as $invoice) {
+                if ((float)$invoice->total_amount <= 0) {
+                    continue;
+                }
+
+                $invoicePayment = $invoicePaymentsTable->newEntity([
+                    'invoice_id' => $invoice->id,
+                    'banking_entity_id' => $record->banking_entity_id,
+                    'amount' => $invoice->total_amount,
+                    'payment_date' => $record->payment_date,
+                    'petty_cash_record_id' => $record->id,
+                    'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
+                    'authorized' => true,
+                    'authorized_by' => $authorizedBy,
+                    'authorized_date' => date('Y-m-d'),
+                    'created_by' => $record->payment_created_by,
+                ]);
+
+                if (!$invoicePaymentsTable->save($invoicePayment)) {
+                    return false;
+                }
+
+                $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+                $invoice->payment_status = InvoiceConstants::PAYMENT_FULL;
+                $invoice->full_payment_date = $record->payment_date;
+
+                if (!$invoicesTable->save($invoice)) {
+                    return false;
+                }
+            }
+
+            $record->status = PettyCashConstants::STATUS_PAGADO;
+            $record->payment_status = InvoiceConstants::PAYMENT_FULL;
+            $record->payment_authorized_by = $authorizedBy;
+            $record->payment_authorized_date = date('Y-m-d');
+
+            return (bool)$recordsTable->save($record);
+        });
+
+        if ($ok === false) {
+            return ServiceResult::fail('No se pudo autorizar el pago.');
+        }
+
+        return ServiceResult::ok('Pago autorizado. Registro marcado como Pagado.');
+    }
+
+    /**
+     * Reject a pending petty cash payment.
+     * Clears pending fields and returns record to Tesorería with rejection reason.
+     *
+     * @param int $recordId Record ID.
+     * @param int $rejectedBy User ID rejecting (currently unused, reserved for audit).
+     * @param string $reason Rejection reason (required).
+     * @return \App\Service\ServiceResult
+     */
+    public function rejectPayment(int $recordId, int $rejectedBy, string $reason): ServiceResult
+    {
+        $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
+        $record = $recordsTable->get($recordId);
+
+        if ($record->status !== PettyCashConstants::STATUS_AUT_PAGO) {
+            return ServiceResult::fail('Solo se pueden rechazar pagos en estado Autorización de Pago.');
+        }
+
+        $record = $recordsTable->patchEntity($record, [
+            'banking_entity_id' => null,
+            'payment_amount' => null,
+            'payment_date' => null,
+            'payment_created_by' => null,
+            'payment_rejection_reason' => $reason,
+            'status' => PettyCashConstants::STATUS_TESORERIA,
+        ]);
+
+        if (!$recordsTable->save($record)) {
+            return ServiceResult::fail('No se pudo rechazar el pago.');
+        }
+
+        return ServiceResult::ok('Pago rechazado. Registro devuelto a Tesorería.');
+    }
 }
