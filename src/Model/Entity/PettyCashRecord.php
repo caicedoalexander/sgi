@@ -17,6 +17,12 @@ class PettyCashRecord extends Entity
         'ready_for_payment' => true,
         'payment_status' => true,
         'payment_date' => true,
+        'banking_entity_id' => true,
+        'payment_amount' => true,
+        'payment_created_by' => true,
+        'payment_authorized_by' => true,
+        'payment_authorized_date' => true,
+        'payment_rejection_reason' => true,
         'notes' => true,
         'created_by' => true,
     ];

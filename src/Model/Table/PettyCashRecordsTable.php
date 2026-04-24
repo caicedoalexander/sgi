@@ -25,6 +25,20 @@ class PettyCashRecordsTable extends Table
             'foreignKey' => 'created_by',
             'joinType' => 'INNER',
         ]);
+        $this->belongsTo('BankingEntities', [
+            'foreignKey' => 'banking_entity_id',
+            'joinType' => 'LEFT',
+        ]);
+        $this->belongsTo('PaymentCreatedByUsers', [
+            'className' => 'Users',
+            'foreignKey' => 'payment_created_by',
+            'joinType' => 'LEFT',
+        ]);
+        $this->belongsTo('PaymentAuthorizedByUsers', [
+            'className' => 'Users',
+            'foreignKey' => 'payment_authorized_by',
+            'joinType' => 'LEFT',
+        ]);
         $this->hasMany('Invoices', [
             'foreignKey' => 'petty_cash_record_id',
         ]);
@@ -37,10 +51,6 @@ class PettyCashRecordsTable extends Table
             'foreignKey' => 'petty_cash_record_id',
             'dependent' => true,
             'cascadeCallbacks' => true,
-        ]);
-        $this->hasMany('PettyCashPayments', [
-            'foreignKey' => 'petty_cash_record_id',
-            'dependent' => true,
         ]);
     }
 
@@ -66,6 +76,13 @@ class PettyCashRecordsTable extends Table
             ->integer('created_by')
             ->requirePresence('created_by', 'create')
             ->notEmptyString('created_by');
+
+        $validator->integer('banking_entity_id')->allowEmptyString('banking_entity_id');
+        $validator->decimal('payment_amount')->allowEmptyString('payment_amount');
+        $validator->integer('payment_created_by')->allowEmptyString('payment_created_by');
+        $validator->integer('payment_authorized_by')->allowEmptyString('payment_authorized_by');
+        $validator->date('payment_authorized_date')->allowEmptyDate('payment_authorized_date');
+        $validator->scalar('payment_rejection_reason')->allowEmptyString('payment_rejection_reason');
 
         return $validator;
     }
