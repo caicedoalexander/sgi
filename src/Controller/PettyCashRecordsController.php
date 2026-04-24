@@ -244,6 +244,65 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    public function registerPayment($id = null)
+    {
+        $this->request->allowMethod(['post']);
+
+        $user = $this->_getCurrentUser();
+        $result = $this->pettyCashService->registerPayment(
+            (int)$id,
+            $this->request->getData(),
+            $user->id,
+        );
+
+        if ($result->success) {
+            $this->Flash->success($result->data ?? 'Pago registrado.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'No se pudo registrar el pago.');
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    public function authorizePayment($id = null)
+    {
+        $this->request->allowMethod(['post']);
+
+        $user = $this->_getCurrentUser();
+        $result = $this->pettyCashService->authorizePayment((int)$id, $user->id);
+
+        if ($result->success) {
+            $this->Flash->success($result->data ?? 'Pago autorizado.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'No se pudo autorizar.');
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    public function rejectPayment($id = null)
+    {
+        $this->request->allowMethod(['post']);
+
+        $reason = trim((string)$this->request->getData('reason'));
+        if ($reason === '') {
+            $this->Flash->error('Debe indicar un motivo de rechazo.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        $user = $this->_getCurrentUser();
+        $result = $this->pettyCashService->rejectPayment((int)$id, $user->id, $reason);
+
+        if ($result->success) {
+            $this->Flash->success($result->data ?? 'Pago rechazado.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'No se pudo rechazar el pago.');
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
