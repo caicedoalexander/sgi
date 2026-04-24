@@ -35,7 +35,6 @@ $typeBadge = [
                     <option value="">Todos</option>
                     <option value="invoice" <?= ($filters['type'] ?? '') === 'invoice' ? 'selected' : '' ?>>Factura</option>
                     <option value="liquidation" <?= ($filters['type'] ?? '') === 'liquidation' ? 'selected' : '' ?>>Liquidacion</option>
-                    <option value="petty_cash" <?= ($filters['type'] ?? '') === 'petty_cash' ? 'selected' : '' ?>>Caja Menor</option>
                     <option value="legalization" <?= ($filters['type'] ?? '') === 'legalization' ? 'selected' : '' ?>>Legalizacion</option>
                 </select>
             </div>
