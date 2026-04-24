@@ -9,7 +9,7 @@ use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 
 /**
- * Shared logic for services that group invoices (Legalization, Petty Cash).
+ * Shared logic for services that group invoices (Petty Cash).
  */
 class GroupedInvoiceService
 {

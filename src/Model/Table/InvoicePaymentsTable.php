@@ -40,10 +40,6 @@ class InvoicePaymentsTable extends Table
             'foreignKey' => 'petty_cash_record_id',
             'joinType' => 'LEFT',
         ]);
-        $this->belongsTo('LegalizationRecords', [
-            'foreignKey' => 'legalization_record_id',
-            'joinType' => 'LEFT',
-        ]);
         $this->belongsTo('AuthorizedByUsers', [
             'className' => 'Users',
             'foreignKey' => 'authorized_by',
@@ -85,10 +81,6 @@ class InvoicePaymentsTable extends Table
         $validator
             ->integer('petty_cash_record_id')
             ->allowEmptyString('petty_cash_record_id');
-
-        $validator
-            ->integer('legalization_record_id')
-            ->allowEmptyString('legalization_record_id');
 
         $validator
             ->boolean('authorized');

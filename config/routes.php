@@ -316,33 +316,6 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']]
         );
 
-        // Legalization Records (Legalizaciones)
-        $builder->connect(
-            '/legalization-records/advance-status/{id}',
-            ['controller' => 'LegalizationRecords', 'action' => 'advanceStatus'],
-            ['id' => '\d+', 'pass' => ['id']]
-        );
-        $builder->connect(
-            '/legalization-records/upload-document/{id}',
-            ['controller' => 'LegalizationRecords', 'action' => 'uploadDocument'],
-            ['id' => '\d+', 'pass' => ['id']]
-        );
-        $builder->connect(
-            '/legalization-records/delete-document/{recordId}/{documentId}',
-            ['controller' => 'LegalizationRecords', 'action' => 'deleteDocument'],
-            ['recordId' => '\d+', 'documentId' => '\d+', 'pass' => ['recordId', 'documentId']]
-        );
-        $builder->connect(
-            '/legalization-records/remove-invoice/{recordId}/{invoiceId}',
-            ['controller' => 'LegalizationRecords', 'action' => 'removeInvoice'],
-            ['recordId' => '\d+', 'invoiceId' => '\d+', 'pass' => ['recordId', 'invoiceId']]
-        );
-        $builder->connect(
-            '/legalization-records/add-observation/{id}',
-            ['controller' => 'LegalizationRecords', 'action' => 'addObservation'],
-            ['id' => '\d+', 'pass' => ['id']]
-        );
-
         // Employee observations
         $builder->connect(
             '/employees/add-observation/{id}',

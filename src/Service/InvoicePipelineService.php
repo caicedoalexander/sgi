@@ -191,24 +191,13 @@ class InvoicePipelineService
     }
 
     /**
-     * Returns true if the invoice is linked to a Legalization record.
-     */
-    public function isLockedByLegalization(object $invoice): bool
-    {
-        return !empty($invoice->legalization_record_id ?? null);
-    }
-
-    /**
      * Returns a human-readable reason if the invoice is locked for editing,
-     * or null otherwise. Lock priority: petty cash → legalization → scheduling.
+     * or null otherwise. Lock priority: petty cash → scheduling.
      */
     public function getEditLockMessage(object $invoice): ?string
     {
         if ($this->isLockedByPettyCash($invoice)) {
             return 'Factura bloqueada: pertenece al registro de Caja Menor.';
-        }
-        if ($this->isLockedByLegalization($invoice)) {
-            return 'Factura bloqueada: pertenece al registro de Legalización.';
         }
         if (!empty($invoice->id) && $this->isLockedByPaidScheduling((int)$invoice->id)) {
             return 'Factura bloqueada: tiene pagos de una programación ya pagada.';

@@ -15,7 +15,6 @@ $typeBadge = [
     'invoice' => 'bg-primary',
     'liquidation' => 'bg-info text-dark',
     'petty_cash' => 'bg-warning text-dark',
-    'legalization' => 'bg-secondary',
 ];
 ?>
 
@@ -35,7 +34,6 @@ $typeBadge = [
                     <option value="">Todos</option>
                     <option value="invoice" <?= ($filters['type'] ?? '') === 'invoice' ? 'selected' : '' ?>>Factura</option>
                     <option value="liquidation" <?= ($filters['type'] ?? '') === 'liquidation' ? 'selected' : '' ?>>Liquidacion</option>
-                    <option value="legalization" <?= ($filters['type'] ?? '') === 'legalization' ? 'selected' : '' ?>>Legalizacion</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -131,7 +129,6 @@ $typeBadge = [
                                 '<i class="bi bi-' . h(match ($p['source_type']) {
                                     'scheduling' => 'calendar-check',
                                     'petty_cash' => 'wallet2',
-                                    'legalization' => 'journal-check',
                                     default => 'dash',
                                 }) . ' me-1"></i>' . h($p['source_label']),
                                 $p['source_url'],

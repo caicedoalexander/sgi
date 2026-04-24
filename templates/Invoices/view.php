@@ -73,19 +73,6 @@ $dianClass = match($invoice->dian_validation ?? '') {
 </div>
 <?php endif; ?>
 
-<?php if (!empty($isLockedByLegalization) && !$isAdmin): ?>
-<div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
-    <i class="bi bi-lock-fill fs-5"></i>
-    <div>
-        Factura bloqueada: pertenece al registro de Legalización
-        <strong><?= $this->Html->link(
-            h($invoice->legalization_record->code ?? '#' . $invoice->legalization_record_id),
-            ['controller' => 'LegalizationRecords', 'action' => 'view', $invoice->legalization_record_id],
-            ['class' => 'alert-link']
-        ) ?></strong>. Los cambios se gestionan desde allí.
-    </div>
-</div>
-<?php endif; ?>
 
 <?php if (!empty($isLockedByScheduling) && !$isAdmin): ?>
 <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
@@ -376,12 +363,6 @@ $dianClass = match($invoice->dian_validation ?? '') {
                                     <?= $this->Html->link(
                                         '<i class="bi bi-wallet2 me-1"></i>Caja Menor ' . h($payment->petty_cash_record->code ?? '#' . $payment->petty_cash_record_id),
                                         ['controller' => 'PettyCashRecords', 'action' => 'view', $payment->petty_cash_record_id],
-                                        ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
-                                    ) ?>
-                                <?php elseif (!empty($payment->legalization_record_id)): ?>
-                                    <?= $this->Html->link(
-                                        '<i class="bi bi-journal-check me-1"></i>Legalización ' . h($payment->legalization_record->code ?? '#' . $payment->legalization_record_id),
-                                        ['controller' => 'LegalizationRecords', 'action' => 'view', $payment->legalization_record_id],
                                         ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
                                     ) ?>
                                 <?php else: ?>

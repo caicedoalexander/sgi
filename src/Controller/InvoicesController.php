@@ -65,14 +65,6 @@ class InvoicesController extends AppController
             ],
         ];
 
-        // Excluir facturas de Legalización que ya están en contabilidad o posterior
-        $conditions[] = [
-            'OR' => [
-                'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_LEGALIZACION,
-                'Invoices.pipeline_status' => InvoiceConstants::STATUS_APROBACION,
-            ],
-        ];
-
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
         $invoices = $this->paginate($this->_buildInvoiceQuery($conditions, $userId));
 
@@ -145,7 +137,6 @@ class InvoicesController extends AppController
             'RegisteredByUsers',
             'ApproverUsers',
             'PettyCashRecords',
-            'LegalizationRecords',
             'InvoiceHistories' => ['Users'],
             'InvoiceObservations' => [
                 'Users',
@@ -161,7 +152,6 @@ class InvoicesController extends AppController
                 'AuthorizedByUsers',
                 'PaymentSchedulings',
                 'PettyCashRecords',
-                'LegalizationRecords',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -170,9 +160,8 @@ class InvoicesController extends AppController
         $isRejected = $this->pipeline->isRejected($invoice);
         $isApproved = $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
         $isLockedByPettyCash = $this->pipeline->isLockedByPettyCash($invoice);
-        $isLockedByLegalization = $this->pipeline->isLockedByLegalization($invoice);
         $isLockedByScheduling = $this->pipeline->isLockedByPaidScheduling((int)$id);
-        $isLocked = $isLockedByPettyCash || $isLockedByLegalization || $isLockedByScheduling;
+        $isLocked = $isLockedByPettyCash || $isLockedByScheduling;
         $pipelineStatuses = InvoicePipelineService::STATUSES;
         $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
 
@@ -182,7 +171,7 @@ class InvoicesController extends AppController
         }
 
         $fieldLabels = InvoiceHistoryService::FIELD_LABELS;
-        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByLegalization', 'isLockedByScheduling', 'isLocked', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
+        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
     }
 
     public function add()
@@ -217,7 +206,6 @@ class InvoicesController extends AppController
             'Employees',
             'OperationCenters',
             'PettyCashRecords',
-            'LegalizationRecords',
             'InvoiceObservations' => [
                 'Users',
                 'sort' => ['InvoiceObservations.created' => 'ASC'],
@@ -232,7 +220,6 @@ class InvoicesController extends AppController
                 'AuthorizedByUsers',
                 'PaymentSchedulings',
                 'PettyCashRecords',
-                'LegalizationRecords',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
         ]);
@@ -245,7 +232,7 @@ class InvoicesController extends AppController
             return $this->redirect(['action' => 'view', $id]);
         }
 
-        // Unified lock: petty cash, legalization or paid scheduling (non-admin only).
+        // Unified lock: petty cash or paid scheduling (non-admin only).
         if ($this->_getRoleName() !== RoleConstants::ADMIN) {
             $lockMessage = $this->pipeline->getEditLockMessage($invoice);
             if ($lockMessage !== null) {

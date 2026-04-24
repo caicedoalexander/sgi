@@ -46,12 +46,10 @@ class AppController extends Controller
         'NoveltyTypes' => 'novelty_types',
         'LeaveDocumentTemplates' => 'leave_document_templates',
         'PettyCashRecords' => 'petty_cash',
-        'LegalizationRecords' => 'legalizations',
         'NoveltyLiquidationDocs' => 'novelty_liquidation_docs',
         'BankingEntities' => 'banking_entities',
         'InvoicePayments' => 'invoices',
         'LiquidationDocPayments' => 'novelty_liquidation_docs',
-        'LegalizationPayments' => 'legalizations',
         'PaymentSchedulings' => 'payment_schedulings',
         'PaymentRegistry' => 'payment_registry',
     ];

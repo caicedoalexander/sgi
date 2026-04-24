@@ -211,12 +211,6 @@ $addUrl = $this->Url->build($addPaymentUrl);
                                     ['controller' => 'PettyCashRecords', 'action' => 'view', $payment->petty_cash_record_id],
                                     ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
                                 ) ?>
-                            <?php elseif (!empty($payment->legalization_record_id)): ?>
-                                <?= $this->Html->link(
-                                    '<i class="bi bi-journal-check me-1"></i>Legalización ' . h($payment->legalization_record->code ?? '#' . $payment->legalization_record_id),
-                                    ['controller' => 'LegalizationRecords', 'action' => 'view', $payment->legalization_record_id],
-                                    ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
-                                ) ?>
                             <?php else: ?>
                                 <span class="text-muted" style="font-size:.75rem;">Individual</span>
                             <?php endif; ?>
@@ -225,7 +219,6 @@ $addUrl = $this->Url->build($addPaymentUrl);
                         $isFromModule = $isInvoicePayment && (
                             !empty($payment->payment_scheduling_id)
                             || !empty($payment->petty_cash_record_id)
-                            || !empty($payment->legalization_record_id)
                         ); ?>
                         <?php if ($canAuthorize || $canDelete): ?>
                         <td class="text-end">

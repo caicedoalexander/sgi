@@ -11,7 +11,6 @@ $userPermissions = $userPermissions ?? [];
 $currentController = $this->request->getParam('controller');
 $rejectedInvoicesCount = $rejectedInvoicesCount ?? 0;
 $pettyCashCount = $pettyCashCount ?? 0;
-$legalizationCount = $legalizationCount ?? 0;
 $noveltiesCount = $noveltiesCount ?? 0;
 $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
 ?>
@@ -149,16 +148,6 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                                     ($pettyCashCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $pettyCashCount . '</span>' : ''),
                                     ['controller' => 'PettyCashRecords', 'action' => 'index'],
                                     ['class' => $navLink('PettyCashRecords') . ' d-flex align-items-center', 'escape' => false]
-                                ) ?>
-                            </li>
-                            <?php endif; ?>
-                            <?php if ($canView('legalizations')): ?>
-                            <li class="nav-item">
-                                <?= $this->Html->link(
-                                    '<i class="bi bi-file-earmark-check me-2"></i>Legalizaciones' .
-                                    ($legalizationCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $legalizationCount . '</span>' : ''),
-                                    ['controller' => 'LegalizationRecords', 'action' => 'index'],
-                                    ['class' => $navLink('LegalizationRecords') . ' d-flex align-items-center', 'escape' => false]
                                 ) ?>
                             </li>
                             <?php endif; ?>

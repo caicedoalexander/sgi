@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
-use App\Constants\LegalizationConstants;
 use App\Constants\NoveltyConstants;
 use App\Constants\PettyCashConstants;
 use Cake\ORM\TableRegistry;
@@ -44,10 +43,6 @@ class SidebarCounterService
                     'PettyCashRecords',
                     ['status !=' => PettyCashConstants::STATUS_PAGADO],
                 ),
-                'legalizationCount' => $this->getCount(
-                    'LegalizationRecords',
-                    ['status !=' => LegalizationConstants::STATUS_PAGADO],
-                ),
                 'noveltiesCount' => $this->getNoveltiesCount($roleName),
                 'rejectedNoveltiesCount' => $this->getCount(
                     'EmployeeNovelties',
@@ -63,7 +58,6 @@ class SidebarCounterService
                 'rejectedInvoicesCount' => 0,
                 'overdueInvoicesCount' => 0,
                 'pettyCashCount' => 0,
-                'legalizationCount' => 0,
                 'noveltiesCount' => 0,
                 'rejectedNoveltiesCount' => 0,
                 'activeNoveltiesCount' => 0,

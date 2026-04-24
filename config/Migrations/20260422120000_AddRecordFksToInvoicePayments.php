@@ -13,16 +13,7 @@ class AddRecordFksToInvoicePayments extends BaseMigration
                 'default' => null,
                 'after' => 'payment_scheduling_id',
             ])
-            ->addColumn('legalization_record_id', 'integer', [
-                'null' => true,
-                'default' => null,
-                'after' => 'petty_cash_record_id',
-            ])
             ->addForeignKey('petty_cash_record_id', 'petty_cash_records', 'id', [
-                'delete' => 'SET_NULL',
-                'update' => 'NO_ACTION',
-            ])
-            ->addForeignKey('legalization_record_id', 'legalization_records', 'id', [
                 'delete' => 'SET_NULL',
                 'update' => 'NO_ACTION',
             ])
@@ -33,9 +24,7 @@ class AddRecordFksToInvoicePayments extends BaseMigration
     {
         $this->table('invoice_payments')
             ->dropForeignKey('petty_cash_record_id')
-            ->dropForeignKey('legalization_record_id')
             ->removeColumn('petty_cash_record_id')
-            ->removeColumn('legalization_record_id')
             ->update();
     }
 }
