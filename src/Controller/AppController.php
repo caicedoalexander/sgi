@@ -51,7 +51,6 @@ class AppController extends Controller
         'BankingEntities' => 'banking_entities',
         'InvoicePayments' => 'invoices',
         'LiquidationDocPayments' => 'novelty_liquidation_docs',
-        'PettyCashPayments' => 'petty_cash',
         'LegalizationPayments' => 'legalizations',
         'PaymentSchedulings' => 'payment_schedulings',
         'PaymentRegistry' => 'payment_registry',
