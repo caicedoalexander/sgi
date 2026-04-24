@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\Constants\RoleConstants;
 use App\Service\PettyCashDocumentService;
@@ -162,12 +163,6 @@ class PettyCashRecordsController extends AppController
                 $patchData['ready_for_payment'] = $data['ready_for_payment'] ?? null;
             }
 
-            // Treasury fields: editable in tesoreria
-            if ($record->isTesoreria()) {
-                $patchData['payment_status'] = $data['payment_status'] ?? null;
-                $patchData['payment_date'] = !empty($data['payment_date']) ? $data['payment_date'] : null;
-            }
-
             if (!empty($patchData)) {
                 $record = $this->PettyCashRecords->patchEntity($record, $patchData);
                 $this->PettyCashRecords->save($record);
@@ -225,6 +220,34 @@ class PettyCashRecordsController extends AppController
             RoleConstants::CONTADOR, RoleConstants::ADMIN,
         ], true);
 
+        // Synthesize a pseudo-payment from record columns so the shared
+        // payment_section element can render it. Caja Menor stores a single
+        // bulk payment as columns on the record itself (not in a payments table).
+        $syntheticPayments = [];
+        if (!empty($record->banking_entity_id)) {
+            $isAuthorized = $record->isPagado();
+            $syntheticPayments[] = (object)[
+                'id' => $record->id,
+                'banking_entity' => $record->banking_entity,
+                'amount' => $record->payment_amount,
+                'payment_date' => $record->payment_date instanceof \DateTimeInterface
+                    ? $record->payment_date
+                    : (is_string($record->payment_date) && $record->payment_date !== ''
+                        ? new \Cake\I18n\Date($record->payment_date)
+                        : null),
+                'status' => $isAuthorized
+                    ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED
+                    : InvoiceConstants::PAYMENT_RECORD_PENDING,
+                'authorized' => $isAuthorized,
+                'authorized_by_user' => $record->payment_authorized_by_user ?? null,
+                'authorized_date' => $record->payment_authorized_date instanceof \DateTimeInterface
+                    ? $record->payment_authorized_date
+                    : null,
+                'created_by_user' => $record->payment_created_by_user ?? null,
+                'rejection_reason' => null,
+            ];
+        }
+
         $this->set(compact(
             'record',
             'availableInvoices',
@@ -237,6 +260,7 @@ class PettyCashRecordsController extends AppController
             'bankingEntities',
             'canRegisterPayment',
             'canAuthorizePayment',
+            'syntheticPayments',
         ));
     }
 
@@ -265,9 +289,16 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
+
+        // The shared payment_section JS posts 'amount'; map to 'payment_amount'.
+        $data = $this->request->getData();
+        if (!isset($data['payment_amount']) && isset($data['amount'])) {
+            $data['payment_amount'] = $data['amount'];
+        }
+
         $result = $this->pettyCashService->registerPayment(
             (int)$id,
-            $this->request->getData(),
+            $data,
             $user->id,
         );
 

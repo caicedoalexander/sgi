@@ -18,6 +18,10 @@
  * @var string $mode                One of 'tesoreria_register','authorize','close','view' (default 'view')
  * @var callable|null $editUrlFn    fn(paymentId) => URL array for editPayment (sub-fase tesoreria_register)
  * @var callable|null $rejectUrlReasonFn fn(paymentId) => URL array for rejectPayment with reason modal
+ * @var bool   $forceFullAmount    When true, the amount input is hidden and prefilled with totalAmount
+ *                                 (use for modules that only allow a single bulk payment for the total).
+ * @var bool   $singlePaymentOnly  When true, hide "Agregar Pago" button if a payment already exists
+ *                                 (pending, authorized, or any non-rejected).
  */
 
 // Defaults
@@ -34,6 +38,19 @@ $rejectMessage = $rejectMessage ?? '¿Rechazar este pago? El registro volverá a
 $mode = $mode ?? 'view';
 $sectionTitle = $sectionTitle ?? 'Tesorería — Pagos';
 $sectionIcon = $sectionIcon ?? 'bi-bank';
+$forceFullAmount = $forceFullAmount ?? false;
+$singlePaymentOnly = $singlePaymentOnly ?? false;
+
+// If singlePaymentOnly, suppress "Agregar Pago" when there is any non-rejected payment.
+$hasActivePayment = false;
+foreach ($payments as $p) {
+    $st = $p->status ?? ($p->authorized ? 'authorized' : 'pending');
+    if ($st !== 'rejected') {
+        $hasActivePayment = true;
+        break;
+    }
+}
+$showAddButton = $canRegisterPayment && !($singlePaymentOnly && $hasActivePayment);
 
 // Compute totals
 $paymentsTotal = 0;
@@ -47,7 +64,8 @@ $addUrl = $this->Url->build($addPaymentUrl);
 <div class="mb-4"
      data-payment-section
      data-add-url="<?= h($addUrl) ?>"
-     data-remaining-amount="<?= $remainingAmount ?>">
+     data-remaining-amount="<?= $remainingAmount ?>"
+     data-force-full-amount="<?= $forceFullAmount ? '1' : '0' ?>">
 
     <!-- Header -->
     <div class="d-flex align-items-center gap-3 mb-3">
@@ -82,7 +100,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
             <span class="text-uppercase fw-semibold" style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
                 <i class="bi bi-credit-card me-1"></i>Pagos Registrados
             </span>
-            <?php if ($canRegisterPayment): ?>
+            <?php if ($showAddButton): ?>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#add-payment-form">
                     <i class="bi bi-plus-lg me-1"></i>Agregar Pago
@@ -91,7 +109,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
             <?php endif; ?>
         </div>
 
-        <?php if ($canRegisterPayment): ?>
+        <?php if ($showAddButton): ?>
         <div class="collapse mb-3" id="add-payment-form">
             <div class="card card-body" style="border-top:2px solid var(--primary-color);">
                 <div class="row g-3">
@@ -104,15 +122,24 @@ $addUrl = $this->Url->build($addPaymentUrl);
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <?php if ($forceFullAmount): ?>
+                    <div class="col-md-3">
+                        <label class="form-label">Monto (COP)</label>
+                        <input type="text" data-pay-amount class="form-control currency-input"
+                               value="<?= $totalAmount ?>" readonly>
+                        <div class="form-text">Pago total del registro.</div>
+                    </div>
+                    <?php else: ?>
                     <div class="col-md-3">
                         <label class="form-label">Monto (COP)</label>
                         <input type="text" data-pay-amount class="form-control currency-input" required>
                     </div>
+                    <?php endif; ?>
                     <div class="col-md-3">
                         <label class="form-label">Fecha de Pago</label>
                         <input type="text" data-pay-date class="form-control flatpickr-date" required>
                     </div>
-                    <?php if ($remainingAmount > 0): ?>
+                    <?php if (!$forceFullAmount && $remainingAmount > 0): ?>
                     <div class="col-md-12">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="pay-full-check" data-pay-full>

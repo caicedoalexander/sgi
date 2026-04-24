@@ -403,132 +403,35 @@ $invoiceCount = count($record->invoices ?? []);
         <?php endif; ?>
 
         <?php if ($section['key'] === 'treasury'): ?>
-        <!-- ── Sección: Pago (Tesorería → Aut. Pago → Pagado) ── -->
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-bank me-1"></i>Pago
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+        <?php if (!empty($record->payment_rejection_reason)
+            && $record->status === PettyCashConstants::STATUS_TESORERIA): ?>
+        <div class="alert alert-warning d-flex align-items-start gap-2 mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+            <div>
+                <strong>Pago rechazado.</strong>
+                <div><?= h($record->payment_rejection_reason) ?></div>
             </div>
-
-            <?php if ($record->status === PettyCashConstants::STATUS_TESORERIA
-                && !empty($record->payment_rejection_reason)): ?>
-            <div class="alert alert-warning d-flex align-items-start gap-2 mb-3" role="alert">
-                <i class="bi bi-exclamation-triangle-fill mt-1"></i>
-                <div>
-                    <strong>Pago rechazado.</strong>
-                    <div><?= h($record->payment_rejection_reason) ?></div>
-                </div>
-            </div>
-            <?php endif; ?>
-
-            <?php if ($record->status === PettyCashConstants::STATUS_TESORERIA
-                && ($canRegisterPayment ?? false)): ?>
-            <!-- Inputs pertenecen al form externo #registerPaymentForm (ver final del template) -->
-            <div class="p-3" style="background:#f9fafb;border:1px solid var(--border-color);">
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label" style="font-size:.78rem;color:#666;">Entidad Bancaria <span class="text-danger">*</span></label>
-                        <select name="banking_entity_id" form="registerPaymentForm"
-                                class="form-select select2-enable" required>
-                            <option value="">Seleccione...</option>
-                            <?php foreach ($bankingEntities as $beId => $beName): ?>
-                            <option value="<?= $beId ?>"><?= h($beName) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label" style="font-size:.78rem;color:#666;">Monto <span class="text-danger">*</span></label>
-                        <input type="text" name="payment_amount" form="registerPaymentForm"
-                               class="form-control currency-input" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label" style="font-size:.78rem;color:#666;">Fecha <span class="text-danger">*</span></label>
-                        <input type="text" name="payment_date" form="registerPaymentForm"
-                               class="form-control flatpickr-date" required>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" form="registerPaymentForm" class="btn btn-primary w-100"
-                                onclick="return confirm('Este pago se registrará y el registro pasará a Autorización de Pago. ¿Continuar?');">
-                            <i class="bi bi-plus-circle me-1"></i>Registrar
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
-
-            <?php if (in_array($record->status, [
-                PettyCashConstants::STATUS_AUT_PAGO,
-                PettyCashConstants::STATUS_PAGADO,
-            ], true)): ?>
-            <div class="card" style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
-                <div class="card-header bg-light"><strong>Pago</strong></div>
-                <div class="card-body">
-                    <dl class="row mb-0" style="font-size:.9rem;">
-                        <dt class="col-sm-3">Banco</dt>
-                        <dd class="col-sm-9"><?= h($record->banking_entity->name ?? '—') ?></dd>
-
-                        <dt class="col-sm-3">Monto</dt>
-                        <dd class="col-sm-9">$ <?= number_format((float)$record->payment_amount, 0, ',', '.') ?></dd>
-
-                        <dt class="col-sm-3">Fecha</dt>
-                        <dd class="col-sm-9">
-                            <?= $record->payment_date
-                                ? (is_string($record->payment_date)
-                                    ? h($record->payment_date)
-                                    : $record->payment_date->format('d/m/Y'))
-                                : '—' ?>
-                        </dd>
-
-                        <dt class="col-sm-3">Registrado por</dt>
-                        <dd class="col-sm-9">
-                            <?= h($record->payment_created_by_user->full_name
-                                ?? $record->payment_created_by_user->username ?? '—') ?>
-                        </dd>
-
-                        <dt class="col-sm-3">Estado</dt>
-                        <dd class="col-sm-9">
-                            <?php if ($record->status === PettyCashConstants::STATUS_PAGADO): ?>
-                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
-                            <?php else: ?>
-                                <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente de autorización</span>
-                            <?php endif; ?>
-                        </dd>
-
-                        <?php if ($record->status === PettyCashConstants::STATUS_PAGADO): ?>
-                        <dt class="col-sm-3">Autorizado por</dt>
-                        <dd class="col-sm-9">
-                            <?= h($record->payment_authorized_by_user->full_name
-                                ?? $record->payment_authorized_by_user->username ?? '—') ?>
-                            <?php if ($record->payment_authorized_date): ?>
-                                · <?= is_string($record->payment_authorized_date)
-                                    ? h($record->payment_authorized_date)
-                                    : $record->payment_authorized_date->format('d/m/Y') ?>
-                            <?php endif; ?>
-                        </dd>
-                        <?php endif; ?>
-                    </dl>
-
-                    <?php if ($record->status === PettyCashConstants::STATUS_AUT_PAGO
-                        && ($canAuthorizePayment ?? false)): ?>
-                    <div class="mt-3 d-flex gap-2" data-payment-section>
-                        <button type="button" class="btn btn-outline-success btn-post-action"
-                                data-url="<?= $this->Url->build(['action' => 'authorizePayment', $record->id]) ?>"
-                                data-confirm="¿Autorizar este pago?">
-                            <i class="bi bi-shield-check me-1"></i>Autorizar
-                        </button>
-                        <button type="button" class="btn btn-outline-danger btn-reject-payment"
-                                data-url="<?= $this->Url->build(['action' => 'rejectPayment', $record->id]) ?>">
-                            <i class="bi bi-x-circle me-1"></i>Rechazar
-                        </button>
-                    </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php endif; ?>
         </div>
+        <?php endif; ?>
+        <?= $this->element('payment_section', [
+            'payments'           => $syntheticPayments ?? [],
+            'bankingEntities'    => $bankingEntities,
+            'addPaymentUrl'      => ['action' => 'registerPayment', $record->id],
+            'authorizeUrlFn'     => fn($_) => ['action' => 'authorizePayment', $record->id],
+            'rejectUrlFn'        => fn($_) => ['action' => 'rejectPayment', $record->id],
+            'canRegisterPayment' => ($record->status === PettyCashConstants::STATUS_TESORERIA)
+                && ($canRegisterPayment ?? false),
+            'canAuthorize'       => ($record->status === PettyCashConstants::STATUS_AUT_PAGO)
+                && ($canAuthorizePayment ?? false),
+            'canDelete'          => false,
+            'paymentStatus'      => null,
+            'totalAmount'        => (float)$record->total_amount,
+            'rejectMessage'      => '¿Rechazar este pago? El registro volverá a Tesorería.',
+            'sectionTitle'       => 'Pago',
+            'sectionIcon'        => 'bi-bank',
+            'forceFullAmount'    => true,
+            'singlePaymentOnly'  => true,
+        ]) ?>
         <?php endif; ?>
 
         <?php endforeach; ?>
@@ -726,19 +629,6 @@ $invoiceCount = count($record->invoices ?? []);
     </div>
 </div>
 <?php endif; ?>
-
-<?php if ($record->status === PettyCashConstants::STATUS_TESORERIA && ($canRegisterPayment ?? false)): ?>
-<!-- Form externo usado por inputs con form="registerPaymentForm" -->
-<?= $this->Form->create(null, [
-    'id' => 'registerPaymentForm',
-    'url' => ['action' => 'registerPayment', $record->id],
-    'type' => 'post',
-    'style' => 'display:none;',
-]) ?>
-<?= $this->Form->end() ?>
-<?php endif; ?>
-
-<?php $this->Html->script('sgi-payment', ['block' => true]); ?>
 
 <?php $this->append('script') ?>
 <script>

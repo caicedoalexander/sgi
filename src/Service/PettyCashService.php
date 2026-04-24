@@ -312,14 +312,14 @@ class PettyCashService
                 ->all();
 
             foreach ($childInvoices as $invoice) {
-                if ((float)$invoice->total_amount <= 0) {
+                if ((float)$invoice->amount <= 0) {
                     continue;
                 }
 
                 $invoicePayment = $invoicePaymentsTable->newEntity([
                     'invoice_id' => $invoice->id,
                     'banking_entity_id' => $record->banking_entity_id,
-                    'amount' => $invoice->total_amount,
+                    'amount' => $invoice->amount,
                     'payment_date' => $record->payment_date,
                     'petty_cash_record_id' => $record->id,
                     'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
