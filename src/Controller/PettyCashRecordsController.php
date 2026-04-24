@@ -125,7 +125,9 @@ class PettyCashRecordsController extends AppController
                 'Users',
                 'sort' => ['PettyCashObservations.created' => 'ASC'],
             ],
-            'PettyCashPayments' => ['BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'],
+            'BankingEntities',
+            'PaymentCreatedByUsers',
+            'PaymentAuthorizedByUsers',
         ]);
 
         if ($this->request->is(['patch', 'post', 'put'])) {
@@ -216,12 +218,26 @@ class PettyCashRecordsController extends AppController
         $user = $this->_getCurrentUser();
         $roleName = $this->_getUserRoleName($user);
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
-        $isTesoreriaEdit = ($roleName === RoleConstants::TESORERIA || $roleName === RoleConstants::ADMIN)
-            && $record->status === PettyCashConstants::STATUS_TESORERIA;
-        $isContadorAutPago = ($roleName === RoleConstants::CONTADOR || $roleName === RoleConstants::ADMIN)
-            && $record->status === PettyCashConstants::STATUS_AUT_PAGO;
+        $canRegisterPayment = in_array($roleName, [
+            RoleConstants::TESORERIA, RoleConstants::ADMIN,
+        ], true);
+        $canAuthorizePayment = in_array($roleName, [
+            RoleConstants::CONTADOR, RoleConstants::ADMIN,
+        ], true);
 
-        $this->set(compact('record', 'availableInvoices', 'operationCenters', 'canDeleteDocuments', 'groupFilters', 'nextStatus', 'advanceErrors', 'roleName', 'bankingEntities', 'isTesoreriaEdit', 'isContadorAutPago'));
+        $this->set(compact(
+            'record',
+            'availableInvoices',
+            'operationCenters',
+            'canDeleteDocuments',
+            'groupFilters',
+            'nextStatus',
+            'advanceErrors',
+            'roleName',
+            'bankingEntities',
+            'canRegisterPayment',
+            'canAuthorizePayment',
+        ));
     }
 
     public function advanceStatus($id = null)
