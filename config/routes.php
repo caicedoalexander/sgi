@@ -300,6 +300,21 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'PettyCashRecords', 'action' => 'addObservation'],
             ['id' => '\d+', 'pass' => ['id']]
         );
+        $builder->connect(
+            '/petty-cash-records/register-payment/{id}',
+            ['controller' => 'PettyCashRecords', 'action' => 'registerPayment'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/petty-cash-records/authorize-payment/{id}',
+            ['controller' => 'PettyCashRecords', 'action' => 'authorizePayment'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
+        $builder->connect(
+            '/petty-cash-records/reject-payment/{id}',
+            ['controller' => 'PettyCashRecords', 'action' => 'rejectPayment'],
+            ['id' => '\d+', 'pass' => ['id']]
+        );
 
         // Legalization Records (Legalizaciones)
         $builder->connect(
