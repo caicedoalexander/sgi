@@ -508,6 +508,8 @@ class InvoicesController extends AppController
 
         $this->filterService->apply($query, $this->request->getQueryParams());
 
+        $query->order(['Invoices.created' => 'DESC']);
+
         return $query;
     }
 
