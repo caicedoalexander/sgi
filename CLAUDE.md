@@ -69,7 +69,7 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 | `AuthorizationService` | RBAC via `permissions` table. Admin bypasses all. |
 | `InvoiceHistoryService` | Field-by-field audit trail in `invoice_histories` |
 | `ApprovalTokenService` | External approval via SHA256 tokens (48h TTL) |
-| `NotificationService` | Email on state transitions |
+| `NotificationService` | Email para links de aprobación (facturas y novedades) y prueba SMTP |
 | `LegalizationService` | Legalization records business logic |
 | `PettyCashService` | Petty cash records management |
 | `DianCrosscheckService` | DIAN crosscheck validation |
@@ -83,7 +83,7 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 
 ### Service Subdirectories
 
-- `Service/Interface/` — `HistoryServiceInterface`, `MailerInterface`, `NotificationServiceInterface`, `SpreadsheetReaderInterface`
+- `Service/Interface/` — `HistoryServiceInterface`, `MailerInterface`, `SpreadsheetReaderInterface`
 - `Service/Adapter/` — `CakeMailerAdapter`, `PhpSpreadsheetAdapter` (adapter pattern for external libs)
 - `Service/Strategy/` — `InvoiceApprovalStrategy`, `NoveltyApprovalStrategy` (strategy pattern for approval logic)
 - `Service/Trait/` — `DocumentUploadTrait`, `HistoryNormalizationTrait`

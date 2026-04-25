@@ -292,10 +292,6 @@ class InvoicesController extends AppController
                     }
                 }
 
-                foreach ($result['notificationErrors'] as $notifErr) {
-                    $this->Flash->warning($notifErr);
-                }
-
                 $redirectAction = $result['advanced'] ? 'index' : 'edit';
                 return $this->redirect(['action' => $redirectAction, ...($redirectAction === 'edit' ? [$id] : [])]);
             }
@@ -366,9 +362,6 @@ class InvoicesController extends AppController
         if ($result['success']) {
             $nextLabel = InvoicePipelineService::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
             $this->Flash->success(sprintf('Factura avanzada a: %s', $nextLabel));
-            if (!empty($result['notificationError'])) {
-                $this->Flash->warning($result['notificationError']);
-            }
 
             return $this->redirect(['action' => 'index']);
         }

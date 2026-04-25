@@ -8,28 +8,22 @@ use App\Constants\PaymentSchedulingConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\Invoice;
 use App\Service\Interface\HistoryServiceInterface;
-use App\Service\Interface\NotificationServiceInterface;
 use Cake\ORM\TableRegistry;
 
 class InvoicePipelineService
 {
     private HistoryServiceInterface $historyService;
-    private NotificationServiceInterface $notificationService;
     private InvoicePaymentService $paymentService;
     private InvoiceFieldAccessPolicy $fieldPolicy;
-    private StructuredLogger $logger;
 
     public function __construct(
         ?HistoryServiceInterface $historyService = null,
-        ?NotificationServiceInterface $notificationService = null,
         ?InvoicePaymentService $paymentService = null,
         ?InvoiceFieldAccessPolicy $fieldPolicy = null,
     ) {
         $this->historyService = $historyService ?? new InvoiceHistoryService();
-        $this->notificationService = $notificationService ?? new NotificationService();
         $this->paymentService = $paymentService ?? new InvoicePaymentService();
         $this->fieldPolicy = $fieldPolicy ?? new InvoiceFieldAccessPolicy();
-        $this->logger = new StructuredLogger('InvoicePipeline');
     }
 
     // Pipeline statuses in order
@@ -344,14 +338,13 @@ class InvoicePipelineService
     }
 
     /**
-     * Save invoice fields, optionally advance the pipeline, record history, and send notifications.
+     * Save invoice fields, optionally advance the pipeline, and record history.
      *
      * Returns an associative array:
      *   - 'saved'          => bool
      *   - 'advanced'       => bool
      *   - 'nextStatus'     => ?string
      *   - 'advanceErrors'  => string[]   (warnings when save succeeded but advance did not)
-     *   - 'notificationErrors' => string[]  (notification failures, non-blocking)
      */
     public function saveAndAdvance(
         Invoice $invoice,
@@ -436,24 +429,11 @@ class InvoicePipelineService
             },
         );
 
-        $notificationErrors = [];
-
-        if ($saved) {
-            // Send status change notification if pipeline advanced
-            if ($advanceNextStatus) {
-                $notifResult = $this->trySendNotification($invoice, $currentStatus, $advanceNextStatus);
-                if (!$notifResult['success']) {
-                    $notificationErrors[] = $notifResult['error'];
-                }
-            }
-        }
-
         return [
             'saved' => (bool)$saved,
             'advanced' => (bool)$advanceNextStatus && (bool)$saved,
             'nextStatus' => $advanceNextStatus,
             'advanceErrors' => $postAdvanceErrors,
-            'notificationErrors' => $notificationErrors,
         ];
     }
 
@@ -496,34 +476,10 @@ class InvoicePipelineService
 
         $this->historyService->recordStatusChange($invoice->id, $currentStatus, $nextStatus, $userId);
 
-        $notifResult = $this->trySendNotification($invoice, $currentStatus, $nextStatus);
-
         return [
             'success' => true,
             'error' => null,
             'nextStatus' => $nextStatus,
-            'notificationError' => $notifResult['error'],
         ];
-    }
-
-    /**
-     * Try to send status change notification.
-     * Returns ['success' => bool, 'error' => ?string].
-     */
-    private function trySendNotification(Invoice $invoice, string $fromStatus, string $toStatus): array
-    {
-        $notifResult = $this->notificationService->sendStatusChangeNotification($invoice, $fromStatus, $toStatus);
-
-        if (!empty($notifResult['failed'])) {
-            $errorMsg = implode('; ', $notifResult['failed']);
-            $this->logger->error('Error enviando notificación de cambio de estado', [
-                'invoiceId' => $invoice->id,
-                'error' => $errorMsg,
-            ]);
-
-            return ['success' => false, 'error' => 'No se pudo enviar la notificación de cambio de estado: ' . $errorMsg];
-        }
-
-        return ['success' => true, 'error' => null];
     }
 }

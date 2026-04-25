@@ -27,16 +27,14 @@ class ApprovalTokenService
 
     /**
      * @param \App\Service\InvoiceHistoryService|null $historyService History service.
-     * @param \App\Service\NotificationService|null $notificationService Notification service.
      * @param \App\Service\NoveltyObservationService|null $observationService Observation service.
      */
     public function __construct(
         ?InvoiceHistoryService $historyService = null,
-        ?NotificationService $notificationService = null,
         ?NoveltyObservationService $observationService = null,
     ) {
         $this->strategies = [
-            'invoices' => new InvoiceApprovalStrategy($historyService, $notificationService),
+            'invoices' => new InvoiceApprovalStrategy($historyService),
             'employee_novelties' => new NoveltyApprovalStrategy($observationService),
         ];
     }

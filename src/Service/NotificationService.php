@@ -3,17 +3,14 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Constants\InvoiceConstants;
-use App\Constants\RoleConstants;
 use App\Model\Entity\Invoice;
-use App\Service\Interface\NotificationServiceInterface;
 use Cake\Log\Log;
 use Cake\Mailer\Mailer;
 use Cake\Mailer\TransportFactory;
 use Cake\ORM\TableRegistry;
 use Exception;
 
-class NotificationService implements NotificationServiceInterface
+class NotificationService
 {
     private SystemSettingsService $settings;
     private CircuitBreaker $smtpCircuitBreaker;
@@ -22,69 +19,6 @@ class NotificationService implements NotificationServiceInterface
     {
         $this->settings = $settings ?? new SystemSettingsService();
         $this->smtpCircuitBreaker = new CircuitBreaker('smtp', failureThreshold: 3, recoveryTimeoutSeconds: 300);
-    }
-
-    /**
-     * Send status change notification. Returns result instead of throwing.
-     *
-     * @return array{sent: int, failed: array<string>}
-     */
-    public function sendStatusChangeNotification(Invoice $invoice, string $fromStatus, string $toStatus): array
-    {
-        $smtpConfig = $this->settings->getGroup('smtp');
-
-        if (empty($smtpConfig['smtp_host']) || empty($smtpConfig['smtp_from_email'])) {
-            return ['sent' => 0, 'failed' => ['SMTP no configurado. Configure el correo en Ajustes del Sistema.']];
-        }
-
-        $recipients = $this->getRecipientsForStatus($toStatus);
-
-        if (empty($recipients)) {
-            Log::info("No hay destinatarios para notificación de estado '{$toStatus}' - factura #{$invoice->id}");
-
-            return ['sent' => 0, 'failed' => []];
-        }
-
-        $this->configureTransport($smtpConfig);
-
-        $statusLabels = InvoicePipelineService::STATUS_LABELS;
-        $fromLabel = $statusLabels[$fromStatus] ?? $fromStatus;
-        $toLabel = $statusLabels[$toStatus] ?? $toStatus;
-        $invoiceNumber = $invoice->invoice_number ?: '#' . $invoice->id;
-
-        $sent = 0;
-        $failed = [];
-        foreach ($recipients as $recipient) {
-            try {
-                $mailer = new Mailer();
-                $mailer->setTransport('sgi_dynamic');
-                $mailer->setFrom(
-                    $smtpConfig['smtp_from_email'],
-                    $smtpConfig['smtp_from_name'] ?? 'SGI',
-                );
-                $mailer->setTo($recipient->email);
-                $mailer->setSubject("SGI - Factura {$invoiceNumber} avanzó a {$toLabel}");
-                $mailer->setEmailFormat('html');
-                $mailer->setViewVars([
-                    'invoiceNumber' => $invoiceNumber,
-                    'fromLabel' => $fromLabel,
-                    'toLabel' => $toLabel,
-                    'invoiceId' => $invoice->id,
-                ]);
-                $mailer->viewBuilder()
-                    ->setTemplate('invoice_status_changed')
-                    ->setLayout('default');
-                $this->smtpCircuitBreaker->call(function () use ($mailer) {
-                    $mailer->deliver();
-                });
-                $sent++;
-            } catch (\Throwable $e) {
-                Log::error("Email notification failed for {$recipient->email}: " . $e->getMessage());
-                $failed[] = $recipient->email . ': ' . $e->getMessage();
-            }
-        }
-
-        return ['sent' => $sent, 'failed' => $failed];
     }
 
     /**
@@ -225,37 +159,6 @@ class NotificationService implements NotificationServiceInterface
             ->first();
 
         return $approver ? [$approver] : [];
-    }
-
-    private function getRecipientsForStatus(string $toStatus): array
-    {
-        $roleMapping = $this->getStatusRoleMapping();
-        $roleName = $roleMapping[$toStatus] ?? null;
-
-        if (!$roleName) {
-            return [];
-        }
-
-        $usersTable = TableRegistry::getTableLocator()->get('Users');
-
-        return $usersTable->find()
-            ->contain(['Roles'])
-            ->matching('Roles', function ($q) use ($roleName) {
-                return $q->where(['Roles.name' => $roleName]);
-            })
-            ->where(['Users.active' => true])
-            ->all()
-            ->toArray();
-    }
-
-    private function getStatusRoleMapping(): array
-    {
-        return [
-            InvoiceConstants::STATUS_APROBACION    => null,
-            InvoiceConstants::STATUS_CONTABILIDAD  => RoleConstants::CONTABILIDAD,
-            InvoiceConstants::STATUS_TESORERIA     => RoleConstants::TESORERIA,
-            InvoiceConstants::STATUS_PAGADA        => null,
-        ];
     }
 
     public function testSmtpConnection(): array

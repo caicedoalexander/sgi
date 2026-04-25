@@ -7,8 +7,6 @@ use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePipelineService;
-use App\Service\Interface\NotificationServiceInterface;
-use App\Service\NotificationService;
 use Cake\ORM\TableRegistry;
 use DateTime;
 use Exception;
@@ -16,18 +14,14 @@ use Exception;
 class InvoiceApprovalStrategy implements ApprovalStrategyInterface
 {
     private InvoiceHistoryService $historyService;
-    private NotificationServiceInterface $notificationService;
 
     /**
      * @param \App\Service\InvoiceHistoryService|null $historyService History service.
-     * @param \App\Service\Interface\NotificationServiceInterface|null $notificationService Notification service.
      */
     public function __construct(
         ?InvoiceHistoryService $historyService = null,
-        ?NotificationServiceInterface $notificationService = null,
     ) {
         $this->historyService = $historyService ?? new InvoiceHistoryService();
-        $this->notificationService = $notificationService ?? new NotificationService();
     }
 
     /**
@@ -47,7 +41,7 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
         $parsedDate = !empty($approvalDate) ? new DateTime($approvalDate) : new DateTime();
 
         if ($action === 'approve') {
-            $pipeline = new InvoicePipelineService($this->historyService, $this->notificationService);
+            $pipeline = new InvoicePipelineService($this->historyService);
             $result = $pipeline->saveAndAdvance(
                 $invoice,
                 [
