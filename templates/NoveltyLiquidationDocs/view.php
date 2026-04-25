@@ -10,6 +10,7 @@
  * @var array $fieldLabels
  */
 use App\Constants\NoveltyConstants;
+use App\Constants\StatusColorConstants;
 
 $this->assign('title', 'Liquidación: ' . h($doc->liquidation_number));
 
@@ -50,11 +51,7 @@ $docIconColor = fn(?string $mime): string => match(true) {
     default => '#aaa',
 };
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
-$badgeColors = [
-    'aprobacion' => 'bg-warning text-dark', 'rrhh' => 'bg-secondary',
-    'contabilidad' => 'bg-primary', 'revision_firmas' => 'bg-warning text-dark',
-    'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'aut_pago' => 'bg-info', 'pagada' => 'bg-success',
-];
+$badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
 ?>
 
 <!-- Page header -->

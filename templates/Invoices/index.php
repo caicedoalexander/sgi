@@ -10,6 +10,7 @@
  */
 
 use App\Constants\InvoiceConstants;
+use App\Constants\StatusColorConstants;
 use App\Service\InvoicePipelineService;
 $isAllView      = $this->request->getParam('action') === 'all';
 $isRejectedView = $this->request->getParam('action') === 'rejected';
@@ -18,13 +19,6 @@ $pageTitle = $isRejectedView ? 'Facturas Rechazadas'
            :                   'Mis Facturas');
 $this->assign('title', $pageTitle);
 
-$pipelineBadges = [
-    InvoiceConstants::STATUS_APROBACION        => ['Aprobación',    'bg-info text-dark'],
-    InvoiceConstants::STATUS_CONTABILIDAD      => ['Contabilidad',  'bg-primary'],
-    InvoiceConstants::STATUS_TESORERIA         => ['Tesorería',     'bg-warning text-dark'],
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => ['Aut. Pago',     'bg-info'],
-    InvoiceConstants::STATUS_PAGADA            => ['Pagada',        'bg-success'],
-];
 
 $query = $this->request->getQueryParams();
 $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
@@ -162,7 +156,10 @@ $pipelineOptions = InvoicePipelineService::STATUS_LABELS;
             </thead>
             <tbody>
                 <?php foreach ($invoices as $invoice):
-                    $ps             = $pipelineBadges[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
+                    $ps = [
+                        InvoicePipelineService::STATUS_LABELS[$invoice->pipeline_status] ?? 'Desconocido',
+                        StatusColorConstants::PIPELINE_STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-dark',
+                    ];
                     $isRejected     = ($invoice->area_approval === InvoiceConstants::APPROVAL_REJECTED);
                     $isApproved     = ($invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED);
                     $isPartialPay   = ($invoice->pipeline_status === InvoiceConstants::STATUS_TESORERIA && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL);
@@ -246,7 +243,7 @@ $pipelineOptions = InvoicePipelineService::STATUS_LABELS;
                                     <span class="badge bg-warning text-dark">Pago Parcial</span>
                                 <?php endif; ?>
                                 <?php if ($readyForPay): ?>
-                                    <span class="badge bg-info text-dark"><?= h($invoice->ready_for_payment) ?></span>
+                                    <span class="badge <?= StatusColorConstants::READY_FOR_PAYMENT_BADGES[$invoice->ready_for_payment] ?? 'bg-secondary' ?>"><?= h($invoice->ready_for_payment) ?></span>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>

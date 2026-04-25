@@ -9,6 +9,7 @@
  * @var \App\Model\Entity\User $currentUser
  */
 use App\Constants\NoveltyConstants;
+use App\Constants\StatusColorConstants;
 
 $this->assign('title', 'Editar Liquidación: ' . h($doc->liquidation_number));
 
@@ -53,11 +54,7 @@ $docIconColor = fn(?string $mime): string => match(true) {
     default => '#aaa',
 };
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
-$badgeColors = [
-    'rrhh' => 'bg-secondary', 'contabilidad' => 'bg-primary',
-    'aprobacion' => 'bg-warning text-dark', 'revision_firmas' => 'bg-warning text-dark',
-    'gdp' => 'bg-dark', 'tesoreria' => 'bg-info', 'aut_pago' => 'bg-info', 'pagada' => 'bg-success',
-];
+$badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
 $noveltyCount = count($doc->employee_novelties);
 ?>
 

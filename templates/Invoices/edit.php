@@ -16,6 +16,7 @@
  */
 
 use App\Constants\InvoiceConstants;
+use App\Constants\StatusColorConstants;
 
 $this->assign('title', 'Editar Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
@@ -137,7 +138,7 @@ if (!empty($invoice->invoice_documents)) {
     }
 }
 $statusLabels = ['aprobacion' => 'Aprobación', 'contabilidad' => 'Contabilidad', 'tesoreria' => 'Tesorería', 'autorizacion_pago' => 'Aut. Pago', 'pagada' => 'Pagada'];
-$badgeColors  = ['aprobacion' => 'bg-info text-dark', 'contabilidad' => 'bg-primary', 'tesoreria' => 'bg-warning text-dark', 'autorizacion_pago' => 'bg-info', 'pagada' => 'bg-success'];
+$badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
 $docIcon = fn(?string $mime): string => match(true) {
     str_contains($mime ?? '', 'pdf')                                                                  => 'bi-file-earmark-pdf',
     str_contains($mime ?? '', 'image')                                                                => 'bi-file-earmark-image',

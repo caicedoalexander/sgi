@@ -5,19 +5,9 @@
  * @var string|null $statusFilter
  */
 use App\Constants\NoveltyConstants;
+use App\Constants\StatusColorConstants;
 
 $this->assign('title', 'Documentos de Liquidación');
-
-$statusBadges = [
-    'aprobacion' => 'bg-warning text-dark',
-    'rrhh' => 'bg-secondary',
-    'contabilidad' => 'bg-primary',
-    'revision_firmas' => 'bg-warning text-dark',
-    'gdp' => 'bg-dark',
-    'tesoreria' => 'bg-info',
-    'pagada' => 'bg-success',
-    'rechazada' => 'bg-danger',
-];
 $statusLabels = NoveltyConstants::STATUS_LABELS;
 $periodLabels = NoveltyConstants::PERIOD_LABELS;
 ?>
@@ -61,7 +51,7 @@ $periodLabels = NoveltyConstants::PERIOD_LABELS;
                 <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'edit', $doc->id]) ?>">
                     <td><strong><?= h($doc->liquidation_number) ?></strong></td>
                     <td><?= $periodLabels[$doc->period] ?? h($doc->period) ?></td>
-                    <td><span class="badge <?= $statusBadges[$doc->pipeline_status] ?? 'bg-secondary' ?>"><?= $statusLabels[$doc->pipeline_status] ?? ucfirst(h($doc->pipeline_status)) ?></span></td>
+                    <td><span class="badge <?= StatusColorConstants::PIPELINE_STATUS_BADGES[$doc->pipeline_status] ?? 'bg-secondary' ?>"><?= $statusLabels[$doc->pipeline_status] ?? ucfirst(h($doc->pipeline_status)) ?></span></td>
                     <td><span class="badge bg-light text-dark"><?= count($doc->employee_novelties) ?></span></td>
                     <td style="font-size:.8125rem;"><?= h($doc->performed_by_user->full_name ?? '—') ?></td>
                     <td style="font-size:.8125rem;color:#888"><?= $doc->document_date?->format('d/m/Y') ?: '—' ?></td>

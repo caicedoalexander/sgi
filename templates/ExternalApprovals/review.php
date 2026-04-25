@@ -6,6 +6,7 @@
  * @var object $entity
  * @var object $currentUser
  */
+use App\Constants\StatusColorConstants;
 $this->assign('title', 'Revisión de Aprobación');
 
 $entityType = $tokenRecord->entity_type;
@@ -118,7 +119,6 @@ $entityType = $tokenRecord->entity_type;
         default => '#aaa',
     };
     $statusLabels = ['aprobacion' => 'Aprobación', 'contabilidad' => 'Contabilidad', 'tesoreria' => 'Tesorería', 'pagada' => 'Pagada'];
-    $badgeColors  = ['aprobacion' => 'bg-info text-dark', 'contabilidad' => 'bg-primary', 'tesoreria' => 'bg-warning text-dark', 'pagada' => 'bg-success'];
     ?>
     <div style="border-top:1px solid var(--border-color);">
         <div class="sgi-section-title">Soportes</div>
@@ -139,7 +139,7 @@ $entityType = $tokenRecord->entity_type;
                         <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
                             <?php if (!empty($doc->pipeline_status)): ?>
                             <div>
-                                <span class="badge <?= $badgeColors[$doc->pipeline_status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
+                                <span class="badge <?= StatusColorConstants::PIPELINE_STATUS_BADGES[$doc->pipeline_status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
                                     <?= $statusLabels[$doc->pipeline_status] ?? $doc->pipeline_status ?>
                                 </span>
                             </div>

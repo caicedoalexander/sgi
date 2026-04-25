@@ -8,6 +8,7 @@
  * @var array $visibleStatuses
  */
 use App\Constants\NoveltyConstants;
+use App\Constants\StatusColorConstants;
 
 $action = $this->request->getParam('action');
 
@@ -20,16 +21,6 @@ $this->assign('title', $pageTitle);
 
 $linkAction = ($action === 'index') ? 'edit' : 'view';
 
-$statusBadges = [
-    'aprobacion' => 'bg-warning text-dark',
-    'rrhh' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'revision_firmas' => 'bg-warning text-dark',
-    'gdp' => 'bg-dark',
-    'tesoreria' => 'bg-info',
-    'pagada' => 'bg-success',
-    'rechazada' => 'bg-danger',
-];
 $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
 $statusLabels = NoveltyConstants::STATUS_LABELS;
 $calendarColors = NoveltyConstants::CALENDAR_COLORS;
@@ -130,7 +121,7 @@ $calendarColorCount = count($calendarColors);
                                 <span class="badge bg-secondary">No</span>
                             <?php endif; ?>
                         </td>
-                        <td><span class="badge <?= $statusBadges[$novelty->pipeline_status] ?? 'bg-secondary' ?>"><?= $statusLabels[$novelty->pipeline_status] ?? ucfirst(h($novelty->pipeline_status)) ?></span></td>
+                        <td><span class="badge <?= StatusColorConstants::PIPELINE_STATUS_BADGES[$novelty->pipeline_status] ?? 'bg-secondary' ?>"><?= $statusLabels[$novelty->pipeline_status] ?? ucfirst(h($novelty->pipeline_status)) ?></span></td>
                         <td style="font-size:.8125rem;color:#888"><?= h($novelty->registered_by_user->full_name ?? '—') ?></td>
                     </tr>
                     <?php endforeach; ?>

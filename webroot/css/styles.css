@@ -385,6 +385,13 @@ body {
     color: #fff;
 }
 
+/* Badge purple (novedades - RRHH) */
+.badge-purple,
+.bg-purple.badge {
+    background-color: #6f42c1 !important;
+    color: #fff;
+}
+
 /* Badge light */
 .badge-light,
 .bg-light.badge {
