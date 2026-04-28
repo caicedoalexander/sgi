@@ -3,19 +3,13 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Service\ExcelService;
+use App\Controller\Trait\ExcelWizardTrait;
 
 class ProvidersController extends AppController
 {
+    use ExcelWizardTrait;
+
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
-
-    private ExcelService $excelService;
-
-    public function initialize(): void
-    {
-        parent::initialize();
-        $this->excelService = new ExcelService();
-    }
 
     public function index()
     {
@@ -71,50 +65,6 @@ class ProvidersController extends AppController
             $this->Flash->success(__('El proveedor ha sido eliminado.'));
         } else {
             $this->Flash->error(__('No se pudo eliminar el proveedor. Intente de nuevo.'));
-        }
-
-        return $this->redirect(['action' => 'index']);
-    }
-
-    public function export()
-    {
-        $query = $this->Providers->find()
-            ->select(['Providers.document_type', 'Providers.document_number', 'Providers.name', 'Providers.active'])
-            ->order(['Providers.name' => 'ASC']);
-
-        $filePath = $this->excelService->exportCatalog('Proveedores', $query);
-
-        $response = $this->response->withFile($filePath, [
-            'download' => true,
-            'name' => 'proveedores_' . date('Y-m-d') . '.xlsx',
-        ]);
-
-        register_shutdown_function(function () use ($filePath) {
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
-        });
-
-        return $response;
-    }
-
-    public function import()
-    {
-        $this->request->allowMethod(['post']);
-
-        $file = $this->request->getUploadedFile('excel_file');
-        if (!$file || $file->getError() !== UPLOAD_ERR_OK) {
-            $this->Flash->error('No se recibió un archivo válido.');
-
-            return $this->redirect(['action' => 'index']);
-        }
-
-        $result = $this->excelService->importCatalog('Providers', $file, 'document_number');
-
-        $this->Flash->success($result->getSummary());
-
-        foreach ($result->errors as $error) {
-            $this->Flash->warning($error);
         }
 
         return $this->redirect(['action' => 'index']);
