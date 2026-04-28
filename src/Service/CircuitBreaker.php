@@ -5,6 +5,8 @@ namespace App\Service;
 
 use Cake\Cache\Cache;
 use Cake\Log\Log;
+use RuntimeException;
+use Throwable;
 
 class CircuitBreaker
 {
@@ -48,7 +50,7 @@ class CircuitBreaker
                     return $fallback();
                 }
 
-                throw new \RuntimeException("Circuit breaker [{$this->name}] is open");
+                throw new RuntimeException("Circuit breaker [{$this->name}] is open");
             }
         }
 
@@ -57,7 +59,7 @@ class CircuitBreaker
             $this->_onSuccess();
 
             return $result;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->_onFailure();
             Log::error("CircuitBreaker [{$this->name}]: failure — {$e->getMessage()}");
 

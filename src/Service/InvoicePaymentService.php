@@ -5,6 +5,7 @@ namespace App\Service;
 
 use App\Constants\InvoiceConstants;
 use Cake\ORM\TableRegistry;
+use DateTimeInterface;
 
 class InvoicePaymentService
 {
@@ -148,7 +149,7 @@ class InvoicePaymentService
     public function registerPayment(
         int $invoiceId,
         array $paymentData,
-        int $createdBy
+        int $createdBy,
     ): ServiceResult {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
@@ -165,7 +166,7 @@ class InvoicePaymentService
             $invoiceId,
             $paymentData,
             $createdBy,
-            $currentStatus
+            $currentStatus,
         ) {
             $payment = $paymentsTable->newEntity([
                 'invoice_id' => $invoiceId,
@@ -277,12 +278,12 @@ class InvoicePaymentService
             $payment,
             $allowed,
             $reason,
-            $userId
+            $userId,
         ) {
             $changes = [];
             foreach ($allowed as $field => $newValue) {
                 $oldValue = $payment->get($field);
-                $oldNorm = $oldValue instanceof \DateTimeInterface ? $oldValue->format('Y-m-d') : $oldValue;
+                $oldNorm = $oldValue instanceof DateTimeInterface ? $oldValue->format('Y-m-d') : $oldValue;
                 $newNorm = $newValue;
                 if ($field === 'payment_date' && is_string($newNorm) && $newNorm !== '') {
                     $newNorm = date('Y-m-d', strtotime($newNorm));
@@ -325,5 +326,4 @@ class InvoicePaymentService
             return ServiceResult::ok('Pago actualizado.');
         });
     }
-
 }

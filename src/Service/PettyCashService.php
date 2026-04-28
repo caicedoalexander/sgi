@@ -305,7 +305,7 @@ class PettyCashService
             $authorizedBy,
             $recordsTable,
             $invoicesTable,
-            $invoicePaymentsTable
+            $invoicePaymentsTable,
         ) {
             $childInvoices = $invoicesTable->find()
                 ->where(['petty_cash_record_id' => $record->id])

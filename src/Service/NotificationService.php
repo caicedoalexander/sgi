@@ -69,7 +69,7 @@ class NotificationService
             $mailer->viewBuilder()
                 ->setTemplate('invoice_approval_request')
                 ->setLayout('default');
-            $this->smtpCircuitBreaker->call(function () use ($mailer) {
+            $this->smtpCircuitBreaker->call(function () use ($mailer): void {
                 $mailer->deliver();
             });
 
@@ -115,7 +115,7 @@ class NotificationService
             $mailer->viewBuilder()
                 ->setTemplate('novelty_approval_request')
                 ->setLayout('default');
-            $this->smtpCircuitBreaker->call(function () use ($mailer) {
+            $this->smtpCircuitBreaker->call(function () use ($mailer): void {
                 $mailer->deliver();
             });
 

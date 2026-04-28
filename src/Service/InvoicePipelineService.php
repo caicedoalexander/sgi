@@ -269,9 +269,9 @@ class InvoicePipelineService
      * Requirements driven by actions (empty REQUIREMENT_FIELDS entry) are kept
      * when the role has visibility over the current status.
      *
-     * @param string[] $errors error messages aligned positionally with $rules
+     * @param array<string> $errors error messages aligned positionally with $rules
      * @param array<int, array{field:string, label:string}> $rules
-     * @return string[]
+     * @return array<string>
      */
     public function filterAdvanceErrorsForRole(array $errors, array $rules, string $roleName, string $status): array
     {

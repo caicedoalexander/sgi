@@ -7,6 +7,7 @@ use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
 use App\Model\Entity\InvoiceApproval;
 use Cake\I18n\DateTime;
+use Cake\Log\Log;
 use Cake\ORM\TableRegistry;
 use Exception;
 
@@ -75,7 +76,7 @@ class InvoiceApprovalService
             try {
                 $this->notificationService->sendApprovalLinkNotification($invoice, $approvalUrl, (int)$userId);
             } catch (Exception $e) {
-                \Cake\Log\Log::error("Approval email failed for user {$userId}: " . $e->getMessage());
+                Log::error("Approval email failed for user {$userId}: " . $e->getMessage());
             }
         }
 
@@ -354,7 +355,7 @@ class InvoiceApprovalService
         return $connection->transactional(function () use ($invoice, $newApproverIds, $reason, $baseUrl, $userId) {
             $previous = $this->getCurrentApprovals($invoice->id);
             $previousNames = array_map(
-                fn($a) => $a->user->full_name ?? $a->user->username ?? ('Usuario #' . $a->user_id),
+                fn($a) => $a->user->full_name ?? $a->user->username ?? 'Usuario #' . $a->user_id,
                 $previous,
             );
 
@@ -385,7 +386,7 @@ class InvoiceApprovalService
                 ->all()
                 ->toArray();
             $newNames = array_map(
-                fn($u) => $u->full_name ?? $u->username ?? ('Usuario #' . $u->id),
+                fn($u) => $u->full_name ?? $u->username ?? 'Usuario #' . $u->id,
                 $newUsers,
             );
 
@@ -414,7 +415,7 @@ class InvoiceApprovalService
 
         $connection = $this->invoiceApprovalsTable->getConnection();
 
-        $connection->transactional(function () use ($invoice, $userId) {
+        $connection->transactional(function () use ($invoice, $userId): void {
             $this->invoiceApprovalsTable->deleteAll(['invoice_id' => $invoice->id]);
 
             $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');

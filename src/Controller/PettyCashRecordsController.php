@@ -8,6 +8,8 @@ use App\Constants\PettyCashConstants;
 use App\Constants\RoleConstants;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
+use Cake\I18n\Date;
+use DateTimeInterface;
 
 class PettyCashRecordsController extends AppController
 {
@@ -154,6 +156,7 @@ class PettyCashRecordsController extends AppController
                     if (empty($submittedDate)) {
                         $this->Flash->error('La fecha de causación es requerida cuando el registro está marcado como causado.');
                         $this->redirect(['action' => 'edit', $id]);
+
                         return;
                     }
                     $patchData['accrual_date'] = $submittedDate;
@@ -230,17 +233,17 @@ class PettyCashRecordsController extends AppController
                 'id' => $record->id,
                 'banking_entity' => $record->banking_entity,
                 'amount' => $record->payment_amount,
-                'payment_date' => $record->payment_date instanceof \DateTimeInterface
+                'payment_date' => $record->payment_date instanceof DateTimeInterface
                     ? $record->payment_date
                     : (is_string($record->payment_date) && $record->payment_date !== ''
-                        ? new \Cake\I18n\Date($record->payment_date)
+                        ? new Date($record->payment_date)
                         : null),
                 'status' => $isAuthorized
                     ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED
                     : InvoiceConstants::PAYMENT_RECORD_PENDING,
                 'authorized' => $isAuthorized,
                 'authorized_by_user' => $record->payment_authorized_by_user ?? null,
-                'authorized_date' => $record->payment_authorized_date instanceof \DateTimeInterface
+                'authorized_date' => $record->payment_authorized_date instanceof DateTimeInterface
                     ? $record->payment_authorized_date
                     : null,
                 'created_by_user' => $record->payment_created_by_user ?? null,

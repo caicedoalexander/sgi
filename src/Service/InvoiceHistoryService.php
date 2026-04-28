@@ -94,7 +94,7 @@ class InvoiceHistoryService implements HistoryServiceInterface
         $historiesTable->save($history);
     }
 
-public function recordStatusChange(int $invoiceId, string $fromStatus, string $toStatus, int $userId): void
+    public function recordStatusChange(int $invoiceId, string $fromStatus, string $toStatus, int $userId): void
     {
         $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
         $labels = InvoicePipelineService::STATUS_LABELS;

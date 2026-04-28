@@ -246,7 +246,12 @@ class PaymentSchedulingService
         $connection = $paymentsTable->getConnection();
 
         return $connection->transactional(function () use (
-            $items, $paymentsTable, $invoicesTable, $scheduling, $schedulingId, $authorizedBy
+            $items,
+            $paymentsTable,
+            $invoicesTable,
+            $scheduling,
+            $schedulingId,
+            $authorizedBy,
         ) {
             $appliedInvoiceIds = [];
             $errors = [];
