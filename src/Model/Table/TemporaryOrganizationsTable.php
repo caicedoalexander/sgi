@@ -3,13 +3,17 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Model\Excel\ExcelExportableInterface;
+use App\Model\Excel\ExcelExportableTrait;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-class TemporaryOrganizationsTable extends Table
+class TemporaryOrganizationsTable extends Table implements ExcelExportableInterface
 {
+    use ExcelExportableTrait;
+
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -58,5 +62,27 @@ class TemporaryOrganizationsTable extends Table
                     return $row->nit ? $row->nit . ' - ' . $row->name : $row->name;
                 });
             });
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function getExcelFields(): array
+    {
+        return [
+            'nit' => ['label' => 'NIT', 'type' => 'string', 'is_key' => true, 'required' => true],
+            'name' => ['label' => 'Nombre', 'type' => 'string', 'required_new' => true],
+            'active' => ['label' => 'Activo', 'type' => 'boolean'],
+        ];
+    }
+
+    public function getExcelSheetTitle(): string
+    {
+        return 'Organizaciones Temporales';
+    }
+
+    public function getExcelDownloadSlug(): string
+    {
+        return 'temporales';
     }
 }

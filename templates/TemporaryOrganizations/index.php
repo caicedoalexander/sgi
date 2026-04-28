@@ -4,7 +4,11 @@ $this->assign('title', 'Organizaciones Temporales');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Organizaciones Temporales</span>
     <div class="d-flex gap-2">
-        <?= $this->element('catalog_excel_buttons') ?>
+        <?= $this->element('excel_wizard/buttons', [
+            'module' => 'TemporaryOrganizations',
+            'importable' => true,
+            'canCreate' => !empty($userPermissions['temporary_organizations']['can_create']),
+        ]) ?>
         <?php if (!empty($userPermissions['temporary_organizations']['can_create'])): ?>
         <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nueva Organización', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
         <?php endif; ?>
@@ -51,3 +55,10 @@ $this->assign('title', 'Organizaciones Temporales');
     </div>
     <?= $this->element('pagination') ?>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'TemporaryOrganizations',
+    'entityName' => 'Organizaciones Temporales',
+    'downloadSlug' => 'temporales',
+    'importable' => true,
+]) ?>
