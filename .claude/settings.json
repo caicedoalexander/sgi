@@ -7,6 +7,10 @@
     "php-lsp@claude-plugins-official": true,
     "acc@awesome-claude-code": true,
     "superpowers@claude-plugins-official": true,
+<<<<<<< HEAD
     "andrej-karpathy-skills@karpathy-skills": true
+=======
+    "frontend-design@claude-plugins-official": true
+>>>>>>> a02e6a1df87d6e5229c5e80d55cd54da7e089cfb
   }
 }
