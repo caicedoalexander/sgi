@@ -60,8 +60,8 @@ class AppController extends Controller
     protected function _actionToPermission(string $action): string
     {
         return match ($action) {
-            'index', 'view', 'export', 'all', 'rejected', 'exportPdf', 'preview', 'active', 'activeEvents', 'allEvents' => 'view',
-            'add', 'addFolder', 'uploadDocument', 'import', 'importExcel', 'previewImport', 'confirmImport', 'addItem', 'uploadAttachment', 'addPayment' => 'add',
+            'index', 'view', 'export', 'exportConfig', 'all', 'rejected', 'exportPdf', 'preview', 'active', 'activeEvents', 'allEvents' => 'view',
+            'add', 'addFolder', 'uploadDocument', 'import', 'importExcel', 'importUpload', 'importProcess', 'previewImport', 'confirmImport', 'addItem', 'uploadAttachment', 'addPayment' => 'add',
             'edit', 'advanceStatus', 'addObservation', 'testSmtp', 'approve', 'reject', 'deactivate', 'saveFields', 'removeInvoice', 'advance', 'advanceGroup', 'addSignature', 'assignLiquidation', 'getFlags', 'authorizePayment', 'rejectPayment', 'editPayment', 'sendApprovalLinks', 'modifyApprovers', 'resetFlow', 'upload' => 'edit',
             'delete', 'deleteDocument', 'removeItem', 'deleteAttachment' => 'delete',
             default => 'view',
