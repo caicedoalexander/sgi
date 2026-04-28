@@ -4,12 +4,16 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use App\Constants\ProviderConstants;
+use App\Model\Excel\ExcelExportableInterface;
+use App\Model\Excel\ExcelExportableTrait;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-class ProvidersTable extends Table
+class ProvidersTable extends Table implements ExcelExportableInterface
 {
+    use ExcelExportableTrait;
+
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -58,5 +62,41 @@ class ProvidersTable extends Table
         $rules->add($rules->isUnique(['document_number']), ['errorField' => 'document_number']);
 
         return $rules;
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function getExcelFields(): array
+    {
+        return [
+            'document_type' => [
+                'label' => 'Tipo de documento', 'type' => 'string',
+                'aliases' => ['tipo doc', 'tipo'],
+            ],
+            'document_number' => [
+                'label' => 'NIT/Documento', 'type' => 'string',
+                'required' => true, 'is_key' => true,
+                'aliases' => ['nit', 'documento', 'numero documento'],
+            ],
+            'name' => ['label' => 'Nombre', 'type' => 'string', 'required_new' => true],
+            'active' => ['label' => 'Activo', 'type' => 'boolean'],
+        ];
+    }
+
+    /**
+     * @return string
+     */
+    public function getExcelSheetTitle(): string
+    {
+        return 'Proveedores';
+    }
+
+    /**
+     * @return string
+     */
+    public function getExcelDownloadSlug(): string
+    {
+        return 'proveedores';
     }
 }
