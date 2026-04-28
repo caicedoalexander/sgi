@@ -113,7 +113,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `empleados_${new Date().toISOString().slice(0,10)}.xlsx`;
+                    const slug = exportModal.dataset.downloadSlug || module.toLowerCase();
+                    a.download = `${slug}_${new Date().toISOString().slice(0,10)}.xlsx`;
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
