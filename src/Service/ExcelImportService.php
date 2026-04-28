@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Model\Entity\Employee;
+use App\Model\Excel\ExcelExportableInterface;
 use Cake\ORM\TableRegistry;
 use DateTime;
 use DateTimeInterface;
@@ -26,6 +26,7 @@ class ExcelImportService
     /**
      * Read headers from an uploaded Excel file saved as temp.
      *
+     * @param string $tempFilePath Path to temp file
      * @return array<string> List of header strings
      * @throws \Exception if the file cannot be read
      */
@@ -40,35 +41,32 @@ class ExcelImportService
         }
 
         $headers = array_map(fn($h) => trim((string)$h), $rows[0]);
-        // Remove empty trailing headers
-        $headers = array_values(array_filter($headers, fn($h) => $h !== ''));
 
-        return $headers;
+        return array_values(array_filter($headers, fn($h) => $h !== ''));
     }
 
     /**
-     * Process import with custom column mapping.
+     * Process a previously-uploaded Excel file using a user-provided column mapping.
      *
      * @param string $tempFilePath Path to the temporary Excel file
-     * @param string $module Module name (e.g., 'Employees')
-     * @param string $tableName ORM table alias
+     * @param \App\Model\Excel\ExcelExportableInterface $table A Table implementing the interface.
+     *        Both an ORM table type and the interface are required, but PHP cannot express
+     *        the intersection in a portable signature; runtime check enforces it.
      * @param array<string, string> $mapping file_header => system_field
-     * @param array<string> $enabledHeaders Only these file headers will be processed
+     * @param array<string> $enabledHeaders headers the user kept enabled in the wizard
+     * @param int $userId User performing the import
+     * @return \App\Service\ImportResult
      */
     public function processImport(
         string $tempFilePath,
-        string $module,
-        string $tableName,
+        ExcelExportableInterface $table,
         array $mapping,
         array $enabledHeaders,
-        ?callable $onCreated = null,
-        ?EmployeeHistoryService $historyService = null,
-        ?int $userId = null,
+        int $userId,
     ): ImportResult {
         $result = new ImportResult();
-        $definitions = $this->mappingService->getFieldDefinitions($module);
+        $definitions = $table->getExcelFields();
 
-        // Find key field
         $keyField = null;
         foreach ($definitions as $field => $def) {
             if (!empty($def['is_key'])) {
@@ -82,8 +80,7 @@ class ExcelImportService
             return $result;
         }
 
-        // Validate required fields are mapped
-        $validationErrors = $this->mappingService->validateMapping($mapping, $module);
+        $validationErrors = $this->mappingService->validateMapping($mapping, $definitions);
         if (!empty($validationErrors)) {
             $result->errors = $validationErrors;
 
@@ -107,38 +104,31 @@ class ExcelImportService
         }
 
         $headers = array_map(fn($h) => trim((string)$h), $rows[0]);
-        $table = TableRegistry::getTableLocator()->get($tableName);
         $skipSystemFields = ['id', 'created', 'modified', 'profile_image'];
 
-        // Build FK lookup caches: code→id and name→id
         $fkCodeLookups = $this->buildFkLookups($definitions);
         $fkNameLookups = $this->buildFkNameLookups($definitions);
 
         $rowCount = count($rows);
         for ($i = 1; $i < $rowCount; $i++) {
             $rowData = [];
-            $rowNum = $i + 1; // Human-readable row number
+            $rowNum = $i + 1;
 
             foreach ($headers as $col => $header) {
-                // Skip if header is not in enabled list
-                if (!in_array($header, $enabledHeaders)) {
+                if (!in_array($header, $enabledHeaders, true)) {
                     continue;
                 }
-                // Skip if not mapped
                 $systemField = $mapping[$header] ?? null;
                 if (!$systemField) {
                     continue;
                 }
-                // Skip system fields
-                if (in_array($systemField, $skipSystemFields)) {
+                if (in_array($systemField, $skipSystemFields, true)) {
                     continue;
                 }
                 $fieldDef = $definitions[$systemField] ?? null;
-
                 $rawValue = $rows[$i][$col] ?? null;
                 $castValue = $this->castValue($rawValue, $fieldDef['type'] ?? 'string');
 
-                // Handle display_only fields with fk_resolve (name→id)
                 if (!empty($fieldDef['display_only']) && !empty($fieldDef['fk_resolve'])) {
                     $nameStr = trim((string)$castValue);
                     if ($nameStr !== '' && isset($fkNameLookups[$systemField])) {
@@ -149,21 +139,18 @@ class ExcelImportService
                             $result->errors[] = "Fila {$rowNum}: {$fieldDef['label']} \"{$nameStr}\" no encontrado.";
                             continue;
                         }
-                        // Store in the target _id field
                         $targetField = $fieldDef['fk_target'];
                         if (!isset($rowData[$targetField])) {
                             $rowData[$targetField] = $resolvedId;
                         }
                     }
-                    continue; // Don't store the display_only field itself
+                    continue;
                 }
 
-                // Skip pure display_only fields without fk_resolve
                 if (!empty($fieldDef['display_only'])) {
                     continue;
                 }
 
-                // Resolve FK code to ID
                 if (!empty($fieldDef['fk']) && !empty($fieldDef['fk_code']) && $castValue !== null) {
                     $codeStr = trim((string)$castValue);
                     if ($codeStr !== '' && isset($fkCodeLookups[$systemField])) {
@@ -181,70 +168,31 @@ class ExcelImportService
                 $rowData[$systemField] = $castValue;
             }
 
-            // Check key field
             $keyValue = trim((string)($rowData[$keyField] ?? ''));
             if ($keyValue === '') {
                 $result->skipped++;
                 continue;
             }
 
-            // Upsert
             $existing = $table->find()
                 ->where([$keyField => $keyValue])
                 ->first();
 
             if ($existing) {
-                // DEBUG: Log comparison for first existing record
-                if ($result->updated === 0 && $result->unchanged === 0) {
-                    $debugLog = "=== DEBUG IMPORT COMPARISON (Row {$rowNum}) ===\n";
-                    foreach ($rowData as $f => $nv) {
-                        $t = $definitions[$f]['type'] ?? 'string';
-                        if (!empty($definitions[$f]['fk'])) {
-                            $t = 'integer';
-                        }
-                        $ov = $existing->get($f);
-                        $on = $this->normalizeForComparison($ov, $t);
-                        $nn = $this->normalizeForComparison($nv, $t);
-                        $match = $on === $nn ? 'EQUAL' : 'DIFF';
-                        $debugLog .= "{$f} [{$t}]: old=" . var_export($ov, true)
-                            . ' → norm=' . var_export($on, true)
-                            . ' | new=' . var_export($nv, true)
-                            . ' → norm=' . var_export($nn, true)
-                            . " [{$match}]\n";
-                    }
-                    file_put_contents(TMP . 'import_debug.log', $debugLog);
-                }
-
-                // Filter to only fields with actual changes
                 $changedData = $this->filterChangedFields($existing, $rowData, $definitions);
-
                 if (empty($changedData)) {
                     $result->unchanged++;
                     continue;
                 }
-
-                // Clone original state before patching (for history)
                 $originalClone = clone $existing;
-
                 $entity = $table->patchEntity($existing, $changedData);
-
                 if ($table->save($entity)) {
                     $result->updated++;
-                    // Record history if service provided
-                    if ($historyService && $userId && $entity instanceof Employee) {
-                        $historyService->recordChanges($originalClone, $entity, $userId);
-                    }
+                    $table->onExcelImportUpdated($originalClone, $entity, $userId);
                 } else {
-                    $errors = $entity->getErrors();
-                    $errorMsg = "Fila {$rowNum}: ";
-                    foreach ($errors as $field => $fieldErrors) {
-                        $label = $definitions[$field]['label'] ?? $field;
-                        $errorMsg .= "{$label}: " . implode(', ', $fieldErrors) . '. ';
-                    }
-                    $result->errors[] = trim($errorMsg);
+                    $result->errors[] = $this->formatEntityErrors($entity, $rowNum, $definitions);
                 }
             } else {
-                // Validate required_new fields
                 $missingNew = [];
                 foreach ($definitions as $field => $def) {
                     if (!empty($def['required_new']) && empty($rowData[$field])) {
@@ -257,20 +205,11 @@ class ExcelImportService
                     continue;
                 }
                 $entity = $table->newEntity($rowData);
-
                 if ($table->save($entity)) {
                     $result->created++;
-                    if ($onCreated) {
-                        $onCreated($entity);
-                    }
+                    $table->onExcelImportCreated($entity, $userId);
                 } else {
-                    $errors = $entity->getErrors();
-                    $errorMsg = "Fila {$rowNum}: ";
-                    foreach ($errors as $field => $fieldErrors) {
-                        $label = $definitions[$field]['label'] ?? $field;
-                        $errorMsg .= "{$label}: " . implode(', ', $fieldErrors) . '. ';
-                    }
-                    $result->errors[] = trim($errorMsg);
+                    $result->errors[] = $this->formatEntityErrors($entity, $rowNum, $definitions);
                 }
             }
         }
@@ -279,7 +218,29 @@ class ExcelImportService
     }
 
     /**
+     * @param object $entity The entity that failed to save
+     * @param int $rowNum 1-based row number for error message
+     * @param array<string, array<string, mixed>> $definitions
+     * @return string
+     */
+    private function formatEntityErrors(object $entity, int $rowNum, array $definitions): string
+    {
+        $errors = method_exists($entity, 'getErrors') ? $entity->getErrors() : [];
+        $msg = "Fila {$rowNum}: ";
+        foreach ($errors as $field => $fieldErrors) {
+            $label = $definitions[$field]['label'] ?? $field;
+            $msg .= "{$label}: " . implode(', ', $fieldErrors) . '. ';
+        }
+
+        return trim($msg);
+    }
+
+    /**
      * Cast a raw Excel value to the expected PHP type.
+     *
+     * @param mixed $rawValue Raw cell value
+     * @param string $type Field type
+     * @return mixed
      */
     private function castValue(mixed $rawValue, string $type): mixed
     {
@@ -297,12 +258,11 @@ class ExcelImportService
     }
 
     /**
-     * @param mixed $value Raw date value from Excel
-     * @return string|null Formatted date string
+     * @param mixed $value Raw date value
+     * @return string|null
      */
     private function parseDate(mixed $value): ?string
     {
-        // Excel serial number
         if (is_numeric($value) && (float)$value > 1000) {
             try {
                 $dateObj = Date::excelToDateTimeObject((float)$value);
@@ -314,8 +274,6 @@ class ExcelImportService
         }
 
         $strValue = trim((string)$value);
-
-        // Try common formats
         $formats = ['Y-m-d', 'd/m/Y', 'd-m-Y', 'Y/m/d', 'm/d/Y'];
         foreach ($formats as $format) {
             $parsed = DateTime::createFromFormat($format, $strValue);
@@ -328,15 +286,14 @@ class ExcelImportService
     }
 
     /**
-     * @param mixed $value Raw decimal value from Excel
-     * @return float|null Parsed float value
+     * @param mixed $value Raw decimal value
+     * @return float|null
      */
     private function parseDecimal(mixed $value): ?float
     {
         if (is_numeric($value)) {
             return (float)$value;
         }
-        // Remove currency formatting (dots as thousands, comma as decimal)
         $cleaned = str_replace(['.', '$', ' '], '', (string)$value);
         $cleaned = str_replace(',', '.', $cleaned);
 
@@ -344,8 +301,8 @@ class ExcelImportService
     }
 
     /**
-     * @param mixed $value Raw boolean value from Excel
-     * @return bool|null Parsed boolean value
+     * @param mixed $value Raw boolean value
+     * @return bool|null
      */
     private function parseBoolean(mixed $value): ?bool
     {
@@ -362,10 +319,8 @@ class ExcelImportService
     }
 
     /**
-     * Build code→id lookup caches for all FK fields in the definitions.
-     *
-     * @param array<string, array> $definitions Field definitions from ExcelMappingService
-     * @return array<string, array<string, int>> Map of field_name => [code => id]
+     * @param array<string, array<string, mixed>> $definitions
+     * @return array<string, array<string, int>>
      */
     private function buildFkLookups(array $definitions): array
     {
@@ -376,11 +331,8 @@ class ExcelImportService
             }
             $fkTable = TableRegistry::getTableLocator()->get($def['fk_table']);
             $codeField = $def['fk_code'];
-            $rows = $fkTable->find()
-                ->select(['id', $codeField])
-                ->where(["{$codeField} IS NOT" => null])
-                ->all();
-
+            $rows = $fkTable->find()->select(['id', $codeField])
+                ->where(["{$codeField} IS NOT" => null])->all();
             $map = [];
             foreach ($rows as $row) {
                 $code = trim((string)$row->{$codeField});
@@ -395,11 +347,8 @@ class ExcelImportService
     }
 
     /**
-     * Build name→id lookup caches for display_only fields with fk_resolve.
-     * Stores both original and lowercased name for case-insensitive matching.
-     *
-     * @param array<string, array> $definitions Field definitions from ExcelMappingService
-     * @return array<string, array<string, int>> Map of field_name => [name => id]
+     * @param array<string, array<string, mixed>> $definitions
+     * @return array<string, array<string, int>>
      */
     private function buildFkNameLookups(array $definitions): array
     {
@@ -410,11 +359,8 @@ class ExcelImportService
             }
             $fkTable = TableRegistry::getTableLocator()->get($def['fk_table']);
             $nameField = $def['fk_resolve'];
-            $rows = $fkTable->find()
-                ->select(['id', $nameField])
-                ->where(["{$nameField} IS NOT" => null])
-                ->all();
-
+            $rows = $fkTable->find()->select(['id', $nameField])
+                ->where(["{$nameField} IS NOT" => null])->all();
             $map = [];
             foreach ($rows as $row) {
                 $name = trim((string)$row->{$nameField});
@@ -430,20 +376,17 @@ class ExcelImportService
     }
 
     /**
-     * Normalize a value for comparison between existing DB value and imported value.
+     * Normalize a value for change-detection between DB and import values.
      *
-     * @param mixed $value The value to normalize
-     * @param string $type The field type from definitions
-     * @return string|null Normalized string representation for comparison
+     * @param mixed $value Raw value
+     * @param string $type Field type
+     * @return string|null
      */
     private function normalizeForComparison(mixed $value, string $type): ?string
     {
         if ($value === null || $value === '') {
             return null;
         }
-
-        // CakePHP Chronos 3.x Date doesn't implement DateTimeInterface.
-        // Extract the native DateTimeImmutable to use PHP's format().
         if (is_object($value) && method_exists($value, 'toNative')) {
             return $value->toNative()->format('Y-m-d');
         }
@@ -461,26 +404,21 @@ class ExcelImportService
     }
 
     /**
-     * Filter rowData to only fields that actually differ from existing entity.
-     *
-     * @param object $existing The existing entity from DB
+     * @param object $existing Current entity in DB
      * @param array<string, mixed> $rowData Imported row data
-     * @param array<string, array> $definitions Field definitions with types
-     * @return array<string, mixed> Only the fields that have real changes
+     * @param array<string, array<string, mixed>> $definitions
+     * @return array<string, mixed>
      */
     private function filterChangedFields(object $existing, array $rowData, array $definitions): array
     {
         $changed = [];
         foreach ($rowData as $field => $newValue) {
             $type = $definitions[$field]['type'] ?? 'string';
-            // FK fields store integer IDs regardless of their declared type
             if (!empty($definitions[$field]['fk'])) {
                 $type = 'integer';
             }
-
             $oldNormalized = $this->normalizeForComparison($existing->get($field), $type);
             $newNormalized = $this->normalizeForComparison($newValue, $type);
-
             if ($oldNormalized !== $newNormalized) {
                 $changed[$field] = $newValue;
             }
