@@ -42,11 +42,11 @@ $pipelineOptions = InvoicePipelineService::STATUS_LABELS;
             ['class' => 'btn btn-outline-secondary', 'escape' => false]
         ) ?>
         <?php endif; ?>
-        <?= $this->Html->link(
-            '<i class="bi bi-file-earmark-excel me-1"></i>Exportar',
-            ['action' => 'export'],
-            ['class' => 'btn btn-outline-success', 'escape' => false]
-        ) ?>
+        <?= $this->element('excel_wizard/buttons', [
+            'module' => 'Invoices',
+            'importable' => false,
+            'canCreate' => !empty($userPermissions['invoices']['can_create']),
+        ]) ?>
         <?php if (!empty($userPermissions['invoices']['can_create'])): ?>
         <?= $this->Html->link(
             '<i class="bi bi-plus-lg me-1"></i>Nueva Factura',
@@ -280,3 +280,10 @@ $pipelineOptions = InvoicePipelineService::STATUS_LABELS;
 
     <?= $this->element('pagination') ?>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'Invoices',
+    'entityName' => 'Facturas',
+    'downloadSlug' => 'facturas',
+    'importable' => false,
+]) ?>
