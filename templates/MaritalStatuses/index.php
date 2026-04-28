@@ -4,7 +4,11 @@ $this->assign('title', 'Estados Civiles');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Estados Civiles</span>
     <div class="d-flex gap-2">
-        <?= $this->element('catalog_excel_buttons') ?>
+        <?= $this->element('excel_wizard/buttons', [
+            'module' => 'MaritalStatuses',
+            'importable' => true,
+            'canCreate' => !empty($userPermissions['marital_statuses']['can_create']),
+        ]) ?>
         <?php if (!empty($userPermissions['marital_statuses']['can_create'])): ?>
         <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Estado Civil', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
         <?php endif; ?>
@@ -42,3 +46,10 @@ $this->assign('title', 'Estados Civiles');
     </div>
     <?= $this->element('pagination') ?>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'MaritalStatuses',
+    'entityName' => 'Estados Civiles',
+    'downloadSlug' => 'estados_civiles',
+    'importable' => true,
+]) ?>

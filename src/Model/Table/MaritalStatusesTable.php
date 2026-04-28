@@ -3,12 +3,16 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Model\Excel\ExcelExportableInterface;
+use App\Model\Excel\ExcelExportableTrait;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-class MaritalStatusesTable extends Table
+class MaritalStatusesTable extends Table implements ExcelExportableInterface
 {
+    use ExcelExportableTrait;
+
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -42,5 +46,25 @@ class MaritalStatusesTable extends Table
         ]);
 
         return $rules;
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function getExcelFields(): array
+    {
+        return [
+            'name' => ['label' => 'Nombre', 'type' => 'string', 'is_key' => true, 'required' => true],
+        ];
+    }
+
+    public function getExcelSheetTitle(): string
+    {
+        return 'Estados Civiles';
+    }
+
+    public function getExcelDownloadSlug(): string
+    {
+        return 'estados_civiles';
     }
 }
