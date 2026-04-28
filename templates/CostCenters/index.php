@@ -8,7 +8,11 @@ $this->assign('title', 'Centros de Costos');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Centros de Costos</span>
     <div class="d-flex gap-2">
-        <?= $this->element('catalog_excel_buttons') ?>
+        <?= $this->element('excel_wizard/buttons', [
+            'module' => 'CostCenters',
+            'importable' => true,
+            'canCreate' => !empty($userPermissions['cost_centers']['can_create']),
+        ]) ?>
         <?php if (!empty($userPermissions['cost_centers']['can_create'])): ?>
         <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Centro', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
         <?php endif; ?>
@@ -50,3 +54,10 @@ $this->assign('title', 'Centros de Costos');
     </div>
     <?= $this->element('pagination') ?>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'CostCenters',
+    'entityName' => 'Centros de Costos',
+    'downloadSlug' => 'centros_costos',
+    'importable' => true,
+]) ?>
