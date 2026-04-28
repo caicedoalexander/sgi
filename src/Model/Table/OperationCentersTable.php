@@ -3,13 +3,17 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Model\Excel\ExcelExportableInterface;
+use App\Model\Excel\ExcelExportableTrait;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-class OperationCentersTable extends Table
+class OperationCentersTable extends Table implements ExcelExportableInterface
 {
+    use ExcelExportableTrait;
+
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -62,5 +66,26 @@ class OperationCentersTable extends Table
                     return $row->code ? $row->code . ' - ' . $row->name : $row->name;
                 });
             });
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function getExcelFields(): array
+    {
+        return [
+            'code' => ['label' => 'Código', 'type' => 'string', 'is_key' => true, 'required' => true],
+            'name' => ['label' => 'Nombre', 'type' => 'string', 'required_new' => true],
+        ];
+    }
+
+    public function getExcelSheetTitle(): string
+    {
+        return 'Centros de Operación';
+    }
+
+    public function getExcelDownloadSlug(): string
+    {
+        return 'centros_operacion';
     }
 }
