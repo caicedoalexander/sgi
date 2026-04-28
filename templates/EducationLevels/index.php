@@ -4,7 +4,11 @@ $this->assign('title', 'Niveles Educativos');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Niveles Educativos</span>
     <div class="d-flex gap-2">
-        <?= $this->element('catalog_excel_buttons') ?>
+        <?= $this->element('excel_wizard/buttons', [
+            'module' => 'EducationLevels',
+            'importable' => true,
+            'canCreate' => !empty($userPermissions['education_levels']['can_create']),
+        ]) ?>
         <?php if (!empty($userPermissions['education_levels']['can_create'])): ?>
         <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Nivel Educativo', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
         <?php endif; ?>
@@ -42,3 +46,10 @@ $this->assign('title', 'Niveles Educativos');
     </div>
     <?= $this->element('pagination') ?>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'EducationLevels',
+    'entityName' => 'Niveles Educativos',
+    'downloadSlug' => 'niveles_educativos',
+    'importable' => true,
+]) ?>
