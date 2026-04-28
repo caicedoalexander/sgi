@@ -4,7 +4,11 @@ $this->assign('title', 'Cargos');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Cargos</span>
     <div class="d-flex gap-2">
-        <?= $this->element('catalog_excel_buttons') ?>
+        <?= $this->element('excel_wizard/buttons', [
+            'module' => 'Positions',
+            'importable' => true,
+            'canCreate' => !empty($userPermissions['positions']['can_create']),
+        ]) ?>
         <?php if (!empty($userPermissions['positions']['can_create'])): ?>
         <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Cargo', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
         <?php endif; ?>
@@ -44,3 +48,10 @@ $this->assign('title', 'Cargos');
     </div>
     <?= $this->element('pagination') ?>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'Positions',
+    'entityName' => 'Cargos',
+    'downloadSlug' => 'cargos',
+    'importable' => true,
+]) ?>

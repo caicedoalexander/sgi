@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Controller\Trait\ExcelCatalogTrait;
+use App\Controller\Trait\ExcelWizardTrait;
 
 class PositionsController extends AppController
 {
-    use ExcelCatalogTrait;
+    use ExcelWizardTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
