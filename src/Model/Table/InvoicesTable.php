@@ -4,13 +4,17 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use App\Constants\InvoiceConstants;
+use App\Model\Excel\ExcelExportableInterface;
+use App\Model\Excel\ExcelExportableTrait;
 use App\Service\InvoicePipelineService;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-class InvoicesTable extends Table
+class InvoicesTable extends Table implements ExcelExportableInterface
 {
+    use ExcelExportableTrait;
+
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -248,5 +252,79 @@ class InvoicesTable extends Table
         ]);
 
         return $rules;
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function getExcelFields(): array
+    {
+        return [
+            'invoice_number' => ['label' => 'Número Factura', 'type' => 'string'],
+            'document_type' => ['label' => 'Tipo Documento', 'type' => 'string'],
+            'registration_date' => ['label' => 'Fecha Registro', 'type' => 'date'],
+            'issue_date' => ['label' => 'Fecha Emisión', 'type' => 'date'],
+            'due_date' => ['label' => 'Fecha Vencimiento', 'type' => 'date'],
+            // display_only field keys MUST match the association property name on the
+            // entity (lowerCamel of the alias). For belongsTo('Providers') Cake exposes
+            // $entity->provider.
+            'provider' => [
+                'label' => 'Proveedor', 'type' => 'string', 'display_only' => true,
+                'fk_resolve' => 'name', 'fk_table' => 'Providers', 'fk_target' => 'provider_id',
+            ],
+            'operation_center' => [
+                'label' => 'Centro Operación', 'type' => 'string', 'display_only' => true,
+                'fk_resolve' => 'name', 'fk_table' => 'OperationCenters', 'fk_target' => 'operation_center_id',
+            ],
+            'expense_type' => [
+                'label' => 'Tipo Gasto', 'type' => 'string', 'display_only' => true,
+                'fk_resolve' => 'name', 'fk_table' => 'ExpenseTypes', 'fk_target' => 'expense_type_id',
+            ],
+            'cost_center' => [
+                'label' => 'Centro Costos', 'type' => 'string', 'display_only' => true,
+                'fk_resolve' => 'name', 'fk_table' => 'CostCenters', 'fk_target' => 'cost_center_id',
+            ],
+            'detail' => ['label' => 'Detalle', 'type' => 'string'],
+            'amount' => ['label' => 'Valor', 'type' => 'decimal'],
+            'dian_validation' => ['label' => 'Validación DIAN', 'type' => 'string'],
+            'accrued' => ['label' => 'Causada', 'type' => 'boolean'],
+            'accrual_date' => ['label' => 'Fecha Causación', 'type' => 'date'],
+            'ready_for_payment' => ['label' => 'Lista para Pago', 'type' => 'string'],
+            'payment_status' => ['label' => 'Estado Pago', 'type' => 'string'],
+            'full_payment_date' => ['label' => 'Fecha Pago Total', 'type' => 'date'],
+            'pipeline_status' => ['label' => 'Estado Pipeline', 'type' => 'string'],
+        ];
+    }
+
+    /**
+     * @return string
+     */
+    public function getExcelSheetTitle(): string
+    {
+        return 'Facturas';
+    }
+
+    /**
+     * @return string
+     */
+    public function getExcelDownloadSlug(): string
+    {
+        return 'facturas';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isExcelImportable(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @return array<int|string, mixed>
+     */
+    public function getExcelExportContains(): array
+    {
+        return ['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters'];
     }
 }
