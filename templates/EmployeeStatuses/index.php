@@ -4,7 +4,11 @@ $this->assign('title', 'Estados de Empleado');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Estados de Empleado</span>
     <div class="d-flex gap-2">
-        <?= $this->element('catalog_excel_buttons') ?>
+        <?= $this->element('excel_wizard/buttons', [
+            'module' => 'EmployeeStatuses',
+            'importable' => true,
+            'canCreate' => !empty($userPermissions['employee_statuses']['can_create']),
+        ]) ?>
         <?php if (!empty($userPermissions['employee_statuses']['can_create'])): ?>
         <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Estado de Empleado', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
         <?php endif; ?>
@@ -42,3 +46,10 @@ $this->assign('title', 'Estados de Empleado');
     </div>
     <?= $this->element('pagination') ?>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'EmployeeStatuses',
+    'entityName' => 'Estados de Empleado',
+    'downloadSlug' => 'estados_empleado',
+    'importable' => true,
+]) ?>
