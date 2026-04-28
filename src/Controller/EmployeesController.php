@@ -4,27 +4,21 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
+use App\Controller\Trait\ExcelWizardTrait;
 use App\Service\EmployeeDocumentService;
 use App\Service\EmployeeFilterService;
 use App\Service\EmployeeHistoryService;
-use App\Service\ExcelImportService;
-use App\Service\ExcelMappingService;
-use App\Service\ExcelService;
-use ArrayObject;
-use Cake\Http\Response;
 use Cake\ORM\TableRegistry;
-use Exception;
 
 class EmployeesController extends AppController
 {
+    use ExcelWizardTrait;
+
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     private EmployeeFilterService $filterService;
     private EmployeeDocumentService $documentService;
     private EmployeeHistoryService $historyService;
-    private ExcelMappingService $mappingService;
-    private ExcelService $excelService;
-    private ExcelImportService $importService;
 
     public function initialize(): void
     {
@@ -32,23 +26,6 @@ class EmployeesController extends AppController
         $this->filterService = new EmployeeFilterService();
         $this->documentService = new EmployeeDocumentService();
         $this->historyService = new EmployeeHistoryService();
-        $this->mappingService = new ExcelMappingService();
-        $this->excelService = new ExcelService();
-        $this->importService = new ExcelImportService();
-    }
-
-    /**
-     * Return exportable fields as JSON for the export modal.
-     */
-    public function exportConfig(): void
-    {
-        $this->request->allowMethod(['get']);
-        $this->viewBuilder()->setClassName('Json');
-
-        $fields = $this->mappingService->getExportableFields('Employees');
-
-        $this->set('fields', $fields);
-        $this->viewBuilder()->setOption('serialize', ['fields']);
     }
 
     public function index()
@@ -276,228 +253,6 @@ class EmployeesController extends AppController
         }
 
         return $this->redirect(['action' => 'view', $employeeId]);
-    }
-
-    /**
-     * Export employees to XLSX with user-selected fields via AJAX POST.
-     *
-     * @return \Cake\Http\Response|null
-     */
-    public function export(): ?Response
-    {
-        $this->request->allowMethod(['post']);
-
-        $requestFields = $this->request->getData('fields');
-        if (empty($requestFields) || !is_array($requestFields)) {
-            $this->response = $this->response->withStatus(400);
-            $this->viewBuilder()->setClassName('Json');
-            $this->set('error', 'No se seleccionaron campos para exportar.');
-            $this->viewBuilder()->setOption('serialize', ['error']);
-
-            return null;
-        }
-
-        $labelMap = $this->mappingService->getLabelMap('Employees');
-
-        // Filter to only valid fields
-        $allDefinitions = $this->mappingService->getFieldDefinitions('Employees');
-        $validFields = array_filter($requestFields, fn($f) => isset($allDefinitions[$f]));
-        if (empty($validFields)) {
-            $this->response = $this->response->withStatus(400);
-            $this->viewBuilder()->setClassName('Json');
-            $this->set('error', 'Ningún campo válido seleccionado.');
-            $this->viewBuilder()->setOption('serialize', ['error']);
-
-            return null;
-        }
-
-        // Re-index to ensure sequential keys
-        $validFields = array_values($validFields);
-
-        // Build query with contains for display_only fields
-        $query = $this->Employees->find()
-            ->contain([
-                'EmployeeStatuses',
-                'Positions',
-                'SupervisorPositions',
-                'OperationCenters',
-                'CostCenters',
-                'MaritalStatuses',
-                'EducationLevels',
-                'TemporaryOrganizations',
-            ])
-            ->order(['Employees.last_name1' => 'ASC', 'Employees.last_name2' => 'ASC'])
-            ->formatResults(function ($results) use ($validFields, $allDefinitions) {
-                return $results->map(function ($employee) use ($validFields, $allDefinitions) {
-                    $data = [];
-                    // display_only fields: show related entity name
-                    $relationNameMap = [
-                        'position' => 'position',
-                        'supervisor_position' => 'supervisor_position',
-                        'operation_center' => 'operation_center',
-                        'cost_center' => 'cost_center',
-                        'employee_status' => 'employee_status',
-                        'marital_status' => 'marital_status',
-                        'education_level' => 'education_level',
-                        'temporary_organization' => 'temporary_organization',
-                    ];
-                    // FK fields: show related entity code instead of numeric ID
-                    $relationCodeMap = [
-                        'position_id' => ['rel' => 'position', 'code' => 'code'],
-                        'supervisor_position_id' => ['rel' => 'supervisor_position', 'code' => 'code'],
-                        'operation_center_id' => ['rel' => 'operation_center', 'code' => 'code'],
-                        'cost_center_id' => ['rel' => 'cost_center', 'code' => 'code'],
-                        'employee_status_id' => ['rel' => 'employee_status', 'code' => 'name'],
-                        'marital_status_id' => ['rel' => 'marital_status', 'code' => 'name'],
-                        'education_level_id' => ['rel' => 'education_level', 'code' => 'name'],
-                        'temporary_organization_id' => ['rel' => 'temporary_organization', 'code' => 'nit'],
-                    ];
-
-                    foreach ($validFields as $field) {
-                        if (isset($relationNameMap[$field])) {
-                            $rel = $relationNameMap[$field];
-                            $data[$field] = $employee->{$rel}->name ?? '';
-                        } elseif (isset($relationCodeMap[$field])) {
-                            $info = $relationCodeMap[$field];
-                            $related = $employee->{$info['rel']} ?? null;
-                            $data[$field] = $related ? ($related->{$info['code']} ?? '') : '';
-                        } else {
-                            $data[$field] = $employee->{$field} ?? '';
-                        }
-                    }
-
-                    return new ArrayObject($data);
-                });
-            });
-
-        $filePath = $this->excelService->exportWithLabels('Empleados', $query, $validFields, $labelMap);
-
-        $response = $this->response->withFile($filePath, [
-            'download' => true,
-            'name' => 'empleados_' . date('Y-m-d') . '.xlsx',
-        ]);
-
-        register_shutdown_function(function () use ($filePath): void {
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
-        });
-
-        return $response;
-    }
-
-    /**
-     * Upload Excel file, read headers, and return auto-mapping as JSON.
-     *
-     * @return void
-     */
-    public function importUpload(): void
-    {
-        $this->request->allowMethod(['post']);
-        $this->viewBuilder()->setClassName('Json');
-
-        $file = $this->request->getUploadedFile('excel_file');
-        if (!$file || $file->getError() !== UPLOAD_ERR_OK) {
-            $this->response = $this->response->withStatus(400);
-            $this->set('error', 'No se recibió un archivo válido.');
-            $this->viewBuilder()->setOption('serialize', ['error']);
-
-            return;
-        }
-
-        // Save temp file
-        $tempName = 'sgi_import_' . bin2hex(random_bytes(8));
-        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $tempName . '.xlsx';
-        $file->moveTo($tempPath);
-
-        try {
-            $headers = $this->importService->readHeaders($tempPath);
-
-            $autoMapping = $this->mappingService->autoMapColumns($headers, 'Employees');
-            $systemFields = $this->mappingService->getImportableFields('Employees');
-
-            $this->set(compact('tempName', 'headers', 'autoMapping', 'systemFields'));
-            $this->viewBuilder()->setOption('serialize', ['tempName', 'headers', 'autoMapping', 'systemFields']);
-        } catch (Exception $e) {
-            if (file_exists($tempPath)) {
-                unlink($tempPath);
-            }
-            $this->response = $this->response->withStatus(400);
-            $this->set('error', $e->getMessage());
-            $this->viewBuilder()->setOption('serialize', ['error']);
-        }
-    }
-
-    /**
-     * Process import with user-defined column mapping via AJAX POST.
-     *
-     * @return void
-     */
-    public function importProcess(): void
-    {
-        $this->request->allowMethod(['post']);
-        $this->viewBuilder()->setClassName('Json');
-
-        $tempName = $this->request->getData('temp_file');
-        $mapping = $this->request->getData('mapping');
-        $enabledHeaders = $this->request->getData('enabled');
-
-        if (!$tempName || !$mapping || !$enabledHeaders) {
-            $this->response = $this->response->withStatus(400);
-            $this->set('error', 'Datos de importación incompletos.');
-            $this->viewBuilder()->setOption('serialize', ['error']);
-
-            return;
-        }
-
-        // Validate temp file name (prevent path traversal)
-        if (!preg_match('/^sgi_import_[a-f0-9]{16}$/', $tempName)) {
-            $this->response = $this->response->withStatus(400);
-            $this->set('error', 'Referencia de archivo inválida.');
-            $this->viewBuilder()->setOption('serialize', ['error']);
-
-            return;
-        }
-
-        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $tempName . '.xlsx';
-        if (!file_exists($tempPath)) {
-            $this->response = $this->response->withStatus(400);
-            $this->set('error', 'El archivo temporal ha expirado. Por favor, suba el archivo nuevamente.');
-            $this->viewBuilder()->setOption('serialize', ['error']);
-
-            return;
-        }
-
-        try {
-            $userId = (int)$this->request->getAttribute('identity')->getIdentifier();
-            $result = $this->importService->processImport(
-                $tempPath,
-                'Employees',
-                'Employees',
-                $mapping,
-                $enabledHeaders,
-                fn($entity) => $this->documentService->createDefaultFolders((int)$entity->id),
-                $this->historyService,
-                $userId,
-            );
-
-            $this->set([
-                'success' => empty($result->errors) || $result->created > 0 || $result->updated > 0,
-                'created' => $result->created,
-                'updated' => $result->updated,
-                'unchanged' => $result->unchanged,
-                'skipped' => $result->skipped,
-                'errors' => $result->errors,
-                'summary' => $result->getSummary(),
-            ]);
-            $this->viewBuilder()->setOption('serialize', [
-                'success', 'created', 'updated', 'unchanged', 'skipped', 'errors', 'summary',
-            ]);
-        } finally {
-            if (file_exists($tempPath)) {
-                unlink($tempPath);
-            }
-        }
     }
 
     protected function _setFormDropdowns(): void
