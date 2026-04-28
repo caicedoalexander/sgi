@@ -4,7 +4,11 @@ $this->assign('title', 'Carpetas por Defecto');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Carpetas por Defecto</span>
     <div class="d-flex gap-2">
-        <?= $this->element('catalog_excel_buttons') ?>
+        <?= $this->element('excel_wizard/buttons', [
+            'module' => 'DefaultFolders',
+            'importable' => true,
+            'canCreate' => !empty($userPermissions['default_folders']['can_create']),
+        ]) ?>
         <?php if (!empty($userPermissions['default_folders']['can_create'])): ?>
         <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nueva Carpeta por Defecto', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
         <?php endif; ?>
@@ -44,3 +48,10 @@ $this->assign('title', 'Carpetas por Defecto');
     </div>
     <?= $this->element('pagination') ?>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'DefaultFolders',
+    'entityName' => 'Carpetas por Defecto',
+    'downloadSlug' => 'carpetas_defecto',
+    'importable' => true,
+]) ?>

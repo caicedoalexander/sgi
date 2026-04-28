@@ -3,12 +3,16 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Model\Excel\ExcelExportableInterface;
+use App\Model\Excel\ExcelExportableTrait;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-class DefaultFoldersTable extends Table
+class DefaultFoldersTable extends Table implements ExcelExportableInterface
 {
+    use ExcelExportableTrait;
+
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -42,5 +46,26 @@ class DefaultFoldersTable extends Table
         ]);
 
         return $rules;
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function getExcelFields(): array
+    {
+        return [
+            'name' => ['label' => 'Nombre', 'type' => 'string', 'is_key' => true, 'required' => true],
+            'sort_order' => ['label' => 'Orden', 'type' => 'integer'],
+        ];
+    }
+
+    public function getExcelSheetTitle(): string
+    {
+        return 'Carpetas por Defecto';
+    }
+
+    public function getExcelDownloadSlug(): string
+    {
+        return 'carpetas_defecto';
     }
 }
