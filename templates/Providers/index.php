@@ -8,7 +8,11 @@ $this->assign('title', 'Proveedores');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Proveedores</span>
     <div class="d-flex gap-2">
-        <?= $this->element('catalog_excel_buttons') ?>
+        <?= $this->element('excel_wizard/buttons', [
+            'module' => 'Providers',
+            'importable' => true,
+            'canCreate' => !empty($userPermissions['providers']['can_create']),
+        ]) ?>
         <?php if (!empty($userPermissions['providers']['can_create'])): ?>
         <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Proveedor', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
         <?php endif; ?>
@@ -54,3 +58,10 @@ $this->assign('title', 'Proveedores');
     </div>
     <?= $this->element('pagination') ?>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'Providers',
+    'entityName' => 'Proveedores',
+    'downloadSlug' => 'proveedores',
+    'importable' => true,
+]) ?>
