@@ -6,19 +6,20 @@ namespace App\Controller;
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
-use App\Service\ExcelService;
+use App\Controller\Trait\ExcelWizardTrait;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
 use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
-use ArrayObject;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 
 class InvoicesController extends AppController
 {
+    use ExcelWizardTrait;
+
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     private InvoicePipelineService $pipeline;
@@ -293,6 +294,7 @@ class InvoicesController extends AppController
                 }
 
                 $redirectAction = $result['advanced'] ? 'index' : 'edit';
+
                 return $this->redirect(['action' => $redirectAction, ...($redirectAction === 'edit' ? [$id] : [])]);
             }
 
@@ -412,62 +414,6 @@ class InvoicesController extends AppController
         }
 
         return $this->redirect(['action' => 'edit', $id]);
-    }
-
-    public function export()
-    {
-        $roleName = $this->_getRoleName();
-        $visibleStatuses = $this->pipeline->getVisibleStatuses($roleName);
-        $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
-
-        $query = $this->Invoices->find()
-            ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters'])
-            ->order(['Invoices.registration_date' => 'DESC']);
-
-        if (!empty($visibleStatuses)) {
-            $query->where(['Invoices.pipeline_status IN' => $visibleStatuses]);
-        }
-
-        $query->formatResults(function ($results) use ($pipelineLabels) {
-            return $results->map(function ($invoice) use ($pipelineLabels) {
-                return new ArrayObject([
-                    'Número Factura'      => $invoice->invoice_number ?? '',
-                    'Tipo Documento'      => $invoice->document_type ?? '',
-                    'Fecha Registro'      => $invoice->registration_date?->format('Y-m-d') ?? '',
-                    'Fecha Emisión'       => $invoice->issue_date?->format('Y-m-d') ?? '',
-                    'Fecha Vencimiento'   => $invoice->due_date?->format('Y-m-d') ?? '',
-                    'Proveedor'           => $invoice->provider->name ?? '',
-                    'Centro Operación'    => $invoice->operation_center->name ?? '',
-                    'Tipo Gasto'          => $invoice->expense_type->name ?? '',
-                    'Centro Costos'       => $invoice->cost_center->name ?? '',
-                    'Detalle'             => $invoice->detail ?? '',
-                    'Valor'               => $invoice->amount ?? 0,
-                    'Validación DIAN'     => $invoice->dian_validation ?? '',
-                    'Causada'             => $invoice->accrued ? 'Sí' : 'No',
-                    'Fecha Causación'     => $invoice->accrual_date?->format('Y-m-d') ?? '',
-                    'Lista para Pago'     => $invoice->ready_for_payment ?? '',
-                    'Estado Pago'         => $invoice->payment_status ?? '',
-                    'Fecha Pago Total'    => $invoice->full_payment_date?->format('Y-m-d') ?? '',
-                    'Estado Pipeline'     => $pipelineLabels[$invoice->pipeline_status] ?? $invoice->pipeline_status ?? '',
-                ]);
-            });
-        });
-
-        $excelService = new ExcelService();
-        $filePath = $excelService->exportCatalog('Facturas', $query);
-
-        $response = $this->response->withFile($filePath, [
-            'download' => true,
-            'name' => 'facturas_' . date('Y-m-d') . '.xlsx',
-        ]);
-
-        register_shutdown_function(function () use ($filePath) {
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
-        });
-
-        return $response;
     }
 
     public function delete($id = null)
@@ -732,5 +678,4 @@ class InvoicesController extends AppController
 
         return $this->redirect(['action' => 'edit', $id]);
     }
-
 }
