@@ -14,6 +14,7 @@ class AuthorizationService
     // Module constants (matching PermissionsTable::MODULES)
     public const MODULES = [
         'invoices' => 'Facturas',
+        'advances' => 'Anticipos',
         'providers' => 'Proveedores',
         'operation_centers' => 'Centros de Operación',
         'expense_types' => 'Tipos de Gasto',
