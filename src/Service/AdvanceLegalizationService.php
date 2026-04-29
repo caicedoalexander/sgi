@@ -393,11 +393,11 @@ class AdvanceLegalizationService
         }
 
         $payments = TableRegistry::getTableLocator()->get('InvoicePayments');
-        $invoices = TableRegistry::getTableLocator()->get('Invoices');
+        $legTable = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
 
         $connection = $payments->getConnection();
 
-        return $connection->transactional(function () use ($leg, $data, $userId, $payments, $invoices) {
+        return $connection->transactional(function () use ($leg, $data, $userId, $payments, $legTable) {
             $payment = $payments->newEntity([
                 'invoice_id' => $leg->advance_invoice_id,
                 'banking_entity_id' => $data['banking_entity_id'] ?? null,
@@ -413,14 +413,14 @@ class AdvanceLegalizationService
                 return ServiceResult::fail('No se pudo crear el reintegro: ' . json_encode($payment->getErrors()));
             }
 
-            // Move the underlying Anticipo Invoice back to autorizacion_pago for the Contador.
-            $advance = $invoices->get($leg->advance_invoice_id);
-            $advance->pipeline_status = InvoiceConstants::STATUS_AUTORIZACION_PAGO;
-            $invoices->save($advance);
-
+            // El estado del Anticipo (Invoice) queda en `pagada`: el reintegro es un
+            // movimiento posterior que vive solo en la legalización.
             $leg->surplus_payment_id = $payment->id;
+            $leg->status = AdvanceConstants::STATUS_AUTORIZACION_PAGO;
             $leg->updated_by = $userId;
-            TableRegistry::getTableLocator()->get('AdvanceLegalizations')->save($leg);
+            if (!$legTable->save($leg)) {
+                return ServiceResult::fail('No se pudo actualizar la legalización: ' . json_encode($leg->getErrors()));
+            }
 
             return ServiceResult::ok($payment);
         });
@@ -428,6 +428,7 @@ class AdvanceLegalizationService
 
     /**
      * Called from InvoicePaymentService::authorizePayment when a refund payment is authorized.
+     * Cierra la legalización (caso sobrante) cuando estaba esperando autorización de pago.
      */
     public function closeOnRefundAuthorized(int $paymentId, int $userId): ServiceResult
     {
@@ -439,10 +440,34 @@ class AdvanceLegalizationService
         if ($leg->status === AdvanceConstants::STATUS_LEGALIZADA) {
             return ServiceResult::ok($leg);
         }
+        if ($leg->status !== AdvanceConstants::STATUS_AUTORIZACION_PAGO) {
+            return ServiceResult::fail('La legalización no está esperando autorización de pago.');
+        }
 
         $leg->legalized_at = date('Y-m-d H:i:s');
 
         return $this->_setStatus($leg, AdvanceConstants::STATUS_LEGALIZADA, $userId);
+    }
+
+    /**
+     * Called from InvoicePaymentService::rejectPayment when a refund payment is rejected.
+     * Devuelve la legalización a Tesorería para registrar un nuevo reintegro y limpia
+     * el surplus_payment_id (el pago rechazado se conserva en historial).
+     */
+    public function reopenAfterRefundRejected(int $paymentId, int $userId): ServiceResult
+    {
+        $legTable = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
+        $leg = $legTable->find()->where(['surplus_payment_id' => $paymentId])->first();
+        if (!$leg) {
+            return ServiceResult::fail('No hay legalización vinculada al pago.');
+        }
+        if ($leg->status !== AdvanceConstants::STATUS_AUTORIZACION_PAGO) {
+            return ServiceResult::ok($leg);
+        }
+
+        $leg->surplus_payment_id = null;
+
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId);
     }
 
     /**

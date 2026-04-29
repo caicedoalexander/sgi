@@ -255,6 +255,14 @@ class InvoicePaymentService
             return ServiceResult::fail('No se pudo rechazar el pago.');
         }
 
+        // Refund: la factura del Anticipo permanece en `pagada`; el rechazo solo
+        // afecta a la legalización vía hook.
+        if ((bool)($payment->is_refund ?? false)) {
+            $this->advanceLegalizationService->reopenAfterRefundRejected($payment->id, $rejectedBy);
+
+            return ServiceResult::ok('Reintegro rechazado. La legalización volvió a Tesorería.');
+        }
+
         $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
         $invoicesTable->save($invoice);
 

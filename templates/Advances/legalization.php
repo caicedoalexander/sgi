@@ -369,40 +369,46 @@ $docIconColor = fn(?string $mime): string => match (true) {
             <?= $this->Form->end() ?>
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_TESORERIA && $leg->case_type === AdvanceConstants::CASE_SOBRANTE): ?>
-        <div class="sgi-sticky-actions">
-            <?php if ($leg->surplus_payment_id): ?>
-            <div class="alert alert-info d-flex align-items-center gap-2 mb-0">
-                <i class="bi bi-info-circle-fill"></i>
-                <span>
-                    Reintegro #<?= h($leg->surplus_payment_id) ?> registrado. Esperando autorización por el Contador en
-                    <?= $this->Html->link('Aut. Pago', ['controller' => 'Invoices', 'action' => 'edit', $leg->advance_invoice_id]) ?>.
-                </span>
-            </div>
-            <?php else: ?>
-            <?php $bankingEntities = \Cake\ORM\TableRegistry::getTableLocator()->get('BankingEntities')->find('list')->all(); ?>
-            <?= $this->Form->create(null, ['url' => ['action' => 'registerRefund', $leg->advance_invoice_id]]) ?>
-            <div class="row g-2">
-                <div class="col-md-5">
-                    <label class="form-label">Entidad bancaria *</label>
-                    <?= $this->Form->select('banking_entity_id', $bankingEntities, ['class' => 'form-select select2-enable', 'required' => true, 'empty' => '-- Seleccione --']) ?>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Fecha *</label>
-                    <input type="text" name="payment_date" class="form-control flatpickr-date" value="<?= date('Y-m-d') ?>" required>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Monto</label>
-                    <input type="text" class="form-control" value="$ <?= $this->Number->format((float)$leg->surplus_amount, ['places' => 2]) ?>" disabled>
-                </div>
-            </div>
-            <div class="mt-3 text-end">
-                <button type="submit" class="btn btn-danger">
-                    <i class="bi bi-arrow-up-circle me-1"></i>Registrar reintegro
-                </button>
-            </div>
-            <?= $this->Form->end() ?>
-            <?php endif; ?>
-        </div>
+        <?php
+        $isTesoreria = ($roleName ?? '') === \App\Constants\RoleConstants::TESORERIA
+            || ($roleName ?? '') === \App\Constants\RoleConstants::ADMIN;
+        ?>
+        <?= $this->element('payment_section', [
+            'payments' => [],
+            'bankingEntities' => $bankingEntities,
+            'addPaymentUrl' => ['controller' => 'Advances', 'action' => 'registerRefund', $leg->advance_invoice_id],
+            'paymentStatus' => null,
+            'totalAmount' => (float)$leg->surplus_amount,
+            'mode' => 'tesoreria_register',
+            'canRegisterPayment' => $isTesoreria,
+            'canAuthorize' => false,
+            'canDelete' => false,
+            'forceFullAmount' => true,
+            'singlePaymentOnly' => true,
+            'sectionTitle' => 'Reintegro al beneficiario',
+            'sectionIcon' => 'bi-arrow-up-circle',
+        ]) ?>
+        <?php elseif ($leg->status === AdvanceConstants::STATUS_AUTORIZACION_PAGO && $leg->case_type === AdvanceConstants::CASE_SOBRANTE): ?>
+        <?php
+        $isContador = ($roleName ?? '') === \App\Constants\RoleConstants::CONTADOR
+            || ($roleName ?? '') === \App\Constants\RoleConstants::ADMIN;
+        ?>
+        <?= $this->element('payment_section', [
+            'payments' => $surplusPayment ? [$surplusPayment] : [],
+            'bankingEntities' => $bankingEntities,
+            'addPaymentUrl' => ['controller' => 'Advances', 'action' => 'registerRefund', $leg->advance_invoice_id],
+            'authorizeUrlFn' => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'authorizePayment', $invoice->id, $pId],
+            'rejectUrlFn'    => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'rejectPayment', $invoice->id, $pId],
+            'paymentStatus' => null,
+            'totalAmount' => (float)$leg->surplus_amount,
+            'mode' => 'authorize',
+            'canRegisterPayment' => false,
+            'canAuthorize' => $isContador,
+            'canDelete' => false,
+            'rejectMessage' => '¿Rechazar el reintegro? La legalización volverá a Tesorería para nuevo registro.',
+            'sectionTitle' => 'Autorización de Reintegro',
+            'sectionIcon' => 'bi-shield-check',
+        ]) ?>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_LEGALIZADA): ?>
         <div class="alert alert-success d-flex align-items-center gap-2 mb-0">
             <i class="bi bi-check-circle-fill fs-5"></i>

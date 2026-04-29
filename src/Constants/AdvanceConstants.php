@@ -10,6 +10,7 @@ final class AdvanceConstants
     public const STATUS_REVISION_FIRMAS = 'revision_firmas';
     public const STATUS_CONTABILIDAD = 'contabilidad';
     public const STATUS_TESORERIA = 'tesoreria';
+    public const STATUS_AUTORIZACION_PAGO = 'autorizacion_pago';
     public const STATUS_LEGALIZADA = 'legalizada';
 
     public const PIPELINE_STATUSES = [
@@ -17,23 +18,26 @@ final class AdvanceConstants
         self::STATUS_REVISION_FIRMAS,
         self::STATUS_CONTABILIDAD,
         self::STATUS_TESORERIA,
+        self::STATUS_AUTORIZACION_PAGO,
         self::STATUS_LEGALIZADA,
     ];
 
     public const STATUS_LABELS = [
-        self::STATUS_VALIDACION => 'Validación',
-        self::STATUS_REVISION_FIRMAS => 'Revisión y Firmas',
-        self::STATUS_CONTABILIDAD => 'Contabilidad',
-        self::STATUS_TESORERIA => 'Tesorería',
-        self::STATUS_LEGALIZADA => 'Legalizada',
+        self::STATUS_VALIDACION        => 'Validación',
+        self::STATUS_REVISION_FIRMAS   => 'Revisión y Firmas',
+        self::STATUS_CONTABILIDAD      => 'Contabilidad',
+        self::STATUS_TESORERIA         => 'Tesorería',
+        self::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
+        self::STATUS_LEGALIZADA        => 'Legalizada',
     ];
 
     public const STATUS_ICONS = [
-        self::STATUS_VALIDACION => 'bi-clipboard-check',
-        self::STATUS_REVISION_FIRMAS => 'bi-pen',
-        self::STATUS_CONTABILIDAD => 'bi-calculator',
-        self::STATUS_TESORERIA => 'bi-bank',
-        self::STATUS_LEGALIZADA => 'bi-cash-coin',
+        self::STATUS_VALIDACION        => 'bi-clipboard-check',
+        self::STATUS_REVISION_FIRMAS   => 'bi-pen',
+        self::STATUS_CONTABILIDAD      => 'bi-calculator',
+        self::STATUS_TESORERIA         => 'bi-bank',
+        self::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
+        self::STATUS_LEGALIZADA        => 'bi-cash-coin',
     ];
 
     // Case types resolved by Contabilidad

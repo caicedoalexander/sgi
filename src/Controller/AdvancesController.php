@@ -182,6 +182,21 @@ class AdvancesController extends AppController
             }
         }
 
+        // Refund payment + banking entities (caso sobrante)
+        $bankingEntities = TableRegistry::getTableLocator()->get('BankingEntities')
+            ->find('list')
+            ->all()
+            ->toArray();
+        $surplusPayment = null;
+        if ($leg->surplus_payment_id) {
+            $surplusPayment = TableRegistry::getTableLocator()->get('InvoicePayments')->get(
+                $leg->surplus_payment_id,
+                contain: ['BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'],
+            );
+        }
+
+        $roleName = $this->_getCurrentUser()->role->name ?? '';
+
         $this->set(compact(
             'invoice',
             'leg',
@@ -191,6 +206,9 @@ class AdvancesController extends AppController
             'diff',
             'relationDocument',
             'signatureHistory',
+            'bankingEntities',
+            'surplusPayment',
+            'roleName',
         ));
 
         return null;
