@@ -75,6 +75,8 @@ class AdvancesController extends AppController
 
         $this->set(compact('invoice'));
         $this->set($this->_dropdowns());
+
+        return null;
     }
 
     public function view(?int $id = null): ?Response
