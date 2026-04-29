@@ -58,6 +58,10 @@ class AdvancesController extends AppController
             $data['registered_by'] = $user->id;
             $data['pipeline_status'] = InvoiceConstants::STATUS_APROBACION;
             $data['registration_date'] = date('Y-m-d');
+            // Anticipos no tienen fecha de vencimiento; usamos la de emisión.
+            if (empty($data['due_date']) && !empty($data['issue_date'])) {
+                $data['due_date'] = $data['issue_date'];
+            }
 
             // beneficiary required: provider_id OR employee_id
             if (empty($data['provider_id']) && empty($data['employee_id'])) {
