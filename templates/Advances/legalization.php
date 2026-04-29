@@ -245,7 +245,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
             <div class="d-flex flex-wrap gap-2 align-items-center">
                 <?= $this->Form->postLink(
                     '<i class="bi bi-arrow-right-circle me-1"></i>Pasar a Revisión y Firmas',
-                    ['action' => 'moveToRevision', $leg->id],
+                    ['action' => 'moveToRevision', $leg->advance_invoice_id],
                     ['class' => 'btn sgi-btn-primary', 'escape' => false, 'confirm' => '¿Pasar a Revisión y Firmas?']
                 ) ?>
                 <small class="text-muted">Requiere ≥1 factura vinculada y la relación de facturas adjunta.</small>
@@ -256,7 +256,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
             <div class="d-flex flex-wrap gap-2">
                 <?= $this->Form->postLink(
                     '<i class="bi bi-check-circle me-1"></i>Marcar como firmado',
-                    ['action' => 'markSigned', $leg->id],
+                    ['action' => 'markSigned', $leg->advance_invoice_id],
                     ['class' => 'btn btn-success', 'escape' => false]
                 ) ?>
                 <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#advReturnModal">
@@ -267,7 +267,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
 
         <div class="modal fade" id="advReturnModal" tabindex="-1">
             <div class="modal-dialog">
-                <?= $this->Form->create(null, ['url' => ['action' => 'returnToValidacion', $leg->id]]) ?>
+                <?= $this->Form->create(null, ['url' => ['action' => 'returnToValidacion', $leg->advance_invoice_id]]) ?>
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Devolver a Validación</h5>
@@ -290,11 +290,11 @@ $docIconColor = fn(?string $mime): string => match (true) {
             <?php if (abs($diff) < 0.005): ?>
             <?= $this->Form->postLink(
                 '<i class="bi bi-check-circle me-1"></i>Marcar legalizada (caso exacto)',
-                ['action' => 'markExact', $leg->id],
+                ['action' => 'markExact', $leg->advance_invoice_id],
                 ['class' => 'btn btn-success', 'escape' => false]
             ) ?>
             <?php elseif ($diff > 0.005): ?>
-            <?= $this->Form->create(null, ['url' => ['action' => 'registerShortage', $leg->id]]) ?>
+            <?= $this->Form->create(null, ['url' => ['action' => 'registerShortage', $leg->advance_invoice_id]]) ?>
             <div class="row g-2 align-items-end">
                 <div class="col-md-6">
                     <label class="form-label">Monto del faltante (consignación pendiente)</label>
@@ -309,7 +309,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
             </div>
             <?= $this->Form->end() ?>
             <?php else: ?>
-            <?= $this->Form->create(null, ['url' => ['action' => 'registerSurplus', $leg->id]]) ?>
+            <?= $this->Form->create(null, ['url' => ['action' => 'registerSurplus', $leg->advance_invoice_id]]) ?>
             <div class="row g-2 align-items-end">
                 <div class="col-md-6">
                     <label class="form-label">Monto del sobrante (reintegro a beneficiario)</label>
@@ -331,7 +331,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
                 <i class="bi bi-info-circle-fill"></i>
                 <span>Monto pendiente: <strong>$ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?></strong></span>
             </div>
-            <?= $this->Form->create(null, ['url' => ['action' => 'confirmShortage', $leg->id], 'type' => 'file']) ?>
+            <?= $this->Form->create(null, ['url' => ['action' => 'confirmShortage', $leg->advance_invoice_id], 'type' => 'file']) ?>
             <div class="row g-2">
                 <div class="col-md-4">
                     <label class="form-label">N.º comprobante *</label>
@@ -365,7 +365,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
             </div>
             <?php else: ?>
             <?php $bankingEntities = \Cake\ORM\TableRegistry::getTableLocator()->get('BankingEntities')->find('list')->all(); ?>
-            <?= $this->Form->create(null, ['url' => ['action' => 'registerRefund', $leg->id]]) ?>
+            <?= $this->Form->create(null, ['url' => ['action' => 'registerRefund', $leg->advance_invoice_id]]) ?>
             <div class="row g-2">
                 <div class="col-md-5">
                     <label class="form-label">Entidad bancaria *</label>

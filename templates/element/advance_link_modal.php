@@ -15,7 +15,7 @@ $candidates = $invoices->find()
 ?>
 <div class="modal fade" id="advanceLinkModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <?= $this->Form->create(null, ['url' => ['controller' => 'Advances', 'action' => 'linkInvoices', $leg->id]]) ?>
+        <?= $this->Form->create(null, ['url' => ['controller' => 'Advances', 'action' => 'linkInvoices', $leg->advance_invoice_id]]) ?>
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Vincular facturas-Legalización</h5>
