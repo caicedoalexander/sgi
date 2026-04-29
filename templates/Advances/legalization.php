@@ -404,7 +404,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
 </div><!-- /columna izquierda -->
 
 <!-- ── Columna derecha: soportes + observaciones ── -->
-<div class="sgi-invoice-aside">
+<div class="sgi-invoice-sidebar">
 
 <!-- Soportes -->
 <div class="card card-primary mb-4">
