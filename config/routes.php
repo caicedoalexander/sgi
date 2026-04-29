@@ -456,6 +456,16 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'Advances', 'action' => 'markExact'],
             ['id' => '\d+', 'pass' => ['id']],
         );
+        $builder->connect(
+            '/advances/register-shortage/{id}',
+            ['controller' => 'Advances', 'action' => 'registerShortage'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/confirm-shortage/{id}',
+            ['controller' => 'Advances', 'action' => 'confirmShortage'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
 
         $builder->fallbacks();
     });

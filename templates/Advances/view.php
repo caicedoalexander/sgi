@@ -139,9 +139,50 @@ $leg = $invoice->advance_legalization ?? null;
                     </dl>
                     <?php if (abs($diff) < 0.005): ?>
                         <?= $this->Form->postLink('Marcar legalizada (caso exacto)', ['action' => 'markExact', $leg->id], ['class' => 'btn btn-success']) ?>
-                    <?php else: ?>
-                        <p class="text-muted">Use Faltante o Sobrante (Phase 4 / Phase 5).</p>
                     <?php endif; ?>
+                    <?php if ($diff > 0.005): ?>
+                        <hr>
+                        <?= $this->Form->create(null, ['url' => ['action' => 'registerShortage', $leg->id]]) ?>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Monto del faltante</label>
+                                    <input type="text" name="shortage_amount" class="form-control currency-input"
+                                           value="<?= number_format($diff, 0, ',', '.') ?>" required>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-warning">Registrar faltante</button>
+                                </div>
+                            </div>
+                        <?= $this->Form->end() ?>
+                    <?php elseif ($diff < -0.005): ?>
+                        <p class="text-muted">Caso Sobrante (Phase 5).</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php elseif ($leg->status === \App\Constants\AdvanceConstants::STATUS_TESORERIA && $leg->case_type === \App\Constants\AdvanceConstants::CASE_FALTANTE): ?>
+            <div class="card mt-3">
+                <div class="card-header">Tesorería — confirmar consignación del faltante</div>
+                <div class="card-body">
+                    <p>Monto pendiente: <strong>$<?= number_format((float)$leg->shortage_amount, 0, ',', '.') ?></strong></p>
+                    <?= $this->Form->create(null, ['url' => ['action' => 'confirmShortage', $leg->id], 'type' => 'file']) ?>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label">N.º comprobante *</label>
+                                <input type="text" name="receipt_number" class="form-control" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Fecha</label>
+                                <input type="text" name="received_at" class="form-control flatpickr-date">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Soporte (PDF/imagen)</label>
+                                <input type="file" name="receipt_file" class="form-control">
+                            </div>
+                        </div>
+                        <div class="mt-3 text-end">
+                            <button type="submit" class="btn btn-success">Confirmar consignación</button>
+                        </div>
+                    <?= $this->Form->end() ?>
                 </div>
             </div>
         <?php elseif ($leg->status === \App\Constants\AdvanceConstants::STATUS_LEGALIZADA): ?>

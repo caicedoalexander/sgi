@@ -259,6 +259,48 @@ class AdvancesController extends AppController
     }
 
     /**
+     * Contabilidad declares a shortage and pushes legalization to Tesorería (POST).
+     */
+    public function registerShortage(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $raw = (string)$this->request->getData('shortage_amount');
+        $amount = (float)str_replace([',', '.'], ['.', ''], $raw);
+        $result = $this->legalizationService->registerShortage($leg, $amount, (int)$this->_getCurrentUser()->id);
+        if ($result->success) {
+            $this->Flash->success('Faltante registrado. La legalización pasó a Tesorería.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al registrar faltante.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
+     * Tesorería confirms beneficiary's shortage deposit (POST multipart).
+     */
+    public function confirmShortage(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $data = $this->request->getData();
+        $data['receipt_file'] = $this->request->getUploadedFile('receipt_file');
+        $result = $this->legalizationService->confirmShortageReceipt(
+            $leg,
+            $data,
+            (int)$this->_getCurrentUser()->id,
+        );
+        if ($result->success) {
+            $this->Flash->success('Consignación confirmada. Anticipo legalizado.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al confirmar consignación.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
      * Resolve the AdvanceLegalization tied to a given Anticipo invoice id.
      */
     private function _loadLegalization(int $advanceInvoiceId): AdvanceLegalization

@@ -297,6 +297,65 @@ class AdvanceLegalizationService
     }
 
     /**
+     * Contabilidad declares a shortage (anticipo > linked invoices). The legalization
+     * jumps to Tesorería awaiting the beneficiary's deposit.
+     */
+    public function registerShortage(AdvanceLegalization $leg, float $amount, int $userId): ServiceResult
+    {
+        if ($leg->status !== AdvanceConstants::STATUS_CONTABILIDAD) {
+            return ServiceResult::fail('La legalización no está en Contabilidad.');
+        }
+        if ($amount <= 0) {
+            return ServiceResult::fail('El monto del faltante debe ser mayor a cero.');
+        }
+
+        $leg->case_type = AdvanceConstants::CASE_FALTANTE;
+        $leg->shortage_amount = $amount;
+
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId);
+    }
+
+    /**
+     * Tesorería confirms the beneficiary's deposit. Payload keys:
+     *   - receipt_number (string, required)
+     *   - received_at (Y-m-d, optional)
+     *   - receipt_file (UploadedFile, optional)
+     */
+    public function confirmShortageReceipt(AdvanceLegalization $leg, array $data, int $userId): ServiceResult
+    {
+        $isWaiting = $leg->status === AdvanceConstants::STATUS_TESORERIA
+            && $leg->case_type === AdvanceConstants::CASE_FALTANTE;
+        if (!$isWaiting) {
+            return ServiceResult::fail('La legalización no está esperando consignación de faltante.');
+        }
+        $number = trim((string)($data['receipt_number'] ?? ''));
+        if ($number === '') {
+            return ServiceResult::fail('El número de comprobante es obligatorio.');
+        }
+
+        $leg->shortage_receipt_number = $number;
+        $leg->shortage_received_at = !empty($data['received_at'])
+            ? date('Y-m-d H:i:s', strtotime($data['received_at']))
+            : date('Y-m-d H:i:s');
+
+        if (!empty($data['receipt_file']) && $data['receipt_file'] instanceof UploadedFile) {
+            $file = $data['receipt_file'];
+            $uploadDir = WWW_ROOT . 'uploads/advances/' . $leg->id;
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $ext = pathinfo($file->getClientFilename() ?? '', PATHINFO_EXTENSION) ?: 'pdf';
+            $name = uniqid('shortage_') . '.' . $ext;
+            $file->moveTo($uploadDir . DS . $name);
+            $leg->shortage_receipt_path = 'uploads/advances/' . $leg->id . '/' . $name;
+        }
+
+        $leg->legalized_at = date('Y-m-d H:i:s');
+
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_LEGALIZADA, $userId);
+    }
+
+    /**
      * Persist a status transition and updated_by stamp.
      */
     private function _setStatus(AdvanceLegalization $leg, string $newStatus, int $userId): ServiceResult
