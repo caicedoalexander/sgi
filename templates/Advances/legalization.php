@@ -62,6 +62,12 @@ $docIconColor = fn(?string $mime): string => match (true) {
 };
 ?>
 
+<?php
+// CSRF token disponible para el JS dinámico de payment_section (que arma forms ad-hoc).
+$csrfToken = $this->request->getAttribute('csrfToken') ?? '';
+?>
+<input type="hidden" name="_csrfToken" value="<?= h($csrfToken) ?>">
+
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Legalización del Anticipo</span>
