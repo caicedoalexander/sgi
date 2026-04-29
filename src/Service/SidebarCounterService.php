@@ -34,10 +34,16 @@ class SidebarCounterService
         try {
             return [
                 'sidebarCounters' => $this->getInvoiceStatusCounters($roleName),
-                'totalInvoicesCount' => $this->getCount('Invoices'),
+                'totalInvoicesCount' => $this->getCount(
+                    'Invoices',
+                    ['document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO],
+                ),
                 'rejectedInvoicesCount' => $this->getCount(
                     'Invoices',
-                    ['area_approval' => InvoiceConstants::APPROVAL_REJECTED],
+                    [
+                        'area_approval' => InvoiceConstants::APPROVAL_REJECTED,
+                        'document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
+                    ],
                 ),
                 'overdueInvoicesCount' => $this->getOverdueInvoicesCount(),
                 'pettyCashCount' => $this->getCount(
@@ -80,7 +86,10 @@ class SidebarCounterService
         $counters = [];
         foreach ($visibleStatuses as $status) {
             $counters[$status] = $invoicesTable->find()
-                ->where(['pipeline_status' => $status])
+                ->where([
+                    'pipeline_status' => $status,
+                    'document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
+                ])
                 ->count();
         }
 
@@ -91,6 +100,7 @@ class SidebarCounterService
     {
         return TableRegistry::getTableLocator()->get('Invoices')->find()
             ->where([
+                'document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
                 'due_date <' => date('Y-m-d'),
                 'pipeline_status !=' => InvoiceConstants::STATUS_PAGADA,
             ])

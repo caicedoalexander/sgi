@@ -432,7 +432,8 @@ class InvoicesController extends AppController
     private function _buildInvoiceQuery(array $conditions = [], ?int $userId = null): SelectQuery
     {
         $query = $this->Invoices->find()
-            ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers']);
+            ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers'])
+            ->where(['Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO]);
 
         if (!empty($conditions)) {
             $query->where($conditions);
