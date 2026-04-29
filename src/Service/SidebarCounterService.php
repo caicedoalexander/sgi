@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\NoveltyConstants;
 use App\Constants\PettyCashConstants;
@@ -50,6 +51,10 @@ class SidebarCounterService
                 ),
                 'activeNoveltiesCount' => $this->getActiveNoveltiesCount(),
                 'liquidationCounters' => $this->getLiquidationCounters(),
+                'advancesPendingLegalizationCount' => $this->getCount(
+                    'AdvanceLegalizations',
+                    ['status !=' => AdvanceConstants::STATUS_LEGALIZADA],
+                ),
             ];
         } catch (Exception $e) {
             return [
@@ -62,6 +67,7 @@ class SidebarCounterService
                 'rejectedNoveltiesCount' => 0,
                 'activeNoveltiesCount' => 0,
                 'liquidationCounters' => [],
+                'advancesPendingLegalizationCount' => 0,
             ];
         }
     }

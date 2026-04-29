@@ -13,6 +13,7 @@ $rejectedInvoicesCount = $rejectedInvoicesCount ?? 0;
 $pettyCashCount = $pettyCashCount ?? 0;
 $noveltiesCount = $noveltiesCount ?? 0;
 $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
+$advancesPendingLegalizationCount = $advancesPendingLegalizationCount ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -148,6 +149,16 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
                                     ($pettyCashCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $pettyCashCount . '</span>' : ''),
                                     ['controller' => 'PettyCashRecords', 'action' => 'index'],
                                     ['class' => $navLink('PettyCashRecords') . ' d-flex align-items-center', 'escape' => false]
+                                ) ?>
+                            </li>
+                            <?php endif; ?>
+                            <?php if ($canView('advances')): ?>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-cash-coin me-2"></i>Anticipos' .
+                                    (!empty($advancesPendingLegalizationCount) ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $advancesPendingLegalizationCount . '</span>' : ''),
+                                    ['controller' => 'Advances', 'action' => 'index'],
+                                    ['class' => $navLink('Advances') . ' d-flex align-items-center', 'escape' => false]
                                 ) ?>
                             </li>
                             <?php endif; ?>
