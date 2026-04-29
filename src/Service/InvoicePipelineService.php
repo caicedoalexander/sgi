@@ -15,15 +15,18 @@ class InvoicePipelineService
     private HistoryServiceInterface $historyService;
     private InvoicePaymentService $paymentService;
     private InvoiceFieldAccessPolicy $fieldPolicy;
+    private AdvanceLegalizationService $advanceLegalizationService;
 
     public function __construct(
         ?HistoryServiceInterface $historyService = null,
         ?InvoicePaymentService $paymentService = null,
         ?InvoiceFieldAccessPolicy $fieldPolicy = null,
+        ?AdvanceLegalizationService $advanceLegalizationService = null,
     ) {
         $this->historyService = $historyService ?? new InvoiceHistoryService();
         $this->paymentService = $paymentService ?? new InvoicePaymentService();
         $this->fieldPolicy = $fieldPolicy ?? new InvoiceFieldAccessPolicy();
+        $this->advanceLegalizationService = $advanceLegalizationService ?? new AdvanceLegalizationService();
     }
 
     // Pipeline statuses in order
@@ -422,6 +425,14 @@ class InvoicePipelineService
                                 $userId,
                             );
                         }
+                    }
+
+                    // Anticipo → Legalización auto-init (idempotent).
+                    if (
+                        $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
+                        && ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO
+                    ) {
+                        $this->advanceLegalizationService->initialize($invoice, $userId);
                     }
                 }
 

@@ -10,10 +10,18 @@ use DateTimeInterface;
 class InvoicePaymentService
 {
     private InvoiceHistoryService $historyService;
+    private AdvanceLegalizationService $advanceLegalizationService;
 
-    public function __construct(?InvoiceHistoryService $historyService = null)
-    {
+    /**
+     * @param \App\Service\InvoiceHistoryService|null $historyService Audit trail recorder.
+     * @param \App\Service\AdvanceLegalizationService|null $advanceLegalizationService Legalization initializer.
+     */
+    public function __construct(
+        ?InvoiceHistoryService $historyService = null,
+        ?AdvanceLegalizationService $advanceLegalizationService = null,
+    ) {
         $this->historyService = $historyService ?? new InvoiceHistoryService();
+        $this->advanceLegalizationService = $advanceLegalizationService ?? new AdvanceLegalizationService();
     }
 
     /**
@@ -134,6 +142,13 @@ class InvoicePaymentService
             $newPipelineStatus,
             $authorizedBy,
         );
+
+        if (
+            $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
+            && ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO
+        ) {
+            $this->advanceLegalizationService->initialize($invoice, $authorizedBy);
+        }
 
         return [
             'success' => true,

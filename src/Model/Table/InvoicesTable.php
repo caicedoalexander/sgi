@@ -7,6 +7,9 @@ use App\Constants\InvoiceConstants;
 use App\Model\Excel\ExcelExportableInterface;
 use App\Model\Excel\ExcelExportableTrait;
 use App\Service\InvoicePipelineService;
+use ArrayObject;
+use Cake\Datasource\EntityInterface;
+use Cake\Event\EventInterface;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -270,6 +273,30 @@ class InvoicesTable extends Table implements ExcelExportableInterface
         ]);
 
         return $rules;
+    }
+
+    /**
+     * Auto-approve Anticipo invoices on creation: set area_approval and dian_validation
+     * so the invoice can flow through the pipeline without external approval.
+     *
+     * @param \Cake\Event\EventInterface $event Event instance.
+     * @param \Cake\Datasource\EntityInterface $entity Invoice entity being saved.
+     * @param \ArrayObject $options Save options.
+     * @return void
+     */
+    public function beforeSave(
+        EventInterface $event,
+        EntityInterface $entity,
+        ArrayObject $options,
+    ): void {
+        if ($entity->isNew() && ($entity->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO) {
+            $entity->area_approval = InvoiceConstants::APPROVAL_APPROVED;
+            $entity->approver_id = null;
+            $entity->area_approval_date = date('Y-m-d');
+            if (empty($entity->dian_validation)) {
+                $entity->dian_validation = InvoiceConstants::DIAN_APPROVED;
+            }
+        }
     }
 
     /**
