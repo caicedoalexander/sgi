@@ -365,10 +365,10 @@ class AdvancesController extends AppController
         return [
             'providers' => $invoicesTable->Providers->find('list')->order(['Providers.name' => 'ASC'])->all(),
             'operationCenters' => $invoicesTable->OperationCenters->find('codeList')->all(),
-            'expenseTypes' => $invoicesTable->ExpenseTypes->find('list', limit: 200)->all(),
+            'expenseTypes' => $invoicesTable->ExpenseTypes->find('list')->all(),
             'costCenters' => $invoicesTable->CostCenters->find('codeList')->all(),
             'employees' => $this->fetchTable('Employees')
-                ->find('list', keyField: 'id', valueField: 'full_name', limit: 500)
+                ->find('list', keyField: 'id', valueField: 'full_name')
                 ->order(['Employees.first_name' => 'ASC', 'Employees.last_name1' => 'ASC'])
                 ->toArray(),
         ];
