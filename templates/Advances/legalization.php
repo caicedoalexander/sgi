@@ -327,22 +327,27 @@ $docIconColor = fn(?string $mime): string => match (true) {
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_TESORERIA && $leg->case_type === AdvanceConstants::CASE_FALTANTE): ?>
         <div class="sgi-sticky-actions">
-            <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-bank me-1"></i>Confirmar consignación
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
-
-            <div class="d-flex align-items-center gap-2 mb-3"
-                 style="border-left:2px solid var(--secondary-color);padding:.35rem .7rem;">
-                <i class="bi bi-info-circle-fill flex-shrink-0"
-                   style="color:var(--secondary-color);font-size:.85rem;"></i>
-                <span style="font-size:.75rem;color:#666;">Monto pendiente:</span>
-                <strong style="color:#222;font-size:.85rem;letter-spacing:-.01em;">
-                    $ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?>
-                </strong>
+            <div class="row g-2 align-items-center mb-3">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-uppercase fw-semibold flex-shrink-0"
+                              style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                            <i class="bi bi-bank me-1"></i>Confirmar consignación
+                        </span>
+                        <div style="flex:1;height:1px;background:var(--border-color);"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-2"
+                         style="border-left:2px solid var(--secondary-color);padding:.35rem .7rem;">
+                        <i class="bi bi-info-circle-fill flex-shrink-0"
+                           style="color:var(--secondary-color);font-size:.85rem;"></i>
+                        <span style="font-size:.75rem;color:#666;">Monto pendiente:</span>
+                        <strong style="color:#222;font-size:.85rem;letter-spacing:-.01em;">
+                            $ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?>
+                        </strong>
+                    </div>
+                </div>
             </div>
 
             <?= $this->Form->create(null, ['url' => ['action' => 'confirmShortage', $leg->advance_invoice_id], 'type' => 'file']) ?>
