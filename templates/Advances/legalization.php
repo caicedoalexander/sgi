@@ -327,27 +327,42 @@ $docIconColor = fn(?string $mime): string => match (true) {
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_TESORERIA && $leg->case_type === AdvanceConstants::CASE_FALTANTE): ?>
         <div class="sgi-sticky-actions">
-            <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
-                <i class="bi bi-info-circle-fill"></i>
-                <span>Monto pendiente: <strong>$ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?></strong></span>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="text-uppercase fw-semibold flex-shrink-0"
+                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                    <i class="bi bi-bank me-1"></i>Confirmar consignación
+                </span>
+                <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
+
+            <div class="d-flex align-items-center gap-3 mb-3"
+                 style="border-left:2px solid var(--secondary-color);background:#fff;padding:.6rem .9rem;">
+                <i class="bi bi-info-circle-fill" style="color:var(--secondary-color);font-size:1rem;"></i>
+                <div style="font-size:.78rem;color:#555;line-height:1.4;">
+                    Monto pendiente:
+                    <strong style="color:#222;font-size:.95rem;letter-spacing:-.01em;">
+                        $ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?>
+                    </strong>
+                </div>
+            </div>
+
             <?= $this->Form->create(null, ['url' => ['action' => 'confirmShortage', $leg->advance_invoice_id], 'type' => 'file']) ?>
-            <div class="row g-2">
+            <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">N.º comprobante *</label>
                     <input type="text" name="receipt_number" class="form-control" required>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Fecha</label>
-                    <input type="text" name="received_at" class="form-control flatpickr-date">
+                    <input type="text" name="received_at" class="form-control flatpickr-date" value="<?= date('Y-m-d') ?>">
                 </div>
                 <div class="col-md-5">
-                    <label class="form-label">Soporte (PDF/imagen)</label>
-                    <input type="file" name="receipt_file" class="form-control">
+                    <label class="form-label">Soporte (PDF / imagen)</label>
+                    <input type="file" name="receipt_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                 </div>
             </div>
-            <div class="mt-3 text-end">
-                <button type="submit" class="btn btn-success">
+            <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="btn sgi-btn-primary">
                     <i class="bi bi-check-circle me-1"></i>Confirmar consignación
                 </button>
             </div>
