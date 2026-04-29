@@ -19,7 +19,10 @@ $leg = $invoice->advance_legalization ?? null;
 
     <?= $this->element('pipeline_progress', [
         'currentStatus' => $invoice->pipeline_status,
+        'pipelineStatuses' => \App\Constants\InvoiceConstants::PIPELINE_STATUSES,
+        'pipelineLabels' => \App\Service\InvoicePipelineService::STATUS_LABELS,
         'isRejected' => false,
+        'paymentStatus' => $invoice->payment_status ?? null,
     ]) ?>
 
     <?php if ($leg): ?>
