@@ -80,7 +80,7 @@ $documentTypes = [
             </div>
 
             <!-- Documento Equivalente -->
-            <div class="row g-3 mt-1">
+            <div class="row g-3 mt-1" id="equivalent-doc-row">
                 <div class="col-md-3">
                     <div class="form-check mt-4">
                         <?= $this->Form->checkbox('is_equivalent_document', [
@@ -223,5 +223,40 @@ $documentTypes = [
         </div>
 
         <?= $this->Form->end() ?>
+
+<?php $this->append('script') ?>
+<script>
+(function () {
+    // Tipo de Documento: Legalización oculta campos no aplicables (Orden de Compra,
+    // Fecha de Vencimiento, Documento Equivalente). Cualquier otro tipo los muestra.
+    var docTypeSelect = document.querySelector('select[name="document_type"]');
+    if (!docTypeSelect) return;
+
+    var purchaseOrder = document.getElementById('purchase-order-wrapper');
+    var dueDate = document.getElementById('due-date-wrapper');
+    var equivalentRow = document.getElementById('equivalent-doc-row');
+
+    function setDisabled(wrapper, disabled) {
+        if (!wrapper) return;
+        wrapper.classList.toggle('d-none', disabled);
+        wrapper.querySelectorAll('input,select,textarea').forEach(function (el) {
+            el.disabled = disabled;
+            if (disabled) { el.value = ''; el.checked = false; }
+        });
+    }
+
+    function applyDocTypeRules() {
+        var value = docTypeSelect.value;
+        var isLegalization = value === 'Legalización';
+        setDisabled(purchaseOrder, isLegalization);
+        setDisabled(dueDate, isLegalization);
+        setDisabled(equivalentRow, isLegalization);
+    }
+
+    docTypeSelect.addEventListener('change', applyDocTypeRules);
+    applyDocTypeRules();
+})();
+</script>
+<?php $this->end() ?>
     </div>
 </div>

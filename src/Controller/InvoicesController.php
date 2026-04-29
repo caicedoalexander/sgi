@@ -184,6 +184,11 @@ class InvoicesController extends AppController
             $data['registered_by'] = $user->id;
             $data['pipeline_status'] = InvoiceConstants::STATUS_APROBACION;
             $data['registration_date'] = date('Y-m-d');
+            // Documentos sin vencimiento real (Legalización, Anticipo, etc.) usan
+            // la fecha de emisión como vencimiento para satisfacer el NOT NULL.
+            if (empty($data['due_date']) && !empty($data['issue_date'])) {
+                $data['due_date'] = $data['issue_date'];
+            }
 
             $invoice = $this->Invoices->patchEntity($invoice, $data);
             if ($this->Invoices->save($invoice)) {
