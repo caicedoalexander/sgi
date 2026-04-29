@@ -420,6 +420,43 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
 
+        // Advances (Anticipos)
+        $builder->connect(
+            '/advances/link-invoices/{id}',
+            ['controller' => 'Advances', 'action' => 'linkInvoices'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/unlink-invoice/{id}/{invoiceId}',
+            ['controller' => 'Advances', 'action' => 'unlinkInvoice'],
+            ['id' => '\d+', 'invoiceId' => '\d+', 'pass' => ['id', 'invoiceId']],
+        );
+        $builder->connect(
+            '/advances/upload-relation-document/{id}',
+            ['controller' => 'Advances', 'action' => 'uploadRelationDocument'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/move-to-revision/{id}',
+            ['controller' => 'Advances', 'action' => 'moveToRevision'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/mark-signed/{id}',
+            ['controller' => 'Advances', 'action' => 'markSigned'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/return-to-validacion/{id}',
+            ['controller' => 'Advances', 'action' => 'returnToValidacion'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/mark-exact/{id}',
+            ['controller' => 'Advances', 'action' => 'markExact'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+
         $builder->fallbacks();
     });
 

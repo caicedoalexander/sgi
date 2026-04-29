@@ -75,4 +75,79 @@ $leg = $invoice->advance_legalization ?? null;
             </table>
         </div>
     </div>
+
+    <?php if ($leg): ?>
+        <?= $this->element('advance_link_modal', ['leg' => $leg]) ?>
+
+        <?php if ($leg->status === \App\Constants\AdvanceConstants::STATUS_VALIDACION): ?>
+            <div class="card mt-3">
+                <div class="card-header">Validación</div>
+                <div class="card-body">
+                    <?= $this->Form->create(null, ['url' => ['action' => 'uploadRelationDocument', $leg->id], 'type' => 'file']) ?>
+                        <div class="mb-2">
+                            <label class="form-label">Relación de facturas (PDF)</label>
+                            <?= $this->Form->control('relation_document', ['type' => 'file', 'class' => 'form-control', 'label' => false, 'required' => true]) ?>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary btn-sm">Adjuntar</button>
+                    <?= $this->Form->end() ?>
+                    <hr>
+                    <?= $this->Form->postLink(
+                        'Pasar a Revisión y Firmas',
+                        ['action' => 'moveToRevision', $leg->id],
+                        ['class' => 'btn sgi-btn-primary', 'confirm' => '¿Pasar a Revisión y Firmas?'],
+                    ) ?>
+                </div>
+            </div>
+        <?php elseif ($leg->status === \App\Constants\AdvanceConstants::STATUS_REVISION_FIRMAS): ?>
+            <div class="card mt-3">
+                <div class="card-header">Revisión y Firmas</div>
+                <div class="card-body">
+                    <?= $this->Form->postLink('Marcar como firmado', ['action' => 'markSigned', $leg->id], ['class' => 'btn btn-success me-2']) ?>
+                    <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#advReturnModal">Devolver a Validación</button>
+                </div>
+            </div>
+            <div class="modal fade" id="advReturnModal" tabindex="-1"><div class="modal-dialog">
+                <?= $this->Form->create(null, ['url' => ['action' => 'returnToValidacion', $leg->id]]) ?>
+                <div class="modal-content">
+                    <div class="modal-header"><h5 class="modal-title">Devolver a Validación</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <label class="form-label">Motivo *</label>
+                        <?= $this->Form->control('reason', ['type' => 'textarea', 'rows' => 3, 'class' => 'form-control', 'required' => true, 'label' => false]) ?>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-warning">Devolver</button></div>
+                </div>
+                <?= $this->Form->end() ?>
+            </div></div>
+        <?php elseif ($leg->status === \App\Constants\AdvanceConstants::STATUS_CONTABILIDAD): ?>
+            <?php
+            $legService = new \App\Service\AdvanceLegalizationService();
+            $diff = $legService->getDifference($leg);
+            $linkedSum = $legService->getLinkedTotal($leg);
+            $advanceTotal = (float)$invoice->amount;
+            ?>
+            <div class="card mt-3">
+                <div class="card-header">Contabilidad — cierre</div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Total Anticipo</dt><dd class="col-sm-9">$<?= number_format($advanceTotal, 0, ',', '.') ?></dd>
+                        <dt class="col-sm-3">Total facturas vinculadas</dt><dd class="col-sm-9">$<?= number_format($linkedSum, 0, ',', '.') ?></dd>
+                        <dt class="col-sm-3">Diferencia</dt><dd class="col-sm-9">
+                            <span class="badge bg-<?= abs($diff) < 0.005 ? 'success' : ($diff > 0 ? 'warning text-dark' : 'danger') ?>">
+                                $<?= number_format($diff, 0, ',', '.') ?>
+                            </span>
+                        </dd>
+                    </dl>
+                    <?php if (abs($diff) < 0.005): ?>
+                        <?= $this->Form->postLink('Marcar legalizada (caso exacto)', ['action' => 'markExact', $leg->id], ['class' => 'btn btn-success']) ?>
+                    <?php else: ?>
+                        <p class="text-muted">Use Faltante o Sobrante (Phase 4 / Phase 5).</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php elseif ($leg->status === \App\Constants\AdvanceConstants::STATUS_LEGALIZADA): ?>
+            <div class="alert alert-success mt-3">
+                <i class="bi bi-check-circle me-1"></i> Legalizada el <?= h($leg->legalized_at) ?> (caso <?= h($leg->case_type) ?>).
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
 </div>

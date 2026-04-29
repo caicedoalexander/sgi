@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\InvoiceConstants;
+use App\Model\Entity\AdvanceLegalization;
+use App\Service\AdvanceLegalizationService;
 use Cake\Http\Response;
 use Cake\ORM\TableRegistry;
 
@@ -11,10 +13,13 @@ class AdvancesController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    private AdvanceLegalizationService $legalizationService;
+
     public function initialize(): void
     {
         parent::initialize();
         $this->fetchTable('Invoices');
+        $this->legalizationService = new AdvanceLegalizationService();
     }
 
     private function _getCurrentUser(): object
@@ -41,7 +46,7 @@ class AdvancesController extends AppController
         $this->set(compact('advances'));
     }
 
-    public function add(): void
+    public function add(): ?Response
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $invoice = $invoicesTable->newEmptyEntity();
@@ -72,7 +77,7 @@ class AdvancesController extends AppController
         $this->set($this->_dropdowns());
     }
 
-    public function view(?int $id = null): void
+    public function view(?int $id = null): ?Response
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $invoice = $invoicesTable->get($id, contain: [
@@ -110,6 +115,8 @@ class AdvancesController extends AppController
         }
 
         $this->set(compact('invoice', 'linkedInvoices', 'linkedTotal'));
+
+        return null;
     }
 
     /**
@@ -118,6 +125,149 @@ class AdvancesController extends AppController
     public function edit(?int $id = null): Response
     {
         return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $id]);
+    }
+
+    /**
+     * Bulk-link Legalización invoices to this advance (POST).
+     */
+    public function linkInvoices(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $userId = (int)$this->_getCurrentUser()->id;
+
+        $invoiceIds = (array)$this->request->getData('invoice_ids', []);
+        $invoiceIds = array_values(array_filter(array_map('intval', $invoiceIds)));
+
+        $result = $this->legalizationService->linkInvoices($leg, $invoiceIds, $userId);
+        if ($result->success) {
+            $this->Flash->success(($result->data['linked'] ?? 0) . ' factura(s) vinculada(s).');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al vincular.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
+     * Unlink a single Legalización invoice (POST).
+     */
+    public function unlinkInvoice(?int $id = null, ?int $invoiceId = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $result = $this->legalizationService->unlinkInvoice($leg, (int)$invoiceId, (int)$this->_getCurrentUser()->id);
+        if ($result->success) {
+            $this->Flash->success('Factura desvinculada.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al desvincular.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
+     * Upload the relation-of-invoices document (POST multipart).
+     */
+    public function uploadRelationDocument(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $file = $this->request->getUploadedFile('relation_document');
+        if (!$file) {
+            $this->Flash->error('Adjunte un archivo PDF de relación de facturas.');
+
+            return $this->redirect(['action' => 'view', $id]);
+        }
+        $result = $this->legalizationService->attachRelationDocument($leg, $file, (int)$this->_getCurrentUser()->id);
+        if ($result->success) {
+            $this->Flash->success('Documento adjuntado.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al adjuntar.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
+     * Move legalization from validacion → revision_firmas (POST).
+     */
+    public function moveToRevision(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $result = $this->legalizationService->moveToRevisionFirmas($leg, (int)$this->_getCurrentUser()->id);
+        if ($result->success) {
+            $this->Flash->success('Legalización enviada a Revisión y Firmas.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al avanzar.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
+     * Mark relation document as signed and advance to contabilidad (POST).
+     */
+    public function markSigned(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $result = $this->legalizationService->markSigned($leg, (int)$this->_getCurrentUser()->id);
+        if ($result->success) {
+            $this->Flash->success('Documento marcado como firmado.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al firmar.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
+     * Reject signature and bounce back to validacion (POST).
+     */
+    public function returnToValidacion(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $reason = (string)$this->request->getData('reason', '');
+        $result = $this->legalizationService->returnToValidacion($leg, $reason, (int)$this->_getCurrentUser()->id);
+        if ($result->success) {
+            $this->Flash->success('Legalización devuelta a Validación.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al devolver.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
+     * Close legalization as caso exacto (POST).
+     */
+    public function markExact(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $result = $this->legalizationService->markExact($leg, (int)$this->_getCurrentUser()->id);
+        if ($result->success) {
+            $this->Flash->success('Anticipo legalizado (caso exacto).');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al legalizar.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
+     * Resolve the AdvanceLegalization tied to a given Anticipo invoice id.
+     */
+    private function _loadLegalization(int $advanceInvoiceId): AdvanceLegalization
+    {
+        return TableRegistry::getTableLocator()
+            ->get('AdvanceLegalizations')
+            ->find()
+            ->where(['advance_invoice_id' => $advanceInvoiceId])
+            ->firstOrFail();
     }
 
     /**
