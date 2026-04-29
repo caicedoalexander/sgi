@@ -327,23 +327,23 @@ $docIconColor = fn(?string $mime): string => match (true) {
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_TESORERIA && $leg->case_type === AdvanceConstants::CASE_FALTANTE): ?>
         <div class="sgi-sticky-actions">
-            <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="d-flex align-items-center gap-2 mb-3"
+                 style="border-left:2px solid var(--secondary-color);padding:.4rem .75rem;">
+                <i class="bi bi-bank flex-shrink-0"
+                   style="color:var(--secondary-color);font-size:.85rem;"></i>
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-bank me-1"></i>Confirmar consignación
+                      style="font-size:.58rem;letter-spacing:.14em;color:#888;">
+                    Confirmar consignación
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
-
-            <div class="d-flex align-items-center gap-3 mb-3"
-                 style="border-left:2px solid var(--secondary-color);background:#fff;padding:.6rem .9rem;">
-                <i class="bi bi-info-circle-fill" style="color:var(--secondary-color);font-size:1rem;"></i>
-                <div style="font-size:.78rem;color:#555;line-height:1.4;">
-                    Monto pendiente:
-                    <strong style="color:#222;font-size:.95rem;letter-spacing:-.01em;">
-                        $ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?>
-                    </strong>
-                </div>
+                <span class="text-uppercase fw-semibold flex-shrink-0"
+                      style="font-size:.58rem;letter-spacing:.14em;color:#aaa;">
+                    Pendiente
+                </span>
+                <strong class="flex-shrink-0"
+                        style="color:var(--secondary-color);font-size:.95rem;letter-spacing:-.01em;font-weight:700;">
+                    $ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?>
+                </strong>
             </div>
 
             <?= $this->Form->create(null, ['url' => ['action' => 'confirmShortage', $leg->advance_invoice_id], 'type' => 'file']) ?>
