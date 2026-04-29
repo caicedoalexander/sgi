@@ -41,22 +41,31 @@ $this->assign('title', 'Nuevo Anticipo');
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">Beneficiario</span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
-            <p class="text-muted small mb-3">Seleccione un proveedor o un empleado como beneficiario del anticipo.</p>
             <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-md-3">
+                    <label class="form-label">Tipo de Beneficiario</label>
+                    <select id="beneficiary-type" class="form-select" required>
+                        <option value="">-- Seleccione --</option>
+                        <option value="provider">Proveedor</option>
+                        <option value="employee">Empleado</option>
+                    </select>
+                </div>
+                <div class="col-md-9 d-none" id="provider-wrapper">
                     <?= $this->Form->control('provider_id', [
                         'class'   => 'form-select select2-enable',
                         'label'   => ['text' => 'Proveedor', 'class' => 'form-label'],
                         'options' => $providers,
                         'empty'   => '-- Seleccione --',
+                        'disabled' => true,
                     ]) ?>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-9 d-none" id="employee-wrapper">
                     <?= $this->Form->control('employee_id', [
                         'class'   => 'form-select select2-enable',
                         'label'   => ['text' => 'Empleado', 'class' => 'form-label'],
                         'options' => $employees,
                         'empty'   => '-- Seleccione --',
+                        'disabled' => true,
                     ]) ?>
                 </div>
             </div>
@@ -151,3 +160,52 @@ $this->assign('title', 'Nuevo Anticipo');
         <?= $this->Form->end() ?>
     </div>
 </div>
+
+<?php $this->start('script'); ?>
+<script>
+(function () {
+    const typeSelect = document.getElementById('beneficiary-type');
+    const providerWrapper = document.getElementById('provider-wrapper');
+    const employeeWrapper = document.getElementById('employee-wrapper');
+    const providerSelect = providerWrapper.querySelector('select');
+    const employeeSelect = employeeWrapper.querySelector('select');
+
+    function applyToggle() {
+        const value = typeSelect.value;
+        if (value === 'provider') {
+            providerWrapper.classList.remove('d-none');
+            employeeWrapper.classList.add('d-none');
+            providerSelect.disabled = false;
+            providerSelect.required = true;
+            employeeSelect.disabled = true;
+            employeeSelect.required = false;
+            employeeSelect.value = '';
+            if (employeeSelect.dispatchEvent) {
+                employeeSelect.dispatchEvent(new Event('change'));
+            }
+        } else if (value === 'employee') {
+            employeeWrapper.classList.remove('d-none');
+            providerWrapper.classList.add('d-none');
+            employeeSelect.disabled = false;
+            employeeSelect.required = true;
+            providerSelect.disabled = true;
+            providerSelect.required = false;
+            providerSelect.value = '';
+            if (providerSelect.dispatchEvent) {
+                providerSelect.dispatchEvent(new Event('change'));
+            }
+        } else {
+            providerWrapper.classList.add('d-none');
+            employeeWrapper.classList.add('d-none');
+            providerSelect.disabled = true;
+            employeeSelect.disabled = true;
+            providerSelect.required = false;
+            employeeSelect.required = false;
+        }
+    }
+
+    typeSelect.addEventListener('change', applyToggle);
+    applyToggle();
+})();
+</script>
+<?php $this->end(); ?>

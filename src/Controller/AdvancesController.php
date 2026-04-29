@@ -368,9 +368,9 @@ class AdvancesController extends AppController
             'expenseTypes' => $invoicesTable->ExpenseTypes->find('list', limit: 200)->all(),
             'costCenters' => $invoicesTable->CostCenters->find('codeList')->all(),
             'employees' => $this->fetchTable('Employees')
-                ->find('list', limit: 500)
-                ->order(['Employees.first_name' => 'ASC'])
-                ->all(),
+                ->find('list', keyField: 'id', valueField: 'full_name', limit: 500)
+                ->order(['Employees.first_name' => 'ASC', 'Employees.last_name1' => 'ASC'])
+                ->toArray(),
         ];
     }
 }
