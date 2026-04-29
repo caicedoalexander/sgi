@@ -93,9 +93,43 @@ class AdvancesController extends AppController
             'ExpenseTypes',
             'CostCenters',
             'RegisteredByUsers',
-            'InvoiceObservations' => ['Users'],
             'InvoiceDocuments' => ['UploadedByUsers'],
             'InvoicePayments' => ['BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'],
+            'AdvanceLegalization',
+        ]);
+
+        if ($invoice->document_type !== InvoiceConstants::DOCTYPE_ANTICIPO) {
+            $this->Flash->error('Esta factura no es un Anticipo.');
+
+            return $this->redirect(['action' => 'index']);
+        }
+
+        // Cuando ya hay legalización iniciada, redirigir a la vista dedicada.
+        if ($invoice->advance_legalization) {
+            return $this->redirect(['action' => 'legalization', $invoice->id]);
+        }
+
+        $this->set(compact('invoice'));
+        $this->set('linkedInvoices', []);
+        $this->set('linkedTotal', 0.0);
+
+        return null;
+    }
+
+    /**
+     * Vista dedicada del proceso de legalización del anticipo (Phase 2).
+     */
+    public function legalization(?int $id = null): ?Response
+    {
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $invoice = $invoicesTable->get($id, contain: [
+            'Providers',
+            'Employees',
+            'OperationCenters',
+            'ExpenseTypes',
+            'CostCenters',
+            'RegisteredByUsers',
+            'InvoiceObservations' => ['Users'],
             'AdvanceLegalization' => ['AdvanceLegalizationSignatures' => ['SignedByUsers']],
         ]);
 
@@ -105,7 +139,14 @@ class AdvancesController extends AppController
             return $this->redirect(['action' => 'index']);
         }
 
-        // Linked Legalización-Invoices
+        $leg = $invoice->advance_legalization ?? null;
+        if (!$leg) {
+            $this->Flash->info('La legalización aún no ha iniciado. Espere a que el anticipo esté en estado Pagada.');
+
+            return $this->redirect(['action' => 'view', $invoice->id]);
+        }
+
+        // Facturas vinculadas
         $linkedInvoices = $invoicesTable->find()
             ->where([
                 'Invoices.document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
@@ -119,8 +160,38 @@ class AdvancesController extends AppController
         foreach ($linkedInvoices as $li) {
             $linkedTotal += (float)$li->amount;
         }
+        $advanceTotal = (float)$invoice->amount;
+        $diff = $advanceTotal - $linkedTotal;
 
-        $this->set(compact('invoice', 'linkedInvoices', 'linkedTotal'));
+        // Documento "Relación de facturas" actual (signature pendiente o firmada más reciente)
+        $relationDocument = null;
+        $signatureHistory = [];
+        if ($leg->advance_legalization_signatures) {
+            $sigs = $leg->advance_legalization_signatures;
+            usort($sigs, fn($a, $b) => $b->id <=> $a->id);
+            foreach ($sigs as $sig) {
+                if ($relationDocument === null && in_array(
+                    $sig->signature_status,
+                    [\App\Constants\AdvanceConstants::SIGNATURE_PENDING, \App\Constants\AdvanceConstants::SIGNATURE_SIGNED],
+                    true
+                )) {
+                    $relationDocument = $sig;
+                } else {
+                    $signatureHistory[] = $sig;
+                }
+            }
+        }
+
+        $this->set(compact(
+            'invoice',
+            'leg',
+            'linkedInvoices',
+            'linkedTotal',
+            'advanceTotal',
+            'diff',
+            'relationDocument',
+            'signatureHistory',
+        ));
 
         return null;
     }

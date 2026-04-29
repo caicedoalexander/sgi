@@ -11,8 +11,10 @@ class AdvanceLegalizationSignature extends Entity
         'legalization_id' => true,
         'signed_by_user_id' => true,
         'signed_at' => true,
-        'document_path' => true,
-        'document_name' => true,
+        'file_path' => true,
+        'file_name' => true,
+        'file_size' => true,
+        'mime_type' => true,
         'signature_status' => true,
         'rejection_reason' => true,
     ];

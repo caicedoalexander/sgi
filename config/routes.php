@@ -422,6 +422,11 @@ return function (RouteBuilder $routes): void {
 
         // Advances (Anticipos)
         $builder->connect(
+            '/advances/legalization/{id}',
+            ['controller' => 'Advances', 'action' => 'legalization'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
             '/advances/link-invoices/{id}',
             ['controller' => 'Advances', 'action' => 'linkInvoices'],
             ['id' => '\d+', 'pass' => ['id']],
