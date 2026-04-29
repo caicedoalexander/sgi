@@ -59,7 +59,25 @@ class InvoiceFieldAccessPolicy
         return self::EDITABLE_FIELDS[$roleName][$status] ?? [];
     }
 
-    public function getVisibleSections(string $roleName, string $status): array
+    public function getVisibleSections(string $roleName, string $status, ?string $documentType = null): array
+    {
+        $sections = $this->_resolveVisibleSections($roleName, $status);
+
+        if ($documentType === InvoiceConstants::DOCTYPE_ANTICIPO) {
+            $sections = array_values(array_filter($sections, static fn($s) => $s !== 'revision'));
+        }
+
+        if ($documentType === InvoiceConstants::DOCTYPE_LEGALIZACION) {
+            $sections = array_values(array_filter(
+                $sections,
+                static fn($s) => !in_array($s, ['treasury', 'payment_authorization'], true),
+            ));
+        }
+
+        return $sections;
+    }
+
+    private function _resolveVisibleSections(string $roleName, string $status): array
     {
         if ($roleName !== RoleConstants::ADMIN) {
             return self::VISIBLE_SECTIONS_BY_ROLE[$roleName] ?? ['general'];

@@ -138,9 +138,9 @@ class InvoicePipelineService
         return $this->fieldPolicy->getEditableFields($roleName, $status);
     }
 
-    public function getVisibleSections(string $roleName, string $status): array
+    public function getVisibleSections(string $roleName, string $status, ?string $documentType = null): array
     {
-        return $this->fieldPolicy->getVisibleSections($roleName, $status);
+        return $this->fieldPolicy->getVisibleSections($roleName, $status, $documentType);
     }
 
     public function getCollapsibleSections(string $roleName, string $status): array
@@ -212,6 +212,25 @@ class InvoicePipelineService
         // Rejection blocks all advancement
         if ($this->isRejected($invoice)) {
             return ['La factura fue rechazada. El flujo ha terminado.'];
+        }
+
+        // Legalizaciones skip treasury/auth-payment requirements: jump from contabilidad to pagada directly.
+        if (
+            ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_LEGALIZACION
+            && $fromStatus === InvoiceConstants::STATUS_CONTABILIDAD
+        ) {
+            $errors = [];
+            foreach (self::TRANSITION_REQUIREMENTS[InvoiceConstants::STATUS_CONTABILIDAD] ?? [] as $rule) {
+                $field = $rule['field'];
+                $value = $invoice->$field ?? null;
+                if (isset($rule['value']) && $value !== $rule['value']) {
+                    $errors[] = $rule['label'];
+                } elseif (!empty($rule['not_empty']) && ($value === null || $value === '' || $value === false)) {
+                    $errors[] = $rule['label'];
+                }
+            }
+
+            return $errors;
         }
 
         $errors = [];
@@ -323,8 +342,15 @@ class InvoicePipelineService
         return self::TRANSITIONS[$currentStatus] !== null;
     }
 
-    public function getNextStatus(string $currentStatus): ?string
+    public function getNextStatus(string $currentStatus, ?string $documentType = null): ?string
     {
+        if (
+            $documentType === InvoiceConstants::DOCTYPE_LEGALIZACION
+            && $currentStatus === InvoiceConstants::STATUS_CONTABILIDAD
+        ) {
+            return InvoiceConstants::STATUS_PAGADA;
+        }
+
         return self::TRANSITIONS[$currentStatus] ?? null;
     }
 
@@ -380,7 +406,7 @@ class InvoicePipelineService
             $testEntity = $invoicesTable->patchEntity(clone $invoice, $filteredData);
             $postAdvanceErrors = $this->validateTransitionRequirements($testEntity, $currentStatus);
             if (empty($postAdvanceErrors)) {
-                $advanceNextStatus = $this->getNextStatus($currentStatus);
+                $advanceNextStatus = $this->getNextStatus($currentStatus, $invoice->document_type);
             }
         }
 
@@ -473,7 +499,7 @@ class InvoicePipelineService
             return ['success' => false, 'error' => implode(' ', $errors), 'nextStatus' => null];
         }
 
-        $nextStatus = $this->getNextStatus($currentStatus);
+        $nextStatus = $this->getNextStatus($currentStatus, $invoice->document_type);
         if (!$nextStatus) {
             return ['success' => false, 'error' => 'Esta factura ya está en el estado final.', 'nextStatus' => null];
         }

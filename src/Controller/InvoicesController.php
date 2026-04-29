@@ -248,7 +248,7 @@ class InvoicesController extends AppController
 
         $editableFields = $this->pipeline->getEditableFields($roleName, $currentStatus);
         $canAdvance = $this->pipeline->canAdvance($roleName, $currentStatus);
-        $visibleSections = $this->pipeline->getVisibleSections($roleName, $currentStatus);
+        $visibleSections = $this->pipeline->getVisibleSections($roleName, $currentStatus, $invoice->document_type);
         $collapsibleSections = $this->pipeline->getCollapsibleSections($roleName, $currentStatus);
         $isRejected = $this->pipeline->isRejected($invoice);
         $isApproved = $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
