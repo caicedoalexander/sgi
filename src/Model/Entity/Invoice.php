@@ -38,6 +38,7 @@ class Invoice extends Entity
         'pipeline_status' => true,
         'registered_by' => true,
         'petty_cash_record_id' => true,
+        'advance_id' => true,
     ];
 
     public function isInPettyCash(): bool

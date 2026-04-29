@@ -80,6 +80,16 @@ class InvoicesTable extends Table implements ExcelExportableInterface
             'foreignKey' => 'employee_id',
             'joinType' => 'LEFT',
         ]);
+        $this->belongsTo('Advance', [
+            'className' => 'Invoices',
+            'foreignKey' => 'advance_id',
+            'joinType' => 'LEFT',
+        ]);
+        $this->hasOne('AdvanceLegalization', [
+            'className' => 'AdvanceLegalizations',
+            'foreignKey' => 'advance_invoice_id',
+            'joinType' => 'LEFT',
+        ]);
         $this->hasMany('InvoicePayments', [
             'foreignKey' => 'invoice_id',
             'dependent' => true,
@@ -218,6 +228,10 @@ class InvoicesTable extends Table implements ExcelExportableInterface
             ->integer('confirmed_by')
             ->allowEmptyString('confirmed_by');
 
+        $validator
+            ->integer('advance_id')
+            ->allowEmptyString('advance_id');
+
         return $validator;
     }
 
@@ -248,6 +262,10 @@ class InvoicesTable extends Table implements ExcelExportableInterface
         ]);
         $rules->add($rules->existsIn('approver_id', 'ApproverUsers'), [
             'errorField' => 'approver_id',
+            'allowNullableNulls' => true,
+        ]);
+        $rules->add($rules->existsIn('advance_id', 'Advance'), [
+            'errorField' => 'advance_id',
             'allowNullableNulls' => true,
         ]);
 
