@@ -497,12 +497,13 @@ class InvoicesController extends AppController
                 ->where(['ApproverUsers.id IN' => $activeApproverIds])
                 ->all(),
             'employees' => $this->fetchTable('Employees')
-                ->find('list', keyField: 'id', valueField: 'full_name')
+                ->find()
                 ->where(['Employees.employee_status_id' => EmployeeStatusConstants::ACTIVO])
                 ->order(['Employees.first_name' => 'ASC', 'Employees.last_name1' => 'ASC'])
-                ->toArray()
+                ->all()
                 ->combine('id', function ($employee) {
-                    return $employee->full_name . ' - ' . $employee->document_number;
+                    $doc = $employee->document_number ? ' - ' . $employee->document_number : '';
+                    return $employee->full_name . $doc;
                 })
                 ->toArray(),
             'bankingEntities' => $this->fetchTable('BankingEntities')->find('codeList')->all(),
