@@ -184,27 +184,19 @@ $documentTypes = [
             </div>
         </div>
 
-        <!-- Sección: Detalle y Observaciones -->
+        <!-- Sección: Detalle -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">Descripción</span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
-            <div class="mb-3">
+            <div>
                 <?= $this->Form->control('detail', [
                     'type'  => 'textarea',
                     'rows'  => 3,
                     'class' => 'form-control',
                     'label' => ['text' => 'Detalle', 'class' => 'form-label'],
-                ]) ?>
-            </div>
-            <div>
-                <?= $this->Form->control('observations', [
-                    'type'  => 'textarea',
-                    'rows'  => 2,
-                    'class' => 'form-control',
-                    'label' => ['text' => 'Observaciones', 'class' => 'form-label'],
                 ]) ?>
             </div>
         </div>
