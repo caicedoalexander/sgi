@@ -47,10 +47,24 @@ class AdvanceLegalizationSignaturesTable extends Table
             ->notEmptyString('legalization_id');
 
         $validator
-            ->scalar('document_path')
-            ->maxLength('document_path', 500)
-            ->requirePresence('document_path', 'create')
-            ->notEmptyString('document_path');
+            ->scalar('file_path')
+            ->maxLength('file_path', 500)
+            ->requirePresence('file_path', 'create')
+            ->notEmptyString('file_path');
+
+        $validator
+            ->scalar('file_name')
+            ->maxLength('file_name', 255)
+            ->allowEmptyString('file_name');
+
+        $validator
+            ->integer('file_size')
+            ->allowEmptyString('file_size');
+
+        $validator
+            ->scalar('mime_type')
+            ->maxLength('mime_type', 100)
+            ->allowEmptyString('mime_type');
 
         $validator
             ->scalar('signature_status')
