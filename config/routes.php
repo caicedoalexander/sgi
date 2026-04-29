@@ -61,33 +61,33 @@ return function (RouteBuilder $routes): void {
         // Invoice rejected view
         $builder->connect(
             '/invoices/rejected',
-            ['controller' => 'Invoices', 'action' => 'rejected']
+            ['controller' => 'Invoices', 'action' => 'rejected'],
         );
 
         // Invoice overdue view
         $builder->connect(
             '/invoices/overdue',
-            ['controller' => 'Invoices', 'action' => 'overdue']
+            ['controller' => 'Invoices', 'action' => 'overdue'],
         );
 
         // Invoice pipeline advance action
         $builder->connect(
             '/invoices/advance-status/{id}',
             ['controller' => 'Invoices', 'action' => 'advanceStatus'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
 
         // System settings SMTP test
         $builder->connect(
             '/system-settings/test-smtp',
-            ['controller' => 'SystemSettings', 'action' => 'testSmtp']
+            ['controller' => 'SystemSettings', 'action' => 'testSmtp'],
         );
 
         // Invoice observation
         $builder->connect(
             '/invoices/add-observation/{id}',
             ['controller' => 'Invoices', 'action' => 'addObservation'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
 
         // External approval tokens (rate-limited)
@@ -113,214 +113,214 @@ return function (RouteBuilder $routes): void {
         $builder->connect(
             '/invoices/upload-document/{invoiceId}',
             ['controller' => 'Invoices', 'action' => 'uploadDocument'],
-            ['invoiceId' => '\d+', 'pass' => ['invoiceId']]
+            ['invoiceId' => '\d+', 'pass' => ['invoiceId']],
         );
         $builder->connect(
             '/invoices/delete-document/{invoiceId}/{documentId}',
             ['controller' => 'Invoices', 'action' => 'deleteDocument'],
-            ['invoiceId' => '\d+', 'documentId' => '\d+', 'pass' => ['invoiceId', 'documentId']]
+            ['invoiceId' => '\d+', 'documentId' => '\d+', 'pass' => ['invoiceId', 'documentId']],
         );
 
         // Employee novelties views
         $builder->connect(
             '/employee-novelties/all',
-            ['controller' => 'EmployeeNovelties', 'action' => 'all']
+            ['controller' => 'EmployeeNovelties', 'action' => 'all'],
         );
         $builder->connect(
             '/employee-novelties/rejected',
-            ['controller' => 'EmployeeNovelties', 'action' => 'rejected']
+            ['controller' => 'EmployeeNovelties', 'action' => 'rejected'],
         );
 
         // Employee novelties active/calendar view
         $builder->connect(
             '/employee-novelties/active',
-            ['controller' => 'EmployeeNovelties', 'action' => 'active']
+            ['controller' => 'EmployeeNovelties', 'action' => 'active'],
         );
         $builder->connect(
             '/employee-novelties/active-events',
-            ['controller' => 'EmployeeNovelties', 'action' => 'activeEvents']
+            ['controller' => 'EmployeeNovelties', 'action' => 'activeEvents'],
         );
         $builder->connect(
             '/employee-novelties/all-events',
-            ['controller' => 'EmployeeNovelties', 'action' => 'allEvents']
+            ['controller' => 'EmployeeNovelties', 'action' => 'allEvents'],
         );
 
         // Employee novelties pipeline
         $builder->connect(
             '/employee-novelties/advance/{id}',
             ['controller' => 'EmployeeNovelties', 'action' => 'advance'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/employee-novelties/reject/{id}',
             ['controller' => 'EmployeeNovelties', 'action' => 'reject'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/employee-novelties/export-pdf/{id}',
             ['controller' => 'EmployeeNovelties', 'action' => 'exportPdf'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/employee-novelties/assign-liquidation/{id}',
             ['controller' => 'EmployeeNovelties', 'action' => 'assignLiquidation'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/employee-novelties/resend-approval/{id}',
             ['controller' => 'EmployeeNovelties', 'action' => 'resendApproval'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/employee-novelties/add-observation/{id}',
             ['controller' => 'EmployeeNovelties', 'action' => 'addObservation'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/employee-novelties/upload-document/{id}',
             ['controller' => 'NoveltyDocuments', 'action' => 'upload'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/employee-novelties/delete-document/{noveltyId}/{documentId}',
             ['controller' => 'NoveltyDocuments', 'action' => 'delete'],
-            ['noveltyId' => '\d+', 'documentId' => '\d+', 'pass' => ['noveltyId', 'documentId']]
+            ['noveltyId' => '\d+', 'documentId' => '\d+', 'pass' => ['noveltyId', 'documentId']],
         );
 
         // Novelty Liquidation Docs
         $builder->connect(
             '/novelty-liquidation-docs/advance-group/{id}',
             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'advanceGroup'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/novelty-liquidation-docs/add-signature/{id}',
             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'addSignature'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/novelty-liquidation-docs/upload-document/{id}',
             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'uploadDocument'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/novelty-liquidation-docs/delete-document/{id}/{documentId}',
             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'deleteDocument'],
-            ['id' => '\d+', 'documentId' => '\d+', 'pass' => ['id', 'documentId']]
+            ['id' => '\d+', 'documentId' => '\d+', 'pass' => ['id', 'documentId']],
         );
         $builder->connect(
             '/novelty-liquidation-docs/add-observation/{id}',
             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'addObservation'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/novelty-liquidation-docs/upload-liquidation-document/{id}',
             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'uploadLiquidationDocument'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/novelty-liquidation-docs/update-liquidation-document/{id}',
             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'updateLiquidationDocument'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
 
         // Novelty Types AJAX flags
         $builder->connect(
             '/novelty-types/get-flags/{id}',
             ['controller' => 'NoveltyTypes', 'action' => 'getFlags'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
 
         // Leave document template management
         $builder->connect(
             '/leave-document-templates/save-fields/{id}',
             ['controller' => 'LeaveDocumentTemplates', 'action' => 'saveFields'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/leave-document-templates/preview/{id}',
             ['controller' => 'LeaveDocumentTemplates', 'action' => 'preview'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
 
         // Employee document management routes
         $builder->connect(
             '/employees/add-folder/{employeeId}',
             ['controller' => 'Employees', 'action' => 'addFolder'],
-            ['employeeId' => '\d+', 'pass' => ['employeeId']]
+            ['employeeId' => '\d+', 'pass' => ['employeeId']],
         );
         $builder->connect(
             '/employees/upload-document/{employeeId}',
             ['controller' => 'Employees', 'action' => 'uploadDocument'],
-            ['employeeId' => '\d+', 'pass' => ['employeeId']]
+            ['employeeId' => '\d+', 'pass' => ['employeeId']],
         );
         $builder->connect(
             '/employees/delete-document/{employeeId}/{documentId}',
             ['controller' => 'Employees', 'action' => 'deleteDocument'],
-            ['employeeId' => '\d+', 'documentId' => '\d+', 'pass' => ['employeeId', 'documentId']]
+            ['employeeId' => '\d+', 'documentId' => '\d+', 'pass' => ['employeeId', 'documentId']],
         );
 
         // Employee Excel import/export AJAX
         $builder->connect(
             '/employees/export-config',
-            ['controller' => 'Employees', 'action' => 'exportConfig']
+            ['controller' => 'Employees', 'action' => 'exportConfig'],
         );
         $builder->connect(
             '/employees/import-upload',
-            ['controller' => 'Employees', 'action' => 'importUpload']
+            ['controller' => 'Employees', 'action' => 'importUpload'],
         );
         $builder->connect(
             '/employees/import-process',
-            ['controller' => 'Employees', 'action' => 'importProcess']
+            ['controller' => 'Employees', 'action' => 'importProcess'],
         );
 
         // Petty Cash Records (Caja Menor)
         $builder->connect(
             '/petty-cash-records/advance-status/{id}',
             ['controller' => 'PettyCashRecords', 'action' => 'advanceStatus'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/petty-cash-records/upload-document/{id}',
             ['controller' => 'PettyCashRecords', 'action' => 'uploadDocument'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/petty-cash-records/delete-document/{recordId}/{documentId}',
             ['controller' => 'PettyCashRecords', 'action' => 'deleteDocument'],
-            ['recordId' => '\d+', 'documentId' => '\d+', 'pass' => ['recordId', 'documentId']]
+            ['recordId' => '\d+', 'documentId' => '\d+', 'pass' => ['recordId', 'documentId']],
         );
         $builder->connect(
             '/petty-cash-records/remove-invoice/{recordId}/{invoiceId}',
             ['controller' => 'PettyCashRecords', 'action' => 'removeInvoice'],
-            ['recordId' => '\d+', 'invoiceId' => '\d+', 'pass' => ['recordId', 'invoiceId']]
+            ['recordId' => '\d+', 'invoiceId' => '\d+', 'pass' => ['recordId', 'invoiceId']],
         );
         $builder->connect(
             '/petty-cash-records/add-observation/{id}',
             ['controller' => 'PettyCashRecords', 'action' => 'addObservation'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/petty-cash-records/register-payment/{id}',
             ['controller' => 'PettyCashRecords', 'action' => 'registerPayment'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/petty-cash-records/authorize-payment/{id}',
             ['controller' => 'PettyCashRecords', 'action' => 'authorizePayment'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
             '/petty-cash-records/reject-payment/{id}',
             ['controller' => 'PettyCashRecords', 'action' => 'rejectPayment'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
 
         // Employee observations
         $builder->connect(
             '/employees/add-observation/{id}',
             ['controller' => 'Employees', 'action' => 'addObservation'],
-            ['id' => '\d+', 'pass' => ['id']]
+            ['id' => '\d+', 'pass' => ['id']],
         );
 
         // Invoice payments
