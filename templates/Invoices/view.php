@@ -36,6 +36,16 @@ $dianClass = match($invoice->dian_validation ?? '') {
 };
 ?>
 
+<?php if (($invoice->document_type ?? null) === \App\Constants\InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($invoice->advance_id)): ?>
+    <div class="alert alert-info d-flex justify-content-between align-items-center">
+        <div>
+            <i class="bi bi-link-45deg me-1"></i>
+            Esta factura es una <strong>Legalización</strong> vinculada al
+            <?= $this->Html->link('Anticipo #' . h($invoice->advance_id), ['controller' => 'Advances', 'action' => 'view', $invoice->advance_id]) ?>.
+        </div>
+    </div>
+<?php endif; ?>
+
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Ver Factura</span>
