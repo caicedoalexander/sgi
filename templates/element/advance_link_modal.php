@@ -6,12 +6,11 @@
 $invoices = \Cake\ORM\TableRegistry::getTableLocator()->get('Invoices');
 $candidates = $invoices->find()
     ->where([
-        'document_type' => \App\Constants\InvoiceConstants::DOCTYPE_LEGALIZACION,
-        'advance_id IS' => null,
+        'Invoices.document_type' => \App\Constants\InvoiceConstants::DOCTYPE_LEGALIZACION,
+        'Invoices.advance_id IS' => null,
     ])
     ->contain(['Providers', 'Employees'])
-    ->order(['issue_date' => 'DESC'])
-    ->limit(200)
+    ->order(['Invoices.issue_date' => 'DESC'])
     ->all();
 ?>
 <div class="modal fade" id="advanceLinkModal" tabindex="-1">

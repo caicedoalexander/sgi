@@ -108,11 +108,11 @@ class AdvancesController extends AppController
         // Linked Legalización-Invoices
         $linkedInvoices = $invoicesTable->find()
             ->where([
-                'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
-                'advance_id' => $invoice->id,
+                'Invoices.document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+                'Invoices.advance_id' => $invoice->id,
             ])
             ->contain(['Providers', 'Employees'])
-            ->order(['issue_date' => 'ASC'])
+            ->order(['Invoices.issue_date' => 'ASC'])
             ->all();
 
         $linkedTotal = 0.0;
