@@ -18,7 +18,14 @@
 use App\Constants\InvoiceConstants;
 use App\Constants\StatusColorConstants;
 
-$this->assign('title', 'Editar Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
+$isAdvance = ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO;
+
+$this->assign(
+    'title',
+    $isAdvance
+        ? ('Editar Anticipo #' . $invoice->id)
+        : ('Editar Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id)),
+);
 
 $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstants::DOCUMENT_TYPES);
 $approvalOptions       = array_combine(InvoiceConstants::APPROVAL_STATUSES, InvoiceConstants::APPROVAL_STATUSES);
@@ -105,16 +112,16 @@ $isCollapsibleSection = fn(string $s): bool => in_array($s, $collapsible, true);
 
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Editar Factura</span>
+    <span class="sgi-page-title"><?= $isAdvance ? 'Editar Anticipo' : 'Editar Factura' ?></span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
             '<i class="bi bi-arrow-left me-1"></i>Volver',
-            ['action' => 'index'],
+            $isAdvance ? ['controller' => 'Advances', 'action' => 'index'] : ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?= $this->Html->link(
             '<i class="bi bi-eye me-1"></i>Ver',
-            ['action' => 'view', $invoice->id],
+            $isAdvance ? ['controller' => 'Advances', 'action' => 'view', $invoice->id] : ['action' => 'view', $invoice->id],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
     </div>
@@ -178,11 +185,11 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         <div class="d-flex align-items-center gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-                <i class="bi bi-receipt"></i>
+                <i class="bi <?= $isAdvance ? 'bi-cash-coin' : 'bi-receipt' ?>"></i>
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
-                    <?= h($invoice->invoice_number ?? ('# ' . $invoice->id)) ?>
+                    <?= $isAdvance ? ('Anticipo #' . h($invoice->id)) : h($invoice->invoice_number ?? ('# ' . $invoice->id)) ?>
                 </div>
                 <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
                     Rol: <strong style="color:#777;"><?= h($roleName) ?></strong>
@@ -210,6 +217,28 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
     ?>
     <div style="padding:1rem 1.5rem .75rem;">
         <div class="sgi-ledger">
+            <?php if ($isAdvance): ?>
+            <!-- Fila 1: Beneficiario + Documento + Valor (Anticipo) -->
+            <?php
+            $beneficiaryName = $invoice->provider->name ?? ($invoice->employee->full_name ?? '—');
+            $beneficiaryDoc = $invoice->provider->document_number
+                ?? ($invoice->employee->document_number ?? null);
+            $beneficiaryDocType = $invoice->provider_id
+                ? ($invoice->provider->document_type ?? '')
+                : ($invoice->employee_id ? ($invoice->employee->document_type ?? '') : '');
+            $beneficiaryKind = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id ? 'Empleado' : '—');
+            ?>
+            <div class="sgi-ledger-item" style="grid-column:span 2;">
+                <div class="sgi-ledger-label">Beneficiario (<?= h($beneficiaryKind) ?>)</div>
+                <div class="sgi-ledger-value" title="<?= h($beneficiaryName) ?>">
+                    <?= h($beneficiaryName) ?>
+                </div>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Documento</div>
+                <div class="sgi-ledger-value"><?= h(trim($beneficiaryDocType . ' ' . ($beneficiaryDoc ?? '—'))) ?></div>
+            </div>
+            <?php else: ?>
             <!-- Fila 1: Proveedor + NIT + Valor -->
             <div class="sgi-ledger-item" style="grid-column:span 2;">
                 <div class="sgi-ledger-label">Proveedor</div>
@@ -221,6 +250,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                 <div class="sgi-ledger-label">Documento</div>
                 <div class="sgi-ledger-value"><?= h(($invoice->provider->document_type ?? '') . ' ' . ($invoice->provider->document_number ?? '—')) ?></div>
             </div>
+            <?php endif; ?>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Valor</div>
                 <div class="sgi-ledger-value --amount">
@@ -259,18 +289,22 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                 <div class="sgi-ledger-label">Emisión</div>
                 <div class="sgi-ledger-value"><?= $invoice->issue_date ? h($invoice->issue_date->format('d/m/Y')) : '—' ?></div>
             </div>
+            <?php if (!$isAdvance): ?>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Vencimiento</div>
                 <div class="sgi-ledger-value"><?= $invoice->due_date ? h($invoice->due_date->format('d/m/Y')) : '—' ?></div>
             </div>
+            <?php endif; ?>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Registro</div>
                 <div class="sgi-ledger-value"><?= $invoice->registration_date ? h($invoice->registration_date->format('d/m/Y')) : '—' ?></div>
             </div>
+            <?php if (!$isAdvance): ?>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Orden de Compra</div>
                 <div class="sgi-ledger-value"><?= h($invoice->purchase_order ?: '—') ?></div>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -315,7 +349,52 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             <div style="padding-top:.75rem;">
         <?php endif; ?>
 
-        <?php if ($sectionName === 'general' && in_array('general', $visibleSections)): ?>
+        <?php if ($sectionName === 'general' && in_array('general', $visibleSections) && $isAdvance): ?>
+        <!-- ── Sección: Beneficiario (Anticipo) ── -->
+        <?php
+        $currentBeneficiary = $invoice->provider_id ? 'provider' : ($invoice->employee_id ? 'employee' : '');
+        ?>
+        <div class="mb-4 ">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="text-uppercase fw-semibold flex-shrink-0"
+                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                    <i class="bi bi-person-badge me-1"></i>Beneficiario
+                </span>
+                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Tipo de Beneficiario</label>
+                    <select id="beneficiary-type" class="form-select" <?= ($canEdit('provider_id') || $canEdit('employee_id')) ? '' : 'disabled' ?>>
+                        <option value="">-- Seleccione --</option>
+                        <option value="provider" <?= $currentBeneficiary === 'provider' ? 'selected' : '' ?>>Proveedor</option>
+                        <option value="employee" <?= $currentBeneficiary === 'employee' ? 'selected' : '' ?>>Empleado</option>
+                    </select>
+                </div>
+                <div class="col-md-9 <?= $currentBeneficiary === 'provider' ? '' : 'd-none' ?>" id="provider-wrapper">
+                    <label class="form-label">Proveedor</label>
+                    <?= $this->Form->control('provider_id', array_merge(
+                        ['label' => false, 'options' => $providers, 'empty' => '-- Seleccione --'],
+                        $canEdit('provider_id')
+                            ? ['class' => 'form-select select2-enable']
+                            : ['class' => 'form-select select2-enable', 'disabled' => true],
+                    )) ?>
+                </div>
+                <div class="col-md-9 <?= $currentBeneficiary === 'employee' ? '' : 'd-none' ?>" id="employee-wrapper">
+                    <label class="form-label">Empleado</label>
+                    <?= $this->Form->control('employee_id', array_merge(
+                        ['label' => false, 'options' => $employees ?? [], 'empty' => '-- Seleccione --'],
+                        $canEdit('employee_id')
+                            ? ['class' => 'form-select select2-enable']
+                            : ['class' => 'form-select select2-enable', 'disabled' => true],
+                    )) ?>
+                </div>
+            </div>
+            <?= $this->Form->hidden('document_type', ['value' => InvoiceConstants::DOCTYPE_ANTICIPO]) ?>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($sectionName === 'general' && in_array('general', $visibleSections) && !$isAdvance): ?>
         <!-- ── Sección: Información del Documento ── -->
         <div class="mb-4 ">
             <div class="d-flex align-items-center gap-3 mb-3">
@@ -439,6 +518,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                                value="<?= h($invoice->issue_date?->format('Y-m-d') ?? '') ?>">
                     <?php endif; ?>
                 </div>
+                <?php if (!$isAdvance): ?>
                 <div class="col-md-4" id="due-date-wrapper">
                     <label class="form-label">Fecha de Vencimiento</label>
                     <?php if ($canEdit('due_date')): ?>
@@ -452,6 +532,9 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                                value="<?= h($invoice->due_date?->format('Y-m-d') ?? '') ?>">
                     <?php endif; ?>
                 </div>
+                <?php else: ?>
+                <input type="hidden" name="due_date" value="<?= h($invoice->due_date?->format('Y-m-d') ?? '') ?>">
+                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>
@@ -1241,4 +1324,38 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
     });
 })();
 </script>
+
+<?php if ($isAdvance): ?>
+<script>
+(function () {
+    var typeSelect = document.getElementById('beneficiary-type');
+    if (!typeSelect) return;
+    var providerWrapper = document.getElementById('provider-wrapper');
+    var employeeWrapper = document.getElementById('employee-wrapper');
+    if (!providerWrapper || !employeeWrapper) return;
+    var providerSelect = providerWrapper.querySelector('select');
+    var employeeSelect = employeeWrapper.querySelector('select');
+
+    function applyToggle() {
+        var value = typeSelect.value;
+        if (value === 'provider') {
+            providerWrapper.classList.remove('d-none');
+            employeeWrapper.classList.add('d-none');
+            employeeSelect.value = '';
+            if (employeeSelect.dispatchEvent) employeeSelect.dispatchEvent(new Event('change'));
+        } else if (value === 'employee') {
+            employeeWrapper.classList.remove('d-none');
+            providerWrapper.classList.add('d-none');
+            providerSelect.value = '';
+            if (providerSelect.dispatchEvent) providerSelect.dispatchEvent(new Event('change'));
+        } else {
+            providerWrapper.classList.add('d-none');
+            employeeWrapper.classList.add('d-none');
+        }
+    }
+
+    typeSelect.addEventListener('change', applyToggle);
+})();
+</script>
+<?php endif; ?>
 <?php $this->end() ?>
