@@ -155,7 +155,54 @@ $leg = $invoice->advance_legalization ?? null;
                             </div>
                         <?= $this->Form->end() ?>
                     <?php elseif ($diff < -0.005): ?>
-                        <p class="text-muted">Caso Sobrante (Phase 5).</p>
+                        <hr>
+                        <?= $this->Form->create(null, ['url' => ['action' => 'registerSurplus', $leg->id]]) ?>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Monto del sobrante</label>
+                                    <input type="text" name="surplus_amount" class="form-control currency-input"
+                                           value="<?= number_format(abs($diff), 0, ',', '.') ?>" required>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-danger">Registrar sobrante (reintegro a beneficiario)</button>
+                                </div>
+                            </div>
+                        <?= $this->Form->end() ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php elseif ($leg->status === \App\Constants\AdvanceConstants::STATUS_TESORERIA && $leg->case_type === \App\Constants\AdvanceConstants::CASE_SOBRANTE): ?>
+            <div class="card mt-3">
+                <div class="card-header">Tesorería — registrar reintegro al beneficiario</div>
+                <div class="card-body">
+                    <?php if ($leg->surplus_payment_id): ?>
+                        <div class="alert alert-info mb-0">
+                            Reintegro #<?= h($leg->surplus_payment_id) ?> registrado. Esperando autorización por el Contador en
+                            <?= $this->Html->link('Aut. Pago', ['controller' => 'Invoices', 'action' => 'edit', $leg->advance_invoice_id]) ?>.
+                        </div>
+                    <?php else: ?>
+                        <?php
+                        $bankingEntities = \Cake\ORM\TableRegistry::getTableLocator()->get('BankingEntities')->find('list')->all();
+                        ?>
+                        <?= $this->Form->create(null, ['url' => ['action' => 'registerRefund', $leg->id]]) ?>
+                            <div class="row g-2">
+                                <div class="col-md-5">
+                                    <label class="form-label">Entidad bancaria *</label>
+                                    <?= $this->Form->select('banking_entity_id', $bankingEntities, ['class' => 'form-select select2', 'required' => true, 'empty' => '— Seleccione —']) ?>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Fecha *</label>
+                                    <input type="text" name="payment_date" class="form-control flatpickr-date" value="<?= date('Y-m-d') ?>" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Monto</label>
+                                    <input type="text" class="form-control" value="$<?= number_format((float)$leg->surplus_amount, 0, ',', '.') ?>" disabled>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-end">
+                                <button type="submit" class="btn btn-danger">Registrar reintegro</button>
+                            </div>
+                        <?= $this->Form->end() ?>
                     <?php endif; ?>
                 </div>
             </div>

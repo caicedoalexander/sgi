@@ -301,6 +301,47 @@ class AdvancesController extends AppController
     }
 
     /**
+     * Contabilidad declares a surplus and pushes legalization to Tesorería (POST).
+     */
+    public function registerSurplus(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $raw = (string)$this->request->getData('surplus_amount');
+        $amount = (float)str_replace([',', '.'], ['.', ''], $raw);
+        $result = $this->legalizationService->registerSurplus($leg, $amount, (int)$this->_getCurrentUser()->id);
+        if ($result->success) {
+            $this->Flash->success('Sobrante registrado. La legalización pasó a Tesorería.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al registrar sobrante.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
+     * Tesorería registers a refund payment to the beneficiary (POST).
+     */
+    public function registerRefund(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        $data = $this->request->getData();
+        $result = $this->legalizationService->registerRefundPayment(
+            $leg,
+            $data,
+            (int)$this->_getCurrentUser()->id,
+        );
+        if ($result->success) {
+            $this->Flash->success('Reintegro registrado. Pendiente de autorización por el Contador.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al registrar reintegro.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
      * Resolve the AdvanceLegalization tied to a given Anticipo invoice id.
      */
     private function _loadLegalization(int $advanceInvoiceId): AdvanceLegalization

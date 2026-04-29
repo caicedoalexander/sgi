@@ -356,6 +356,96 @@ class AdvanceLegalizationService
     }
 
     /**
+     * Contabilidad declares a surplus (linked invoices > anticipo). The legalization
+     * jumps to Tesorería awaiting the company's refund payment to the beneficiary.
+     */
+    public function registerSurplus(AdvanceLegalization $leg, float $amount, int $userId): ServiceResult
+    {
+        if ($leg->status !== AdvanceConstants::STATUS_CONTABILIDAD) {
+            return ServiceResult::fail('La legalización no está en Contabilidad.');
+        }
+        if ($amount <= 0) {
+            return ServiceResult::fail('El monto del sobrante debe ser mayor a cero.');
+        }
+
+        $leg->case_type = AdvanceConstants::CASE_SOBRANTE;
+        $leg->surplus_amount = $amount;
+
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId);
+    }
+
+    /**
+     * Crea un InvoicePayment con is_refund=true sobre el Invoice del Anticipo,
+     * y deja la legalización en Tesorería esperando autorización.
+     */
+    public function registerRefundPayment(AdvanceLegalization $leg, array $data, int $userId): ServiceResult
+    {
+        $isWaiting = $leg->status === AdvanceConstants::STATUS_TESORERIA
+            && $leg->case_type === AdvanceConstants::CASE_SOBRANTE;
+        if (!$isWaiting) {
+            return ServiceResult::fail('La legalización no está esperando reintegro.');
+        }
+        if (!empty($leg->surplus_payment_id)) {
+            return ServiceResult::fail('Ya existe un pago de reintegro registrado.');
+        }
+        if ($leg->surplus_amount === null) {
+            return ServiceResult::fail('Monto del sobrante no definido.');
+        }
+
+        $payments = TableRegistry::getTableLocator()->get('InvoicePayments');
+        $invoices = TableRegistry::getTableLocator()->get('Invoices');
+
+        $connection = $payments->getConnection();
+
+        return $connection->transactional(function () use ($leg, $data, $userId, $payments, $invoices) {
+            $payment = $payments->newEntity([
+                'invoice_id' => $leg->advance_invoice_id,
+                'banking_entity_id' => $data['banking_entity_id'] ?? null,
+                'amount' => (float)$leg->surplus_amount,
+                'payment_date' => $data['payment_date'] ?? date('Y-m-d'),
+                'is_refund' => true,
+                'status' => InvoiceConstants::PAYMENT_RECORD_PENDING,
+                'authorized' => false,
+                'created_by' => $userId,
+            ]);
+
+            if (!$payments->save($payment)) {
+                return ServiceResult::fail('No se pudo crear el reintegro: ' . json_encode($payment->getErrors()));
+            }
+
+            // Move the underlying Anticipo Invoice back to autorizacion_pago for the Contador.
+            $advance = $invoices->get($leg->advance_invoice_id);
+            $advance->pipeline_status = InvoiceConstants::STATUS_AUTORIZACION_PAGO;
+            $invoices->save($advance);
+
+            $leg->surplus_payment_id = $payment->id;
+            $leg->updated_by = $userId;
+            TableRegistry::getTableLocator()->get('AdvanceLegalizations')->save($leg);
+
+            return ServiceResult::ok($payment);
+        });
+    }
+
+    /**
+     * Called from InvoicePaymentService::authorizePayment when a refund payment is authorized.
+     */
+    public function closeOnRefundAuthorized(int $paymentId, int $userId): ServiceResult
+    {
+        $legTable = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
+        $leg = $legTable->find()->where(['surplus_payment_id' => $paymentId])->first();
+        if (!$leg) {
+            return ServiceResult::fail('No hay legalización vinculada al pago.');
+        }
+        if ($leg->status === AdvanceConstants::STATUS_LEGALIZADA) {
+            return ServiceResult::ok($leg);
+        }
+
+        $leg->legalized_at = date('Y-m-d H:i:s');
+
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_LEGALIZADA, $userId);
+    }
+
+    /**
      * Persist a status transition and updated_by stamp.
      */
     private function _setStatus(AdvanceLegalization $leg, string $newStatus, int $userId): ServiceResult

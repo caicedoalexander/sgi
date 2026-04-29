@@ -20,5 +20,6 @@ class InvoicePayment extends Entity
         'status' => true,
         'rejection_reason' => true,
         'created_by' => true,
+        'is_refund' => true,
     ];
 }

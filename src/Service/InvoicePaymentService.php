@@ -143,6 +143,10 @@ class InvoicePaymentService
             $authorizedBy,
         );
 
+        if ((bool)($payment->is_refund ?? false)) {
+            $this->advanceLegalizationService->closeOnRefundAuthorized($payment->id, $authorizedBy);
+        }
+
         if (
             $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
             && ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO
@@ -171,6 +175,10 @@ class InvoicePaymentService
 
         $invoice = $invoicesTable->get($invoiceId);
         $currentStatus = $invoice->pipeline_status;
+
+        if (!empty($paymentData['is_refund']) && $invoice->document_type !== InvoiceConstants::DOCTYPE_ANTICIPO) {
+            return ServiceResult::fail('is_refund solo es válido en pagos de Anticipos.');
+        }
 
         $connection = $paymentsTable->getConnection();
 

@@ -466,6 +466,16 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'Advances', 'action' => 'confirmShortage'],
             ['id' => '\d+', 'pass' => ['id']],
         );
+        $builder->connect(
+            '/advances/register-surplus/{id}',
+            ['controller' => 'Advances', 'action' => 'registerSurplus'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/register-refund/{id}',
+            ['controller' => 'Advances', 'action' => 'registerRefund'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
 
         $builder->fallbacks();
     });
