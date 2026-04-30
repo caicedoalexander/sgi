@@ -270,6 +270,11 @@ class InvoicesController extends AppController
             }
         }
 
+        // Regression button visibility / lock state
+        $canRegress = $this->pipeline->canRegress($roleName, $currentStatus);
+        $previousStatus = $this->pipeline->getPreviousStatus($currentStatus);
+        $regressLockMessage = $canRegress ? $this->pipeline->getRegressionLockMessage($invoice) : null;
+
         if ($this->request->is(['patch', 'post', 'put'])) {
             $user = $this->_getCurrentUser();
             $result = $this->pipeline->saveAndAdvance(
@@ -341,6 +346,9 @@ class InvoicesController extends AppController
             'isApproved',
             'advanceErrors',
             'nextStatus',
+            'canRegress',
+            'previousStatus',
+            'regressLockMessage',
             'currentApprovals',
             'hasPendingApprovals',
             'canSendLinks',
