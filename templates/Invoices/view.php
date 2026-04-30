@@ -220,27 +220,47 @@ $dianClass = match($invoice->dian_validation ?? '') {
 
     <!-- Sección: Observaciones (chat) -->
     <?php if (!empty($invoice->invoice_observations)): ?>
+    <?php $statusLabels = \App\Service\InvoicePipelineService::STATUS_LABELS; ?>
     <div style="border-bottom:1px solid var(--border-color);">
         <div class="sgi-section-title">Observaciones</div>
         <div style="padding:.5rem 1.25rem .875rem;max-height:400px;overflow-y:auto;">
             <?php foreach ($invoice->invoice_observations as $obs): ?>
+            <?php
+                $isRegression = ($obs->type ?? null) === \App\Constants\InvoiceConstants::OBSERVATION_TYPE_REGRESSION;
+                $meta = $obs->metadata ?? [];
+                if (is_string($meta)) {
+                    $decoded = json_decode($meta, true);
+                    $meta = is_array($decoded) ? $decoded : [];
+                }
+                $fromLbl = $statusLabels[$meta['from_status'] ?? ''] ?? null;
+                $toLbl = $statusLabels[$meta['to_status'] ?? ''] ?? null;
+            ?>
             <div class="d-flex align-items-start gap-2 mb-3">
                 <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:32px;height:32px;background:var(--primary-color);color:#fff;font-size:.7rem;font-weight:700;">
+                     style="width:32px;height:32px;background:<?= $isRegression ? '#CD6A15' : 'var(--primary-color)' ?>;color:#fff;font-size:.7rem;font-weight:700;">
                     <?php
                     $names = explode(' ', $obs->user->full_name ?? '');
                     echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
                     ?>
                 </div>
                 <div style="flex:1;min-width:0;">
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <span style="font-size:.8rem;font-weight:600;color:#222;">
                             <?= h($obs->user->full_name ?? '') ?>
                         </span>
+                        <?php if ($isRegression): ?>
+                            <span class="badge bg-warning text-dark" style="font-size:.65rem;">Regresión</span>
+                        <?php endif; ?>
                         <span style="font-size:.7rem;color:#aaa;">
                             <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
                         </span>
                     </div>
+                    <?php if ($isRegression && $fromLbl && $toLbl): ?>
+                        <div style="font-size:.74rem;color:#666;margin-top:.1rem;">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>
+                            <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
+                        </div>
+                    <?php endif; ?>
                     <div style="font-size:.84rem;color:#444;line-height:1.5;margin-top:.15rem;">
                         <?= nl2br(h($obs->message)) ?>
                     </div>
