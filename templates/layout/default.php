@@ -229,7 +229,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-hourglass-split me-2"></i>Pend. de Legalización' .
+                                    '<i class="bi bi-hourglass-split me-2"></i>Pendientes' .
                                     (!empty($advancesPendingLegalizationCount) ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $advancesPendingLegalizationCount . '</span>' : ''),
                                     ['controller' => 'Advances', 'action' => 'pendingLegalization'],
                                     ['class' => $navLink('Advances', 'pendingLegalization') . ' d-flex align-items-center', 'escape' => false],
@@ -272,7 +272,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                         <ul class="sidebar-submenu">
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-file-earmark-text me-2"></i>Mis D. de Liquidación' .
+                                    '<i class="bi bi-file-earmark-text me-2"></i>Mis Documentos' .
                                     ($liquidationMineCount > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $liquidationMineCount . '</span>' : ''),
                                     ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index'],
                                     ['class' => $navLink('NoveltyLiquidationDocs', 'index') . ' d-flex align-items-center', 'escape' => false],

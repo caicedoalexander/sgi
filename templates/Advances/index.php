@@ -54,7 +54,6 @@ $legalizationBadge = [
                     <th>#</th>
                     <th>Beneficiario</th>
                     <th>Centro Op.</th>
-                    <th>Detalle</th>
                     <th class="text-end">Monto</th>
                     <th>Estado pago</th>
                     <th>Estado legalización</th>
@@ -63,7 +62,7 @@ $legalizationBadge = [
             <tbody>
                 <?php if (empty($advances) || $advances->count() === 0): ?>
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">No hay anticipos registrados.</td>
+                    <td colspan="6" class="text-center text-muted py-4">No hay anticipos registrados.</td>
                 </tr>
                 <?php else: ?>
                 <?php foreach ($advances as $a): ?>
@@ -75,7 +74,6 @@ $legalizationBadge = [
                     </td>
                     <td><?= h($a->provider->name ?? ($a->employee->full_name ?? '—')) ?></td>
                     <td><?= h($a->operation_center->name ?? '—') ?></td>
-                    <td><?= h($a->detail) ?></td>
                     <td class="text-end" style="font-weight:600;">
                         $ <?= $this->Number->format((float)$a->amount, ['places' => 2]) ?>
                     </td>
