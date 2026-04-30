@@ -128,6 +128,15 @@ class InvoicePipelineService
         InvoiceConstants::STATUS_PAGADA             => null,
     ];
 
+    // Backward transitions (counterpart of TRANSITIONS for the regress operation).
+    public const BACKWARD_TRANSITIONS = [
+        InvoiceConstants::STATUS_APROBACION         => null,
+        InvoiceConstants::STATUS_CONTABILIDAD       => InvoiceConstants::STATUS_APROBACION,
+        InvoiceConstants::STATUS_TESORERIA          => InvoiceConstants::STATUS_CONTABILIDAD,
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO  => InvoiceConstants::STATUS_TESORERIA,
+        InvoiceConstants::STATUS_PAGADA             => InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+    ];
+
     public function getVisibleStatuses(string $roleName): array
     {
         return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];

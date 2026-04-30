@@ -103,4 +103,13 @@ final class InvoiceConstants
     public const HOLDER_TYPE_EMPLOYEE = 'employee';
     public const HOLDER_TYPE_MANUAL = 'manual';
     public const HOLDER_TYPES = [self::HOLDER_TYPE_PROVIDER, self::HOLDER_TYPE_EMPLOYEE, self::HOLDER_TYPE_MANUAL];
+
+    // Tipos de observación (invoice_observations.type)
+    public const OBSERVATION_TYPE_GENERAL = 'general';
+    public const OBSERVATION_TYPE_REGRESSION = 'regression';
+
+    public const OBSERVATION_TYPES = [
+        self::OBSERVATION_TYPE_GENERAL,
+        self::OBSERVATION_TYPE_REGRESSION,
+    ];
 }
