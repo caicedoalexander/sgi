@@ -200,7 +200,7 @@ class InvoicesTable extends Table implements ExcelExportableInterface
 
         $validator
             ->scalar('pipeline_status')
-            ->inList('pipeline_status', InvoicePipelineService::STATUSES);
+            ->inList('pipeline_status', InvoicePipelineService::ALL_STATUSES);
 
         $validator
             ->scalar('ready_for_payment')

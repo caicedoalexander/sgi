@@ -3,11 +3,26 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\InvoiceConstants;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 
 class PaymentRegistryService
 {
+    /**
+     * Mapa de keys de tipo a labels visibles en el registro de pagos.
+     */
+    public const TYPE_LABELS = [
+        'refund'        => 'Reintegro',
+        'advance'       => 'Anticipo',
+        'debit_note'    => 'Nota Débito',
+        'receipt'       => 'Recibo',
+        'credit_card'   => 'Tarjeta de Crédito',
+        'reintegro_doc' => 'Reintegro (Doc)',
+        'invoice'       => 'Factura',
+        'liquidation'   => 'Liquidación',
+    ];
+
     /**
      * Get all payments across modules, merged and sorted.
      *
@@ -28,6 +43,22 @@ class PaymentRegistryService
     }
 
     /**
+     * Resolves the type key for an invoice payment based on its document_type and is_refund flag.
+     */
+    private function _resolveInvoicePaymentType(?string $documentType, bool $isRefund): string
+    {
+        return match (true) {
+            $isRefund                                                => 'refund',
+            $documentType === InvoiceConstants::DOCTYPE_ANTICIPO     => 'advance',
+            $documentType === InvoiceConstants::DOCTYPE_NOTA_DEBITO  => 'debit_note',
+            $documentType === InvoiceConstants::DOCTYPE_RECIBO       => 'receipt',
+            $documentType === InvoiceConstants::DOCTYPE_TARJETA_CREDITO => 'credit_card',
+            $documentType === InvoiceConstants::DOCTYPE_REINTEGRO    => 'reintegro_doc',
+            default                                                  => 'invoice',
+        };
+    }
+
+    /**
      * Query invoice payments.
      *
      * @param array $filters Filters to apply.
@@ -35,7 +66,9 @@ class PaymentRegistryService
      */
     private function _queryInvoicePayments(array $filters): array
     {
-        if (!empty($filters['type']) && $filters['type'] !== 'invoice') {
+        $requestedType = $filters['type'] ?? null;
+        $invoiceTypeKeys = ['refund', 'advance', 'debit_note', 'receipt', 'credit_card', 'reintegro_doc', 'invoice'];
+        if (!empty($requestedType) && !in_array($requestedType, $invoiceTypeKeys, true)) {
             return [];
         }
 
@@ -45,37 +78,99 @@ class PaymentRegistryService
             ->order(['InvoicePayments.created' => 'DESC']);
 
         $this->_applyCommonFilters($query, $filters, 'InvoicePayments');
+        $this->_applyInvoiceTypeFilter($query, $requestedType);
 
-        return array_map(fn($p) => [
-            'type' => 'invoice',
-            'type_label' => 'Factura',
-            'reference' => $p->invoice->invoice_number ?? "FAC-{$p->invoice_id}",
-            'banking_entity' => $p->banking_entity->name ?? '—',
-            'amount' => (float)$p->amount,
-            'payment_date' => $p->payment_date?->format('Y-m-d'),
-            'authorized' => (bool)$p->authorized,
-            'authorized_by' => $p->authorized_by_user->full_name
-                ?? $p->authorized_by_user->username ?? null,
-            'authorized_date' => $p->authorized_date?->format('Y-m-d'),
-            'created_by' => $p->created_by_user->full_name
-                ?? $p->created_by_user->username ?? '—',
-            'source_type' => match (true) {
-                !empty($p->payment_scheduling_id) => 'scheduling',
-                !empty($p->petty_cash_record_id) => 'petty_cash',
-                default => 'individual',
-            },
-            'source_label' => match (true) {
-                !empty($p->payment_scheduling_id) => 'Programación ' . ($p->payment_scheduling->code ?? '#' . $p->payment_scheduling_id),
-                !empty($p->petty_cash_record_id) => 'Caja Menor ' . ($p->petty_cash_record->code ?? '#' . $p->petty_cash_record_id),
-                default => 'Individual',
-            },
-            'source_url' => match (true) {
-                !empty($p->payment_scheduling_id) => ['controller' => 'PaymentSchedulings', 'action' => 'view', $p->payment_scheduling_id],
-                !empty($p->petty_cash_record_id) => ['controller' => 'PettyCashRecords', 'action' => 'view', $p->petty_cash_record_id],
-                default => null,
-            },
-            'created' => $p->created?->format('Y-m-d H:i:s') ?? '',
-        ], $query->all()->toArray());
+        return array_map(function ($p) {
+            $documentType = $p->invoice->document_type ?? null;
+            $isRefund = (bool)$p->is_refund;
+            $typeKey = $this->_resolveInvoicePaymentType($documentType, $isRefund);
+
+            return [
+                'type' => $typeKey,
+                'type_label' => self::TYPE_LABELS[$typeKey] ?? 'Factura',
+                'reference' => $p->invoice->invoice_number ?? "FAC-{$p->invoice_id}",
+                'banking_entity' => $p->banking_entity->name ?? '—',
+                'amount' => (float)$p->amount,
+                'payment_date' => $p->payment_date?->format('Y-m-d'),
+                'authorized' => (bool)$p->authorized,
+                'authorized_by' => $p->authorized_by_user->full_name
+                    ?? $p->authorized_by_user->username ?? null,
+                'authorized_date' => $p->authorized_date?->format('Y-m-d'),
+                'created_by' => $p->created_by_user->full_name
+                    ?? $p->created_by_user->username ?? '—',
+                'source_type' => match (true) {
+                    !empty($p->payment_scheduling_id) => 'scheduling',
+                    !empty($p->petty_cash_record_id) => 'petty_cash',
+                    default => 'individual',
+                },
+                'source_label' => match (true) {
+                    !empty($p->payment_scheduling_id) => 'Programación ' . ($p->payment_scheduling->code ?? '#' . $p->payment_scheduling_id),
+                    !empty($p->petty_cash_record_id) => 'Caja Menor ' . ($p->petty_cash_record->code ?? '#' . $p->petty_cash_record_id),
+                    default => 'Individual',
+                },
+                'source_url' => match (true) {
+                    !empty($p->payment_scheduling_id) => ['controller' => 'PaymentSchedulings', 'action' => 'view', $p->payment_scheduling_id],
+                    !empty($p->petty_cash_record_id) => ['controller' => 'PettyCashRecords', 'action' => 'view', $p->petty_cash_record_id],
+                    default => null,
+                },
+                'created' => $p->created?->format('Y-m-d H:i:s') ?? '',
+            ];
+        }, $query->all()->toArray());
+    }
+
+    /**
+     * Apply a type filter on invoice payments based on document_type / is_refund.
+     */
+    private function _applyInvoiceTypeFilter(SelectQuery $query, ?string $type): void
+    {
+        if (empty($type)) {
+            return;
+        }
+
+        switch ($type) {
+            case 'refund':
+                $query->where(['InvoicePayments.is_refund' => true]);
+                break;
+            case 'advance':
+                $query->where([
+                    'InvoicePayments.is_refund' => false,
+                    'Invoices.document_type' => InvoiceConstants::DOCTYPE_ANTICIPO,
+                ]);
+                break;
+            case 'debit_note':
+                $query->where([
+                    'InvoicePayments.is_refund' => false,
+                    'Invoices.document_type' => InvoiceConstants::DOCTYPE_NOTA_DEBITO,
+                ]);
+                break;
+            case 'receipt':
+                $query->where([
+                    'InvoicePayments.is_refund' => false,
+                    'Invoices.document_type' => InvoiceConstants::DOCTYPE_RECIBO,
+                ]);
+                break;
+            case 'credit_card':
+                $query->where([
+                    'InvoicePayments.is_refund' => false,
+                    'Invoices.document_type' => InvoiceConstants::DOCTYPE_TARJETA_CREDITO,
+                ]);
+                break;
+            case 'reintegro_doc':
+                $query->where([
+                    'InvoicePayments.is_refund' => false,
+                    'Invoices.document_type' => InvoiceConstants::DOCTYPE_REINTEGRO,
+                ]);
+                break;
+            case 'invoice':
+                $query->where([
+                    'InvoicePayments.is_refund' => false,
+                    'Invoices.document_type IN' => [
+                        InvoiceConstants::DOCTYPE_FACTURA,
+                        InvoiceConstants::DOCTYPE_CAJA_MENOR,
+                    ],
+                ]);
+                break;
+        }
     }
 
     /**
@@ -99,7 +194,7 @@ class PaymentRegistryService
 
         return array_map(fn($p) => [
             'type' => 'liquidation',
-            'type_label' => 'Liquidación',
+            'type_label' => self::TYPE_LABELS['liquidation'],
             'reference' => $p->novelty_liquidation_doc->liquidation_number
                 ?? "LIQ-{$p->liquidation_doc_id}",
             'banking_entity' => $p->banking_entity->name ?? '—',

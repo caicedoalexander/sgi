@@ -13,6 +13,7 @@ final class StatusColorConstants
         'aut_pago'         => 'bg-info',
         'pagada'           => 'bg-success',
         'pagado'           => 'bg-success',
+        'legalizada'       => 'bg-success',
         'agrupacion'       => 'bg-secondary',
         'borrador'         => 'bg-secondary',
         'registro'         => 'bg-light text-dark',

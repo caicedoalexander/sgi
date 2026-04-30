@@ -114,7 +114,10 @@ class InvoicesController extends AppController
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
         $invoices = $this->paginate($this->_buildInvoiceQuery([
             'Invoices.due_date <' => date('Y-m-d'),
-            'Invoices.pipeline_status !=' => InvoiceConstants::STATUS_PAGADA,
+            'Invoices.pipeline_status NOT IN' => [
+                InvoiceConstants::STATUS_PAGADA,
+                InvoiceConstants::STATUS_LEGALIZADA,
+            ],
         ], $userId));
         $visibleStatuses = [];
 
@@ -163,7 +166,7 @@ class InvoicesController extends AppController
         $isLockedByPettyCash = $this->pipeline->isLockedByPettyCash($invoice);
         $isLockedByScheduling = $this->pipeline->isLockedByPaidScheduling((int)$id);
         $isLocked = $isLockedByPettyCash || $isLockedByScheduling;
-        $pipelineStatuses = InvoicePipelineService::STATUSES;
+        $pipelineStatuses = $this->pipeline->getPipelineStatusesFor($invoice->document_type);
         $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
 
         $documentsByStatus = [];
@@ -230,9 +233,10 @@ class InvoicesController extends AppController
             ],
         ]);
 
-        // Paid invoices are read-only for non-admin roles: redirect to view.
+        // Paid/legalized invoices are read-only for non-admin roles: redirect to view.
+        $terminalStatuses = [InvoiceConstants::STATUS_PAGADA, InvoiceConstants::STATUS_LEGALIZADA];
         if (
-            $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
+            in_array($invoice->pipeline_status, $terminalStatuses, true)
             && $this->_getRoleName() !== RoleConstants::ADMIN
         ) {
             return $this->_redirectForInvoice($invoice, 'view', $id);
@@ -252,7 +256,7 @@ class InvoicesController extends AppController
         $currentStatus = $invoice->pipeline_status;
 
         $editableFields = $this->pipeline->getEditableFields($roleName, $currentStatus);
-        $canAdvance = $this->pipeline->canAdvance($roleName, $currentStatus);
+        $canAdvance = $this->pipeline->canAdvance($roleName, $currentStatus, $invoice->document_type);
         $visibleSections = $this->pipeline->getVisibleSections($roleName, $currentStatus, $invoice->document_type);
         $collapsibleSections = $this->pipeline->getCollapsibleSections($roleName, $currentStatus);
         $isRejected = $this->pipeline->isRejected($invoice);
@@ -313,7 +317,7 @@ class InvoicesController extends AppController
             $this->Flash->error('No se pudo guardar la factura. Verifique los datos e intente de nuevo.');
         }
 
-        $pipelineStatuses = InvoicePipelineService::STATUSES;
+        $pipelineStatuses = $this->pipeline->getPipelineStatusesFor($invoice->document_type);
         $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
 
         $canDeleteDocuments = $this->_checkPermission('invoices', 'delete');

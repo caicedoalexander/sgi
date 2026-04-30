@@ -85,6 +85,11 @@ class SidebarCounterService
 
         $counters = [];
         foreach ($visibleStatuses as $status) {
+            // `legalizada` no es un estado del pipeline normal — se reporta vía
+            // advancesPendingLegalizationCount, no como contador de pendientes.
+            if ($status === InvoiceConstants::STATUS_LEGALIZADA) {
+                continue;
+            }
             $counters[$status] = $invoicesTable->find()
                 ->where([
                     'pipeline_status' => $status,
@@ -102,7 +107,10 @@ class SidebarCounterService
             ->where([
                 'document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
                 'due_date <' => date('Y-m-d'),
-                'pipeline_status !=' => InvoiceConstants::STATUS_PAGADA,
+                'pipeline_status NOT IN' => [
+                    InvoiceConstants::STATUS_PAGADA,
+                    InvoiceConstants::STATUS_LEGALIZADA,
+                ],
             ])
             ->count();
     }

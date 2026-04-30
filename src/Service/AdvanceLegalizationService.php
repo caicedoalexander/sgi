@@ -15,6 +15,18 @@ class AdvanceLegalizationService
 {
     use DocumentUploadTrait;
 
+    private ?InvoicePipelineService $pipelineService;
+
+    public function __construct(?InvoicePipelineService $pipelineService = null)
+    {
+        $this->pipelineService = $pipelineService;
+    }
+
+    private function _getPipelineService(): InvoicePipelineService
+    {
+        return $this->pipelineService ??= new InvoicePipelineService();
+    }
+
     /**
      * Idempotently create the advance_legalizations row for a paid Anticipo.
      *
@@ -483,7 +495,9 @@ class AdvanceLegalizationService
     }
 
     /**
-     * Persist a status transition and updated_by stamp.
+     * Persist a status transition and updated_by stamp. Cuando el nuevo estado es
+     * STATUS_LEGALIZADA, también promueve a `legalizada` todas las facturas tipo
+     * Legalización vinculadas que estén en `contabilidad`.
      */
     private function _setStatus(AdvanceLegalization $leg, string $newStatus, int $userId): ServiceResult
     {
@@ -492,6 +506,10 @@ class AdvanceLegalizationService
         $table = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
         if (!$table->save($leg)) {
             return ServiceResult::fail('No se pudo guardar la legalización: ' . json_encode($leg->getErrors()));
+        }
+
+        if ($newStatus === AdvanceConstants::STATUS_LEGALIZADA) {
+            $this->_getPipelineService()->legalizeLinkedInvoices($leg->advance_invoice_id, $userId);
         }
 
         return ServiceResult::ok($leg);

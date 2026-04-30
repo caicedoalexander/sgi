@@ -54,6 +54,9 @@ final class InvoiceConstants
     public const STATUS_TESORERIA = 'tesoreria';
     public const STATUS_AUTORIZACION_PAGO = 'autorizacion_pago';
     public const STATUS_PAGADA = 'pagada';
+    // Estado terminal exclusivo para document_type = Legalización.
+    // No participa en PIPELINE_STATUSES (flujo normal). Ver InvoicePipelineService::ALL_STATUSES.
+    public const STATUS_LEGALIZADA = 'legalizada';
 
     public const PIPELINE_STATUSES = [
         self::STATUS_APROBACION,
@@ -61,6 +64,13 @@ final class InvoiceConstants
         self::STATUS_TESORERIA,
         self::STATUS_AUTORIZACION_PAGO,
         self::STATUS_PAGADA,
+    ];
+
+    // Pipeline visual exclusivo de Legalizaciones: 3 pasos.
+    public const PIPELINE_STATUSES_LEGALIZACION = [
+        self::STATUS_APROBACION,
+        self::STATUS_CONTABILIDAD,
+        self::STATUS_LEGALIZADA,
     ];
 
     // Document types

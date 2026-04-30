@@ -12,9 +12,14 @@
 $this->assign('title', 'Registro de Pagos');
 
 $typeBadge = [
-    'invoice'      => 'bg-primary',
-    'liquidation'  => 'bg-info text-dark',
-    'petty_cash'   => 'bg-secondary',
+    'invoice'       => 'bg-primary',
+    'advance'       => 'bg-warning text-dark',
+    'refund'        => 'bg-danger',
+    'debit_note'    => 'bg-primary',
+    'receipt'       => 'bg-primary',
+    'credit_card'   => 'bg-primary',
+    'reintegro_doc' => 'bg-danger',
+    'liquidation'   => 'bg-info text-dark',
 ];
 
 $hasFilters = !empty(array_filter($filters, fn($v) => $v !== null && $v !== ''));
@@ -36,8 +41,13 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
             <label class="sgi-filter-label">Tipo</label>
             <select name="type" class="form-select form-select-sm">
                 <option value="">Todos</option>
-                <option value="invoice"      <?= ($filters['type'] ?? '') === 'invoice'      ? 'selected' : '' ?>>Factura</option>
-                <option value="liquidation"  <?= ($filters['type'] ?? '') === 'liquidation'  ? 'selected' : '' ?>>Liquidación</option>
+                <option value="invoice"       <?= ($filters['type'] ?? '') === 'invoice'       ? 'selected' : '' ?>>Factura</option>
+                <option value="advance"       <?= ($filters['type'] ?? '') === 'advance'       ? 'selected' : '' ?>>Anticipo</option>
+                <option value="refund"        <?= ($filters['type'] ?? '') === 'refund'        ? 'selected' : '' ?>>Reintegro</option>
+                <option value="debit_note"    <?= ($filters['type'] ?? '') === 'debit_note'    ? 'selected' : '' ?>>Nota Débito</option>
+                <option value="receipt"       <?= ($filters['type'] ?? '') === 'receipt'       ? 'selected' : '' ?>>Recibo</option>
+                <option value="credit_card"   <?= ($filters['type'] ?? '') === 'credit_card'   ? 'selected' : '' ?>>Tarjeta de Crédito</option>
+                <option value="liquidation"   <?= ($filters['type'] ?? '') === 'liquidation'   ? 'selected' : '' ?>>Liquidación</option>
             </select>
         </div>
         <div class="col-md-2">

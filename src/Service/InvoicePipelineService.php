@@ -29,8 +29,19 @@ class InvoicePipelineService
         $this->advanceLegalizationService = $advanceLegalizationService ?? new AdvanceLegalizationService();
     }
 
-    // Pipeline statuses in order
+    // Pipeline statuses in order (flujo normal de facturas).
     public const STATUSES = InvoiceConstants::PIPELINE_STATUSES;
+
+    // Todos los estados válidos para almacenar en invoices.pipeline_status,
+    // incluyendo el terminal `legalizada` exclusivo de document_type = Legalización.
+    public const ALL_STATUSES = [
+        InvoiceConstants::STATUS_APROBACION,
+        InvoiceConstants::STATUS_CONTABILIDAD,
+        InvoiceConstants::STATUS_TESORERIA,
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+        InvoiceConstants::STATUS_PAGADA,
+        InvoiceConstants::STATUS_LEGALIZADA,
+    ];
 
     public const STATUS_LABELS = [
         InvoiceConstants::STATUS_APROBACION        => 'Aprobación',
@@ -38,6 +49,7 @@ class InvoicePipelineService
         InvoiceConstants::STATUS_TESORERIA         => 'Tesorería',
         InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
         InvoiceConstants::STATUS_PAGADA            => 'Pagada',
+        InvoiceConstants::STATUS_LEGALIZADA        => 'Legalizada',
     ];
 
     public const STATUS_ICONS = [
@@ -46,6 +58,7 @@ class InvoicePipelineService
         InvoiceConstants::STATUS_TESORERIA         => 'bi-bank',
         InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
         InvoiceConstants::STATUS_PAGADA            => 'bi-cash-coin',
+        InvoiceConstants::STATUS_LEGALIZADA        => 'bi-cash-coin',
     ];
 
     // Which statuses each role can see/work with
@@ -54,7 +67,7 @@ class InvoicePipelineService
         RoleConstants::CONTABILIDAD      => [InvoiceConstants::STATUS_CONTABILIDAD],
         RoleConstants::TESORERIA         => [InvoiceConstants::STATUS_TESORERIA, InvoiceConstants::STATUS_AUTORIZACION_PAGO],
         RoleConstants::CONTADOR          => [InvoiceConstants::STATUS_AUTORIZACION_PAGO],
-        RoleConstants::ADMIN             => InvoiceConstants::PIPELINE_STATUSES,
+        RoleConstants::ADMIN             => self::ALL_STATUSES,
     ];
 
     // All fields available for Admin in any status
@@ -126,6 +139,7 @@ class InvoicePipelineService
         InvoiceConstants::STATUS_TESORERIA          => InvoiceConstants::STATUS_AUTORIZACION_PAGO,
         InvoiceConstants::STATUS_AUTORIZACION_PAGO  => InvoiceConstants::STATUS_PAGADA,
         InvoiceConstants::STATUS_PAGADA             => null,
+        InvoiceConstants::STATUS_LEGALIZADA         => null,
     ];
 
     // Backward transitions (counterpart of TRANSITIONS for the regress operation).
@@ -135,11 +149,27 @@ class InvoicePipelineService
         InvoiceConstants::STATUS_TESORERIA          => InvoiceConstants::STATUS_CONTABILIDAD,
         InvoiceConstants::STATUS_AUTORIZACION_PAGO  => InvoiceConstants::STATUS_TESORERIA,
         InvoiceConstants::STATUS_PAGADA             => InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+        InvoiceConstants::STATUS_LEGALIZADA         => null,
     ];
 
     public function getVisibleStatuses(string $roleName): array
     {
         return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+    }
+
+    /**
+     * Returns the pipeline statuses to render visually for an invoice, depending on document_type.
+     * Legalizaciones tienen un pipeline corto: aprobacion → contabilidad → legalizada.
+     *
+     * @return array<string>
+     */
+    public function getPipelineStatusesFor(?string $documentType = null): array
+    {
+        if ($documentType === InvoiceConstants::DOCTYPE_LEGALIZACION) {
+            return InvoiceConstants::PIPELINE_STATUSES_LEGALIZACION;
+        }
+
+        return InvoiceConstants::PIPELINE_STATUSES;
     }
 
     public function getEditableFields(string $roleName, string $status): array
@@ -223,23 +253,13 @@ class InvoicePipelineService
             return ['La factura fue rechazada. El flujo ha terminado.'];
         }
 
-        // Legalizaciones skip treasury/auth-payment requirements: jump from contabilidad to pagada directly.
+        // Legalizaciones se quedan en `contabilidad` hasta que el Anticipo padre se legalice.
+        // El avance a `legalizada` lo dispara AdvanceLegalizationService::_setStatus.
         if (
             ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_LEGALIZACION
             && $fromStatus === InvoiceConstants::STATUS_CONTABILIDAD
         ) {
-            $errors = [];
-            foreach (self::TRANSITION_REQUIREMENTS[InvoiceConstants::STATUS_CONTABILIDAD] ?? [] as $rule) {
-                $field = $rule['field'];
-                $value = $invoice->$field ?? null;
-                if (isset($rule['value']) && $value !== $rule['value']) {
-                    $errors[] = $rule['label'];
-                } elseif (!empty($rule['not_empty']) && ($value === null || $value === '' || $value === false)) {
-                    $errors[] = $rule['label'];
-                }
-            }
-
-            return $errors;
+            return ['La legalización avanzará automáticamente cuando el Anticipo padre se legalice.'];
         }
 
         $errors = [];
@@ -337,27 +357,30 @@ class InvoicePipelineService
         return $filtered;
     }
 
-    public function canAdvance(string $roleName, string $currentStatus): bool
+    public function canAdvance(string $roleName, string $currentStatus, ?string $documentType = null): bool
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return self::TRANSITIONS[$currentStatus] !== null;
-        }
-
-        $visibleStatuses = $this->getVisibleStatuses($roleName);
-        if (!in_array($currentStatus, $visibleStatuses)) {
+        if ($this->getNextStatus($currentStatus, $documentType) === null) {
             return false;
         }
 
-        return self::TRANSITIONS[$currentStatus] !== null;
+        if ($roleName === RoleConstants::ADMIN) {
+            return true;
+        }
+
+        $visibleStatuses = $this->getVisibleStatuses($roleName);
+
+        return in_array($currentStatus, $visibleStatuses, true);
     }
 
     public function getNextStatus(string $currentStatus, ?string $documentType = null): ?string
     {
+        // Legalizaciones no avanzan manualmente desde contabilidad.
+        // El cierre lo dispara AdvanceLegalizationService cuando el Anticipo padre se legaliza.
         if (
             $documentType === InvoiceConstants::DOCTYPE_LEGALIZACION
             && $currentStatus === InvoiceConstants::STATUS_CONTABILIDAD
         ) {
-            return InvoiceConstants::STATUS_PAGADA;
+            return null;
         }
 
         return self::TRANSITIONS[$currentStatus] ?? null;
@@ -405,7 +428,7 @@ class InvoicePipelineService
             }
         }
 
-        $canAdvance = $this->canAdvance($roleName, $currentStatus);
+        $canAdvance = $this->canAdvance($roleName, $currentStatus, $invoice->document_type ?? null);
         $isRejected = $this->isRejected($invoice);
 
         // Determine if we can advance with submitted data
@@ -495,7 +518,7 @@ class InvoicePipelineService
     {
         $currentStatus = $invoice->pipeline_status;
 
-        if (!$this->canAdvance($roleName, $currentStatus)) {
+        if (!$this->canAdvance($roleName, $currentStatus, $invoice->document_type ?? null)) {
             return ['success' => false, 'error' => 'No tiene permisos para avanzar esta factura.', 'nextStatus' => null];
         }
 
@@ -668,5 +691,53 @@ class InvoicePipelineService
         }
 
         return ['success' => true, 'error' => null, 'previousStatus' => $previousStatus];
+    }
+
+    /**
+     * Promueve a `legalizada` todas las facturas tipo Legalización vinculadas al
+     * Anticipo dado que estén actualmente en `contabilidad`. Disparado por
+     * AdvanceLegalizationService cuando el Anticipo padre llega a STATUS_LEGALIZADA.
+     *
+     * @return int Cantidad de facturas promovidas.
+     */
+    public function legalizeLinkedInvoices(int $advanceInvoiceId, int $userId): int
+    {
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+
+        $linked = $invoicesTable->find()
+            ->where([
+                'advance_id' => $advanceInvoiceId,
+                'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+                'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
+            ])
+            ->all();
+
+        if ($linked->isEmpty()) {
+            return 0;
+        }
+
+        $count = 0;
+        $invoicesTable->getConnection()->transactional(
+            function () use ($linked, $userId, &$count, $invoicesTable): bool {
+                foreach ($linked as $inv) {
+                    $from = $inv->pipeline_status;
+                    $inv->pipeline_status = InvoiceConstants::STATUS_LEGALIZADA;
+                    if (!$invoicesTable->save($inv)) {
+                        return false;
+                    }
+                    $this->historyService->recordStatusChange(
+                        $inv->id,
+                        $from,
+                        InvoiceConstants::STATUS_LEGALIZADA,
+                        $userId,
+                    );
+                    $count++;
+                }
+
+                return true;
+            },
+        );
+
+        return $count;
     }
 }

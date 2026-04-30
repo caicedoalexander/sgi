@@ -116,6 +116,11 @@ class InvoiceFieldAccessPolicy
 
     private function _getStatusIndex(string $status): int
     {
+        // `legalizada` es terminal exclusivo de Legalizaciones; equivale a haber pasado contabilidad.
+        if ($status === InvoiceConstants::STATUS_LEGALIZADA) {
+            return array_search(InvoiceConstants::STATUS_CONTABILIDAD, InvoiceConstants::PIPELINE_STATUSES);
+        }
+
         $index = array_search($status, InvoiceConstants::PIPELINE_STATUSES);
 
         return $index !== false ? $index : 0;
