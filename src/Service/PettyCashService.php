@@ -5,6 +5,7 @@ namespace App\Service;
 
 use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
+use App\Constants\RoleConstants;
 use App\Model\Entity\PettyCashRecord;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
@@ -389,5 +390,170 @@ class PettyCashService
         }
 
         return ServiceResult::ok('Pago rechazado. Registro devuelto a Tesorería.');
+    }
+
+    /**
+     * Returns the previous pipeline status, or null if no predecessor exists
+     * or the state is excluded from regression.
+     */
+    public function getPreviousStatus(string $currentStatus): ?string
+    {
+        return PettyCashConstants::BACKWARD_TRANSITIONS[$currentStatus] ?? null;
+    }
+
+    /**
+     * Returns true if the role can regress the record from the current status.
+     */
+    public function canRegress(string $roleName, string $currentStatus): bool
+    {
+        if ($this->getPreviousStatus($currentStatus) === null) {
+            return false;
+        }
+
+        if ($roleName === RoleConstants::ADMIN) {
+            return true;
+        }
+
+        $allowed = PettyCashConstants::REGRESS_ROLE_BY_STATUS[$currentStatus] ?? [];
+
+        return in_array($roleName, $allowed, true);
+    }
+
+    /**
+     * Returns a human-readable lock message preventing regression, or null if allowed.
+     */
+    public function getRegressionLockMessage(PettyCashRecord $record): ?string
+    {
+        // Único bloqueo: tesoreria → contabilidad con pago pendiente registrado.
+        if ($record->status === PettyCashConstants::STATUS_TESORERIA
+            && !empty($record->payment_amount)
+        ) {
+            return 'No se puede regresar a Contabilidad: existe un pago pendiente registrado. Anule o reasigne el pago primero.';
+        }
+
+        return null;
+    }
+
+    /**
+     * Regress the record to its previous pipeline status.
+     * Propagates the change to child invoices for contabilidad and tesoreria,
+     * and stores the reason as a typed observation.
+     *
+     * @return array{success: bool, error: ?string, previousStatus: ?string}
+     */
+    public function regress(
+        PettyCashRecord $record,
+        string $roleName,
+        int $userId,
+        string $reason,
+    ): array {
+        $reason = trim($reason);
+        $currentStatus = $record->status;
+
+        if (!$this->canRegress($roleName, $currentStatus)) {
+            $previous = $this->getPreviousStatus($currentStatus);
+            $error = $previous === null
+                ? 'Este registro ya está en el primer paso del flujo.'
+                : 'No tiene permisos para regresar este registro.';
+
+            return ['success' => false, 'error' => $error, 'previousStatus' => null];
+        }
+
+        $lock = $this->getRegressionLockMessage($record);
+        if ($lock !== null) {
+            return ['success' => false, 'error' => $lock, 'previousStatus' => null];
+        }
+
+        if (mb_strlen($reason) < 10) {
+            return [
+                'success' => false,
+                'error' => 'El motivo es obligatorio (mínimo 10 caracteres).',
+                'previousStatus' => null,
+            ];
+        }
+        if (mb_strlen($reason) > 500) {
+            return [
+                'success' => false,
+                'error' => 'El motivo no puede superar 500 caracteres.',
+                'previousStatus' => null,
+            ];
+        }
+
+        $previousStatus = $this->getPreviousStatus($currentStatus);
+        $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $observationsTable = TableRegistry::getTableLocator()->get('PettyCashObservations');
+        $fkField = $this->grouped->getFkField();
+
+        // Map child invoice status. agrupacion no aplica (hijas sin pipeline alineado).
+        // aut_pago tampoco aplica (en avance tesoreria→aut_pago las hijas no cambiaron).
+        $childPipelineMap = [
+            PettyCashConstants::STATUS_CONTABILIDAD => InvoiceConstants::STATUS_CONTABILIDAD,
+            PettyCashConstants::STATUS_TESORERIA => InvoiceConstants::STATUS_TESORERIA,
+        ];
+
+        $ok = $invoicesTable->getConnection()->transactional(
+            function () use (
+                $recordsTable,
+                $invoicesTable,
+                $observationsTable,
+                $record,
+                $previousStatus,
+                $currentStatus,
+                $userId,
+                $reason,
+                $fkField,
+                $childPipelineMap
+            ): bool {
+                $record->status = $previousStatus;
+                if (!$recordsTable->save($record)) {
+                    return false;
+                }
+
+                if (isset($childPipelineMap[$previousStatus])) {
+                    $newPipelineStatus = $childPipelineMap[$previousStatus];
+                    $invoicesBefore = $invoicesTable->find()
+                        ->select(['id', 'pipeline_status'])
+                        ->where([$fkField => $record->id])
+                        ->all()
+                        ->toArray();
+
+                    $invoicesTable->updateAll(
+                        ['pipeline_status' => $newPipelineStatus],
+                        [$fkField => $record->id],
+                    );
+
+                    $this->grouped->recordBulkHistory(
+                        $record->id,
+                        $invoicesBefore,
+                        $newPipelineStatus,
+                        $userId,
+                    );
+                }
+
+                $observation = $observationsTable->newEntity([
+                    'petty_cash_record_id' => $record->id,
+                    'user_id' => $userId,
+                    'type' => PettyCashConstants::OBSERVATION_TYPE_REGRESSION,
+                    'message' => $reason,
+                    'metadata' => [
+                        'from_status' => $currentStatus,
+                        'to_status' => $previousStatus,
+                    ],
+                ]);
+
+                return (bool)$observationsTable->save($observation);
+            },
+        );
+
+        if (!$ok) {
+            return [
+                'success' => false,
+                'error' => 'No se pudo regresar el registro. Intente de nuevo.',
+                'previousStatus' => null,
+            ];
+        }
+
+        return ['success' => true, 'error' => null, 'previousStatus' => $previousStatus];
     }
 }
