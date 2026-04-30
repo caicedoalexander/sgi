@@ -546,4 +546,30 @@ class InvoicePipelineService
 
         return in_array($currentStatus, $this->getVisibleStatuses($roleName), true);
     }
+
+    /**
+     * Returns a human-readable reason if the invoice cannot be regressed,
+     * or null if regression is allowed (independent of role).
+     */
+    public function getRegressionLockMessage(object $invoice): ?string
+    {
+        if (($invoice->area_approval ?? null) === InvoiceConstants::APPROVAL_REJECTED) {
+            return "Factura rechazada. Use 'Reiniciar flujo' para reactivarla.";
+        }
+        if ($this->isLockedByPettyCash($invoice)) {
+            return 'Factura bloqueada: pertenece a un registro de Caja Menor.';
+        }
+        if (!empty($invoice->id) && $this->isLockedByPaidScheduling((int)$invoice->id)) {
+            return 'Factura bloqueada: tiene pagos en una programación ya pagada.';
+        }
+        if (
+            ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO
+            && !empty($invoice->id)
+            && $this->advanceLegalizationService->hasLegalization((int)$invoice->id)
+        ) {
+            return 'No se puede regresar: la legalización del anticipo ya fue iniciada.';
+        }
+
+        return null;
+    }
 }
