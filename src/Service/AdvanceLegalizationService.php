@@ -54,6 +54,18 @@ class AdvanceLegalizationService
     }
 
     /**
+     * Returns true if there is an advance_legalizations row linked to the given anticipo invoice id.
+     */
+    public function hasLegalization(int $invoiceId): bool
+    {
+        $table = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
+
+        return $table->find()
+            ->where(['advance_invoice_id' => $invoiceId])
+            ->count() > 0;
+    }
+
+    /**
      * Bulk-link Legalización invoices to this advance.
      *
      * @param array<int> $invoiceIds
