@@ -572,4 +572,101 @@ class InvoicePipelineService
 
         return null;
     }
+
+    /**
+     * Regress the invoice to its previous pipeline status (cold regression).
+     * Records a status change in invoice_histories and stores the reason in
+     * invoice_observations as a regression-typed observation.
+     *
+     * @return array{success: bool, error: ?string, previousStatus: ?string}
+     */
+    public function regress(
+        Invoice $invoice,
+        string $roleName,
+        int $userId,
+        string $reason,
+    ): array {
+        $reason = trim($reason);
+        $currentStatus = $invoice->pipeline_status;
+
+        if (!$this->canRegress($roleName, $currentStatus)) {
+            $previous = $this->getPreviousStatus($currentStatus);
+            $error = $previous === null
+                ? 'Esta factura ya está en el primer paso del flujo.'
+                : 'No tiene permisos para regresar esta factura.';
+
+            return ['success' => false, 'error' => $error, 'previousStatus' => null];
+        }
+
+        $lock = $this->getRegressionLockMessage($invoice);
+        if ($lock !== null) {
+            return ['success' => false, 'error' => $lock, 'previousStatus' => null];
+        }
+
+        if (mb_strlen($reason) < 10) {
+            return [
+                'success' => false,
+                'error' => 'El motivo es obligatorio (mínimo 10 caracteres).',
+                'previousStatus' => null,
+            ];
+        }
+        if (mb_strlen($reason) > 500) {
+            return [
+                'success' => false,
+                'error' => 'El motivo no puede superar 500 caracteres.',
+                'previousStatus' => null,
+            ];
+        }
+
+        $previousStatus = $this->getPreviousStatus($currentStatus);
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $observationsTable = TableRegistry::getTableLocator()->get('InvoiceObservations');
+
+        $ok = $invoicesTable->getConnection()->transactional(
+            function () use (
+                $invoicesTable,
+                $observationsTable,
+                $invoice,
+                $previousStatus,
+                $currentStatus,
+                $userId,
+                $reason
+            ): bool {
+                $invoice->pipeline_status = $previousStatus;
+                if (!$invoicesTable->save($invoice)) {
+                    return false;
+                }
+
+                $this->historyService->recordStatusChange(
+                    $invoice->id,
+                    $currentStatus,
+                    $previousStatus,
+                    $userId,
+                );
+
+                $observation = $observationsTable->newEntity([
+                    'invoice_id' => $invoice->id,
+                    'user_id' => $userId,
+                    'type' => InvoiceConstants::OBSERVATION_TYPE_REGRESSION,
+                    'message' => $reason,
+                    'metadata' => [
+                        'from_status' => $currentStatus,
+                        'to_status' => $previousStatus,
+                    ],
+                ]);
+
+                return (bool)$observationsTable->save($observation);
+            },
+        );
+
+        if (!$ok) {
+            return [
+                'success' => false,
+                'error' => 'No se pudo regresar la factura. Intente de nuevo.',
+                'previousStatus' => null,
+            ];
+        }
+
+        return ['success' => true, 'error' => null, 'previousStatus' => $previousStatus];
+    }
 }
