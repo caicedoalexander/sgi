@@ -5,12 +5,12 @@
  */
 $this->assign('title', 'Editar Aprobador');
 ?>
-<div class="mb-4">
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Editar Aprobador</span>
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
-<div class="card shadow-sm" style="max-width:600px;">
-    <div class="card-header"><h5 class="mb-0">Editar Aprobador</h5></div>
+<div class="card card-primary" style="max-width:600px;">
     <div class="card-body">
         <?= $this->Form->create($approver) ?>
 

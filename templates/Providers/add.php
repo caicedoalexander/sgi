@@ -5,13 +5,13 @@
  */
 $this->assign('title', 'Nuevo Proveedor');
 ?>
-<div class="mb-4">
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Nuevo Proveedor</span>
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-header"><h5 class="mb-0">Nuevo Proveedor</h5></div>
-    <div class="card-body">
+<div class="card card-primary">
+<div class="card-body">
         <?= $this->Form->create($provider) ?>
         <div class="row">
             <div class="col-md-3 mb-3">

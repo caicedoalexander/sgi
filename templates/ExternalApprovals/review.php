@@ -177,7 +177,7 @@ $entityType = $tokenRecord->entity_type;
         </div>
 
         <div class="d-flex gap-2">
-            <button type="submit" name="action" value="approve" class="btn btn-success">
+            <button type="submit" name="action" value="approve" class="btn btn-primary">
                 <i class="bi bi-check-lg me-1"></i>Aprobar
             </button>
             <button type="submit" name="action" value="reject" class="btn btn-danger">

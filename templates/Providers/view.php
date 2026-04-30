@@ -5,13 +5,13 @@
  */
 $this->assign('title', 'Proveedor: ' . $provider->name);
 ?>
-<div class="mb-4">
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Detalle del Proveedor</span>
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header"><h5 class="mb-0">Detalle del Proveedor</h5></div>
-    <div class="card-body">
+<div class="card card-primary mb-4">
+<div class="card-body">
         <dl class="row mb-0">
             <dt class="col-sm-3">ID</dt>
             <dd class="col-sm-9"><?= $this->Number->format($provider->id) ?></dd>
@@ -40,7 +40,7 @@ $this->assign('title', 'Proveedor: ' . $provider->name);
 </div>
 
 <?php if (!empty($provider->invoices)): ?>
-<div class="card shadow-sm">
+<div class="card card-primary">
     <div class="card-header"><h5 class="mb-0">Facturas del Proveedor</h5></div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">

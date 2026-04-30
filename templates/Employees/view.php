@@ -56,10 +56,11 @@ foreach ($folders as $folder) {
 }
 ?>
 
-<!-- Barra de acciones -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+<!-- Encabezado de página -->
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Empleado</span>
     <div class="d-flex gap-2">
+        <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
         <?php if (!empty($userPermissions['employees']['can_edit'])): ?>
         <?= $this->Html->link('<i class="bi bi-pencil me-1"></i>Editar', ['action' => 'edit', $employee->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
         <?php endif; ?>

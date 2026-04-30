@@ -280,7 +280,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
             <?= $this->Form->postLink(
                 '<i class="bi bi-arrow-right-circle me-1"></i>Avanzar a ' . h($pipelineLabels[$nextStatus] ?? ''),
                 ['action' => 'advance', $record->id],
-                ['confirm' => '¿Avanzar la programación?', 'class' => 'btn btn-success', 'escape' => false]
+                ['confirm' => '¿Avanzar la programación?', 'class' => 'btn btn-primary', 'escape' => false]
             ) ?>
             <?php endif; ?>
 
@@ -478,7 +478,7 @@ $docIconColor = fn(?string $name): string => match(true) {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-success"><i class="bi bi-upload me-1"></i>Importar</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Importar</button>
             </div>
             <?= $this->Form->end() ?>
         </div>

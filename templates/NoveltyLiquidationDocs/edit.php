@@ -297,7 +297,7 @@ $noveltyCount = count($doc->employee_novelties);
                         <option value="0" <?= $doc->passes_for_payment === false ? 'selected' : '' ?>>No</option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-success flex-shrink-0">
+                <button type="submit" class="btn btn-primary flex-shrink-0">
                     <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
                 </button>
             </div>
@@ -311,7 +311,7 @@ $noveltyCount = count($doc->employee_novelties);
                     <input type="text" name="document_date" class="form-control form-control-sm flatpickr-date"
                            value="<?= $doc->document_date?->format('Y-m-d') ?>">
                 </div>
-                <button type="submit" class="btn btn-success">
+                <button type="submit" class="btn btn-primary">
                     <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_REVISION_FIRMAS] ?? '' ?>
                 </button>
             </div>
@@ -330,7 +330,7 @@ $noveltyCount = count($doc->employee_novelties);
                     </select>
                 </div>
                 <?php endif; ?>
-                <button type="submit" class="btn btn-success flex-shrink-0">
+                <button type="submit" class="btn btn-primary flex-shrink-0">
                     <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
                 </button>
             </div>
@@ -338,7 +338,7 @@ $noveltyCount = count($doc->employee_novelties);
 
             <?php elseif ($currentStatus === NoveltyConstants::STATUS_RRHH): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'class' => 'd-inline']) ?>
-            <button type="submit" class="btn btn-success">
+            <button type="submit" class="btn btn-primary">
                 <i class="bi bi-arrow-right-circle me-1"></i>Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_CONTABILIDAD] ?? 'Contabilidad' ?>
             </button>
             <?= $this->Form->end() ?>

@@ -263,7 +263,7 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
                 <?= $this->Form->postLink(
                     '<i class="bi bi-check-circle me-1"></i>Marcar como firmado',
                     ['action' => 'markSigned', $leg->advance_invoice_id],
-                    ['class' => 'btn btn-success', 'escape' => false]
+                    ['class' => 'btn btn-primary', 'escape' => false]
                 ) ?>
                 <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#advReturnModal">
                     <i class="bi bi-arrow-return-left me-1"></i>Devolver a Validación
@@ -297,7 +297,7 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
             <?= $this->Form->postLink(
                 '<i class="bi bi-check-circle me-1"></i>Marcar legalizada (caso exacto)',
                 ['action' => 'markExact', $leg->advance_invoice_id],
-                ['class' => 'btn btn-success', 'escape' => false]
+                ['class' => 'btn btn-primary', 'escape' => false]
             ) ?>
             <?php elseif ($diff > 0.005): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'registerShortage', $leg->advance_invoice_id]]) ?>

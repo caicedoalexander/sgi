@@ -9,7 +9,7 @@ $this->assign('title', 'Historial de Cambios');
     <span class="sgi-page-title">Historial de Cambios</span>
 </div>
 
-<div class="card shadow-sm">
+<div class="card card-primary">
     <div class="table-responsive">
         <table class="table table-hover mb-0">
             <thead class="table-light">

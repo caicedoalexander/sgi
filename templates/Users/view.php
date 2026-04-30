@@ -5,13 +5,13 @@
  */
 $this->assign('title', 'Usuario: ' . $user->full_name);
 ?>
-<div class="mb-4">
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Detalle del Usuario</span>
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-header"><h5 class="mb-0">Detalle del Usuario</h5></div>
-    <div class="card-body">
+<div class="card card-primary">
+<div class="card-body">
         <dl class="row mb-0">
             <dt class="col-sm-3">ID</dt>
             <dd class="col-sm-9"><?= $this->Number->format($user->id) ?></dd>

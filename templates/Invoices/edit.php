@@ -52,7 +52,7 @@ if ($isRejected) {
 } elseif ($canAdvance && empty($advanceErrors) && $nextStatus) {
     $nextLabel = $pipelineLabels[$nextStatus] ?? $nextStatus;
     $btnLabel  = '<i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar a: ' . h($nextLabel);
-    $btnClass  = 'btn btn-success';
+    $btnClass  = 'btn btn-primary';
 } else {
     $btnLabel = '<i class="bi bi-save me-1"></i>Guardar Cambios';
     $btnClass = 'btn btn-primary';

@@ -384,7 +384,7 @@ $badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-primary">
                         <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
                     </button>
                 </div>
@@ -443,7 +443,7 @@ $badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
         <div class="d-flex gap-2 pt-3" style="border-top:1px solid var(--border-color);">
             <?php if (empty($transitionErrors)): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id], 'class' => 'd-inline']) ?>
-            <button type="submit" class="btn btn-success">
+            <button type="submit" class="btn btn-primary">
                 <i class="bi bi-arrow-right-circle me-1"></i>Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
             </button>
             <?= $this->Form->end() ?>

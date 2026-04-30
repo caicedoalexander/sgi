@@ -10,7 +10,7 @@ $this->assign('title', 'Nueva Entidad Bancaria');
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
-<div class="card shadow-sm">
+<div class="card card-primary">
     <div class="card-body">
         <?= $this->Form->create($bankingEntity) ?>
         <div class="row g-3">

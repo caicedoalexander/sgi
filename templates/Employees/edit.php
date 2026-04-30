@@ -5,14 +5,15 @@
  */
 $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
 ?>
-<div class="mb-4">
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Editar Empleado: <?= h($employee->full_name) ?></span>
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'view', $employee->id], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
 <?= $this->Form->create($employee, ['type' => 'file']) ?>
 
 <!-- Datos Personales -->
-<div class="card shadow-sm mb-4">
+<div class="card card-primary mb-4">
     <div class="card-header"><h5 class="mb-0"><i class="bi bi-person me-2"></i>Datos Personales</h5></div>
     <div class="card-body">
         <div class="row">
@@ -63,7 +64,7 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
 </div>
 
 <!-- Contacto -->
-<div class="card shadow-sm mb-4">
+<div class="card card-primary mb-4">
     <div class="card-header"><h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Contacto</h5></div>
     <div class="card-body">
         <div class="row">
@@ -84,7 +85,7 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
 </div>
 
 <!-- Datos Laborales -->
-<div class="card shadow-sm mb-4">
+<div class="card card-primary mb-4">
     <div class="card-header"><h5 class="mb-0"><i class="bi bi-briefcase me-2"></i>Datos Laborales</h5></div>
     <div class="card-body">
         <div class="row">
@@ -148,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php $this->Html->scriptEnd(); ?>
 
 <!-- Imagen de Perfil -->
-<div class="card shadow-sm mb-4">
+<div class="card card-primary mb-4">
     <div class="card-body">
         <div class="col-md-3 mb-3">
             <label class="form-label">Imagen de Perfil</label>

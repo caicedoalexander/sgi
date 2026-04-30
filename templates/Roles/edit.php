@@ -7,13 +7,13 @@
  */
 $this->assign('title', 'Editar Rol: ' . $role->name);
 ?>
-<div class="mb-4">
+<div class="sgi-page-header d-flex justify-content-between align-items-center">
+    <span class="sgi-page-title">Editar Rol: <?= h($role->name) ?></span>
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-header"><h5 class="mb-0">Editar Rol: <?= h($role->name) ?></h5></div>
-    <div class="card-body">
+<div class="card card-primary">
+<div class="card-body">
         <?= $this->Form->create($role) ?>
 
         <div class="row mb-3">
