@@ -96,7 +96,7 @@ $advancesPendingLegalizationCount = $advancesPendingLegalizationCount ?? 0;
                     $canView('invoices') ? 'invoices' : null,
                     $canView('novelty_liquidation_docs') ? 'novelty_liquidation_docs' : null,
                 ]);
-                $facturacionSubActive = in_array($this->request->getParam('controller'), ['Invoices', 'PettyCashRecords']);
+                $facturacionSubActive = $this->request->getParam('controller') === 'Invoices';
                 if (!empty($facturacionItems)): ?>
                 <li class="nav-heading">Financiero</li>
                 <?php if ($canView('invoices')): ?>
@@ -142,26 +142,6 @@ $advancesPendingLegalizationCount = $advancesPendingLegalizationCount ?? 0;
                                     ['class' => $navLink('Invoices', 'overdue') . ' d-flex align-items-center', 'escape' => false]
                                 ) ?>
                             </li>
-                            <?php if ($canView('petty_cash')): ?>
-                            <li class="nav-item">
-                                <?= $this->Html->link(
-                                    '<i class="bi bi-wallet2 me-2"></i>Caja Menor' .
-                                    ($pettyCashCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $pettyCashCount . '</span>' : ''),
-                                    ['controller' => 'PettyCashRecords', 'action' => 'index'],
-                                    ['class' => $navLink('PettyCashRecords') . ' d-flex align-items-center', 'escape' => false]
-                                ) ?>
-                            </li>
-                            <?php endif; ?>
-                            <?php if ($canView('advances')): ?>
-                            <li class="nav-item">
-                                <?= $this->Html->link(
-                                    '<i class="bi bi-cash-coin me-2"></i>Anticipos' .
-                                    (!empty($advancesPendingLegalizationCount) ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $advancesPendingLegalizationCount . '</span>' : ''),
-                                    ['controller' => 'Advances', 'action' => 'index'],
-                                    ['class' => $navLink('Advances') . ' d-flex align-items-center', 'escape' => false]
-                                ) ?>
-                            </li>
-                            <?php endif; ?>
                             <?php if ($canView('payment_schedulings')): ?>
                             <li class="nav-item">
                                 <?= $this->Html->link(
@@ -173,6 +153,26 @@ $advancesPendingLegalizationCount = $advancesPendingLegalizationCount ?? 0;
                             <?php endif; ?>
                         </ul>
                     </div>
+                </li>
+                <?php endif; ?>
+                <?php if ($canView('petty_cash')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-wallet2 me-2"></i>Caja Menor' .
+                        ($pettyCashCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $pettyCashCount . '</span>' : ''),
+                        ['controller' => 'PettyCashRecords', 'action' => 'index'],
+                        ['class' => $navLink('PettyCashRecords') . ' d-flex align-items-center', 'escape' => false]
+                    ) ?>
+                </li>
+                <?php endif; ?>
+                <?php if ($canView('advances')): ?>
+                <li class="nav-item">
+                    <?= $this->Html->link(
+                        '<i class="bi bi-cash-coin me-2"></i>Anticipos' .
+                        (!empty($advancesPendingLegalizationCount) ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $advancesPendingLegalizationCount . '</span>' : ''),
+                        ['controller' => 'Advances', 'action' => 'index'],
+                        ['class' => $navLink('Advances') . ' d-flex align-items-center', 'escape' => false]
+                    ) ?>
                 </li>
                 <?php endif; ?>
                 <?php if ($canView('payment_registry')): ?>
