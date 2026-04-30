@@ -23,11 +23,11 @@ class PaymentSchedulingPipelineServiceTest extends TestCase
         $this->assertNull($this->service->getPreviousStatus(PaymentSchedulingConstants::STATUS_BORRADOR));
         $this->assertSame(
             PaymentSchedulingConstants::STATUS_BORRADOR,
-            $this->service->getPreviousStatus(PaymentSchedulingConstants::STATUS_TESORERIA)
+            $this->service->getPreviousStatus(PaymentSchedulingConstants::STATUS_TESORERIA),
         );
         $this->assertSame(
             PaymentSchedulingConstants::STATUS_TESORERIA,
-            $this->service->getPreviousStatus(PaymentSchedulingConstants::STATUS_AUT_PAGO)
+            $this->service->getPreviousStatus(PaymentSchedulingConstants::STATUS_AUT_PAGO),
         );
         $this->assertNull($this->service->getPreviousStatus(PaymentSchedulingConstants::STATUS_PAGADA));
     }

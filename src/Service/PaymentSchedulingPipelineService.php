@@ -134,13 +134,15 @@ class PaymentSchedulingPipelineService
             return true;
         }
 
-        if ($roleName === RoleConstants::TESORERIA
+        if (
+            $roleName === RoleConstants::TESORERIA
             && $currentStatus === PaymentSchedulingConstants::STATUS_TESORERIA
         ) {
             return true;
         }
 
-        if ($roleName === RoleConstants::CONTADOR
+        if (
+            $roleName === RoleConstants::CONTADOR
             && $currentStatus === PaymentSchedulingConstants::STATUS_AUT_PAGO
         ) {
             return true;
@@ -212,7 +214,7 @@ class PaymentSchedulingPipelineService
                 $previousStatus,
                 $currentStatus,
                 $userId,
-                $reason
+                $reason,
             ): bool {
                 $scheduling->pipeline_status = $previousStatus;
                 if (!$schedulingsTable->save($scheduling)) {

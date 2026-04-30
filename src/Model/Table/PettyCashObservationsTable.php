@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Constants\PettyCashConstants;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -54,8 +55,8 @@ class PettyCashObservationsTable extends Table
             ->notEmptyString('message', 'La observación no puede estar vacía.')
             ->add('message', 'minLengthRegression', [
                 'rule' => function ($value, $context) {
-                    $type = $context['data']['type'] ?? \App\Constants\PettyCashConstants::OBSERVATION_TYPE_GENERAL;
-                    if ($type !== \App\Constants\PettyCashConstants::OBSERVATION_TYPE_REGRESSION) {
+                    $type = $context['data']['type'] ?? PettyCashConstants::OBSERVATION_TYPE_GENERAL;
+                    if ($type !== PettyCashConstants::OBSERVATION_TYPE_REGRESSION) {
                         return true;
                     }
 
@@ -65,8 +66,8 @@ class PettyCashObservationsTable extends Table
             ])
             ->add('message', 'maxLengthRegression', [
                 'rule' => function ($value, $context) {
-                    $type = $context['data']['type'] ?? \App\Constants\PettyCashConstants::OBSERVATION_TYPE_GENERAL;
-                    if ($type !== \App\Constants\PettyCashConstants::OBSERVATION_TYPE_REGRESSION) {
+                    $type = $context['data']['type'] ?? PettyCashConstants::OBSERVATION_TYPE_GENERAL;
+                    if ($type !== PettyCashConstants::OBSERVATION_TYPE_REGRESSION) {
                         return true;
                     }
 
@@ -78,7 +79,7 @@ class PettyCashObservationsTable extends Table
         $validator
             ->scalar('type')
             ->maxLength('type', 20)
-            ->inList('type', \App\Constants\PettyCashConstants::OBSERVATION_TYPES, 'Tipo de observación inválido.')
+            ->inList('type', PettyCashConstants::OBSERVATION_TYPES, 'Tipo de observación inválido.')
             ->allowEmptyString('type');
 
         return $validator;

@@ -425,7 +425,8 @@ class PettyCashService
     public function getRegressionLockMessage(PettyCashRecord $record): ?string
     {
         // Único bloqueo: tesoreria → contabilidad con pago pendiente registrado.
-        if ($record->status === PettyCashConstants::STATUS_TESORERIA
+        if (
+            $record->status === PettyCashConstants::STATUS_TESORERIA
             && !empty($record->payment_amount)
         ) {
             return 'No se puede regresar a Contabilidad: existe un pago pendiente registrado. Anule o reasigne el pago primero.';
@@ -503,7 +504,7 @@ class PettyCashService
                 $userId,
                 $reason,
                 $fkField,
-                $childPipelineMap
+                $childPipelineMap,
             ): bool {
                 $record->status = $previousStatus;
                 if (!$recordsTable->save($record)) {

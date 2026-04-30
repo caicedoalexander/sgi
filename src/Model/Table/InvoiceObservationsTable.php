@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Constants\InvoiceConstants;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -54,8 +55,8 @@ class InvoiceObservationsTable extends Table
             ->notEmptyString('message', 'La observación no puede estar vacía.')
             ->add('message', 'minLengthRegression', [
                 'rule' => function ($value, $context) {
-                    $type = $context['data']['type'] ?? \App\Constants\InvoiceConstants::OBSERVATION_TYPE_GENERAL;
-                    if ($type !== \App\Constants\InvoiceConstants::OBSERVATION_TYPE_REGRESSION) {
+                    $type = $context['data']['type'] ?? InvoiceConstants::OBSERVATION_TYPE_GENERAL;
+                    if ($type !== InvoiceConstants::OBSERVATION_TYPE_REGRESSION) {
                         return true;
                     }
 
@@ -65,8 +66,8 @@ class InvoiceObservationsTable extends Table
             ])
             ->add('message', 'maxLengthRegression', [
                 'rule' => function ($value, $context) {
-                    $type = $context['data']['type'] ?? \App\Constants\InvoiceConstants::OBSERVATION_TYPE_GENERAL;
-                    if ($type !== \App\Constants\InvoiceConstants::OBSERVATION_TYPE_REGRESSION) {
+                    $type = $context['data']['type'] ?? InvoiceConstants::OBSERVATION_TYPE_GENERAL;
+                    if ($type !== InvoiceConstants::OBSERVATION_TYPE_REGRESSION) {
                         return true;
                     }
 
@@ -78,7 +79,7 @@ class InvoiceObservationsTable extends Table
         $validator
             ->scalar('type')
             ->maxLength('type', 20)
-            ->inList('type', \App\Constants\InvoiceConstants::OBSERVATION_TYPES, 'Tipo de observación inválido.')
+            ->inList('type', InvoiceConstants::OBSERVATION_TYPES, 'Tipo de observación inválido.')
             ->allowEmptyString('type');
 
         return $validator;

@@ -546,6 +546,7 @@ class InvoicesController extends AppController
                 ->all()
                 ->combine('id', function ($employee) {
                     $doc = $employee->document_number ? ' - ' . $employee->document_number : '';
+
                     return $employee->full_name . $doc;
                 })
                 ->toArray(),

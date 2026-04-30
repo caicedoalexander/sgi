@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\AdvanceLegalizationService;
@@ -170,11 +171,13 @@ class AdvancesController extends AppController
             $sigs = $leg->advance_legalization_signatures;
             usort($sigs, fn($a, $b) => $b->id <=> $a->id);
             foreach ($sigs as $sig) {
-                if ($relationDocument === null && in_array(
-                    $sig->signature_status,
-                    [\App\Constants\AdvanceConstants::SIGNATURE_PENDING, \App\Constants\AdvanceConstants::SIGNATURE_SIGNED],
-                    true
-                )) {
+                if (
+                    $relationDocument === null && in_array(
+                        $sig->signature_status,
+                        [AdvanceConstants::SIGNATURE_PENDING, AdvanceConstants::SIGNATURE_SIGNED],
+                        true,
+                    )
+                ) {
                     $relationDocument = $sig;
                 } else {
                     $signatureHistory[] = $sig;

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Constants\PaymentSchedulingConstants;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -47,8 +48,8 @@ class PaymentSchedulingObservationsTable extends Table
             ->notEmptyString('message')
             ->add('message', 'minLengthRegression', [
                 'rule' => function ($value, $context) {
-                    $type = $context['data']['type'] ?? \App\Constants\PaymentSchedulingConstants::OBSERVATION_TYPE_GENERAL;
-                    if ($type !== \App\Constants\PaymentSchedulingConstants::OBSERVATION_TYPE_REGRESSION) {
+                    $type = $context['data']['type'] ?? PaymentSchedulingConstants::OBSERVATION_TYPE_GENERAL;
+                    if ($type !== PaymentSchedulingConstants::OBSERVATION_TYPE_REGRESSION) {
                         return true;
                     }
 
@@ -58,8 +59,8 @@ class PaymentSchedulingObservationsTable extends Table
             ])
             ->add('message', 'maxLengthRegression', [
                 'rule' => function ($value, $context) {
-                    $type = $context['data']['type'] ?? \App\Constants\PaymentSchedulingConstants::OBSERVATION_TYPE_GENERAL;
-                    if ($type !== \App\Constants\PaymentSchedulingConstants::OBSERVATION_TYPE_REGRESSION) {
+                    $type = $context['data']['type'] ?? PaymentSchedulingConstants::OBSERVATION_TYPE_GENERAL;
+                    if ($type !== PaymentSchedulingConstants::OBSERVATION_TYPE_REGRESSION) {
                         return true;
                     }
 
@@ -71,7 +72,7 @@ class PaymentSchedulingObservationsTable extends Table
         $validator
             ->scalar('type')
             ->maxLength('type', 20)
-            ->inList('type', \App\Constants\PaymentSchedulingConstants::OBSERVATION_TYPES, 'Tipo de observación inválido.')
+            ->inList('type', PaymentSchedulingConstants::OBSERVATION_TYPES, 'Tipo de observación inválido.')
             ->allowEmptyString('type');
 
         return $validator;

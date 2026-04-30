@@ -630,7 +630,7 @@ class InvoicePipelineService
                 $previousStatus,
                 $currentStatus,
                 $userId,
-                $reason
+                $reason,
             ): bool {
                 $invoice->pipeline_status = $previousStatus;
                 if (!$invoicesTable->save($invoice)) {
