@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-04-29-invoice-pipeline-regression-design.md`.
 
+> **Nota de ejecución (override del usuario):** se omiten los tests que requieren base de datos (creación de entidades vía `TableRegistry`, `IntegrationTestTrait`, etc.). Solo se conservan tests puramente lógicos. Las tareas 3, 6, 7 y 9 quedan SIN tests; las verificaciones se hacen con `php -l` (sintaxis) y smoke test manual en navegador.
+
 ---
 
 ## File Structure
@@ -176,52 +178,14 @@ git commit -m "feat(invoices): add observation type constants and backward trans
 
 ---
 
-## Task 3: `AdvanceLegalizationService::hasLegalization` (TDD)
+## Task 3: `AdvanceLegalizationService::hasLegalization`
 
 **Files:**
 - Modify: `src/Service/AdvanceLegalizationService.php`
-- Test: `tests/TestCase/Service/AdvanceLegalizationServiceTest.php`
 
-- [ ] **Step 1: Añadir test que falla**
+> Test omitido (requiere BD).
 
-Editar `tests/TestCase/Service/AdvanceLegalizationServiceTest.php`. Antes del cierre de la clase, añadir:
-
-```php
-    public function testHasLegalizationReturnsTrueWhenRowExists(): void
-    {
-        $invoices = TableRegistry::getTableLocator()->get('Invoices');
-        $advance = $invoices->newEntity([
-            'document_type' => InvoiceConstants::DOCTYPE_ANTICIPO,
-            'pipeline_status' => InvoiceConstants::STATUS_PAGADA,
-            'detail' => 'has-legalization-test',
-            'amount' => 1000,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-        ]);
-        $this->assertTrue((bool)$invoices->save($advance), json_encode($advance->getErrors()));
-
-        $this->assertFalse(
-            $this->service->hasLegalization((int)$advance->id),
-            'No debería existir legalización antes de inicializar.'
-        );
-
-        $this->service->initialize($advance, 1);
-
-        $this->assertTrue(
-            $this->service->hasLegalization((int)$advance->id),
-            'Debe detectar la legalización ya creada.'
-        );
-    }
-```
-
-- [ ] **Step 2: Correr el test y confirmar que falla**
-
-Run: `composer test -- --filter testHasLegalizationReturnsTrueWhenRowExists`
-Expected: ERROR / FAIL con mensaje `Call to undefined method App\Service\AdvanceLegalizationService::hasLegalization()`.
-
-- [ ] **Step 3: Implementar el método**
+- [ ] **Step 1: Implementar el método**
 
 Editar `src/Service/AdvanceLegalizationService.php`. Añadir el siguiente método (antes del cierre de la clase, junto a `initialize`):
 
@@ -239,15 +203,15 @@ Editar `src/Service/AdvanceLegalizationService.php`. Añadir el siguiente métod
     }
 ```
 
-- [ ] **Step 4: Correr el test y confirmar que pasa**
+- [ ] **Step 2: Verificar sintaxis**
 
-Run: `composer test -- --filter testHasLegalizationReturnsTrueWhenRowExists`
-Expected: OK (1 test, ≥2 assertions).
+Run: `php -l src/Service/AdvanceLegalizationService.php`
+Expected: `No syntax errors detected`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add src/Service/AdvanceLegalizationService.php tests/TestCase/Service/AdvanceLegalizationServiceTest.php
+git add src/Service/AdvanceLegalizationService.php
 git commit -m "feat(advances): add hasLegalization helper to AdvanceLegalizationService"
 ```
 
@@ -478,107 +442,14 @@ git commit -m "feat(invoices): add getPreviousStatus and canRegress to InvoicePi
 
 ---
 
-## Task 6: `getRegressionLockMessage` (TDD)
+## Task 6: `getRegressionLockMessage`
 
 **Files:**
 - Modify: `src/Service/InvoicePipelineService.php`
-- Modify: `tests/TestCase/Service/InvoicePipelineServiceTest.php`
 
-- [ ] **Step 1: Añadir tests para los 4 bloqueos**
+> Tests omitidos (los 4 casos requieren BD). Se valida lógica con smoke test manual en Task 12.
 
-Añadir al final de `tests/TestCase/Service/InvoicePipelineServiceTest.php` (antes del cierre de la clase):
-
-```php
-    public function testGetRegressionLockMessageReturnsNullWhenNoLock(): void
-    {
-        $invoices = \Cake\ORM\TableRegistry::getTableLocator()->get('Invoices');
-        $invoice = $invoices->newEntity([
-            'document_type' => InvoiceConstants::DOCTYPE_FACTURA,
-            'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
-            'detail' => 'no-lock',
-            'amount' => 100,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-            'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
-        ]);
-        $this->assertTrue((bool)$invoices->save($invoice), json_encode($invoice->getErrors()));
-
-        $this->assertNull($this->service->getRegressionLockMessage($invoice));
-    }
-
-    public function testGetRegressionLockMessageBlocksPettyCash(): void
-    {
-        $invoices = \Cake\ORM\TableRegistry::getTableLocator()->get('Invoices');
-        $invoice = $invoices->newEntity([
-            'document_type' => InvoiceConstants::DOCTYPE_CAJA_MENOR,
-            'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
-            'detail' => 'pc',
-            'amount' => 100,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-            'petty_cash_record_id' => 999,
-        ]);
-        $invoice->petty_cash_record_id = 999;
-
-        $msg = $this->service->getRegressionLockMessage($invoice);
-        $this->assertNotNull($msg);
-        $this->assertStringContainsString('Caja Menor', $msg);
-    }
-
-    public function testGetRegressionLockMessageBlocksRejected(): void
-    {
-        $invoices = \Cake\ORM\TableRegistry::getTableLocator()->get('Invoices');
-        $invoice = $invoices->newEntity([
-            'document_type' => InvoiceConstants::DOCTYPE_FACTURA,
-            'pipeline_status' => InvoiceConstants::STATUS_APROBACION,
-            'detail' => 'rej',
-            'amount' => 100,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-            'area_approval' => InvoiceConstants::APPROVAL_REJECTED,
-        ]);
-
-        $msg = $this->service->getRegressionLockMessage($invoice);
-        $this->assertNotNull($msg);
-        $this->assertStringContainsString('Rechazada', $msg);
-    }
-
-    public function testGetRegressionLockMessageBlocksAnticipoWithLegalization(): void
-    {
-        $invoices = \Cake\ORM\TableRegistry::getTableLocator()->get('Invoices');
-        $advance = $invoices->newEntity([
-            'document_type' => InvoiceConstants::DOCTYPE_ANTICIPO,
-            'pipeline_status' => InvoiceConstants::STATUS_PAGADA,
-            'detail' => 'leg-block',
-            'amount' => 1000,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-        ]);
-        $this->assertTrue((bool)$invoices->save($advance), json_encode($advance->getErrors()));
-
-        // Crear la fila de legalización para activar el bloqueo
-        (new \App\Service\AdvanceLegalizationService())->initialize($advance, 1);
-
-        $msg = $this->service->getRegressionLockMessage($advance);
-        $this->assertNotNull($msg);
-        $this->assertStringContainsString('legalización', $msg);
-    }
-```
-
-- [ ] **Step 2: Correr y confirmar fallo**
-
-Run: `composer test -- --filter InvoicePipelineServiceTest`
-Expected: ERROR `Call to undefined method ...::getRegressionLockMessage()`.
-
-- [ ] **Step 3: Implementar el método**
+- [ ] **Step 1: Implementar el método**
 
 Editar `src/Service/InvoicePipelineService.php`. Después del método `canRegress` añadir:
 
@@ -610,199 +481,28 @@ Editar `src/Service/InvoicePipelineService.php`. Después del método `canRegres
     }
 ```
 
-- [ ] **Step 4: Correr y confirmar éxito**
+- [ ] **Step 2: Verificar sintaxis**
 
-Run: `composer test -- --filter InvoicePipelineServiceTest`
-Expected: OK (9 tests).
+Run: `php -l src/Service/InvoicePipelineService.php`
+Expected: `No syntax errors detected`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add src/Service/InvoicePipelineService.php tests/TestCase/Service/InvoicePipelineServiceTest.php
+git add src/Service/InvoicePipelineService.php
 git commit -m "feat(invoices): add getRegressionLockMessage covering 4 lock conditions"
 ```
 
 ---
 
-## Task 7: Método `regress()` en `InvoicePipelineService` (TDD)
+## Task 7: Método `regress()` en `InvoicePipelineService`
 
 **Files:**
 - Modify: `src/Service/InvoicePipelineService.php`
-- Modify: `tests/TestCase/Service/InvoicePipelineServiceTest.php`
 
-- [ ] **Step 1: Añadir test del happy path**
+> Tests omitidos (todos requieren BD: persisten facturas, observaciones, histories). Se valida lógica con smoke test manual en Tasks 10/12.
 
-Añadir al final de `tests/TestCase/Service/InvoicePipelineServiceTest.php` (antes del cierre de la clase):
-
-```php
-    public function testRegressHappyPathFromTesoreriaToContabilidad(): void
-    {
-        $invoices = \Cake\ORM\TableRegistry::getTableLocator()->get('Invoices');
-        $observations = \Cake\ORM\TableRegistry::getTableLocator()->get('InvoiceObservations');
-        $histories = \Cake\ORM\TableRegistry::getTableLocator()->get('InvoiceHistories');
-
-        $invoice = $invoices->newEntity([
-            'document_type' => InvoiceConstants::DOCTYPE_FACTURA,
-            'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
-            'detail' => 'regress-happy',
-            'amount' => 100,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-            'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
-        ]);
-        $this->assertTrue((bool)$invoices->save($invoice), json_encode($invoice->getErrors()));
-
-        $result = $this->service->regress(
-            $invoice,
-            RoleConstants::TESORERIA,
-            1,
-            'Falta verificar la causación contable'
-        );
-
-        $this->assertTrue($result['success'], $result['error'] ?? 'no error message');
-        $this->assertSame(InvoiceConstants::STATUS_CONTABILIDAD, $result['previousStatus']);
-
-        $refreshed = $invoices->get($invoice->id);
-        $this->assertSame(InvoiceConstants::STATUS_CONTABILIDAD, $refreshed->pipeline_status);
-
-        $obs = $observations->find()->where(['invoice_id' => $invoice->id])->first();
-        $this->assertNotNull($obs);
-        $this->assertSame(InvoiceConstants::OBSERVATION_TYPE_REGRESSION, $obs->type);
-        $this->assertSame('Falta verificar la causación contable', $obs->message);
-        $this->assertSame(InvoiceConstants::STATUS_TESORERIA, $obs->metadata['from_status'] ?? null);
-        $this->assertSame(InvoiceConstants::STATUS_CONTABILIDAD, $obs->metadata['to_status'] ?? null);
-
-        $hist = $histories->find()->where([
-            'invoice_id' => $invoice->id,
-            'field_changed' => 'pipeline_status',
-        ])->first();
-        $this->assertNotNull($hist);
-    }
-
-    public function testRegressFailsWhenReasonTooShort(): void
-    {
-        $invoices = \Cake\ORM\TableRegistry::getTableLocator()->get('Invoices');
-        $invoice = $invoices->newEntity([
-            'document_type' => InvoiceConstants::DOCTYPE_FACTURA,
-            'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
-            'detail' => 'short-reason',
-            'amount' => 100,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-            'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
-        ]);
-        $invoices->save($invoice);
-
-        $result = $this->service->regress(
-            $invoice,
-            RoleConstants::TESORERIA,
-            1,
-            'corto'
-        );
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('motivo', mb_strtolower((string)$result['error']));
-        $this->assertSame(
-            InvoiceConstants::STATUS_TESORERIA,
-            $invoices->get($invoice->id)->pipeline_status
-        );
-    }
-
-    public function testRegressFailsWhenRoleNotAuthorized(): void
-    {
-        $invoices = \Cake\ORM\TableRegistry::getTableLocator()->get('Invoices');
-        $invoice = $invoices->newEntity([
-            'document_type' => InvoiceConstants::DOCTYPE_FACTURA,
-            'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
-            'detail' => 'wrong-role',
-            'amount' => 100,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-            'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
-        ]);
-        $invoices->save($invoice);
-
-        $result = $this->service->regress(
-            $invoice,
-            RoleConstants::CONTABILIDAD,
-            1,
-            'Motivo razonable de regresión'
-        );
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('permisos', mb_strtolower((string)$result['error']));
-        $this->assertSame(
-            InvoiceConstants::STATUS_TESORERIA,
-            $invoices->get($invoice->id)->pipeline_status
-        );
-    }
-
-    public function testRegressFailsWhenNoPredecessor(): void
-    {
-        $invoices = \Cake\ORM\TableRegistry::getTableLocator()->get('Invoices');
-        $invoice = $invoices->newEntity([
-            'document_type' => InvoiceConstants::DOCTYPE_FACTURA,
-            'pipeline_status' => InvoiceConstants::STATUS_APROBACION,
-            'detail' => 'no-pred',
-            'amount' => 100,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-        ]);
-        $invoices->save($invoice);
-
-        $result = $this->service->regress(
-            $invoice,
-            RoleConstants::ADMIN,
-            1,
-            'Motivo razonable de regresión'
-        );
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('primer paso', mb_strtolower((string)$result['error']));
-    }
-
-    public function testRegressFailsWhenLockActive(): void
-    {
-        $invoices = \Cake\ORM\TableRegistry::getTableLocator()->get('Invoices');
-        $invoice = $invoices->newEntity([
-            'document_type' => InvoiceConstants::DOCTYPE_CAJA_MENOR,
-            'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
-            'detail' => 'pc-block',
-            'amount' => 100,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-            'petty_cash_record_id' => 9999,
-        ]);
-        $invoices->save($invoice);
-
-        $result = $this->service->regress(
-            $invoice,
-            RoleConstants::TESORERIA,
-            1,
-            'Motivo razonable de regresión'
-        );
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('Caja Menor', (string)$result['error']);
-    }
-```
-
-- [ ] **Step 2: Correr los tests y confirmar que fallan**
-
-Run: `composer test -- --filter InvoicePipelineServiceTest`
-Expected: errores `Call to undefined method ...::regress()`.
-
-- [ ] **Step 3: Implementar `regress()`**
+- [ ] **Step 1: Implementar `regress()`**
 
 Editar `src/Service/InvoicePipelineService.php`. Después de `getRegressionLockMessage` añadir:
 
@@ -905,15 +605,15 @@ Editar `src/Service/InvoicePipelineService.php`. Después de `getRegressionLockM
     }
 ```
 
-- [ ] **Step 4: Correr los tests y confirmar éxito**
+- [ ] **Step 2: Verificar sintaxis**
 
-Run: `composer test -- --filter InvoicePipelineServiceTest`
-Expected: OK (14 tests).
+Run: `php -l src/Service/InvoicePipelineService.php`
+Expected: `No syntax errors detected`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add src/Service/InvoicePipelineService.php tests/TestCase/Service/InvoicePipelineServiceTest.php
+git add src/Service/InvoicePipelineService.php
 git commit -m "feat(invoices): add regress() to InvoicePipelineService with history and observation"
 ```
 
@@ -1012,149 +712,13 @@ Editar `src/Controller/InvoicesController.php`. Localizar `public function advan
 Run: `php -l src/Controller/InvoicesController.php`
 Expected: `No syntax errors detected`.
 
-- [ ] **Step 3: Crear el test del controlador (happy path)**
+> Tests del controlador omitidos (requieren BD: usuarios, roles, permisos, sesión, CSRF). Se valida con smoke test manual en Tasks 10/12.
 
-Crear `tests/TestCase/Controller/InvoicesControllerTest.php`:
-
-```php
-<?php
-declare(strict_types=1);
-
-namespace App\Test\TestCase\Controller;
-
-use App\Constants\InvoiceConstants;
-use App\Constants\RoleConstants;
-use Cake\ORM\TableRegistry;
-use Cake\TestSuite\IntegrationTestTrait;
-use Cake\TestSuite\TestCase;
-
-class InvoicesControllerTest extends TestCase
-{
-    use IntegrationTestTrait;
-
-    private function loginAsRole(string $roleName): array
-    {
-        $usersTable = TableRegistry::getTableLocator()->get('Users');
-        $rolesTable = TableRegistry::getTableLocator()->get('Roles');
-
-        $role = $rolesTable->find()->where(['name' => $roleName])->first();
-        $this->assertNotNull($role, "Rol $roleName no existe en la BD de tests.");
-
-        $user = $usersTable->newEntity([
-            'username' => 'test_' . strtolower(str_replace([' ', '/'], '_', $roleName)) . '_' . uniqid(),
-            'email' => uniqid('test_') . '@example.com',
-            'full_name' => 'Test ' . $roleName,
-            'password' => 'pass',
-            'role_id' => $role->id,
-            'active' => true,
-        ]);
-        $this->assertTrue((bool)$usersTable->save($user), json_encode($user->getErrors()));
-
-        $this->session([
-            'Auth' => $user->toArray(),
-        ]);
-
-        return ['user' => $user, 'role' => $role];
-    }
-
-    private function createInvoice(array $overrides = []): \Cake\Datasource\EntityInterface
-    {
-        $invoices = TableRegistry::getTableLocator()->get('Invoices');
-        $defaults = [
-            'document_type' => InvoiceConstants::DOCTYPE_FACTURA,
-            'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
-            'detail' => 'controller-test',
-            'amount' => 100,
-            'issue_date' => date('Y-m-d'),
-            'operation_center_id' => 1,
-            'expense_type_id' => 1,
-            'registered_by' => 1,
-            'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
-        ];
-        $invoice = $invoices->newEntity(array_merge($defaults, $overrides));
-        $invoices->save($invoice);
-
-        return $invoice;
-    }
-
-    public function testRegressStatusRequiresPost(): void
-    {
-        $this->loginAsRole(RoleConstants::ADMIN);
-        $invoice = $this->createInvoice();
-
-        $this->get('/invoices/regress-status/' . $invoice->id);
-
-        $this->assertResponseCode(405);
-    }
-
-    public function testRegressStatusHappyPath(): void
-    {
-        $this->loginAsRole(RoleConstants::TESORERIA);
-        $invoice = $this->createInvoice();
-
-        $this->enableCsrfToken();
-        $this->post('/invoices/regress-status/' . $invoice->id, [
-            'reason' => 'Falta verificar la causación contable',
-        ]);
-
-        $this->assertRedirectContains('/invoices');
-        $this->assertFlashMessage('Factura regresada a: Contabilidad');
-
-        $invoices = TableRegistry::getTableLocator()->get('Invoices');
-        $refreshed = $invoices->get($invoice->id);
-        $this->assertSame(InvoiceConstants::STATUS_CONTABILIDAD, $refreshed->pipeline_status);
-    }
-
-    public function testRegressStatusFailsWithoutReason(): void
-    {
-        $this->loginAsRole(RoleConstants::TESORERIA);
-        $invoice = $this->createInvoice();
-
-        $this->enableCsrfToken();
-        $this->post('/invoices/regress-status/' . $invoice->id, [
-            'reason' => '',
-        ]);
-
-        $this->assertRedirect();
-        $this->assertSession('El motivo es obligatorio (mínimo 10 caracteres).', 'Flash.flash.0.message');
-
-        $invoices = TableRegistry::getTableLocator()->get('Invoices');
-        $this->assertSame(
-            InvoiceConstants::STATUS_TESORERIA,
-            $invoices->get($invoice->id)->pipeline_status,
-        );
-    }
-
-    public function testRegressStatusFailsForUnauthorizedRole(): void
-    {
-        $this->loginAsRole(RoleConstants::CONTABILIDAD);
-        $invoice = $this->createInvoice();
-
-        $this->enableCsrfToken();
-        $this->post('/invoices/regress-status/' . $invoice->id, [
-            'reason' => 'Motivo razonable de regresión',
-        ]);
-
-        $this->assertRedirect();
-        $invoices = TableRegistry::getTableLocator()->get('Invoices');
-        $this->assertSame(
-            InvoiceConstants::STATUS_TESORERIA,
-            $invoices->get($invoice->id)->pipeline_status,
-        );
-    }
-}
-```
-
-- [ ] **Step 4: Correr los tests del controlador**
-
-Run: `composer test -- --filter InvoicesControllerTest`
-Expected: OK (4 tests). Si la prueba falla por permisos faltantes en BD de test (por ejemplo el rol `Tesorería` sin filas en `permissions`), revisar `config/Migrations/` por seeds y replicarlos en `setUp` o complementar con `TableRegistry::get('Permissions')->newEntity([...])->save()` antes del POST.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add src/Controller/InvoicesController.php tests/TestCase/Controller/InvoicesControllerTest.php
-git commit -m "feat(invoices): add regressStatus action with controller tests"
+git add src/Controller/InvoicesController.php
+git commit -m "feat(invoices): add regressStatus controller action"
 ```
 
 ---
@@ -1424,22 +988,17 @@ git commit -m "feat(invoices): render regression observations with badge and tra
 **Files:**
 - (none — solo ejecución de checks)
 
-- [ ] **Step 1: Correr la suite completa**
+- [ ] **Step 1: Correr los tests puros (sin BD)**
 
-Run: `composer test`
-Expected: todos los tests pasan, incluyendo los nuevos `InvoicePipelineServiceTest`, `InvoicesControllerTest`, `AdvanceLegalizationServiceTest`.
+Run: `composer test -- --filter InvoicePipelineServiceTest`
+Expected: 5 tests OK (los puros: `getPreviousStatus`, `canRegress`*).
 
 - [ ] **Step 2: Correr el code style**
 
 Run: `composer cs-check`
 Expected: sin violaciones. Si hay, ejecutar `composer cs-fix` y volver a correr `cs-check`.
 
-- [ ] **Step 3: Correr el agregado**
-
-Run: `composer check`
-Expected: equivalente a test + cs-check, todo verde.
-
-- [ ] **Step 4: Smoke test integral en navegador (4 escenarios)**
+- [ ] **Step 3: Smoke test integral en navegador (4 escenarios)**
 
 Iniciar `php bin/cake server` y verificar:
 
@@ -1448,7 +1007,7 @@ Iniciar `php bin/cake server` y verificar:
 3. **Sin permiso:** loguearse como Contabilidad sobre factura en `tesoreria` → botón no aparece (Contabilidad no tiene `tesoreria` en visible statuses).
 4. **Sin predecesor:** loguearse como Registro/Revisión sobre factura en `aprobacion` → botón no aparece (no hay paso previo).
 
-- [ ] **Step 5: Commit final si quedó algún ajuste de cs-fix**
+- [ ] **Step 4: Commit final si quedó algún ajuste de cs-fix**
 
 ```bash
 git status
@@ -1457,7 +1016,7 @@ git add -A
 git commit -m "style: apply cs-fix after pipeline regression feature"
 ```
 
-- [ ] **Step 6: Resumen final al usuario**
+- [ ] **Step 5: Resumen final al usuario**
 
 Comentar al usuario:
 
@@ -1466,8 +1025,8 @@ Comentar al usuario:
 - Nueva acción `InvoicesController::regressStatus`.
 - UI: botón en `edit.php` + modal con observación obligatoria.
 - Visualización con badge en `view.php`.
-- Tests: `InvoicePipelineServiceTest` (14), `InvoicesControllerTest` (4), `AdvanceLegalizationServiceTest` (+1).
-- Total commits feature: 11.
+- Tests: `InvoicePipelineServiceTest` (5 puros, sin BD). Tests dependientes de BD omitidos por decisión del usuario; cobertura compensada con smoke tests manuales.
+- Total commits feature: ~10.
 
 ---
 
