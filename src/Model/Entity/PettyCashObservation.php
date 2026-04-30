@@ -11,5 +11,7 @@ class PettyCashObservation extends Entity
         'petty_cash_record_id' => true,
         'user_id' => true,
         'message' => true,
+        'type' => true,
+        'metadata' => true,
     ];
 }
