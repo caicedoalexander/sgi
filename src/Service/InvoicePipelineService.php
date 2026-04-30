@@ -70,6 +70,26 @@ class InvoicePipelineService
         RoleConstants::ADMIN             => self::ALL_STATUSES,
     ];
 
+    // Active advance statuses (excludes pagada and legalizada — terminales para "Mis Anticipos").
+    private const ADVANCE_ACTIVE_STATUSES = [
+        InvoiceConstants::STATUS_APROBACION,
+        InvoiceConstants::STATUS_CONTABILIDAD,
+        InvoiceConstants::STATUS_TESORERIA,
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+    ];
+
+    // Which advance statuses each role sees in "Mis Anticipos".
+    private const ADVANCE_VISIBLE_STATUSES = [
+        RoleConstants::REGISTRO_REVISION  => [InvoiceConstants::STATUS_APROBACION],
+        RoleConstants::CONTABILIDAD       => [InvoiceConstants::STATUS_CONTABILIDAD],
+        RoleConstants::TESORERIA          => [InvoiceConstants::STATUS_TESORERIA, InvoiceConstants::STATUS_AUTORIZACION_PAGO],
+        RoleConstants::CONTADOR           => [InvoiceConstants::STATUS_AUTORIZACION_PAGO],
+        RoleConstants::AUXILIAR_PERSONAL  => self::ADVANCE_ACTIVE_STATUSES,
+        RoleConstants::ASISTENTE_PERSONAL => self::ADVANCE_ACTIVE_STATUSES,
+        RoleConstants::COORDINADOR_ADMIN  => self::ADVANCE_ACTIVE_STATUSES,
+        RoleConstants::ADMIN              => self::ADVANCE_ACTIVE_STATUSES,
+    ];
+
     // All fields available for Admin in any status
     // Fields required before advancing from each status
     private const TRANSITION_REQUIREMENTS = [
@@ -155,6 +175,14 @@ class InvoicePipelineService
     public function getVisibleStatuses(string $roleName): array
     {
         return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+    }
+
+    /**
+     * Get advance statuses visible to a role in "Mis Anticipos".
+     */
+    public function getVisibleAdvanceStatuses(string $roleName): array
+    {
+        return self::ADVANCE_VISIBLE_STATUSES[$roleName] ?? [];
     }
 
     /**

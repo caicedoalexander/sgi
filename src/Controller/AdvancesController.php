@@ -7,6 +7,7 @@ use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\AdvanceLegalizationService;
+use App\Service\InvoicePipelineService;
 use Cake\Http\Response;
 use Cake\ORM\TableRegistry;
 
@@ -15,12 +16,14 @@ class AdvancesController extends AppController
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     private AdvanceLegalizationService $legalizationService;
+    private InvoicePipelineService $pipelineService;
 
     public function initialize(): void
     {
         parent::initialize();
         $this->fetchTable('Invoices');
         $this->legalizationService = new AdvanceLegalizationService();
+        $this->pipelineService = new InvoicePipelineService();
     }
 
     private function _getCurrentUser(): object
@@ -28,7 +31,38 @@ class AdvancesController extends AppController
         return $this->Authentication->getIdentity()->getOriginalData();
     }
 
+    /**
+     * "Mis Anticipos" — filtra por los pipeline_status visibles del rol.
+     */
     public function index(): void
+    {
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        $visibleStatuses = $this->pipelineService->getVisibleAdvanceStatuses($roleName);
+
+        $query = $invoicesTable->find()
+            ->where(['Invoices.document_type' => InvoiceConstants::DOCTYPE_ANTICIPO])
+            ->contain([
+                'Providers',
+                'Employees',
+                'OperationCenters',
+                'AdvanceLegalization',
+            ])
+            ->order(['Invoices.created' => 'DESC']);
+
+        if (!empty($visibleStatuses)) {
+            $query->where(['Invoices.pipeline_status IN' => $visibleStatuses]);
+        }
+
+        $advances = $this->paginate($query);
+
+        $this->set(compact('advances', 'visibleStatuses'));
+    }
+
+    /**
+     * "Todos los Anticipos" — sin filtros de rol.
+     */
+    public function all(): void
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
 
@@ -43,8 +77,40 @@ class AdvancesController extends AppController
             ->order(['Invoices.created' => 'DESC']);
 
         $advances = $this->paginate($query);
+        $visibleStatuses = [];
+        $this->set(compact('advances', 'visibleStatuses'));
+        $this->render('index');
+    }
 
-        $this->set(compact('advances'));
+    /**
+     * "Pendientes de Legalización" — anticipos pagados con legalización en curso.
+     */
+    public function pendingLegalization(): void
+    {
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+
+        $query = $invoicesTable->find()
+            ->where([
+                'Invoices.document_type' => InvoiceConstants::DOCTYPE_ANTICIPO,
+                'Invoices.pipeline_status' => InvoiceConstants::STATUS_PAGADA,
+            ])
+            ->contain([
+                'Providers',
+                'Employees',
+                'OperationCenters',
+                'AdvanceLegalization',
+            ])
+            ->matching('AdvanceLegalization', function ($q) {
+                return $q->where([
+                    'AdvanceLegalization.status !=' => AdvanceConstants::STATUS_LEGALIZADA,
+                ]);
+            })
+            ->order(['Invoices.created' => 'DESC']);
+
+        $advances = $this->paginate($query);
+        $visibleStatuses = [];
+        $this->set(compact('advances', 'visibleStatuses'));
+        $this->render('index');
     }
 
     public function add(): ?Response

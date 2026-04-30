@@ -16,6 +16,9 @@ $rejectedNoveltiesCount = $rejectedNoveltiesCount ?? 0;
 $advancesPendingLegalizationCount = $advancesPendingLegalizationCount ?? 0;
 $liquidationMineCount = $liquidationMineCount ?? 0;
 $liquidationRejectedCount = $liquidationRejectedCount ?? 0;
+$pettyCashMineCount = $pettyCashMineCount ?? 0;
+$pettyCashPaidCount = $pettyCashPaidCount ?? 0;
+$advancesMineCount = $advancesMineCount ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -159,23 +162,81 @@ $liquidationRejectedCount = $liquidationRejectedCount ?? 0;
                 </li>
                     <?php endif; ?>
                     <?php if ($canView('petty_cash')) : ?>
-                <li class="nav-item">
+                        <?php $pettyCashSubActive = $currentController === 'PettyCashRecords'; ?>
+                <li class="nav-item sidebar-has-submenu">
+                    <div class="sidebar-collapsible-header">
                         <?= $this->Html->link(
-                            '<i class="bi bi-wallet2 me-2"></i>Caja Menor' .
-                            ($pettyCashCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $pettyCashCount . '</span>' : ''),
-                            ['controller' => 'PettyCashRecords', 'action' => 'index'],
-                            ['class' => $navLink('PettyCashRecords') . ' d-flex align-items-center', 'escape' => false],
+                            '<i class="bi bi-wallet2 me-2"></i><span class="flex-grow-1">Caja Menor</span>',
+                            ['controller' => 'PettyCashRecords', 'action' => 'all'],
+                            ['class' => $navLink('PettyCashRecords', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false],
                         ) ?>
+                        <button class="sidebar-chevron-btn"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#caja-menor-submenu"
+                                aria-expanded="<?= $pettyCashSubActive ? 'true' : 'false' ?>"
+                                aria-controls="caja-menor-submenu">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="collapse<?= $pettyCashSubActive ? ' show' : '' ?>" id="caja-menor-submenu">
+                        <ul class="sidebar-submenu">
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-wallet2 me-2"></i>Mis Registros' .
+                                    ($pettyCashMineCount > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $pettyCashMineCount . '</span>' : ''),
+                                    ['controller' => 'PettyCashRecords', 'action' => 'index'],
+                                    ['class' => $navLink('PettyCashRecords', 'index') . ' d-flex align-items-center', 'escape' => false],
+                                ) ?>
+                            </li>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-check2-circle me-2"></i>Pagados' .
+                                    ($pettyCashPaidCount > 0 ? ' <span class="badge bg-secondary sidebar-badge ms-auto">' . $pettyCashPaidCount . '</span>' : ''),
+                                    ['controller' => 'PettyCashRecords', 'action' => 'paid'],
+                                    ['class' => $navLink('PettyCashRecords', 'paid') . ' d-flex align-items-center', 'escape' => false],
+                                ) ?>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
                     <?php endif; ?>
                     <?php if ($canView('advances')) : ?>
-                <li class="nav-item">
+                        <?php $advancesSubActive = $currentController === 'Advances'; ?>
+                <li class="nav-item sidebar-has-submenu">
+                    <div class="sidebar-collapsible-header">
                         <?= $this->Html->link(
-                            '<i class="bi bi-cash-coin me-2"></i>Anticipos' .
-                            (!empty($advancesPendingLegalizationCount) ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $advancesPendingLegalizationCount . '</span>' : ''),
-                            ['controller' => 'Advances', 'action' => 'index'],
-                            ['class' => $navLink('Advances') . ' d-flex align-items-center', 'escape' => false],
+                            '<i class="bi bi-cash-coin me-2"></i><span class="flex-grow-1">Anticipos</span>',
+                            ['controller' => 'Advances', 'action' => 'all'],
+                            ['class' => $navLink('Advances', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false],
                         ) ?>
+                        <button class="sidebar-chevron-btn"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#anticipos-submenu"
+                                aria-expanded="<?= $advancesSubActive ? 'true' : 'false' ?>"
+                                aria-controls="anticipos-submenu">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="collapse<?= $advancesSubActive ? ' show' : '' ?>" id="anticipos-submenu">
+                        <ul class="sidebar-submenu">
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-cash-coin me-2"></i>Mis Anticipos' .
+                                    ($advancesMineCount > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $advancesMineCount . '</span>' : ''),
+                                    ['controller' => 'Advances', 'action' => 'index'],
+                                    ['class' => $navLink('Advances', 'index') . ' d-flex align-items-center', 'escape' => false],
+                                ) ?>
+                            </li>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-hourglass-split me-2"></i>Pend. de Legalización' .
+                                    (!empty($advancesPendingLegalizationCount) ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $advancesPendingLegalizationCount . '</span>' : ''),
+                                    ['controller' => 'Advances', 'action' => 'pendingLegalization'],
+                                    ['class' => $navLink('Advances', 'pendingLegalization') . ' d-flex align-items-center', 'escape' => false],
+                                ) ?>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
                     <?php endif; ?>
                     <?php if ($canView('payment_registry')) : ?>

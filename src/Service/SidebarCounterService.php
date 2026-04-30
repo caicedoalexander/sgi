@@ -14,13 +14,16 @@ class SidebarCounterService
 {
     private InvoicePipelineService $invoicePipeline;
     private NoveltyPipelineService $noveltyPipeline;
+    private PettyCashService $pettyCashService;
 
     public function __construct(
         ?InvoicePipelineService $invoicePipeline = null,
         ?NoveltyPipelineService $noveltyPipeline = null,
+        ?PettyCashService $pettyCashService = null,
     ) {
         $this->invoicePipeline = $invoicePipeline ?? new InvoicePipelineService();
         $this->noveltyPipeline = $noveltyPipeline ?? new NoveltyPipelineService();
+        $this->pettyCashService = $pettyCashService ?? new PettyCashService();
     }
 
     /**
@@ -50,6 +53,12 @@ class SidebarCounterService
                     'PettyCashRecords',
                     ['status !=' => PettyCashConstants::STATUS_PAGADO],
                 ),
+                'pettyCashMineCount' => $this->getPettyCashMineCount($roleName),
+                'pettyCashPaidCount' => $this->getCount(
+                    'PettyCashRecords',
+                    ['status' => PettyCashConstants::STATUS_PAGADO],
+                ),
+                'advancesMineCount' => $this->getAdvancesMineCount($roleName),
                 'noveltiesCount' => $this->getNoveltiesCount($roleName),
                 'rejectedNoveltiesCount' => $this->getCount(
                     'EmployeeNovelties',
@@ -73,6 +82,9 @@ class SidebarCounterService
                 'rejectedInvoicesCount' => 0,
                 'overdueInvoicesCount' => 0,
                 'pettyCashCount' => 0,
+                'pettyCashMineCount' => 0,
+                'pettyCashPaidCount' => 0,
+                'advancesMineCount' => 0,
                 'noveltiesCount' => 0,
                 'rejectedNoveltiesCount' => 0,
                 'activeNoveltiesCount' => 0,
@@ -162,6 +174,39 @@ class SidebarCounterService
                     ]),
                 ]);
             })
+            ->count();
+    }
+
+    /**
+     * Count advances visible to the current role.
+     */
+    private function getAdvancesMineCount(string $roleName): int
+    {
+        $visibleStatuses = $this->invoicePipeline->getVisibleAdvanceStatuses($roleName);
+        if (empty($visibleStatuses)) {
+            return 0;
+        }
+
+        return TableRegistry::getTableLocator()->get('Invoices')->find()
+            ->where([
+                'document_type' => InvoiceConstants::DOCTYPE_ANTICIPO,
+                'pipeline_status IN' => $visibleStatuses,
+            ])
+            ->count();
+    }
+
+    /**
+     * Count petty cash records visible to the current role.
+     */
+    private function getPettyCashMineCount(string $roleName): int
+    {
+        $visibleStatuses = $this->pettyCashService->getVisibleStatuses($roleName);
+        if (empty($visibleStatuses)) {
+            return 0;
+        }
+
+        return TableRegistry::getTableLocator()->get('PettyCashRecords')->find()
+            ->where(['status IN' => $visibleStatuses])
             ->count();
     }
 

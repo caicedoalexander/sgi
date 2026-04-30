@@ -30,19 +30,78 @@ class PettyCashRecordsController extends AppController
         return $this->Authentication->getIdentity()->getOriginalData();
     }
 
-    public function index()
+    /**
+     * "Mis Registros" — filtra por los status visibles del rol.
+     */
+    public function index(): void
+    {
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        $visibleStatuses = $this->pettyCashService->getVisibleStatuses($roleName);
+
+        $query = $this->PettyCashRecords->find()
+            ->contain(['CreatedByUsers', 'Invoices'])
+            ->order(['PettyCashRecords.created' => 'DESC']);
+
+        if (!empty($visibleStatuses)) {
+            $query->where(['PettyCashRecords.status IN' => $visibleStatuses]);
+        }
+
+        $this->_applyListFilters($query);
+
+        $records = $this->paginate($query);
+        $this->set(compact('records', 'visibleStatuses'));
+    }
+
+    /**
+     * "Todos los Registros" — sin filtro de rol.
+     */
+    public function all(): void
     {
         $query = $this->PettyCashRecords->find()
             ->contain(['CreatedByUsers', 'Invoices'])
             ->order(['PettyCashRecords.created' => 'DESC']);
 
-        // Filters
+        $this->_applyListFilters($query);
+
+        $records = $this->paginate($query);
+        $visibleStatuses = [];
+        $this->set(compact('records', 'visibleStatuses'));
+        $this->render('index');
+    }
+
+    /**
+     * "Pagados" — registros en estado pagado (terminal).
+     */
+    public function paid(): void
+    {
+        $query = $this->PettyCashRecords->find()
+            ->contain(['CreatedByUsers', 'Invoices'])
+            ->where(['PettyCashRecords.status' => PettyCashConstants::STATUS_PAGADO])
+            ->order(['PettyCashRecords.created' => 'DESC']);
+
+        $this->_applyListFilters($query, skipStatus: true);
+
+        $records = $this->paginate($query);
+        $visibleStatuses = [];
+        $this->set(compact('records', 'visibleStatuses'));
+        $this->render('index');
+    }
+
+    /**
+     * Apply text/date/status filters from the query string to a list query.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query Query to apply filters to.
+     * @param bool $skipStatus Whether to skip the status filter (used by `paid` which fixes status).
+     * @return void
+     */
+    private function _applyListFilters(\Cake\ORM\Query\SelectQuery $query, bool $skipStatus = false): void
+    {
         $params = $this->request->getQueryParams();
 
         if (!empty($params['code'])) {
             $query->where(['PettyCashRecords.code LIKE' => '%' . $params['code'] . '%']);
         }
-        if (!empty($params['status'])) {
+        if (!$skipStatus && !empty($params['status'])) {
             $query->where(['PettyCashRecords.status' => $params['status']]);
         }
         if (!empty($params['date_from'])) {
@@ -51,13 +110,9 @@ class PettyCashRecordsController extends AppController
         if (!empty($params['date_to'])) {
             $query->where(['PettyCashRecords.created <=' => $params['date_to'] . ' 23:59:59']);
         }
-
-        $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $records = $this->paginate($query);
-        $this->set(compact('records'));
     }
 
-    public function view($id = null)
+    public function view($id = null): void
     {
         $record = $this->PettyCashRecords->get($id, contain: [
             'CreatedByUsers',

@@ -12,6 +12,29 @@ use Cake\ORM\TableRegistry;
 
 class PettyCashService
 {
+    // Active petty-cash statuses (excludes pagado — terminal para "Mis Registros").
+    private const ACTIVE_STATUSES = [
+        PettyCashConstants::STATUS_AGRUPACION,
+        PettyCashConstants::STATUS_CONTABILIDAD,
+        PettyCashConstants::STATUS_TESORERIA,
+        PettyCashConstants::STATUS_AUT_PAGO,
+    ];
+
+    // Which petty-cash statuses each role sees in "Mis Registros".
+    private const ROLE_VISIBLE_STATUSES = [
+        RoleConstants::REGISTRO_REVISION  => [PettyCashConstants::STATUS_AGRUPACION],
+        RoleConstants::CONTABILIDAD       => [PettyCashConstants::STATUS_CONTABILIDAD],
+        RoleConstants::TESORERIA          => [
+            PettyCashConstants::STATUS_TESORERIA,
+            PettyCashConstants::STATUS_AUT_PAGO,
+        ],
+        RoleConstants::CONTADOR           => [PettyCashConstants::STATUS_AUT_PAGO],
+        RoleConstants::AUXILIAR_PERSONAL  => self::ACTIVE_STATUSES,
+        RoleConstants::ASISTENTE_PERSONAL => self::ACTIVE_STATUSES,
+        RoleConstants::COORDINADOR_ADMIN  => self::ACTIVE_STATUSES,
+        RoleConstants::ADMIN              => self::ACTIVE_STATUSES,
+    ];
+
     private GroupedInvoiceService $grouped;
 
     /**
@@ -26,6 +49,14 @@ class PettyCashService
             'Caja Menor',
             $historyService,
         );
+    }
+
+    /**
+     * Get petty-cash statuses visible to a role in "Mis Registros".
+     */
+    public function getVisibleStatuses(string $roleName): array
+    {
+        return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
     }
 
     /**
