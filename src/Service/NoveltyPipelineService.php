@@ -38,6 +38,33 @@ class NoveltyPipelineService
         RoleConstants::ADMIN => NoveltyConstants::PIPELINE_STATUSES,
     ];
 
+    // Pipeline statuses applicable to liquidation documents (no 'registro', 'aprobacion', 'rrhh').
+    private const LIQUIDATION_ACTIVE_STATUSES = [
+        NoveltyConstants::STATUS_CONTABILIDAD,
+        NoveltyConstants::STATUS_REVISION_FIRMAS,
+        NoveltyConstants::STATUS_GDP,
+        NoveltyConstants::STATUS_TESORERIA,
+        NoveltyConstants::STATUS_AUT_PAGO,
+    ];
+
+    // Which liquidation-doc statuses each role sees in "Mis D. de Liquidación".
+    private const LIQUIDATION_VISIBLE_STATUSES = [
+        RoleConstants::CONTABILIDAD => [NoveltyConstants::STATUS_CONTABILIDAD],
+        RoleConstants::TESORERIA => [
+            NoveltyConstants::STATUS_TESORERIA,
+            NoveltyConstants::STATUS_AUT_PAGO,
+        ],
+        RoleConstants::CONTADOR => [NoveltyConstants::STATUS_AUT_PAGO],
+        RoleConstants::REGISTRO_REVISION => [
+            NoveltyConstants::STATUS_REVISION_FIRMAS,
+            NoveltyConstants::STATUS_GDP,
+        ],
+        RoleConstants::AUXILIAR_PERSONAL => self::LIQUIDATION_ACTIVE_STATUSES,
+        RoleConstants::ASISTENTE_PERSONAL => self::LIQUIDATION_ACTIVE_STATUSES,
+        RoleConstants::COORDINADOR_ADMIN => self::LIQUIDATION_ACTIVE_STATUSES,
+        RoleConstants::ADMIN => self::LIQUIDATION_ACTIVE_STATUSES,
+    ];
+
     // All novelty fields (for Admin)
     private const ALL_FIELDS = [
         'approver_id', 'area_approval', 'passes_payroll',
@@ -540,6 +567,14 @@ class NoveltyPipelineService
     public function getVisibleStatuses(string $roleName): array
     {
         return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+    }
+
+    /**
+     * Get the liquidation-doc statuses visible to a role in "Mis D. de Liquidación".
+     */
+    public function getVisibleLiquidationStatuses(string $roleName): array
+    {
+        return self::LIQUIDATION_VISIBLE_STATUSES[$roleName] ?? [];
     }
 
     /**

@@ -10,6 +10,7 @@ use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
 use App\Service\NoveltySignatureService;
+use Cake\Http\Response;
 use DateTime;
 
 class NoveltyLiquidationDocsController extends AppController
@@ -34,9 +35,40 @@ class NoveltyLiquidationDocsController extends AppController
     }
 
     /**
+     * "Mis D. de Liquidación" — filters by the statuses visible to the user's role.
+     * Optional ?pipeline_status=... narrows down within that set.
+     *
      * @return \Cake\Http\Response|null|void
      */
     public function index()
+    {
+        $user = $this->Authentication->getIdentity()->getOriginalData();
+        $roleName = $this->_getUserRoleName($user);
+        $visibleStatuses = $this->pipelineService->getVisibleLiquidationStatuses($roleName);
+
+        $query = $this->NoveltyLiquidationDocs->find()
+            ->contain(['PerformedByUsers', 'EmployeeNovelties'])
+            ->order(['NoveltyLiquidationDocs.created' => 'DESC']);
+
+        if (!empty($visibleStatuses)) {
+            $query->where(['NoveltyLiquidationDocs.pipeline_status IN' => $visibleStatuses]);
+        }
+
+        $statusFilter = $this->request->getQuery('pipeline_status');
+        if ($statusFilter) {
+            $query->where(['NoveltyLiquidationDocs.pipeline_status' => $statusFilter]);
+        }
+
+        $liquidationDocs = $this->paginate($query);
+        $this->set(compact('liquidationDocs', 'statusFilter', 'visibleStatuses'));
+    }
+
+    /**
+     * "Todos los D. de Liquidación" — no role filter, optional ?pipeline_status=...
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function all()
     {
         $query = $this->NoveltyLiquidationDocs->find()
             ->contain(['PerformedByUsers', 'EmployeeNovelties'])
@@ -48,7 +80,28 @@ class NoveltyLiquidationDocsController extends AppController
         }
 
         $liquidationDocs = $this->paginate($query);
-        $this->set(compact('liquidationDocs', 'statusFilter'));
+        $visibleStatuses = [];
+        $this->set(compact('liquidationDocs', 'statusFilter', 'visibleStatuses'));
+        $this->render('index');
+    }
+
+    /**
+     * "Rechazadas" — pipeline_status = 'rechazada'.
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function rejected()
+    {
+        $query = $this->NoveltyLiquidationDocs->find()
+            ->contain(['PerformedByUsers', 'EmployeeNovelties'])
+            ->where(['NoveltyLiquidationDocs.pipeline_status' => NoveltyConstants::STATUS_RECHAZADA])
+            ->order(['NoveltyLiquidationDocs.created' => 'DESC']);
+
+        $liquidationDocs = $this->paginate($query);
+        $statusFilter = NoveltyConstants::STATUS_RECHAZADA;
+        $visibleStatuses = [];
+        $this->set(compact('liquidationDocs', 'statusFilter', 'visibleStatuses'));
+        $this->render('index');
     }
 
     /**
@@ -170,7 +223,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
-    public function advanceGroup(?string $id = null)
+    public function advanceGroup(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
@@ -203,7 +256,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
-    public function addSignature(?string $id = null)
+    public function addSignature(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
         $signerType = $this->request->getData('signer_type');
@@ -244,7 +297,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
-    public function uploadDocument(?string $id = null)
+    public function uploadDocument(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
@@ -274,7 +327,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
-    public function uploadLiquidationDocument(?string $id = null)
+    public function uploadLiquidationDocument(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
@@ -304,7 +357,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
-    public function updateLiquidationDocument(?string $id = null)
+    public function updateLiquidationDocument(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
@@ -346,7 +399,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $documentId Document attachment ID.
      * @return \Cake\Http\Response|null
      */
-    public function deleteDocument(?string $id = null, ?string $documentId = null)
+    public function deleteDocument(?string $id = null, ?string $documentId = null): ?Response
     {
         $this->request->allowMethod(['post', 'delete']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
@@ -373,7 +426,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
-    public function addObservation(?string $id = null)
+    public function addObservation(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
         $user = $this->Authentication->getIdentity()->getOriginalData();

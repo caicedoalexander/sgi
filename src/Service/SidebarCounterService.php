@@ -56,7 +56,11 @@ class SidebarCounterService
                     ['pipeline_status' => NoveltyConstants::STATUS_RECHAZADA],
                 ),
                 'activeNoveltiesCount' => $this->getActiveNoveltiesCount(),
-                'liquidationCounters' => $this->getLiquidationCounters(),
+                'liquidationMineCount' => $this->getLiquidationMineCount($roleName),
+                'liquidationRejectedCount' => $this->getCount(
+                    'NoveltyLiquidationDocs',
+                    ['pipeline_status' => NoveltyConstants::STATUS_RECHAZADA],
+                ),
                 'advancesPendingLegalizationCount' => $this->getCount(
                     'AdvanceLegalizations',
                     ['status !=' => AdvanceConstants::STATUS_LEGALIZADA],
@@ -72,7 +76,8 @@ class SidebarCounterService
                 'noveltiesCount' => 0,
                 'rejectedNoveltiesCount' => 0,
                 'activeNoveltiesCount' => 0,
-                'liquidationCounters' => [],
+                'liquidationMineCount' => 0,
+                'liquidationRejectedCount' => 0,
                 'advancesPendingLegalizationCount' => 0,
             ];
         }
@@ -160,24 +165,16 @@ class SidebarCounterService
             ->count();
     }
 
-    private function getLiquidationCounters(): array
+    private function getLiquidationMineCount(string $roleName): int
     {
-        $liquidationTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
-        $counters = [];
-        $statuses = [
-            NoveltyConstants::STATUS_CONTABILIDAD,
-            NoveltyConstants::STATUS_TESORERIA,
-            NoveltyConstants::STATUS_AUT_PAGO,
-            NoveltyConstants::STATUS_REVISION_FIRMAS,
-            NoveltyConstants::STATUS_GDP,
-        ];
-        foreach ($statuses as $status) {
-            $counters[$status] = $liquidationTable->find()
-                ->where(['pipeline_status' => $status])
-                ->count();
+        $visibleStatuses = $this->noveltyPipeline->getVisibleLiquidationStatuses($roleName);
+        if (empty($visibleStatuses)) {
+            return 0;
         }
 
-        return $counters;
+        return TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs')->find()
+            ->where(['pipeline_status IN' => $visibleStatuses])
+            ->count();
     }
 
     private function getCount(string $tableName, array $conditions = []): int

@@ -3,35 +3,61 @@
  * @var \App\View\AppView $this
  * @var iterable<\App\Model\Entity\NoveltyLiquidationDoc> $liquidationDocs
  * @var string|null $statusFilter
+ * @var array<string> $visibleStatuses
  */
 use App\Constants\NoveltyConstants;
 use App\Constants\StatusColorConstants;
 
-$this->assign('title', 'Documentos de Liquidación');
+$action = $this->request->getParam('action');
+$titleMap = [
+    'index' => 'Mis Documentos de Liquidación',
+    'all' => 'Todos los Documentos de Liquidación',
+    'rejected' => 'Documentos de Liquidación Rechazados',
+];
+$pageTitle = $titleMap[$action] ?? 'Documentos de Liquidación';
+
+$this->assign('title', $pageTitle);
 $statusLabels = NoveltyConstants::STATUS_LABELS;
 $periodLabels = NoveltyConstants::PERIOD_LABELS;
+
+// Estados aplicables a documentos de liquidación (excluye registro/aprobacion/rrhh).
+$liquidationApplicableStatuses = [
+    NoveltyConstants::STATUS_CONTABILIDAD,
+    NoveltyConstants::STATUS_REVISION_FIRMAS,
+    NoveltyConstants::STATUS_GDP,
+    NoveltyConstants::STATUS_TESORERIA,
+    NoveltyConstants::STATUS_AUT_PAGO,
+    NoveltyConstants::STATUS_PAGADA,
+    NoveltyConstants::STATUS_RECHAZADA,
+];
+
+// Opciones del filtro: en `index` usa los estados del rol; en `all` todos los aplicables.
+$filterStatuses = !empty($visibleStatuses ?? []) ? $visibleStatuses : $liquidationApplicableStatuses;
+$showFilter = $action !== 'rejected';
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Documentos de Liquidación</span>
+    <span class="sgi-page-title"><?= h($pageTitle) ?></span>
 </div>
 
+<?php if ($showFilter) : ?>
 <!-- Filters -->
 <div class="card card-primary mb-3">
     <div class="card-body py-2 px-3">
         <form method="get" class="d-flex gap-3 align-items-center flex-wrap">
             <select name="pipeline_status" class="form-select form-select-sm" style="max-width:200px;" onchange="this.form.submit()">
                 <option value="">Estado: Todos</option>
-                <?php foreach (NoveltyConstants::ALL_STATUSES as $s): ?>
+                <?php foreach ($filterStatuses as $s) : ?>
                 <option value="<?= $s ?>" <?= ($statusFilter ?? '') === $s ? 'selected' : '' ?>><?= $statusLabels[$s] ?? ucfirst($s) ?></option>
                 <?php endforeach; ?>
             </select>
-            <?php if ($statusFilter): ?>
-            <a href="<?= $this->Url->build(['action' => 'index']) ?>" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+            <?php if ($statusFilter) : ?>
+            <a href="<?= $this->Url->build(['action' => $action]) ?>" class="btn btn-sm btn-outline-secondary">Limpiar</a>
             <?php endif; ?>
         </form>
     </div>
 </div>
+<?php endif; ?>
 
 <div class="card card-primary">
     <div class="table-responsive">
@@ -47,7 +73,7 @@ $periodLabels = NoveltyConstants::PERIOD_LABELS;
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($liquidationDocs as $doc): ?>
+                <?php foreach ($liquidationDocs as $doc) : ?>
                 <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'edit', $doc->id]) ?>">
                     <td><strong><?= h($doc->liquidation_number) ?></strong></td>
                     <td><?= $periodLabels[$doc->period] ?? h($doc->period) ?></td>
