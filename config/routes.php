@@ -392,6 +392,11 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
+            '/payment-schedulings/regress-status/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'regressStatus'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
             '/payment-schedulings/import-excel/{id}',
             ['controller' => 'PaymentSchedulings', 'action' => 'importExcel'],
             ['id' => '\d+', 'pass' => ['id']],

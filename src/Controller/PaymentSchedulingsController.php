@@ -138,6 +138,10 @@ class PaymentSchedulingsController extends AppController
         $nextStatus = $this->pipeline->getNextStatus($currentStatus);
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->all();
 
+        $canRegress = $this->pipeline->canRegress($roleName, $currentStatus);
+        $previousStatus = $this->pipeline->getPreviousStatus($currentStatus);
+        $regressLockMessage = $this->pipeline->getRegressionLockMessage($record);
+
         $this->set(compact(
             'record',
             'roleName',
@@ -149,6 +153,9 @@ class PaymentSchedulingsController extends AppController
             'pipelineLabels',
             'nextStatus',
             'bankingEntities',
+            'canRegress',
+            'previousStatus',
+            'regressLockMessage',
         ));
     }
 
@@ -228,6 +235,34 @@ class PaymentSchedulingsController extends AppController
         } else {
             $this->Flash->error('No se pudo rechazar la programación.');
         }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    public function regressStatus($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $record = $this->PaymentSchedulings->get($id);
+        $user = $this->_getCurrentUser();
+        $roleName = $this->_getRoleName();
+        $reason = trim((string)$this->request->getData('reason', ''));
+
+        $result = $this->pipeline->regress(
+            $record,
+            $roleName,
+            (int)$user->id,
+            $reason,
+        );
+
+        if ($result['success']) {
+            $prevLabel = PaymentSchedulingConstants::STATUS_LABELS[$result['previousStatus']]
+                ?? $result['previousStatus'];
+            $this->Flash->success(sprintf('Programación regresada a: %s', $prevLabel));
+
+            return $this->redirect(['action' => 'index']);
+        }
+
+        $this->Flash->error($result['error']);
 
         return $this->redirect(['action' => 'edit', $id]);
     }
