@@ -194,7 +194,7 @@ class InvoicesController extends AppController
             if ($this->Invoices->save($invoice)) {
                 $this->Flash->success(__('La factura ha sido guardada.'));
 
-                return $this->redirect(['action' => 'index']);
+                return $this->_redirectForInvoice($invoice, 'index');
             }
             $this->Flash->error(__('No se pudo guardar la factura. Intente de nuevo.'));
         }
@@ -235,7 +235,7 @@ class InvoicesController extends AppController
             $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
             && $this->_getRoleName() !== RoleConstants::ADMIN
         ) {
-            return $this->redirect(['action' => 'view', $id]);
+            return $this->_redirectForInvoice($invoice, 'view', $id);
         }
 
         // Unified lock: petty cash or paid scheduling (non-admin only).
@@ -244,7 +244,7 @@ class InvoicesController extends AppController
             if ($lockMessage !== null) {
                 $this->Flash->warning($lockMessage);
 
-                return $this->redirect(['action' => 'view', $id]);
+                return $this->_redirectForInvoice($invoice, 'view', $id);
             }
         }
 
@@ -300,7 +300,9 @@ class InvoicesController extends AppController
 
                 $redirectAction = $result['advanced'] ? 'index' : 'edit';
 
-                return $this->redirect(['action' => $redirectAction, ...($redirectAction === 'edit' ? [$id] : [])]);
+                return $redirectAction === 'edit'
+                    ? $this->_redirectForInvoice($invoice, 'edit', $id)
+                    : $this->_redirectForInvoice($invoice, 'index');
             }
 
             $this->Flash->error('No se pudo guardar la factura. Verifique los datos e intente de nuevo.');
@@ -358,7 +360,7 @@ class InvoicesController extends AppController
             if ($lockMessage !== null) {
                 $this->Flash->error($lockMessage);
 
-                return $this->redirect(['action' => 'view', $id]);
+                return $this->_redirectForInvoice($invoice, 'view', $id);
             }
         }
 
@@ -370,12 +372,12 @@ class InvoicesController extends AppController
             $nextLabel = InvoicePipelineService::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
             $this->Flash->success(sprintf('Factura avanzada a: %s', $nextLabel));
 
-            return $this->redirect(['action' => 'index']);
+            return $this->_redirectForInvoice($invoice, 'index');
         }
 
         $this->Flash->error($result['error']);
 
-        return $this->redirect(['action' => 'edit', $id]);
+        return $this->_redirectForInvoice($invoice, 'edit', $id);
     }
 
     private function _getBaseUrl(): string
@@ -418,7 +420,7 @@ class InvoicesController extends AppController
             $this->Flash->error('No se pudo agregar la observación.');
         }
 
-        return $this->redirect(['action' => 'edit', $id]);
+        return $this->_redirectForInvoice((int)$id, 'edit', $id);
     }
 
     public function delete($id = null)
@@ -431,7 +433,7 @@ class InvoicesController extends AppController
             $this->Flash->error(__('No se pudo eliminar la factura. Intente de nuevo.'));
         }
 
-        return $this->redirect(['action' => 'index']);
+        return $this->_redirectForInvoice($invoice, 'index');
     }
 
     private function _buildInvoiceQuery(array $conditions = [], ?int $userId = null): SelectQuery
@@ -528,7 +530,7 @@ class InvoicesController extends AppController
             }
             $this->Flash->error(__('No se recibió ningún archivo válido.'));
 
-            return $this->redirect(['action' => 'edit', $invoiceId]);
+            return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);
         }
 
         $identity = $this->Authentication->getIdentity();
@@ -566,7 +568,7 @@ class InvoicesController extends AppController
             $this->Flash->success(__('El soporte ha sido subido.'));
         }
 
-        return $this->redirect(['action' => 'edit', $invoiceId]);
+        return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);
     }
 
     public function deleteDocument($invoiceId = null, $documentId = null)
@@ -583,7 +585,7 @@ class InvoicesController extends AppController
             }
             $this->Flash->error(__('No se puede eliminar un soporte de un estado anterior.'));
 
-            return $this->redirect(['action' => 'view', $invoiceId]);
+            return $this->_redirectForInvoice($invoice, 'view', $invoiceId);
         }
 
         $deleted = $this->documentService->deleteDocument((int)$documentId);
@@ -602,7 +604,7 @@ class InvoicesController extends AppController
             $this->Flash->error(__('No se pudo eliminar el soporte.'));
         }
 
-        return $this->redirect(['action' => 'view', $invoiceId]);
+        return $this->_redirectForInvoice($invoice, 'view', $invoiceId);
     }
 
     /**
@@ -631,7 +633,7 @@ class InvoicesController extends AppController
             }
         }
 
-        return $this->redirect(['action' => 'edit', $id]);
+        return $this->_redirectForInvoice($invoice, 'edit', $id);
     }
 
     /**
@@ -662,7 +664,7 @@ class InvoicesController extends AppController
             }
         }
 
-        return $this->redirect(['action' => 'edit', $id]);
+        return $this->_redirectForInvoice($invoice, 'edit', $id);
     }
 
     /**
@@ -682,6 +684,6 @@ class InvoicesController extends AppController
             $this->Flash->error(is_array($result->errors) ? implode(' ', $result->errors) : (string)$result->errors);
         }
 
-        return $this->redirect(['action' => 'edit', $id]);
+        return $this->_redirectForInvoice($invoice, 'edit', $id);
     }
 }

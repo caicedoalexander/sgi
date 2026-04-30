@@ -44,7 +44,7 @@ class InvoicePaymentsController extends AppController
         ) {
             $this->Flash->error('No tiene permisos para registrar pagos en este estado.');
 
-            return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+            return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);
         }
 
         $data = $this->request->getData();
@@ -65,7 +65,7 @@ class InvoicePaymentsController extends AppController
             $this->Flash->error(implode(' ', (array)$result->errors));
         }
 
-        return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+        return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);
     }
 
     /**
@@ -80,7 +80,7 @@ class InvoicePaymentsController extends AppController
         if ($roleName !== RoleConstants::TESORERIA && $roleName !== RoleConstants::ADMIN) {
             $this->Flash->error('Solo Tesorería puede editar pagos.');
 
-            return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+            return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
         }
 
         $data = array_intersect_key(
@@ -102,7 +102,7 @@ class InvoicePaymentsController extends AppController
             $this->Flash->error(implode(' ', (array)$result->errors));
         }
 
-        return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+        return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
     }
 
     public function authorizePayment($invoiceId = null, $paymentId = null)
@@ -113,7 +113,7 @@ class InvoicePaymentsController extends AppController
         if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
             $this->Flash->error('Solo el Contador puede autorizar pagos.');
 
-            return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+            return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
         }
 
         $result = $this->paymentService->authorizePayment((int)$paymentId, (int)$this->_getCurrentUser()->id);
@@ -128,7 +128,7 @@ class InvoicePaymentsController extends AppController
             $this->Flash->error('No se pudo autorizar el pago.');
         }
 
-        return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+        return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
     }
 
     public function rejectPayment($invoiceId = null, $paymentId = null)
@@ -139,7 +139,7 @@ class InvoicePaymentsController extends AppController
         if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
             $this->Flash->error('Solo el Contador puede rechazar pagos.');
 
-            return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+            return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
         }
 
         $reason = (string)$this->request->getData('reason');
@@ -155,7 +155,7 @@ class InvoicePaymentsController extends AppController
             $this->Flash->error(implode(' ', (array)$result->errors));
         }
 
-        return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+        return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
     }
 
     public function deletePayment($invoiceId = null, $paymentId = null)
@@ -175,7 +175,7 @@ class InvoicePaymentsController extends AppController
         ) {
             $this->Flash->error('No tiene permisos para eliminar pagos en este estado.');
 
-            return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+            return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);
         }
 
         $paymentsTable = $this->fetchTable('InvoicePayments');
@@ -187,6 +187,6 @@ class InvoicePaymentsController extends AppController
             $this->Flash->error('No se pudo eliminar el pago.');
         }
 
-        return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $invoiceId]);
+        return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);
     }
 }

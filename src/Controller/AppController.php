@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\InvoiceConstants;
+use App\Model\Entity\Invoice;
 use App\Service\AuthorizationService;
 use App\Service\SidebarCounterService;
 use Cake\Controller\Controller;
@@ -201,5 +203,26 @@ class AppController extends Controller
         return $this->response
             ->withType('application/json')
             ->withStringBody(json_encode($data));
+    }
+
+    /**
+     * Returns a redirect to the controller that owns the user-facing flow for
+     * the given invoice. Anticipos live under /advances; everything else lives
+     * under /invoices.
+     */
+    protected function _redirectForInvoice(
+        int|Invoice $invoiceOrId,
+        string $action,
+        mixed ...$args,
+    ): Response {
+        $invoice = $invoiceOrId instanceof Invoice
+            ? $invoiceOrId
+            : $this->fetchTable('Invoices')->get($invoiceOrId);
+
+        $controller = $invoice->document_type === InvoiceConstants::DOCTYPE_ANTICIPO
+            ? 'Advances'
+            : 'Invoices';
+
+        return $this->redirect(['controller' => $controller, 'action' => $action, ...$args]);
     }
 }
