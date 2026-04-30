@@ -51,7 +51,35 @@ class InvoiceObservationsTable extends Table
         $validator
             ->scalar('message')
             ->requirePresence('message', 'create')
-            ->notEmptyString('message', 'La observación no puede estar vacía.');
+            ->notEmptyString('message', 'La observación no puede estar vacía.')
+            ->add('message', 'minLengthRegression', [
+                'rule' => function ($value, $context) {
+                    $type = $context['data']['type'] ?? \App\Constants\InvoiceConstants::OBSERVATION_TYPE_GENERAL;
+                    if ($type !== \App\Constants\InvoiceConstants::OBSERVATION_TYPE_REGRESSION) {
+                        return true;
+                    }
+
+                    return is_string($value) && mb_strlen(trim($value)) >= 10;
+                },
+                'message' => 'El motivo de la regresión debe tener al menos 10 caracteres.',
+            ])
+            ->add('message', 'maxLengthRegression', [
+                'rule' => function ($value, $context) {
+                    $type = $context['data']['type'] ?? \App\Constants\InvoiceConstants::OBSERVATION_TYPE_GENERAL;
+                    if ($type !== \App\Constants\InvoiceConstants::OBSERVATION_TYPE_REGRESSION) {
+                        return true;
+                    }
+
+                    return is_string($value) && mb_strlen($value) <= 500;
+                },
+                'message' => 'El motivo de la regresión no puede superar 500 caracteres.',
+            ]);
+
+        $validator
+            ->scalar('type')
+            ->maxLength('type', 20)
+            ->inList('type', \App\Constants\InvoiceConstants::OBSERVATION_TYPES, 'Tipo de observación inválido.')
+            ->allowEmptyString('type');
 
         return $validator;
     }

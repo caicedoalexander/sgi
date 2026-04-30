@@ -11,5 +11,7 @@ class InvoiceObservation extends Entity
         'invoice_id' => true,
         'user_id' => true,
         'message' => true,
+        'type' => true,
+        'metadata' => true,
     ];
 }
