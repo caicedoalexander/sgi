@@ -70,13 +70,13 @@ class PettyCashRecordsController extends AppController
     }
 
     /**
-     * "Pagados" — registros en estado pagado (terminal).
+     * "Pendientes" — registros activos (status != pagado).
      */
-    public function paid(): void
+    public function pending(): void
     {
         $query = $this->PettyCashRecords->find()
             ->contain(['CreatedByUsers', 'Invoices'])
-            ->where(['PettyCashRecords.status' => PettyCashConstants::STATUS_PAGADO])
+            ->where(['PettyCashRecords.status !=' => PettyCashConstants::STATUS_PAGADO])
             ->order(['PettyCashRecords.created' => 'DESC']);
 
         $this->_applyListFilters($query, skipStatus: true);

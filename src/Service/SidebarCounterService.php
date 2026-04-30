@@ -54,10 +54,6 @@ class SidebarCounterService
                     ['status !=' => PettyCashConstants::STATUS_PAGADO],
                 ),
                 'pettyCashMineCount' => $this->getPettyCashMineCount($roleName),
-                'pettyCashPaidCount' => $this->getCount(
-                    'PettyCashRecords',
-                    ['status' => PettyCashConstants::STATUS_PAGADO],
-                ),
                 'advancesMineCount' => $this->getAdvancesMineCount($roleName),
                 'noveltiesCount' => $this->getNoveltiesCount($roleName),
                 'rejectedNoveltiesCount' => $this->getCount(
@@ -83,7 +79,6 @@ class SidebarCounterService
                 'overdueInvoicesCount' => 0,
                 'pettyCashCount' => 0,
                 'pettyCashMineCount' => 0,
-                'pettyCashPaidCount' => 0,
                 'advancesMineCount' => 0,
                 'noveltiesCount' => 0,
                 'rejectedNoveltiesCount' => 0,

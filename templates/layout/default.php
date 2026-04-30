@@ -17,7 +17,6 @@ $advancesPendingLegalizationCount = $advancesPendingLegalizationCount ?? 0;
 $liquidationMineCount = $liquidationMineCount ?? 0;
 $liquidationRejectedCount = $liquidationRejectedCount ?? 0;
 $pettyCashMineCount = $pettyCashMineCount ?? 0;
-$pettyCashPaidCount = $pettyCashPaidCount ?? 0;
 $advancesMineCount = $advancesMineCount ?? 0;
 ?>
 <!DOCTYPE html>
@@ -190,10 +189,10 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-check2-circle me-2"></i>Pagados' .
-                                    ($pettyCashPaidCount > 0 ? ' <span class="badge bg-secondary sidebar-badge ms-auto">' . $pettyCashPaidCount . '</span>' : ''),
-                                    ['controller' => 'PettyCashRecords', 'action' => 'paid'],
-                                    ['class' => $navLink('PettyCashRecords', 'paid') . ' d-flex align-items-center', 'escape' => false],
+                                    '<i class="bi bi-hourglass-split me-2"></i>Pendientes' .
+                                    ($pettyCashCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $pettyCashCount . '</span>' : ''),
+                                    ['controller' => 'PettyCashRecords', 'action' => 'pending'],
+                                    ['class' => $navLink('PettyCashRecords', 'pending') . ' d-flex align-items-center', 'escape' => false],
                                 ) ?>
                             </li>
                         </ul>
