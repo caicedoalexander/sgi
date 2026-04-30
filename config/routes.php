@@ -77,6 +77,13 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
 
+        // Invoice pipeline regress action
+        $builder->connect(
+            '/invoices/regress-status/{id}',
+            ['controller' => 'Invoices', 'action' => 'regressStatus'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+
         // System settings SMTP test
         $builder->connect(
             '/system-settings/test-smtp',
