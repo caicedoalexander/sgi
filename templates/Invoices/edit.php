@@ -912,6 +912,8 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         </div>
         <?php endif; ?>
 
+        <?= $this->Form->end() ?>
+
         <?php if (!empty($canRegress) && empty($regressLockMessage)):
             $prevLabel = $pipelineLabels[$previousStatus] ?? $previousStatus;
             $currLabel = $pipelineLabels[$currentStatus] ?? $currentStatus;
@@ -970,8 +972,6 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         })();
         </script>
         <?php endif; ?>
-
-        <?= $this->Form->end() ?>
 
         <?php if ($currentStatus === \App\Constants\InvoiceConstants::STATUS_APROBACION && !empty($editableFields)): ?>
         <?= $this->element('invoice_edit/modify_approvers_modal', ['invoice' => $invoice, 'approvers' => $approvers]) ?>
