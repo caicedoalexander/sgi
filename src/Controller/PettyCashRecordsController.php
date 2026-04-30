@@ -251,6 +251,12 @@ class PettyCashRecordsController extends AppController
             ];
         }
 
+        $canRegress = $this->pettyCashService->canRegress($roleName, $record->status);
+        $previousStatus = $this->pettyCashService->getPreviousStatus($record->status);
+        $regressLockMessage = $this->pettyCashService->getRegressionLockMessage($record);
+        $pipelineLabels = PettyCashConstants::STATUS_LABELS;
+        $currentStatus = $record->status;
+
         $this->set(compact(
             'record',
             'availableInvoices',
@@ -264,6 +270,11 @@ class PettyCashRecordsController extends AppController
             'canRegisterPayment',
             'canAuthorizePayment',
             'syntheticPayments',
+            'canRegress',
+            'previousStatus',
+            'regressLockMessage',
+            'pipelineLabels',
+            'currentStatus',
         ));
     }
 
@@ -278,6 +289,34 @@ class PettyCashRecordsController extends AppController
         if ($result['success']) {
             $nextLabel = PettyCashConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
             $this->Flash->success(sprintf('Registro avanzado a: %s', $nextLabel));
+
+            return $this->redirect(['action' => 'index']);
+        }
+
+        $this->Flash->error($result['error']);
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    public function regressStatus($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $record = $this->PettyCashRecords->get($id);
+        $user = $this->_getCurrentUser();
+        $roleName = $this->_getUserRoleName($user);
+        $reason = trim((string)$this->request->getData('reason', ''));
+
+        $result = $this->pettyCashService->regress(
+            $record,
+            $roleName,
+            (int)$user->id,
+            $reason,
+        );
+
+        if ($result['success']) {
+            $prevLabel = PettyCashConstants::STATUS_LABELS[$result['previousStatus']]
+                ?? $result['previousStatus'];
+            $this->Flash->success(sprintf('Registro regresado a: %s', $prevLabel));
 
             return $this->redirect(['action' => 'index']);
         }

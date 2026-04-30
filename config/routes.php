@@ -288,6 +288,11 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
+            '/petty-cash-records/regress-status/{id}',
+            ['controller' => 'PettyCashRecords', 'action' => 'regressStatus'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
             '/petty-cash-records/upload-document/{id}',
             ['controller' => 'PettyCashRecords', 'action' => 'uploadDocument'],
             ['id' => '\d+', 'pass' => ['id']],
