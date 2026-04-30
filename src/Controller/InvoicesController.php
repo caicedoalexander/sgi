@@ -380,6 +380,33 @@ class InvoicesController extends AppController
         return $this->_redirectForInvoice($invoice, 'edit', $id);
     }
 
+    public function regressStatus($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($id);
+        $user = $this->_getCurrentUser();
+        $reason = trim((string)$this->request->getData('reason', ''));
+
+        $result = $this->pipeline->regress(
+            $invoice,
+            $this->_getRoleName(),
+            (int)$user->id,
+            $reason,
+        );
+
+        if ($result['success']) {
+            $prevLabel = InvoicePipelineService::STATUS_LABELS[$result['previousStatus']]
+                ?? $result['previousStatus'];
+            $this->Flash->success(sprintf('Factura regresada a: %s', $prevLabel));
+
+            return $this->_redirectForInvoice($invoice, 'index');
+        }
+
+        $this->Flash->error($result['error']);
+
+        return $this->_redirectForInvoice($invoice, 'edit', $id);
+    }
+
     private function _getBaseUrl(): string
     {
         $scheme = $this->request->getHeaderLine('X-Forwarded-Proto') ?: $this->request->scheme();
