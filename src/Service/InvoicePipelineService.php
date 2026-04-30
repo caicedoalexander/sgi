@@ -528,4 +528,22 @@ class InvoicePipelineService
             'nextStatus' => $nextStatus,
         ];
     }
+
+    public function getPreviousStatus(string $currentStatus): ?string
+    {
+        return self::BACKWARD_TRANSITIONS[$currentStatus] ?? null;
+    }
+
+    public function canRegress(string $roleName, string $currentStatus): bool
+    {
+        if ($this->getPreviousStatus($currentStatus) === null) {
+            return false;
+        }
+
+        if ($roleName === RoleConstants::ADMIN) {
+            return true;
+        }
+
+        return in_array($currentStatus, $this->getVisibleStatuses($roleName), true);
+    }
 }
