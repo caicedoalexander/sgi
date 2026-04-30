@@ -34,4 +34,22 @@ final class PaymentSchedulingConstants
 
     // Code prefix
     public const CODE_PREFIX = 'PRO';
+
+    // Backward transitions for the regress operation.
+    // Excluida `pagada` por irreversibilidad de invoice_payments creados.
+    public const BACKWARD_TRANSITIONS = [
+        self::STATUS_BORRADOR => null,
+        self::STATUS_TESORERIA => self::STATUS_BORRADOR,
+        self::STATUS_AUT_PAGO => self::STATUS_TESORERIA,
+        self::STATUS_PAGADA => null,
+    ];
+
+    // Tipos de observación
+    public const OBSERVATION_TYPE_GENERAL = 'general';
+    public const OBSERVATION_TYPE_REGRESSION = 'regression';
+
+    public const OBSERVATION_TYPES = [
+        self::OBSERVATION_TYPE_GENERAL,
+        self::OBSERVATION_TYPE_REGRESSION,
+    ];
 }
