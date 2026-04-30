@@ -11,5 +11,7 @@ class PaymentSchedulingObservation extends Entity
         'payment_scheduling_id' => true,
         'user_id' => true,
         'message' => true,
+        'type' => true,
+        'metadata' => true,
     ];
 }
