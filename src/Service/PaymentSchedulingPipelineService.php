@@ -5,6 +5,7 @@ namespace App\Service;
 
 use App\Constants\PaymentSchedulingConstants;
 use App\Constants\RoleConstants;
+use App\Model\Entity\PaymentScheduling;
 use Cake\ORM\TableRegistry;
 
 class PaymentSchedulingPipelineService
@@ -109,5 +110,138 @@ class PaymentSchedulingPipelineService
         }
 
         return $errors;
+    }
+
+    /**
+     * Returns the previous pipeline status, or null if no predecessor exists
+     * or the state is excluded from regression.
+     */
+    public function getPreviousStatus(string $currentStatus): ?string
+    {
+        return PaymentSchedulingConstants::BACKWARD_TRANSITIONS[$currentStatus] ?? null;
+    }
+
+    /**
+     * Returns true if the role can regress the scheduling from the current status.
+     */
+    public function canRegress(string $roleName, string $currentStatus): bool
+    {
+        if ($this->getPreviousStatus($currentStatus) === null) {
+            return false;
+        }
+
+        if ($roleName === RoleConstants::ADMIN) {
+            return true;
+        }
+
+        if ($roleName === RoleConstants::TESORERIA
+            && $currentStatus === PaymentSchedulingConstants::STATUS_TESORERIA
+        ) {
+            return true;
+        }
+
+        if ($roleName === RoleConstants::CONTADOR
+            && $currentStatus === PaymentSchedulingConstants::STATUS_AUT_PAGO
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * No automatic locks in this iteration. Present for symmetry with the pattern.
+     */
+    public function getRegressionLockMessage(object $scheduling): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Cold regression — only changes pipeline_status, doesn't touch items or payments.
+     *
+     * @return array{success: bool, error: ?string, previousStatus: ?string}
+     */
+    public function regress(
+        PaymentScheduling $scheduling,
+        string $roleName,
+        int $userId,
+        string $reason,
+    ): array {
+        $reason = trim($reason);
+        $currentStatus = $scheduling->pipeline_status;
+
+        if (!$this->canRegress($roleName, $currentStatus)) {
+            $previous = $this->getPreviousStatus($currentStatus);
+            $error = $previous === null
+                ? 'Esta programación ya está en el primer paso del flujo.'
+                : 'No tiene permisos para regresar esta programación.';
+
+            return ['success' => false, 'error' => $error, 'previousStatus' => null];
+        }
+
+        $lock = $this->getRegressionLockMessage($scheduling);
+        if ($lock !== null) {
+            return ['success' => false, 'error' => $lock, 'previousStatus' => null];
+        }
+
+        if (mb_strlen($reason) < 10) {
+            return [
+                'success' => false,
+                'error' => 'El motivo es obligatorio (mínimo 10 caracteres).',
+                'previousStatus' => null,
+            ];
+        }
+        if (mb_strlen($reason) > 500) {
+            return [
+                'success' => false,
+                'error' => 'El motivo no puede superar 500 caracteres.',
+                'previousStatus' => null,
+            ];
+        }
+
+        $previousStatus = $this->getPreviousStatus($currentStatus);
+        $schedulingsTable = TableRegistry::getTableLocator()->get('PaymentSchedulings');
+        $observationsTable = TableRegistry::getTableLocator()->get('PaymentSchedulingObservations');
+
+        $ok = $schedulingsTable->getConnection()->transactional(
+            function () use (
+                $schedulingsTable,
+                $observationsTable,
+                $scheduling,
+                $previousStatus,
+                $currentStatus,
+                $userId,
+                $reason
+            ): bool {
+                $scheduling->pipeline_status = $previousStatus;
+                if (!$schedulingsTable->save($scheduling)) {
+                    return false;
+                }
+
+                $observation = $observationsTable->newEntity([
+                    'payment_scheduling_id' => $scheduling->id,
+                    'user_id' => $userId,
+                    'type' => PaymentSchedulingConstants::OBSERVATION_TYPE_REGRESSION,
+                    'message' => $reason,
+                    'metadata' => [
+                        'from_status' => $currentStatus,
+                        'to_status' => $previousStatus,
+                    ],
+                ]);
+
+                return (bool)$observationsTable->save($observation);
+            },
+        );
+
+        if (!$ok) {
+            return [
+                'success' => false,
+                'error' => 'No se pudo regresar la programación. Intente de nuevo.',
+                'previousStatus' => null,
+            ];
+        }
+
+        return ['success' => true, 'error' => null, 'previousStatus' => $previousStatus];
     }
 }
