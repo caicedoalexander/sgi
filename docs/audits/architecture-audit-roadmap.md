@@ -242,7 +242,7 @@ Plan 2 ─────┐         Plan 3 (sin deps, paralelizable)
 
 | # | Plan | Estado | Spec | Plan | PR | Cerrado |
 |---|------|--------|------|------|----|---------|
-| 1 | Quick Critical Fixes | ⬜ Pendiente | — | — | — | — |
+| 1 | Quick Critical Fixes | 🟡 En progreso | [spec](../superpowers/specs/2026-04-30-quick-critical-fixes-design.md) | — | — | — |
 | 2 | Outbox + Emails | ⬜ Pendiente | — | — | — | — |
 | 3 | DI Container | ⬜ Pendiente | — | — | — | — |
 | 4 | Refactor Pipeline | ⬜ Pendiente | — | — | — | — |
@@ -268,7 +268,20 @@ Columnas:
 
 Si en algún momento se decide modificar el roadmap (fusionar planes, dividir uno, cambiar prioridades, descartar items), registrar aquí con fecha y razón:
 
-- _Sin cambios aún._
+### 2026-04-30 — Plan 1: dos desviaciones intencionales (acordadas durante brainstorming)
+
+Spec resultante: [`docs/superpowers/specs/2026-04-30-quick-critical-fixes-design.md`](../superpowers/specs/2026-04-30-quick-critical-fixes-design.md)
+
+1. **C1 — side effects permanecen dentro de la transacción.**
+   El roadmap original sugería envolver pasos 1–4 en `transactional()` y diferir los side effects (`closeOnRefundAuthorized`, `advanceLegalizationService->initialize`) a post-commit. Sin outbox aún (Plan 2), diferir post-commit reintroduciría inconsistencia silenciosa. Decisión: envolver TODO (1–6) dentro de `transactional()` ahora, refactorizar a outbox+post-commit cuando se ejecute Plan 5 (Domain Events) sobre la base del Plan 2.
+
+2. **C2 — registro vía route-scope middleware, no `Application::middleware()`.**
+   El roadmap (y el audit origen) decían "registrar en `Application::middleware()` con scope a `/login` y `/approve/*`". Realidad encontrada: el middleware ya estaba aplicado a `/approve/*` vía route-scope en `config/routes.php`. Mantener ese patrón y agregar `/login` por route-scope es más selectivo y consistente. Functionally equivalente al registro global con scoping condicional.
+
+3. **Adiciones al alcance de Plan 1 (necesarias para no romper funcionalidad):**
+   - Fix del bug SSL en `CakeMailerAdapter::_ensureTransport()` — sin él, migrar `NotificationService` al adapter rompería cuentas SMTP que usan puerto 465.
+   - Migrar `testSmtpConnection()` al adapter — para no dejar `configureTransport()` huérfano solo para el diagnóstico.
+   - Nuevo template `templates/email/html/smtp_test.php` (1 línea) — requerido por el punto anterior.
 
 ---
 
