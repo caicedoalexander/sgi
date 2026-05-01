@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\EmailLogConstants;
 use App\Model\Entity\Invoice;
 use App\Service\Adapter\CakeMailerAdapter;
 use App\Service\Interface\MailerInterface;
@@ -15,21 +16,30 @@ class NotificationService
     private SystemSettingsService $settings;
     private MailerInterface $mailer;
     private CircuitBreaker $smtpCircuitBreaker;
+    private EmailLogService $emailLogService;
 
     public function __construct(
         ?SystemSettingsService $settings = null,
         ?MailerInterface $mailer = null,
+        ?EmailLogService $emailLogService = null,
     ) {
         $this->settings = $settings ?? new SystemSettingsService();
         $this->mailer = $mailer ?? new CakeMailerAdapter($this->settings);
         $this->smtpCircuitBreaker = new CircuitBreaker('smtp', failureThreshold: 3, recoveryTimeoutSeconds: 300);
+        $this->emailLogService = $emailLogService ?? new EmailLogService();
     }
 
     /**
-     * Send approval link email to the assigned approver. Throws on failure.
+     * Envía link de aprobación de factura. Registra cada intento en email_logs
+     * y propaga la excepción si el envío falla (a diferencia del comportamiento
+     * histórico, que la tragaba con Log::error).
      */
-    public function sendApprovalLinkNotification(Invoice $invoice, string $approvalUrl, ?int $approverUserId = null): void
-    {
+    public function sendApprovalLinkNotification(
+        Invoice $invoice,
+        string $approvalUrl,
+        ?int $approverUserId = null,
+        ?int $createdBy = null,
+    ): void {
         $smtpConfig = $this->settings->getGroup('smtp');
 
         if (empty($smtpConfig['smtp_host']) || empty($smtpConfig['smtp_from_email'])) {
@@ -62,25 +72,40 @@ class NotificationService
                 'recipientName' => $recipient->full_name ?? $recipient->username ?? '',
             ];
 
-            $this->smtpCircuitBreaker->call(function () use ($recipient, $subject, $viewVars): void {
-                $this->mailer->send($recipient->email, $subject, 'invoice_approval_request', $viewVars);
-            });
+            $this->deliverWithLog(
+                eventType: EmailLogConstants::EVENT_INVOICE_APPROVAL_REQUEST,
+                entityType: EmailLogConstants::ENTITY_INVOICE,
+                entityId: (int)$invoice->id,
+                to: $recipient->email,
+                subject: $subject,
+                template: 'invoice_approval_request',
+                viewVars: $viewVars,
+                layout: 'default',
+                createdBy: $createdBy,
+            );
 
             Log::info("Approval link sent to {$recipient->email} for invoice #{$invoice->id}");
         }
     }
 
     /**
-     * Send approval link email for a novelty to the assigned approver.
+     * Envía link de aprobación de novedad. Registra cada intento y propaga
+     * excepciones (cambio: antes se tragaban).
      */
-    public function sendNoveltyApprovalEmail(object $approver, object $novelty, string $approvalUrl): void
-    {
+    public function sendNoveltyApprovalEmail(
+        object $approver,
+        object $novelty,
+        string $approvalUrl,
+        ?int $createdBy = null,
+    ): void {
         $smtpConfig = $this->settings->getGroup('smtp');
 
         if (empty($smtpConfig['smtp_host']) || empty($smtpConfig['smtp_from_email'])) {
-            Log::warning('SMTP no configurado — no se envió email de aprobación de novedad.');
+            throw new Exception('SMTP no configurado. Configure el correo en Ajustes del Sistema.');
+        }
 
-            return;
+        if (empty($approver->email)) {
+            throw new Exception('El aprobador asignado no tiene correo electrónico configurado.');
         }
 
         $employeeName = $novelty->custom_name ?? ($novelty->employee->full_name ?? '—');
@@ -96,14 +121,78 @@ class NotificationService
             'recipientName' => $approver->full_name ?? $approver->username ?? '',
         ];
 
-        try {
-            $this->smtpCircuitBreaker->call(function () use ($approver, $subject, $viewVars): void {
-                $this->mailer->send($approver->email, $subject, 'novelty_approval_request', $viewVars);
-            });
+        $this->deliverWithLog(
+            eventType: EmailLogConstants::EVENT_NOVELTY_APPROVAL_REQUEST,
+            entityType: EmailLogConstants::ENTITY_NOVELTY,
+            entityId: (int)$novelty->id,
+            to: $approver->email,
+            subject: $subject,
+            template: 'novelty_approval_request',
+            viewVars: $viewVars,
+            layout: 'default',
+            createdBy: $createdBy,
+        );
 
-            Log::info("Novelty approval link sent to {$approver->email} for novelty #{$novelty->id}");
+        Log::info("Novelty approval link sent to {$approver->email} for novelty #{$novelty->id}");
+    }
+
+    /**
+     * Punto de entrada "raw" usado por EmailLogService::retry — no resuelve
+     * recipient ni viewVars; recibe el envío ya armado y solo lo entrega vía
+     * CircuitBreaker + MailerInterface, actualizando la fila $logId.
+     */
+    public function deliverRaw(
+        int $logId,
+        string $to,
+        string $subject,
+        string $template,
+        array $viewVars,
+        string $layout = 'default',
+    ): void {
+        try {
+            $this->smtpCircuitBreaker->call(function () use ($to, $subject, $template, $viewVars, $layout): void {
+                $this->mailer->send($to, $subject, $template, $viewVars, $layout);
+            });
+            $this->emailLogService->markSent($logId);
         } catch (Exception $e) {
-            Log::error("Novelty approval email failed for {$approver->email}: " . $e->getMessage());
+            $this->emailLogService->markFailed($logId, $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Núcleo común: recordPending → CB.call(send) → markSent o markFailed → throw.
+     */
+    private function deliverWithLog(
+        string $eventType,
+        ?string $entityType,
+        ?int $entityId,
+        string $to,
+        string $subject,
+        string $template,
+        array $viewVars,
+        string $layout,
+        ?int $createdBy,
+    ): void {
+        $logId = $this->emailLogService->recordPending(
+            eventType: $eventType,
+            entityType: $entityType,
+            entityId: $entityId,
+            toEmail: $to,
+            subject: $subject,
+            template: $template,
+            payload: ['viewVars' => $viewVars, 'layout' => $layout],
+            createdBy: $createdBy,
+        );
+
+        try {
+            $this->smtpCircuitBreaker->call(function () use ($to, $subject, $template, $viewVars, $layout): void {
+                $this->mailer->send($to, $subject, $template, $viewVars, $layout);
+            });
+            $this->emailLogService->markSent($logId);
+        } catch (Exception $e) {
+            $this->emailLogService->markFailed($logId, $e->getMessage());
+            throw $e;
         }
     }
 
