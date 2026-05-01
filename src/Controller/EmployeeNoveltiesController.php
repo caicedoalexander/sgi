@@ -16,6 +16,7 @@ use Cake\Http\Response;
 use Cake\I18n\Date;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
+use Exception;
 
 class EmployeeNoveltiesController extends AppController
 {
@@ -638,7 +639,19 @@ class EmployeeNoveltiesController extends AppController
                     $approversTable = TableRegistry::getTableLocator()->get('Users');
                     $approver = $approversTable->get($novelty->approver_id);
                     if ($approver && !empty($approver->email)) {
-                        $this->notificationService->sendNoveltyApprovalEmail($approver, $noveltyForEmail, $approvalUrl);
+                        try {
+                            $this->notificationService->sendNoveltyApprovalEmail(
+                                $approver,
+                                $noveltyForEmail,
+                                $approvalUrl,
+                                (int)$user->id,
+                            );
+                        } catch (Exception $e) {
+                            $this->Flash->warning(__(
+                                'Novedad creada, pero el correo de aprobación falló: {0}. Puede reintentar desde la página de la novedad.',
+                                $e->getMessage(),
+                            ));
+                        }
                     }
                 }
 
@@ -785,10 +798,23 @@ class EmployeeNoveltiesController extends AppController
         $approversTable = TableRegistry::getTableLocator()->get('Users');
         $approver = $approversTable->get($novelty->approver_id);
         if ($approver && !empty($approver->email)) {
-            $this->notificationService->sendNoveltyApprovalEmail($approver, $novelty, $approvalUrl);
+            try {
+                $this->notificationService->sendNoveltyApprovalEmail(
+                    $approver,
+                    $novelty,
+                    $approvalUrl,
+                    (int)$user->id,
+                );
+                $this->Flash->success('Enlace de aprobación reenviado al aprobador (válido por 48h).');
+            } catch (Exception $e) {
+                $this->Flash->error(__(
+                    'No se pudo reenviar el correo de aprobación: {0}. Puede reintentar desde la página de la novedad.',
+                    $e->getMessage(),
+                ));
+            }
+        } else {
+            $this->Flash->warning('El aprobador asignado no tiene correo electrónico configurado.');
         }
-
-        $this->Flash->success('Enlace de aprobación reenviado al aprobador (válido por 48h).');
 
         return $this->redirect(['action' => 'edit', $id]);
     }

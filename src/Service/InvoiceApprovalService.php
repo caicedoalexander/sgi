@@ -7,7 +7,6 @@ use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
 use App\Model\Entity\InvoiceApproval;
 use Cake\I18n\DateTime;
-use Cake\Log\Log;
 use Cake\ORM\TableRegistry;
 use Exception;
 
@@ -74,9 +73,18 @@ class InvoiceApprovalService
             // Send notification email
             $approvalUrl = $baseUrl . '/approve/' . $token;
             try {
-                $this->notificationService->sendApprovalLinkNotification($invoice, $approvalUrl, (int)$userId);
+                $this->notificationService->sendApprovalLinkNotification(
+                    $invoice,
+                    $approvalUrl,
+                    (int)$userId,
+                    $createdByUserId,
+                );
             } catch (Exception $e) {
-                Log::error("Approval email failed for user {$userId}: " . $e->getMessage());
+                $errors[] = sprintf(
+                    'Aprobador asignado, pero el correo a usuario ID %d falló: %s. Puede reintentar desde el panel de notificaciones de la factura.',
+                    (int)$userId,
+                    $e->getMessage(),
+                );
             }
         }
 
