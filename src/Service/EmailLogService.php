@@ -8,6 +8,7 @@ use App\Model\Entity\EmailLog;
 use App\Model\Table\EmailLogsTable;
 use Cake\I18n\DateTime;
 use Cake\ORM\TableRegistry;
+use Exception;
 
 class EmailLogService
 {
@@ -145,6 +146,53 @@ class EmailLogService
         return $this->emailLogsTable->find('forEntity', entityType: $entityType, entityId: $entityId)
             ->all()
             ->toArray();
+    }
+
+    /**
+     * Reintenta una fila concreta. Carga, marca status=pending mientras intenta,
+     * delega el envío en NotificationService::deliverRaw que actualiza el log
+     * (sent o failed) según resultado. Devuelve ServiceResult.
+     *
+     * Antes de operar sobre la fila, si la fila es pending huérfana, se sweepea.
+     */
+    public function retry(int $id, ?NotificationService $notificationService = null): ServiceResult
+    {
+        $this->sweepOrphanPendings();
+
+        $log = $this->emailLogsTable->find()->where(['id' => $id])->first();
+        if (!$log instanceof EmailLog) {
+            return ServiceResult::fail('No se encontró el registro de correo.');
+        }
+
+        if ($log->status === EmailLogConstants::STATUS_SENT) {
+            return ServiceResult::fail('Este correo ya fue enviado.');
+        }
+
+        $payload = $log->payload ?? [];
+        $viewVars = $payload['viewVars'] ?? [];
+        $layout = $payload['layout'] ?? 'default';
+
+        $notificationService = $notificationService ?? new NotificationService();
+
+        try {
+            $notificationService->deliverRaw(
+                logId: (int)$log->id,
+                to: $log->to_email,
+                subject: $log->subject,
+                template: $log->template,
+                viewVars: is_array($viewVars) ? $viewVars : [],
+                layout: is_string($layout) ? $layout : 'default',
+            );
+        } catch (Exception $e) {
+            $this->logger->warning('Email retry failed', [
+                'log_id' => (int)$log->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ServiceResult::fail('Reintento falló: ' . $e->getMessage());
+        }
+
+        return ServiceResult::ok('Correo reenviado exitosamente.');
     }
 
     /** Acceso a la table para callers (controller usa paginate sobre la query). */
