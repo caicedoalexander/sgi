@@ -16,7 +16,7 @@ class EmailLogService
 
     public function __construct()
     {
-        /** @var EmailLogsTable $table */
+        /** @var \App\Model\Table\EmailLogsTable $table */
         $table = TableRegistry::getTableLocator()->get('EmailLogs');
         $this->emailLogsTable = $table;
         $this->logger = new StructuredLogger('EmailLog');
