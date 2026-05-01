@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
+use App\Service\Pipeline\DocumentTypePolicyFactory;
 use Cake\ORM\TableRegistry;
 use DateTimeInterface;
 
@@ -12,10 +13,12 @@ class InvoicePaymentService
     /**
      * @param \App\Service\InvoiceHistoryService $historyService Audit trail recorder.
      * @param \App\Service\AdvanceLegalizationService $advanceLegalizationService Legalization initializer.
+     * @param \App\Service\Pipeline\DocumentTypePolicyFactory $docTypePolicies Doctype policy factory.
      */
     public function __construct(
         private readonly InvoiceHistoryService $historyService,
         private readonly AdvanceLegalizationService $advanceLegalizationService,
+        private readonly DocumentTypePolicyFactory $docTypePolicies,
     ) {
     }
 
@@ -148,10 +151,7 @@ class InvoicePaymentService
                 $this->advanceLegalizationService->closeOnRefundAuthorized($payment->id, $authorizedBy);
             }
 
-            if (
-                $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
-                && ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO
-            ) {
+            if ($this->docTypePolicies->for($invoice->document_type ?? null)->triggersAutoLegalization($invoice->pipeline_status)) {
                 $this->advanceLegalizationService->initialize($invoice, $authorizedBy);
             }
 
@@ -182,7 +182,7 @@ class InvoicePaymentService
         $invoice = $invoicesTable->get($invoiceId);
         $currentStatus = $invoice->pipeline_status;
 
-        if (!empty($paymentData['is_refund']) && $invoice->document_type !== InvoiceConstants::DOCTYPE_ANTICIPO) {
+        if (!empty($paymentData['is_refund']) && !$this->docTypePolicies->for($invoice->document_type)->allowsRefundPayments()) {
             return ServiceResult::fail('is_refund solo es válido en pagos de Anticipos.');
         }
 

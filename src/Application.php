@@ -187,6 +187,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ->addArguments([
                 InvoiceHistoryService::class,
                 AdvanceLegalizationService::class,
+                DocumentTypePolicyFactory::class,
             ]);
         $container->addShared(AdvanceLegalizationService::class)
             ->addArgument(new LiteralArgument(
