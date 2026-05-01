@@ -79,13 +79,6 @@ return [
      */
     'Security' => [
         'salt' => env('SECURITY_SALT'),
-        /*
-         * Comma-separated list of CIDR ranges for trusted reverse proxies.
-         * RateLimitMiddleware will only honor X-Forwarded-For when REMOTE_ADDR
-         * matches one of these. Empty by default (no proxy trusted).
-         * Example: '172.16.0.0/12,10.0.0.0/8'
-         */
-        'trustedProxies' => env('TRUSTED_PROXIES', ''),
     ],
 
     /*
