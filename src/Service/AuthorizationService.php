@@ -39,6 +39,7 @@ class AuthorizationService
         'banking_entities' => 'Entidades Bancarias',
         'payment_schedulings' => 'Programación',
         'payment_registry' => 'Registro de Pagos',
+        'email_logs' => 'Logs de correo',
     ];
 
     private array $cache = [];
