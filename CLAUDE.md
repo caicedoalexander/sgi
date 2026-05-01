@@ -15,9 +15,9 @@ php bin/cake server                  # localhost:8765
 # Dependencies
 composer install
 
-# Tests
-composer test                        # PHPUnit
-composer check                       # test + cs-check
+# Tests — NO se usan en este proyecto (ver "Testing Policy")
+# composer test                      # disponible pero no se ejecuta
+# composer check                     # disponible pero no se ejecuta
 
 # Code style (CakePHP standard)
 composer cs-check                    # Check
@@ -127,6 +127,12 @@ States: `aprobacion` → `contabilidad` → `tesoreria` → `autorizacion_pago` 
 - **CSS load order:** Bootstrap → Bootstrap Icons → Flatpickr → `styles.css` (always this order).
 - **JS auto-init classes:** `.flatpickr-date` (datepicker), `.currency-input` (AutoNumeric COP), `.select2` (searchable dropdown), `.clickable-row` (row click via `data-href`).
 - **Routes:** Custom routes go before `$builder->fallbacks()` in `config/routes.php`.
+
+## Testing Policy
+
+**Este proyecto NO usa tests automatizados.** No agregar archivos en `tests/`, no proponer fixtures de PHPUnit, no incluir secciones de "testing strategy" en specs/plans, no recomendar TDD.
+
+La validación se hace de forma manual: levantar `php bin/cake server` y ejercitar los endpoints en el navegador o con `curl`. Los specs/plans deben sustituir la sección de tests por **criterios de validación manual** (pasos concretos a ejecutar tras el merge).
 
 ## Migration Gotchas
 
