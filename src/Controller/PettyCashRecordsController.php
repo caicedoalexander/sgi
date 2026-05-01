@@ -15,6 +15,7 @@ use Cake\Event\EventManagerInterface;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 use Cake\I18n\Date;
+use Cake\ORM\Query\SelectQuery;
 use DateTimeInterface;
 
 class PettyCashRecordsController extends AppController
@@ -115,7 +116,7 @@ class PettyCashRecordsController extends AppController
      * @param bool $skipStatus Whether to skip the status filter (used by `paid` which fixes status).
      * @return void
      */
-    private function _applyListFilters(\Cake\ORM\Query\SelectQuery $query, bool $skipStatus = false): void
+    private function _applyListFilters(SelectQuery $query, bool $skipStatus = false): void
     {
         $params = $this->request->getQueryParams();
 
