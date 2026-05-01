@@ -17,6 +17,7 @@ class InvoicePipelineService
      * @param \App\Service\InvoiceFieldAccessPolicy $fieldPolicy Editable fields per role/state.
      * @param \App\Service\AdvanceLegalizationService $advanceLegalizationService Legalization cross-link.
      * @param \App\Service\InvoiceLockPolicy $lockPolicy Edit/regression lock policy.
+     * @param \App\Service\InvoiceTransitionValidator $transitionValidator Pipeline transition validator.
      */
     public function __construct(
         private readonly HistoryServiceInterface $historyService,
@@ -24,6 +25,7 @@ class InvoicePipelineService
         private readonly InvoiceFieldAccessPolicy $fieldPolicy,
         private readonly AdvanceLegalizationService $advanceLegalizationService,
         private readonly InvoiceLockPolicy $lockPolicy,
+        private readonly InvoiceTransitionValidator $transitionValidator,
     ) {
     }
 
@@ -86,68 +88,6 @@ class InvoicePipelineService
         RoleConstants::ASISTENTE_PERSONAL => self::ADVANCE_ACTIVE_STATUSES,
         RoleConstants::COORDINADOR_ADMIN  => self::ADVANCE_ACTIVE_STATUSES,
         RoleConstants::ADMIN              => self::ADVANCE_ACTIVE_STATUSES,
-    ];
-
-    // All fields available for Admin in any status
-    // Fields required before advancing from each status
-    private const TRANSITION_REQUIREMENTS = [
-        InvoiceConstants::STATUS_APROBACION => [
-            [
-                'field' => 'area_approval',
-                'value' => InvoiceConstants::APPROVAL_APPROVED,
-                'label' => 'Todos los aprobadores deben haber aprobado',
-            ],
-            [
-                'field' => 'dian_validation',
-                'value' => InvoiceConstants::DIAN_APPROVED,
-                'label' => 'Validación DIAN debe ser "Aprobada"',
-            ],
-        ],
-        InvoiceConstants::STATUS_CONTABILIDAD => [
-            [
-                'field' => 'accrued',
-                'value' => true,
-                'label' => 'La factura debe estar marcada como Causada',
-            ],
-            [
-                'field' => 'accrual_date',
-                'not_empty' => true,
-                'label' => 'Fecha de Causación es requerida',
-            ],
-            [
-                'field' => 'ready_for_payment',
-                'not_empty' => true,
-                'label' => 'Campo "Lista para Pago" es requerido',
-            ],
-        ],
-        InvoiceConstants::STATUS_TESORERIA => [
-            [
-                'field' => '_has_pending_payment',
-                'custom' => true,
-                'label' => 'Debe registrar al menos un pago para avanzar a autorización',
-            ],
-        ],
-        InvoiceConstants::STATUS_AUTORIZACION_PAGO => [
-            [
-                'field' => '_payment_authorized',
-                'custom' => true,
-                'label' => 'El pago pendiente debe ser autorizado por el Contador',
-            ],
-        ],
-    ];
-
-    /**
-     * Maps each transition requirement field to the invoice fields that resolve it.
-     * An empty array means the requirement is resolved by actions (not by editing fields).
-     */
-    private const REQUIREMENT_FIELDS = [
-        'area_approval'         => [],
-        'dian_validation'       => ['dian_validation'],
-        'accrued'               => ['accrued', 'accrual_date'],
-        'accrual_date'          => ['accrual_date'],
-        'ready_for_payment'     => ['ready_for_payment'],
-        '_has_pending_payment'  => [],
-        '_payment_authorized'   => [],
     ];
 
     // Next status transitions
@@ -250,82 +190,25 @@ class InvoicePipelineService
     }
 
     /**
-     * Validates whether all requirements are met to advance from $fromStatus.
-     * Returns an array of error messages (empty = can advance).
+     * Delegates to InvoiceTransitionValidator.
      */
     public function validateTransitionRequirements(object $invoice, string $fromStatus): array
     {
-        // Rejection blocks all advancement
-        if ($this->isRejected($invoice)) {
-            return ['La factura fue rechazada. El flujo ha terminado.'];
-        }
-
-        // Legalizaciones se quedan en `contabilidad` hasta que el Anticipo padre se legalice.
-        // El avance a `legalizada` lo dispara AdvanceLegalizationService::_setStatus.
-        if (
-            ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_LEGALIZACION
-            && $fromStatus === InvoiceConstants::STATUS_CONTABILIDAD
-        ) {
-            return ['La legalización avanzará automáticamente cuando el Anticipo padre se legalice.'];
-        }
-
-        $errors = [];
-        foreach (self::TRANSITION_REQUIREMENTS[$fromStatus] ?? [] as $rule) {
-            if (!empty($rule['custom'])) {
-                if ($rule['field'] === '_has_pending_payment') {
-                    if (!$this->paymentService->hasPendingAuthorization($invoice->id)) {
-                        $errors[] = $rule['label'];
-                    }
-                } elseif ($rule['field'] === '_payment_authorized') {
-                    if ($this->paymentService->hasPendingAuthorization($invoice->id)) {
-                        $errors[] = $rule['label'];
-                    }
-                }
-                continue;
-            }
-
-            $field = $rule['field'];
-            $value = $invoice->$field ?? null;
-
-            if (isset($rule['value'])) {
-                $expected = $rule['value'];
-                if (is_bool($expected)) {
-                    $actual = (bool)$value;
-                } else {
-                    $actual = $value;
-                }
-                if ($actual !== $expected) {
-                    $errors[] = $rule['label'];
-                }
-            } elseif (!empty($rule['not_empty'])) {
-                if ($value === null || $value === '' || $value === false) {
-                    $errors[] = $rule['label'];
-                }
-            }
-        }
-
-        return $errors;
+        return $this->transitionValidator->validateAdvance($invoice, $fromStatus);
     }
 
     /**
-     * Returns the transition requirement rules for a status (raw definitions).
+     * Delegates to InvoiceTransitionValidator.
      *
      * @return array<int, array{field:string, label:string}>
      */
     public function getTransitionRules(string $fromStatus): array
     {
-        $rules = [];
-        foreach (self::TRANSITION_REQUIREMENTS[$fromStatus] ?? [] as $rule) {
-            $rules[] = ['field' => $rule['field'], 'label' => $rule['label']];
-        }
-
-        return $rules;
+        return $this->transitionValidator->getTransitionRules($fromStatus);
     }
 
     /**
-     * Filters advanceErrors so only those the given role can resolve remain.
-     * Requirements driven by actions (empty REQUIREMENT_FIELDS entry) are kept
-     * when the role has visibility over the current status.
+     * Delegates to InvoiceTransitionValidator.
      *
      * @param array<string> $errors error messages aligned positionally with $rules
      * @param array<int, array{field:string, label:string}> $rules
@@ -333,35 +216,7 @@ class InvoicePipelineService
      */
     public function filterAdvanceErrorsForRole(array $errors, array $rules, string $roleName, string $status): array
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return array_values($errors);
-        }
-
-        $editable = $this->getEditableFields($roleName, $status);
-        $visibleStatuses = $this->getVisibleStatuses($roleName);
-        $statusVisible = in_array($status, $visibleStatuses, true);
-
-        $filtered = [];
-        foreach ($rules as $i => $rule) {
-            if (!isset($errors[$i])) {
-                continue;
-            }
-            $field = $rule['field'];
-            $responsible = self::REQUIREMENT_FIELDS[$field] ?? [$field];
-
-            if ($responsible === []) {
-                if ($statusVisible) {
-                    $filtered[] = $errors[$i];
-                }
-                continue;
-            }
-
-            if (array_intersect($responsible, $editable)) {
-                $filtered[] = $errors[$i];
-            }
-        }
-
-        return $filtered;
+        return $this->transitionValidator->filterErrorsForRole($errors, $rules, $roleName, $status);
     }
 
     public function canAdvance(string $roleName, string $currentStatus, ?string $documentType = null): bool
