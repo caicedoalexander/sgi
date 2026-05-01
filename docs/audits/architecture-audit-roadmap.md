@@ -242,7 +242,7 @@ Plan 2 ─────┐         Plan 3 (sin deps, paralelizable)
 
 | # | Plan | Estado | Spec | Plan | PR | Cerrado |
 |---|------|--------|------|------|----|---------|
-| 1 | Quick Critical Fixes | 🟡 En progreso | [spec](../superpowers/specs/2026-04-30-quick-critical-fixes-design.md) | — | — | — |
+| 1 | Quick Critical Fixes | 🟢 Completado | [spec](../superpowers/specs/2026-04-30-quick-critical-fixes-design.md) | [plan](../superpowers/plans/2026-04-30-quick-critical-fixes-plan.md) | [#3](https://github.com/caicedoalexander/sgi/pull/3) | 2026-04-30 |
 | 2 | Outbox + Emails | ⬜ Pendiente | — | — | — | — |
 | 3 | DI Container | ⬜ Pendiente | — | — | — | — |
 | 4 | Refactor Pipeline | ⬜ Pendiente | — | — | — | — |
