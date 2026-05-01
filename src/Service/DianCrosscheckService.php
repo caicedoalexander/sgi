@@ -16,14 +16,12 @@ class DianCrosscheckService
 
     private const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
-    private N8nService $n8nService;
-
     /**
      * Constructor.
      */
-    public function __construct(?N8nService $n8nService = null)
-    {
-        $this->n8nService = $n8nService ?? new N8nService();
+    public function __construct(
+        private readonly N8nService $n8nService,
+    ) {
     }
 
     /**

@@ -13,15 +13,14 @@ use Cake\Mailer\TransportFactory;
  */
 class CakeMailerAdapter implements MailerInterface
 {
-    private SystemSettingsService $settings;
     private bool $transportConfigured = false;
 
     /**
-     * @param \App\Service\SystemSettingsService|null $settings System settings.
+     * @param \App\Service\SystemSettingsService $settings System settings.
      */
-    public function __construct(?SystemSettingsService $settings = null)
-    {
-        $this->settings = $settings ?? new SystemSettingsService();
+    public function __construct(
+        private readonly SystemSettingsService $settings,
+    ) {
     }
 
     /**

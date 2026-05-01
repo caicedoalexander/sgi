@@ -5,18 +5,13 @@ namespace App\Service;
 
 class N8nService
 {
-    private WebhookService $webhookService;
-    private SystemSettingsService $settingsService;
-
     /**
      * Constructor.
      */
     public function __construct(
-        ?WebhookService $webhookService = null,
-        ?SystemSettingsService $settingsService = null,
+        private readonly WebhookService $webhookService,
+        private readonly SystemSettingsService $settingsService,
     ) {
-        $this->webhookService = $webhookService ?? new WebhookService();
-        $this->settingsService = $settingsService ?? new SystemSettingsService();
     }
 
     /**
