@@ -9,11 +9,12 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class PaymentSchedulingService
 {
-    private InvoicePaymentService $paymentService;
-
-    public function __construct(?InvoicePaymentService $paymentService = null)
-    {
-        $this->paymentService = $paymentService ?? new InvoicePaymentService();
+    /**
+     * @param \App\Service\InvoicePaymentService $paymentService Resolves invoice payment balances and recalculations.
+     */
+    public function __construct(
+        private readonly InvoicePaymentService $paymentService,
+    ) {
     }
 
     /**
