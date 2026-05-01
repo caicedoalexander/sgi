@@ -20,6 +20,15 @@ $this->assign('title', 'Logs de correo');
         <h2 class="me-auto mb-0">
             <i class="bi bi-envelope-exclamation me-2"></i>Logs de correo
         </h2>
+        <?= $this->Form->postLink(
+            '<i class="bi bi-arrow-clockwise me-1"></i>Reintentar todos los fallidos',
+            ['action' => 'retryAllFailed'],
+            [
+                'class' => 'btn btn-warning',
+                'escape' => false,
+                'confirm' => '¿Reintentar todos los correos fallidos? Se procesarán hasta 100 por click.',
+            ],
+        ) ?>
     </div>
 
     <div class="card mb-3">

@@ -158,4 +158,34 @@ class EmailLogsController extends AppController
         // Sin entity_type → solo admin (que ya retornó arriba).
         return false;
     }
+
+    /**
+     * Reintento masivo. Solo Administrador (gated por _enforcePermission con
+     * email_logs.can_edit, que solo está asignado al admin).
+     *
+     * @return \Cake\Http\Response
+     */
+    public function retryAllFailed(): Response
+    {
+        $this->request->allowMethod(['post']);
+
+        $stats = $this->emailLogService->retryAllFailed();
+
+        if ($stats['success'] === 0 && $stats['failed'] === 0) {
+            $this->Flash->info('No había correos fallidos para reintentar.');
+        } else {
+            $msg = sprintf(
+                'Reintentos: %d exitosos, %d fallidos.',
+                $stats['success'],
+                $stats['failed'],
+            );
+            if ($stats['failed'] > 0) {
+                $this->Flash->warning($msg);
+            } else {
+                $this->Flash->success($msg);
+            }
+        }
+
+        return $this->redirect(['action' => 'index']);
+    }
 }

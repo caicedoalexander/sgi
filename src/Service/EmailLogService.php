@@ -195,6 +195,38 @@ class EmailLogService
         return ServiceResult::ok('Correo reenviado exitosamente.');
     }
 
+    /**
+     * Reintenta hasta RETRY_BATCH_LIMIT filas con status=failed. Devuelve
+     * el conteo {success, failed, skipped} para el flash del controller.
+     *
+     * Si se desea procesar más filas, el admin puede pulsar el botón otra
+     * vez; no hay paginación de procesamiento ni progress bar.
+     */
+    public function retryAllFailed(?NotificationService $notificationService = null): array
+    {
+        $this->sweepOrphanPendings();
+
+        $notificationService = $notificationService ?? new NotificationService();
+
+        $failedLogs = $this->emailLogsTable->find('failed')
+            ->orderBy(['EmailLogs.created' => 'ASC'])
+            ->limit(EmailLogConstants::RETRY_BATCH_LIMIT)
+            ->all();
+
+        $stats = ['success' => 0, 'failed' => 0, 'skipped' => 0];
+
+        foreach ($failedLogs as $log) {
+            $result = $this->retry((int)$log->id, $notificationService);
+            if ($result->success) {
+                $stats['success']++;
+            } else {
+                $stats['failed']++;
+            }
+        }
+
+        return $stats;
+    }
+
     /** Acceso a la table para callers (controller usa paginate sobre la query). */
     public function getTable(): EmailLogsTable
     {
