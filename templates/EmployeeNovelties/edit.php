@@ -461,6 +461,8 @@ $badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
 
     </div>
 </div>
+
+<?= $this->element('email_log_panel', ['emailLogs' => $emailLogs ?? []]) ?>
 </div><!-- /left column -->
 
 <!-- Right column: documents + observations -->

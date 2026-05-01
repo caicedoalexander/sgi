@@ -978,6 +978,8 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         <?php endif; ?>
     </div>
 </div>
+
+<?= $this->element('email_log_panel', ['emailLogs' => $emailLogs ?? []]) ?>
 </div><!-- /columna izquierda -->
 
 <!-- ── Columna derecha: soportes + observaciones ── -->

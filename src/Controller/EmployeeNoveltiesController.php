@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
 use App\Service\ApprovalTokenService;
+use App\Service\EmailLogService;
 use App\Service\LeaveDocumentService;
 use App\Service\NotificationService;
 use App\Service\NoveltyDocumentService;
@@ -437,6 +438,10 @@ class EmployeeNoveltiesController extends AppController
                 'valueField' => 'liquidation_number',
             ])->where(['pipeline_status' => NoveltyConstants::STATUS_CONTABILIDAD])->toArray();
         }
+
+        // Email logs para el panel inline (Plan 2 — W8)
+        $emailLogService = new EmailLogService();
+        $this->set('emailLogs', $emailLogService->forEntity('employee_novelty', (int)$novelty->id));
 
         $this->set(compact(
             'novelty',

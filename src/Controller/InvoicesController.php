@@ -7,6 +7,7 @@ use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Controller\Trait\ExcelWizardTrait;
+use App\Service\EmailLogService;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
 use App\Service\InvoiceFilterService;
@@ -334,6 +335,10 @@ class InvoicesController extends AppController
             fn($p) => (float)$p->amount,
             $invoice->invoice_payments ?? [],
         ));
+
+        // Email logs para el panel inline (Plan 2 — W8)
+        $emailLogService = new EmailLogService();
+        $this->set('emailLogs', $emailLogService->forEntity('invoice', (int)$invoice->id));
 
         $this->set(compact(
             'invoice',
