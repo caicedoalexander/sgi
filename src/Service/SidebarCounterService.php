@@ -12,18 +12,16 @@ use Exception;
 
 class SidebarCounterService
 {
-    private InvoicePipelineService $invoicePipeline;
-    private NoveltyPipelineService $noveltyPipeline;
-    private PettyCashService $pettyCashService;
-
+    /**
+     * @param \App\Service\InvoicePipelineService $invoicePipeline Invoice pipeline.
+     * @param \App\Service\NoveltyPipelineService $noveltyPipeline Novelty pipeline.
+     * @param \App\Service\PettyCashService $pettyCashService Petty cash service.
+     */
     public function __construct(
-        ?InvoicePipelineService $invoicePipeline = null,
-        ?NoveltyPipelineService $noveltyPipeline = null,
-        ?PettyCashService $pettyCashService = null,
+        private readonly InvoicePipelineService $invoicePipeline,
+        private readonly NoveltyPipelineService $noveltyPipeline,
+        private readonly PettyCashService $pettyCashService,
     ) {
-        $this->invoicePipeline = $invoicePipeline ?? new InvoicePipelineService();
-        $this->noveltyPipeline = $noveltyPipeline ?? new NoveltyPipelineService();
-        $this->pettyCashService = $pettyCashService ?? new PettyCashService();
     }
 
     /**

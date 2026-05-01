@@ -13,14 +13,12 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class ExcelImportService
 {
-    private ExcelMappingService $mappingService;
-
     /**
-     * @param \App\Service\ExcelMappingService|null $mappingService Mapping service instance
+     * @param \App\Service\ExcelMappingService $mappingService Mapping service instance.
      */
-    public function __construct(?ExcelMappingService $mappingService = null)
-    {
-        $this->mappingService = $mappingService ?? new ExcelMappingService();
+    public function __construct(
+        private readonly ExcelMappingService $mappingService,
+    ) {
     }
 
     /**

@@ -13,19 +13,14 @@ use Exception;
  */
 class DashboardStatisticsService
 {
-    private InvoiceStatisticsService $invoiceStats;
-    private EmployeeStatisticsService $employeeStats;
-
     /**
-     * @param \App\Service\Dashboard\InvoiceStatisticsService|null $invoiceStats Invoice stats.
-     * @param \App\Service\Dashboard\EmployeeStatisticsService|null $employeeStats Employee stats.
+     * @param \App\Service\Dashboard\InvoiceStatisticsService $invoiceStats Invoice stats.
+     * @param \App\Service\Dashboard\EmployeeStatisticsService $employeeStats Employee stats.
      */
     public function __construct(
-        ?InvoiceStatisticsService $invoiceStats = null,
-        ?EmployeeStatisticsService $employeeStats = null,
+        private readonly InvoiceStatisticsService $invoiceStats,
+        private readonly EmployeeStatisticsService $employeeStats,
     ) {
-        $this->invoiceStats = $invoiceStats ?? new InvoiceStatisticsService();
-        $this->employeeStats = $employeeStats ?? new EmployeeStatisticsService();
     }
 
     /**
