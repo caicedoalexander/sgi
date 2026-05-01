@@ -103,62 +103,73 @@ class InvoicePaymentService
 
     /**
      * Autoriza un pago individual, recalcula estado, y maneja transiciones de pipeline.
-     * Registra historial para los cambios de estado.
+     * Registra historial para los cambios de estado. Todo el flujo (pago, recálculo,
+     * actualización de pipeline, historial y side effects de legalización) ocurre
+     * dentro de una sola transacción para evitar inconsistencias parciales.
      */
     public function authorizePayment(int $paymentId, int $authorizedBy): array
     {
         $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $payment = $paymentsTable->get($paymentId);
+        $connection = $paymentsTable->getConnection();
 
-        $payment->authorized = true;
-        $payment->status = InvoiceConstants::PAYMENT_RECORD_AUTHORIZED;
-        $payment->authorized_by = $authorizedBy;
-        $payment->authorized_date = date('Y-m-d');
-
-        if (!$paymentsTable->save($payment)) {
-            return ['success' => false, 'paymentStatus' => null, 'newPipelineStatus' => null];
-        }
-
-        $this->recalculatePaymentStatus($payment->invoice_id);
-
-        $invoice = $invoicesTable->get($payment->invoice_id);
-        $previousStatus = $invoice->pipeline_status;
-        $newPipelineStatus = null;
-
-        if ($invoice->payment_status === InvoiceConstants::PAYMENT_FULL) {
-            $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
-            $newPipelineStatus = InvoiceConstants::STATUS_PAGADA;
-        } else {
-            $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
-            $newPipelineStatus = InvoiceConstants::STATUS_TESORERIA;
-        }
-
-        $invoicesTable->save($invoice);
-
-        $this->historyService->recordStatusChange(
-            $invoice->id,
-            $previousStatus,
-            $newPipelineStatus,
+        $result = $connection->transactional(function () use (
+            $paymentsTable,
+            $invoicesTable,
+            $paymentId,
             $authorizedBy,
-        );
-
-        if ((bool)($payment->is_refund ?? false)) {
-            $this->advanceLegalizationService->closeOnRefundAuthorized($payment->id, $authorizedBy);
-        }
-
-        if (
-            $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
-            && ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO
         ) {
-            $this->advanceLegalizationService->initialize($invoice, $authorizedBy);
-        }
+            $payment = $paymentsTable->get($paymentId);
 
-        return [
-            'success' => true,
-            'paymentStatus' => $invoice->payment_status,
-            'newPipelineStatus' => $newPipelineStatus,
-        ];
+            $payment->authorized = true;
+            $payment->status = InvoiceConstants::PAYMENT_RECORD_AUTHORIZED;
+            $payment->authorized_by = $authorizedBy;
+            $payment->authorized_date = date('Y-m-d');
+
+            if (!$paymentsTable->save($payment)) {
+                return false; // → rollback
+            }
+
+            $this->recalculatePaymentStatus($payment->invoice_id);
+
+            $invoice = $invoicesTable->get($payment->invoice_id);
+            $previousStatus = $invoice->pipeline_status;
+
+            $newPipelineStatus = $invoice->payment_status === InvoiceConstants::PAYMENT_FULL
+                ? InvoiceConstants::STATUS_PAGADA
+                : InvoiceConstants::STATUS_TESORERIA;
+
+            $invoice->pipeline_status = $newPipelineStatus;
+            $invoicesTable->save($invoice);
+
+            $this->historyService->recordStatusChange(
+                $invoice->id,
+                $previousStatus,
+                $newPipelineStatus,
+                $authorizedBy,
+            );
+
+            if ((bool)($payment->is_refund ?? false)) {
+                $this->advanceLegalizationService->closeOnRefundAuthorized($payment->id, $authorizedBy);
+            }
+
+            if (
+                $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA
+                && ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO
+            ) {
+                $this->advanceLegalizationService->initialize($invoice, $authorizedBy);
+            }
+
+            return [
+                'success' => true,
+                'paymentStatus' => $invoice->payment_status,
+                'newPipelineStatus' => $newPipelineStatus,
+            ];
+        });
+
+        return $result === false
+            ? ['success' => false, 'paymentStatus' => null, 'newPipelineStatus' => null]
+            : $result;
     }
 
     /**
