@@ -177,7 +177,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(InvoiceLockPolicy::class);
         $container->addShared(InvoiceTransitionValidator::class)
             ->addArguments([
-                InvoicePaymentService::class,
+                InvoicePipelineStateRegistry::class,
+                DocumentTypePolicyFactory::class,
                 InvoiceFieldAccessPolicy::class,
             ]);
         $container->addShared(InvoiceFilterService::class);
@@ -199,6 +200,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 AdvanceLegalizationService::class,
                 InvoiceLockPolicy::class,
                 InvoiceTransitionValidator::class,
+                InvoicePipelineStateRegistry::class,
+                DocumentTypePolicyFactory::class,
             ]);
         $container->addShared(InvoiceApprovalService::class)
             ->addArgument(NotificationService::class);
