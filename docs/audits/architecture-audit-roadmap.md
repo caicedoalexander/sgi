@@ -40,39 +40,43 @@ Cuando empieces una sesión nueva (con o sin contexto previo):
 
 | # | Plan | Items | Tamaño | Depende de | Estado |
 |---|------|-------|--------|------------|--------|
-| 1 | Quick Critical Fixes | C1, C2, C3 | XS (2–4 días) | — | ⬜ Pendiente |
-| 2 | Outbox + Emails Confiables | C4, W8 | M (1–2 sem) | — | ⬜ Pendiente |
+| 1 | Quick Critical Fixes | C1, C2, C3 | XS (2–4 días) | — | 🟢 Completado |
+| 2 | Email Audit Log + Reintento manual *(pivot, ver "Cambios al roadmap" 2026-05-01)* | W8 | S (4–6 días) | — | 🟡 En progreso |
 | 3 | DI Container | W3, W5 | S (3–5 días) | — | ⬜ Pendiente |
 | 4 | Refactor del Pipeline | C5, W2, W9, W10 | M (1–2 sem) | Plan 3 (recomendado) | ⬜ Pendiente |
-| 5 | Domain Events (romper ciclo) | C6 | S (~1 sem) | Plan 2 | ⬜ Pendiente |
-| 6 | Resilience Hardening | W6, W13, W14, W7 | M (~1 sem) | Plan 2 | ⬜ Pendiente |
+| 5 | Domain Events (romper ciclo) | C6 | S (~1 sem) | — *(originalmente Plan 2; ver "Cambios al roadmap")* | ⬜ Pendiente |
+| 6 | Resilience Hardening | W6, W13, W14, W7 | M (~1 sem) | — *(originalmente Plan 2; ver "Cambios al roadmap")* | ⬜ Pendiente |
 | 7 | Observability + Polish | W1, W4, W11, W12, W15, ADRs | M (~1 sem) | — | ⬜ Pendiente |
 
-**Cobertura:** los 6 críticos (C1–C6) y los 15 warnings (W1–W15) sin items huérfanos.
+**Cobertura:** los 6 críticos (C1–C6) y los 15 warnings (W1–W15) sin items huérfanos. C4 quedó cubierto por el Plan 1 (transacción atómica en `authorizePayment`).
 
 ---
 
 ## Mapa de dependencias
 
+> **Actualizado 2026-05-01** tras el pivot del Plan 2 (ver "Cambios al roadmap"). El outbox ya no existe; Plan 5 y Plan 6 dejaron de depender de Plan 2.
+
 ```
-Plan 1 (sin deps, primero)
+Plan 1 (✅ completado)
   ↓
-Plan 2 ─────┐         Plan 3 (sin deps, paralelizable)
-            ↓                 ↓
-          Plan 5         Plan 4
-            ↓                 ↓
-          Plan 6 ←────────────┘
-            ↓
-          Plan 7 (último, polish)
+Plan 2 (en progreso, sin bloquear a otros)   Plan 3 (sin deps, paralelizable)
+                                                    ↓
+                                                  Plan 4
+                                                    ↓
+Plan 5 (sin deps; se replantea su mecánica)  ──┐    │
+Plan 6 (sin deps; se replantea su alcance)   ──┼────┘
+                                                │
+                                                ↓
+                                              Plan 7 (último, polish)
 ```
 
-**Reglas:**
-- El **Plan 1** se hace primero siempre (estabilización antes de refactor).
+**Reglas (actualizadas):**
+- El **Plan 1** se hizo primero (estabilización antes de refactor). ✅
 - **Plan 2** y **Plan 3** son independientes entre sí — pueden hacerse en paralelo o en cualquier orden.
-- **Plan 5** requiere la infraestructura del **Plan 2** (outbox + eventos).
+- **Plan 5** ya no depende de Plan 2 (el outbox fue descartado). Su brainstorming debe abrir con la decisión sobre la mecánica de despacho de eventos (síncrono vía `EventManager` u otra).
 - **Plan 4** se beneficia de tener el **Plan 3** primero (refactor más limpio con DI), pero no es bloqueante.
-- **Plan 6** consume la infraestructura del **Plan 2** (worker async sobre outbox para bulkhead).
-- **Plan 7** se deja al final — es polish y no desbloquea nada.
+- **Plan 6** ya no depende de Plan 2. W14 (bulkhead) se replantea con timeouts agresivos en `NotificationService`/`WebhookService`.
+- **Plan 7** se deja al final — es polish y no desbloquea nada. Su métrica de "outbox backlog" se sustituye por `email_logs_failed_count`.
 
 ---
 
@@ -103,19 +107,27 @@ Plan 2 ─────┐         Plan 3 (sin deps, paralelizable)
 
 ## Fase 2 — Cimientos
 
-### Plan 2 — Outbox + Emails Confiables
-**Items:** C4, W8
-**Tamaño estimado:** 1–2 semanas
-**Depende de:** nada
-**Bloquea a:** Plan 5, Plan 6 (parcialmente)
+### Plan 2 — Email Audit Log + Reintento manual
 
-**Alcance:**
-- Migración: tabla `outbox` (`id`, `event_type`, `aggregate_type`, `aggregate_id`, `payload JSON`, `occurred_at`, `processed_at`, `attempts`, `last_error`).
-- Servicio `OutboxService::publish(string $eventType, array $payload)`.
-- CLI command `bin/cake outbox process` (worker que toma pendientes en lotes, los entrega con retry, marca processed/failed).
-- Primera integración: `NotificationService::sendApprovalLinkNotification` deja de enviar inline; en su lugar publica `EmailQueued` al outbox dentro de la misma transacción del flujo origen. El worker entrega.
-- Mismo tratamiento para `sendNoveltyApprovalEmail` y `sendTestEmail` queda fuera (se mantiene síncrono — es para diagnóstico).
-- Documentación operativa: cómo correr el worker, alertas si la tabla crece.
+> **Pivot del 2026-05-01.** El alcance original (outbox + worker CLI por cron) se descartó por decisión operativa. Resumen del cambio en "Cambios al roadmap"; spec completo en [`docs/superpowers/specs/2026-05-01-email-log-design.md`](../superpowers/specs/2026-05-01-email-log-design.md).
+
+**Items:** W8 *(C4 ya quedó cubierto por la transacción del Plan 1)*
+**Tamaño estimado:** 4–6 días
+**Depende de:** nada
+**Bloquea a:** nada *(Plan 5 y Plan 6 dejaron de depender de Plan 2)*
+
+**Alcance (revisado):**
+- Migración: tabla `email_logs` (`id`, `event_type`, `entity_type`, `entity_id`, `to_email`, `subject`, `template`, `payload JSON`, `status`, `attempts`, `last_error`, `last_attempt_at`, `sent_at`, `created_by`, `created`, `modified`).
+- Servicio `EmailLogService` con `recordPending`, `markSent`, `markFailed`, `retry`, `retryAllFailed`, `sweepOrphanPendings`.
+- `NotificationService` integra el log en cada envío y propaga excepciones SMTP en lugar de tragarlas.
+- UI: panel inline en `invoices/edit` y `employee_novelties/edit` + vista global `/email-logs` (admin only) con filtros y reintento individual + masivo.
+- Sweep lazy de filas `pending` huérfanas al cargar la vista global o al ejecutar un reintento — sin cron.
+- Sin worker async, sin cron, sin daemon.
+
+**Lo que NO entra (originalmente sí):**
+- Outbox como mecanismo genérico de eventos.
+- Worker CLI / cron / supervisor.
+- `sendTestEmail`/`testSmtpConnection` se mantiene fuera (sigue síncrono, sin log — es diagnóstico).
 
 **Criterios de éxito:**
 - Caída prolongada del SMTP no pierde correos: la tabla `outbox` se llena y se drena cuando vuelve.
@@ -243,7 +255,7 @@ Plan 2 ─────┐         Plan 3 (sin deps, paralelizable)
 | # | Plan | Estado | Spec | Plan | PR | Cerrado |
 |---|------|--------|------|------|----|---------|
 | 1 | Quick Critical Fixes | 🟢 Completado | [spec](../superpowers/specs/2026-04-30-quick-critical-fixes-design.md) | [plan](../superpowers/plans/2026-04-30-quick-critical-fixes-plan.md) | [#3](https://github.com/caicedoalexander/sgi/pull/3) | 2026-04-30 |
-| 2 | Outbox + Emails | ⬜ Pendiente | — | — | — | — |
+| 2 | Email Audit Log + Reintento manual (W8) | 🟡 En progreso | [spec](../superpowers/specs/2026-05-01-email-log-design.md) | — | — | — |
 | 3 | DI Container | ⬜ Pendiente | — | — | — | — |
 | 4 | Refactor Pipeline | ⬜ Pendiente | — | — | — | — |
 | 5 | Domain Events | ⬜ Pendiente | — | — | — | — |
@@ -282,6 +294,33 @@ Spec resultante: [`docs/superpowers/specs/2026-04-30-quick-critical-fixes-design
    - Fix del bug SSL en `CakeMailerAdapter::_ensureTransport()` — sin él, migrar `NotificationService` al adapter rompería cuentas SMTP que usan puerto 465.
    - Migrar `testSmtpConnection()` al adapter — para no dejar `configureTransport()` huérfano solo para el diagnóstico.
    - Nuevo template `templates/email/html/smtp_test.php` (1 línea) — requerido por el punto anterior.
+
+### 2026-05-01 — Plan 2: pivot de outbox async a email log síncrono con reintento manual
+
+Spec resultante: [`docs/superpowers/specs/2026-05-01-email-log-design.md`](../superpowers/specs/2026-05-01-email-log-design.md)
+
+El plan original proponía outbox + worker CLI ejecutado por cron (`bin/cake outbox process`). Decisión operativa del usuario: **descartar el worker** para no introducir un cron en el servidor (otro componente del que cuidarse, monitorear, reiniciar si cae). Sustituir por:
+
+1. Tabla `email_logs` que registra cada intento de envío con `status` (pending/sent/failed), `attempts`, `last_error`, `payload` snapshot.
+2. Envío sigue **síncrono** desde `NotificationService` (con CircuitBreaker existente). Las excepciones SMTP ya no se tragan — se propagan al controller para que la UI muestre el error al usuario que disparó el flujo.
+3. Recuperación **manual** desde la UI: panel inline en `invoices/edit` y `employee_novelties/edit`, más vista global `/email-logs` (admin only) con reintento individual y masivo.
+4. Sweep lazy de huérfanos (filas `pending` interrumpidas por crash de PHP) al cargar la vista global o al ejecutar un reintento — sin cron.
+
+Trade-off: cero infraestructura nueva en el servidor a cambio de recovery humano en lugar de automático. Aceptado.
+
+**Lo que sigue cubierto:**
+- ✅ **W8** (correos perdidos silenciosamente): cada intento queda registrado y los fallos son visibles + recuperables desde la UI.
+
+**Lo que ya estaba cubierto antes de Plan 2 y queda confirmado:**
+- ✅ **C4** (saga-shaped flows sin compensación): resuelto por la transacción atómica del Plan 1 (`authorizePayment` con side effects dentro de `transactional()`). El outbox ya no era necesario para C4.
+
+**Impacto en planes futuros:**
+
+- **Plan 5 — Domain Events (C6).** Ya no puede apoyarse en la mecánica del outbox de Plan 2. Tendrá que usar `Cake\Event\EventManager` (despacho síncrono in-process) o reintroducir un mecanismo de despacho diferido específico del Plan 5. **A re-evaluar al iniciar Plan 5.** El brainstorming de Plan 5 debe abrir con esa decisión.
+
+- **Plan 6 — W14 (Bulkhead).** La idea original de usar un worker async como bulkhead para webhooks/emails se descarta. Plan 6 abordará W14 con **timeouts agresivos** en `NotificationService` y `WebhookService` (HTTP client timeout, SMTP socket timeout) para que peticiones lentas a integraciones externas no bloqueen al usuario más de N segundos. **A definir el N específico en el spec del Plan 6.**
+
+- **Plan 7 — W7 (`/health`).** El "backlog del outbox" como métrica deja de existir. En su lugar `/health` puede reportar `email_logs_failed_count` (correos en `failed` pendientes de reintento manual) como indicador de salud del SMTP/notificaciones. **Ajustar el alcance de Plan 7 cuando se inicie su brainstorming.**
 
 ---
 
