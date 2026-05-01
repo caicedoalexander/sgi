@@ -65,18 +65,27 @@ class CakeMailerAdapter implements MailerInterface
             return;
         }
 
-        if (TransportFactory::getConfig('sgi_dynamic')) {
-            TransportFactory::drop('sgi_dynamic');
-        }
-
-        TransportFactory::setConfig('sgi_dynamic', [
+        $config = [
             'className' => 'Smtp',
             'host' => $smtpConfig['smtp_host'] ?? '',
             'port' => (int)($smtpConfig['smtp_port'] ?? 587),
             'username' => $smtpConfig['smtp_username'] ?? '',
             'password' => $smtpConfig['smtp_password'] ?? '',
-            'tls' => true,
-        ]);
+        ];
+
+        $encryption = $smtpConfig['smtp_encryption'] ?? '';
+        if ($encryption === 'tls') {
+            $config['tls'] = true;
+        } elseif ($encryption === 'ssl') {
+            $config['host'] = 'ssl://' . ($smtpConfig['smtp_host'] ?? '');
+            $config['port'] = (int)($smtpConfig['smtp_port'] ?? 465);
+            $config['tls'] = false;
+        }
+
+        if (TransportFactory::getConfig('sgi_dynamic')) {
+            TransportFactory::drop('sgi_dynamic');
+        }
+        TransportFactory::setConfig('sgi_dynamic', $config);
 
         $this->transportConfigured = true;
     }
