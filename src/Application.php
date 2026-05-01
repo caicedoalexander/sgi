@@ -203,7 +203,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         // === Petty cash / payment scheduling / advances ===
         $container->addShared(PettyCashDocumentService::class);
-        $container->addShared(PettyCashService::class);
+        $container->addShared(PettyCashService::class)
+            ->addArgument(InvoiceHistoryService::class);
         $container->addShared(PaymentSchedulingPipelineService::class);
         $container->addShared(PaymentSchedulingService::class)
             ->addArgument(InvoicePaymentService::class);

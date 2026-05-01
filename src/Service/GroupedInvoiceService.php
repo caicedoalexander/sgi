@@ -13,31 +13,20 @@ use Cake\ORM\TableRegistry;
  */
 class GroupedInvoiceService
 {
-    private string $documentType;
-    private string $fkField;
-    private string $recordTableName;
-    private string $fkLabel;
-    private HistoryServiceInterface $historyService;
-
     /**
      * @param string $documentType Invoice document_type value to filter by.
      * @param string $fkField FK column name on the invoices table.
      * @param string $recordTableName CakePHP table name for the parent record.
      * @param string $fkLabel Human-readable label for the FK (error messages).
-     * @param \App\Service\Interface\HistoryServiceInterface|null $historyService History service.
+     * @param \App\Service\Interface\HistoryServiceInterface $historyService History service.
      */
     public function __construct(
-        string $documentType,
-        string $fkField,
-        string $recordTableName,
-        string $fkLabel,
-        ?HistoryServiceInterface $historyService = null,
+        private readonly string $documentType,
+        private readonly string $fkField,
+        private readonly string $recordTableName,
+        private readonly string $fkLabel,
+        private readonly HistoryServiceInterface $historyService,
     ) {
-        $this->documentType = $documentType;
-        $this->fkField = $fkField;
-        $this->recordTableName = $recordTableName;
-        $this->fkLabel = $fkLabel;
-        $this->historyService = $historyService ?? new InvoiceHistoryService();
     }
 
     /**

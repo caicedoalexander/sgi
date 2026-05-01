@@ -9,19 +9,14 @@ use DateTimeInterface;
 
 class InvoicePaymentService
 {
-    private InvoiceHistoryService $historyService;
-    private AdvanceLegalizationService $advanceLegalizationService;
-
     /**
-     * @param \App\Service\InvoiceHistoryService|null $historyService Audit trail recorder.
-     * @param \App\Service\AdvanceLegalizationService|null $advanceLegalizationService Legalization initializer.
+     * @param \App\Service\InvoiceHistoryService $historyService Audit trail recorder.
+     * @param \App\Service\AdvanceLegalizationService $advanceLegalizationService Legalization initializer.
      */
     public function __construct(
-        ?InvoiceHistoryService $historyService = null,
-        ?AdvanceLegalizationService $advanceLegalizationService = null,
+        private readonly InvoiceHistoryService $historyService,
+        private readonly AdvanceLegalizationService $advanceLegalizationService,
     ) {
-        $this->historyService = $historyService ?? new InvoiceHistoryService();
-        $this->advanceLegalizationService = $advanceLegalizationService ?? new AdvanceLegalizationService();
     }
 
     /**

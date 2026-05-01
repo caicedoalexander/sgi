@@ -7,6 +7,7 @@ use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\PettyCashRecord;
+use App\Service\Interface\HistoryServiceInterface;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 
@@ -38,16 +39,17 @@ class PettyCashService
     private GroupedInvoiceService $grouped;
 
     /**
-     * @param \App\Service\InvoiceHistoryService|null $historyService History service.
+     * @param \App\Service\Interface\HistoryServiceInterface $historyService History service.
      */
-    public function __construct(?InvoiceHistoryService $historyService = null)
-    {
+    public function __construct(
+        HistoryServiceInterface $historyService,
+    ) {
         $this->grouped = new GroupedInvoiceService(
-            InvoiceConstants::DOCTYPE_CAJA_MENOR,
-            'petty_cash_record_id',
-            'PettyCashRecords',
-            'Caja Menor',
-            $historyService,
+            documentType: InvoiceConstants::DOCTYPE_CAJA_MENOR,
+            fkField: 'petty_cash_record_id',
+            recordTableName: 'PettyCashRecords',
+            fkLabel: 'Caja Menor',
+            historyService: $historyService,
         );
     }
 

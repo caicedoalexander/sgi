@@ -23,13 +23,11 @@ use Exception;
 class InvoiceApprovalService
 {
     private $invoiceApprovalsTable;
-    private $notificationService;
 
     public function __construct(
-        ?NotificationService $notificationService = null,
+        private readonly NotificationService $notificationService,
     ) {
         $this->invoiceApprovalsTable = TableRegistry::getTableLocator()->get('InvoiceApprovals');
-        $this->notificationService = $notificationService ?? new NotificationService();
     }
 
     /**
