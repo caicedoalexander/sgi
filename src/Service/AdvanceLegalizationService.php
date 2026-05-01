@@ -9,22 +9,24 @@ use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
 use App\Service\Trait\DocumentUploadTrait;
 use Cake\ORM\TableRegistry;
+use Closure;
 use Laminas\Diactoros\UploadedFile;
 
 class AdvanceLegalizationService
 {
     use DocumentUploadTrait;
 
-    private ?InvoicePipelineService $pipelineService;
-
-    public function __construct(?InvoicePipelineService $pipelineService = null)
-    {
-        $this->pipelineService = $pipelineService;
+    /**
+     * @param \Closure $pipelineFactory Factory that resolves InvoicePipelineService lazily (breaks cycle).
+     */
+    public function __construct(
+        private readonly Closure $pipelineFactory,
+    ) {
     }
 
     private function _getPipelineService(): InvoicePipelineService
     {
-        return $this->pipelineService ??= new InvoicePipelineService();
+        return ($this->pipelineFactory)();
     }
 
     /**

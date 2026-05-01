@@ -12,21 +12,18 @@ use Cake\ORM\TableRegistry;
 
 class InvoicePipelineService
 {
-    private HistoryServiceInterface $historyService;
-    private InvoicePaymentService $paymentService;
-    private InvoiceFieldAccessPolicy $fieldPolicy;
-    private AdvanceLegalizationService $advanceLegalizationService;
-
+    /**
+     * @param \App\Service\Interface\HistoryServiceInterface $historyService Audit trail recorder.
+     * @param \App\Service\InvoicePaymentService $paymentService Resolves payment balances.
+     * @param \App\Service\InvoiceFieldAccessPolicy $fieldPolicy Editable fields per role/state.
+     * @param \App\Service\AdvanceLegalizationService $advanceLegalizationService Legalization cross-link.
+     */
     public function __construct(
-        ?HistoryServiceInterface $historyService = null,
-        ?InvoicePaymentService $paymentService = null,
-        ?InvoiceFieldAccessPolicy $fieldPolicy = null,
-        ?AdvanceLegalizationService $advanceLegalizationService = null,
+        private readonly HistoryServiceInterface $historyService,
+        private readonly InvoicePaymentService $paymentService,
+        private readonly InvoiceFieldAccessPolicy $fieldPolicy,
+        private readonly AdvanceLegalizationService $advanceLegalizationService,
     ) {
-        $this->historyService = $historyService ?? new InvoiceHistoryService();
-        $this->paymentService = $paymentService ?? new InvoicePaymentService();
-        $this->fieldPolicy = $fieldPolicy ?? new InvoiceFieldAccessPolicy();
-        $this->advanceLegalizationService = $advanceLegalizationService ?? new AdvanceLegalizationService();
     }
 
     // Pipeline statuses in order (flujo normal de facturas).
