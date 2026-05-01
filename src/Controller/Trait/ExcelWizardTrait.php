@@ -53,7 +53,8 @@ trait ExcelWizardTrait
         $this->request->allowMethod(['get']);
         $this->viewBuilder()->setClassName('Json');
 
-        $fields = (new ExcelMappingService())->getExportableFields($this->_excelTable());
+        $fields = $this->getContainer()->get(ExcelMappingService::class)
+            ->getExportableFields($this->_excelTable());
 
         $this->set('fields', $fields);
         $this->viewBuilder()->setOption('serialize', ['fields']);
@@ -69,7 +70,7 @@ trait ExcelWizardTrait
         $this->request->allowMethod(['post']);
 
         $table = $this->_excelTable();
-        $mapping = new ExcelMappingService();
+        $mapping = $this->getContainer()->get(ExcelMappingService::class);
         $allDefinitions = $table->getExcelFields();
 
         $requestFields = $this->request->getData('fields');
@@ -117,7 +118,7 @@ trait ExcelWizardTrait
             });
         });
 
-        $excelService = new ExcelService();
+        $excelService = $this->getContainer()->get(ExcelService::class);
         $filePath = $excelService->exportWithLabels(
             $table->getExcelSheetTitle(),
             $query,
@@ -171,8 +172,8 @@ trait ExcelWizardTrait
         $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $tempName . '.xlsx';
         $file->moveTo($tempPath);
 
-        $importService = new ExcelImportService();
-        $mapping = new ExcelMappingService();
+        $importService = $this->getContainer()->get(ExcelImportService::class);
+        $mapping = $this->getContainer()->get(ExcelMappingService::class);
 
         try {
             $headers = $importService->readHeaders($tempPath);
@@ -241,7 +242,7 @@ trait ExcelWizardTrait
 
         try {
             $userId = (int)$this->request->getAttribute('identity')->getIdentifier();
-            $importService = new ExcelImportService();
+            $importService = $this->getContainer()->get(ExcelImportService::class);
             $result = $importService->processImport($tempPath, $table, $mappingData, $enabledHeaders, $userId);
 
             $this->set([
