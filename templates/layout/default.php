@@ -509,6 +509,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     $canView('users') ? 'users' : null,
                     $canView('roles') ? 'roles' : null,
                     $canView('system_settings') ? 'system_settings' : null,
+                    $canView('email_logs') ? 'email_logs' : null,
                 ]);
                 if (!empty($adminItems)) : ?>
                 <li class="nav-heading">Administración</li>
@@ -536,6 +537,15 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             '<i class="bi bi-gear me-2"></i>Configuración',
                             ['controller' => 'SystemSettings', 'action' => 'index'],
                             ['class' => $navLink('SystemSettings'), 'escape' => false],
+                        ) ?>
+                </li>
+                    <?php endif; ?>
+                    <?php if ($canView('email_logs')) : ?>
+                <li class="nav-item">
+                        <?= $this->Html->link(
+                            '<i class="bi bi-envelope-exclamation me-2"></i>Logs de correo',
+                            ['controller' => 'EmailLogs', 'action' => 'index'],
+                            ['class' => $navLink('EmailLogs'), 'escape' => false],
                         ) ?>
                 </li>
                     <?php endif; ?>
