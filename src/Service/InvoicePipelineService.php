@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
-use App\Constants\PaymentSchedulingConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\Invoice;
 use App\Service\Interface\HistoryServiceInterface;
@@ -17,12 +16,14 @@ class InvoicePipelineService
      * @param \App\Service\InvoicePaymentService $paymentService Resolves payment balances.
      * @param \App\Service\InvoiceFieldAccessPolicy $fieldPolicy Editable fields per role/state.
      * @param \App\Service\AdvanceLegalizationService $advanceLegalizationService Legalization cross-link.
+     * @param \App\Service\InvoiceLockPolicy $lockPolicy Edit/regression lock policy.
      */
     public function __construct(
         private readonly HistoryServiceInterface $historyService,
         private readonly InvoicePaymentService $paymentService,
         private readonly InvoiceFieldAccessPolicy $fieldPolicy,
         private readonly AdvanceLegalizationService $advanceLegalizationService,
+        private readonly InvoiceLockPolicy $lockPolicy,
     ) {
     }
 
@@ -225,46 +226,27 @@ class InvoicePipelineService
     }
 
     /**
-     * Returns true if the invoice has any payment linked to a payment
-     * scheduling already in "pagada" state. Used to lock the invoice from
-     * further edits (except for Admin).
+     * Delegates to InvoiceLockPolicy.
      */
     public function isLockedByPaidScheduling(int $invoiceId): bool
     {
-        $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
-
-        return $paymentsTable->find()
-            ->matching('PaymentSchedulings', function ($q) {
-                return $q->where([
-                    'PaymentSchedulings.pipeline_status' => PaymentSchedulingConstants::STATUS_PAGADA,
-                ]);
-            })
-            ->where(['InvoicePayments.invoice_id' => $invoiceId])
-            ->count() > 0;
+        return $this->lockPolicy->isLockedByPaidScheduling($invoiceId);
     }
 
     /**
-     * Returns true if the invoice is linked to a Petty Cash record.
+     * Delegates to InvoiceLockPolicy.
      */
     public function isLockedByPettyCash(object $invoice): bool
     {
-        return !empty($invoice->petty_cash_record_id ?? null);
+        return $this->lockPolicy->isLockedByPettyCash($invoice);
     }
 
     /**
-     * Returns a human-readable reason if the invoice is locked for editing,
-     * or null otherwise. Lock priority: petty cash → scheduling.
+     * Delegates to InvoiceLockPolicy.
      */
     public function getEditLockMessage(object $invoice): ?string
     {
-        if ($this->isLockedByPettyCash($invoice)) {
-            return 'Factura bloqueada: pertenece al registro de Caja Menor.';
-        }
-        if (!empty($invoice->id) && $this->isLockedByPaidScheduling((int)$invoice->id)) {
-            return 'Factura bloqueada: tiene pagos de una programación ya pagada.';
-        }
-
-        return null;
+        return $this->lockPolicy->getEditLockMessage($invoice);
     }
 
     /**
@@ -601,15 +583,13 @@ class InvoicePipelineService
      */
     public function getRegressionLockMessage(object $invoice): ?string
     {
-        if (($invoice->area_approval ?? null) === InvoiceConstants::APPROVAL_REJECTED) {
-            return "Factura rechazada. Use 'Reiniciar flujo' para reactivarla.";
+        $lockMsg = $this->lockPolicy->getRegressionLockMessage($invoice);
+        if ($lockMsg !== null) {
+            return $lockMsg;
         }
-        if ($this->isLockedByPettyCash($invoice)) {
-            return 'Factura bloqueada: pertenece a un registro de Caja Menor.';
-        }
-        if (!empty($invoice->id) && $this->isLockedByPaidScheduling((int)$invoice->id)) {
-            return 'Factura bloqueada: tiene pagos en una programación ya pagada.';
-        }
+
+        // Bloqueo cross-aggregate por Anticipo con legalización iniciada.
+        // Plan 4 lo deja aquí; Task 5 lo moverá a DocumentTypePolicy.
         if (
             ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO
             && !empty($invoice->id)

@@ -28,6 +28,7 @@ use App\Service\InvoiceDocumentService;
 use App\Service\InvoiceFieldAccessPolicy;
 use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
+use App\Service\InvoiceLockPolicy;
 use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
 use App\Service\LeaveDocumentService;
@@ -161,6 +162,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         // === Invoice domain (cycle: closure factory in AdvanceLegalization) ===
         $container->addShared(InvoiceHistoryService::class);
         $container->addShared(InvoiceFieldAccessPolicy::class);
+        $container->addShared(InvoiceLockPolicy::class);
         $container->addShared(InvoiceFilterService::class);
         $container->addShared(InvoiceDocumentService::class);
         $container->addShared(InvoicePaymentService::class)
@@ -178,6 +180,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoicePaymentService::class,
                 InvoiceFieldAccessPolicy::class,
                 AdvanceLegalizationService::class,
+                InvoiceLockPolicy::class,
             ]);
         $container->addShared(InvoiceApprovalService::class)
             ->addArgument(NotificationService::class);
