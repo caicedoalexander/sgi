@@ -51,8 +51,20 @@ return function (RouteBuilder $routes): void {
     $routes->setRouteClass(DashedRoute::class);
 
     $routes->scope('/', function (RouteBuilder $builder): void {
+        $builder->registerMiddleware(
+            'rateLimit',
+            new RateLimitMiddleware(10, 60),
+        );
+        $builder->registerMiddleware(
+            'rateLimitLogin',
+            new RateLimitMiddleware(5, 300),
+        );
+
         $builder->connect('/', ['controller' => 'Dashboard', 'action' => 'index']);
-        $builder->connect('/login', ['controller' => 'Users', 'action' => 'login']);
+        $builder->scope('/login', function (RouteBuilder $loginBuilder): void {
+            $loginBuilder->applyMiddleware('rateLimitLogin');
+            $loginBuilder->connect('', ['controller' => 'Users', 'action' => 'login']);
+        });
         $builder->connect('/logout', ['controller' => 'Users', 'action' => 'logout']);
         $builder->connect('/health', ['controller' => 'Health', 'action' => 'index']);
 
@@ -98,10 +110,6 @@ return function (RouteBuilder $routes): void {
         );
 
         // External approval tokens (rate-limited)
-        $builder->registerMiddleware(
-            'rateLimit',
-            new RateLimitMiddleware(10, 60),
-        );
         $builder->scope('/approve', function (RouteBuilder $approveBuilder): void {
             $approveBuilder->applyMiddleware('rateLimit');
             $approveBuilder->connect(
