@@ -43,7 +43,7 @@ Cuando empieces una sesión nueva (con o sin contexto previo):
 | 1 | Quick Critical Fixes | C1, C2, C3 | XS (2–4 días) | — | 🟢 Completado |
 | 2 | Email Audit Log + Reintento manual *(pivot, ver "Cambios al roadmap" 2026-05-01)* | W8 | S (4–6 días) | — | 🟢 Completado |
 | 3 | DI Container | W3, W5 | S (3–5 días) | — | 🟢 Completado |
-| 4 | Refactor del Pipeline | C5, W2, W9, W10 | M (1–2 sem) | Plan 3 (recomendado) | ⬜ Pendiente |
+| 4 | Refactor del Pipeline | C5, W2, W9, W10 | M (1–2 sem) | Plan 3 (recomendado) | 🟢 Completado |
 | 5 | Domain Events (romper ciclo) | C6 | S (~1 sem) | — *(originalmente Plan 2; ver "Cambios al roadmap")* | ⬜ Pendiente |
 | 6 | Resilience Hardening | W6, W13, W14, W7 | M (~1 sem) | — *(originalmente Plan 2; ver "Cambios al roadmap")* | ⬜ Pendiente |
 | 7 | Observability + Polish | W1, W4, W11, W12, W15, ADRs | M (~1 sem) | — | ⬜ Pendiente |
@@ -257,7 +257,7 @@ Plan 6 (sin deps; se replantea su alcance)   ──┼────┘
 | 1 | Quick Critical Fixes | 🟢 Completado | [spec](../superpowers/specs/2026-04-30-quick-critical-fixes-design.md) | [plan](../superpowers/plans/2026-04-30-quick-critical-fixes-plan.md) | [#3](https://github.com/caicedoalexander/sgi/pull/3) | 2026-04-30 |
 | 2 | Email Audit Log + Reintento manual (W8) | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-email-log-design.md) | [plan](../superpowers/plans/2026-05-01-email-log-plan.md) | — | 2026-05-01 |
 | 3 | DI Container | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-di-container-design.md) | [plan](../superpowers/plans/2026-05-01-di-container-plan.md) | — | 2026-05-01 |
-| 4 | Refactor Pipeline | ⬜ Pendiente | — | — | — | — |
+| 4 | Refactor Pipeline | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-pipeline-refactor-design.md) | [plan](../superpowers/plans/2026-05-01-pipeline-refactor-plan.md) | — | 2026-05-01 |
 | 5 | Domain Events | ⬜ Pendiente | — | — | — | — |
 | 6 | Resilience Hardening | ⬜ Pendiente | — | — | — | — |
 | 7 | Observability + Polish | ⬜ Pendiente | — | — | — | — |
