@@ -256,7 +256,7 @@ Plan 6 (sin deps; se replantea su alcance)   ──┼────┘
 |---|------|--------|------|------|----|---------|
 | 1 | Quick Critical Fixes | 🟢 Completado | [spec](../superpowers/specs/2026-04-30-quick-critical-fixes-design.md) | [plan](../superpowers/plans/2026-04-30-quick-critical-fixes-plan.md) | [#3](https://github.com/caicedoalexander/sgi/pull/3) | 2026-04-30 |
 | 2 | Email Audit Log + Reintento manual (W8) | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-email-log-design.md) | [plan](../superpowers/plans/2026-05-01-email-log-plan.md) | — | 2026-05-01 |
-| 3 | DI Container | ⬜ Pendiente | — | — | — | — |
+| 3 | DI Container | 🟡 En progreso | [spec](../superpowers/specs/2026-05-01-di-container-design.md) | — | — | — |
 | 4 | Refactor Pipeline | ⬜ Pendiente | — | — | — | — |
 | 5 | Domain Events | ⬜ Pendiente | — | — | — | — |
 | 6 | Resilience Hardening | ⬜ Pendiente | — | — | — | — |
