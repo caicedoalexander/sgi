@@ -25,7 +25,7 @@ class DashboardController extends AppController
         $userPermissions = $this->viewBuilder()->getVar('userPermissions') ?? [];
         $canView = fn(string $module): bool => !empty($userPermissions[$module]['can_view']);
 
-        $stats = new DashboardStatisticsService();
+        $stats = $this->getContainer()->get(DashboardStatisticsService::class);
 
         // --- Facturacion ---
         $invoiceStats = [];
