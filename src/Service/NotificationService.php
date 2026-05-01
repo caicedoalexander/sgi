@@ -5,7 +5,6 @@ namespace App\Service;
 
 use App\Constants\EmailLogConstants;
 use App\Model\Entity\Invoice;
-use App\Service\Adapter\CakeMailerAdapter;
 use App\Service\Interface\MailerInterface;
 use Cake\Log\Log;
 use Cake\ORM\TableRegistry;
@@ -13,20 +12,14 @@ use Exception;
 
 class NotificationService
 {
-    private SystemSettingsService $settings;
-    private MailerInterface $mailer;
     private CircuitBreaker $smtpCircuitBreaker;
-    private EmailLogService $emailLogService;
 
     public function __construct(
-        ?SystemSettingsService $settings = null,
-        ?MailerInterface $mailer = null,
-        ?EmailLogService $emailLogService = null,
+        private readonly SystemSettingsService $settings,
+        private readonly MailerInterface $mailer,
+        private readonly EmailLogService $emailLogService,
     ) {
-        $this->settings = $settings ?? new SystemSettingsService();
-        $this->mailer = $mailer ?? new CakeMailerAdapter($this->settings);
         $this->smtpCircuitBreaker = new CircuitBreaker('smtp', failureThreshold: 3, recoveryTimeoutSeconds: 300);
-        $this->emailLogService = $emailLogService ?? new EmailLogService();
     }
 
     /**

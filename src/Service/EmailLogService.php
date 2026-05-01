@@ -8,6 +8,7 @@ use App\Model\Entity\EmailLog;
 use App\Model\Table\EmailLogsTable;
 use Cake\I18n\DateTime;
 use Cake\ORM\TableRegistry;
+use Closure;
 use Exception;
 
 class EmailLogService
@@ -15,8 +16,9 @@ class EmailLogService
     private EmailLogsTable $emailLogsTable;
     private StructuredLogger $logger;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly Closure $notificationFactory,
+    ) {
         /** @var \App\Model\Table\EmailLogsTable $table */
         $table = TableRegistry::getTableLocator()->get('EmailLogs');
         $this->emailLogsTable = $table;
@@ -155,7 +157,7 @@ class EmailLogService
      *
      * Antes de operar sobre la fila, si la fila es pending huérfana, se sweepea.
      */
-    public function retry(int $id, ?NotificationService $notificationService = null): ServiceResult
+    public function retry(int $id): ServiceResult
     {
         $this->sweepOrphanPendings();
 
@@ -172,7 +174,7 @@ class EmailLogService
         $viewVars = $payload['viewVars'] ?? [];
         $layout = $payload['layout'] ?? 'default';
 
-        $notificationService = $notificationService ?? new NotificationService();
+        $notificationService = ($this->notificationFactory)();
 
         try {
             $notificationService->deliverRaw(
@@ -202,11 +204,9 @@ class EmailLogService
      * Si se desea procesar más filas, el admin puede pulsar el botón otra
      * vez; no hay paginación de procesamiento ni progress bar.
      */
-    public function retryAllFailed(?NotificationService $notificationService = null): array
+    public function retryAllFailed(): array
     {
         $this->sweepOrphanPendings();
-
-        $notificationService = $notificationService ?? new NotificationService();
 
         $failedLogs = $this->emailLogsTable->find('failed')
             ->orderBy(['EmailLogs.created' => 'ASC'])
@@ -216,7 +216,7 @@ class EmailLogService
         $stats = ['success' => 0, 'failed' => 0, 'skipped' => 0];
 
         foreach ($failedLogs as $log) {
-            $result = $this->retry((int)$log->id, $notificationService);
+            $result = $this->retry((int)$log->id);
             if ($result->success) {
                 $stats['success']++;
             } else {
