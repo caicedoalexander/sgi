@@ -129,6 +129,13 @@ class AppController extends Controller
             return;
         }
 
+        // EmailLogs::retry valida permisos internamente (delega a invoices.can_edit
+        // o employee_novelties.can_edit según entity_type). Saltarse el check de
+        // módulo aquí para no bloquear a usuarios no-admin desde el panel inline.
+        if ($controllerName === 'EmailLogs' && $action === 'retry') {
+            return;
+        }
+
         $module = $this->controllerModuleMap[$controllerName];
         $permAction = $this->_actionToPermission($action);
 

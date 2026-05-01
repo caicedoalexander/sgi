@@ -24,7 +24,7 @@ class SeedEmailLogsPermissions extends BaseMigration
             $roleId = $row['id'] ?? $row[0];
 
             $existing = $this->fetchRow(
-                "SELECT id FROM permissions WHERE role_id = $roleId AND module = 'email_logs'"
+                "SELECT id FROM permissions WHERE role_id = $roleId AND module = 'email_logs'",
             );
             if ($existing) {
                 continue;
@@ -32,7 +32,7 @@ class SeedEmailLogsPermissions extends BaseMigration
 
             $this->execute(
                 "INSERT INTO permissions (role_id, module, can_view, can_create, can_edit, can_delete, created, modified)
-                 VALUES ($roleId, 'email_logs', {$perms['view']}, {$perms['create']}, {$perms['edit']}, {$perms['delete']}, NOW(), NOW())"
+                 VALUES ($roleId, 'email_logs', {$perms['view']}, {$perms['create']}, {$perms['edit']}, {$perms['delete']}, NOW(), NOW())",
             );
         }
     }
