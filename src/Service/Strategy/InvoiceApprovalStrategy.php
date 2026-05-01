@@ -13,15 +13,14 @@ use Exception;
 
 class InvoiceApprovalStrategy implements ApprovalStrategyInterface
 {
-    private InvoiceHistoryService $historyService;
-
     /**
-     * @param \App\Service\InvoiceHistoryService|null $historyService History service.
+     * @param \App\Service\InvoiceHistoryService $historyService History service.
+     * @param \App\Service\InvoicePipelineService $pipeline Invoice pipeline service.
      */
     public function __construct(
-        ?InvoiceHistoryService $historyService = null,
+        private readonly InvoiceHistoryService $historyService,
+        private readonly InvoicePipelineService $pipeline,
     ) {
-        $this->historyService = $historyService ?? new InvoiceHistoryService();
     }
 
     /**
@@ -41,8 +40,7 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
         $parsedDate = !empty($approvalDate) ? new DateTime($approvalDate) : new DateTime();
 
         if ($action === 'approve') {
-            $pipeline = new InvoicePipelineService($this->historyService);
-            $result = $pipeline->saveAndAdvance(
+            $result = $this->pipeline->saveAndAdvance(
                 $invoice,
                 [
                     'area_approval' => InvoiceConstants::APPROVAL_APPROVED,

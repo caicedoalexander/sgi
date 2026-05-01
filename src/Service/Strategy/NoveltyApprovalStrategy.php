@@ -11,14 +11,12 @@ use Exception;
 
 class NoveltyApprovalStrategy implements ApprovalStrategyInterface
 {
-    private NoveltyObservationService $observationService;
-
     /**
-     * @param \App\Service\NoveltyObservationService|null $observationService Observation service.
+     * @param \App\Service\NoveltyObservationService $observationService Observation service.
      */
-    public function __construct(?NoveltyObservationService $observationService = null)
-    {
-        $this->observationService = $observationService ?? new NoveltyObservationService();
+    public function __construct(
+        private readonly NoveltyObservationService $observationService,
+    ) {
     }
 
     /**
