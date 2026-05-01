@@ -9,14 +9,6 @@ class RolesController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
-    private AuthorizationService $authService;
-
-    public function initialize(): void
-    {
-        parent::initialize();
-        $this->authService = new AuthorizationService();
-    }
-
     public function index()
     {
         $roles = $this->paginate($this->Roles);

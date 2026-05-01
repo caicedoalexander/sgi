@@ -7,7 +7,11 @@ use App\Constants\EmailLogConstants;
 use App\Model\Entity\EmailLog;
 use App\Service\AuthorizationService;
 use App\Service\EmailLogService;
+use App\Service\SidebarCounterService;
+use Cake\Controller\ComponentRegistry;
+use Cake\Event\EventManagerInterface;
 use Cake\Http\Response;
+use Cake\Http\ServerRequest;
 
 /**
  * Bitácora de envíos de correo (Plan 2 — W8). Solo Administrador.
@@ -16,15 +20,27 @@ use Cake\Http\Response;
  */
 class EmailLogsController extends AppController
 {
-    private EmailLogService $emailLogService;
-
     /**
-     * @inheritDoc
+     * @param \App\Service\EmailLogService $emailLogService Email log service.
+     * @param \App\Service\AuthorizationService $authService Authorization service.
+     * @param \App\Service\SidebarCounterService $counterService Sidebar counters.
+     * @param \Cake\Http\ServerRequest|null $request Request.
+     * @param \Cake\Http\Response|null $response Response.
+     * @param string|null $name Controller name.
+     * @param \Cake\Event\EventManagerInterface|null $eventManager Event manager.
+     * @param \Cake\Controller\ComponentRegistry|null $components Component registry.
      */
-    public function initialize(): void
-    {
-        parent::initialize();
-        $this->emailLogService = new EmailLogService();
+    public function __construct(
+        private readonly EmailLogService $emailLogService,
+        AuthorizationService $authService,
+        SidebarCounterService $counterService,
+        ?ServerRequest $request = null,
+        ?Response $response = null,
+        ?string $name = null,
+        ?EventManagerInterface $eventManager = null,
+        ?ComponentRegistry $components = null,
+    ) {
+        parent::__construct($authService, $counterService, $request, $response, $name, $eventManager, $components);
     }
 
     /**
@@ -144,15 +160,14 @@ class EmailLogsController extends AppController
         }
 
         // Resto: depende de la entidad.
-        $authorizationService = new AuthorizationService();
         $roleId = (int)($user->role_id ?? 0);
 
         if ($logRow->entity_type === EmailLogConstants::ENTITY_INVOICE) {
-            return $authorizationService->isAllowed($roleId, $roleName, 'invoices', 'edit');
+            return $this->authService->isAllowed($roleId, $roleName, 'invoices', 'edit');
         }
 
         if ($logRow->entity_type === EmailLogConstants::ENTITY_NOVELTY) {
-            return $authorizationService->isAllowed($roleId, $roleName, 'employee_novelties', 'edit');
+            return $this->authService->isAllowed($roleId, $roleName, 'employee_novelties', 'edit');
         }
 
         // Sin entity_type → solo admin (que ya retornó arriba).
