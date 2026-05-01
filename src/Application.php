@@ -47,7 +47,11 @@ use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PaymentSchedulingService;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
+use App\Service\Pipeline\DocumentTypePolicyFactory;
 use App\Service\Pipeline\InvoicePipelineStateRegistry;
+use App\Service\Pipeline\Policy\AnticipoDocumentTypePolicy;
+use App\Service\Pipeline\Policy\LegalizacionDocumentTypePolicy;
+use App\Service\Pipeline\Policy\StandardDocumentTypePolicy;
 use App\Service\Pipeline\State\AprobacionState;
 use App\Service\Pipeline\State\AutorizacionPagoState;
 use App\Service\Pipeline\State\ContabilidadState;
@@ -216,6 +220,18 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 AutorizacionPagoState::class,
                 PagadaState::class,
                 LegalizadaState::class,
+            ]);
+
+        // === Document type policies (Plan 4 W10) — registrados pero aún no consumidos ===
+        $container->addShared(StandardDocumentTypePolicy::class);
+        $container->addShared(AnticipoDocumentTypePolicy::class)
+            ->addArgument(AdvanceLegalizationService::class);
+        $container->addShared(LegalizacionDocumentTypePolicy::class);
+        $container->addShared(DocumentTypePolicyFactory::class)
+            ->addArguments([
+                StandardDocumentTypePolicy::class,
+                AnticipoDocumentTypePolicy::class,
+                LegalizacionDocumentTypePolicy::class,
             ]);
 
         // === Strategies ===
