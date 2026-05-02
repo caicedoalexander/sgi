@@ -6,14 +6,22 @@ namespace App\Service\Dashboard;
 use App\Constants\ContractTypeConstants;
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\NoveltyConstants;
+use App\Service\StructuredLogger;
+use Cake\Database\Exception\DatabaseException;
 use Cake\ORM\TableRegistry;
-use Exception;
 
 /**
  * Employee/RRHH-related dashboard statistics.
  */
 class EmployeeStatisticsService
 {
+    private StructuredLogger $logger;
+
+    public function __construct()
+    {
+        $this->logger = new StructuredLogger('Dashboard.EmployeeStats');
+    }
+
     /**
      * Get recent novelties for dashboard widget.
      *
@@ -33,7 +41,13 @@ class EmployeeStatisticsService
                 ->orderByDesc('created')
                 ->limit($limit)
                 ->toArray();
-        } catch (Exception $e) {
+        } catch (DatabaseException $e) {
+            // UI degradable
+            $this->logger->error('recent_novelties_query_failed', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
             return [];
         }
     }
@@ -73,7 +87,12 @@ class EmployeeStatisticsService
                     ]);
                 })
                 ->count();
-        } catch (Exception $e) {
+        } catch (DatabaseException $e) {
+            // UI degradable: contador queda en 0 si la query falla.
+            $this->logger->error('active_novelties_count_failed', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
             $stats['active_novelties'] = 0;
         }
 
@@ -127,7 +146,13 @@ class EmployeeStatisticsService
                 'new_hires' => $newHires,
                 'terminations' => $terminations,
             ];
-        } catch (Exception $e) {
+        } catch (DatabaseException $e) {
+            // UI degradable
+            $this->logger->error('extended_stats_query_failed', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
             return [];
         }
     }
@@ -169,7 +194,13 @@ class EmployeeStatisticsService
                 'donut_contract' => $contractTypes,
                 'monthly_novelties' => $monthlyNovelties,
             ];
-        } catch (Exception $e) {
+        } catch (DatabaseException $e) {
+            // UI degradable
+            $this->logger->error('chart_data_query_failed', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
             return [];
         }
     }
@@ -188,7 +219,14 @@ class EmployeeStatisticsService
             }
 
             return $query->count();
-        } catch (Exception $e) {
+        } catch (DatabaseException $e) {
+            // UI degradable: contador queda en 0 si la query falla.
+            $this->logger->error('count_query_failed', [
+                'method' => __METHOD__,
+                'table' => $tableName,
+                'exception' => $e->getMessage(),
+            ]);
+
             return 0;
         }
     }
