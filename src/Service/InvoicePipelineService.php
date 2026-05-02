@@ -5,10 +5,13 @@ namespace App\Service;
 
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
+use App\Event\InvoicePaidEvent;
 use App\Model\Entity\Invoice;
 use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
 use App\Service\Pipeline\InvoicePipelineStateRegistry;
+use Cake\Event\Event;
+use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -23,11 +26,11 @@ class InvoicePipelineService
         private readonly HistoryServiceInterface $historyService,
         private readonly InvoicePaymentService $paymentService,
         private readonly InvoiceFieldAccessPolicy $fieldPolicy,
-        private readonly AdvanceLegalizationService $advanceLegalizationService,
         private readonly InvoiceLockPolicy $lockPolicy,
         private readonly InvoiceTransitionValidator $transitionValidator,
         private readonly InvoicePipelineStateRegistry $states,
         private readonly DocumentTypePolicyFactory $docTypePolicies,
+        private readonly EventManagerInterface $events,
     ) {
     }
 
@@ -314,9 +317,15 @@ class InvoicePipelineService
                         }
                     }
 
-                    // Auto-init de legalización cuando la doctype policy lo dispara (Anticipo → pagada).
-                    if ($this->docTypePolicies->for($invoice->document_type ?? null)->triggersAutoLegalization($invoice->pipeline_status)) {
-                        $this->advanceLegalizationService->initialize($invoice, $userId);
+                    // Plan 5: publicar InvoicePaidEvent cuando el avance dejó la factura
+                    // en pagada. El subscriber LegalizationInitializerSubscriber filtra por
+                    // doctype y dispara la inicialización de legalización si corresponde.
+                    if ($invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA) {
+                        $this->events->dispatch(new Event(
+                            'Invoice.paid',
+                            null,
+                            ['payload' => new InvoicePaidEvent($invoice, $userId)],
+                        ));
                     }
                 }
 
@@ -470,53 +479,4 @@ class InvoicePipelineService
         return ['success' => true, 'error' => null, 'previousStatus' => $previousStatus];
     }
 
-    /**
-     * Promueve a `legalizada` todas las facturas tipo Legalización vinculadas al
-     * Anticipo dado que estén actualmente en `contabilidad`. Disparado por
-     * AdvanceLegalizationService cuando el Anticipo padre llega a STATUS_LEGALIZADA.
-     *
-     * Plan 5 (Domain Events) moverá este método a un servicio dedicado.
-     *
-     * @return int Cantidad de facturas promovidas.
-     */
-    public function legalizeLinkedInvoices(int $advanceInvoiceId, int $userId): int
-    {
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-
-        $linked = $invoicesTable->find()
-            ->where([
-                'advance_id' => $advanceInvoiceId,
-                'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
-                'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
-            ])
-            ->all();
-
-        if ($linked->isEmpty()) {
-            return 0;
-        }
-
-        $count = 0;
-        $invoicesTable->getConnection()->transactional(
-            function () use ($linked, $userId, &$count, $invoicesTable): bool {
-                foreach ($linked as $inv) {
-                    $from = $inv->pipeline_status;
-                    $inv->pipeline_status = InvoiceConstants::STATUS_LEGALIZADA;
-                    if (!$invoicesTable->save($inv)) {
-                        return false;
-                    }
-                    $this->historyService->recordStatusChange(
-                        $inv->id,
-                        $from,
-                        InvoiceConstants::STATUS_LEGALIZADA,
-                        $userId,
-                    );
-                    $count++;
-                }
-
-                return true;
-            },
-        );
-
-        return $count;
-    }
 }

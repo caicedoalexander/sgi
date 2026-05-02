@@ -10,7 +10,7 @@ use App\Service\Pipeline\InvoicePipelineState;
 /**
  * Reglas específicas de las Legalizaciones:
  *  - pipeline visual corto: aprobacion → contabilidad → legalizada,
- *  - en `contabilidad` no se avanza manualmente (lo dispara legalizeLinkedInvoices),
+ *  - en `contabilidad` no se avanza manualmente (lo dispara LinkedInvoiceLegalizer),
  *  - secciones de tesorería y autorización de pago no aplican.
  */
 final class LegalizacionDocumentTypePolicy implements DocumentTypePolicy

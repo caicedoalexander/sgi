@@ -201,11 +201,11 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoiceHistoryService::class,
                 InvoicePaymentService::class,
                 InvoiceFieldAccessPolicy::class,
-                AdvanceLegalizationService::class,
                 InvoiceLockPolicy::class,
                 InvoiceTransitionValidator::class,
                 InvoicePipelineStateRegistry::class,
                 DocumentTypePolicyFactory::class,
+                EventManagerInterface::class,
             ]);
         $container->addShared(InvoiceApprovalService::class)
             ->addArgument(NotificationService::class);
