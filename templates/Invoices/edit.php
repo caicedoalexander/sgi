@@ -318,6 +318,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         <?= $this->Form->end() ?>
         <?php endif; ?>
         <?= $this->Form->create($invoice) ?>
+        <?= $this->Form->hidden('expected_status', ['value' => $invoice->pipeline_status]) ?>
 
         <div class="sgi-form-sections">
 

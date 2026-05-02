@@ -280,7 +280,12 @@ $itemCount = count($record->payment_scheduling_items ?? []);
             <?= $this->Form->postLink(
                 '<i class="bi bi-arrow-right-circle me-1"></i>Avanzar a ' . h($pipelineLabels[$nextStatus] ?? ''),
                 ['action' => 'advance', $record->id],
-                ['confirm' => '¿Avanzar la programación?', 'class' => 'btn btn-primary', 'escape' => false]
+                [
+                    'confirm' => '¿Avanzar la programación?',
+                    'class' => 'btn btn-primary',
+                    'escape' => false,
+                    'data' => ['expected_status' => $record->pipeline_status],
+                ]
             ) ?>
             <?php endif; ?>
 

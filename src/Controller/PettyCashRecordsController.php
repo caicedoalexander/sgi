@@ -211,6 +211,10 @@ class PettyCashRecordsController extends AppController
         ]);
 
         if ($this->request->is(['patch', 'post', 'put'])) {
+            if (!$this->_ensureExpectedStatus($record->status)) {
+                return $this->redirect(['action' => 'edit', $id]);
+            }
+
             $data = $this->request->getData();
             $patchData = [];
 
@@ -359,6 +363,11 @@ class PettyCashRecordsController extends AppController
     {
         $this->request->allowMethod(['post']);
         $record = $this->PettyCashRecords->get($id);
+
+        if (!$this->_ensureExpectedStatus($record->status)) {
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
         $user = $this->_getCurrentUser();
 
         $result = $this->pettyCashService->advanceStatus($record, $user->id);

@@ -717,6 +717,11 @@ class EmployeeNoveltiesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $novelty = $this->EmployeeNovelties->get($id, contain: ['NoveltyTypes']);
+
+        if (!$this->_ensureExpectedStatus($novelty->pipeline_status)) {
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
         $user = $this->Authentication->getIdentity()->getOriginalData();
         $originalStatus = $novelty->pipeline_status;
 

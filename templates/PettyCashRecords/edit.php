@@ -186,6 +186,7 @@ $invoiceCount = count($record->invoices ?? []);
 
     <div class="card-body p-4" style="padding-top:0 !important;">
         <?= $this->Form->create($record, ['id' => 'pettyCashEditForm']) ?>
+        <?= $this->Form->hidden('expected_status', ['value' => $record->status]) ?>
 
         <div class="sgi-form-sections">
 

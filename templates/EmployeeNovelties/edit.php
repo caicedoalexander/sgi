@@ -374,6 +374,7 @@ $badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
         <?php if ($novelty->pipeline_status === NoveltyConstants::STATUS_RRHH && !$isRejected): ?>
         <div class="pt-3" style="border-top:1px solid var(--border-color);">
             <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id]]) ?>
+            <?= $this->Form->hidden('expected_status', ['value' => $novelty->pipeline_status]) ?>
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
                     <label class="form-label">Pasa a Nómina</label>
@@ -443,6 +444,7 @@ $badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
         <div class="d-flex gap-2 pt-3" style="border-top:1px solid var(--border-color);">
             <?php if (empty($transitionErrors)): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id], 'class' => 'd-inline']) ?>
+            <?= $this->Form->hidden('expected_status', ['value' => $novelty->pipeline_status]) ?>
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-arrow-right-circle me-1"></i>Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
             </button>

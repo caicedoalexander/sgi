@@ -184,6 +184,11 @@ class PaymentSchedulingsController extends AppController
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
+
+        if (!$this->_ensureExpectedStatus($record->pipeline_status)) {
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
         $roleName = $this->_getRoleName();
         $user = $this->_getCurrentUser();
 

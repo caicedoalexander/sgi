@@ -253,4 +253,29 @@ class AppController extends Controller
 
         return $this->redirect(['controller' => $controller, 'action' => $action, ...$args]);
     }
+
+    /**
+     * Optimistic concurrency guard para acciones que avanzan estado del pipeline.
+     *
+     * Compara el `expected_status` enviado por el form con el estado actual de la
+     * entidad. Si difieren (otra pestaña ya avanzó, o el usuario hizo back+resubmit),
+     * flash error y devuelve false; el caller hace `return $this->redirect(...)`.
+     *
+     * @param string $current Estado actual de la entidad.
+     * @param string $errorMessage Mensaje de flash si no coincide.
+     * @return bool true si el guard pasa, false si falló (caller debe redirect).
+     */
+    protected function _ensureExpectedStatus(
+        string $current,
+        string $errorMessage = 'El registro cambió de estado. Recargue la página antes de avanzar.',
+    ): bool {
+        $expected = (string)$this->request->getData('expected_status', '');
+        if ($expected !== '' && $expected !== $current) {
+            $this->Flash->error($errorMessage);
+
+            return false;
+        }
+
+        return true;
+    }
 }

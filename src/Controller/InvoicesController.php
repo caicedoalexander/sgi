@@ -302,6 +302,10 @@ class InvoicesController extends AppController
         $regressLockMessage = $canRegress ? $this->pipeline->getRegressionLockMessage($invoice) : null;
 
         if ($this->request->is(['patch', 'post', 'put'])) {
+            if (!$this->_ensureExpectedStatus($invoice->pipeline_status)) {
+                return $this->_redirectForInvoice($invoice, 'edit', $id);
+            }
+
             $user = $this->_getCurrentUser();
             $result = $this->pipeline->saveAndAdvance(
                 $invoice,
@@ -392,6 +396,10 @@ class InvoicesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->Invoices->get($id);
+
+        if (!$this->_ensureExpectedStatus($invoice->pipeline_status)) {
+            return $this->_redirectForInvoice($invoice, 'edit', $id);
+        }
 
         if ($this->_getRoleName() !== RoleConstants::ADMIN) {
             $lockMessage = $this->pipeline->getEditLockMessage($invoice);
