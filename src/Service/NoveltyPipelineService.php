@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\NoveltyConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\EmployeeNovelty;
 use Cake\ORM\TableRegistry;
@@ -71,34 +72,37 @@ class NoveltyPipelineService
         'rrhh_by', 'liquidation_doc_id',
     ];
 
-    // Fields editable by role in each status
-    private const EDITABLE_FIELDS = [
-        RoleConstants::AUXILIAR_PERSONAL => [
-            NoveltyConstants::STATUS_APROBACION => ['approver_id'],
-            NoveltyConstants::STATUS_RRHH => ['passes_payroll'],
-        ],
-        RoleConstants::ASISTENTE_PERSONAL => [
-            NoveltyConstants::STATUS_APROBACION => ['approver_id'],
-            NoveltyConstants::STATUS_RRHH => ['passes_payroll'],
-        ],
-        RoleConstants::CONTABILIDAD => [
-            NoveltyConstants::STATUS_CONTABILIDAD => ['liquidation_doc_id'],
-        ],
+    /**
+     * Campos editables por paso del pipeline (sin acoplamiento a rol).
+     */
+    private const FIELDS_BY_STEP = [
+        NoveltyConstants::STATUS_APROBACION => ['approver_id'],
+        NoveltyConstants::STATUS_RRHH => ['passes_payroll'],
+        NoveltyConstants::STATUS_CONTABILIDAD => ['liquidation_doc_id'],
     ];
 
-    // Sections visible per role (non-Admin roles have fixed sections)
-    private const VISIBLE_SECTIONS_BY_ROLE = [
-        RoleConstants::AUXILIAR_PERSONAL => [
-            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas',
-        ],
-        RoleConstants::ASISTENTE_PERSONAL => [
-            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas',
-        ],
-        RoleConstants::CONTABILIDAD => ['informacion', 'fechas', 'contabilidad'],
-        RoleConstants::CONTADOR => ['informacion', 'fechas', 'firmas'],
-        RoleConstants::COORDINADOR_ADMIN => ['informacion', 'fechas', 'firmas'],
-        RoleConstants::TESORERIA => ['informacion'],
+    /**
+     * Secciones del formulario asociadas a cada paso (unión cuando el rol opera varios).
+     */
+    private const SECTIONS_BY_STEP = [
+        NoveltyConstants::STATUS_APROBACION => ['informacion', 'fechas', 'motivo', 'aprobacion', 'firmas'],
+        NoveltyConstants::STATUS_RRHH => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas'],
+        NoveltyConstants::STATUS_CONTABILIDAD => ['informacion', 'fechas', 'contabilidad'],
+        NoveltyConstants::STATUS_REVISION_FIRMAS => ['informacion', 'fechas', 'firmas'],
+        NoveltyConstants::STATUS_GDP => ['informacion', 'fechas', 'firmas'],
+        NoveltyConstants::STATUS_TESORERIA => ['informacion'],
+        NoveltyConstants::STATUS_AUT_PAGO => ['informacion'],
     ];
+
+    private PipelineAuthorizationService $pipelineAuth;
+
+    /**
+     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth
+     */
+    public function __construct(?PipelineAuthorizationService $pipelineAuth = null)
+    {
+        $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+    }
 
     // All sections in pipeline order (for Admin)
     private const ALL_SECTIONS = [
@@ -583,43 +587,72 @@ class NoveltyPipelineService
     /**
      * Get editable fields for a role in a given status.
      */
-    public function getEditableFields(string $roleName, string $status): array
+    public function getEditableFields(int $roleId, string $roleName, string $status): array
     {
         if ($roleName === RoleConstants::ADMIN) {
             return self::ALL_FIELDS;
         }
 
-        return self::EDITABLE_FIELDS[$roleName][$status] ?? [];
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_NOVELTIES,
+                $status,
+            )
+        ) {
+            return [];
+        }
+
+        return self::FIELDS_BY_STEP[$status] ?? [];
     }
 
     /**
      * Get visible sections for a role in a given status.
      */
-    public function getVisibleSections(string $roleName, string $status): array
+    public function getVisibleSections(int $roleId, string $roleName, string $status): array
     {
         if ($roleName === RoleConstants::ADMIN) {
             return self::SECTIONS_BY_STATUS[$status] ?? self::ALL_SECTIONS;
         }
 
-        return self::VISIBLE_SECTIONS_BY_ROLE[$roleName] ?? [];
+        $operableSteps = $this->pipelineAuth->getOperableSteps(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_NOVELTIES,
+        );
+
+        $sections = [];
+        foreach ($operableSteps as $step) {
+            $sections = array_merge($sections, self::SECTIONS_BY_STEP[$step] ?? []);
+        }
+
+        return array_values(array_unique($sections));
     }
 
     /**
      * Check if a role can advance from a given status.
      */
-    public function canAdvanceFromStatus(string $roleName, string $status): bool
+    public function canAdvanceFromStatus(int $roleId, string $roleName, string $status): bool
     {
-        $visible = self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+        if ($roleName === RoleConstants::ADMIN) {
+            return true;
+        }
 
-        return in_array($status, $visible, true);
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_NOVELTIES,
+            $status,
+        );
     }
 
     /**
      * Filter entity data to only allowed fields for the role/status.
      */
-    public function filterEntityData(array $data, string $roleName, string $status): array
+    public function filterEntityData(array $data, int $roleId, string $roleName, string $status): array
     {
-        $allowed = $this->getEditableFields($roleName, $status);
+        $allowed = $this->getEditableFields($roleId, $roleName, $status);
 
         return array_intersect_key($data, array_flip($allowed));
     }

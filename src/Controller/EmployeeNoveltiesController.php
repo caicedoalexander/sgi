@@ -397,8 +397,8 @@ class EmployeeNoveltiesController extends AppController
 
         $user = $this->Authentication->getIdentity()->getOriginalData();
         $roleName = $this->_getUserRoleName($user);
-        $editableFields = $this->pipelineService->getEditableFields($roleName, $novelty->pipeline_status);
-        $visibleSections = $this->pipelineService->getVisibleSections($roleName, $novelty->pipeline_status);
+        $editableFields = $this->pipelineService->getEditableFields((int)$user->role_id, $roleName, $novelty->pipeline_status);
+        $visibleSections = $this->pipelineService->getVisibleSections((int)$user->role_id, $roleName, $novelty->pipeline_status);
 
         // Mark observations as read
         $this->observationService->markAsRead($user->id, noveltyId: $novelty->id);

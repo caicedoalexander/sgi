@@ -290,7 +290,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(NoveltyObservationService::class);
         $container->addShared(NoveltyDocumentService::class);
         $container->addShared(NoveltySignatureService::class);
-        $container->addShared(NoveltyPipelineService::class);
+        $container->addShared(NoveltyPipelineService::class)
+            ->addArgument(PipelineAuthorizationService::class);
         $container->addShared(LeaveDocumentService::class);
         $container->addShared(LeaveSignatureService::class);
         $container->addShared(LiquidationDocPaymentService::class);
