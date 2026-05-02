@@ -315,15 +315,19 @@ class InvoicesController extends AppController
                 $this->_getBaseUrl(),
             );
 
-            if ($result['saved']) {
-                if ($result['advanced']) {
-                    $nextLabel = InvoicePipelineService::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
+            if ($result->success) {
+                $advanced = (bool)($result->data['advanced'] ?? false);
+                $nextStatus = $result->data['nextStatus'] ?? null;
+                $advanceErrors = $result->data['advanceErrors'] ?? [];
+
+                if ($advanced) {
+                    $nextLabel = InvoicePipelineService::STATUS_LABELS[$nextStatus] ?? $nextStatus;
                     $this->Flash->success(sprintf('Factura guardada y avanzada a: %s', $nextLabel));
                 } else {
                     $this->Flash->success('La factura ha sido actualizada.');
                     $rules = $this->pipeline->getTransitionRules($currentStatus);
                     $filteredErrors = $this->pipeline->filterAdvanceErrorsForRole(
-                        $result['advanceErrors'],
+                        $advanceErrors,
                         $rules,
                         $roleName,
                         $currentStatus,
@@ -333,14 +337,12 @@ class InvoicesController extends AppController
                     }
                 }
 
-                $redirectAction = $result['advanced'] ? 'index' : 'edit';
-
-                return $redirectAction === 'edit'
-                    ? $this->_redirectForInvoice($invoice, 'edit', $id)
-                    : $this->_redirectForInvoice($invoice, 'index');
+                return $advanced
+                    ? $this->_redirectForInvoice($invoice, 'index')
+                    : $this->_redirectForInvoice($invoice, 'edit', $id);
             }
 
-            $this->Flash->error('No se pudo guardar la factura. Verifique los datos e intente de nuevo.');
+            $this->Flash->error($result->firstError() ?? 'No se pudo guardar la factura. Verifique los datos e intente de nuevo.');
         }
 
         $pipelineStatuses = $this->pipeline->getPipelineStatusesFor($invoice->document_type);
@@ -414,14 +416,15 @@ class InvoicesController extends AppController
 
         $result = $this->pipeline->advance($invoice, $this->_getRoleName(), $user->id);
 
-        if ($result['success']) {
-            $nextLabel = InvoicePipelineService::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
+        if ($result->success) {
+            $nextStatus = $result->data['nextStatus'] ?? null;
+            $nextLabel = InvoicePipelineService::STATUS_LABELS[$nextStatus] ?? $nextStatus;
             $this->Flash->success(sprintf('Factura avanzada a: %s', $nextLabel));
 
             return $this->_redirectForInvoice($invoice, 'index');
         }
 
-        $this->Flash->error($result['error']);
+        $this->Flash->error($result->firstError() ?? 'No se pudo avanzar la factura.');
 
         return $this->_redirectForInvoice($invoice, 'edit', $id);
     }
@@ -440,15 +443,15 @@ class InvoicesController extends AppController
             $reason,
         );
 
-        if ($result['success']) {
-            $prevLabel = InvoicePipelineService::STATUS_LABELS[$result['previousStatus']]
-                ?? $result['previousStatus'];
+        if ($result->success) {
+            $previousStatus = $result->data['previousStatus'] ?? null;
+            $prevLabel = InvoicePipelineService::STATUS_LABELS[$previousStatus] ?? $previousStatus;
             $this->Flash->success(sprintf('Factura regresada a: %s', $prevLabel));
 
             return $this->_redirectForInvoice($invoice, 'index');
         }
 
-        $this->Flash->error($result['error']);
+        $this->Flash->error($result->firstError() ?? 'No se pudo regresar la factura.');
 
         return $this->_redirectForInvoice($invoice, 'edit', $id);
     }

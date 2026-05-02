@@ -54,11 +54,11 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
                 $userId,
             );
 
-            if ($result['saved'] && !empty($observations)) {
+            if ($result->success && !empty($observations)) {
                 $this->_saveObservation($entityId, $observations, $userId);
             }
 
-            return $result['saved'];
+            return $result->success;
         }
 
         if ($action === 'reject') {

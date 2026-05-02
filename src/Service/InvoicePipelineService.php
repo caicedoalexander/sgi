@@ -232,11 +232,7 @@ class InvoicePipelineService
     /**
      * Save invoice fields, optionally advance the pipeline, and record history.
      *
-     * Returns:
-     *   - 'saved'          => bool
-     *   - 'advanced'       => bool
-     *   - 'nextStatus'     => ?string
-     *   - 'advanceErrors'  => string[]
+     * @return ServiceResult on success: data = ['advanced' => bool, 'nextStatus' => ?string, 'advanceErrors' => string[]]
      */
     public function saveAndAdvance(
         Invoice $invoice,
@@ -244,7 +240,7 @@ class InvoicePipelineService
         string $roleName,
         int $userId,
         ?string $baseUrl = null,
-    ): array {
+    ): ServiceResult {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
 
         $currentStatus = $invoice->pipeline_status;
@@ -333,68 +329,67 @@ class InvoicePipelineService
             },
         );
 
-        return [
-            'saved' => (bool)$saved,
-            'advanced' => (bool)$advanceNextStatus && (bool)$saved,
+        if (!(bool)$saved) {
+            return ServiceResult::fail(['No se pudo guardar la factura.']);
+        }
+
+        return ServiceResult::ok([
+            'advanced' => (bool)$advanceNextStatus,
             'nextStatus' => $advanceNextStatus,
             'advanceErrors' => $postAdvanceErrors,
-        ];
+        ]);
     }
 
     /**
      * Standalone advance (without field edits). Used by the legacy advanceStatus route.
      *
-     * @return array{success: bool, error: ?string, nextStatus: ?string}
+     * @return ServiceResult on success: data = ['nextStatus' => string]
      */
-    public function advance(Invoice $invoice, string $roleName, int $userId): array
+    public function advance(Invoice $invoice, string $roleName, int $userId): ServiceResult
     {
         $currentStatus = $invoice->pipeline_status;
 
         if (!$this->canAdvance($roleName, $currentStatus, $invoice->document_type ?? null)) {
-            return ['success' => false, 'error' => 'No tiene permisos para avanzar esta factura.', 'nextStatus' => null];
+            return ServiceResult::fail(['No tiene permisos para avanzar esta factura.']);
         }
 
         if ($this->isRejected($invoice)) {
-            return ['success' => false, 'error' => 'La factura fue rechazada. El flujo ha terminado.', 'nextStatus' => null];
+            return ServiceResult::fail(['La factura fue rechazada. El flujo ha terminado.']);
         }
 
         $errors = $this->validateTransitionRequirements($invoice, $currentStatus);
         if (!empty($errors)) {
-            return ['success' => false, 'error' => implode(' ', $errors), 'nextStatus' => null];
+            return ServiceResult::fail($errors);
         }
 
         $nextStatus = $this->getNextStatus($currentStatus, $invoice->document_type);
         if (!$nextStatus) {
-            return ['success' => false, 'error' => 'Esta factura ya está en el estado final.', 'nextStatus' => null];
+            return ServiceResult::fail(['Esta factura ya está en el estado final.']);
         }
 
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $invoice->pipeline_status = $nextStatus;
 
         if (!$invoicesTable->save($invoice)) {
-            return ['success' => false, 'error' => 'No se pudo avanzar el estado.', 'nextStatus' => null];
+            return ServiceResult::fail(['No se pudo avanzar el estado.']);
         }
 
         $this->historyService->recordStatusChange($invoice->id, $currentStatus, $nextStatus, $userId);
 
-        return [
-            'success' => true,
-            'error' => null,
-            'nextStatus' => $nextStatus,
-        ];
+        return ServiceResult::ok(['nextStatus' => $nextStatus]);
     }
 
     /**
      * Regress the invoice to its previous pipeline status (cold regression).
      *
-     * @return array{success: bool, error: ?string, previousStatus: ?string}
+     * @return ServiceResult on success: data = ['previousStatus' => string]
      */
     public function regress(
         Invoice $invoice,
         string $roleName,
         int $userId,
         string $reason,
-    ): array {
+    ): ServiceResult {
         $reason = trim($reason);
         $currentStatus = $invoice->pipeline_status;
 
@@ -404,27 +399,19 @@ class InvoicePipelineService
                 ? 'Esta factura ya está en el primer paso del flujo.'
                 : 'No tiene permisos para regresar esta factura.';
 
-            return ['success' => false, 'error' => $error, 'previousStatus' => null];
+            return ServiceResult::fail([$error]);
         }
 
         $lock = $this->getRegressionLockMessage($invoice);
         if ($lock !== null) {
-            return ['success' => false, 'error' => $lock, 'previousStatus' => null];
+            return ServiceResult::fail([$lock]);
         }
 
         if (mb_strlen($reason) < 10) {
-            return [
-                'success' => false,
-                'error' => 'El motivo es obligatorio (mínimo 10 caracteres).',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail(['El motivo es obligatorio (mínimo 10 caracteres).']);
         }
         if (mb_strlen($reason) > 500) {
-            return [
-                'success' => false,
-                'error' => 'El motivo no puede superar 500 caracteres.',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail(['El motivo no puede superar 500 caracteres.']);
         }
 
         $previousStatus = $this->getPreviousStatus($currentStatus);
@@ -469,14 +456,10 @@ class InvoicePipelineService
         );
 
         if (!$ok) {
-            return [
-                'success' => false,
-                'error' => 'No se pudo regresar la factura. Intente de nuevo.',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail(['No se pudo regresar la factura. Intente de nuevo.']);
         }
 
-        return ['success' => true, 'error' => null, 'previousStatus' => $previousStatus];
+        return ServiceResult::ok(['previousStatus' => $previousStatus]);
     }
 
 }

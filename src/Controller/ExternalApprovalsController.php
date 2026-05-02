@@ -14,6 +14,7 @@ use Cake\Event\EventInterface;
 use Cake\Event\EventManagerInterface;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
+use Cake\Log\Log;
 use Cake\ORM\TableRegistry;
 
 class ExternalApprovalsController extends AppController
@@ -177,7 +178,13 @@ class ExternalApprovalsController extends AppController
 
                 if ($invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION) {
                     $identity = $this->Authentication->getIdentity();
-                    $this->pipelineService->advance($invoice, 'Admin', (int)$identity->getIdentifier());
+                    $advanceResult = $this->pipelineService->advance($invoice, 'Admin', (int)$identity->getIdentifier());
+                    if (!$advanceResult->success) {
+                        Log::warning('External approval: auto-advance falló', [
+                            'invoice_id' => $invoice->id,
+                            'errors' => $advanceResult->errors,
+                        ]);
+                    }
                 }
             }
 
