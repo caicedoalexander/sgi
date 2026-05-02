@@ -332,6 +332,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoicePipelineService::class,
                 NoveltyPipelineService::class,
                 PettyCashService::class,
+                RefundService::class,
             ]);
 
         // === Plan 6: Health checks ===

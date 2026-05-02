@@ -199,6 +199,45 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     </div>
                 </li>
                     <?php endif; ?>
+                    <?php if ($canView('refunds')) : ?>
+                        <?php $refundsSubActive = $currentController === 'Refunds'; ?>
+                <li class="nav-item sidebar-has-submenu">
+                    <div class="sidebar-collapsible-header">
+                        <?= $this->Html->link(
+                            '<i class="bi bi-arrow-counterclockwise me-2"></i><span class="flex-grow-1">Reintegros</span>',
+                            ['controller' => 'Refunds', 'action' => 'all'],
+                            ['class' => $navLink('Refunds', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false],
+                        ) ?>
+                        <button class="sidebar-chevron-btn"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#refunds-submenu"
+                                aria-expanded="<?= $refundsSubActive ? 'true' : 'false' ?>"
+                                aria-controls="refunds-submenu">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="collapse<?= $refundsSubActive ? ' show' : '' ?>" id="refunds-submenu">
+                        <ul class="sidebar-submenu">
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-arrow-counterclockwise me-2"></i>Mis Registros' .
+                                    (($refundsMineCount ?? 0) > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . (int)$refundsMineCount . '</span>' : ''),
+                                    ['controller' => 'Refunds', 'action' => 'index'],
+                                    ['class' => $navLink('Refunds', 'index') . ' d-flex align-items-center', 'escape' => false],
+                                ) ?>
+                            </li>
+                            <li class="nav-item">
+                                <?= $this->Html->link(
+                                    '<i class="bi bi-hourglass-split me-2"></i>Pendientes' .
+                                    (($refundsCount ?? 0) > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . (int)$refundsCount . '</span>' : ''),
+                                    ['controller' => 'Refunds', 'action' => 'pending'],
+                                    ['class' => $navLink('Refunds', 'pending') . ' d-flex align-items-center', 'escape' => false],
+                                ) ?>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                    <?php endif; ?>
                     <?php if ($canView('advances')) : ?>
                         <?php $advancesSubActive = $currentController === 'Advances'; ?>
                 <li class="nav-item sidebar-has-submenu">

@@ -7,6 +7,7 @@ use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\NoveltyConstants;
 use App\Constants\PettyCashConstants;
+use App\Constants\RefundConstants;
 use Cake\Cache\Cache;
 use Cake\Database\Exception\DatabaseException;
 use Cake\ORM\TableRegistry;
@@ -19,11 +20,13 @@ class SidebarCounterService
      * @param \App\Service\InvoicePipelineService $invoicePipeline Invoice pipeline.
      * @param \App\Service\NoveltyPipelineService $noveltyPipeline Novelty pipeline.
      * @param \App\Service\PettyCashService $pettyCashService Petty cash service.
+     * @param \App\Service\RefundService $refundService Refund service.
      */
     public function __construct(
         private readonly InvoicePipelineService $invoicePipeline,
         private readonly NoveltyPipelineService $noveltyPipeline,
         private readonly PettyCashService $pettyCashService,
+        private readonly RefundService $refundService,
     ) {
         $this->logger = new StructuredLogger('Sidebar');
     }
@@ -76,6 +79,11 @@ class SidebarCounterService
                 ['status !=' => PettyCashConstants::STATUS_PAGADO],
             ),
             'pettyCashMineCount' => $this->getPettyCashMineCount($roleName),
+            'refundsCount' => $this->getCount(
+                'Refunds',
+                ['status !=' => RefundConstants::STATUS_PAGADO],
+            ),
+            'refundsMineCount' => $this->getRefundsMineCount($roleName),
             'advancesMineCount' => $this->getAdvancesMineCount($roleName),
             'noveltiesCount' => $this->getNoveltiesCount($roleName),
             'rejectedNoveltiesCount' => $this->getCount(
@@ -104,6 +112,8 @@ class SidebarCounterService
             'overdueInvoicesCount' => 0,
             'pettyCashCount' => 0,
             'pettyCashMineCount' => 0,
+            'refundsCount' => 0,
+            'refundsMineCount' => 0,
             'advancesMineCount' => 0,
             'noveltiesCount' => 0,
             'rejectedNoveltiesCount' => 0,
@@ -225,6 +235,21 @@ class SidebarCounterService
         }
 
         return TableRegistry::getTableLocator()->get('PettyCashRecords')->find()
+            ->where(['status IN' => $visibleStatuses])
+            ->count();
+    }
+
+    /**
+     * Count refund records visible to the current role.
+     */
+    private function getRefundsMineCount(string $roleName): int
+    {
+        $visibleStatuses = $this->refundService->getVisibleStatuses($roleName);
+        if (empty($visibleStatuses)) {
+            return 0;
+        }
+
+        return TableRegistry::getTableLocator()->get('Refunds')->find()
             ->where(['status IN' => $visibleStatuses])
             ->count();
     }
