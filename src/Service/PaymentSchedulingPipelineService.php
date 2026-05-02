@@ -4,12 +4,23 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\PaymentSchedulingConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\PaymentScheduling;
 use Cake\ORM\TableRegistry;
 
 class PaymentSchedulingPipelineService
 {
+    private PipelineAuthorizationService $pipelineAuth;
+
+    /**
+     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth
+     */
+    public function __construct(?PipelineAuthorizationService $pipelineAuth = null)
+    {
+        $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+    }
+
     public const STATUSES = PaymentSchedulingConstants::PIPELINE_STATUSES;
     public const STATUS_LABELS = PaymentSchedulingConstants::STATUS_LABELS;
 
@@ -54,41 +65,40 @@ class PaymentSchedulingPipelineService
         return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
     }
 
-    public function canAdvance(string $roleName, string $currentStatus): bool
+    public function canAdvance(int $roleId, string $roleName, string $currentStatus): bool
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return self::TRANSITIONS[$currentStatus] !== null;
-        }
-
-        $visible = $this->getVisibleStatuses($roleName);
-        if (!in_array($currentStatus, $visible)) {
+        if ((self::TRANSITIONS[$currentStatus] ?? null) === null) {
             return false;
         }
 
-        // Tesorería puede avanzar borrador y tesoreria
-        if ($roleName === RoleConstants::TESORERIA) {
-            return in_array($currentStatus, [
-                PaymentSchedulingConstants::STATUS_BORRADOR,
-                PaymentSchedulingConstants::STATUS_TESORERIA,
-            ]);
+        if ($roleName === RoleConstants::ADMIN) {
+            return true;
         }
 
-        // Contador puede avanzar aut_pago
-        if ($roleName === RoleConstants::CONTADOR) {
-            return $currentStatus === PaymentSchedulingConstants::STATUS_AUT_PAGO;
-        }
-
-        return false;
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+            $currentStatus,
+        );
     }
 
-    public function canReject(string $roleName, string $currentStatus): bool
+    public function canReject(int $roleId, string $roleName, string $currentStatus): bool
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return $currentStatus === PaymentSchedulingConstants::STATUS_AUT_PAGO;
+        if ($currentStatus !== PaymentSchedulingConstants::STATUS_AUT_PAGO) {
+            return false;
         }
 
-        return $roleName === RoleConstants::CONTADOR
-            && $currentStatus === PaymentSchedulingConstants::STATUS_AUT_PAGO;
+        if ($roleName === RoleConstants::ADMIN) {
+            return true;
+        }
+
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+            $currentStatus,
+        );
     }
 
     public function getNextStatus(string $currentStatus): ?string
@@ -124,7 +134,7 @@ class PaymentSchedulingPipelineService
     /**
      * Returns true if the role can regress the scheduling from the current status.
      */
-    public function canRegress(string $roleName, string $currentStatus): bool
+    public function canRegress(int $roleId, string $roleName, string $currentStatus): bool
     {
         if ($this->getPreviousStatus($currentStatus) === null) {
             return false;
@@ -134,21 +144,12 @@ class PaymentSchedulingPipelineService
             return true;
         }
 
-        if (
-            $roleName === RoleConstants::TESORERIA
-            && $currentStatus === PaymentSchedulingConstants::STATUS_TESORERIA
-        ) {
-            return true;
-        }
-
-        if (
-            $roleName === RoleConstants::CONTADOR
-            && $currentStatus === PaymentSchedulingConstants::STATUS_AUT_PAGO
-        ) {
-            return true;
-        }
-
-        return false;
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+            $currentStatus,
+        );
     }
 
     /**
@@ -166,6 +167,7 @@ class PaymentSchedulingPipelineService
      */
     public function regress(
         PaymentScheduling $scheduling,
+        int $roleId,
         string $roleName,
         int $userId,
         string $reason,
@@ -173,7 +175,7 @@ class PaymentSchedulingPipelineService
         $reason = trim($reason);
         $currentStatus = $scheduling->pipeline_status;
 
-        if (!$this->canRegress($roleName, $currentStatus)) {
+        if (!$this->canRegress($roleId, $roleName, $currentStatus)) {
             $previous = $this->getPreviousStatus($currentStatus);
             $error = $previous === null
                 ? 'Esta programación ya está en el primer paso del flujo.'
