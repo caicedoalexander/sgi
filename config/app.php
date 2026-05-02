@@ -133,6 +133,13 @@ return [
             'duration' => '+1 years',
             'url' => env('CACHE_CAKEMODEL_URL', null),
         ],
+
+        'sidebar' => [
+            'className' => FileEngine::class,
+            'duration' => '+30 seconds',
+            'path' => CACHE,
+            'prefix' => 'sgi_sidebar_',
+        ],
     ],
 
     /*
