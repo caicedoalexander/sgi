@@ -46,7 +46,7 @@ Cuando empieces una sesión nueva (con o sin contexto previo):
 | 4 | Refactor del Pipeline | C5, W2, W9, W10 | M (1–2 sem) | Plan 3 (recomendado) | 🟢 Completado |
 | 5 | Domain Events (romper ciclo) | C6 | S (~1 sem) | — *(originalmente Plan 2; ver "Cambios al roadmap")* | 🟢 Completado |
 | 6 | Resilience Hardening | W6, W13, W14, W7 | M (~1 sem) | — *(originalmente Plan 2; ver "Cambios al roadmap")* | 🟢 Completado |
-| 7 | Observability + Polish | W1, W4, W11, W12, W15, ADRs | M (~1 sem) | — | ⬜ Pendiente |
+| 7 | Observability + Polish | W1, W4, W11, W12, W15, ADRs | M (~1 sem) | — | 🟢 Completado |
 
 **Cobertura:** los 6 críticos (C1–C6) y los 15 warnings (W1–W15) sin items huérfanos. C4 quedó cubierto por el Plan 1 (transacción atómica en `authorizePayment`).
 
@@ -260,7 +260,7 @@ Plan 6 (sin deps; se replantea su alcance)   ──┼────┘
 | 4 | Refactor Pipeline | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-pipeline-refactor-design.md) | [plan](../superpowers/plans/2026-05-01-pipeline-refactor-plan.md) | — | 2026-05-01 |
 | 5 | Domain Events | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-domain-events-design.md) | [plan](../superpowers/plans/2026-05-01-domain-events-plan.md) | — | 2026-05-01 |
 | 6 | Resilience Hardening | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-resilience-hardening-design.md) | [plan](../superpowers/plans/2026-05-01-resilience-hardening-plan.md) | — | 2026-05-01 |
-| 7 | Observability + Polish | ⬜ Pendiente | — | — | — | — |
+| 7 | Observability + Polish | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-observability-polish-design.md) | [plan](../superpowers/plans/2026-05-01-observability-polish-plan.md) | — | 2026-05-01 |
 
 **Leyenda:**
 - ⬜ Pendiente — aún no se ha empezado
@@ -321,6 +321,33 @@ Trade-off: cero infraestructura nueva en el servidor a cambio de recovery humano
 - **Plan 6 — W14 (Bulkhead).** La idea original de usar un worker async como bulkhead para webhooks/emails se descarta. Plan 6 abordará W14 con **timeouts agresivos** en `NotificationService` y `WebhookService` (HTTP client timeout, SMTP socket timeout) para que peticiones lentas a integraciones externas no bloqueen al usuario más de N segundos. **A definir el N específico en el spec del Plan 6.**
 
 - **Plan 7 — W7 (`/health`).** El "backlog del outbox" como métrica deja de existir. En su lugar `/health` puede reportar `email_logs_failed_count` (correos en `failed` pendientes de reintento manual) como indicador de salud del SMTP/notificaciones. **Ajustar el alcance de Plan 7 cuando se inicie su brainstorming.**
+
+### 2026-05-01 — Plan 7: ADR del outbox sustituido + set ampliado a 8 ADRs
+
+Spec resultante: [`docs/superpowers/specs/2026-05-01-observability-polish-design.md`](../superpowers/specs/2026-05-01-observability-polish-design.md)
+
+El roadmap original incluía un ADR de "Outbox como columna vertebral de integraciones;
+Saga implícita". El outbox fue descartado en el pivot del Plan 2 (2026-05-01), así
+que ese ADR no tenía sujeto. Sustituido por **ADR 0003 — Email log síncrono con
+reintento manual; descartar outbox**, que documenta justamente el pivot.
+
+Adicionalmente, el set de ADRs creció de 4 (los del roadmap original) a 8 incluyendo
+las decisiones tácticas/arquitectónicas de los Planes 3–6:
+
+- 0001 — Layered Architecture, no DDD
+- 0002 — ServiceResult en lugar de excepciones
+- 0003 — Email log síncrono (sustituye al "Outbox como columna vertebral")
+- 0004 — Sidebar counters con cache 30s
+- 0005 — DI Container centralizado (Plan 3)
+- 0006 — State pattern para invoice pipeline (Plan 4)
+- 0007 — Domain events vía EventManager síncrono (Plan 5)
+- 0008 — Optimistic concurrency + idempotency keys (Plan 6)
+
+Razón: dejar las decisiones estratégicas en `docs/adr/` evita que un futuro auditor
+o dev nuevo tenga que reconstruir el "por qué" de cada elección desde specs/commits.
+
+**Cierre del roadmap.** Con el merge del Plan 7, los 6 críticos (C1–C6) y los
+15 warnings (W1–W15) de la auditoría 2026-04-30 quedan resueltos.
 
 ---
 

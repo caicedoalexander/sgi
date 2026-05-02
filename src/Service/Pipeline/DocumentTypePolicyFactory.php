@@ -15,7 +15,9 @@ use App\Service\Pipeline\Policy\StandardDocumentTypePolicy;
  */
 final class DocumentTypePolicyFactory
 {
-    /** @var array<string, DocumentTypePolicy> */
+    /**
+     * @var array<string, \App\Service\Pipeline\DocumentTypePolicy>
+     */
     private array $byType;
 
     public function __construct(

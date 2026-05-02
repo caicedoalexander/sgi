@@ -162,7 +162,7 @@ class PaymentSchedulingPipelineService
     /**
      * Cold regression — only changes pipeline_status, doesn't touch items or payments.
      *
-     * @return ServiceResult on success: data = ['previousStatus' => string]
+     * @return \App\Service\ServiceResult on success: data = ['previousStatus' => string]
      */
     public function regress(
         PaymentScheduling $scheduling,

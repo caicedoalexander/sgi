@@ -37,7 +37,7 @@ class InvoiceApprovalService
      * @param array $approverUserIds Array of user IDs to assign as approvers
      * @param string $baseUrl Base URL for approval links
      * @param int $createdByUserId The user who assigned the approvers
-     * @return ServiceResult on success: data = ['approvals' => InvoiceApproval[]]
+     * @return \App\Service\ServiceResult on success: data = ['approvals' => InvoiceApproval[]]
      */
     public function assignApprovers(Invoice $invoice, array $approverUserIds, string $baseUrl, int $createdByUserId): ServiceResult
     {
@@ -143,7 +143,7 @@ class InvoiceApprovalService
     /**
      * Process an approver's response (approve or reject).
      *
-     * @return ServiceResult on success: data = ['allApproved' => bool, 'rejected' => bool, 'invoice_id' => int]
+     * @return \App\Service\ServiceResult on success: data = ['allApproved' => bool, 'rejected' => bool, 'invoice_id' => int]
      */
     public function processResponse(
         string $token,
@@ -295,7 +295,7 @@ class InvoiceApprovalService
      * Sends approval links without touching existing active approvals.
      * Fails if there are pending approvals already (caller should use modifyApprovers).
      *
-     * @return ServiceResult on success: data = ['approvals' => InvoiceApproval[]]
+     * @return \App\Service\ServiceResult on success: data = ['approvals' => InvoiceApproval[]]
      */
     public function sendApprovalLinks(Invoice $invoice, array $approverUserIds, string $baseUrl, int $createdByUserId): ServiceResult
     {
@@ -313,7 +313,7 @@ class InvoiceApprovalService
      * Replaces the current approver set: invalidates pending tokens, records the
      * reason in invoice history, and creates new approvals.
      *
-     * @return ServiceResult on success: data = ['approvals' => InvoiceApproval[]]
+     * @return \App\Service\ServiceResult on success: data = ['approvals' => InvoiceApproval[]]
      */
     public function modifyApprovers(
         Invoice $invoice,

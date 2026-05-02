@@ -48,7 +48,7 @@ class WebhookService
     {
         $headers['Content-Type'] = 'application/json';
 
-        return $this->dispatch(fn () => $this->client->post(
+        return $this->dispatch(fn() => $this->client->post(
             $url,
             (string)json_encode($data),
             ['headers' => $headers, 'timeout' => self::TIMEOUT_JSON_SECONDS],
@@ -74,7 +74,7 @@ class WebhookService
             ];
         }
 
-        return $this->dispatch(fn () => $this->client->post(
+        return $this->dispatch(fn() => $this->client->post(
             $url,
             array_merge($extraData, [$fieldName => fopen($filePath, 'r')]),
             [
@@ -90,7 +90,7 @@ class WebhookService
      */
     public function post(string $url, mixed $body, array $headers = []): array
     {
-        return $this->dispatch(fn () => $this->client->post(
+        return $this->dispatch(fn() => $this->client->post(
             $url,
             (string)$body,
             ['headers' => $headers, 'timeout' => self::TIMEOUT_JSON_SECONDS],
@@ -105,8 +105,8 @@ class WebhookService
     private function dispatch(callable $request): array
     {
         return $this->circuitBreaker->call(
-            fn () => $this->retryer->run(function () use ($request) {
-                /** @var Response $response */
+            fn() => $this->retryer->run(function () use ($request) {
+                /** @var \Cake\Http\Client\Response $response */
                 $response = $request();
 
                 if ($response->getStatusCode() >= 400 && $response->getStatusCode() < 500) {
@@ -119,7 +119,7 @@ class WebhookService
 
                 return $this->shape($response);
             }),
-            fn () => [
+            fn() => [
                 'success' => false,
                 'statusCode' => 0,
                 'body' => '',

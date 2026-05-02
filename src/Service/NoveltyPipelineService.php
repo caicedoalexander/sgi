@@ -208,7 +208,7 @@ class NoveltyPipelineService
      * Advance a single novelty individually.
      * Blocked if novelty has a liquidation_doc_id.
      *
-     * @return ServiceResult on success: data = ['nextStatus' => string]
+     * @return \App\Service\ServiceResult on success: data = ['nextStatus' => string]
      */
     public function advance(EmployeeNovelty $novelty, int $userId): ServiceResult
     {
@@ -250,7 +250,7 @@ class NoveltyPipelineService
     /**
      * Advance all novelties in a liquidation document group.
      *
-     * @return ServiceResult on success: data = ['nextStatus' => string]
+     * @return \App\Service\ServiceResult on success: data = ['nextStatus' => string]
      */
     public function advanceGroup(object $liquidationDoc, int $userId): ServiceResult
     {

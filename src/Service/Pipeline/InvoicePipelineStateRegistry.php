@@ -17,7 +17,9 @@ use InvalidArgumentException;
  */
 final class InvoicePipelineStateRegistry
 {
-    /** @var array<string, InvoicePipelineState> */
+    /**
+     * @var array<string, \App\Service\Pipeline\InvoicePipelineState>
+     */
     private array $states;
 
     public function __construct(
@@ -42,7 +44,7 @@ final class InvoicePipelineStateRegistry
         return $this->states[$name];
     }
 
-    /** @return array<string, InvoicePipelineState> */
+    /** @return array<string, \App\Service\Pipeline\InvoicePipelineState> */
     public function all(): array
     {
         return $this->states;

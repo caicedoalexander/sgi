@@ -232,7 +232,7 @@ class InvoicePipelineService
     /**
      * Save invoice fields, optionally advance the pipeline, and record history.
      *
-     * @return ServiceResult on success: data = ['advanced' => bool, 'nextStatus' => ?string, 'advanceErrors' => string[]]
+     * @return \App\Service\ServiceResult on success: data = ['advanced' => bool, 'nextStatus' => ?string, 'advanceErrors' => string[]]
      */
     public function saveAndAdvance(
         Invoice $invoice,
@@ -343,7 +343,7 @@ class InvoicePipelineService
     /**
      * Standalone advance (without field edits). Used by the legacy advanceStatus route.
      *
-     * @return ServiceResult on success: data = ['nextStatus' => string]
+     * @return \App\Service\ServiceResult on success: data = ['nextStatus' => string]
      */
     public function advance(Invoice $invoice, string $roleName, int $userId): ServiceResult
     {
@@ -382,7 +382,7 @@ class InvoicePipelineService
     /**
      * Regress the invoice to its previous pipeline status (cold regression).
      *
-     * @return ServiceResult on success: data = ['previousStatus' => string]
+     * @return \App\Service\ServiceResult on success: data = ['previousStatus' => string]
      */
     public function regress(
         Invoice $invoice,
@@ -461,5 +461,4 @@ class InvoicePipelineService
 
         return ServiceResult::ok(['previousStatus' => $previousStatus]);
     }
-
 }

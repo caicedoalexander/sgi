@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Resilience;
 
-use Throwable;
+use Exception;
 
 /**
  * Configuración inmutable para reintentos. Define cuántas veces reintentar,
@@ -15,12 +15,12 @@ final class RetryPolicy
     /**
      * @param int $maxAttempts Cantidad de reintentos tras el primer intento (0 = sin retry).
      * @param int $baseDelayMs Delay base en ms para el backoff exponencial.
-     * @param list<class-string<Throwable>> $retriableExceptions Excepciones que disparan retry.
+     * @param list<class-string<\Throwable>> $retriableExceptions Excepciones que disparan retry.
      */
     public function __construct(
         public readonly int $maxAttempts = 3,
         public readonly int $baseDelayMs = 1000,
-        public readonly array $retriableExceptions = [\Exception::class],
+        public readonly array $retriableExceptions = [Exception::class],
     ) {
     }
 

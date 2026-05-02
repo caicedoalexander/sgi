@@ -38,18 +38,18 @@ class HealthController extends AppController
     {
         $container = $this->getContainer();
         $results = array_map(
-            fn (string $cls): HealthCheckResult => $container->get($cls)->check(),
+            fn(string $cls): HealthCheckResult => $container->get($cls)->check(),
             self::CHECKS,
         );
 
         $criticalFailed = !empty(array_filter(
             $results,
-            fn (HealthCheckResult $r) => $r->critical && $r->status === HealthStatus::FAIL,
+            fn(HealthCheckResult $r) => $r->critical && $r->status === HealthStatus::FAIL,
         ));
 
         $hasDegraded = !empty(array_filter(
             $results,
-            fn (HealthCheckResult $r) => $r->status === HealthStatus::DEGRADED
+            fn(HealthCheckResult $r) => $r->status === HealthStatus::DEGRADED
                 || (!$r->critical && $r->status === HealthStatus::FAIL),
         ));
 
@@ -71,7 +71,7 @@ class HealthController extends AppController
     }
 
     /**
-     * @param list<HealthCheckResult> $results
+     * @param list<\App\Service\HealthCheck\HealthCheckResult> $results
      * @return array<string, array{status: string, ...}>
      */
     private function _serializeChecks(array $results): array
