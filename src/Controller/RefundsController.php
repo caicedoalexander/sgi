@@ -38,7 +38,7 @@ class RefundsController extends AppController
         $visibleStatuses = $this->refundService->getVisibleStatuses($roleName);
 
         $query = $this->Refunds->find()
-            ->contain(['CreatedByUsers', 'Invoices'])
+            ->contain(['CreatedByUsers', 'BeneficiaryEmployees', 'BeneficiaryProviders', 'Invoices'])
             ->order(['Refunds.created' => 'DESC']);
 
         if (!empty($visibleStatuses)) {
@@ -57,7 +57,7 @@ class RefundsController extends AppController
     public function all(): void
     {
         $query = $this->Refunds->find()
-            ->contain(['CreatedByUsers', 'Invoices'])
+            ->contain(['CreatedByUsers', 'BeneficiaryEmployees', 'BeneficiaryProviders', 'Invoices'])
             ->order(['Refunds.created' => 'DESC']);
 
         $this->_applyListFilters($query);
@@ -74,7 +74,7 @@ class RefundsController extends AppController
     public function pending(): void
     {
         $query = $this->Refunds->find()
-            ->contain(['CreatedByUsers', 'Invoices'])
+            ->contain(['CreatedByUsers', 'BeneficiaryEmployees', 'BeneficiaryProviders', 'Invoices'])
             ->where(['Refunds.status !=' => RefundConstants::STATUS_PAGADO])
             ->order(['Refunds.created' => 'DESC']);
 

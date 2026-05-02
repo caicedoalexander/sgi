@@ -3,7 +3,8 @@
     "allow": [
       "Bash(php *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(bash bin/cake migrations migrate)"
     ]
   }
 }
