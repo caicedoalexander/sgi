@@ -191,8 +191,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(InvoicePaymentService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
-                AdvanceLegalizationService::class,
                 DocumentTypePolicyFactory::class,
+                EventManagerInterface::class,
             ]);
         $container->addShared(AdvanceLegalizationService::class)
             ->addArgument(EventManagerInterface::class);

@@ -4,21 +4,21 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
+use App\Event\InvoicePaidEvent;
+use App\Event\InvoiceRefundAuthorizedEvent;
+use App\Event\InvoiceRefundRejectedEvent;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
+use Cake\Event\Event;
+use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
 use DateTimeInterface;
 
 class InvoicePaymentService
 {
-    /**
-     * @param \App\Service\InvoiceHistoryService $historyService Audit trail recorder.
-     * @param \App\Service\AdvanceLegalizationService $advanceLegalizationService Legalization initializer.
-     * @param \App\Service\Pipeline\DocumentTypePolicyFactory $docTypePolicies Doctype policy factory.
-     */
     public function __construct(
         private readonly InvoiceHistoryService $historyService,
-        private readonly AdvanceLegalizationService $advanceLegalizationService,
         private readonly DocumentTypePolicyFactory $docTypePolicies,
+        private readonly EventManagerInterface $events,
     ) {
     }
 
@@ -102,8 +102,13 @@ class InvoicePaymentService
     /**
      * Autoriza un pago individual, recalcula estado, y maneja transiciones de pipeline.
      * Registra historial para los cambios de estado. Todo el flujo (pago, recálculo,
-     * actualización de pipeline, historial y side effects de legalización) ocurre
-     * dentro de una sola transacción para evitar inconsistencias parciales.
+     * actualización de pipeline, historial y eventos de dominio) ocurre dentro de una
+     * sola transacción para evitar inconsistencias parciales.
+     *
+     * Plan 5: las llamadas directas a AdvanceLegalizationService se reemplazan por
+     * dispatch de InvoiceRefundAuthorizedEvent (cuando is_refund) y InvoicePaidEvent
+     * (cuando la factura quedó en pagada). Si un subscriber falla, lanza
+     * ListenerFailedException → rollback de toda la operación.
      */
     public function authorizePayment(int $paymentId, int $authorizedBy): array
     {
@@ -148,11 +153,19 @@ class InvoicePaymentService
             );
 
             if ((bool)($payment->is_refund ?? false)) {
-                $this->advanceLegalizationService->closeOnRefundAuthorized($payment->id, $authorizedBy);
+                $this->events->dispatch(new Event(
+                    'Invoice.refundAuthorized',
+                    null,
+                    ['payload' => new InvoiceRefundAuthorizedEvent($payment, $authorizedBy)],
+                ));
             }
 
-            if ($this->docTypePolicies->for($invoice->document_type ?? null)->triggersAutoLegalization($invoice->pipeline_status)) {
-                $this->advanceLegalizationService->initialize($invoice, $authorizedBy);
+            if ($invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA) {
+                $this->events->dispatch(new Event(
+                    'Invoice.paid',
+                    null,
+                    ['payload' => new InvoicePaidEvent($invoice, $authorizedBy)],
+                ));
             }
 
             return [
@@ -235,6 +248,10 @@ class InvoicePaymentService
     /**
      * Rechaza un pago pendiente marcando status=rejected con motivo,
      * y devuelve la factura a tesorería. No elimina el registro.
+     *
+     * Plan 5: la rama refund se envuelve en transactional() para mantener la
+     * invariante "dispatches dentro de TX" del spec. La llamada directa a
+     * AdvanceLegalizationService se reemplaza por dispatch de InvoiceRefundRejectedEvent.
      */
     public function rejectPayment(int $paymentId, int $rejectedBy, string $reason): ServiceResult
     {
@@ -254,19 +271,40 @@ class InvoicePaymentService
         $invoice = $invoicesTable->get($invoiceId);
         $previousStatus = $invoice->pipeline_status;
 
+        // Refund: la factura del Anticipo permanece en `pagada`; el rechazo solo
+        // afecta a la legalización vía evento. TX preserva atomicidad save+dispatch.
+        if ((bool)($payment->is_refund ?? false)) {
+            $connection = $paymentsTable->getConnection();
+            $ok = $connection->transactional(function () use ($paymentsTable, $payment, $reason, $rejectedBy) {
+                $payment->status = InvoiceConstants::PAYMENT_RECORD_REJECTED;
+                $payment->rejection_reason = $reason;
+
+                if (!$paymentsTable->save($payment)) {
+                    return false;
+                }
+
+                $this->events->dispatch(new Event(
+                    'Invoice.refundRejected',
+                    null,
+                    ['payload' => new InvoiceRefundRejectedEvent($payment, $rejectedBy)],
+                ));
+
+                return true;
+            });
+
+            if ($ok === false) {
+                return ServiceResult::fail('No se pudo rechazar el pago.');
+            }
+
+            return ServiceResult::ok('Reintegro rechazado. La legalización volvió a Tesorería.');
+        }
+
+        // No-refund: comportamiento original (sin transactional, fuera del scope del Plan 5).
         $payment->status = InvoiceConstants::PAYMENT_RECORD_REJECTED;
         $payment->rejection_reason = $reason;
 
         if (!$paymentsTable->save($payment)) {
             return ServiceResult::fail('No se pudo rechazar el pago.');
-        }
-
-        // Refund: la factura del Anticipo permanece en `pagada`; el rechazo solo
-        // afecta a la legalización vía hook.
-        if ((bool)($payment->is_refund ?? false)) {
-            $this->advanceLegalizationService->reopenAfterRefundRejected($payment->id, $rejectedBy);
-
-            return ServiceResult::ok('Reintegro rechazado. La legalización volvió a Tesorería.');
         }
 
         $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
