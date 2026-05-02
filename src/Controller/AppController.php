@@ -11,6 +11,7 @@ use Cake\Controller\ComponentRegistry;
 use Cake\Controller\Controller;
 use Cake\Event\EventInterface;
 use Cake\Event\EventManagerInterface;
+use Cake\Http\Exception\ForbiddenException;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 
@@ -163,13 +164,9 @@ class AppController extends Controller
         $permAction = $this->_actionToPermission($action);
 
         if (!$this->_checkPermission($module, $permAction)) {
-            $this->Flash->error('No tiene permisos para acceder a esta función.');
-            // Avoid redirect loop: if already on dashboard, redirect to login
-            if ($controllerName === 'Dashboard' && $action === 'index') {
-                $this->redirect(['controller' => 'Users', 'action' => 'login']);
-            } else {
-                $this->redirect($this->request->referer() ?: ['controller' => 'Dashboard', 'action' => 'index']);
-            }
+            throw new ForbiddenException(
+                sprintf('No tiene permisos para %s en %s.', $permAction, $module),
+            );
         }
     }
 
