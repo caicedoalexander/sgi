@@ -16,34 +16,34 @@ if (empty($emailLogs)) {
 $now = new DateTime();
 $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
 ?>
-<div class="card mt-3 sgi-email-log-panel">
-    <div class="card-header d-flex align-items-center">
-        <i class="bi bi-envelope-paper me-2"></i>
-        <strong>Notificaciones de correo</strong>
+<div class="card card-primary mt-3">
+    <div class="card-header d-flex align-items-center gap-2" style="background:#fff;border-bottom:1px solid var(--border-color);padding:.6rem 1rem;">
+        <i class="bi bi-envelope-paper" style="color:var(--primary-color);"></i>
+        <span style="font-size:.875rem;font-weight:600;letter-spacing:-.01em;">Notificaciones de correo</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-sm mb-0 align-middle">
+        <table class="table table-hover mb-0" style="font-size:.8125rem;">
             <thead>
                 <tr>
                     <th>Destinatario</th>
-                    <th>Estado</th>
-                    <th>Último intento</th>
-                    <th>Intentos</th>
-                    <th class="text-end">Acción</th>
+                    <th style="width:120px;">Estado</th>
+                    <th style="width:140px;white-space:nowrap;">Último intento</th>
+                    <th style="width:80px;">Intentos</th>
+                    <th style="width:110px;" class="text-end">Acción</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($emailLogs as $log) : ?>
+                <?php foreach ($emailLogs as $log): ?>
                     <?php
                     $statusBadge = match ($log->status) {
-                        EmailLogConstants::STATUS_SENT => 'bg-success',
-                        EmailLogConstants::STATUS_FAILED => 'bg-danger',
+                        EmailLogConstants::STATUS_SENT    => 'bg-success',
+                        EmailLogConstants::STATUS_FAILED  => 'bg-danger',
                         EmailLogConstants::STATUS_PENDING => 'bg-warning text-dark',
                         default => 'bg-secondary',
                     };
                     $statusIcon = match ($log->status) {
-                        EmailLogConstants::STATUS_SENT => 'bi-check-circle',
-                        EmailLogConstants::STATUS_FAILED => 'bi-x-circle',
+                        EmailLogConstants::STATUS_SENT    => 'bi-check-circle',
+                        EmailLogConstants::STATUS_FAILED  => 'bi-x-circle',
                         EmailLogConstants::STATUS_PENDING => 'bi-hourglass-split',
                         default => 'bi-question-circle',
                     };
@@ -52,26 +52,27 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
                         && $log->created !== null
                         && $log->created->diffInSeconds($now) > $orphanThreshold;
 
-                    $showRetry = $log->status === EmailLogConstants::STATUS_FAILED || $isOrphanPending;
+                    $showRetry  = $log->status === EmailLogConstants::STATUS_FAILED || $isOrphanPending;
                     $lastAttempt = $log->last_attempt_at ?? $log->created;
-    ?>
+                    ?>
                     <tr>
-                        <td><?= h($log->to_email) ?></td>
+                        <td style="color:#444;"><?= h($log->to_email) ?></td>
                         <td>
                             <span class="badge <?= $statusBadge ?>">
-                                <i class="bi <?= $statusIcon ?>"></i>
-                                <?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
+                                <i class="bi <?= $statusIcon ?> me-1"></i><?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
                             </span>
-                            <?php if ($log->status === EmailLogConstants::STATUS_FAILED && !empty($log->last_error)) : ?>
-                                <div class="text-danger small mt-1">
+                            <?php if ($log->status === EmailLogConstants::STATUS_FAILED && !empty($log->last_error)): ?>
+                                <div class="text-danger mt-1" style="font-size:.7rem;line-height:1.3;">
                                     <i class="bi bi-exclamation-triangle me-1"></i><?= h($log->last_error) ?>
                                 </div>
                             <?php endif; ?>
                         </td>
-                        <td><?= $lastAttempt ? h($lastAttempt->i18nFormat('yyyy-MM-dd HH:mm')) : '—' ?></td>
-                        <td><?= (int)$log->attempts ?></td>
+                        <td style="color:#555;white-space:nowrap;">
+                            <?= $lastAttempt ? h($lastAttempt->i18nFormat('dd/MM/yyyy HH:mm')) : '—' ?>
+                        </td>
+                        <td style="color:#555;text-align:center;"><?= (int)$log->attempts ?></td>
                         <td class="text-end">
-                            <?php if ($showRetry) : ?>
+                            <?php if ($showRetry): ?>
                                 <?= $this->Form->postLink(
                                     '<i class="bi bi-arrow-clockwise me-1"></i>Reintentar',
                                     ['controller' => 'EmailLogs', 'action' => 'retry', $log->id],
