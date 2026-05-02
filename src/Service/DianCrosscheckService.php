@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use Cake\Log\Log;
 use Cake\ORM\TableRegistry;
 use Laminas\Diactoros\UploadedFile;
 
@@ -16,12 +15,15 @@ class DianCrosscheckService
 
     private const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
+    private StructuredLogger $logger;
+
     /**
      * Constructor.
      */
     public function __construct(
         private readonly N8nService $n8nService,
     ) {
+        $this->logger = new StructuredLogger('DianCrosscheck');
     }
 
     /**
@@ -86,7 +88,10 @@ class DianCrosscheckService
                 $entity->status = 'error_envio';
                 $entity->error_message = $result['error'];
                 $entity->attempt_count = 1;
-                Log::warning("DianCrosscheck #{$entity->id}: webhook failed, queued for retry — {$result['error']}");
+                $this->logger->warning('webhook_failed_queued_for_retry', [
+                    'crosscheck_id' => $entity->id,
+                    'error' => $result['error'] ?? 'unknown',
+                ]);
             }
             $table->save($entity);
         }
