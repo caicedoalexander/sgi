@@ -6,13 +6,13 @@ namespace App\Service;
 use App\Constants\EmailLogConstants;
 use App\Model\Entity\Invoice;
 use App\Service\Interface\MailerInterface;
-use Cake\Log\Log;
 use Cake\ORM\TableRegistry;
 use Exception;
 
 class NotificationService
 {
     private CircuitBreaker $smtpCircuitBreaker;
+    private StructuredLogger $logger;
 
     public function __construct(
         private readonly SystemSettingsService $settings,
@@ -20,12 +20,13 @@ class NotificationService
         private readonly EmailLogService $emailLogService,
     ) {
         $this->smtpCircuitBreaker = new CircuitBreaker('smtp', failureThreshold: 3, recoveryTimeoutSeconds: 300);
+        $this->logger = new StructuredLogger('Notification');
     }
 
     /**
      * Envía link de aprobación de factura. Registra cada intento en email_logs
      * y propaga la excepción si el envío falla (a diferencia del comportamiento
-     * histórico, que la tragaba con Log::error).
+     * histórico, que la tragaba en el log de errores).
      */
     public function sendApprovalLinkNotification(
         Invoice $invoice,
@@ -77,7 +78,11 @@ class NotificationService
                 createdBy: $createdBy,
             );
 
-            Log::info("Approval link sent to {$recipient->email} for invoice #{$invoice->id}");
+            $this->logger->info('approval_link_sent', [
+                'recipient' => $recipient->email,
+                'invoice_id' => $invoice->id,
+                'context' => 'invoice',
+            ]);
         }
     }
 
@@ -126,7 +131,11 @@ class NotificationService
             createdBy: $createdBy,
         );
 
-        Log::info("Novelty approval link sent to {$approver->email} for novelty #{$novelty->id}");
+        $this->logger->info('approval_link_sent', [
+            'recipient' => $approver->email,
+            'novelty_id' => $novelty->id,
+            'context' => 'novelty',
+        ]);
     }
 
     /**
