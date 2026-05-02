@@ -195,9 +195,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 DocumentTypePolicyFactory::class,
             ]);
         $container->addShared(AdvanceLegalizationService::class)
-            ->addArgument(new LiteralArgument(
-                fn() => $container->get(InvoicePipelineService::class),
-            ));
+            ->addArgument(EventManagerInterface::class);
         $container->addShared(InvoicePipelineService::class)
             ->addArguments([
                 InvoiceHistoryService::class,

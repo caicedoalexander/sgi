@@ -5,28 +5,22 @@ namespace App\Service;
 
 use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
+use App\Event\AdvanceLegalizedEvent;
 use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
 use App\Service\Trait\DocumentUploadTrait;
+use Cake\Event\Event;
+use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
-use Closure;
 use Laminas\Diactoros\UploadedFile;
 
 class AdvanceLegalizationService
 {
     use DocumentUploadTrait;
 
-    /**
-     * @param \Closure $pipelineFactory Factory that resolves InvoicePipelineService lazily (breaks cycle).
-     */
     public function __construct(
-        private readonly Closure $pipelineFactory,
+        private readonly EventManagerInterface $events,
     ) {
-    }
-
-    private function _getPipelineService(): InvoicePipelineService
-    {
-        return ($this->pipelineFactory)();
     }
 
     /**
@@ -498,8 +492,9 @@ class AdvanceLegalizationService
 
     /**
      * Persist a status transition and updated_by stamp. Cuando el nuevo estado es
-     * STATUS_LEGALIZADA, también promueve a `legalizada` todas las facturas tipo
-     * Legalización vinculadas que estén en `contabilidad`.
+     * STATUS_LEGALIZADA, publica AdvanceLegalizedEvent (Plan 5) en lugar de llamar
+     * directamente al pipeline service. El subscriber LinkedInvoicesPromoterSubscriber
+     * promueve las facturas vinculadas vía LinkedInvoiceLegalizer.
      */
     private function _setStatus(AdvanceLegalization $leg, string $newStatus, int $userId): ServiceResult
     {
@@ -511,7 +506,11 @@ class AdvanceLegalizationService
         }
 
         if ($newStatus === AdvanceConstants::STATUS_LEGALIZADA) {
-            $this->_getPipelineService()->legalizeLinkedInvoices($leg->advance_invoice_id, $userId);
+            $this->events->dispatch(new Event(
+                'AdvanceLegalization.legalized',
+                null,
+                ['payload' => new AdvanceLegalizedEvent($leg, $userId)],
+            ));
         }
 
         return ServiceResult::ok($leg);
