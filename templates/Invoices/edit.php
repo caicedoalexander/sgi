@@ -830,6 +830,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                 'paymentStatus'      => $invoice->payment_status ?? null,
                 'totalAmount'        => $invoice->amount ?? null,
                 'rejectMessage'      => '¿Rechazar este pago? El registro volverá a Tesorería.',
+                'with_idempotency_key' => true,
             ];
         ?>
 

@@ -199,6 +199,19 @@ class InvoicePaymentService
             return ServiceResult::fail('is_refund solo es válido en pagos de Anticipos.');
         }
 
+        $idempotencyKey = isset($paymentData['idempotency_key']) && trim((string)$paymentData['idempotency_key']) !== ''
+            ? trim((string)$paymentData['idempotency_key'])
+            : \Cake\Utility\Text::uuid();
+
+        // Short-circuit: si ya existe un pago con esta key, devolver éxito apuntando
+        // a esa fila — operación repetida, idempotente.
+        $existing = $paymentsTable->find()
+            ->where(['idempotency_key' => $idempotencyKey])
+            ->first();
+        if ($existing !== null) {
+            return ServiceResult::ok('Pago ya registrado (operación repetida).');
+        }
+
         $connection = $paymentsTable->getConnection();
 
         return $connection->transactional(function () use (
@@ -209,6 +222,7 @@ class InvoicePaymentService
             $paymentData,
             $createdBy,
             $currentStatus,
+            $idempotencyKey,
         ) {
             $payment = $paymentsTable->newEntity([
                 'invoice_id' => $invoiceId,
@@ -218,17 +232,26 @@ class InvoicePaymentService
                 'status' => InvoiceConstants::PAYMENT_RECORD_PENDING,
                 'authorized' => false,
                 'created_by' => $createdBy,
+                'idempotency_key' => $idempotencyKey,
             ]);
 
-            if (!$paymentsTable->save($payment)) {
-                $errors = [];
-                foreach ($payment->getErrors() as $field => $fieldErrors) {
-                    foreach ($fieldErrors as $msg) {
-                        $errors[] = "$field: $msg";
+            try {
+                if (!$paymentsTable->save($payment)) {
+                    $errors = [];
+                    foreach ($payment->getErrors() as $field => $fieldErrors) {
+                        foreach ($fieldErrors as $msg) {
+                            $errors[] = "$field: $msg";
+                        }
                     }
-                }
 
-                return ServiceResult::fail('No se pudo registrar el pago.' . (!empty($errors) ? ' ' . implode(', ', $errors) : ''));
+                    return ServiceResult::fail('No se pudo registrar el pago.' . (!empty($errors) ? ' ' . implode(', ', $errors) : ''));
+                }
+            } catch (\PDOException $e) {
+                // SQLSTATE 23000 = integrity constraint violation (duplicate key).
+                if ($e->getCode() === '23000') {
+                    return ServiceResult::ok('Pago ya registrado (operación repetida).');
+                }
+                throw $e;
             }
 
             $invoice->pipeline_status = InvoiceConstants::STATUS_AUTORIZACION_PAGO;

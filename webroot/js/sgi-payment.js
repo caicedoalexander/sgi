@@ -130,6 +130,9 @@
                 if (fullPayCheck && fullPayCheck.checked) {
                     fields['full_payment'] = '1';
                 }
+                if (section.dataset.idempotencyKey) {
+                    fields['idempotency_key'] = section.dataset.idempotencyKey;
+                }
                 _submitDynamicForm(addUrl, fields, findCsrfToken(section));
             }
 
