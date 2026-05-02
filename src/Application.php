@@ -74,6 +74,7 @@ use Cake\Core\Configure;
 use Cake\Core\ContainerInterface;
 use Cake\Datasource\FactoryLocator;
 use Cake\Error\Middleware\ErrorHandlerMiddleware;
+use Cake\Event\EventManager;
 use Cake\Event\EventManagerInterface;
 use Cake\Http\BaseApplication;
 use Cake\Http\Middleware\BodyParserMiddleware;
@@ -240,6 +241,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ]);
 
         // === Plan 5: Domain events — services + subscribers ===
+        $container->addShared(EventManagerInterface::class, fn () => EventManager::instance());
+
         $container->addShared(LinkedInvoiceLegalizer::class)
             ->addArgument(InvoiceHistoryService::class);
 
