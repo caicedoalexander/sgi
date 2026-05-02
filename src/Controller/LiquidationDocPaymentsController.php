@@ -3,17 +3,30 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Constants\NoveltyConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Service\LiquidationDocPaymentService;
+use App\Service\PipelineAuthorizationService;
 
 class LiquidationDocPaymentsController extends AppController
 {
     private LiquidationDocPaymentService $paymentService;
+    private PipelineAuthorizationService $pipelineAuth;
 
+    /**
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
         $this->paymentService = $this->getContainer()->get(LiquidationDocPaymentService::class);
+        $this->pipelineAuth = $this->getContainer()->get(PipelineAuthorizationService::class);
+    }
+
+    private function _getRoleId(): int
+    {
+        return (int)$this->_getCurrentUser()->role_id;
     }
 
     /**
@@ -47,8 +60,16 @@ class LiquidationDocPaymentsController extends AppController
         $this->request->allowMethod(['post']);
         $roleName = $this->_getRoleName();
 
-        if ($roleName !== RoleConstants::TESORERIA && $roleName !== RoleConstants::ADMIN) {
-            $this->Flash->error('No tiene permisos para registrar pagos.');
+        if (
+            $roleName !== RoleConstants::ADMIN
+            && !$this->pipelineAuth->canOperate(
+                $this->_getRoleId(),
+                $roleName,
+                PipelineStepConstants::PIPELINE_NOVELTIES,
+                NoveltyConstants::STATUS_TESORERIA,
+            )
+        ) {
+            $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'edit', $docId]);
         }
@@ -80,8 +101,16 @@ class LiquidationDocPaymentsController extends AppController
         $this->request->allowMethod(['post']);
         $roleName = $this->_getRoleName();
 
-        if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
-            $this->Flash->error('Solo el Contador puede autorizar pagos.');
+        if (
+            $roleName !== RoleConstants::ADMIN
+            && !$this->pipelineAuth->canOperate(
+                $this->_getRoleId(),
+                $roleName,
+                PipelineStepConstants::PIPELINE_NOVELTIES,
+                NoveltyConstants::STATUS_AUT_PAGO,
+            )
+        ) {
+            $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'edit', $docId]);
         }
@@ -109,8 +138,16 @@ class LiquidationDocPaymentsController extends AppController
         $this->request->allowMethod(['post']);
         $roleName = $this->_getRoleName();
 
-        if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
-            $this->Flash->error('Solo el Contador puede rechazar pagos.');
+        if (
+            $roleName !== RoleConstants::ADMIN
+            && !$this->pipelineAuth->canOperate(
+                $this->_getRoleId(),
+                $roleName,
+                PipelineStepConstants::PIPELINE_NOVELTIES,
+                NoveltyConstants::STATUS_AUT_PAGO,
+            )
+        ) {
+            $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'edit', $docId]);
         }

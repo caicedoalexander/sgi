@@ -163,7 +163,7 @@ class ExternalApprovalsController extends AppController
 
                 if ($invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION) {
                     $identity = $this->Authentication->getIdentity();
-                    $advanceResult = $this->pipelineService->advance($invoice, 'Admin', (int)$identity->getIdentifier());
+                    $advanceResult = $this->pipelineService->advance($invoice, 0, 'Admin', (int)$identity->getIdentifier());
                     if (!$advanceResult->success) {
                         Log::warning('External approval: auto-advance falló', [
                             'invoice_id' => $invoice->id,

@@ -71,13 +71,13 @@ final class InvoiceTransitionValidator
      * @param array<int, array{field: string, label: string}> $rules
      * @return array<string>
      */
-    public function filterErrorsForRole(array $errors, array $rules, string $roleName, string $status): array
+    public function filterErrorsForRole(array $errors, array $rules, int $roleId, string $roleName, string $status): array
     {
         if ($roleName === RoleConstants::ADMIN) {
             return array_values($errors);
         }
 
-        $editable = $this->fieldPolicy->getEditableFields($roleName, $status);
+        $editable = $this->fieldPolicy->getEditableFields($roleId, $roleName, $status);
         $statusVisible = in_array($roleName, $this->states->get($status)->getRoleVisibility(), true);
 
         $filtered = [];

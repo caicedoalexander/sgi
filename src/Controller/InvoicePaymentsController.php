@@ -4,17 +4,24 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\InvoiceConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Service\InvoicePaymentService;
+use App\Service\PipelineAuthorizationService;
 
 class InvoicePaymentsController extends AppController
 {
     private InvoicePaymentService $paymentService;
+    private PipelineAuthorizationService $pipelineAuth;
 
+    /**
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
         $this->paymentService = $this->getContainer()->get(InvoicePaymentService::class);
+        $this->pipelineAuth = $this->getContainer()->get(PipelineAuthorizationService::class);
     }
 
     private function _getCurrentUser(): object
@@ -27,6 +34,15 @@ class InvoicePaymentsController extends AppController
         return $this->_getUserRoleName($this->_getCurrentUser());
     }
 
+    private function _getRoleId(): int
+    {
+        return (int)$this->_getCurrentUser()->role_id;
+    }
+
+    /**
+     * @param string|int|null $invoiceId
+     * @return \Cake\Http\Response|null
+     */
     public function addPayment($invoiceId = null)
     {
         $this->request->allowMethod(['post']);
@@ -34,12 +50,19 @@ class InvoicePaymentsController extends AppController
         $invoice = $invoicesTable->get($invoiceId);
 
         $roleName = $this->_getRoleName();
+        $roleId = $this->_getRoleId();
         $currentStatus = $invoice->pipeline_status;
 
         if (
-            $roleName !== RoleConstants::ADMIN && (
-            $roleName !== RoleConstants::TESORERIA ||
-            $currentStatus !== InvoiceConstants::STATUS_TESORERIA
+            $roleName !== RoleConstants::ADMIN
+            && !(
+                $this->pipelineAuth->canOperate(
+                    $roleId,
+                    $roleName,
+                    PipelineStepConstants::PIPELINE_INVOICES,
+                    InvoiceConstants::STATUS_TESORERIA,
+                )
+                && $currentStatus === InvoiceConstants::STATUS_TESORERIA
             )
         ) {
             $this->Flash->error('No tiene permisos para registrar pagos en este estado.');
@@ -69,16 +92,26 @@ class InvoicePaymentsController extends AppController
     }
 
     /**
-     * Edit a pending payment. Requires non-empty reason; records field changes
-     * in invoice_histories and persists the reason as an invoice observation.
+     * @param string|int|null $invoiceId
+     * @param string|int|null $paymentId
+     * @return \Cake\Http\Response|null
      */
     public function editPayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
         $roleName = $this->_getRoleName();
+        $roleId = $this->_getRoleId();
 
-        if ($roleName !== RoleConstants::TESORERIA && $roleName !== RoleConstants::ADMIN) {
-            $this->Flash->error('Solo Tesorería puede editar pagos.');
+        if (
+            $roleName !== RoleConstants::ADMIN
+            && !$this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_INVOICES,
+                InvoiceConstants::STATUS_TESORERIA,
+            )
+        ) {
+            $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
         }
@@ -105,13 +138,27 @@ class InvoicePaymentsController extends AppController
         return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
     }
 
+    /**
+     * @param string|int|null $invoiceId
+     * @param string|int|null $paymentId
+     * @return \Cake\Http\Response|null
+     */
     public function authorizePayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
         $roleName = $this->_getRoleName();
+        $roleId = $this->_getRoleId();
 
-        if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
-            $this->Flash->error('Solo el Contador puede autorizar pagos.');
+        if (
+            $roleName !== RoleConstants::ADMIN
+            && !$this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_INVOICES,
+                InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+            )
+        ) {
+            $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
         }
@@ -131,13 +178,27 @@ class InvoicePaymentsController extends AppController
         return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
     }
 
+    /**
+     * @param string|int|null $invoiceId
+     * @param string|int|null $paymentId
+     * @return \Cake\Http\Response|null
+     */
     public function rejectPayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
         $roleName = $this->_getRoleName();
+        $roleId = $this->_getRoleId();
 
-        if ($roleName !== RoleConstants::CONTADOR && $roleName !== RoleConstants::ADMIN) {
-            $this->Flash->error('Solo el Contador puede rechazar pagos.');
+        if (
+            $roleName !== RoleConstants::ADMIN
+            && !$this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_INVOICES,
+                InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+            )
+        ) {
+            $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
         }
@@ -158,6 +219,11 @@ class InvoicePaymentsController extends AppController
         return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
     }
 
+    /**
+     * @param string|int|null $invoiceId
+     * @param string|int|null $paymentId
+     * @return \Cake\Http\Response|null
+     */
     public function deletePayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -165,12 +231,19 @@ class InvoicePaymentsController extends AppController
         $invoice = $invoicesTable->get($invoiceId);
 
         $roleName = $this->_getRoleName();
+        $roleId = $this->_getRoleId();
         $currentStatus = $invoice->pipeline_status;
 
         if (
-            $roleName !== RoleConstants::ADMIN && (
-            $roleName !== RoleConstants::TESORERIA ||
-            $currentStatus !== InvoiceConstants::STATUS_TESORERIA
+            $roleName !== RoleConstants::ADMIN
+            && !(
+                $this->pipelineAuth->canOperate(
+                    $roleId,
+                    $roleName,
+                    PipelineStepConstants::PIPELINE_INVOICES,
+                    InvoiceConstants::STATUS_TESORERIA,
+                )
+                && $currentStatus === InvoiceConstants::STATUS_TESORERIA
             )
         ) {
             $this->Flash->error('No tiene permisos para eliminar pagos en este estado.');

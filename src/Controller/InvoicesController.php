@@ -259,12 +259,13 @@ class InvoicesController extends AppController
         }
 
         $roleName = $this->_getRoleName();
+        $roleId = (int)$this->_getCurrentUser()->role_id;
         $currentStatus = $invoice->pipeline_status;
 
-        $editableFields = $this->pipeline->getEditableFields($roleName, $currentStatus);
-        $canAdvance = $this->pipeline->canAdvance($roleName, $currentStatus, $invoice->document_type);
-        $visibleSections = $this->pipeline->getVisibleSections($roleName, $currentStatus, $invoice->document_type);
-        $collapsibleSections = $this->pipeline->getCollapsibleSections($roleName, $currentStatus);
+        $editableFields = $this->pipeline->getEditableFields($roleId, $roleName, $currentStatus);
+        $canAdvance = $this->pipeline->canAdvance($roleId, $roleName, $currentStatus, $invoice->document_type);
+        $visibleSections = $this->pipeline->getVisibleSections($roleId, $roleName, $currentStatus, $invoice->document_type);
+        $collapsibleSections = $this->pipeline->getCollapsibleSections($roleId, $roleName, $currentStatus);
         $isRejected = $this->pipeline->isRejected($invoice);
         $isApproved = $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
 
@@ -274,14 +275,14 @@ class InvoicesController extends AppController
         if ($canAdvance && !$isRejected) {
             $rawErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
             $rules = $this->pipeline->getTransitionRules($currentStatus);
-            $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleName, $currentStatus);
+            $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleId, $roleName, $currentStatus);
             if (empty($rawErrors)) {
                 $nextStatus = $this->pipeline->getNextStatus($currentStatus);
             }
         }
 
         // Regression button visibility / lock state
-        $canRegress = $this->pipeline->canRegress($roleName, $currentStatus);
+        $canRegress = $this->pipeline->canRegress($roleId, $roleName, $currentStatus);
         $previousStatus = $this->pipeline->getPreviousStatus($currentStatus);
         $regressLockMessage = $canRegress ? $this->pipeline->getRegressionLockMessage($invoice) : null;
 
@@ -294,6 +295,7 @@ class InvoicesController extends AppController
             $result = $this->pipeline->saveAndAdvance(
                 $invoice,
                 $this->request->getData(),
+                $roleId,
                 $roleName,
                 $user->id,
                 $this->_getBaseUrl(),
@@ -313,6 +315,7 @@ class InvoicesController extends AppController
                     $filteredErrors = $this->pipeline->filterAdvanceErrorsForRole(
                         $advanceErrors,
                         $rules,
+                        $roleId,
                         $roleName,
                         $currentStatus,
                     );
@@ -398,7 +401,7 @@ class InvoicesController extends AppController
 
         $user = $this->_getCurrentUser();
 
-        $result = $this->pipeline->advance($invoice, $this->_getRoleName(), $user->id);
+        $result = $this->pipeline->advance($invoice, (int)$user->role_id, $this->_getRoleName(), $user->id);
 
         if ($result->success) {
             $nextStatus = $result->data['nextStatus'] ?? null;
@@ -422,6 +425,7 @@ class InvoicesController extends AppController
 
         $result = $this->pipeline->regress(
             $invoice,
+            (int)$user->role_id,
             $this->_getRoleName(),
             (int)$user->id,
             $reason,

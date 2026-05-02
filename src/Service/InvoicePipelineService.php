@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Event\InvoicePaidEvent;
 use App\Model\Entity\Invoice;
@@ -31,6 +32,7 @@ class InvoicePipelineService
         private readonly InvoicePipelineStateRegistry $states,
         private readonly DocumentTypePolicyFactory $docTypePolicies,
         private readonly EventManagerInterface $events,
+        private readonly PipelineAuthorizationService $pipelineAuth,
     ) {
     }
 
@@ -105,21 +107,21 @@ class InvoicePipelineService
         return $this->docTypePolicies->for($documentType)->getPipelineStatusesForView();
     }
 
-    public function getEditableFields(string $roleName, string $status): array
+    public function getEditableFields(int $roleId, string $roleName, string $status): array
     {
-        return $this->fieldPolicy->getEditableFields($roleName, $status);
+        return $this->fieldPolicy->getEditableFields($roleId, $roleName, $status);
     }
 
-    public function getVisibleSections(string $roleName, string $status, ?string $documentType = null): array
+    public function getVisibleSections(int $roleId, string $roleName, string $status, ?string $documentType = null): array
     {
-        $sections = $this->fieldPolicy->getVisibleSections($roleName, $status);
+        $sections = $this->fieldPolicy->getVisibleSections($roleId, $roleName, $status);
 
         return $this->docTypePolicies->for($documentType)->filterVisibleSections($sections);
     }
 
-    public function getCollapsibleSections(string $roleName, string $status): array
+    public function getCollapsibleSections(int $roleId, string $roleName, string $status): array
     {
-        return $this->fieldPolicy->getCollapsibleSections($roleName, $status);
+        return $this->fieldPolicy->getCollapsibleSections($roleId, $roleName, $status);
     }
 
     public function isRejected(object $invoice): bool
@@ -166,12 +168,12 @@ class InvoicePipelineService
         return $this->transitionValidator->getTransitionRules($fromStatus);
     }
 
-    public function filterAdvanceErrorsForRole(array $errors, array $rules, string $roleName, string $status): array
+    public function filterAdvanceErrorsForRole(array $errors, array $rules, int $roleId, string $roleName, string $status): array
     {
-        return $this->transitionValidator->filterErrorsForRole($errors, $rules, $roleName, $status);
+        return $this->transitionValidator->filterErrorsForRole($errors, $rules, $roleId, $roleName, $status);
     }
 
-    public function canAdvance(string $roleName, string $currentStatus, ?string $documentType = null): bool
+    public function canAdvance(int $roleId, string $roleName, string $currentStatus, ?string $documentType = null): bool
     {
         if ($this->getNextStatus($currentStatus, $documentType) === null) {
             return false;
@@ -181,7 +183,12 @@ class InvoicePipelineService
             return true;
         }
 
-        return in_array($currentStatus, $this->getVisibleStatuses($roleName), true);
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_INVOICES,
+            $currentStatus,
+        );
     }
 
     public function getNextStatus(string $currentStatus, ?string $documentType = null): ?string
@@ -199,9 +206,9 @@ class InvoicePipelineService
         return $state->getNext();
     }
 
-    public function filterEntityData(array $data, string $roleName, string $status): array
+    public function filterEntityData(array $data, int $roleId, string $roleName, string $status): array
     {
-        return $this->fieldPolicy->filterEntityData($data, $roleName, $status);
+        return $this->fieldPolicy->filterEntityData($data, $roleId, $roleName, $status);
     }
 
     public function getStatusIndex(string $status): int
@@ -216,7 +223,7 @@ class InvoicePipelineService
         return $this->states->get($currentStatus)->getPrevious();
     }
 
-    public function canRegress(string $roleName, string $currentStatus): bool
+    public function canRegress(int $roleId, string $roleName, string $currentStatus): bool
     {
         if ($this->getPreviousStatus($currentStatus) === null) {
             return false;
@@ -226,7 +233,12 @@ class InvoicePipelineService
             return true;
         }
 
-        return in_array($currentStatus, $this->getVisibleStatuses($roleName), true);
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_INVOICES,
+            $currentStatus,
+        );
     }
 
     /**
@@ -237,6 +249,7 @@ class InvoicePipelineService
     public function saveAndAdvance(
         Invoice $invoice,
         array $data,
+        int $roleId,
         string $roleName,
         int $userId,
         ?string $baseUrl = null,
@@ -244,7 +257,7 @@ class InvoicePipelineService
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
 
         $currentStatus = $invoice->pipeline_status;
-        $filteredData = $this->filterEntityData($data, $roleName, $currentStatus);
+        $filteredData = $this->filterEntityData($data, $roleId, $roleName, $currentStatus);
 
         // Auto-set area_approval_date when area_approval changes to Aprobada or Rechazada
         if (array_key_exists('area_approval', $filteredData)) {
@@ -258,7 +271,7 @@ class InvoicePipelineService
             }
         }
 
-        $canAdvance = $this->canAdvance($roleName, $currentStatus, $invoice->document_type ?? null);
+        $canAdvance = $this->canAdvance($roleId, $roleName, $currentStatus, $invoice->document_type ?? null);
         $isRejected = $this->isRejected($invoice);
 
         $advanceNextStatus = null;
@@ -345,11 +358,11 @@ class InvoicePipelineService
      *
      * @return \App\Service\ServiceResult on success: data = ['nextStatus' => string]
      */
-    public function advance(Invoice $invoice, string $roleName, int $userId): ServiceResult
+    public function advance(Invoice $invoice, int $roleId, string $roleName, int $userId): ServiceResult
     {
         $currentStatus = $invoice->pipeline_status;
 
-        if (!$this->canAdvance($roleName, $currentStatus, $invoice->document_type ?? null)) {
+        if (!$this->canAdvance($roleId, $roleName, $currentStatus, $invoice->document_type ?? null)) {
             return ServiceResult::fail(['No tiene permisos para avanzar esta factura.']);
         }
 
@@ -386,6 +399,7 @@ class InvoicePipelineService
      */
     public function regress(
         Invoice $invoice,
+        int $roleId,
         string $roleName,
         int $userId,
         string $reason,
@@ -393,7 +407,7 @@ class InvoicePipelineService
         $reason = trim($reason);
         $currentStatus = $invoice->pipeline_status;
 
-        if (!$this->canRegress($roleName, $currentStatus)) {
+        if (!$this->canRegress($roleId, $roleName, $currentStatus)) {
             $previous = $this->getPreviousStatus($currentStatus);
             $error = $previous === null
                 ? 'Esta factura ya está en el primer paso del flujo.'

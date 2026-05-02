@@ -222,6 +222,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoicePipelineStateRegistry::class,
                 DocumentTypePolicyFactory::class,
                 EventManagerInterface::class,
+                PipelineAuthorizationService::class,
             ]);
         $container->addShared(InvoiceApprovalService::class)
             ->addArgument(NotificationService::class);
