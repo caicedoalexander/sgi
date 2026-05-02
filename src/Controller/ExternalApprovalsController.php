@@ -156,8 +156,8 @@ class ExternalApprovalsController extends AppController
 
             $result = $this->approvalService->processResponse($token, $action, $observations, $ipAddress, $userAgent);
 
-            if (!$result['success']) {
-                $this->Flash->error($result['errors'][0] ?? 'Error al procesar respuesta');
+            if (!$result->success) {
+                $this->Flash->error($result->firstError() ?? 'Error al procesar respuesta');
 
                 return $this->redirect(['action' => 'review', $token]);
             }
@@ -172,9 +172,12 @@ class ExternalApprovalsController extends AppController
                 );
             }
 
-            if ($result['allApproved']) {
+            $allApproved = (bool)($result->data['allApproved'] ?? false);
+            $invoiceId = $result->data['invoice_id'] ?? null;
+
+            if ($allApproved && $invoiceId !== null) {
                 $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-                $invoice = $invoicesTable->get($result['invoice_id']);
+                $invoice = $invoicesTable->get($invoiceId);
 
                 if ($invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION) {
                     $identity = $this->Authentication->getIdentity();

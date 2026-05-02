@@ -702,10 +702,10 @@ class InvoicesController extends AppController
             (int)$user->id,
         );
 
-        if (!empty($result['success'])) {
+        if ($result->success) {
             $this->Flash->success('Enlaces de aprobación enviados.');
         } else {
-            foreach ($result['errors'] ?? [] as $error) {
+            foreach ($result->errors as $error) {
                 $this->Flash->error($error);
             }
         }
@@ -733,10 +733,10 @@ class InvoicesController extends AppController
             (int)$user->id,
         );
 
-        if (!empty($result['success'])) {
+        if ($result->success) {
             $this->Flash->success('Aprobadores actualizados. Se enviaron los nuevos enlaces.');
         } else {
-            foreach ($result['errors'] ?? [] as $error) {
+            foreach ($result->errors as $error) {
                 $this->Flash->error($error);
             }
         }

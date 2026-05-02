@@ -37,15 +37,15 @@ class InvoiceApprovalService
      * @param array $approverUserIds Array of user IDs to assign as approvers
      * @param string $baseUrl Base URL for approval links
      * @param int $createdByUserId The user who assigned the approvers
-     * @return array ['success' => bool, 'errors' => array, 'approvals' => array]
+     * @return ServiceResult on success: data = ['approvals' => InvoiceApproval[]]
      */
-    public function assignApprovers(Invoice $invoice, array $approverUserIds, string $baseUrl, int $createdByUserId): array
+    public function assignApprovers(Invoice $invoice, array $approverUserIds, string $baseUrl, int $createdByUserId): ServiceResult
     {
         $errors = [];
         $approvals = [];
 
         if (empty($approverUserIds)) {
-            return ['success' => false, 'errors' => ['Debe seleccionar al menos un aprobador'], 'approvals' => []];
+            return ServiceResult::fail(['Debe seleccionar al menos un aprobador']);
         }
 
         $expiresAt = new DateTime('+48 hours');
@@ -86,9 +86,11 @@ class InvoiceApprovalService
             }
         }
 
-        $success = empty($errors);
+        if (!empty($errors)) {
+            return ServiceResult::fail($errors);
+        }
 
-        return compact('success', 'errors', 'approvals');
+        return ServiceResult::ok(['approvals' => $approvals]);
     }
 
     /**
@@ -141,7 +143,7 @@ class InvoiceApprovalService
     /**
      * Process an approver's response (approve or reject).
      *
-     * @return array ['success' => bool, 'allApproved' => bool, 'rejected' => bool, 'errors' => array]
+     * @return ServiceResult on success: data = ['allApproved' => bool, 'rejected' => bool, 'invoice_id' => int]
      */
     public function processResponse(
         string $token,
@@ -149,7 +151,7 @@ class InvoiceApprovalService
         ?string $observations,
         ?string $ipAddress,
         ?string $userAgent,
-    ): array {
+    ): ServiceResult {
         $connection = $this->invoiceApprovalsTable->getConnection();
 
         return $connection->transactional(function () use ($token, $action, $observations, $ipAddress, $userAgent) {
@@ -165,12 +167,7 @@ class InvoiceApprovalService
                 ->first();
 
             if (!$approval) {
-                return [
-                    'success' => false,
-                    'allApproved' => false,
-                    'rejected' => false,
-                    'errors' => ['Token inválido o expirado'],
-                ];
+                return ServiceResult::fail(['Token inválido o expirado']);
             }
 
             $newStatus = $action === 'approve'
@@ -185,12 +182,7 @@ class InvoiceApprovalService
             $approval->token = null;
 
             if (!$this->invoiceApprovalsTable->save($approval)) {
-                return [
-                    'success' => false,
-                    'allApproved' => false,
-                    'rejected' => false,
-                    'errors' => ['Error al guardar respuesta'],
-                ];
+                return ServiceResult::fail(['Error al guardar respuesta']);
             }
 
             $invoiceId = $approval->invoice_id;
@@ -204,13 +196,11 @@ class InvoiceApprovalService
                 $invoice->area_approval_date = new DateTime();
                 $invoicesTable->save($invoice);
 
-                return [
-                    'success' => true,
+                return ServiceResult::ok([
                     'allApproved' => false,
                     'rejected' => true,
-                    'errors' => [],
                     'invoice_id' => $invoiceId,
-                ];
+                ]);
             }
 
             $allApproved = $this->areAllApproved($invoiceId);
@@ -223,13 +213,11 @@ class InvoiceApprovalService
                 $invoicesTable->save($invoice);
             }
 
-            return [
-                'success' => true,
+            return ServiceResult::ok([
                 'allApproved' => $allApproved,
                 'rejected' => false,
-                'errors' => [],
                 'invoice_id' => $invoiceId,
-            ];
+            ]);
         });
     }
 
@@ -307,23 +295,15 @@ class InvoiceApprovalService
      * Sends approval links without touching existing active approvals.
      * Fails if there are pending approvals already (caller should use modifyApprovers).
      *
-     * @return array ['success' => bool, 'errors' => array, 'approvals' => array]
+     * @return ServiceResult on success: data = ['approvals' => InvoiceApproval[]]
      */
-    public function sendApprovalLinks(Invoice $invoice, array $approverUserIds, string $baseUrl, int $createdByUserId): array
+    public function sendApprovalLinks(Invoice $invoice, array $approverUserIds, string $baseUrl, int $createdByUserId): ServiceResult
     {
         if ($invoice->pipeline_status !== InvoiceConstants::STATUS_APROBACION) {
-            return [
-                'success' => false,
-                'errors' => ['Solo se pueden enviar enlaces mientras la factura esté en Aprobación.'],
-                'approvals' => [],
-            ];
+            return ServiceResult::fail(['Solo se pueden enviar enlaces mientras la factura esté en Aprobación.']);
         }
         if ($this->hasAnyActiveApprovals($invoice->id)) {
-            return [
-                'success' => false,
-                'errors' => ['Ya existen aprobaciones para esta factura; use Modificar aprobadores.'],
-                'approvals' => [],
-            ];
+            return ServiceResult::fail(['Ya existen aprobaciones para esta factura; use Modificar aprobadores.']);
         }
 
         return $this->assignApprovers($invoice, $approverUserIds, $baseUrl, $createdByUserId);
@@ -333,7 +313,7 @@ class InvoiceApprovalService
      * Replaces the current approver set: invalidates pending tokens, records the
      * reason in invoice history, and creates new approvals.
      *
-     * @return array ['success' => bool, 'errors' => array, 'approvals' => array]
+     * @return ServiceResult on success: data = ['approvals' => InvoiceApproval[]]
      */
     public function modifyApprovers(
         Invoice $invoice,
@@ -341,19 +321,15 @@ class InvoiceApprovalService
         string $reason,
         string $baseUrl,
         int $userId,
-    ): array {
+    ): ServiceResult {
         if ($invoice->pipeline_status !== InvoiceConstants::STATUS_APROBACION) {
-            return [
-                'success' => false,
-                'errors' => ['No se pueden modificar aprobadores fuera del estado Aprobación.'],
-                'approvals' => [],
-            ];
+            return ServiceResult::fail(['No se pueden modificar aprobadores fuera del estado Aprobación.']);
         }
         if (trim($reason) === '') {
-            return ['success' => false, 'errors' => ['El motivo es obligatorio.'], 'approvals' => []];
+            return ServiceResult::fail(['El motivo es obligatorio.']);
         }
         if (empty($newApproverIds)) {
-            return ['success' => false, 'errors' => ['Debe seleccionar al menos un aprobador.'], 'approvals' => []];
+            return ServiceResult::fail(['Debe seleccionar al menos un aprobador.']);
         }
 
         $connection = $this->invoiceApprovalsTable->getConnection();
