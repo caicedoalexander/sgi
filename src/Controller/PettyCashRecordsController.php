@@ -5,9 +5,11 @@ namespace App\Controller;
 
 use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
+use App\Service\PipelineAuthorizationService;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
 use DateTimeInterface;
@@ -20,12 +22,18 @@ class PettyCashRecordsController extends AppController
 
     private PettyCashDocumentService $documentService;
 
+    private PipelineAuthorizationService $pipelineAuth;
+
+    /**
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
         $container = $this->getContainer();
         $this->pettyCashService = $container->get(PettyCashService::class);
         $this->documentService = $container->get(PettyCashDocumentService::class);
+        $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
     }
 
     private function _getCurrentUser(): object
@@ -278,12 +286,21 @@ class PettyCashRecordsController extends AppController
         $user = $this->_getCurrentUser();
         $roleName = $this->_getUserRoleName($user);
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
-        $canRegisterPayment = in_array($roleName, [
-            RoleConstants::TESORERIA, RoleConstants::ADMIN,
-        ], true);
-        $canAuthorizePayment = in_array($roleName, [
-            RoleConstants::CONTADOR, RoleConstants::ADMIN,
-        ], true);
+        $roleId = (int)$user->role_id;
+        $canRegisterPayment = $roleName === RoleConstants::ADMIN
+            || $this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_PETTY_CASH,
+                PettyCashConstants::STATUS_TESORERIA,
+            );
+        $canAuthorizePayment = $roleName === RoleConstants::ADMIN
+            || $this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_PETTY_CASH,
+                PettyCashConstants::STATUS_AUT_PAGO,
+            );
 
         // Synthesize a pseudo-payment from record columns so the shared
         // payment_section element can render it. Caja Menor stores a single

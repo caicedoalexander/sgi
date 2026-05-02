@@ -4,12 +4,14 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
 use App\Service\NoveltySignatureService;
+use App\Service\PipelineAuthorizationService;
 use DateTime;
 
 class NoveltyLiquidationDocsController extends AppController
@@ -24,6 +26,11 @@ class NoveltyLiquidationDocsController extends AppController
 
     private NoveltySignatureService $signatureService;
 
+    private PipelineAuthorizationService $pipelineAuth;
+
+    /**
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
@@ -32,6 +39,7 @@ class NoveltyLiquidationDocsController extends AppController
         $this->documentService = $container->get(NoveltyDocumentService::class);
         $this->observationService = $container->get(NoveltyObservationService::class);
         $this->signatureService = $container->get(NoveltySignatureService::class);
+        $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
     }
 
     /**
@@ -200,9 +208,24 @@ class NoveltyLiquidationDocsController extends AppController
         $currentUser = $user;
         $roleName = $this->_getUserRoleName($user);
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
-        $isTesoreriaEdit = ($roleName === RoleConstants::TESORERIA || $roleName === RoleConstants::ADMIN)
+        $roleId = (int)$user->role_id;
+        $canOpTesoreria = $roleName === RoleConstants::ADMIN
+            || $this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_NOVELTIES,
+                NoveltyConstants::STATUS_TESORERIA,
+            );
+        $canOpAutPago = $roleName === RoleConstants::ADMIN
+            || $this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_NOVELTIES,
+                NoveltyConstants::STATUS_AUT_PAGO,
+            );
+        $isTesoreriaEdit = $canOpTesoreria
             && $doc->pipeline_status === NoveltyConstants::STATUS_TESORERIA;
-        $isContadorAutPago = ($roleName === RoleConstants::CONTADOR || $roleName === RoleConstants::ADMIN)
+        $isContadorAutPago = $canOpAutPago
             && $doc->pipeline_status === NoveltyConstants::STATUS_AUT_PAGO;
         $this->set(compact(
             'doc',

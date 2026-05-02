@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\InvoiceConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
 use App\Constants\RoleConstants;
+use App\Service\PipelineAuthorizationService;
 use App\Service\RefundService;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
@@ -16,12 +18,17 @@ class RefundsController extends AppController
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     private RefundService $refundService;
+    private PipelineAuthorizationService $pipelineAuth;
 
+    /**
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
         $container = $this->getContainer();
         $this->refundService = $container->get(RefundService::class);
+        $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
     }
 
     private function _getCurrentUser(): object
@@ -311,12 +318,21 @@ class RefundsController extends AppController
         $user = $this->_getCurrentUser();
         $roleName = $this->_getUserRoleName($user);
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
-        $canRegisterPayment = in_array($roleName, [
-            RoleConstants::TESORERIA, RoleConstants::ADMIN,
-        ], true);
-        $canAuthorizePayment = in_array($roleName, [
-            RoleConstants::CONTADOR, RoleConstants::ADMIN,
-        ], true);
+        $roleId = (int)$user->role_id;
+        $canRegisterPayment = $roleName === RoleConstants::ADMIN
+            || $this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                RefundConstants::STATUS_TESORERIA,
+            );
+        $canAuthorizePayment = $roleName === RoleConstants::ADMIN
+            || $this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                RefundConstants::STATUS_AUT_PAGO,
+            );
 
         // Synthesize a pseudo-payment from record columns so the shared
         // payment_section element can render it. Reintegro stores a single
