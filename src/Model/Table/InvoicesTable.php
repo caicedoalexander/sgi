@@ -79,6 +79,10 @@ class InvoicesTable extends Table implements ExcelExportableInterface
             'foreignKey' => 'petty_cash_record_id',
             'joinType' => 'LEFT',
         ]);
+        $this->belongsTo('Refunds', [
+            'foreignKey' => 'refund_id',
+            'joinType' => 'LEFT',
+        ]);
         $this->belongsTo('Employees', [
             'foreignKey' => 'employee_id',
             'joinType' => 'LEFT',

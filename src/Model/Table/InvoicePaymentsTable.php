@@ -40,6 +40,10 @@ class InvoicePaymentsTable extends Table
             'foreignKey' => 'petty_cash_record_id',
             'joinType' => 'LEFT',
         ]);
+        $this->belongsTo('Refunds', [
+            'foreignKey' => 'refund_id',
+            'joinType' => 'LEFT',
+        ]);
         $this->belongsTo('AuthorizedByUsers', [
             'className' => 'Users',
             'foreignKey' => 'authorized_by',
