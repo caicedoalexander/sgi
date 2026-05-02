@@ -245,6 +245,8 @@ Si el método tiene side effects (persiste, transiciona estado, dispara eventos,
 | Servicio | Método | Retorno actual | Retorno nuevo |
 |---|---|---|---|
 | `InvoicePipelineService` | `saveAndAdvance()` | `array{saved, advanced, nextStatus, advanceErrors}` | `ServiceResult` con `data: ['advanced' => bool, 'nextStatus' => ?string, 'advanceErrors' => string[]]` |
+| `InvoicePipelineService` | `advance()` | `array{success, error, nextStatus}` | `ServiceResult` con `data: ['nextStatus' => ?string]` |
+| `InvoicePipelineService` | `regress()` | `array{success, error, previousStatus}` | `ServiceResult` con `data: ['previousStatus' => ?string]` |
 | `NoveltyPipelineService` | `advance()` | `array` | `ServiceResult` |
 | `NoveltyPipelineService` | `advanceGroup()` | `array` | `ServiceResult` |
 | `NoveltyPipelineService` | `reject()` | `array` | `ServiceResult` |
