@@ -10,15 +10,19 @@ use DateTimeInterface;
 use Exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use Throwable;
 
 class ExcelImportService
 {
+    private StructuredLogger $logger;
+
     /**
      * @param \App\Service\ExcelMappingService $mappingService Mapping service instance.
      */
     public function __construct(
         private readonly ExcelMappingService $mappingService,
     ) {
+        $this->logger = new StructuredLogger('ExcelImport');
     }
 
     /**
@@ -89,7 +93,12 @@ class ExcelImportService
             $spreadsheet = IOFactory::load($tempFilePath);
             $sheet = $spreadsheet->getActiveSheet();
             $rows = $sheet->toArray(null, false, false);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
+            // Lectura de Excel puede lanzar Exception o Error (PhpSpreadsheet, archivos corruptos).
+            $this->logger->warning('excel_read_failed', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
             $result->errors[] = 'No se pudo leer el archivo: ' . $e->getMessage();
 
             return $result;
@@ -266,7 +275,12 @@ class ExcelImportService
                 $dateObj = Date::excelToDateTimeObject((float)$value);
 
                 return $dateObj->format('Y-m-d');
-            } catch (Exception) {
+            } catch (Throwable $e) {
+                $this->logger->warning('excel_date_parse_failed', [
+                    'method' => __METHOD__,
+                    'exception' => $e->getMessage(),
+                ]);
+
                 return null;
             }
         }

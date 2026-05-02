@@ -5,9 +5,9 @@ namespace App\Service;
 
 use App\Constants\ContractTypeConstants;
 use Cake\ORM\TableRegistry;
-use Exception;
 use Laminas\Diactoros\UploadedFile;
 use setasign\Fpdi\Tcpdf\Fpdi;
+use Throwable;
 
 class LeaveDocumentService
 {
@@ -54,6 +54,13 @@ class LeaveDocumentService
         'employee_signature' => ['label' => 'Firma Funcionario', 'type' => 'image', 'group' => 'Firma'],
         'coordinator_signature' => ['label' => 'Firma Coordinador', 'type' => 'image', 'group' => 'Firma'],
     ];
+
+    private StructuredLogger $logger;
+
+    public function __construct()
+    {
+        $this->logger = new StructuredLogger('LeaveDocument');
+    }
 
     public function resolveTemplate(int $noveltyTypeId, ?string $contractType, ?int $temporaryOrgId): ?object
     {
@@ -363,7 +370,13 @@ class LeaveDocumentService
                     'width' => round((float)$size['width'], 2),
                     'height' => round((float)$size['height'], 2),
                 ];
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
+                // Lectura de PDF puede lanzar Exception o Error (FPDI, archivos corruptos).
+                $this->logger->warning('pdf_dimensions_failed', [
+                    'method' => __METHOD__,
+                    'exception' => $e->getMessage(),
+                ]);
+
                 return ['width' => $defaultW, 'height' => $defaultH];
             }
         }
