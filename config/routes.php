@@ -336,6 +336,43 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
 
+        // Refunds (Reintegros)
+        $builder->connect(
+            '/refunds/advance-status/{id}',
+            ['controller' => 'Refunds', 'action' => 'advanceStatus'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/refunds/regress-status/{id}',
+            ['controller' => 'Refunds', 'action' => 'regressStatus'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/refunds/remove-invoice/{recordId}/{invoiceId}',
+            ['controller' => 'Refunds', 'action' => 'removeInvoice'],
+            ['recordId' => '\d+', 'invoiceId' => '\d+', 'pass' => ['recordId', 'invoiceId']],
+        );
+        $builder->connect(
+            '/refunds/add-observation/{id}',
+            ['controller' => 'Refunds', 'action' => 'addObservation'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/refunds/register-payment/{id}',
+            ['controller' => 'Refunds', 'action' => 'registerPayment'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/refunds/authorize-payment/{id}',
+            ['controller' => 'Refunds', 'action' => 'authorizePayment'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/refunds/reject-payment/{id}',
+            ['controller' => 'Refunds', 'action' => 'rejectPayment'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+
         // Employee observations
         $builder->connect(
             '/employees/add-observation/{id}',
