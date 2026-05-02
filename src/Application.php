@@ -62,6 +62,7 @@ use App\Service\Pipeline\State\TesoreriaState;
 use App\Service\SidebarCounterService;
 use App\Service\Strategy\InvoiceApprovalStrategy;
 use App\Service\Strategy\NoveltyApprovalStrategy;
+use App\Service\Subscriber\LegalizationInitializerSubscriber;
 use App\Service\StructuredLogger;
 use App\Service\SystemSettingsService;
 use App\Service\WebhookService;
@@ -245,6 +246,12 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         $container->addShared(LinkedInvoiceLegalizer::class)
             ->addArgument(InvoiceHistoryService::class);
+
+        $container->addShared(LegalizationInitializerSubscriber::class)
+            ->addArguments([
+                AdvanceLegalizationService::class,
+                DocumentTypePolicyFactory::class,
+            ]);
 
         // === Strategies ===
         $container->addShared(InvoiceApprovalStrategy::class)
