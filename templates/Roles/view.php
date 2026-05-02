@@ -2,6 +2,9 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Role $role
+ * @var array<string, array<string, bool>> $pipelineMatrix
+ * @var array<string, string> $pipelineLabels
+ * @var array<string, array<string, string>> $stepLabels
  */
 $this->assign('title', 'Rol: ' . $role->name);
 ?>
@@ -11,7 +14,7 @@ $this->assign('title', 'Rol: ' . $role->name);
 </div>
 
 <div class="card card-primary mb-4">
-<div class="card-body">
+    <div class="card-body">
         <dl class="row mb-0">
             <dt class="col-sm-3">ID</dt>
             <dd class="col-sm-9"><?= $this->Number->format($role->id) ?></dd>
@@ -32,6 +35,26 @@ $this->assign('title', 'Rol: ' . $role->name);
         <?php if (!empty($userPermissions['roles']['can_delete'])): ?>
         <?= $this->Form->postLink('<i class="bi bi-trash me-1"></i>Eliminar', ['action' => 'delete', $role->id], ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
+    </div>
+</div>
+
+<div class="card card-primary mb-4">
+    <div class="card-body">
+        <h6 class="text-muted mb-3"><i class="bi bi-diagram-3 me-1"></i>Permisos de Pipeline</h6>
+        <?php foreach ($pipelineLabels as $pipeline => $pipelineLabel): ?>
+            <div class="mb-3">
+                <div class="fw-semibold mb-2"><?= h($pipelineLabel) ?></div>
+                <ul class="list-unstyled small mb-0">
+                <?php foreach ($stepLabels[$pipeline] ?? [] as $step => $stepLabel): ?>
+                    <?php $allowed = !empty($pipelineMatrix[$pipeline][$step]); ?>
+                    <li>
+                        <i class="bi <?= $allowed ? 'bi-check-circle text-success' : 'bi-x-circle text-muted' ?> me-1"></i>
+                        <?= h($stepLabel) ?>
+                    </li>
+                <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endforeach; ?>
     </div>
 </div>
 
