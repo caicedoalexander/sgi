@@ -7,6 +7,7 @@ use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\NoveltyConstants;
 use App\Constants\PettyCashConstants;
+use Cake\Cache\Cache;
 use Cake\Database\Exception\DatabaseException;
 use Cake\ORM\TableRegistry;
 
@@ -35,17 +36,23 @@ class SidebarCounterService
      */
     public function getCounters(string $roleName): array
     {
-        try {
-            return $this->_buildCounters($roleName);
-        } catch (DatabaseException $e) {
-            // UI degradable: si una query falla, el sidebar muestra ceros en lugar de romper la página.
-            $this->logger->error('sidebar_counters_failed', [
-                'role' => $roleName,
-                'exception' => $e->getMessage(),
-            ]);
+        return Cache::remember(
+            "sidebar_counters_{$roleName}",
+            function () use ($roleName) {
+                try {
+                    return $this->_buildCounters($roleName);
+                } catch (DatabaseException $e) {
+                    // UI degradable: si una query falla, el sidebar muestra ceros en lugar de romper la página.
+                    $this->logger->error('sidebar_counters_failed', [
+                        'role' => $roleName,
+                        'exception' => $e->getMessage(),
+                    ]);
 
-            return $this->_emptyCounters();
-        }
+                    return $this->_emptyCounters();
+                }
+            },
+            'sidebar',
+        );
     }
 
     private function _buildCounters(string $roleName): array
