@@ -3,8 +3,25 @@
  * @var \App\View\AppView $this
  * @var string $message
  * @var string $url
+ * @var \Throwable|null $error
  */
+
 use Cake\Core\Configure;
+use Cake\Http\Exception\ForbiddenException;
+
+if (isset($error) && $error instanceof ForbiddenException):
+    $this->setLayout('default');
+?>
+    <div class="sgi-forbidden-page">
+        <h1>Acceso restringido</h1>
+        <p><?= h($error->getMessage()) ?></p>
+        <p>Si crees que es un error, contacta al administrador.</p>
+        <a href="<?= $this->Url->build(['controller' => 'Dashboard', 'action' => 'index']) ?>"
+           class="sgi-btn-primary">Volver al inicio</a>
+    </div>
+<?php
+    return;
+endif;
 
 $this->setLayout('error');
 
