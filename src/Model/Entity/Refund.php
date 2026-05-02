@@ -68,7 +68,7 @@ class Refund extends Entity
             return trim(
                 ($emp->first_name ?? '')
                 . ' ' . ($emp->last_name1 ?? '')
-                . ' ' . ($emp->last_name2 ?? '')
+                . ' ' . ($emp->last_name2 ?? ''),
             );
         }
 

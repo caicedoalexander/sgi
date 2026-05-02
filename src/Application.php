@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Controller\AppController;
 use App\Middleware\CorrelationIdMiddleware;
 use App\Middleware\HostHeaderMiddleware;
 use App\Service\Adapter\CakeMailerAdapter;
@@ -51,7 +52,6 @@ use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PaymentSchedulingService;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
-use App\Service\RefundService;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
 use App\Service\Pipeline\InvoicePipelineStateRegistry;
 use App\Service\Pipeline\LinkedInvoiceLegalizer;
@@ -64,6 +64,7 @@ use App\Service\Pipeline\State\ContabilidadState;
 use App\Service\Pipeline\State\LegalizadaState;
 use App\Service\Pipeline\State\PagadaState;
 use App\Service\Pipeline\State\TesoreriaState;
+use App\Service\RefundService;
 use App\Service\SidebarCounterService;
 use App\Service\Strategy\InvoiceApprovalStrategy;
 use App\Service\Strategy\NoveltyApprovalStrategy;
@@ -159,7 +160,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
     public function services(ContainerInterface $container): void
     {
         // Expose container to AppController + traits via static accessor.
-        \App\Controller\AppController::setContainer($container);
+        AppController::setContainer($container);
 
         // === Infrastructure / Adapters ===
         $container->addShared(SystemSettingsService::class);

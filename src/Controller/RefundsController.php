@@ -187,7 +187,7 @@ class RefundsController extends AppController
                 fn($e) => trim(
                     ($e->first_name ?? '')
                     . ' ' . ($e->last_name1 ?? '')
-                    . ' ' . ($e->last_name2 ?? '')
+                    . ' ' . ($e->last_name2 ?? ''),
                 ),
             )
             ->toArray();
@@ -554,5 +554,4 @@ class RefundsController extends AppController
 
         return $this->redirect(['action' => 'edit', $id]);
     }
-
 }
