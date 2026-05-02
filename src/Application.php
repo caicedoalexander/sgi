@@ -319,6 +319,12 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 NoveltyPipelineService::class,
                 PettyCashService::class,
             ]);
+
+        // === Plan 6: Health checks ===
+        $container->addShared(\App\Service\HealthCheck\DatabaseHealthCheck::class);
+        $container->addShared(\App\Service\HealthCheck\CacheHealthCheck::class);
+        $container->addShared(\App\Service\HealthCheck\CircuitBreakerHealthCheck::class);
+        $container->addShared(\App\Service\HealthCheck\EmailLogHealthCheck::class);
     }
 
     public function events(EventManagerInterface $eventManager): EventManagerInterface
