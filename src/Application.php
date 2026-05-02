@@ -52,6 +52,7 @@ use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PaymentSchedulingService;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
+use App\Service\PipelineAuthorizationService;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
 use App\Service\Pipeline\InvoicePipelineStateRegistry;
 use App\Service\Pipeline\LinkedInvoiceLegalizer;
@@ -171,6 +172,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         // === Auth / Authorization ===
         $container->addShared(AuthorizationService::class);
+        $container->addShared(PipelineAuthorizationService::class);
         $container->addShared(ApprovalTokenService::class)
             ->addArguments([
                 InvoiceApprovalStrategy::class,
