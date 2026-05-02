@@ -51,6 +51,7 @@ use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PaymentSchedulingService;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
+use App\Service\RefundService;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
 use App\Service\Pipeline\InvoicePipelineStateRegistry;
 use App\Service\Pipeline\LinkedInvoiceLegalizer;
@@ -292,6 +293,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         // === Petty cash / payment scheduling / advances ===
         $container->addShared(PettyCashDocumentService::class);
         $container->addShared(PettyCashService::class)
+            ->addArgument(InvoiceHistoryService::class);
+        $container->addShared(RefundService::class)
             ->addArgument(InvoiceHistoryService::class);
         $container->addShared(PaymentSchedulingPipelineService::class);
         $container->addShared(PaymentSchedulingService::class)

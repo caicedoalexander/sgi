@@ -82,6 +82,7 @@ class AppController extends Controller
         'NoveltyTypes' => 'novelty_types',
         'LeaveDocumentTemplates' => 'leave_document_templates',
         'PettyCashRecords' => 'petty_cash',
+        'Refunds' => 'refunds',
         'NoveltyLiquidationDocs' => 'novelty_liquidation_docs',
         'BankingEntities' => 'banking_entities',
         'InvoicePayments' => 'invoices',
