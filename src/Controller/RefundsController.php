@@ -346,7 +346,7 @@ class RefundsController extends AppController
             ];
         }
 
-        $canRegress = $this->refundService->canRegress($roleName, $record->status);
+        $canRegress = $this->refundService->canRegress((int)$this->_getCurrentUser()->role_id, $roleName, $record->status);
         $previousStatus = $this->refundService->getPreviousStatus($record->status);
         $regressLockMessage = $this->refundService->getRegressionLockMessage($record);
         $pipelineLabels = RefundConstants::STATUS_LABELS;
@@ -409,6 +409,7 @@ class RefundsController extends AppController
 
         $result = $this->refundService->regress(
             $record,
+            (int)$user->role_id,
             $roleName,
             (int)$user->id,
             $reason,

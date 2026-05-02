@@ -301,7 +301,10 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(PettyCashService::class)
             ->addArgument(InvoiceHistoryService::class);
         $container->addShared(RefundService::class)
-            ->addArgument(InvoiceHistoryService::class);
+            ->addArguments([
+                InvoiceHistoryService::class,
+                PipelineAuthorizationService::class,
+            ]);
         $container->addShared(PaymentSchedulingPipelineService::class)
             ->addArgument(PipelineAuthorizationService::class);
         $container->addShared(PaymentSchedulingService::class)

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\Refund;
@@ -37,12 +38,15 @@ class RefundService
     ];
 
     private GroupedInvoiceService $grouped;
+    private PipelineAuthorizationService $pipelineAuth;
 
     /**
      * @param \App\Service\Interface\HistoryServiceInterface $historyService History service.
+     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth
      */
     public function __construct(
         HistoryServiceInterface $historyService,
+        ?PipelineAuthorizationService $pipelineAuth = null,
     ) {
         $this->grouped = new GroupedInvoiceService(
             documentType: InvoiceConstants::DOCTYPE_REINTEGRO,
@@ -51,6 +55,7 @@ class RefundService
             fkLabel: 'Reintegro',
             historyService: $historyService,
         );
+        $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
     }
 
     /**
@@ -449,7 +454,7 @@ class RefundService
     /**
      * Returns true if the role can regress the record from the current status.
      */
-    public function canRegress(string $roleName, string $currentStatus): bool
+    public function canRegress(int $roleId, string $roleName, string $currentStatus): bool
     {
         if ($this->getPreviousStatus($currentStatus) === null) {
             return false;
@@ -459,9 +464,12 @@ class RefundService
             return true;
         }
 
-        $allowed = RefundConstants::REGRESS_ROLE_BY_STATUS[$currentStatus] ?? [];
-
-        return in_array($roleName, $allowed, true);
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_REFUNDS,
+            $currentStatus,
+        );
     }
 
     /**
@@ -489,6 +497,7 @@ class RefundService
      */
     public function regress(
         Refund $record,
+        int $roleId,
         string $roleName,
         int $userId,
         string $reason,
@@ -496,7 +505,7 @@ class RefundService
         $reason = trim($reason);
         $currentStatus = $record->status;
 
-        if (!$this->canRegress($roleName, $currentStatus)) {
+        if (!$this->canRegress($roleId, $roleName, $currentStatus)) {
             $previous = $this->getPreviousStatus($currentStatus);
             $error = $previous === null
                 ? 'Este registro ya está en el primer paso del flujo.'

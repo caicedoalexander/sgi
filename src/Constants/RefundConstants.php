@@ -51,6 +51,11 @@ final class RefundConstants
         self::STATUS_PAGADO => null,
     ];
 
+    /**
+     * @deprecated Migrado a pipeline_permissions a partir del plan
+     *   2026-05-02-pipeline-permissions. Conservado solo por referencia
+     *   histórica; no se consulta desde el código.
+     */
     public const REGRESS_ROLE_BY_STATUS = [
         self::STATUS_CONTABILIDAD => [RoleConstants::CONTABILIDAD],
         self::STATUS_TESORERIA => [RoleConstants::TESORERIA],
