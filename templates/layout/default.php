@@ -142,7 +142,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             <li class="nav-item">
                                 <?= $this->Html->link(
                                     '<i class="bi bi-clock-history me-2"></i>Vencidas' .
-                                    ($overdueInvoicesCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $overdueInvoicesCount . '</span>' : ''),
+                                    (($overdueInvoicesCount ?? 0) > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . ($overdueInvoicesCount ?? 0) . '</span>' : ''),
                                     ['controller' => 'Invoices', 'action' => 'overdue'],
                                     ['class' => $navLink('Invoices', 'overdue') . ' d-flex align-items-center', 'escape' => false],
                                 ) ?>
@@ -347,7 +347,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             <li class="nav-item">
                                     <?= $this->Html->link(
                                         '<i class="bi bi-calendar-check me-2"></i>Vigentes' .
-                                        ($activeNoveltiesCount > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $activeNoveltiesCount . '</span>' : ''),
+                                        (($activeNoveltiesCount ?? 0) > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . ($activeNoveltiesCount ?? 0) . '</span>' : ''),
                                         ['controller' => 'EmployeeNovelties', 'action' => 'active'],
                                         ['class' => $navLink('EmployeeNovelties', 'active') . ' d-flex align-items-center', 'escape' => false],
                                     ) ?>

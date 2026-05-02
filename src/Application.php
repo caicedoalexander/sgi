@@ -157,6 +157,9 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
     public function services(ContainerInterface $container): void
     {
+        // Expose container to AppController + traits via static accessor.
+        \App\Controller\AppController::setContainer($container);
+
         // === Infrastructure / Adapters ===
         $container->addShared(SystemSettingsService::class);
         $container->addShared(StructuredLogger::class);
@@ -166,7 +169,11 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         // === Auth / Authorization ===
         $container->addShared(AuthorizationService::class);
-        $container->addShared(ApprovalTokenService::class);
+        $container->addShared(ApprovalTokenService::class)
+            ->addArguments([
+                InvoiceApprovalStrategy::class,
+                NoveltyApprovalStrategy::class,
+            ]);
 
         // === Email log + notifications (cycle: closure factory in EmailLog) ===
         $container->addShared(EmailLogService::class)

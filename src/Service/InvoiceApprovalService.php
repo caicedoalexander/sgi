@@ -41,13 +41,36 @@ class InvoiceApprovalService
      */
     public function assignApprovers(Invoice $invoice, array $approverUserIds, string $baseUrl, int $createdByUserId): ServiceResult
     {
-        $errors = [];
-        $approvals = [];
-
         if (empty($approverUserIds)) {
             return ServiceResult::fail(['Debe seleccionar al menos un aprobador']);
         }
 
+        $persistResult = $this->_persistApprovers($invoice, $approverUserIds, $baseUrl);
+        if (!$persistResult['success']) {
+            return ServiceResult::fail($persistResult['errors']);
+        }
+
+        $emailErrors = $this->_sendApprovalEmails($invoice, $persistResult['pending'], $createdByUserId);
+
+        if (!empty($emailErrors)) {
+            return ServiceResult::fail($emailErrors);
+        }
+
+        return ServiceResult::ok(['approvals' => $persistResult['approvals']]);
+    }
+
+    /**
+     * Persiste filas de invoice_approvals y devuelve la lista de pendientes
+     * de notificación (cada item tiene userId + approvalUrl). Solo escribe DB —
+     * no envía correos. Seguro de invocar dentro de una transacción.
+     *
+     * @return array{success: bool, approvals: array, pending: array, errors: array}
+     */
+    public function _persistApprovers(Invoice $invoice, array $approverUserIds, string $baseUrl): array
+    {
+        $errors = [];
+        $approvals = [];
+        $pending = [];
         $expiresAt = new DateTime('+48 hours');
 
         foreach ($approverUserIds as $userId) {
@@ -67,30 +90,50 @@ class InvoiceApprovalService
             }
 
             $approvals[] = $approval;
+            $pending[] = [
+                'userId' => (int)$userId,
+                'approvalUrl' => $baseUrl . '/approve/' . $token,
+            ];
+        }
 
-            // Send notification email
-            $approvalUrl = $baseUrl . '/approve/' . $token;
+        return [
+            'success' => empty($errors),
+            'approvals' => $approvals,
+            'pending' => $pending,
+            'errors' => $errors,
+        ];
+    }
+
+    /**
+     * Envía las notificaciones por correo. Debe ejecutarse FUERA de cualquier
+     * transacción de DB para evitar que un fallo SMTP o un save() de email_logs
+     * envenene una transacción externa con savepoints anidados.
+     *
+     * @param array<int, array{userId:int, approvalUrl:string}> $pending
+     * @return array<string> Errores recolectados (vacío si todo OK).
+     */
+    public function _sendApprovalEmails(Invoice $invoice, array $pending, int $createdByUserId): array
+    {
+        $errors = [];
+
+        foreach ($pending as $item) {
             try {
                 $this->notificationService->sendApprovalLinkNotification(
                     $invoice,
-                    $approvalUrl,
-                    (int)$userId,
+                    $item['approvalUrl'],
+                    $item['userId'],
                     $createdByUserId,
                 );
             } catch (Exception $e) {
                 $errors[] = sprintf(
                     'Aprobador asignado, pero el correo a usuario ID %d falló: %s. Puede reintentar desde el panel de notificaciones de la factura.',
-                    (int)$userId,
+                    $item['userId'],
                     $e->getMessage(),
                 );
             }
         }
 
-        if (!empty($errors)) {
-            return ServiceResult::fail($errors);
-        }
-
-        return ServiceResult::ok(['approvals' => $approvals]);
+        return $errors;
     }
 
     /**
@@ -334,7 +377,8 @@ class InvoiceApprovalService
 
         $connection = $this->invoiceApprovalsTable->getConnection();
 
-        return $connection->transactional(function () use ($invoice, $newApproverIds, $reason, $baseUrl, $userId) {
+        // DB writes inside transaction; emails sent after commit (side-effects fuera).
+        $persisted = $connection->transactional(function () use ($invoice, $newApproverIds, $reason, $baseUrl, $userId) {
             $previous = $this->getCurrentApprovals($invoice->id);
             $previousNames = array_map(
                 fn($a) => $a->user->full_name ?? $a->user->username ?? 'Usuario #' . $a->user_id,
@@ -381,8 +425,21 @@ class InvoiceApprovalService
                 'new_value' => (implode(', ', $newNames) ?: '—') . ' (Motivo: ' . $reason . ')',
             ]));
 
-            return $this->assignApprovers($invoice, $newApproverIds, $baseUrl, $userId);
+            return $this->_persistApprovers($invoice, $newApproverIds, $baseUrl);
         });
+
+        if (!$persisted['success']) {
+            return ServiceResult::fail($persisted['errors']);
+        }
+
+        // Envío SMTP fuera de la transacción: un fallo aquí ya no envenena el commit.
+        $emailErrors = $this->_sendApprovalEmails($invoice, $persisted['pending'], $userId);
+
+        if (!empty($emailErrors)) {
+            return ServiceResult::fail($emailErrors);
+        }
+
+        return ServiceResult::ok(['approvals' => $persisted['approvals']]);
     }
 
     /**

@@ -20,6 +20,9 @@ class EmailLogsTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+
+        // Serializa array <-> JSON para la columna payload (MySQL JSON type).
+        $this->getSchema()->setColumnType('payload', 'json');
     }
 
     public function validationDefault(Validator $validator): Validator

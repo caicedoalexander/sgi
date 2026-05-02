@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
+use App\Service\Strategy\ApprovalStrategyInterface;
 use App\Service\Strategy\InvoiceApprovalStrategy;
 use App\Service\Strategy\NoveltyApprovalStrategy;
 use Cake\ORM\TableRegistry;
@@ -25,17 +26,13 @@ class ApprovalTokenService
      */
     private array $strategies;
 
-    /**
-     * @param \App\Service\InvoiceHistoryService|null $historyService History service.
-     * @param \App\Service\NoveltyObservationService|null $observationService Observation service.
-     */
     public function __construct(
-        ?InvoiceHistoryService $historyService = null,
-        ?NoveltyObservationService $observationService = null,
+        InvoiceApprovalStrategy $invoiceStrategy,
+        NoveltyApprovalStrategy $noveltyStrategy,
     ) {
         $this->strategies = [
-            'invoices' => new InvoiceApprovalStrategy($historyService),
-            'employee_novelties' => new NoveltyApprovalStrategy($observationService),
+            'invoices' => $invoiceStrategy,
+            'employee_novelties' => $noveltyStrategy,
         ];
     }
 

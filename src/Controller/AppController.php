@@ -7,40 +7,49 @@ use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
 use App\Service\AuthorizationService;
 use App\Service\SidebarCounterService;
-use Cake\Controller\ComponentRegistry;
 use Cake\Controller\Controller;
+use Cake\Core\ContainerInterface;
 use Cake\Event\EventInterface;
-use Cake\Event\EventManagerInterface;
 use Cake\Http\Exception\ForbiddenException;
 use Cake\Http\Response;
-use Cake\Http\ServerRequest;
+use RuntimeException;
 
 class AppController extends Controller
 {
+    private static ?ContainerInterface $appContainer = null;
+
+    protected AuthorizationService $authService;
+
+    protected SidebarCounterService $counterService;
+
     /**
-     * @param \App\Service\AuthorizationService $authService Authorization service.
-     * @param \App\Service\SidebarCounterService $counterService Sidebar counters service.
-     * @param \Cake\Http\ServerRequest|null $request Request.
-     * @param \Cake\Http\Response|null $response Response.
-     * @param string|null $name Controller name.
-     * @param \Cake\Event\EventManagerInterface|null $eventManager Event manager.
-     * @param \Cake\Controller\ComponentRegistry|null $components Component registry.
+     * Stash the application container so controllers can resolve services on demand.
+     * Called once per request from Application::services().
      */
-    public function __construct(
-        protected readonly AuthorizationService $authService,
-        protected readonly SidebarCounterService $counterService,
-        ?ServerRequest $request = null,
-        ?Response $response = null,
-        ?string $name = null,
-        ?EventManagerInterface $eventManager = null,
-        ?ComponentRegistry $components = null,
-    ) {
-        parent::__construct($request, $response, $name, $eventManager, $components);
+    public static function setContainer(ContainerInterface $container): void
+    {
+        self::$appContainer = $container;
+    }
+
+    /**
+     * Resolve the application container. Available to controllers and traits
+     * (e.g. ExcelWizardTrait) that need to fetch services lazily.
+     */
+    public function getContainer(): ContainerInterface
+    {
+        if (self::$appContainer === null) {
+            throw new RuntimeException('Container not initialized. Application::services() must run first.');
+        }
+
+        return self::$appContainer;
     }
 
     public function initialize(): void
     {
         parent::initialize();
+
+        $this->authService = $this->getContainer()->get(AuthorizationService::class);
+        $this->counterService = $this->getContainer()->get(SidebarCounterService::class);
 
         $this->loadComponent('Flash');
         $this->loadComponent('Authentication.Authentication');

@@ -38,7 +38,7 @@ class EmployeeStatisticsService
                     'Employees' => ['fields' => ['id', 'first_name', 'last_name1', 'last_name2']],
                     'NoveltyTypes' => ['fields' => ['id', 'name']],
                 ])
-                ->orderByDesc('created')
+                ->orderByDesc('EmployeeNovelties.created')
                 ->limit($limit)
                 ->toArray();
         } catch (DatabaseException $e) {

@@ -53,7 +53,7 @@ class InvoiceStatisticsService
                 ->find()
                 ->select(['id', 'invoice_number', 'pipeline_status', 'area_approval', 'modified'])
                 ->contain(['Providers' => ['fields' => ['id', 'name']]])
-                ->orderByDesc('modified')
+                ->orderByDesc('Invoices.modified')
                 ->limit($limit)
                 ->toArray();
         } catch (DatabaseException $e) {

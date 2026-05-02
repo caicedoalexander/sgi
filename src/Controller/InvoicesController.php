@@ -7,7 +7,6 @@ use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Controller\Trait\ExcelWizardTrait;
-use App\Service\AuthorizationService;
 use App\Service\EmailLogService;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
@@ -15,11 +14,6 @@ use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
-use App\Service\SidebarCounterService;
-use Cake\Controller\ComponentRegistry;
-use Cake\Event\EventManagerInterface;
-use Cake\Http\Response;
-use Cake\Http\ServerRequest;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 
@@ -29,35 +23,25 @@ class InvoicesController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
-    /**
-     * @param \App\Service\InvoicePipelineService $pipeline Pipeline service.
-     * @param \App\Service\InvoiceFilterService $filterService Filter service.
-     * @param \App\Service\InvoiceDocumentService $documentService Document service.
-     * @param \App\Service\InvoiceApprovalService $approvalService Approval service.
-     * @param \App\Service\InvoicePaymentService $paymentService Payment service.
-     * @param \App\Service\AuthorizationService $authService Authorization service.
-     * @param \App\Service\SidebarCounterService $counterService Sidebar counters.
-     * @param \Cake\Http\ServerRequest|null $request Request.
-     * @param \Cake\Http\Response|null $response Response.
-     * @param string|null $name Controller name.
-     * @param \Cake\Event\EventManagerInterface|null $eventManager Event manager.
-     * @param \Cake\Controller\ComponentRegistry|null $components Component registry.
-     */
-    public function __construct(
-        private readonly InvoicePipelineService $pipeline,
-        private readonly InvoiceFilterService $filterService,
-        private readonly InvoiceDocumentService $documentService,
-        private readonly InvoiceApprovalService $approvalService,
-        private readonly InvoicePaymentService $paymentService,
-        AuthorizationService $authService,
-        SidebarCounterService $counterService,
-        ?ServerRequest $request = null,
-        ?Response $response = null,
-        ?string $name = null,
-        ?EventManagerInterface $eventManager = null,
-        ?ComponentRegistry $components = null,
-    ) {
-        parent::__construct($authService, $counterService, $request, $response, $name, $eventManager, $components);
+    private InvoicePipelineService $pipeline;
+
+    private InvoiceFilterService $filterService;
+
+    private InvoiceDocumentService $documentService;
+
+    private InvoiceApprovalService $approvalService;
+
+    private InvoicePaymentService $paymentService;
+
+    public function initialize(): void
+    {
+        parent::initialize();
+        $container = $this->getContainer();
+        $this->pipeline = $container->get(InvoicePipelineService::class);
+        $this->filterService = $container->get(InvoiceFilterService::class);
+        $this->documentService = $container->get(InvoiceDocumentService::class);
+        $this->approvalService = $container->get(InvoiceApprovalService::class);
+        $this->paymentService = $container->get(InvoicePaymentService::class);
     }
 
     private function _getCurrentUser(): object
