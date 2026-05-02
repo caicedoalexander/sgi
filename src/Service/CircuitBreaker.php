@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use Cake\Cache\Cache;
-use Cake\Log\Log;
 use RuntimeException;
 use Throwable;
 
@@ -13,6 +12,7 @@ class CircuitBreaker
     private string $name;
     private int $failureThreshold;
     private int $recoveryTimeoutSeconds;
+    private StructuredLogger $logger;
 
     private const STATE_CLOSED = 'closed';
     private const STATE_OPEN = 'open';
@@ -26,6 +26,7 @@ class CircuitBreaker
         $this->name = $name;
         $this->failureThreshold = $failureThreshold;
         $this->recoveryTimeoutSeconds = $recoveryTimeoutSeconds;
+        $this->logger = new StructuredLogger('CircuitBreaker.' . $name);
     }
 
     /**
@@ -44,7 +45,7 @@ class CircuitBreaker
             if ($this->_shouldAttemptReset()) {
                 $this->_setState(self::STATE_HALF_OPEN);
             } else {
-                Log::warning("CircuitBreaker [{$this->name}]: OPEN — skipping call");
+                $this->logger->warning('open_skip_call', ['name' => $this->name]);
 
                 if ($fallback) {
                     return $fallback();
@@ -61,7 +62,10 @@ class CircuitBreaker
             return $result;
         } catch (Throwable $e) {
             $this->_onFailure();
-            Log::error("CircuitBreaker [{$this->name}]: failure — {$e->getMessage()}");
+            $this->logger->error('call_failure', [
+                'name' => $this->name,
+                'exception' => $e->getMessage(),
+            ]);
 
             if ($fallback) {
                 return $fallback();
@@ -90,7 +94,10 @@ class CircuitBreaker
         if ($count >= $this->failureThreshold) {
             $this->_setState(self::STATE_OPEN);
             $this->_setOpenedAt(time());
-            Log::warning("CircuitBreaker [{$this->name}]: OPENED after {$count} failures");
+            $this->logger->warning('opened', [
+                'name' => $this->name,
+                'failures' => $count,
+            ]);
         }
     }
 
