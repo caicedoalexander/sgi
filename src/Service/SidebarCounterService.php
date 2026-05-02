@@ -7,11 +7,13 @@ use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\NoveltyConstants;
 use App\Constants\PettyCashConstants;
+use Cake\Database\Exception\DatabaseException;
 use Cake\ORM\TableRegistry;
-use Exception;
 
 class SidebarCounterService
 {
+    private StructuredLogger $logger;
+
     /**
      * @param \App\Service\InvoicePipelineService $invoicePipeline Invoice pipeline.
      * @param \App\Service\NoveltyPipelineService $noveltyPipeline Novelty pipeline.
@@ -22,6 +24,7 @@ class SidebarCounterService
         private readonly NoveltyPipelineService $noveltyPipeline,
         private readonly PettyCashService $pettyCashService,
     ) {
+        $this->logger = new StructuredLogger('Sidebar');
     }
 
     /**
@@ -33,59 +36,75 @@ class SidebarCounterService
     public function getCounters(string $roleName): array
     {
         try {
-            return [
-                'sidebarCounters' => $this->getInvoiceStatusCounters($roleName),
-                'totalInvoicesCount' => $this->getCount(
-                    'Invoices',
-                    ['document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO],
-                ),
-                'rejectedInvoicesCount' => $this->getCount(
-                    'Invoices',
-                    [
-                        'area_approval' => InvoiceConstants::APPROVAL_REJECTED,
-                        'document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
-                    ],
-                ),
-                'overdueInvoicesCount' => $this->getOverdueInvoicesCount(),
-                'pettyCashCount' => $this->getCount(
-                    'PettyCashRecords',
-                    ['status !=' => PettyCashConstants::STATUS_PAGADO],
-                ),
-                'pettyCashMineCount' => $this->getPettyCashMineCount($roleName),
-                'advancesMineCount' => $this->getAdvancesMineCount($roleName),
-                'noveltiesCount' => $this->getNoveltiesCount($roleName),
-                'rejectedNoveltiesCount' => $this->getCount(
-                    'EmployeeNovelties',
-                    ['pipeline_status' => NoveltyConstants::STATUS_RECHAZADA],
-                ),
-                'activeNoveltiesCount' => $this->getActiveNoveltiesCount(),
-                'liquidationMineCount' => $this->getLiquidationMineCount($roleName),
-                'liquidationRejectedCount' => $this->getCount(
-                    'NoveltyLiquidationDocs',
-                    ['pipeline_status' => NoveltyConstants::STATUS_RECHAZADA],
-                ),
-                'advancesPendingLegalizationCount' => $this->getCount(
-                    'AdvanceLegalizations',
-                    ['status !=' => AdvanceConstants::STATUS_LEGALIZADA],
-                ),
-            ];
-        } catch (Exception $e) {
-            return [
-                'sidebarCounters' => [],
-                'totalInvoicesCount' => 0,
-                'rejectedInvoicesCount' => 0,
-                'overdueInvoicesCount' => 0,
-                'pettyCashCount' => 0,
-                'pettyCashMineCount' => 0,
-                'advancesMineCount' => 0,
-                'noveltiesCount' => 0,
-                'rejectedNoveltiesCount' => 0,
-                'activeNoveltiesCount' => 0,
-                'liquidationMineCount' => 0,
-                'liquidationRejectedCount' => 0,
-                'advancesPendingLegalizationCount' => 0,
-            ];
+            return $this->_buildCounters($roleName);
+        } catch (DatabaseException $e) {
+            // UI degradable: si una query falla, el sidebar muestra ceros en lugar de romper la página.
+            $this->logger->error('sidebar_counters_failed', [
+                'role' => $roleName,
+                'exception' => $e->getMessage(),
+            ]);
+
+            return $this->_emptyCounters();
         }
+    }
+
+    private function _buildCounters(string $roleName): array
+    {
+        return [
+            'sidebarCounters' => $this->getInvoiceStatusCounters($roleName),
+            'totalInvoicesCount' => $this->getCount(
+                'Invoices',
+                ['document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO],
+            ),
+            'rejectedInvoicesCount' => $this->getCount(
+                'Invoices',
+                [
+                    'area_approval' => InvoiceConstants::APPROVAL_REJECTED,
+                    'document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
+                ],
+            ),
+            'overdueInvoicesCount' => $this->getOverdueInvoicesCount(),
+            'pettyCashCount' => $this->getCount(
+                'PettyCashRecords',
+                ['status !=' => PettyCashConstants::STATUS_PAGADO],
+            ),
+            'pettyCashMineCount' => $this->getPettyCashMineCount($roleName),
+            'advancesMineCount' => $this->getAdvancesMineCount($roleName),
+            'noveltiesCount' => $this->getNoveltiesCount($roleName),
+            'rejectedNoveltiesCount' => $this->getCount(
+                'EmployeeNovelties',
+                ['pipeline_status' => NoveltyConstants::STATUS_RECHAZADA],
+            ),
+            'activeNoveltiesCount' => $this->getActiveNoveltiesCount(),
+            'liquidationMineCount' => $this->getLiquidationMineCount($roleName),
+            'liquidationRejectedCount' => $this->getCount(
+                'NoveltyLiquidationDocs',
+                ['pipeline_status' => NoveltyConstants::STATUS_RECHAZADA],
+            ),
+            'advancesPendingLegalizationCount' => $this->getCount(
+                'AdvanceLegalizations',
+                ['status !=' => AdvanceConstants::STATUS_LEGALIZADA],
+            ),
+        ];
+    }
+
+    private function _emptyCounters(): array
+    {
+        return [
+            'sidebarCounters' => [],
+            'totalInvoicesCount' => 0,
+            'rejectedInvoicesCount' => 0,
+            'overdueInvoicesCount' => 0,
+            'pettyCashCount' => 0,
+            'pettyCashMineCount' => 0,
+            'advancesMineCount' => 0,
+            'noveltiesCount' => 0,
+            'rejectedNoveltiesCount' => 0,
+            'activeNoveltiesCount' => 0,
+            'liquidationMineCount' => 0,
+            'liquidationRejectedCount' => 0,
+            'advancesPendingLegalizationCount' => 0,
+        ];
     }
 
     private function getInvoiceStatusCounters(string $roleName): array
