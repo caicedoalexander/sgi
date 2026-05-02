@@ -3,30 +3,41 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Service\Resilience\Retryer;
+use App\Service\Resilience\RetryPolicy;
 use Cake\Http\Client;
+use Cake\Http\Client\Response;
 use Exception;
 
+/**
+ * Outbound HTTP client con CircuitBreaker, retry y timeouts diferenciados.
+ * - sendJson / post genérico: timeout 5s (interactivo).
+ * - sendFile (multipart): timeout 30s (uploads legítimamente lentos).
+ * - 4xx: no se reintenta (filtro del Retryer no se activa porque el handler decide
+ *   devolver inmediatamente sin tirar Exception).
+ * - 5xx / network error: reintenta (1s, 2s, 4s).
+ * - CircuitBreaker envuelve al Retryer: si el CB está abierto, el fallback retorna
+ *   "Circuit breaker is open" sin tocar el remoto.
+ */
 class WebhookService
 {
-    private const MAX_RETRIES = 3;
-    private const BASE_DELAY_MS = 1000; // 1s, 2s, 4s
+    private const TIMEOUT_JSON_SECONDS = 5;
+    private const TIMEOUT_FILE_SECONDS = 30;
 
     private Client $client;
-    private int $maxRetries;
     private CircuitBreaker $circuitBreaker;
+    private Retryer $retryer;
     private StructuredLogger $logger;
 
-    /**
-     * @param int $timeout Request timeout in seconds.
-     * @param int $maxRetries Maximum retry attempts on server errors.
-     */
-    public function __construct(int $timeout = 30, int $maxRetries = self::MAX_RETRIES)
+    public function __construct()
     {
-        $this->client = new Client([
-            'timeout' => $timeout,
-        ]);
-        $this->maxRetries = $maxRetries;
-        $this->circuitBreaker = new CircuitBreaker('webhook', failureThreshold: 3, recoveryTimeoutSeconds: 120);
+        $this->client = new Client();
+        $this->circuitBreaker = new CircuitBreaker(
+            'webhook',
+            failureThreshold: 3,
+            recoveryTimeoutSeconds: 120,
+        );
+        $this->retryer = new Retryer(RetryPolicy::default(), context: 'webhook');
         $this->logger = new StructuredLogger('Webhook');
     }
 
@@ -37,7 +48,11 @@ class WebhookService
     {
         $headers['Content-Type'] = 'application/json';
 
-        return $this->post($url, json_encode($data), $headers);
+        return $this->dispatch(fn () => $this->client->post(
+            $url,
+            (string)json_encode($data),
+            ['headers' => $headers, 'timeout' => self::TIMEOUT_JSON_SECONDS],
+        ));
     }
 
     /**
@@ -59,77 +74,67 @@ class WebhookService
             ];
         }
 
-        return $this->executeWithRetry(function () use ($url, $filePath, $fieldName, $extraData, $headers) {
-            return $this->client->post($url, array_merge($extraData, [
-                $fieldName => fopen($filePath, 'r'),
-            ]), [
+        return $this->dispatch(fn () => $this->client->post(
+            $url,
+            array_merge($extraData, [$fieldName => fopen($filePath, 'r')]),
+            [
                 'headers' => $headers,
                 'type' => 'multipart/form-data',
-            ]);
-        });
+                'timeout' => self::TIMEOUT_FILE_SECONDS,
+            ],
+        ));
     }
 
     /**
-     * Generic POST request.
+     * Generic POST request (treats body as JSON-shaped string; uses JSON timeout).
      */
     public function post(string $url, mixed $body, array $headers = []): array
     {
-        return $this->executeWithRetry(function () use ($url, $body, $headers) {
-            return $this->client->post($url, (string)$body, [
-                'headers' => $headers,
-            ]);
-        });
+        return $this->dispatch(fn () => $this->client->post(
+            $url,
+            (string)$body,
+            ['headers' => $headers, 'timeout' => self::TIMEOUT_JSON_SECONDS],
+        ));
     }
 
     /**
-     * Execute an HTTP request with exponential backoff retry.
-     *
-     * @param callable $request Closure that performs the HTTP call and returns a Response.
-     * @return array{success: bool, statusCode: int, body: string, error: ?string}
+     * Wrap el closure HTTP en CircuitBreaker → Retryer → request.
+     * 4xx no es retriable: se devuelve inmediatamente como respuesta normal.
+     * 5xx / network error: throw Exception → Retryer reintenta hasta agotar.
      */
-    private function executeWithRetry(callable $request): array
+    private function dispatch(callable $request): array
     {
         return $this->circuitBreaker->call(
-            function () use ($request) {
-                $lastException = null;
+            fn () => $this->retryer->run(function () use ($request) {
+                /** @var Response $response */
+                $response = $request();
 
-                for ($attempt = 0; $attempt <= $this->maxRetries; $attempt++) {
-                    try {
-                        $response = $request();
-
-                        if ($response->isOk() || ($response->getStatusCode() >= 400 && $response->getStatusCode() < 500)) {
-                            return [
-                                'success' => $response->isOk(),
-                                'statusCode' => $response->getStatusCode(),
-                                'body' => (string)$response->getBody(),
-                                'error' => $response->isOk() ? null : "HTTP {$response->getStatusCode()}",
-                            ];
-                        }
-
-                        $lastException = new Exception("HTTP {$response->getStatusCode()}");
-                    } catch (Exception $e) {
-                        $lastException = $e;
-                    }
-
-                    if ($attempt < $this->maxRetries) {
-                        $delayMs = self::BASE_DELAY_MS * (2 ** $attempt);
-                        usleep($delayMs * 1000);
-                        $msg = $lastException->getMessage();
-                        $retryNum = $attempt + 1;
-                        $this->logger->warning("Retry #{$retryNum} after {$delayMs}ms", ['error' => $msg]);
-                    }
+                if ($response->getStatusCode() >= 400 && $response->getStatusCode() < 500) {
+                    return $this->shape($response);
                 }
 
-                throw new Exception("Retries exhausted: {$lastException->getMessage()}");
-            },
-            function () {
-                return [
-                    'success' => false,
-                    'statusCode' => 0,
-                    'body' => '',
-                    'error' => 'Circuit breaker is open — external service unavailable',
-                ];
-            },
+                if (!$response->isOk()) {
+                    throw new Exception("HTTP {$response->getStatusCode()}");
+                }
+
+                return $this->shape($response);
+            }),
+            fn () => [
+                'success' => false,
+                'statusCode' => 0,
+                'body' => '',
+                'error' => 'Circuit breaker is open — external service unavailable',
+            ],
         );
+    }
+
+    private function shape(Response $response): array
+    {
+        return [
+            'success' => $response->isOk(),
+            'statusCode' => $response->getStatusCode(),
+            'body' => (string)$response->getBody(),
+            'error' => $response->isOk() ? null : "HTTP {$response->getStatusCode()}",
+        ];
     }
 }
