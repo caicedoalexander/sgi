@@ -49,6 +49,7 @@ use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
 use App\Service\Pipeline\InvoicePipelineStateRegistry;
+use App\Service\Pipeline\LinkedInvoiceLegalizer;
 use App\Service\Pipeline\Policy\AnticipoDocumentTypePolicy;
 use App\Service\Pipeline\Policy\LegalizacionDocumentTypePolicy;
 use App\Service\Pipeline\Policy\StandardDocumentTypePolicy;
@@ -237,6 +238,10 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 AnticipoDocumentTypePolicy::class,
                 LegalizacionDocumentTypePolicy::class,
             ]);
+
+        // === Plan 5: Domain events — services + subscribers ===
+        $container->addShared(LinkedInvoiceLegalizer::class)
+            ->addArgument(InvoiceHistoryService::class);
 
         // === Strategies ===
         $container->addShared(InvoiceApprovalStrategy::class)
