@@ -21,6 +21,10 @@ use App\Service\EmployeeHistoryService;
 use App\Service\ExcelImportService;
 use App\Service\ExcelMappingService;
 use App\Service\ExcelService;
+use App\Service\HealthCheck\CacheHealthCheck;
+use App\Service\HealthCheck\CircuitBreakerHealthCheck;
+use App\Service\HealthCheck\DatabaseHealthCheck;
+use App\Service\HealthCheck\EmailLogHealthCheck;
 use App\Service\Interface\MailerInterface;
 use App\Service\Interface\SpreadsheetReaderInterface;
 use App\Service\InvoiceApprovalService;
@@ -62,10 +66,10 @@ use App\Service\Pipeline\State\TesoreriaState;
 use App\Service\SidebarCounterService;
 use App\Service\Strategy\InvoiceApprovalStrategy;
 use App\Service\Strategy\NoveltyApprovalStrategy;
+use App\Service\StructuredLogger;
 use App\Service\Subscriber\LegalizationInitializerSubscriber;
 use App\Service\Subscriber\LinkedInvoicesPromoterSubscriber;
 use App\Service\Subscriber\RefundOutcomeSubscriber;
-use App\Service\StructuredLogger;
 use App\Service\SystemSettingsService;
 use App\Service\WebhookService;
 use Authentication\AuthenticationService;
@@ -242,7 +246,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ]);
 
         // === Plan 5: Domain events — services + subscribers ===
-        $container->addShared(EventManagerInterface::class, fn () => EventManager::instance());
+        $container->addShared(EventManagerInterface::class, fn() => EventManager::instance());
 
         $container->addShared(LinkedInvoiceLegalizer::class)
             ->addArgument(InvoiceHistoryService::class);
@@ -321,10 +325,10 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ]);
 
         // === Plan 6: Health checks ===
-        $container->addShared(\App\Service\HealthCheck\DatabaseHealthCheck::class);
-        $container->addShared(\App\Service\HealthCheck\CacheHealthCheck::class);
-        $container->addShared(\App\Service\HealthCheck\CircuitBreakerHealthCheck::class);
-        $container->addShared(\App\Service\HealthCheck\EmailLogHealthCheck::class);
+        $container->addShared(DatabaseHealthCheck::class);
+        $container->addShared(CacheHealthCheck::class);
+        $container->addShared(CircuitBreakerHealthCheck::class);
+        $container->addShared(EmailLogHealthCheck::class);
     }
 
     public function events(EventManagerInterface $eventManager): EventManagerInterface

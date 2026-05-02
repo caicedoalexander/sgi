@@ -11,7 +11,9 @@ use App\Service\Pipeline\DocumentTypePolicyFactory;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
+use Cake\Utility\Text;
 use DateTimeInterface;
+use PDOException;
 
 class InvoicePaymentService
 {
@@ -201,7 +203,7 @@ class InvoicePaymentService
 
         $idempotencyKey = isset($paymentData['idempotency_key']) && trim((string)$paymentData['idempotency_key']) !== ''
             ? trim((string)$paymentData['idempotency_key'])
-            : \Cake\Utility\Text::uuid();
+            : Text::uuid();
 
         // Short-circuit: si ya existe un pago con esta key, devolver éxito apuntando
         // a esa fila — operación repetida, idempotente.
@@ -246,7 +248,7 @@ class InvoicePaymentService
 
                     return ServiceResult::fail('No se pudo registrar el pago.' . (!empty($errors) ? ' ' . implode(', ', $errors) : ''));
                 }
-            } catch (\PDOException $e) {
+            } catch (PDOException $e) {
                 // SQLSTATE 23000 = integrity constraint violation (duplicate key).
                 if ($e->getCode() === '23000') {
                     return ServiceResult::ok('Pago ya registrado (operación repetida).');
