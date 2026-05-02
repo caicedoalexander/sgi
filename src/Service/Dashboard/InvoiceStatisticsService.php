@@ -4,14 +4,22 @@ declare(strict_types=1);
 namespace App\Service\Dashboard;
 
 use App\Constants\InvoiceConstants;
+use App\Service\StructuredLogger;
+use Cake\Database\Exception\DatabaseException;
 use Cake\ORM\TableRegistry;
-use Exception;
 
 /**
  * Invoice-related dashboard statistics.
  */
 class InvoiceStatisticsService
 {
+    private StructuredLogger $logger;
+
+    public function __construct()
+    {
+        $this->logger = new StructuredLogger('Dashboard.InvoiceStats');
+    }
+
     /**
      * Get invoice pipeline status counts.
      *
@@ -48,7 +56,13 @@ class InvoiceStatisticsService
                 ->orderByDesc('modified')
                 ->limit($limit)
                 ->toArray();
-        } catch (Exception $e) {
+        } catch (DatabaseException $e) {
+            // UI degradable: dashboard no debe romper si la query de "recientes" falla.
+            $this->logger->error('recent_invoices_query_failed', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
             return [];
         }
     }
@@ -114,7 +128,13 @@ class InvoiceStatisticsService
                 'avg_amount' => (float)($avgAmount->avg ?? 0),
                 'overdue' => $overdue,
             ];
-        } catch (Exception $e) {
+        } catch (DatabaseException $e) {
+            // UI degradable: dashboard muestra stats vacíos en lugar de fallar.
+            $this->logger->error('financial_stats_query_failed', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
             return [];
         }
     }
@@ -168,7 +188,13 @@ class InvoiceStatisticsService
                 'donut_status' => $statusAmounts,
                 'monthly' => $monthlyData,
             ];
-        } catch (Exception $e) {
+        } catch (DatabaseException $e) {
+            // UI degradable: dashboard sin charts en lugar de fallar.
+            $this->logger->error('chart_data_query_failed', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
             return [];
         }
     }
@@ -187,7 +213,14 @@ class InvoiceStatisticsService
             }
 
             return $query->count();
-        } catch (Exception $e) {
+        } catch (DatabaseException $e) {
+            // UI degradable: contador queda en 0 si la query falla.
+            $this->logger->error('count_query_failed', [
+                'method' => __METHOD__,
+                'table' => $tableName,
+                'exception' => $e->getMessage(),
+            ]);
+
             return 0;
         }
     }
