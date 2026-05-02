@@ -42,6 +42,16 @@ class Refund extends Entity
         return $this->status === RefundConstants::STATUS_AGRUPACION;
     }
 
+    public function isContabilidad(): bool
+    {
+        return $this->status === RefundConstants::STATUS_CONTABILIDAD;
+    }
+
+    public function isTesoreria(): bool
+    {
+        return $this->status === RefundConstants::STATUS_TESORERIA;
+    }
+
     public function isPagado(): bool
     {
         return $this->status === RefundConstants::STATUS_PAGADO;
