@@ -736,16 +736,17 @@ class EmployeeNoveltiesController extends AppController
 
         $result = $this->pipelineService->advance($novelty, $user->id);
 
-        if ($result['success']) {
+        if ($result->success) {
+            $nextStatus = $result->data['nextStatus'] ?? null;
             $this->historyService->recordStatusChange(
                 (int)$novelty->id,
                 $originalStatus,
-                $result['nextStatus'],
+                $nextStatus,
                 $user->id,
             );
-            $this->Flash->success('Novedad avanzada a: ' . NoveltyConstants::STATUS_LABELS[$result['nextStatus']]);
+            $this->Flash->success('Novedad avanzada a: ' . (NoveltyConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus));
         } else {
-            $this->Flash->error($result['error']);
+            $this->Flash->error($result->firstError() ?? 'No se pudo avanzar la novedad.');
         }
 
         return $this->redirect(['action' => 'edit', $id]);
@@ -765,7 +766,7 @@ class EmployeeNoveltiesController extends AppController
         $observations = $this->request->getData('observations');
         $result = $this->pipelineService->reject($novelty, $user->id, $observations);
 
-        if ($result['success']) {
+        if ($result->success) {
             $this->historyService->recordStatusChange(
                 (int)$novelty->id,
                 $originalStatus,
@@ -774,7 +775,7 @@ class EmployeeNoveltiesController extends AppController
             );
             $this->Flash->success('Novedad rechazada.');
         } else {
-            $this->Flash->error($result['error']);
+            $this->Flash->error($result->firstError() ?? 'No se pudo rechazar la novedad.');
         }
 
         return $this->redirect(['action' => 'edit', $id]);

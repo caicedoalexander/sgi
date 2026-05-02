@@ -207,28 +207,29 @@ class NoveltyPipelineService
     /**
      * Advance a single novelty individually.
      * Blocked if novelty has a liquidation_doc_id.
+     *
+     * @return ServiceResult on success: data = ['nextStatus' => string]
      */
-    public function advance(EmployeeNovelty $novelty, int $userId): array
+    public function advance(EmployeeNovelty $novelty, int $userId): ServiceResult
     {
         if ($novelty->isGrouped()) {
-            return [
-                'success' => false,
-                'error' => 'Esta novedad pertenece a un documento de liquidación. Debe avanzar desde el documento grupal.',
-            ];
+            return ServiceResult::fail([
+                'Esta novedad pertenece a un documento de liquidación. Debe avanzar desde el documento grupal.',
+            ]);
         }
 
         if ($novelty->isRejected()) {
-            return ['success' => false, 'error' => 'La novedad fue rechazada. El flujo ha terminado.'];
+            return ServiceResult::fail(['La novedad fue rechazada. El flujo ha terminado.']);
         }
 
         $errors = $this->validateTransition($novelty, $novelty->pipeline_status);
         if (!empty($errors)) {
-            return ['success' => false, 'error' => implode(' ', $errors)];
+            return ServiceResult::fail($errors);
         }
 
         $nextStatus = $this->getNextStatus($novelty);
         if (!$nextStatus) {
-            return ['success' => false, 'error' => 'Esta novedad ya está en el estado final.'];
+            return ServiceResult::fail(['Esta novedad ya está en el estado final.']);
         }
 
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
@@ -240,20 +241,22 @@ class NoveltyPipelineService
         });
 
         if (!$result) {
-            return ['success' => false, 'error' => 'No se pudo avanzar el estado.'];
+            return ServiceResult::fail(['No se pudo avanzar el estado.']);
         }
 
-        return ['success' => true, 'error' => null, 'nextStatus' => $nextStatus];
+        return ServiceResult::ok(['nextStatus' => $nextStatus]);
     }
 
     /**
      * Advance all novelties in a liquidation document group.
+     *
+     * @return ServiceResult on success: data = ['nextStatus' => string]
      */
-    public function advanceGroup(object $liquidationDoc, int $userId): array
+    public function advanceGroup(object $liquidationDoc, int $userId): ServiceResult
     {
         $errors = $this->validateGroupTransition($liquidationDoc);
         if (!empty($errors)) {
-            return ['success' => false, 'errors' => $errors];
+            return ServiceResult::fail($errors);
         }
 
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
@@ -266,12 +269,12 @@ class NoveltyPipelineService
 
         $firstMember = $members->first();
         if (!$firstMember) {
-            return ['success' => false, 'errors' => ['No hay novedades en este documento de liquidación.']];
+            return ServiceResult::fail(['No hay novedades en este documento de liquidación.']);
         }
 
         $nextGroupStatus = $this->getNextStatus($firstMember, $firstMember->novelty_type);
         if (!$nextGroupStatus) {
-            return ['success' => false, 'errors' => ['El documento ya está en el estado final.']];
+            return ServiceResult::fail(['El documento ya está en el estado final.']);
         }
 
         $saved = $noveltiesTable->getConnection()->transactional(
@@ -293,19 +296,19 @@ class NoveltyPipelineService
         );
 
         if (!$saved) {
-            return ['success' => false, 'errors' => ['No se pudo avanzar el grupo.']];
+            return ServiceResult::fail(['No se pudo avanzar el grupo.']);
         }
 
-        return ['success' => true, 'errors' => [], 'nextStatus' => $nextGroupStatus];
+        return ServiceResult::ok(['nextStatus' => $nextGroupStatus]);
     }
 
     /**
      * Reject a novelty (from any stage).
      */
-    public function reject(EmployeeNovelty $novelty, int $userId, ?string $observations = null): array
+    public function reject(EmployeeNovelty $novelty, int $userId, ?string $observations = null): ServiceResult
     {
         if ($novelty->isRejected()) {
-            return ['success' => false, 'error' => 'La novedad ya está rechazada.'];
+            return ServiceResult::fail(['La novedad ya está rechazada.']);
         }
 
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
@@ -318,10 +321,10 @@ class NoveltyPipelineService
         }
 
         if (!$noveltiesTable->save($novelty)) {
-            return ['success' => false, 'error' => 'No se pudo rechazar la novedad.'];
+            return ServiceResult::fail(['No se pudo rechazar la novedad.']);
         }
 
-        return ['success' => true, 'error' => null];
+        return ServiceResult::ok();
     }
 
     /**

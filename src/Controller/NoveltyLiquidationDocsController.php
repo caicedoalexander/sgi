@@ -255,14 +255,15 @@ class NoveltyLiquidationDocsController extends AppController
 
         $result = $this->pipelineService->advanceGroup($doc, $user->id);
 
-        if ($result['success']) {
-            $label = NoveltyConstants::STATUS_LABELS[$result['nextStatus']];
+        if ($result->success) {
+            $nextStatus = $result->data['nextStatus'] ?? null;
+            $label = NoveltyConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
             $this->Flash->success('Documento de liquidación avanzado a: ' . $label);
 
             return $this->redirect(['action' => 'index']);
         }
 
-        foreach ($result['errors'] as $error) {
+        foreach ($result->errors as $error) {
             $this->Flash->error($error);
         }
 
