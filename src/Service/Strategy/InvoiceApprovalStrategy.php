@@ -7,12 +7,15 @@ use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePipelineService;
+use App\Service\StructuredLogger;
+use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\ORM\TableRegistry;
 use DateTime;
-use Exception;
 
 class InvoiceApprovalStrategy implements ApprovalStrategyInterface
 {
+    private StructuredLogger $logger;
+
     /**
      * @param \App\Service\InvoiceHistoryService $historyService History service.
      * @param \App\Service\InvoicePipelineService $pipeline Invoice pipeline service.
@@ -21,6 +24,7 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
         private readonly InvoiceHistoryService $historyService,
         private readonly InvoicePipelineService $pipeline,
     ) {
+        $this->logger = new StructuredLogger('Strategy.InvoiceApproval');
     }
 
     /**
@@ -92,7 +96,13 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
 
         try {
             return $table->get($entityId, contain: ['Providers', 'InvoiceDocuments']);
-        } catch (Exception $e) {
+        } catch (RecordNotFoundException $e) {
+            // Finder nullable: la factura puede no existir si fue eliminada después de emitir el token.
+            $this->logger->warning('entity_not_found', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
             return null;
         }
     }

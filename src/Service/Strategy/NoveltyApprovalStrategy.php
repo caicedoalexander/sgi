@@ -5,18 +5,22 @@ namespace App\Service\Strategy;
 
 use App\Constants\NoveltyConstants;
 use App\Service\NoveltyObservationService;
+use App\Service\StructuredLogger;
+use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\ORM\TableRegistry;
 use DateTime;
-use Exception;
 
 class NoveltyApprovalStrategy implements ApprovalStrategyInterface
 {
+    private StructuredLogger $logger;
+
     /**
      * @param \App\Service\NoveltyObservationService $observationService Observation service.
      */
     public function __construct(
         private readonly NoveltyObservationService $observationService,
     ) {
+        $this->logger = new StructuredLogger('Strategy.NoveltyApproval');
     }
 
     /**
@@ -60,7 +64,13 @@ class NoveltyApprovalStrategy implements ApprovalStrategyInterface
 
         try {
             return $table->get($entityId, contain: ['Employees', 'NoveltyTypes', 'Approvers']);
-        } catch (Exception $e) {
+        } catch (RecordNotFoundException $e) {
+            // Finder nullable: la novedad puede no existir si fue eliminada después de emitir el token.
+            $this->logger->warning('entity_not_found', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
             return null;
         }
     }
