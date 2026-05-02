@@ -313,7 +313,7 @@ class PettyCashRecordsController extends AppController
             ];
         }
 
-        $canRegress = $this->pettyCashService->canRegress($roleName, $record->status);
+        $canRegress = $this->pettyCashService->canRegress((int)$this->_getCurrentUser()->role_id, $roleName, $record->status);
         $previousStatus = $this->pettyCashService->getPreviousStatus($record->status);
         $regressLockMessage = $this->pettyCashService->getRegressionLockMessage($record);
         $pipelineLabels = PettyCashConstants::STATUS_LABELS;
@@ -375,6 +375,7 @@ class PettyCashRecordsController extends AppController
 
         $result = $this->pettyCashService->regress(
             $record,
+            (int)$user->role_id,
             $roleName,
             (int)$user->id,
             $reason,
