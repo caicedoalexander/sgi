@@ -193,7 +193,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         // === Invoice domain (cycle: closure factory in AdvanceLegalization) ===
         $container->addShared(InvoiceHistoryService::class);
-        $container->addShared(InvoiceFieldAccessPolicy::class);
+        $container->addShared(InvoiceFieldAccessPolicy::class)
+            ->addArgument(PipelineAuthorizationService::class);
         $container->addShared(InvoiceLockPolicy::class);
         $container->addShared(InvoiceTransitionValidator::class)
             ->addArguments([
