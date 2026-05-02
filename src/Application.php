@@ -325,6 +325,12 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
     public function events(EventManagerInterface $eventManager): EventManagerInterface
     {
+        $container = $this->getContainer();
+
+        $eventManager->on($container->get(LegalizationInitializerSubscriber::class));
+        $eventManager->on($container->get(RefundOutcomeSubscriber::class));
+        $eventManager->on($container->get(LinkedInvoicesPromoterSubscriber::class));
+
         return $eventManager;
     }
 }
