@@ -2877,3 +2877,32 @@ textarea.form-control {
    NOTE: !important required because FullCalendar v6
    injects its CSS from the JS bundle AFTER this stylesheet.
    ============================================= */
+
+/* W4 (Plan 7) — Vista 403 */
+.sgi-forbidden-page {
+    max-width: 560px;
+    margin: 4rem auto;
+    padding: 2rem;
+    border: 1px solid #dee2e6;
+    border-top: 2px solid #CD6A15;
+    background: #fff;
+    text-align: left;
+}
+
+.sgi-forbidden-page h1 {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+.sgi-forbidden-page p {
+    margin: 0 0 0.75rem 0;
+    color: #495057;
+    line-height: 1.55;
+}
+
+.sgi-forbidden-page .sgi-btn-primary {
+    display: inline-block;
+    margin-top: 1rem;
+}
