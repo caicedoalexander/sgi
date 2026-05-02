@@ -63,6 +63,7 @@ use App\Service\SidebarCounterService;
 use App\Service\Strategy\InvoiceApprovalStrategy;
 use App\Service\Strategy\NoveltyApprovalStrategy;
 use App\Service\Subscriber\LegalizationInitializerSubscriber;
+use App\Service\Subscriber\LinkedInvoicesPromoterSubscriber;
 use App\Service\Subscriber\RefundOutcomeSubscriber;
 use App\Service\StructuredLogger;
 use App\Service\SystemSettingsService;
@@ -256,6 +257,9 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         $container->addShared(RefundOutcomeSubscriber::class)
             ->addArgument(AdvanceLegalizationService::class);
+
+        $container->addShared(LinkedInvoicesPromoterSubscriber::class)
+            ->addArgument(LinkedInvoiceLegalizer::class);
 
         // === Strategies ===
         $container->addShared(InvoiceApprovalStrategy::class)
