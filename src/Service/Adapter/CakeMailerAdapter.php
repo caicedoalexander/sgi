@@ -13,6 +13,8 @@ use Cake\Mailer\TransportFactory;
  */
 class CakeMailerAdapter implements MailerInterface
 {
+    private const SMTP_TIMEOUT_SECONDS = 10;
+
     private bool $transportConfigured = false;
 
     /**
@@ -70,6 +72,7 @@ class CakeMailerAdapter implements MailerInterface
             'port' => (int)($smtpConfig['smtp_port'] ?? 587),
             'username' => $smtpConfig['smtp_username'] ?? '',
             'password' => $smtpConfig['smtp_password'] ?? '',
+            'timeout' => self::SMTP_TIMEOUT_SECONDS,
         ];
 
         $encryption = $smtpConfig['smtp_encryption'] ?? '';
