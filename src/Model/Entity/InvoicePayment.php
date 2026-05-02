@@ -14,6 +14,7 @@ class InvoicePayment extends Entity
         'payment_date' => true,
         'payment_scheduling_id' => true,
         'petty_cash_record_id' => true,
+        'refund_id' => true,
         'authorized' => true,
         'authorized_by' => true,
         'authorized_date' => true,
