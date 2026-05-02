@@ -45,7 +45,7 @@ Cuando empieces una sesión nueva (con o sin contexto previo):
 | 3 | DI Container | W3, W5 | S (3–5 días) | — | 🟢 Completado |
 | 4 | Refactor del Pipeline | C5, W2, W9, W10 | M (1–2 sem) | Plan 3 (recomendado) | 🟢 Completado |
 | 5 | Domain Events (romper ciclo) | C6 | S (~1 sem) | — *(originalmente Plan 2; ver "Cambios al roadmap")* | 🟢 Completado |
-| 6 | Resilience Hardening | W6, W13, W14, W7 | M (~1 sem) | — *(originalmente Plan 2; ver "Cambios al roadmap")* | ⬜ Pendiente |
+| 6 | Resilience Hardening | W6, W13, W14, W7 | M (~1 sem) | — *(originalmente Plan 2; ver "Cambios al roadmap")* | 🟢 Completado |
 | 7 | Observability + Polish | W1, W4, W11, W12, W15, ADRs | M (~1 sem) | — | ⬜ Pendiente |
 
 **Cobertura:** los 6 críticos (C1–C6) y los 15 warnings (W1–W15) sin items huérfanos. C4 quedó cubierto por el Plan 1 (transacción atómica en `authorizePayment`).
@@ -259,7 +259,7 @@ Plan 6 (sin deps; se replantea su alcance)   ──┼────┘
 | 3 | DI Container | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-di-container-design.md) | [plan](../superpowers/plans/2026-05-01-di-container-plan.md) | — | 2026-05-01 |
 | 4 | Refactor Pipeline | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-pipeline-refactor-design.md) | [plan](../superpowers/plans/2026-05-01-pipeline-refactor-plan.md) | — | 2026-05-01 |
 | 5 | Domain Events | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-domain-events-design.md) | [plan](../superpowers/plans/2026-05-01-domain-events-plan.md) | — | 2026-05-01 |
-| 6 | Resilience Hardening | ⬜ Pendiente | — | — | — | — |
+| 6 | Resilience Hardening | 🟢 Completado | [spec](../superpowers/specs/2026-05-01-resilience-hardening-design.md) | [plan](../superpowers/plans/2026-05-01-resilience-hardening-plan.md) | — | 2026-05-01 |
 | 7 | Observability + Polish | ⬜ Pendiente | — | — | — | — |
 
 **Leyenda:**
