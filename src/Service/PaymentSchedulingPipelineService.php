@@ -162,14 +162,14 @@ class PaymentSchedulingPipelineService
     /**
      * Cold regression — only changes pipeline_status, doesn't touch items or payments.
      *
-     * @return array{success: bool, error: ?string, previousStatus: ?string}
+     * @return ServiceResult on success: data = ['previousStatus' => string]
      */
     public function regress(
         PaymentScheduling $scheduling,
         string $roleName,
         int $userId,
         string $reason,
-    ): array {
+    ): ServiceResult {
         $reason = trim($reason);
         $currentStatus = $scheduling->pipeline_status;
 
@@ -179,27 +179,19 @@ class PaymentSchedulingPipelineService
                 ? 'Esta programación ya está en el primer paso del flujo.'
                 : 'No tiene permisos para regresar esta programación.';
 
-            return ['success' => false, 'error' => $error, 'previousStatus' => null];
+            return ServiceResult::fail([$error]);
         }
 
         $lock = $this->getRegressionLockMessage($scheduling);
         if ($lock !== null) {
-            return ['success' => false, 'error' => $lock, 'previousStatus' => null];
+            return ServiceResult::fail([$lock]);
         }
 
         if (mb_strlen($reason) < 10) {
-            return [
-                'success' => false,
-                'error' => 'El motivo es obligatorio (mínimo 10 caracteres).',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail(['El motivo es obligatorio (mínimo 10 caracteres).']);
         }
         if (mb_strlen($reason) > 500) {
-            return [
-                'success' => false,
-                'error' => 'El motivo no puede superar 500 caracteres.',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail(['El motivo no puede superar 500 caracteres.']);
         }
 
         $previousStatus = $this->getPreviousStatus($currentStatus);
@@ -237,13 +229,9 @@ class PaymentSchedulingPipelineService
         );
 
         if (!$ok) {
-            return [
-                'success' => false,
-                'error' => 'No se pudo regresar la programación. Intente de nuevo.',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail(['No se pudo regresar la programación. Intente de nuevo.']);
         }
 
-        return ['success' => true, 'error' => null, 'previousStatus' => $previousStatus];
+        return ServiceResult::ok(['previousStatus' => $previousStatus]);
     }
 }

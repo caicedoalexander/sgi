@@ -280,15 +280,15 @@ class PaymentSchedulingsController extends AppController
             $reason,
         );
 
-        if ($result['success']) {
-            $prevLabel = PaymentSchedulingConstants::STATUS_LABELS[$result['previousStatus']]
-                ?? $result['previousStatus'];
+        if ($result->success) {
+            $previousStatus = $result->data['previousStatus'] ?? null;
+            $prevLabel = PaymentSchedulingConstants::STATUS_LABELS[$previousStatus] ?? $previousStatus;
             $this->Flash->success(sprintf('Programación regresada a: %s', $prevLabel));
 
             return $this->redirect(['action' => 'index']);
         }
 
-        $this->Flash->error($result['error']);
+        $this->Flash->error($result->firstError() ?? 'No se pudo regresar la programación.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
