@@ -458,33 +458,46 @@ class PaymentSchedulingsController extends AppController
     {
         $this->request->allowMethod(['post']);
         $user = $this->_getCurrentUser();
+        $message = trim((string)$this->request->getData('message'));
 
         $observationsTable = $this->fetchTable('PaymentSchedulingObservations');
         $observation = $observationsTable->newEntity([
             'payment_scheduling_id' => $id,
             'user_id' => $user->id,
-            'message' => $this->request->getData('message'),
+            'message' => $message,
         ]);
 
-        if ($this->request->is('ajax')) {
-            if ($observationsTable->save($observation)) {
+        $saved = $message !== '' && $observationsTable->save($observation);
+
+        if ($this->_isJsonRequest()) {
+            if (!$saved) {
                 return $this->_jsonResponse([
-                    'success' => true,
-                    'observation' => [
-                        'message' => $observation->message,
-                        'user_name' => $user->full_name,
-                        'created' => $observation->created->format('d/m/Y H:i'),
-                    ],
+                    'success' => false,
+                    'error' => $message === ''
+                        ? 'El mensaje no puede estar vacío.'
+                        : 'No se pudo agregar la observación.',
                 ]);
             }
 
-            return $this->_jsonResponse(['success' => false, 'error' => 'No se pudo agregar la observación.']);
+            return $this->_jsonResponse([
+                'success' => true,
+                'observation' => [
+                    'id' => $observation->id,
+                    'message' => $observation->message,
+                    'user_name' => $user->full_name,
+                    'created' => $observation->created->format('d/m/Y H:i'),
+                ],
+            ]);
         }
 
-        if ($observationsTable->save($observation)) {
+        if ($saved) {
             $this->Flash->success('Observación agregada.');
         } else {
-            $this->Flash->error('No se pudo agregar la observación.');
+            $this->Flash->error(
+                $message === ''
+                    ? 'El mensaje no puede estar vacío.'
+                    : 'No se pudo agregar la observación.'
+            );
         }
 
         return $this->redirect(['action' => 'edit', $id]);

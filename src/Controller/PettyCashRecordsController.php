@@ -571,18 +571,46 @@ class PettyCashRecordsController extends AppController
     {
         $this->request->allowMethod(['post']);
         $user = $this->_getCurrentUser();
+        $message = trim((string)$this->request->getData('message'));
 
         $observationsTable = $this->fetchTable('PettyCashObservations');
         $observation = $observationsTable->newEntity([
             'petty_cash_record_id' => $id,
             'user_id' => $user->id,
-            'message' => $this->request->getData('message'),
+            'message' => $message,
         ]);
 
-        if ($observationsTable->save($observation)) {
+        $saved = $message !== '' && $observationsTable->save($observation);
+
+        if ($this->_isJsonRequest()) {
+            if (!$saved) {
+                return $this->_jsonResponse([
+                    'success' => false,
+                    'error' => $message === ''
+                        ? 'El mensaje no puede estar vacío.'
+                        : 'No se pudo agregar la observación.',
+                ]);
+            }
+
+            return $this->_jsonResponse([
+                'success' => true,
+                'observation' => [
+                    'id' => $observation->id,
+                    'message' => $observation->message,
+                    'user_name' => $user->full_name,
+                    'created' => $observation->created->format('d/m/Y H:i'),
+                ],
+            ]);
+        }
+
+        if ($saved) {
             $this->Flash->success('Observación agregada.');
         } else {
-            $this->Flash->error('No se pudo agregar la observación.');
+            $this->Flash->error(
+                $message === ''
+                    ? 'El mensaje no puede estar vacío.'
+                    : 'No se pudo agregar la observación.'
+            );
         }
 
         return $this->redirect(['action' => 'edit', $id]);
