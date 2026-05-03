@@ -1442,7 +1442,11 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
     var holderSelect  = document.getElementById('equivalent-holder-type');
     var employeeWrap  = document.getElementById('employee-wrapper');
     var manualWrap    = document.getElementById('manual-doc-wrapper');
+    var providerWrap  = document.getElementById('provider-wrapper');
     var dueDateInput  = document.querySelector('input[name="due_date"]');
+    // Si el form es Anticipo el provider-wrapper lo gobierna otro toggle (beneficiary-type),
+    // no debemos tocarlo aquí.
+    var hasBeneficiaryToggle = document.getElementById('beneficiary-type') !== null;
 
     function setVisible(wrapper, visible) {
         if (!wrapper) return;
@@ -1464,6 +1468,10 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         var holder = holderSelect ? holderSelect.value : '';
         setVisible(employeeWrap, holder === 'employee');
         setVisible(manualWrap,   holder === 'manual');
+        if (!hasBeneficiaryToggle) {
+            // Proveedor visible sólo cuando el titular es 'provider' o aún no se ha elegido.
+            setVisible(providerWrap, holder === '' || holder === 'provider');
+        }
     }
 
     function applyDocTypeRules() {
@@ -1480,6 +1488,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             if (holderSelect) holderSelect.value = '';
             setVisible(employeeWrap, false);
             setVisible(manualWrap,   false);
+            if (!hasBeneficiaryToggle) setVisible(providerWrap, true);
         } else {
             applyHolderRules();
         }

@@ -206,6 +206,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
 
     var purchaseOrder = document.getElementById('purchase-order-wrapper');
     var dueDate       = document.getElementById('due-date-wrapper');
+    var providerWrap  = document.getElementById('provider-wrapper');
     var equivalentRow = document.getElementById('equivalent-doc-row');
     var holderSelect  = document.getElementById('equivalent-holder-type');
     var employeeWrap  = document.getElementById('employee-wrapper');
@@ -230,6 +231,8 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
         var holder = holderSelect ? holderSelect.value : '';
         setVisible(employeeWrap, holder === 'employee');
         setVisible(manualWrap,   holder === 'manual');
+        // Proveedor visible sólo cuando el titular es 'provider' o aún no se ha elegido.
+        setVisible(providerWrap, holder === '' || holder === 'provider');
     }
 
     var RECIBO_CAJA = <?= json_encode(InvoiceConstants::DOCTYPE_RECIBO_CAJA) ?>;
@@ -249,6 +252,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
             if (holderSelect) holderSelect.value = '';
             setVisible(employeeWrap, false);
             setVisible(manualWrap,   false);
+            setVisible(providerWrap, true);
         } else {
             applyHolderRules();
         }
