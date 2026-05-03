@@ -5,7 +5,6 @@ namespace App\Controller;
 
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
-use App\Constants\RoleConstants;
 use App\Controller\Trait\ExcelWizardTrait;
 use App\Service\EmailLogService;
 use App\Service\InvoiceApprovalService;
@@ -239,23 +238,18 @@ class InvoicesController extends AppController
             ],
         ]);
 
-        // Paid/legalized invoices are read-only for non-admin roles: redirect to view.
+        // Paid/legalized invoices are read-only: redirect to view.
         $terminalStatuses = [InvoiceConstants::STATUS_PAGADA, InvoiceConstants::STATUS_LEGALIZADA];
-        if (
-            in_array($invoice->pipeline_status, $terminalStatuses, true)
-            && $this->_getRoleName() !== RoleConstants::ADMIN
-        ) {
+        if (in_array($invoice->pipeline_status, $terminalStatuses, true)) {
             return $this->_redirectForInvoice($invoice, 'view', $id);
         }
 
-        // Unified lock: petty cash or paid scheduling (non-admin only).
-        if ($this->_getRoleName() !== RoleConstants::ADMIN) {
-            $lockMessage = $this->pipeline->getEditLockMessage($invoice);
-            if ($lockMessage !== null) {
-                $this->Flash->warning($lockMessage);
+        // Unified lock: petty cash or paid scheduling.
+        $lockMessage = $this->pipeline->getEditLockMessage($invoice);
+        if ($lockMessage !== null) {
+            $this->Flash->warning($lockMessage);
 
-                return $this->_redirectForInvoice($invoice, 'view', $id);
-            }
+            return $this->_redirectForInvoice($invoice, 'view', $id);
         }
 
         $roleName = $this->_getRoleName();
@@ -390,13 +384,11 @@ class InvoicesController extends AppController
             return $this->_redirectForInvoice($invoice, 'edit', $id);
         }
 
-        if ($this->_getRoleName() !== RoleConstants::ADMIN) {
-            $lockMessage = $this->pipeline->getEditLockMessage($invoice);
-            if ($lockMessage !== null) {
-                $this->Flash->error($lockMessage);
+        $lockMessage = $this->pipeline->getEditLockMessage($invoice);
+        if ($lockMessage !== null) {
+            $this->Flash->error($lockMessage);
 
-                return $this->_redirectForInvoice($invoice, 'view', $id);
-            }
+            return $this->_redirectForInvoice($invoice, 'view', $id);
         }
 
         $user = $this->_getCurrentUser();
