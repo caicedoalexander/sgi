@@ -7,6 +7,7 @@ use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
+use App\Controller\Trait\ObservationControllerTrait;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
 use App\Service\PipelineAuthorizationService;
@@ -18,6 +19,7 @@ use DateTimeInterface;
 class PettyCashRecordsController extends AppController
 {
     use DocumentJsonPayloadTrait;
+    use ObservationControllerTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
@@ -569,51 +571,13 @@ class PettyCashRecordsController extends AppController
 
     public function addObservation($id = null)
     {
-        $this->request->allowMethod(['post']);
-        $user = $this->_getCurrentUser();
-        $message = trim((string)$this->request->getData('message'));
-
-        $observationsTable = $this->fetchTable('PettyCashObservations');
-        $observation = $observationsTable->newEntity([
-            'petty_cash_record_id' => $id,
-            'user_id' => $user->id,
-            'message' => $message,
-        ]);
-
-        $saved = $message !== '' && $observationsTable->save($observation);
-
-        if ($this->_isJsonRequest()) {
-            if (!$saved) {
-                return $this->_jsonResponse([
-                    'success' => false,
-                    'error' => $message === ''
-                        ? 'El mensaje no puede estar vacío.'
-                        : 'No se pudo agregar la observación.',
-                ]);
-            }
-
-            return $this->_jsonResponse([
-                'success' => true,
-                'observation' => [
-                    'id' => $observation->id,
-                    'message' => $observation->message,
-                    'user_name' => $user->full_name,
-                    'created' => $observation->created->format('d/m/Y H:i'),
-                ],
-            ]);
-        }
-
-        if ($saved) {
-            $this->Flash->success('Observación agregada.');
-        } else {
-            $this->Flash->error(
-                $message === ''
-                    ? 'El mensaje no puede estar vacío.'
-                    : 'No se pudo agregar la observación.',
-            );
-        }
-
-        return $this->redirect(['action' => 'edit', $id]);
+        return $this->_handleAddObservation(
+            'PettyCashObservations',
+            'petty_cash_record_id',
+            $id,
+            $this->_getCurrentUser(),
+            fn() => $this->redirect(['action' => 'edit', $id]),
+        );
     }
 
     public function deleteDocument($recordId = null, $documentId = null)

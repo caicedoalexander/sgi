@@ -10,12 +10,15 @@
  *     listSelector:           '#obs-chat-scroll',
  *     emptySelector:          '#obs-empty-state',
  *     bubbleTemplateSelector: '#observation-bubble-template',
+ *     counterSelector:        '#obs-count', // opcional, ver abajo
  *     csrfToken:              '<?= $this->request->getAttribute('csrfToken') ?>'
  *   });
  *
- * El contador se resuelve automáticamente desde el `.card` que contiene
- * `listSelector` (debe contener un `.sgi-folder-count`). Si no existe,
- * se crea uno al insertar la primera observación.
+ * El contador (`.sgi-folder-count`) se resuelve en este orden:
+ *   1. `counterSelector` si se pasa explícito (recomendado cuando hay
+ *      varios `.sgi-folder-count` en la misma pantalla, ej. docs + obs).
+ *   2. El primero encontrado dentro del `.card` que contiene `listSelector`.
+ *   3. Si no existe, se crea uno al insertar la primera observación.
  *
  * Contrato JSON esperado:
  *   OK:    { success: true, observation: { id, message, user_name, created } }
@@ -117,8 +120,10 @@
 
         if (!form || !list || !template) return;
 
-        var listCard = list.closest('.card');
-        var counter  = ensureCounter(listCard);
+        var listCard = list.closest('.card') || list.parentElement;
+        var counter  = opts.counterSelector
+            ? document.querySelector(opts.counterSelector)
+            : ensureCounter(listCard);
         var textarea = form.querySelector('textarea[name="message"]');
         var submitBtn = form.querySelector('button[type="submit"]');
 
@@ -157,7 +162,10 @@
                     showToast(data.error || 'Error al agregar observación.', 'danger');
                 }
             })
-            .catch(function () {
+            .catch(function (err) {
+                if (global.console && global.console.error) {
+                    global.console.error('SgiObservationChat:', err);
+                }
                 showToast('Error de conexión. Intente nuevamente.', 'danger');
             })
             .finally(function () {

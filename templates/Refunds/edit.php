@@ -534,7 +534,7 @@ $invoiceCount = count($record->invoices ?? []);
     <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);"></i>
         <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
-        <span class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
+        <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
     </div>
 
     <div id="obs-chat-scroll" class="sgi-obs-list"
@@ -554,7 +554,7 @@ $invoiceCount = count($record->invoices ?? []);
     </div>
 
     <div style="border-top:1px solid var(--border-color);padding:.75rem .875rem;background:#fff;">
-        <form id="obs-form" data-url="<?= $this->Url->build(['action' => 'addObservation', $record->id]) ?>" method="post">
+        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $record->id], 'id' => 'obs-form']) ?>
         <div class="d-flex gap-2 align-items-end">
             <textarea name="message" class="form-control auto-resize" rows="1"
                       style="font-size:.82rem;background:#f9fafb;border-color:var(--border-color);"
@@ -564,7 +564,7 @@ $invoiceCount = count($record->invoices ?? []);
                 <i class="bi bi-send" style="font-size:.85rem;"></i>
             </button>
         </div>
-        </form>
+        <?= $this->Form->end() ?>
     </div>
 </div>
 
@@ -572,32 +572,11 @@ $invoiceCount = count($record->invoices ?? []);
 
 </div><!-- /layout dos columnas -->
 
-<?= $this->Html->script('sgi-observation-chat', ['block' => true]) ?>
-<?= $this->element('observation_bubble_template') ?>
+<?= $this->element('observation_chat_init') ?>
 
 <?php $this->append('script') ?>
 <script>
 (function(){
-    function syncHeight(el) {
-        el.style.height = '0px';
-        el.style.height = (el.scrollHeight + 2) + 'px';
-    }
-    document.querySelectorAll('textarea.auto-resize').forEach(function(el) {
-        el.style.overflow  = 'hidden';
-        el.style.resize    = 'none';
-        el.style.minHeight = '0px';
-        syncHeight(el);
-        el.addEventListener('input', function() { syncHeight(this); });
-    });
-
-    SgiObservationChat.init({
-        formSelector:           '#obs-form',
-        listSelector:           '#obs-chat-scroll',
-        emptySelector:          '#obs-empty-state',
-        bubbleTemplateSelector: '#observation-bubble-template',
-        csrfToken:              <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
-    });
-
     // Beneficiary radio toggle (only present when in agrupacion)
     var bRadios = document.querySelectorAll('input[name="beneficiary_type"]');
     if (bRadios.length > 0) {

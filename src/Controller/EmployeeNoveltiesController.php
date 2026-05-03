@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
+use App\Constants\ObservationConstants;
 use App\Service\ApprovalTokenService;
 use App\Service\EmailLogService;
 use App\Service\LeaveDocumentService;
@@ -886,7 +887,7 @@ class EmployeeNoveltiesController extends AppController
         $message = trim((string)$this->request->getData('message'));
 
         $result = $message === ''
-            ? 'El mensaje no puede estar vacío.'
+            ? ObservationConstants::ERR_EMPTY
             : $this->observationService->addToNovelty((int)$id, $user->id, $message);
 
         $isError = is_string($result);
@@ -902,7 +903,7 @@ class EmployeeNoveltiesController extends AppController
                     'id' => $result->id,
                     'message' => $result->message,
                     'user_name' => $user->full_name,
-                    'created' => $result->created->format('d/m/Y H:i'),
+                    'created' => $result->created->format(ObservationConstants::DATE_FORMAT),
                 ],
             ]);
         }
@@ -910,7 +911,7 @@ class EmployeeNoveltiesController extends AppController
         if ($isError) {
             $this->Flash->error($result);
         } else {
-            $this->Flash->success('Observación agregada.');
+            $this->Flash->success(ObservationConstants::MSG_ADDED);
         }
 
         return $this->redirect(['action' => 'edit', $id]);
