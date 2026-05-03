@@ -156,7 +156,18 @@ class InvoicesTable extends Table implements ExcelExportableInterface
         $validator
             ->scalar('equivalent_holder_type')
             ->allowEmptyString('equivalent_holder_type')
-            ->inList('equivalent_holder_type', InvoiceConstants::HOLDER_TYPES);
+            ->inList('equivalent_holder_type', InvoiceConstants::HOLDER_TYPES)
+            ->add('equivalent_holder_type', 'requiredWhenReciboDeCaja', [
+                'rule' => function ($value, $context) {
+                    $docType = $context['data']['document_type'] ?? null;
+                    if ($docType !== InvoiceConstants::DOCTYPE_RECIBO_CAJA) {
+                        return true;
+                    }
+
+                    return !in_array($value, [null, ''], true);
+                },
+                'message' => 'Debe seleccionar el titular cuando el tipo es Recibo de Caja.',
+            ]);
 
         $validator
             ->integer('employee_id')
@@ -296,6 +307,15 @@ class InvoicesTable extends Table implements ExcelExportableInterface
             if (empty($entity->dian_validation)) {
                 $entity->dian_validation = InvoiceConstants::DIAN_APPROVED;
             }
+        }
+
+        // Limpiar campos exclusivos de Recibo de Caja cuando el doc type no aplica.
+        // Evita persistir datos fantasma si el cliente no respeta el contrato del JS
+        // (POST sin JS, switch de tipo en edit, etc.).
+        if (($entity->document_type ?? null) !== InvoiceConstants::DOCTYPE_RECIBO_CAJA) {
+            $entity->equivalent_holder_type = null;
+            $entity->employee_id = null;
+            $entity->manual_document_number = null;
         }
     }
 
