@@ -631,11 +631,11 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
 
     <div class="sgi-obs-input-bar">
         <?= $this->Form->create(null, ['url' => ['controller' => 'Invoices', 'action' => 'addObservation', $invoice->id], 'id' => 'obs-form']) ?>
-        <div class="d-flex gap-2 align-items-end">
-            <textarea id="obs-message" name="message" class="form-control auto-resize" rows="1"
+        <div class="sgi-obs-compose">
+            <textarea id="obs-message" name="message" class="auto-resize" rows="1"
                       placeholder="Escriba una observación..."></textarea>
-            <button type="submit" class="btn btn-primary" title="Enviar">
-                <i class="bi bi-send" style="font-size:.85rem;"></i>
+            <button type="submit" class="sgi-obs-compose-send" title="Enviar">
+                <i class="bi bi-send"></i>
             </button>
         </div>
         <?= $this->Form->end() ?>

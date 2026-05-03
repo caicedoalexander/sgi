@@ -2491,19 +2491,59 @@ textarea.form-control {
 .sgi-obs-empty[hidden] { display: none !important; }
 .sgi-obs-input-bar {
     border-top: 1px solid var(--border-color);
-    padding: .75rem .875rem;
+    padding: .625rem .875rem;
     background: #fff;
 }
-.sgi-obs-input-bar textarea {
-    font-size: .82rem;
+
+/* Unified compose box: textarea + send button as one bordered field */
+.sgi-obs-compose {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--border-color);
     background: #f9fafb;
-    border-color: var(--border-color);
+    transition: border-color .15s ease;
 }
-.sgi-obs-input-bar .btn-primary {
-    padding: .5rem .75rem;
-    align-self: flex-end;
+.sgi-obs-compose:focus-within {
+    border-color: var(--primary-color);
+    background: #fff;
+}
+.sgi-obs-compose textarea {
+    flex: 1;
+    border: none;
+    background: transparent;
+    resize: none;
+    padding: .55rem .75rem;
+    font-size: .82rem;
+    line-height: 1.5;
+    outline: none;
+    box-shadow: none !important;
+    min-height: 0;
+    color: #212529;
+}
+.sgi-obs-compose textarea::placeholder { color: #adb5bd; }
+.sgi-obs-compose-send {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: .45rem .7rem .5rem;
+    border: none;
+    border-left: 1px solid var(--border-color);
+    background: transparent;
+    color: #adb5bd;
+    cursor: pointer;
     flex-shrink: 0;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
+.sgi-obs-compose:focus-within .sgi-obs-compose-send {
+    border-left-color: var(--border-color);
+    color: var(--primary-color);
+}
+.sgi-obs-compose-send:hover {
+    background: var(--primary-color);
+    color: #fff;
+    border-left-color: var(--primary-color);
+}
+.sgi-obs-compose-send i { font-size: .85rem; }
 
 /* Observation chat bubbles (shared across modules) */
 .sgi-obs-bubble {

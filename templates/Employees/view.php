@@ -278,11 +278,11 @@ foreach ($folders as $folder) {
         <?php if (!empty($userPermissions['employees']['can_edit'])): ?>
         <div class="sgi-obs-input-bar">
             <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $employee->id], 'id' => 'obs-form']) ?>
-            <div class="d-flex gap-2 align-items-end">
-                <textarea name="message" class="form-control auto-resize" rows="1"
+            <div class="sgi-obs-compose">
+                <textarea name="message" class="auto-resize" rows="1"
                           placeholder="Escriba una observación..."></textarea>
-                <button type="submit" class="btn btn-primary" title="Enviar">
-                    <i class="bi bi-send" style="font-size:.85rem;"></i>
+                <button type="submit" class="sgi-obs-compose-send" title="Enviar">
+                    <i class="bi bi-send"></i>
                 </button>
             </div>
             <?= $this->Form->end() ?>
