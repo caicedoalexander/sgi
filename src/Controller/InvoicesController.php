@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
+use App\Constants\StatusColorConstants;
 use App\Controller\Trait\ExcelWizardTrait;
 use App\Service\EmailLogService;
 use App\Service\InvoiceApprovalService;
@@ -604,6 +605,9 @@ class InvoicesController extends AppController
                 return $this->_jsonResponse(['success' => false, 'error' => $result]);
             }
 
+            $canDelete = $this->documentService->canDeleteDocument($result, $invoice->pipeline_status);
+            [$badgeColors, $statusLabels] = $this->_invoiceDocumentLabels();
+
             return $this->_jsonResponse([
                 'success' => true,
                 'document' => [
@@ -615,6 +619,12 @@ class InvoicesController extends AppController
                     'file_size' => $result->file_size,
                     'pipeline_status' => $result->pipeline_status,
                     'created' => $result->created->format('d/m/Y H:i'),
+                    'can_delete' => $canDelete,
+                    'badge_class' => $badgeColors[$result->pipeline_status] ?? 'bg-secondary',
+                    'badge_label' => $statusLabels[$result->pipeline_status] ?? $result->pipeline_status,
+                    'delete_url' => $canDelete
+                        ? \Cake\Routing\Router::url(['action' => 'deleteDocument', $invoice->id, $result->id])
+                        : null,
                 ],
             ]);
         }
@@ -742,5 +752,24 @@ class InvoicesController extends AppController
         }
 
         return $this->_redirectForInvoice($invoice, 'edit', $id);
+    }
+
+    /**
+     * Returns invoice document badge colors and status labels.
+     * Single source for both edit template and uploadDocument JSON payload.
+     *
+     * @return array{0: array<string,string>, 1: array<string,string>}
+     */
+    private function _invoiceDocumentLabels(): array
+    {
+        $statusLabels = [
+            'aprobacion' => 'Aprobación',
+            'contabilidad' => 'Contabilidad',
+            'tesoreria' => 'Tesorería',
+            'autorizacion_pago' => 'Aut. Pago',
+            'pagada' => 'Pagada',
+        ];
+
+        return [StatusColorConstants::PIPELINE_STATUS_BADGES, $statusLabels];
     }
 }
