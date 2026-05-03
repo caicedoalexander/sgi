@@ -149,7 +149,7 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.success) {
-                    if (emptyState) emptyState.style.display = 'none';
+                    if (emptyState) emptyState.hidden = true;
                     list.appendChild(buildBubble(template, data.observation));
                     list.scrollTop = list.scrollHeight;
                     updateCounter(counter, 1);

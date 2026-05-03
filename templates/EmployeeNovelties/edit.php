@@ -523,8 +523,7 @@ $badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
         <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
     </div>
 
-    <div id="obs-chat-scroll" class="sgi-obs-list"
-         style="min-height:100px;max-height:340px;overflow-y:auto;padding:1rem .875rem;background:#f9fafb;display:flex;flex-direction:column;gap:.875rem;">
+    <div id="obs-chat-scroll" class="sgi-obs-list">
         <?php foreach ($novelty->novelty_observations ?? [] as $obs): ?>
             <?= $this->element('observation_bubble', [
                 'observation' => $obs,
@@ -533,21 +532,18 @@ $badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
         <?php endforeach; ?>
     </div>
 
-    <div id="obs-empty-state" class="sgi-obs-empty"
-         style="display:<?= $obsCount > 0 ? 'none' : 'flex' ?>;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 0;color:#c5c5c5;gap:.5rem;">
+    <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
         <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
         <span style="font-size:.78rem;">Sin observaciones aún</span>
     </div>
 
     <?php if (!$isRejected && !$novelty->isPaid()): ?>
-    <div style="border-top:1px solid var(--border-color);padding:.75rem .875rem;background:#fff;">
+    <div class="sgi-obs-input-bar">
         <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $novelty->id], 'id' => 'obs-form']) ?>
         <div class="d-flex gap-2 align-items-end">
             <textarea name="message" class="form-control auto-resize" rows="1"
-                      style="font-size:.82rem;background:#f9fafb;border-color:var(--border-color);"
                       placeholder="Escriba una observación..."></textarea>
-            <button type="submit" class="btn btn-primary flex-shrink-0"
-                    style="padding:.5rem .75rem;align-self:flex-end;" title="Enviar">
+            <button type="submit" class="btn btn-primary" title="Enviar">
                 <i class="bi bi-send" style="font-size:.85rem;"></i>
             </button>
         </div>

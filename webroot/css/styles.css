@@ -2466,6 +2466,45 @@ textarea.form-control {
     background: rgba(70, 157, 97, .15);
     color: var(--primary-color);
 }
+/* Observation chat — shared layout for all modules
+   (Invoices, PaymentSchedulings, EmployeeNovelties, Employees,
+    PettyCashRecords, Refunds, Advances/legalization, NoveltyLiquidationDocs) */
+.sgi-obs-list {
+    min-height: 100px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 1rem .875rem;
+    background: #f9fafb;
+    display: flex;
+    flex-direction: column;
+    gap: .875rem;
+}
+.sgi-obs-empty {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 0;
+    color: #c5c5c5;
+    gap: .5rem;
+}
+.sgi-obs-empty.is-hidden,
+.sgi-obs-empty[hidden] { display: none !important; }
+.sgi-obs-input-bar {
+    border-top: 1px solid var(--border-color);
+    padding: .75rem .875rem;
+    background: #fff;
+}
+.sgi-obs-input-bar textarea {
+    font-size: .82rem;
+    background: #f9fafb;
+    border-color: var(--border-color);
+}
+.sgi-obs-input-bar .btn-primary {
+    padding: .5rem .75rem;
+    align-self: flex-end;
+    flex-shrink: 0;
+}
+
 /* Observation chat bubbles (shared across modules) */
 .sgi-obs-bubble {
     display: flex;
