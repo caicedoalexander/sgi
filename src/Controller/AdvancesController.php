@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
+use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\AdvanceLegalizationService;
 use App\Service\InvoicePipelineService;
@@ -13,6 +14,8 @@ use Cake\ORM\TableRegistry;
 
 class AdvancesController extends AppController
 {
+    use DocumentJsonPayloadTrait;
+
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     private AdvanceLegalizationService $legalizationService;
@@ -340,11 +343,29 @@ class AdvancesController extends AppController
         $leg = $this->_loadLegalization((int)$id);
         $file = $this->request->getUploadedFile('relation_document');
         if (!$file) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'Adjunte un archivo PDF de relación de facturas.']);
+            }
             $this->Flash->error('Adjunte un archivo PDF de relación de facturas.');
 
             return $this->redirect(['action' => 'view', $id]);
         }
+
         $result = $this->legalizationService->attachRelationDocument($leg, $file, (int)$this->_getCurrentUser()->id);
+
+        if ($this->_isJsonRequest()) {
+            if (!$result->success) {
+                return $this->_jsonResponse(['success' => false, 'error' => $result->firstError() ?? 'Error al adjuntar.']);
+            }
+
+            $doc = $result->data;
+
+            return $this->_jsonResponse([
+                'success' => true,
+                'document' => $this->_buildDocumentPayload($doc, false, null),
+            ]);
+        }
+
         if ($result->success) {
             $this->Flash->success('Documento adjuntado.');
         } else {

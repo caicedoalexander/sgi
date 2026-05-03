@@ -4,13 +4,16 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\PaymentSchedulingConstants;
+use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Service\PaymentSchedulingAttachmentService;
 use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PaymentSchedulingService;
+use Cake\Routing\Router;
 
 class PaymentSchedulingsController extends AppController
 {
+    use DocumentJsonPayloadTrait;
     use ObservationControllerTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -404,10 +407,13 @@ class PaymentSchedulingsController extends AppController
     public function uploadAttachment($id = null)
     {
         $this->request->allowMethod(['post']);
-        $this->PaymentSchedulings->get($id);
+        $record = $this->PaymentSchedulings->get($id);
 
         $file = $this->request->getUploadedFile('file');
         if (!$file) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'No se recibió ningún archivo válido.']);
+            }
             $this->Flash->error('No se recibió un archivo válido.');
 
             return $this->redirect(['action' => 'edit', $id]);
@@ -418,6 +424,23 @@ class PaymentSchedulingsController extends AppController
             $file,
             (int)$this->_getCurrentUser()->id,
         );
+
+        if ($this->_isJsonRequest()) {
+            if (is_string($result)) {
+                return $this->_jsonResponse(['success' => false, 'error' => $result]);
+            }
+
+            $isPagada = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PAGADA;
+            $canDelete = !$isPagada;
+            $deleteUrl = $canDelete
+                ? Router::url(['action' => 'deleteAttachment', $id, $result->id])
+                : null;
+
+            return $this->_jsonResponse([
+                'success' => true,
+                'document' => $this->_buildDocumentPayload($result, $canDelete, $deleteUrl),
+            ]);
+        }
 
         if (is_string($result)) {
             $this->Flash->error($result);
@@ -432,7 +455,17 @@ class PaymentSchedulingsController extends AppController
     {
         $this->request->allowMethod(['post', 'delete']);
 
-        if ($this->attachmentService->deleteAttachment((int)$attachmentId)) {
+        $deleted = $this->attachmentService->deleteAttachment((int)$attachmentId);
+
+        if ($this->_isJsonRequest()) {
+            return $this->_jsonResponse(
+                $deleted
+                    ? ['success' => true]
+                    : ['success' => false, 'error' => 'No se pudo eliminar el soporte.'],
+            );
+        }
+
+        if ($deleted) {
             $this->Flash->success('Soporte eliminado.');
         } else {
             $this->Flash->error('No se pudo eliminar el soporte.');

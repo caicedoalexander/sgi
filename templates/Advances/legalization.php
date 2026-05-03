@@ -480,20 +480,16 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
         </div>
         <div style="display:flex;gap:.25rem;flex-shrink:0;">
             <?php if (in_array($leg->status, [AdvanceConstants::STATUS_VALIDACION, AdvanceConstants::STATUS_REVISION_FIRMAS], true)): ?>
-            <?= $this->Form->create(null, [
-                'url' => ['action' => 'uploadRelationDocument', $leg->advance_invoice_id],
-                'type' => 'file',
-                'id' => 'rel-doc-update-form',
-                'class' => 'd-inline',
-            ]) ?>
+            <form id="rel-doc-update-form" class="d-inline"
+                  data-upload-url="<?= $this->Url->build(['action' => 'uploadRelationDocument', $leg->advance_invoice_id]) ?>">
             <input type="file" name="relation_document" id="rel-doc-file-update" required
                    accept=".pdf,.jpg,.jpeg,.png"
-                   style="display:none;" onchange="document.getElementById('rel-doc-update-form').submit();">
+                   style="display:none;" data-rel-doc-trigger>
             <label for="rel-doc-file-update" class="btn btn-sm btn-outline-primary"
                    style="width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;cursor:pointer;" title="Reemplazar">
                 <i class="bi bi-arrow-repeat"></i>
             </label>
-            <?= $this->Form->end() ?>
+            </form>
             <?php endif; ?>
             <?php if (!empty($relationDocument->file_path)): ?>
             <?= $this->Html->link(
@@ -513,20 +509,16 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
         <div style="flex:1;min-width:0;">
             <span style="font-size:.76rem;color:#999;">Sin documento adjunto</span>
         </div>
-        <?= $this->Form->create(null, [
-            'url' => ['action' => 'uploadRelationDocument', $leg->advance_invoice_id],
-            'type' => 'file',
-            'id' => 'rel-doc-upload-form',
-            'class' => 'd-inline flex-shrink-0',
-        ]) ?>
+        <form id="rel-doc-upload-form" class="d-inline flex-shrink-0"
+              data-upload-url="<?= $this->Url->build(['action' => 'uploadRelationDocument', $leg->advance_invoice_id]) ?>">
         <input type="file" name="relation_document" id="rel-doc-file-new" required
                accept=".pdf,.jpg,.jpeg,.png"
-               style="display:none;" onchange="document.getElementById('rel-doc-upload-form').submit();">
+               style="display:none;" data-rel-doc-trigger>
         <label for="rel-doc-file-new" class="btn btn-sm btn-outline-primary"
                style="padding:.25rem .5rem;font-size:.72rem;line-height:1;cursor:pointer;" title="Subir">
             <i class="bi bi-upload me-1"></i>Subir
         </label>
-        <?= $this->Form->end() ?>
+        </form>
     </div>
     <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php else: ?>
@@ -651,3 +643,76 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
 <?php endif; ?>
 
 <?= $this->element('observation_chat_init') ?>
+
+<?php $this->append('script') ?>
+<script>
+(function () {
+    var csrfToken = <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>;
+
+    function showRelDocToast(message) {
+        if (!window.bootstrap || !window.bootstrap.Toast) { alert(message); return; }
+        var c = document.getElementById('sgi-toast-container');
+        if (!c) {
+            c = document.createElement('div');
+            c.id = 'sgi-toast-container';
+            c.className = 'toast-container position-fixed top-0 end-0 p-3';
+            c.style.zIndex = '1090';
+            document.body.appendChild(c);
+        }
+        var el = document.createElement('div');
+        el.className = 'toast align-items-center text-bg-danger border-0';
+        el.setAttribute('role', 'alert');
+        el.innerHTML = '<div class="d-flex"><div class="toast-body"></div>' +
+            '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
+        el.querySelector('.toast-body').textContent = message;
+        c.appendChild(el);
+        var t = new window.bootstrap.Toast(el, { delay: 4500 });
+        el.addEventListener('hidden.bs.toast', function () { el.remove(); });
+        t.show();
+    }
+
+    document.querySelectorAll('[data-rel-doc-trigger]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            if (!input.files.length) return;
+            var form = input.closest('form[data-upload-url]');
+            if (!form) return;
+
+            var label = form.querySelector('label');
+            var originalHtml = label ? label.innerHTML : '';
+            if (label) {
+                label.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                label.style.pointerEvents = 'none';
+            }
+
+            var fd = new FormData();
+            fd.append('relation_document', input.files[0]);
+
+            fetch(form.dataset.uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: fd,
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    showRelDocToast(data.error || 'Error al subir el documento.');
+                    input.value = '';
+                    if (label) { label.innerHTML = originalHtml; label.style.pointerEvents = ''; }
+                }
+            })
+            .catch(function () {
+                showRelDocToast('Error de conexión. Intente nuevamente.');
+                input.value = '';
+                if (label) { label.innerHTML = originalHtml; label.style.pointerEvents = ''; }
+            });
+        });
+    });
+})();
+</script>
+<?php $this->end() ?>

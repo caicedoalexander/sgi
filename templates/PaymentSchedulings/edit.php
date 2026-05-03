@@ -326,20 +326,6 @@ $itemCount = count($record->payment_scheduling_items ?? []);
 <?php
 $attachments = $record->payment_scheduling_attachments ?? [];
 $totalDocs = count($attachments);
-$docIcon = fn(?string $name): string => match(true) {
-    str_contains($name ?? '', '.pdf') => 'bi-file-earmark-pdf',
-    (bool)preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $name ?? '') => 'bi-file-earmark-image',
-    (bool)preg_match('/\.(doc|docx)$/i', $name ?? '') => 'bi-file-earmark-word',
-    (bool)preg_match('/\.(xls|xlsx|csv)$/i', $name ?? '') => 'bi-file-earmark-excel',
-    default => 'bi-file-earmark',
-};
-$docIconColor = fn(?string $name): string => match(true) {
-    str_contains($name ?? '', '.pdf') => '#dc3545',
-    (bool)preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $name ?? '') => '#0dcaf0',
-    (bool)preg_match('/\.(doc|docx)$/i', $name ?? '') => '#0d6efd',
-    (bool)preg_match('/\.(xls|xlsx|csv)$/i', $name ?? '') => 'var(--primary-color)',
-    default => '#aaa',
-};
 ?>
 
 <!-- Soportes -->
@@ -357,56 +343,20 @@ $docIconColor = fn(?string $name): string => match(true) {
         <?php endif; ?>
     </div>
 
-    <?php if (empty($attachments)): ?>
-    <div style="padding:2rem 1rem;text-align:center;color:#c8c8c8;">
+    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($attachments) ? 'display:none;' : '' ?>">
         <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
-    <?php else: ?>
-    <div style="max-height:420px;overflow-y:auto;">
+    <div id="docs-list" style="max-height:420px;overflow-y:auto;">
         <?php foreach ($attachments as $att): ?>
-        <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
-            <!-- Icono tipo archivo -->
-            <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-                <i class="bi <?= $docIcon($att->file_name) ?>"
-                   style="color:<?= $docIconColor($att->file_name) ?>;font-size:1rem;"></i>
-            </div>
-            <!-- Info -->
-            <div style="flex:1;min-width:0;">
-                <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
-                     title="<?= h($att->file_name) ?>">
-                    <?= h($att->file_name) ?>
-                </div>
-                <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
-                    <span style="font-size:.65rem;color:#888;">
-                        <i class="bi bi-person" style="font-size:.6rem;"></i>
-                        <?= h($att->uploaded_by_user->full_name ?? '—') ?>
-                    </span>
-                    <span style="font-size:.65rem;color:#bbb;">
-                        <i class="bi bi-clock" style="font-size:.6rem;"></i>
-                        <?= $att->created?->format('d/m/Y H:i') ?>
-                    </span>
-                </div>
-            </div>
-            <!-- Acciones -->
-            <div style="display:flex;gap:.25rem;flex-shrink:0;align-self:center;">
-                <?= $this->Html->link(
-                    '<i class="bi bi-box-arrow-up-right"></i>',
-                    '/' . $att->file_path,
-                    ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
-                ) ?>
-                <?php if (!$isPagada): ?>
-                <?= $this->Form->postLink(
-                    '<i class="bi bi-trash"></i>',
-                    ['action' => 'deleteAttachment', $record->id, $att->id],
-                    ['confirm' => '¿Eliminar este soporte?', 'class' => 'btn btn-sm btn-outline-danger', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'title' => 'Eliminar']
-                ) ?>
-                <?php endif; ?>
-            </div>
-        </div>
+            <?= $this->element('document_row', [
+                'doc'       => $att,
+                'canDelete' => !$isPagada,
+                'deleteUrl' => $this->Url->build(['action' => 'deleteAttachment', $record->id, $att->id]),
+                'showBadge' => false,
+            ]) ?>
         <?php endforeach; ?>
     </div>
-    <?php endif; ?>
 </div>
 
 <!-- Observaciones: chat -->
@@ -488,33 +438,33 @@ $docIconColor = fn(?string $name): string => match(true) {
 <div class="modal fade" id="uploadAttachmentModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <?= $this->Form->create(null, ['url' => ['action' => 'uploadAttachment', $record->id], 'type' => 'file']) ?>
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <?= $this->Form->control('file', [
-                        'type' => 'file',
-                        'class' => 'form-control',
-                        'label' => ['text' => 'Archivo', 'class' => 'form-label'],
-                        'required' => true,
-                        'accept' => '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx',
-                    ]) ?>
-                    <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
+            <form id="upload-doc-form"
+                  data-url="<?= $this->Url->build(['action' => 'uploadAttachment', $record->id]) ?>"
+                  enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
-            </div>
-            <?= $this->Form->end() ?>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Archivo</label>
+                        <input type="file" name="file" class="form-control" required
+                               accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
+                        <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 <?php endif; ?>
 
+<?= $this->element('document_row_template', ['showBadge' => false]) ?>
+<?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
 <?= $this->element('observation_chat_init') ?>
 
 <?php if (!empty($canRegress) && empty($regressLockMessage)):
@@ -575,4 +525,17 @@ $docIconColor = fn(?string $name): string => match(true) {
 })();
 </script>
 <?php endif; ?>
+
+<script>
+(function () {
+    SgiDocumentUploader.init({
+        formSelector:        '#upload-doc-form',
+        listSelector:        '#docs-list',
+        emptySelector:       '#docs-empty-state',
+        rowTemplateSelector: '#doc-row-template',
+        modalSelector:       '#uploadAttachmentModal',
+        csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
+    });
+})();
+</script>
 <?php $this->end() ?>
