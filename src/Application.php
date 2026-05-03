@@ -67,6 +67,7 @@ use App\Service\Pipeline\State\PagadaState;
 use App\Service\Pipeline\State\TesoreriaState;
 use App\Service\PipelineAuthorizationService;
 use App\Service\RefundService;
+use App\Service\RefundDocumentService;
 use App\Service\SidebarCounterService;
 use App\Service\Strategy\InvoiceApprovalStrategy;
 use App\Service\Strategy\NoveltyApprovalStrategy;
@@ -304,6 +305,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoiceHistoryService::class,
                 PipelineAuthorizationService::class,
             ]);
+        $container->addShared(RefundDocumentService::class);
         $container->addShared(RefundService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
