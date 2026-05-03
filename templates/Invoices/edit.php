@@ -444,21 +444,10 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                 </div>
             </div>
 
-            <!-- Documento Equivalente -->
-            <div class="row g-3 mt-1">
-                <div class="col-md-3">
-                    <div class="form-check mt-2">
-                        <?= $this->Form->checkbox('is_equivalent_document', [
-                            'class' => 'form-check-input',
-                            'id' => 'is-equivalent-document',
-                            'disabled' => !$canEdit('document_type'),
-                        ]) ?>
-                        <label class="form-check-label" for="is-equivalent-document">
-                            Es Documento Equivalente
-                        </label>
-                    </div>
-                </div>
-                <div class="col-md-3 <?= empty($invoice->is_equivalent_document) ? 'd-none' : '' ?>" id="holder-type-wrapper">
+            <!-- Sub-formulario disparado por document_type='Recibo de Caja' -->
+            <?php $isReciboDeCaja = ($invoice->document_type ?? '') === 'Recibo de Caja'; ?>
+            <div class="row g-3 mt-1 <?= $isReciboDeCaja ? '' : 'd-none' ?>" id="equivalent-doc-row">
+                <div class="col-md-3" id="holder-type-wrapper">
                     <label class="form-label">Titular del Documento</label>
                     <?= $this->Form->control('equivalent_holder_type', array_merge(
                         ['label' => false, 'options' => ['provider' => 'Proveedor', 'employee' => 'Empleado', 'manual' => 'Cédula Manual'], 'empty' => '-- Seleccione --', 'id' => 'equivalent-holder-type'],
@@ -525,7 +514,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                     <?php if ($canEdit('due_date')): ?>
                         <input type="text" name="due_date" class="form-control flatpickr-date"
                                value="<?= h($invoice->due_date?->format('Y-m-d') ?? '') ?>"
-                               <?= !empty($invoice->is_equivalent_document) ? 'disabled' : '' ?>>
+                               <?= ($invoice->document_type ?? '') === 'Recibo de Caja' ? 'disabled' : '' ?>>
                     <?php else: ?>
                         <input type="text" class="form-control" disabled
                                value="<?= h($invoice->due_date?->format('d/m/Y') ?? '') ?>">
@@ -1441,4 +1430,57 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
 })();
 </script>
 <?php endif; ?>
+<?php $this->end() ?>
+
+<?php $this->append('script') ?>
+<script>
+(function () {
+    var docTypeSelect = document.querySelector('select[name="document_type"]');
+    if (!docTypeSelect) return;
+
+    var equivalentRow = document.getElementById('equivalent-doc-row');
+    var holderSelect  = document.getElementById('equivalent-holder-type');
+    var employeeWrap  = document.getElementById('employee-wrapper');
+    var manualWrap    = document.getElementById('manual-doc-wrapper');
+    var dueDateInput  = document.querySelector('input[name="due_date"]');
+
+    function setVisible(wrapper, visible) {
+        if (!wrapper) return;
+        wrapper.classList.toggle('d-none', !visible);
+        wrapper.querySelectorAll('input,select,textarea').forEach(function (el) {
+            el.disabled = !visible;
+            if (!visible) { el.value = ''; el.checked = false; }
+        });
+    }
+
+    function applyHolderRules() {
+        var holder = holderSelect ? holderSelect.value : '';
+        setVisible(employeeWrap, holder === 'employee');
+        setVisible(manualWrap,   holder === 'manual');
+    }
+
+    function applyDocTypeRules() {
+        var isReciboDeCaja = docTypeSelect.value === 'Recibo de Caja';
+
+        setVisible(equivalentRow, isReciboDeCaja);
+
+        if (dueDateInput) {
+            dueDateInput.disabled = isReciboDeCaja;
+            if (isReciboDeCaja) dueDateInput.value = '';
+        }
+
+        if (!isReciboDeCaja) {
+            if (holderSelect) holderSelect.value = '';
+            setVisible(employeeWrap, false);
+            setVisible(manualWrap,   false);
+        } else {
+            applyHolderRules();
+        }
+    }
+
+    docTypeSelect.addEventListener('change', applyDocTypeRules);
+    if (holderSelect) holderSelect.addEventListener('change', applyHolderRules);
+    // No invocar applyDocTypeRules() en load: el server ya rehidrató la fila correctamente.
+})();
+</script>
 <?php $this->end() ?>
