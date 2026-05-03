@@ -158,6 +158,34 @@ $statusLabels = RefundConstants::STATUS_LABELS;
     <?php endif; ?>
 </div>
 
+<?php $docs = $record->refund_documents ?? []; ?>
+<div class="card card-primary mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-paperclip" style="font-size:.85rem;"></i>
+            <span style="font-size:.85rem;font-weight:600;">Soportes</span>
+            <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
+        </span>
+    </div>
+    <?php if (empty($docs)): ?>
+        <div style="padding:2rem 1rem;text-align:center;color:#c8c8c8;">
+            <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+            <span style="font-size:.8rem;">Sin soportes adjuntos</span>
+        </div>
+    <?php else: ?>
+        <div style="max-height:420px;overflow-y:auto;">
+            <?php foreach ($docs as $doc): ?>
+                <?= $this->element('document_row', [
+                    'doc'       => $doc,
+                    'canDelete' => false,
+                    'deleteUrl' => null,
+                    'showBadge' => false,
+                ]) ?>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+</div>
+
 <!-- Observaciones -->
 <?php $obsList = $record->refund_observations ?? []; ?>
 <?php if (!empty($obsList)): ?>

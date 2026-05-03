@@ -534,6 +534,37 @@ $invoiceCount = count($record->invoices ?? []);
 <!-- Columna derecha: soportes + observaciones -->
 <div class="sgi-invoice-sidebar">
 
+<?php $docs = $record->refund_documents ?? []; ?>
+<div class="card card-primary mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-paperclip" style="font-size:.85rem;"></i>
+            <span style="font-size:.85rem;font-weight:600;">Soportes</span>
+            <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
+        </span>
+        <?php if (!$record->isPagado()): ?>
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadRefundDocModal">
+            <i class="bi bi-upload me-1"></i>Subir
+        </button>
+        <?php endif; ?>
+    </div>
+
+    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($docs) ? 'display:none;' : '' ?>">
+        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+        <span style="font-size:.8rem;">Sin soportes adjuntos</span>
+    </div>
+    <div id="docs-list" style="max-height:420px;overflow-y:auto;">
+        <?php foreach ($docs as $doc): ?>
+            <?= $this->element('document_row', [
+                'doc'       => $doc,
+                'canDelete' => !$record->isPagado(),
+                'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
+                'showBadge' => false,
+            ]) ?>
+        <?php endforeach; ?>
+    </div>
+</div>
+
 <!-- Observaciones: chat -->
 <?php $obsCount = count($record->refund_observations ?? []); ?>
 <div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
@@ -574,9 +605,58 @@ $invoiceCount = count($record->invoices ?? []);
 
 </div><!-- /layout dos columnas -->
 
+<?php if (!$record->isPagado()): ?>
+<!-- Modal: Subir Soporte -->
+<div class="modal fade" id="uploadRefundDocModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="upload-doc-form"
+                  data-url="<?= $this->Url->build(['action' => 'uploadDocument', $record->id]) ?>"
+                  enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Documento (opcional)</label>
+                        <input type="text" name="document_type" class="form-control" placeholder="Ej. Soporte causación, Comprobante...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Archivo</label>
+                        <input type="file" name="file" class="form-control" required accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
+                        <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?= $this->element('document_row_template', ['showBadge' => false]) ?>
+<?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
+
 <?= $this->element('observation_chat_init') ?>
 
 <?php $this->append('script') ?>
+<script>
+(function(){
+    SgiDocumentUploader.init({
+        formSelector:        '#upload-doc-form',
+        listSelector:        '#docs-list',
+        emptySelector:       '#docs-empty-state',
+        counterSelector:     '.card.card-primary .card-header .sgi-folder-count',
+        rowTemplateSelector: '#doc-row-template',
+        modalSelector:       '#uploadRefundDocModal',
+        csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
+    });
+})();
+</script>
 <script>
 (function(){
     // Beneficiary radio toggle (only present when in agrupacion)
