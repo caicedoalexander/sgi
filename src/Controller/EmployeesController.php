@@ -216,7 +216,7 @@ class EmployeesController extends AppController
             $this->Flash->error(
                 $message === ''
                     ? 'El mensaje no puede estar vacío.'
-                    : 'No se pudo agregar la observación.'
+                    : 'No se pudo agregar la observación.',
             );
         }
 
