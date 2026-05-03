@@ -170,5 +170,4 @@ final class NoveltyConstants
         '#10B981', // emerald
         '#6366F1', // indigo
     ];
-
 }
