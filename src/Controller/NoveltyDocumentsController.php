@@ -99,7 +99,7 @@ class NoveltyDocumentsController extends AppController
             return $this->_jsonResponse(
                 $deleted
                     ? ['success' => true]
-                    : ['success' => false, 'error' => 'No se pudo eliminar el documento.']
+                    : ['success' => false, 'error' => 'No se pudo eliminar el documento.'],
             );
         }
 

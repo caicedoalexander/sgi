@@ -11,6 +11,7 @@ use App\Service\PettyCashService;
 use App\Service\PipelineAuthorizationService;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
+use Cake\Routing\Router;
 use DateTimeInterface;
 
 class PettyCashRecordsController extends AppController
@@ -558,7 +559,7 @@ class PettyCashRecordsController extends AppController
                     'created' => $result->created->format('d/m/Y H:i'),
                     'can_delete' => $canDelete,
                     'delete_url' => $canDelete
-                        ? \Cake\Routing\Router::url(['action' => 'deleteDocument', $id, $result->id])
+                        ? Router::url(['action' => 'deleteDocument', $id, $result->id])
                         : null,
                 ],
             ]);
@@ -614,7 +615,7 @@ class PettyCashRecordsController extends AppController
             return $this->_jsonResponse(
                 $deleted
                     ? ['success' => true]
-                    : ['success' => false, 'error' => 'No se pudo eliminar el soporte.']
+                    : ['success' => false, 'error' => 'No se pudo eliminar el soporte.'],
             );
         }
 

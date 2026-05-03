@@ -12,6 +12,7 @@ use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
 use App\Service\NoveltySignatureService;
 use App\Service\PipelineAuthorizationService;
+use Cake\Routing\Router;
 use DateTime;
 
 class NoveltyLiquidationDocsController extends AppController
@@ -360,7 +361,7 @@ class NoveltyLiquidationDocsController extends AppController
                     'badge_class' => $badgeColors[$result->pipeline_status] ?? 'bg-secondary',
                     'badge_label' => $statusLabels[$result->pipeline_status] ?? $result->pipeline_status,
                     'delete_url' => $canDelete
-                        ? \Cake\Routing\Router::url(['action' => 'deleteDocument', $doc->id, $result->id])
+                        ? Router::url(['action' => 'deleteDocument', $doc->id, $result->id])
                         : null,
                 ],
             ]);
@@ -476,7 +477,7 @@ class NoveltyLiquidationDocsController extends AppController
             return $this->_jsonResponse(
                 $deleted
                     ? ['success' => true]
-                    : ['success' => false, 'error' => 'No se pudo eliminar el documento.']
+                    : ['success' => false, 'error' => 'No se pudo eliminar el documento.'],
             );
         }
 

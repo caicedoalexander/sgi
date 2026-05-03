@@ -16,6 +16,7 @@ use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
+use Cake\Routing\Router;
 
 class InvoicesController extends AppController
 {
@@ -623,7 +624,7 @@ class InvoicesController extends AppController
                     'badge_class' => $badgeColors[$result->pipeline_status] ?? 'bg-secondary',
                     'badge_label' => $statusLabels[$result->pipeline_status] ?? $result->pipeline_status,
                     'delete_url' => $canDelete
-                        ? \Cake\Routing\Router::url(['action' => 'deleteDocument', $invoice->id, $result->id])
+                        ? Router::url(['action' => 'deleteDocument', $invoice->id, $result->id])
                         : null,
                 ],
             ]);
