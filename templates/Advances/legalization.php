@@ -352,7 +352,9 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
                 </div>
             </div>
 
-            <?= $this->Form->create(null, ['url' => ['action' => 'confirmShortage', $leg->advance_invoice_id], 'type' => 'file']) ?>
+            <form id="confirm-shortage-form"
+                  data-shortage-url="<?= $this->Url->build(['action' => 'confirmShortage', $leg->advance_invoice_id]) ?>"
+                  enctype="multipart/form-data">
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">N.º comprobante *</label>
@@ -368,11 +370,11 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
                 </div>
             </div>
             <div class="d-flex justify-content-end mt-3">
-                <button type="submit" class="btn sgi-btn-primary">
+                <button type="submit" id="confirm-shortage-btn" class="btn sgi-btn-primary">
                     <i class="bi bi-check-circle me-1"></i>Confirmar consignación
                 </button>
             </div>
-            <?= $this->Form->end() ?>
+            </form>
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_TESORERIA && $leg->case_type === AdvanceConstants::CASE_SOBRANTE): ?>
         <?php
@@ -669,6 +671,42 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
         var t = new window.bootstrap.Toast(el, { delay: 4500 });
         el.addEventListener('hidden.bs.toast', function () { el.remove(); });
         t.show();
+    }
+
+    var shortageForm = document.getElementById('confirm-shortage-form');
+    if (shortageForm) {
+        shortageForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var btn = document.getElementById('confirm-shortage-btn');
+            var originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                btn.disabled = true;
+            }
+            var fd = new FormData(shortageForm);
+            fetch(shortageForm.dataset.shortageUrl, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: fd,
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    showRelDocToast(data.error || 'Error al confirmar consignación.');
+                    if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
+                }
+            })
+            .catch(function () {
+                showRelDocToast('Error de conexión. Intente nuevamente.');
+                if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
+            });
+        });
     }
 
     document.querySelectorAll('[data-rel-doc-trigger]').forEach(function (input) {

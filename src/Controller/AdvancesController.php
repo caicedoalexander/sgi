@@ -358,12 +358,7 @@ class AdvancesController extends AppController
                 return $this->_jsonResponse(['success' => false, 'error' => $result->firstError() ?? 'Error al adjuntar.']);
             }
 
-            $doc = $result->data;
-
-            return $this->_jsonResponse([
-                'success' => true,
-                'document' => $this->_buildDocumentPayload($doc, false, null),
-            ]);
+            return $this->_jsonResponse(['success' => true]);
         }
 
         if ($result->success) {
@@ -477,6 +472,15 @@ class AdvancesController extends AppController
             $data,
             (int)$this->_getCurrentUser()->id,
         );
+
+        if ($this->_isJsonRequest()) {
+            if ($result->success) {
+                return $this->_jsonResponse(['success' => true]);
+            }
+
+            return $this->_jsonResponse(['success' => false, 'error' => $result->firstError() ?? 'Error al confirmar consignación.']);
+        }
+
         if ($result->success) {
             $this->Flash->success('Consignación confirmada. Anticipo legalizado.');
         } else {

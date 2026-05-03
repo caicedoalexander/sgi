@@ -455,6 +455,30 @@ class PaymentSchedulingsController extends AppController
     {
         $this->request->allowMethod(['post', 'delete']);
 
+        $record = $this->PaymentSchedulings->get($id);
+        if ($record->pipeline_status === PaymentSchedulingConstants::STATUS_PAGADA) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'No se pueden eliminar soportes de una programación pagada.']);
+            }
+            $this->Flash->error('No se pueden eliminar soportes de una programación pagada.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        $attachmentsTable = $this->fetchTable('PaymentSchedulingAttachments');
+        $attachment = $attachmentsTable->find()
+            ->where(['id' => $attachmentId, 'payment_scheduling_id' => $id])
+            ->first();
+
+        if (!$attachment) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'Soporte no encontrado.']);
+            }
+            $this->Flash->error('Soporte no encontrado.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
         $deleted = $this->attachmentService->deleteAttachment((int)$attachmentId);
 
         if ($this->_isJsonRequest()) {
