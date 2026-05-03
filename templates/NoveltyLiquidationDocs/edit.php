@@ -483,66 +483,33 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
     <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php endif; ?>
 
-    <?php if (empty($documentsByStatus)): ?>
-        <div style="padding:1.5rem 1rem;text-align:center;color:#c8c8c8;">
-            <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
-            <span style="font-size:.8rem;">Sin soportes adjuntos</span>
+    <div id="docs-empty-state" style="padding:1.5rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
+        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+        <span style="font-size:.8rem;">Sin soportes adjuntos</span>
+    </div>
+    <div id="docs-list" style="max-height:420px;overflow-y:auto;">
+        <?php
+        $multipleStatuses = count($documentsByStatus) > 1;
+        foreach ($documentsByStatus as $status => $docs):
+        ?>
+        <?php if ($multipleStatuses): ?>
+        <div style="padding:.3rem .875rem;background:#f8f9fa;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
+            <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
+            <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>
-    <?php else: ?>
-        <div style="max-height:420px;overflow-y:auto;">
-            <?php
-            $multipleStatuses = count($documentsByStatus) > 1;
-            foreach ($documentsByStatus as $status => $docs):
-            ?>
-            <?php if ($multipleStatuses): ?>
-            <div style="padding:.3rem .875rem;background:#f8f9fa;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-                <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
-                <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
-            </div>
-            <?php endif; ?>
-            <?php foreach ($docs as $docFile): ?>
-            <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
-                <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-                    <i class="bi <?= $docIcon($docFile->mime_type) ?>"
-                       style="color:<?= $docIconColor($docFile->mime_type) ?>;font-size:1rem;"></i>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
-                         title="<?= h($docFile->file_name) ?>">
-                        <?= h($docFile->file_name) ?>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
-                        <?php if (!$multipleStatuses): ?>
-                        <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.58rem;"><?= $statusLabels[$status] ?? $status ?></span>
-                        <?php endif; ?>
-                        <span style="font-size:.65rem;color:#bbb;">
-                            <i class="bi bi-clock" style="font-size:.6rem;"></i>
-                            <?= $docFile->created?->format('d/m/Y H:i') ?>
-                        </span>
-                        <?php if ($docFile->file_size): ?>
-                        <span style="font-size:.63rem;color:#ccc;"><?= $this->Number->toReadableSize($docFile->file_size) ?></span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <div style="display:flex;gap:.25rem;flex-shrink:0;align-self:center;">
-                    <?= $this->Html->link(
-                        '<i class="bi bi-box-arrow-up-right"></i>',
-                        '/' . $docFile->file_path,
-                        ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
-                    ) ?>
-                    <?php if ($showUploadSection && $docFile->pipeline_status === $currentStatus): ?>
-                    <?= $this->Form->postLink(
-                        '<i class="bi bi-trash"></i>',
-                        ['action' => 'deleteDocument', $doc->id, $docFile->id],
-                        ['confirm' => '¿Eliminar este soporte?', 'class' => 'btn btn-sm btn-outline-danger', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'title' => 'Eliminar']
-                    ) ?>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php endforeach; ?>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
+        <?php endif; ?>
+        <?php foreach ($docs as $docFile): ?>
+            <?= $this->element('document_row', [
+                'doc'          => $docFile,
+                'canDelete'    => $showUploadSection && $docFile->pipeline_status === $currentStatus,
+                'deleteUrl'    => $this->Url->build(['action' => 'deleteDocument', $doc->id, $docFile->id]),
+                'showBadge'    => !$multipleStatuses,
+                'badgeColors'  => $badgeColors,
+                'statusLabels' => $statusLabels,
+            ]) ?>
+        <?php endforeach; ?>
+        <?php endforeach; ?>
+    </div>
 </div>
 
 <!-- Observations chat -->
@@ -612,28 +579,33 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
 <div class="modal fade" id="uploadDocModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <?= $this->Form->create(null, ['url' => ['action' => 'uploadDocument', $doc->id], 'type' => 'file']) ?>
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Archivo</label>
-                    <input type="file" name="document" class="form-control" required
-                           accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
-                    <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
+            <form id="upload-doc-form"
+                  data-url="<?= $this->Url->build(['action' => 'uploadDocument', $doc->id]) ?>"
+                  enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
-            </div>
-            <?= $this->Form->end() ?>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Archivo</label>
+                        <input type="file" name="file" class="form-control" required
+                               accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
+                        <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 <?php endif; ?>
+
+<?= $this->element('document_row_template', ['showBadge' => true]) ?>
+<?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
 
 <?= $this->Html->script('sgi-signature') ?>
 <?= $this->Html->script('sgi-epadlink') ?>
@@ -654,6 +626,16 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
         el.style.minHeight = '0px';
         syncHeight(el);
         el.addEventListener('input', function() { syncHeight(this); });
+    });
+
+    SgiDocumentUploader.init({
+        formSelector:        '#upload-doc-form',
+        listSelector:        '#docs-list',
+        emptySelector:       '#docs-empty-state',
+        counterSelector:     '.card.card-primary .card-header .sgi-folder-count',
+        rowTemplateSelector: '#doc-row-template',
+        modalSelector:       '#uploadDocModal',
+        csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
     });
 })();
 </script>
