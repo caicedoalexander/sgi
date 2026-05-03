@@ -50,7 +50,7 @@ Fuera de alcance: cambios en pipeline, permisos, reportes o servicios.
   - Si valor `=== 'Recibo de Caja'`: mostrar fila equivalent. La lógica interna (mostrar `employee` o `manual_document_number` según `holder_type`) se conserva sin cambios.
   - Si valor `!== 'Recibo de Caja'`: ocultar fila y resetear `equivalent_holder_type`, `employee_id`, `manual_document_number` para no enviar valores fantasma.
 - Simplificar la lógica de Legalización en `add.php` (~línea 245): ya no hace falta `setDisabled` cruzado entre Legalización y la fila equivalent porque ambos son valores mutuamente excluyentes del mismo select.
-- En `edit.php` el campo `provider_id` que hoy se desactiva con `disabled` cuando `is_equivalent_document=true` pasa a desactivarse cuando `document_type === 'Recibo de Caja'` **y** `holder_type !== 'provider'`. Mantener exactamente el comportamiento previo (con holder=provider el campo sigue habilitado).
+- En `edit.php` el campo `due_date` (línea ~528) que hoy se desactiva con `disabled` cuando `is_equivalent_document=true` pasa a desactivarse cuando `document_type === 'Recibo de Caja'`.
 
 ### 3. Vista `view.php`
 
