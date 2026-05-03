@@ -137,7 +137,12 @@
         var form         = document.querySelector(opts.formSelector);
         var list         = document.querySelector(opts.listSelector);
         var emptyState   = document.querySelector(opts.emptySelector);
-        var counter      = document.querySelector(opts.counterSelector);
+        // Resolve counter relative to the card containing the list to avoid
+        // matching counters in unrelated cards (e.g. observations, payments).
+        var listCard     = list ? list.closest('.card') : null;
+        var counter      = listCard
+            ? listCard.querySelector('.sgi-folder-count')
+            : (opts.counterSelector ? document.querySelector(opts.counterSelector) : null);
         var template     = document.querySelector(opts.rowTemplateSelector);
         var modalEl      = opts.modalSelector ? document.querySelector(opts.modalSelector) : null;
         var csrfToken    = opts.csrfToken || '';

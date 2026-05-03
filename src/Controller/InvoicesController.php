@@ -606,7 +606,8 @@ class InvoicesController extends AppController
                 return $this->_jsonResponse(['success' => false, 'error' => $result]);
             }
 
-            $canDelete = $this->documentService->canDeleteDocument($result, $invoice->pipeline_status);
+            $canDelete = $this->_checkPermission('invoices', 'delete')
+                && $this->documentService->canDeleteDocument($result, $invoice->pipeline_status);
             [$badgeColors, $statusLabels] = $this->_invoiceDocumentLabels();
 
             return $this->_jsonResponse([

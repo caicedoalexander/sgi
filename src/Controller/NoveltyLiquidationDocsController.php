@@ -471,7 +471,7 @@ class NoveltyLiquidationDocsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $deleted = $this->documentService->deleteDocument($documentId);
+        $deleted = $this->documentService->deleteDocument((int)$documentId);
 
         if ($this->_isJsonRequest()) {
             return $this->_jsonResponse(
