@@ -460,10 +460,6 @@ class RefundService
             return false;
         }
 
-        if ($roleName === RoleConstants::ADMIN) {
-            return true;
-        }
-
         return $this->pipelineAuth->canOperate(
             $roleId,
             $roleName,

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
-use App\Constants\RoleConstants;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
 use App\Service\Pipeline\InvoicePipelineStateRegistry;
 
@@ -73,10 +72,6 @@ final class InvoiceTransitionValidator
      */
     public function filterErrorsForRole(array $errors, array $rules, int $roleId, string $roleName, string $status): array
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return array_values($errors);
-        }
-
         $editable = $this->fieldPolicy->getEditableFields($roleId, $roleName, $status);
         $statusVisible = in_array($roleName, $this->states->get($status)->getRoleVisibility(), true);
 

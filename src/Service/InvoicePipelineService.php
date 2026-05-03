@@ -5,7 +5,6 @@ namespace App\Service;
 
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
-use App\Constants\RoleConstants;
 use App\Event\InvoicePaidEvent;
 use App\Model\Entity\Invoice;
 use App\Service\Interface\HistoryServiceInterface;
@@ -179,10 +178,6 @@ class InvoicePipelineService
             return false;
         }
 
-        if ($roleName === RoleConstants::ADMIN) {
-            return true;
-        }
-
         return $this->pipelineAuth->canOperate(
             $roleId,
             $roleName,
@@ -227,10 +222,6 @@ class InvoicePipelineService
     {
         if ($this->getPreviousStatus($currentStatus) === null) {
             return false;
-        }
-
-        if ($roleName === RoleConstants::ADMIN) {
-            return true;
         }
 
         return $this->pipelineAuth->canOperate(

@@ -66,12 +66,6 @@ class NoveltyPipelineService
         RoleConstants::ADMIN => self::LIQUIDATION_ACTIVE_STATUSES,
     ];
 
-    // All novelty fields (for Admin)
-    private const ALL_FIELDS = [
-        'approver_id', 'area_approval', 'passes_payroll',
-        'rrhh_by', 'liquidation_doc_id',
-    ];
-
     /**
      * Campos editables por paso del pipeline (sin acoplamiento a rol).
      */
@@ -103,39 +97,6 @@ class NoveltyPipelineService
     {
         $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
     }
-
-    // All sections in pipeline order (for Admin)
-    private const ALL_SECTIONS = [
-        'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
-    ];
-
-    // Map pipeline statuses to which sections are visible up to that point (for Admin)
-    private const SECTIONS_BY_STATUS = [
-        NoveltyConstants::STATUS_APROBACION => [
-            'informacion', 'fechas', 'motivo', 'aprobacion', 'firmas',
-        ],
-        NoveltyConstants::STATUS_RRHH => [
-            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas',
-        ],
-        NoveltyConstants::STATUS_CONTABILIDAD => [
-            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
-        ],
-        NoveltyConstants::STATUS_REVISION_FIRMAS => [
-            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
-        ],
-        NoveltyConstants::STATUS_GDP => [
-            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
-        ],
-        NoveltyConstants::STATUS_TESORERIA => [
-            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
-        ],
-        NoveltyConstants::STATUS_AUT_PAGO => [
-            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
-        ],
-        NoveltyConstants::STATUS_PAGADA => [
-            'informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas',
-        ],
-    ];
 
     /**
      * Get the next status for a novelty.
@@ -589,10 +550,6 @@ class NoveltyPipelineService
      */
     public function getEditableFields(int $roleId, string $roleName, string $status): array
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return self::ALL_FIELDS;
-        }
-
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
@@ -612,10 +569,6 @@ class NoveltyPipelineService
      */
     public function getVisibleSections(int $roleId, string $roleName, string $status): array
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return self::SECTIONS_BY_STATUS[$status] ?? self::ALL_SECTIONS;
-        }
-
         $operableSteps = $this->pipelineAuth->getOperableSteps(
             $roleId,
             $roleName,
@@ -635,10 +588,6 @@ class NoveltyPipelineService
      */
     public function canAdvanceFromStatus(int $roleId, string $roleName, string $status): bool
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return true;
-        }
-
         return $this->pipelineAuth->canOperate(
             $roleId,
             $roleName,

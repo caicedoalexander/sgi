@@ -71,10 +71,6 @@ class PaymentSchedulingPipelineService
             return false;
         }
 
-        if ($roleName === RoleConstants::ADMIN) {
-            return true;
-        }
-
         return $this->pipelineAuth->canOperate(
             $roleId,
             $roleName,
@@ -87,10 +83,6 @@ class PaymentSchedulingPipelineService
     {
         if ($currentStatus !== PaymentSchedulingConstants::STATUS_AUT_PAGO) {
             return false;
-        }
-
-        if ($roleName === RoleConstants::ADMIN) {
-            return true;
         }
 
         return $this->pipelineAuth->canOperate(
@@ -138,10 +130,6 @@ class PaymentSchedulingPipelineService
     {
         if ($this->getPreviousStatus($currentStatus) === null) {
             return false;
-        }
-
-        if ($roleName === RoleConstants::ADMIN) {
-            return true;
         }
 
         return $this->pipelineAuth->canOperate(
