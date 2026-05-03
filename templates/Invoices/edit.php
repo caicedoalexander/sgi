@@ -31,15 +31,10 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
 $approvalOptions       = array_combine(InvoiceConstants::APPROVAL_STATUSES, InvoiceConstants::APPROVAL_STATUSES);
 $dianOptions           = array_combine(InvoiceConstants::DIAN_STATUSES, InvoiceConstants::DIAN_STATUSES);
 $readyForPaymentOptions = [
-    ''                   => '-- Seleccione --',
-    'Si'                 => 'Sí',
-    'No'                 => 'No',
-    'Anticipo Empleado'  => 'Anticipo Empleado',
-    'Anticipo Proveedor' => 'Anticipo Proveedor',
-    'Pago prioritario'   => 'Pago prioritario',
-    'Pago PSE'           => 'Pago PSE',
-    'No Legalización'    => 'No Legalización',
-    'Reintegro'          => 'Reintegro',
+    ''                 => '-- Seleccione --',
+    'Si'               => 'Sí',
+    'Pago PSE'         => 'Pago PSE',
+    'Pago prioritario' => 'Pago Prioritario',
 ];
 $paymentStatusOptions = ['' => '-- Seleccione --', InvoiceConstants::PAYMENT_FULL => 'Pago total', InvoiceConstants::PAYMENT_PARTIAL => 'Pago Parcial'];
 

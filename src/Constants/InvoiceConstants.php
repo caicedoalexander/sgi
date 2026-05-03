@@ -89,8 +89,7 @@ final class InvoiceConstants
 
     // Lista para pago
     public const READY_FOR_PAYMENT_OPTIONS = [
-        'Si', 'No', 'Anticipo Empleado', 'Anticipo Proveedor',
-        'Pago prioritario', 'Pago PSE', 'No Legalización', 'Reintegro',
+        'Si', 'Pago PSE', 'Pago prioritario',
     ];
 
     // Token de aprobacion (horas de validez)
