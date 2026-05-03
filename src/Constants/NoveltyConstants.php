@@ -135,7 +135,6 @@ final class NoveltyConstants
     ];
 
     // Document types (for novelty_documents)
-    public const DOC_TYPE_SUPPORT = 'support';
     public const DOC_TYPE_LIQUIDATION = 'liquidation_document';
 
     // Signer types (for liquidation doc signatures) — jefe_inmediato removed

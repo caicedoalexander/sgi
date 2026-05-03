@@ -29,13 +29,6 @@ final class InvoiceConstants
     public const APPROVER_STATUS_REJECTED = 'Rechazada';
     public const APPROVER_STATUS_SUPERSEDED = 'Reemplazada';
 
-    public const APPROVER_STATUSES = [
-        self::APPROVER_STATUS_PENDING,
-        self::APPROVER_STATUS_APPROVED,
-        self::APPROVER_STATUS_REJECTED,
-        self::APPROVER_STATUS_SUPERSEDED,
-    ];
-
     public const APPROVER_STATUSES_ACTIVE = [
         self::APPROVER_STATUS_PENDING,
         self::APPROVER_STATUS_APPROVED,
@@ -43,10 +36,9 @@ final class InvoiceConstants
     ];
 
     // Validacion DIAN
-    public const DIAN_PENDING = 'Pendiente';
     public const DIAN_APPROVED = 'Aprobada';
     public const DIAN_REJECTED = 'Rechazado';
-    public const DIAN_STATUSES = [self::DIAN_PENDING, self::DIAN_APPROVED, self::DIAN_REJECTED];
+    public const DIAN_STATUSES = ['Pendiente', self::DIAN_APPROVED, self::DIAN_REJECTED];
 
     // Pipeline statuses
     public const STATUS_APROBACION = 'aprobacion';
@@ -92,12 +84,6 @@ final class InvoiceConstants
     public const PAYMENT_RECORD_PENDING = 'pending';
     public const PAYMENT_RECORD_AUTHORIZED = 'authorized';
     public const PAYMENT_RECORD_REJECTED = 'rejected';
-
-    public const PAYMENT_RECORD_STATUSES = [
-        self::PAYMENT_RECORD_PENDING,
-        self::PAYMENT_RECORD_AUTHORIZED,
-        self::PAYMENT_RECORD_REJECTED,
-    ];
 
     // Lista para pago
     public const READY_FOR_PAYMENT_OPTIONS = [

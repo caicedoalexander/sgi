@@ -18,14 +18,6 @@ final class PipelineStepConstants
     public const PIPELINE_REFUNDS = 'refunds';
     public const PIPELINE_PETTY_CASH = 'petty_cash';
 
-    public const PIPELINES = [
-        self::PIPELINE_INVOICES,
-        self::PIPELINE_NOVELTIES,
-        self::PIPELINE_PAYMENT_SCHEDULINGS,
-        self::PIPELINE_REFUNDS,
-        self::PIPELINE_PETTY_CASH,
-    ];
-
     public const PIPELINE_LABELS = [
         self::PIPELINE_INVOICES => 'Facturas',
         self::PIPELINE_NOVELTIES => 'Novedades',
