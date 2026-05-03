@@ -6,21 +6,26 @@ namespace App\Controller;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
+use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Service\PipelineAuthorizationService;
+use App\Service\RefundDocumentService;
 use App\Service\RefundService;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
+use Cake\Routing\Router;
 use DateTimeInterface;
 
 class RefundsController extends AppController
 {
     use ObservationControllerTrait;
+    use DocumentJsonPayloadTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     private RefundService $refundService;
     private PipelineAuthorizationService $pipelineAuth;
+    private RefundDocumentService $documentService;
 
     /**
      * @return void
@@ -31,6 +36,7 @@ class RefundsController extends AppController
         $container = $this->getContainer();
         $this->refundService = $container->get(RefundService::class);
         $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
+        $this->documentService = $container->get(RefundDocumentService::class);
     }
 
     private function _getCurrentUser(): object
@@ -134,6 +140,7 @@ class RefundsController extends AppController
                 'Users',
                 'sort' => ['RefundObservations.created' => 'ASC'],
             ],
+            'RefundDocuments' => ['UploadedByUsers'],
         ]);
 
         $this->set(compact('record'));
@@ -222,6 +229,7 @@ class RefundsController extends AppController
             'BankingEntities',
             'PaymentCreatedByUsers',
             'PaymentAuthorizedByUsers',
+            'RefundDocuments' => ['UploadedByUsers'],
         ]);
 
         if ($this->request->is(['patch', 'post', 'put'])) {
@@ -560,5 +568,104 @@ class RefundsController extends AppController
             $this->_getCurrentUser(),
             fn() => $this->redirect(['action' => 'edit', $id]),
         );
+    }
+
+    public function uploadDocument($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $record = $this->Refunds->get($id);
+
+        if ($record->isPagado()) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse([
+                    'success' => false,
+                    'error' => 'No se puede subir soportes a un reintegro pagado.',
+                ]);
+            }
+            $this->Flash->error('No se puede subir soportes a un reintegro pagado.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        $file = $this->request->getUploadedFile('file');
+        if (!$file) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse([
+                    'success' => false,
+                    'error' => 'No se recibió ningún archivo válido.',
+                ]);
+            }
+            $this->Flash->error('No se recibió ningún archivo válido.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        $identity = $this->Authentication->getIdentity();
+        $result = $this->documentService->uploadDocument(
+            (int)$id,
+            $file,
+            $identity ? (int)$identity->getIdentifier() : null,
+            $this->request->getData('document_type'),
+        );
+
+        if ($this->_isJsonRequest()) {
+            if (is_string($result)) {
+                return $this->_jsonResponse(['success' => false, 'error' => $result]);
+            }
+
+            $canDelete = !$record->isPagado();
+            $deleteUrl = $canDelete
+                ? Router::url(['action' => 'deleteDocument', $id, $result->id])
+                : null;
+
+            return $this->_jsonResponse([
+                'success' => true,
+                'document' => $this->_buildDocumentPayload($result, $canDelete, $deleteUrl),
+            ]);
+        }
+
+        if (is_string($result)) {
+            $this->Flash->error($result);
+        } else {
+            $this->Flash->success('El soporte ha sido subido.');
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    public function deleteDocument($refundId = null, $documentId = null)
+    {
+        $this->request->allowMethod(['post', 'delete']);
+        $record = $this->Refunds->get($refundId);
+
+        if ($record->isPagado()) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse([
+                    'success' => false,
+                    'error' => 'No se puede eliminar un soporte de un reintegro pagado.',
+                ]);
+            }
+            $this->Flash->error('No se puede eliminar un soporte de un reintegro pagado.');
+
+            return $this->redirect(['action' => 'edit', $refundId]);
+        }
+
+        $deleted = $this->documentService->deleteDocument((int)$documentId);
+
+        if ($this->_isJsonRequest()) {
+            return $this->_jsonResponse(
+                $deleted
+                    ? ['success' => true]
+                    : ['success' => false, 'error' => 'No se pudo eliminar el soporte.'],
+            );
+        }
+
+        if ($deleted) {
+            $this->Flash->success('El soporte ha sido eliminado.');
+        } else {
+            $this->Flash->error('No se pudo eliminar el soporte.');
+        }
+
+        return $this->redirect(['action' => 'edit', $refundId]);
     }
 }
