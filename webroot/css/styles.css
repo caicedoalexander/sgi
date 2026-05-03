@@ -2480,12 +2480,15 @@ textarea.form-control {
     gap: .875rem;
 }
 .sgi-obs-empty {
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    min-height: 100px;
     padding: 1.5rem 0;
     color: #c5c5c5;
     gap: .5rem;
+    background: #f9fafb;
 }
 .sgi-obs-empty.is-hidden,
 .sgi-obs-empty[hidden] { display: none !important; }
