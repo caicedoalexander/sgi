@@ -126,23 +126,28 @@ class AppController extends Controller
 
     /**
      * Calculate and pass user permissions to all views for sidebar filtering.
+     *
+     * Para Administrador, mergea ADMIN_BYPASS_MODULES con can_view/create/edit/delete=true
+     * para que esos módulos sean siempre visibles en el sidebar aunque la BD
+     * no tenga la fila correspondiente.
      */
     protected function _setUserPermissions(object $user): void
     {
         $roleName = $this->_getUserRoleName($user);
+        $perms = $this->authService->getPermissionsForRoleAsMatrix((int)$user->role_id);
 
         if ($roleName === AuthorizationService::ROLE_ADMIN) {
-            // Admin sees everything
-            $perms = [];
-            foreach (array_keys(AuthorizationService::MODULES) as $module) {
-                $perms[$module] = ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => true];
+            foreach (AuthorizationService::ADMIN_BYPASS_MODULES as $module) {
+                $perms[$module] = [
+                    'can_view' => true,
+                    'can_create' => true,
+                    'can_edit' => true,
+                    'can_delete' => true,
+                ];
             }
-            $this->set('userPermissions', $perms);
-
-            return;
         }
 
-        $this->set('userPermissions', $this->authService->getPermissionsForRoleAsMatrix((int)$user->role_id));
+        $this->set('userPermissions', $perms);
     }
 
     /**
@@ -216,11 +221,6 @@ class AppController extends Controller
 
         $user = $identity->getOriginalData();
         $roleName = $this->_getUserRoleName($user);
-
-        // Admin always allowed
-        if ($roleName === AuthorizationService::ROLE_ADMIN) {
-            return true;
-        }
 
         return $this->authService->isAllowed((int)$user->role_id, $roleName, $module, $action);
     }
