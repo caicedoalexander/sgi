@@ -60,6 +60,11 @@ class RefundsTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->hasMany('RefundDocuments', [
+            'foreignKey' => 'refund_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator
