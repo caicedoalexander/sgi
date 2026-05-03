@@ -530,62 +530,41 @@ $invoiceCount = count($record->invoices ?? []);
 
 <!-- Observaciones: chat -->
 <?php $obsCount = count($record->refund_observations ?? []); ?>
-<div class="card card-primary" style="display:flex;flex-direction:column;">
+<div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
     <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);"></i>
         <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
-        <?php if ($obsCount > 0): ?>
-        <span class="sgi-folder-count ms-auto"><?= $obsCount ?></span>
-        <?php endif; ?>
+        <span class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
     </div>
 
-    <!-- Mensajes -->
-    <div id="obs-chat-scroll" style="min-height:100px;max-height:340px;overflow-y:auto;padding:1rem .875rem;background:#f9fafb;display:flex;flex-direction:column;gap:.875rem;">
-        <?php if (empty($record->refund_observations)): ?>
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 0;color:#c5c5c5;gap:.5rem;">
-            <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
-            <span style="font-size:.78rem;">Sin observaciones aún</span>
-        </div>
-        <?php else: ?>
-        <?php foreach ($record->refund_observations as $obs):
-            $isMine   = $currentUser && $obs->user_id === $currentUser->id;
-            $names    = explode(' ', trim($obs->user->full_name ?? ''));
-            $initials = strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[array_key_last($names)] ?? '', 0, 1));
-        ?>
-        <div style="display:flex;flex-direction:column;align-items:<?= $isMine ? 'flex-end' : 'flex-start' ?>;gap:.2rem;">
-            <div style="font-size:.63rem;color:#aaa;font-weight:500;letter-spacing:.01em;
-                        <?= $isMine ? 'padding-right:.3rem' : 'padding-left:.3rem' ?>">
-                <?= $isMine ? 'Tú' : h($obs->user->full_name ?? '') ?>
-            </div>
-            <div style="max-width:92%;padding:.55rem .8rem;font-size:.81rem;line-height:1.5;word-break:break-word;
-                        background:<?= $isMine ? 'var(--primary-color)' : '#fff' ?>;
-                        color:<?= $isMine ? '#fff' : '#2d2d2d' ?>;
-                        border:1px solid <?= $isMine ? 'var(--primary-color)' : 'var(--border-color)' ?>;
-                        border-radius:<?= $isMine ? '10px 10px 2px 10px' : '10px 10px 10px 2px' ?>;">
-                <?= nl2br(h($obs->message)) ?>
-            </div>
-            <div style="font-size:.61rem;color:#c0c0c0;
-                        <?= $isMine ? 'padding-right:.3rem' : 'padding-left:.3rem' ?>">
-                <?= $obs->created?->format('d/m/Y H:i') ?>
-            </div>
-        </div>
+    <div id="obs-chat-scroll" class="sgi-obs-list"
+         style="min-height:100px;max-height:340px;overflow-y:auto;padding:1rem .875rem;background:#f9fafb;display:flex;flex-direction:column;gap:.875rem;">
+        <?php foreach ($record->refund_observations ?? [] as $obs): ?>
+            <?= $this->element('observation_bubble', [
+                'observation' => $obs,
+                'isMine' => $currentUser && $obs->user_id === $currentUser->id,
+            ]) ?>
         <?php endforeach; ?>
-        <?php endif; ?>
     </div>
 
-    <!-- Input -->
+    <div id="obs-empty-state" class="sgi-obs-empty"
+         style="display:<?= $obsCount > 0 ? 'none' : 'flex' ?>;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 0;color:#c5c5c5;gap:.5rem;">
+        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
+        <span style="font-size:.78rem;">Sin observaciones aún</span>
+    </div>
+
     <div style="border-top:1px solid var(--border-color);padding:.75rem .875rem;background:#fff;">
-        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $record->id]]) ?>
+        <form id="obs-form" data-url="<?= $this->Url->build(['action' => 'addObservation', $record->id]) ?>" method="post">
         <div class="d-flex gap-2 align-items-end">
             <textarea name="message" class="form-control auto-resize" rows="1"
                       style="font-size:.82rem;background:#f9fafb;border-color:var(--border-color);"
-                      placeholder="Escriba una observación..." required></textarea>
+                      placeholder="Escriba una observación..."></textarea>
             <button type="submit" class="btn btn-primary flex-shrink-0"
                     style="padding:.5rem .75rem;align-self:flex-end;" title="Enviar">
                 <i class="bi bi-send" style="font-size:.85rem;"></i>
             </button>
         </div>
-        <?= $this->Form->end() ?>
+        </form>
     </div>
 </div>
 
@@ -593,14 +572,12 @@ $invoiceCount = count($record->invoices ?? []);
 
 </div><!-- /layout dos columnas -->
 
+<?= $this->Html->script('sgi-observation-chat', ['block' => true]) ?>
+<?= $this->element('observation_bubble_template') ?>
+
 <?php $this->append('script') ?>
 <script>
 (function(){
-    // Auto-scroll chat al último mensaje
-    var chat = document.getElementById('obs-chat-scroll');
-    if (chat) chat.scrollTop = chat.scrollHeight;
-
-    // Auto-resize textareas
     function syncHeight(el) {
         el.style.height = '0px';
         el.style.height = (el.scrollHeight + 2) + 'px';
@@ -611,6 +588,14 @@ $invoiceCount = count($record->invoices ?? []);
         el.style.minHeight = '0px';
         syncHeight(el);
         el.addEventListener('input', function() { syncHeight(this); });
+    });
+
+    SgiObservationChat.init({
+        formSelector:           '#obs-form',
+        listSelector:           '#obs-chat-scroll',
+        emptySelector:          '#obs-empty-state',
+        bubbleTemplateSelector: '#observation-bubble-template',
+        csrfToken:              <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
     });
 
     // Beneficiary radio toggle (only present when in agrupacion)
