@@ -14,6 +14,7 @@ final class InvoiceConstants
         self::DOCTYPE_REINTEGRO,
         self::DOCTYPE_LEGALIZACION,
         self::DOCTYPE_RECIBO,
+        self::DOCTYPE_RECIBO_CAJA,
         self::DOCTYPE_ANTICIPO,
     ];
 
@@ -73,6 +74,7 @@ final class InvoiceConstants
     public const DOCTYPE_REINTEGRO = 'Reintegro';
     public const DOCTYPE_LEGALIZACION = 'Legalización';
     public const DOCTYPE_RECIBO = 'Recibo';
+    public const DOCTYPE_RECIBO_CAJA = 'Recibo de Caja';
     public const DOCTYPE_ANTICIPO = 'Anticipo';
 
     // Estados de pago
