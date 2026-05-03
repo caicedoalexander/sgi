@@ -445,7 +445,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             </div>
 
             <!-- Sub-formulario disparado por document_type='Recibo de Caja' -->
-            <?php $isReciboDeCaja = ($invoice->document_type ?? '') === 'Recibo de Caja'; ?>
+            <?php $isReciboDeCaja = ($invoice->document_type ?? '') === InvoiceConstants::DOCTYPE_RECIBO_CAJA; ?>
             <div class="row g-3 mt-1 <?= $isReciboDeCaja ? '' : 'd-none' ?>" id="equivalent-doc-row">
                 <div class="col-md-3" id="holder-type-wrapper">
                     <label class="form-label">Titular del Documento</label>
@@ -514,7 +514,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                     <?php if ($canEdit('due_date')): ?>
                         <input type="text" name="due_date" class="form-control flatpickr-date"
                                value="<?= h($invoice->due_date?->format('Y-m-d') ?? '') ?>"
-                               <?= ($invoice->document_type ?? '') === 'Recibo de Caja' ? 'disabled' : '' ?>>
+                               <?= ($invoice->document_type ?? '') === InvoiceConstants::DOCTYPE_RECIBO_CAJA ? 'disabled' : '' ?>>
                     <?php else: ?>
                         <input type="text" class="form-control" disabled
                                value="<?= h($invoice->due_date?->format('d/m/Y') ?? '') ?>">
@@ -1460,7 +1460,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
     }
 
     function applyDocTypeRules() {
-        var isReciboDeCaja = docTypeSelect.value === 'Recibo de Caja';
+        var isReciboDeCaja = docTypeSelect.value === <?= json_encode(InvoiceConstants::DOCTYPE_RECIBO_CAJA) ?>;
 
         setVisible(equivalentRow, isReciboDeCaja);
 

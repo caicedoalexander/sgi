@@ -179,7 +179,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Titular</span>
                 <span class="sgi-data-value">
-                    <?php $isReciboDeCaja = ($invoice->document_type ?? '') === 'Recibo de Caja'; ?>
+                    <?php $isReciboDeCaja = ($invoice->document_type ?? '') === InvoiceConstants::DOCTYPE_RECIBO_CAJA; ?>
                     <?php if ($isReciboDeCaja && ($invoice->equivalent_holder_type ?? '') === 'employee'): ?>
                         <?= $invoice->hasValue('employee') ? h($invoice->employee->full_name) : '—' ?>
                         <span class="text-muted small">(Empleado)</span>

@@ -3,19 +3,11 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Invoice $invoice
  */
+use App\Constants\InvoiceConstants;
+
 $this->assign('title', 'Nueva Factura');
 
-$documentTypes = [
-    'Factura'             => 'Factura',
-    'Nota Debito'         => 'Nota Débito',
-    'Caja menor'          => 'Caja menor',
-    'Tarjeta de Crédito'  => 'Tarjeta de Crédito',
-    'Reintegro'           => 'Reintegro',
-    'Legalización'        => 'Legalización',
-    'Recibo'              => 'Recibo',
-    'Recibo de Caja'      => 'Recibo de Caja',
-    'Anticipo'            => 'Anticipo',
-];
+$documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstants::DOCUMENT_TYPES);
 ?>
 
 <!-- Encabezado de página -->
@@ -234,10 +226,13 @@ $documentTypes = [
         setVisible(manualWrap,   holder === 'manual');
     }
 
+    var RECIBO_CAJA = <?= json_encode(InvoiceConstants::DOCTYPE_RECIBO_CAJA) ?>;
+    var LEGALIZACION = <?= json_encode(InvoiceConstants::DOCTYPE_LEGALIZACION) ?>;
+
     function applyDocTypeRules() {
         var value           = docTypeSelect.value;
-        var isLegalization  = value === 'Legalización';
-        var isReciboDeCaja  = value === 'Recibo de Caja';
+        var isLegalization  = value === LEGALIZACION;
+        var isReciboDeCaja  = value === RECIBO_CAJA;
 
         setVisible(purchaseOrder, !isLegalization);
         setVisible(dueDate,       !isLegalization && !isReciboDeCaja);
