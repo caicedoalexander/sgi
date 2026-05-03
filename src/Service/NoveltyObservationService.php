@@ -30,28 +30,6 @@ class NoveltyObservationService
     }
 
     /**
-     * @param int $liquidationDocId Liquidation document ID.
-     * @param int $userId User ID.
-     * @param string $message Observation message.
-     * @return object|string
-     */
-    public function addToGroup(int $liquidationDocId, int $userId, string $message): object|string
-    {
-        $table = TableRegistry::getTableLocator()->get('NoveltyObservations');
-        $observation = $table->newEntity([
-            'liquidation_doc_id' => $liquidationDocId,
-            'user_id' => $userId,
-            'message' => $message,
-        ]);
-
-        if (!$table->save($observation)) {
-            return 'No se pudo guardar la observación.';
-        }
-
-        return $observation;
-    }
-
-    /**
      * @param int $userId User ID.
      * @param int|null $noveltyId Novelty ID.
      * @param int|null $liquidationDocId Liquidation document ID.

@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
-use App\Constants\ObservationConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\StatusColorConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
+use App\Controller\Trait\ObservationControllerTrait;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
@@ -20,6 +20,7 @@ use DateTime;
 class NoveltyLiquidationDocsController extends AppController
 {
     use DocumentJsonPayloadTrait;
+    use ObservationControllerTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
@@ -528,38 +529,12 @@ class NoveltyLiquidationDocsController extends AppController
      */
     public function addObservation(?string $id = null): ?Response
     {
-        $this->request->allowMethod(['post']);
-        $user = $this->Authentication->getIdentity()->getOriginalData();
-        $message = trim((string)$this->request->getData('message'));
-
-        $result = $message === ''
-            ? ObservationConstants::ERR_EMPTY
-            : $this->observationService->addToGroup($id, $user->id, $message);
-
-        $isError = is_string($result);
-
-        if ($this->_isJsonRequest()) {
-            if ($isError) {
-                return $this->_jsonResponse(['success' => false, 'error' => $result]);
-            }
-
-            return $this->_jsonResponse([
-                'success' => true,
-                'observation' => [
-                    'id' => $result->id,
-                    'message' => $result->message,
-                    'user_name' => $user->full_name,
-                    'created' => $result->created->format(ObservationConstants::DATE_FORMAT),
-                ],
-            ]);
-        }
-
-        if ($isError) {
-            $this->Flash->error($result);
-        } else {
-            $this->Flash->success(ObservationConstants::MSG_ADDED);
-        }
-
-        return $this->redirect(['action' => 'edit', $id]);
+        return $this->_handleAddObservation(
+            'NoveltyObservations',
+            'liquidation_doc_id',
+            $id,
+            $this->Authentication->getIdentity()->getOriginalData(),
+            fn() => $this->redirect(['action' => 'edit', $id]),
+        );
     }
 }
