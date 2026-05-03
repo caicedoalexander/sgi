@@ -502,56 +502,20 @@ $invoiceCount = count($record->invoices ?? []);
         <?php endif; ?>
     </div>
 
-    <?php if (empty($docs)): ?>
-    <div style="padding:2rem 1rem;text-align:center;color:#c8c8c8;">
+    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($docs) ? 'display:none;' : '' ?>">
         <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
-    <?php else: ?>
-    <div style="max-height:420px;overflow-y:auto;">
+    <div id="docs-list" style="max-height:420px;overflow-y:auto;">
         <?php foreach ($docs as $doc): ?>
-        <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
-            <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-                <i class="bi <?= $docIcon($doc->mime_type) ?>"
-                   style="color:<?= $docIconColor($doc->mime_type) ?>;font-size:1rem;"></i>
-            </div>
-            <div style="flex:1;min-width:0;">
-                <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
-                     title="<?= h($doc->document_type ?: $doc->file_name) ?>">
-                    <?= h($doc->document_type ?: $doc->file_name) ?>
-                </div>
-                <?php if ($doc->document_type): ?>
-                <div style="font-size:.7rem;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.1rem;"
-                     title="<?= h($doc->file_name) ?>"><?= h($doc->file_name) ?></div>
-                <?php endif; ?>
-                <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;">
-                    <span style="font-size:.65rem;color:#bbb;">
-                        <i class="bi bi-clock" style="font-size:.6rem;"></i>
-                        <?= $doc->created?->format('d/m/Y H:i') ?>
-                    </span>
-                    <?php if ($doc->file_size): ?>
-                    <span style="font-size:.63rem;color:#ccc;"><?= $this->Number->toReadableSize($doc->file_size) ?></span>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <div style="display:flex;gap:.25rem;flex-shrink:0;align-self:center;">
-                <?= $this->Html->link(
-                    '<i class="bi bi-box-arrow-up-right"></i>',
-                    '/' . $doc->file_path,
-                    ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
-                ) ?>
-                <?php if ($canDeleteDocuments): ?>
-                <?= $this->Form->postLink(
-                    '<i class="bi bi-trash"></i>',
-                    ['action' => 'deleteDocument', $record->id, $doc->id],
-                    ['confirm' => '¿Eliminar este soporte?', 'class' => 'btn btn-sm btn-outline-danger', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'title' => 'Eliminar']
-                ) ?>
-                <?php endif; ?>
-            </div>
-        </div>
+            <?= $this->element('document_row', [
+                'doc'       => $doc,
+                'canDelete' => !$record->isPagado(),
+                'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
+                'showBadge' => false,
+            ]) ?>
         <?php endforeach; ?>
     </div>
-    <?php endif; ?>
 </div>
 
 <!-- Observaciones: chat -->
@@ -624,29 +588,36 @@ $invoiceCount = count($record->invoices ?? []);
 <div class="modal fade" id="uploadPcDocModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <?= $this->Form->create(null, ['url' => ['action' => 'uploadDocument', $record->id], 'type' => 'file']) ?>
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <?= $this->Form->control('document_type', ['class' => 'form-control', 'label' => ['text' => 'Tipo de Documento (opcional)', 'class' => 'form-label'], 'placeholder' => 'Ej. Soporte causación, Comprobante...']) ?>
+            <form id="upload-doc-form"
+                  data-url="<?= $this->Url->build(['action' => 'uploadDocument', $record->id]) ?>"
+                  enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="mb-3">
-                    <?= $this->Form->control('file', ['type' => 'file', 'class' => 'form-control', 'label' => ['text' => 'Archivo', 'class' => 'form-label'], 'required' => true, 'accept' => '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx']) ?>
-                    <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Documento (opcional)</label>
+                        <input type="text" name="document_type" class="form-control" placeholder="Ej. Soporte causación, Comprobante...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Archivo</label>
+                        <input type="file" name="file" class="form-control" required accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
+                        <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
-            </div>
-            <?= $this->Form->end() ?>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 <?php endif; ?>
+
+<?= $this->element('document_row_template', ['showBadge' => false]) ?>
+<?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
 
 <?php $this->append('script') ?>
 <script>
@@ -666,6 +637,16 @@ $invoiceCount = count($record->invoices ?? []);
         el.style.minHeight = '0px';
         syncHeight(el);
         el.addEventListener('input', function() { syncHeight(this); });
+    });
+
+    SgiDocumentUploader.init({
+        formSelector:        '#upload-doc-form',
+        listSelector:        '#docs-list',
+        emptySelector:       '#docs-empty-state',
+        counterSelector:     '.card.card-primary .card-header .sgi-folder-count',
+        rowTemplateSelector: '#doc-row-template',
+        modalSelector:       '#uploadPcDocModal',
+        csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
     });
 })();
 </script>
