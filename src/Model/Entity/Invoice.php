@@ -16,7 +16,6 @@ class Invoice extends Entity
         'document_type' => true,
         'purchase_order' => true,
         'provider_id' => true,
-        'is_equivalent_document' => true,
         'equivalent_holder_type' => true,
         'employee_id' => true,
         'manual_document_number' => true,
