@@ -30,12 +30,11 @@ $this->assign(
 $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstants::DOCUMENT_TYPES);
 $approvalOptions       = array_combine(InvoiceConstants::APPROVAL_STATUSES, InvoiceConstants::APPROVAL_STATUSES);
 $dianOptions           = array_combine(InvoiceConstants::DIAN_STATUSES, InvoiceConstants::DIAN_STATUSES);
-$readyForPaymentOptions = [
-    ''                 => '-- Seleccione --',
-    'Si'               => 'Sí',
-    'Pago PSE'         => 'Pago PSE',
-    'Pago prioritario' => 'Pago Prioritario',
-];
+$readyForPaymentLabels = ['Si' => 'Sí', 'Pago prioritario' => 'Pago Prioritario'];
+$readyForPaymentOptions = ['' => '-- Seleccione --'] + array_combine(
+    InvoiceConstants::READY_FOR_PAYMENT_OPTIONS,
+    array_map(fn($v) => $readyForPaymentLabels[$v] ?? $v, InvoiceConstants::READY_FOR_PAYMENT_OPTIONS)
+);
 $paymentStatusOptions = ['' => '-- Seleccione --', InvoiceConstants::PAYMENT_FULL => 'Pago total', InvoiceConstants::PAYMENT_PARTIAL => 'Pago Parcial'];
 
 $canEdit = fn(string $field): bool => in_array($field, $editableFields, true);
