@@ -24,17 +24,11 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
 
 $nextStatus = PettyCashConstants::TRANSITIONS[$record->status] ?? null;
 
-$readyForPaymentOptions = [
-    ''                   => '-- Seleccione --',
-    'Si'                 => 'Sí',
-    'No'                 => 'No',
-    'Anticipo Empleado'  => 'Anticipo Empleado',
-    'Anticipo Proveedor' => 'Anticipo Proveedor',
-    'Pago prioritario'   => 'Pago prioritario',
-    'Pago PSE'           => 'Pago PSE',
-    'No Legalización'    => 'No Legalización',
-    'Reintegro'          => 'Reintegro',
-];
+$readyForPaymentLabels = ['Si' => 'Sí', 'Pago prioritario' => 'Pago Prioritario'];
+$readyForPaymentOptions = ['' => '-- Seleccione --'] + array_combine(
+    InvoiceConstants::READY_FOR_PAYMENT_OPTIONS,
+    array_map(fn($v) => $readyForPaymentLabels[$v] ?? $v, InvoiceConstants::READY_FOR_PAYMENT_OPTIONS)
+);
 $paymentStatusOptions = ['' => '-- Seleccione --', InvoiceConstants::PAYMENT_FULL => 'Pago total', InvoiceConstants::PAYMENT_PARTIAL => 'Pago Parcial'];
 
 // Determine which sections to show based on status
