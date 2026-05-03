@@ -154,10 +154,6 @@ class InvoicesTable extends Table implements ExcelExportableInterface
             ->allowEmptyString('provider_id');
 
         $validator
-            ->boolean('is_equivalent_document')
-            ->allowEmptyString('is_equivalent_document');
-
-        $validator
             ->scalar('equivalent_holder_type')
             ->allowEmptyString('equivalent_holder_type')
             ->inList('equivalent_holder_type', InvoiceConstants::HOLDER_TYPES);
