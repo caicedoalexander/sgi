@@ -388,12 +388,23 @@ class NoveltyLiquidationDocsController extends AppController
         $file = $this->request->getUploadedFile('liquidation_file');
 
         if (!$file) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'No se seleccionó ningún archivo.']);
+            }
             $this->Flash->error('No se seleccionó ningún archivo.');
 
             return $this->redirect(['action' => 'edit', $id]);
         }
 
         $result = $this->documentService->uploadLiquidationDocument($doc->id, $file, $user->id);
+
+        if ($this->_isJsonRequest()) {
+            if (is_string($result)) {
+                return $this->_jsonResponse(['success' => false, 'error' => $result]);
+            }
+
+            return $this->_jsonResponse(['success' => true]);
+        }
 
         if (is_string($result)) {
             $this->Flash->error($result);
@@ -423,7 +434,11 @@ class NoveltyLiquidationDocsController extends AppController
         ];
 
         if (!in_array($doc->pipeline_status, $allowedStatuses)) {
-            $this->Flash->error('No se puede actualizar el documento en este estado.');
+            $msg = 'No se puede actualizar el documento en este estado.';
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse(['success' => false, 'error' => $msg]);
+            }
+            $this->Flash->error($msg);
 
             return $this->redirect(['action' => 'edit', $id]);
         }
@@ -431,12 +446,23 @@ class NoveltyLiquidationDocsController extends AppController
         $file = $this->request->getUploadedFile('liquidation_file');
 
         if (!$file) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'No se seleccionó ningún archivo.']);
+            }
             $this->Flash->error('No se seleccionó ningún archivo.');
 
             return $this->redirect(['action' => 'edit', $id]);
         }
 
         $result = $this->documentService->updateLiquidationDocument($doc->id, $file, $user->id);
+
+        if ($this->_isJsonRequest()) {
+            if (is_string($result)) {
+                return $this->_jsonResponse(['success' => false, 'error' => $result]);
+            }
+
+            return $this->_jsonResponse(['success' => true]);
+        }
 
         if (is_string($result)) {
             $this->Flash->error($result);

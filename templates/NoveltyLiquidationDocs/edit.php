@@ -436,7 +436,8 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
             ]) ?>
             <input type="file" name="liquidation_file" id="liq-doc-file" required
                    accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
-                   style="display:none;" onchange="document.getElementById('liq-doc-update-form').submit();">
+                   style="display:none;"
+                   data-liq-trigger="liq-doc-update-form">
             <label for="liq-doc-file" class="btn btn-sm btn-outline-primary" style="width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;cursor:pointer;" title="Reemplazar">
                 <i class="bi bi-arrow-repeat"></i>
             </label>
@@ -466,7 +467,8 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
         ]) ?>
         <input type="file" name="liquidation_file" id="liq-doc-file-new" required
                accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
-               style="display:none;" onchange="document.getElementById('liq-doc-upload-form').submit();">
+               style="display:none;"
+               data-liq-trigger="liq-doc-upload-form">
         <label for="liq-doc-file-new" class="btn btn-sm btn-outline-primary" style="padding:.25rem .5rem;font-size:.72rem;line-height:1;cursor:pointer;" title="Subir documento">
             <i class="bi bi-upload me-1"></i>Subir
         </label>
@@ -601,6 +603,43 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
         rowTemplateSelector: '#doc-row-template',
         modalSelector:       '#uploadDocModal',
         csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
+    });
+
+    var csrfToken = <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>;
+    document.querySelectorAll('input[data-liq-trigger]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            if (!input.files || !input.files.length) return;
+            var form = document.getElementById(input.dataset.liqTrigger);
+            if (!form) return;
+            var data = new FormData(form);
+            var label = form.querySelector('label[for="' + input.id + '"]');
+            if (label) label.style.pointerEvents = 'none';
+            fetch(form.action, {
+                method: 'POST',
+                body: data,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': csrfToken
+                },
+                credentials: 'same-origin'
+            })
+            .then(function (r) { return r.json().catch(function () { return { success: false, error: 'Respuesta inválida del servidor.' }; }); })
+            .then(function (json) {
+                if (json && json.success) {
+                    window.location.reload();
+                    return;
+                }
+                window.alert((json && json.error) || 'Error al subir el documento.');
+                if (label) label.style.pointerEvents = '';
+                input.value = '';
+            })
+            .catch(function () {
+                window.alert('Error de conexión. Intente nuevamente.');
+                if (label) label.style.pointerEvents = '';
+                input.value = '';
+            });
+        });
     });
 })();
 </script>
