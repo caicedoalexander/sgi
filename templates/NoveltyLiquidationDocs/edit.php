@@ -7,6 +7,8 @@
  * @var array $documentsByStatus
  * @var object|null $liquidationDocument
  * @var \App\Model\Entity\User $currentUser
+ * @var array $bankingEntities
+ * @var string $currentStatus
  */
 use App\Constants\NoveltyConstants;
 use App\Constants\StatusColorConstants;

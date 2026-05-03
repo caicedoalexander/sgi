@@ -2,6 +2,7 @@
 /**
  * @var \App\View\AppView $this
  * @var iterable<\App\Model\Entity\Invoice> $advances
+ * @var array $pipelineLabels
  */
 
 use App\Constants\AdvanceConstants;

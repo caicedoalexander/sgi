@@ -2,6 +2,7 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Invoice $invoice
+ * @var array $pipelineLabels
  */
 
 use App\Constants\InvoiceConstants;

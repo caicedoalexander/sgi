@@ -6,6 +6,7 @@
  * @var array $documentsByStatus
  * @var bool $hasActiveTemplate
  * @var array $fieldLabels
+ * @var string $currentStatus
  */
 use App\Constants\NoveltyConstants;
 use App\Constants\StatusColorConstants;

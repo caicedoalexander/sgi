@@ -11,6 +11,10 @@
  * @var array $pipelineLabels
  * @var string|null $nextStatus
  * @var iterable $bankingEntities
+ * @var \App\Model\Entity\User|null $currentUser
+ * @var string|null $previousStatus
+ * @var string|null $regressLockMessage
+ * @var bool $canRegress
  */
 use App\Constants\PaymentSchedulingConstants;
 use App\Constants\RoleConstants;

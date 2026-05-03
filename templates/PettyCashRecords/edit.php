@@ -11,6 +11,12 @@
  * @var string|null $regressLockMessage
  * @var string $currentStatus
  * @var \App\Model\Entity\User|null $currentUser
+ * @var bool $canRegress
+ * @var array $pipelineLabels
+ * @var array $syntheticPayments
+ * @var array $advanceErrors
+ * @var bool $canRegisterPayment
+ * @var bool $canAuthorizePayment
  */
 use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;

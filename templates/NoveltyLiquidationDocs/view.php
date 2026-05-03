@@ -8,6 +8,7 @@
  * @var object|null $liquidationDocument
  * @var array $groupHistories
  * @var array $fieldLabels
+ * @var string $currentStatus
  */
 use App\Constants\NoveltyConstants;
 use App\Constants\StatusColorConstants;

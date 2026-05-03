@@ -13,6 +13,11 @@
  * @var bool $isRejected
  * @var string[] $advanceErrors
  * @var string|null $nextStatus
+ * @var \App\Model\Entity\User|null $currentUser
+ * @var array $bankingEntities
+ * @var string|null $previousStatus
+ * @var string|null $regressLockMessage
+ * @var bool $canRegress
  */
 
 use App\Constants\InvoiceConstants;

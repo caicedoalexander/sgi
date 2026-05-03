@@ -10,6 +10,8 @@
  * @var array $approversList
  * @var array $documentsByStatus
  * @var array $liquidationDocs
+ * @var \App\Model\Entity\User|null $currentUser
+ * @var string $currentStatus
  */
 use App\Constants\NoveltyConstants;
 use App\Constants\StatusColorConstants;

@@ -3,6 +3,7 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Employee $employee
  * @var iterable $folders
+ * @var \App\Model\Entity\User|null $currentUser
  */
 $this->assign('title', 'Empleado: ' . $employee->full_name);
 

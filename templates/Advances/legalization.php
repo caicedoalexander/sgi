@@ -9,6 +9,8 @@
  * @var float $diff
  * @var \App\Model\Entity\AdvanceLegalizationSignature|null $relationDocument
  * @var array<\App\Model\Entity\AdvanceLegalizationSignature> $signatureHistory
+ * @var \App\Model\Entity\User|null $currentUser
+ * @var array $bankingEntities
  */
 
 use App\Constants\AdvanceConstants;
