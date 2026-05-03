@@ -1449,7 +1449,14 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         wrapper.classList.toggle('d-none', !visible);
         wrapper.querySelectorAll('input,select,textarea').forEach(function (el) {
             el.disabled = !visible;
-            if (!visible) { el.value = ''; el.checked = false; }
+            if (!visible) {
+                el.value = '';
+                el.checked = false;
+                // Reset Select2 widget si aplica (sin esto el label cacheado queda visible).
+                if (window.jQuery && el.tagName === 'SELECT' && window.jQuery(el).hasClass('select2-hidden-accessible')) {
+                    window.jQuery(el).val(null).trigger('change');
+                }
+            }
         });
     }
 
@@ -1480,7 +1487,10 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
 
     docTypeSelect.addEventListener('change', applyDocTypeRules);
     if (holderSelect) holderSelect.addEventListener('change', applyHolderRules);
-    // No invocar applyDocTypeRules() en load: el server ya rehidrató la fila correctamente.
+    // Asimetría intencional con add.php: no llamamos applyDocTypeRules() en load.
+    // Razón: el server rehidrata el DOM con clases d-none correctas y respeta la policy
+    // (campos disabled cuando $canEdit('document_type') === false). Llamar setVisible()
+    // forzaría disabled=false sobre campos que la policy debe mantener bloqueados.
 })();
 </script>
 <?php $this->end() ?>

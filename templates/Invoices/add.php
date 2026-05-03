@@ -216,7 +216,13 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
         wrapper.classList.toggle('d-none', !visible);
         wrapper.querySelectorAll('input,select,textarea').forEach(function (el) {
             el.disabled = !visible;
-            if (!visible) { el.value = ''; el.checked = false; }
+            if (!visible) {
+                el.value = '';
+                el.checked = false;
+                if (window.jQuery && el.tagName === 'SELECT' && window.jQuery(el).hasClass('select2-hidden-accessible')) {
+                    window.jQuery(el).val(null).trigger('change');
+                }
+            }
         });
     }
 
