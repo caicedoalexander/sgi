@@ -22,7 +22,7 @@ class PipelineAuthorizationService
 
     /**
      * @param int $roleId
-     * @param string $roleName
+     * @param string $roleName Conservado para compat con callers; no se consulta tras cleanup 2026-05-02.
      * @param string $pipeline
      * @param string $step
      * @return bool true si el rol puede operar el paso del pipeline.
@@ -36,7 +36,7 @@ class PipelineAuthorizationService
 
     /**
      * @param int $roleId
-     * @param string $roleName
+     * @param string $roleName Conservado para compat con callers; no se consulta tras cleanup 2026-05-02.
      * @param string $pipeline
      * @return array<string> Pasos del pipeline donde el rol puede operar.
      */
