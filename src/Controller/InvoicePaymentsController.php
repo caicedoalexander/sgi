@@ -5,7 +5,6 @@ namespace App\Controller;
 
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
-use App\Constants\RoleConstants;
 use App\Service\InvoicePaymentService;
 use App\Service\PipelineAuthorizationService;
 
@@ -54,8 +53,7 @@ class InvoicePaymentsController extends AppController
         $currentStatus = $invoice->pipeline_status;
 
         if (
-            $roleName !== RoleConstants::ADMIN
-            && !(
+            !(
                 $this->pipelineAuth->canOperate(
                     $roleId,
                     $roleName,
@@ -103,8 +101,7 @@ class InvoicePaymentsController extends AppController
         $roleId = $this->_getRoleId();
 
         if (
-            $roleName !== RoleConstants::ADMIN
-            && !$this->pipelineAuth->canOperate(
+            !$this->pipelineAuth->canOperate(
                 $roleId,
                 $roleName,
                 PipelineStepConstants::PIPELINE_INVOICES,
@@ -150,8 +147,7 @@ class InvoicePaymentsController extends AppController
         $roleId = $this->_getRoleId();
 
         if (
-            $roleName !== RoleConstants::ADMIN
-            && !$this->pipelineAuth->canOperate(
+            !$this->pipelineAuth->canOperate(
                 $roleId,
                 $roleName,
                 PipelineStepConstants::PIPELINE_INVOICES,
@@ -190,8 +186,7 @@ class InvoicePaymentsController extends AppController
         $roleId = $this->_getRoleId();
 
         if (
-            $roleName !== RoleConstants::ADMIN
-            && !$this->pipelineAuth->canOperate(
+            !$this->pipelineAuth->canOperate(
                 $roleId,
                 $roleName,
                 PipelineStepConstants::PIPELINE_INVOICES,
@@ -235,8 +230,7 @@ class InvoicePaymentsController extends AppController
         $currentStatus = $invoice->pipeline_status;
 
         if (
-            $roleName !== RoleConstants::ADMIN
-            && !(
+            !(
                 $this->pipelineAuth->canOperate(
                     $roleId,
                     $roleName,

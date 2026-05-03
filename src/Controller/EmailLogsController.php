@@ -75,10 +75,8 @@ class EmailLogsController extends AppController
 
     /**
      * Reenvía un correo concreto. Permisos:
-     *   - Si el log no tiene entity_id (smtp_test futuro u otros): solo Administrador.
      *   - Si pertenece a una factura: requiere invoices.can_edit.
      *   - Si pertenece a una novedad: requiere employee_novelties.can_edit.
-     *   - Administrador siempre puede (bypass del AuthorizationService).
      *
      * @param string|null $id ID del email log a reintentar.
      * @return \Cake\Http\Response
@@ -133,13 +131,7 @@ class EmailLogsController extends AppController
             return false;
         }
 
-        // Admin pasa siempre.
         $roleName = $this->_getUserRoleName($user);
-        if ($roleName === AuthorizationService::ROLE_ADMIN) {
-            return true;
-        }
-
-        // Resto: depende de la entidad.
         $roleId = (int)($user->role_id ?? 0);
 
         if ($logRow->entity_type === EmailLogConstants::ENTITY_INVOICE) {
@@ -150,7 +142,6 @@ class EmailLogsController extends AppController
             return $this->authService->isAllowed($roleId, $roleName, 'employee_novelties', 'edit');
         }
 
-        // Sin entity_type → solo admin (que ya retornó arriba).
         return false;
     }
 

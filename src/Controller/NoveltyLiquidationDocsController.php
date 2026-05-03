@@ -5,7 +5,6 @@ namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
-use App\Constants\RoleConstants;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
@@ -209,20 +208,18 @@ class NoveltyLiquidationDocsController extends AppController
         $roleName = $this->_getUserRoleName($user);
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
         $roleId = (int)$user->role_id;
-        $canOpTesoreria = $roleName === RoleConstants::ADMIN
-            || $this->pipelineAuth->canOperate(
-                $roleId,
-                $roleName,
-                PipelineStepConstants::PIPELINE_NOVELTIES,
-                NoveltyConstants::STATUS_TESORERIA,
-            );
-        $canOpAutPago = $roleName === RoleConstants::ADMIN
-            || $this->pipelineAuth->canOperate(
-                $roleId,
-                $roleName,
-                PipelineStepConstants::PIPELINE_NOVELTIES,
-                NoveltyConstants::STATUS_AUT_PAGO,
-            );
+        $canOpTesoreria = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_NOVELTIES,
+            NoveltyConstants::STATUS_TESORERIA,
+        );
+        $canOpAutPago = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_NOVELTIES,
+            NoveltyConstants::STATUS_AUT_PAGO,
+        );
         $isTesoreriaEdit = $canOpTesoreria
             && $doc->pipeline_status === NoveltyConstants::STATUS_TESORERIA;
         $isContadorAutPago = $canOpAutPago

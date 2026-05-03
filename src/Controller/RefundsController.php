@@ -6,7 +6,6 @@ namespace App\Controller;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
-use App\Constants\RoleConstants;
 use App\Service\PipelineAuthorizationService;
 use App\Service\RefundService;
 use Cake\I18n\Date;
@@ -319,20 +318,18 @@ class RefundsController extends AppController
         $roleName = $this->_getUserRoleName($user);
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
         $roleId = (int)$user->role_id;
-        $canRegisterPayment = $roleName === RoleConstants::ADMIN
-            || $this->pipelineAuth->canOperate(
-                $roleId,
-                $roleName,
-                PipelineStepConstants::PIPELINE_REFUNDS,
-                RefundConstants::STATUS_TESORERIA,
-            );
-        $canAuthorizePayment = $roleName === RoleConstants::ADMIN
-            || $this->pipelineAuth->canOperate(
-                $roleId,
-                $roleName,
-                PipelineStepConstants::PIPELINE_REFUNDS,
-                RefundConstants::STATUS_AUT_PAGO,
-            );
+        $canRegisterPayment = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_REFUNDS,
+            RefundConstants::STATUS_TESORERIA,
+        );
+        $canAuthorizePayment = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_REFUNDS,
+            RefundConstants::STATUS_AUT_PAGO,
+        );
 
         // Synthesize a pseudo-payment from record columns so the shared
         // payment_section element can render it. Reintegro stores a single

@@ -5,7 +5,6 @@ namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
-use App\Constants\RoleConstants;
 use App\Service\LiquidationDocPaymentService;
 use App\Service\PipelineAuthorizationService;
 
@@ -61,8 +60,7 @@ class LiquidationDocPaymentsController extends AppController
         $roleName = $this->_getRoleName();
 
         if (
-            $roleName !== RoleConstants::ADMIN
-            && !$this->pipelineAuth->canOperate(
+            !$this->pipelineAuth->canOperate(
                 $this->_getRoleId(),
                 $roleName,
                 PipelineStepConstants::PIPELINE_NOVELTIES,
@@ -102,8 +100,7 @@ class LiquidationDocPaymentsController extends AppController
         $roleName = $this->_getRoleName();
 
         if (
-            $roleName !== RoleConstants::ADMIN
-            && !$this->pipelineAuth->canOperate(
+            !$this->pipelineAuth->canOperate(
                 $this->_getRoleId(),
                 $roleName,
                 PipelineStepConstants::PIPELINE_NOVELTIES,
@@ -139,8 +136,7 @@ class LiquidationDocPaymentsController extends AppController
         $roleName = $this->_getRoleName();
 
         if (
-            $roleName !== RoleConstants::ADMIN
-            && !$this->pipelineAuth->canOperate(
+            !$this->pipelineAuth->canOperate(
                 $this->_getRoleId(),
                 $roleName,
                 PipelineStepConstants::PIPELINE_NOVELTIES,
