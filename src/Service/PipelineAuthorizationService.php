@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\PipelineStepConstants;
-use App\Constants\RoleConstants;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -30,10 +29,6 @@ class PipelineAuthorizationService
      */
     public function canOperate(int $roleId, string $roleName, string $pipeline, string $step): bool
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return true;
-        }
-
         $perms = $this->_loadForRole($roleId);
 
         return (bool)($perms[$pipeline][$step] ?? false);
@@ -47,10 +42,6 @@ class PipelineAuthorizationService
      */
     public function getOperableSteps(int $roleId, string $roleName, string $pipeline): array
     {
-        if ($roleName === RoleConstants::ADMIN) {
-            return PipelineStepConstants::STEPS_BY_PIPELINE[$pipeline] ?? [];
-        }
-
         $perms = $this->_loadForRole($roleId);
         $stepsForPipeline = $perms[$pipeline] ?? [];
 
