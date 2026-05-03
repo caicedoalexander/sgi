@@ -4,21 +4,16 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\NoveltyConstants;
+use App\Service\Trait\DocumentUploadTrait;
 use Cake\ORM\TableRegistry;
 use Laminas\Diactoros\UploadedFile;
 
 class NoveltyDocumentService
 {
-    private const MAX_DOC_SIZE = 20 * 1024 * 1024; // 20 MB
+    use DocumentUploadTrait;
 
-    private const ALLOWED_DOC_MIMES = [
-        'application/pdf',
-        'image/jpeg', 'image/png', 'image/gif',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ];
+    private const TABLE = 'NoveltyDocuments';
+    private const PREFIX = 'nov_';
 
     /**
      * @param int $noveltyId Novelty ID.
@@ -33,9 +28,17 @@ class NoveltyDocumentService
         UploadedFile $file,
         ?int $uploadedBy,
     ): object|string {
-        return $this->upload($file, $pipelineStatus, $uploadedBy, 'novelties/' . $noveltyId, [
-            'novelty_id' => $noveltyId,
-        ]);
+        return $this->uploadAndSave(
+            $file,
+            self::TABLE,
+            'novelties/' . $noveltyId,
+            self::PREFIX,
+            [
+                'novelty_id' => $noveltyId,
+                'pipeline_status' => $pipelineStatus,
+                'uploaded_by' => $uploadedBy,
+            ],
+        );
     }
 
     /**
@@ -51,70 +54,17 @@ class NoveltyDocumentService
         UploadedFile $file,
         ?int $uploadedBy,
     ): object|string {
-        return $this->upload($file, $pipelineStatus, $uploadedBy, 'novelty_liquidations/' . $liquidationDocId, [
-            'liquidation_doc_id' => $liquidationDocId,
-        ]);
-    }
-
-    /**
-     * @param \Laminas\Diactoros\UploadedFile $file Uploaded file.
-     * @param string $pipelineStatus Pipeline status.
-     * @param int|null $uploadedBy User ID.
-     * @param string $subDir Upload subdirectory.
-     * @param array $extraFields Extra entity fields.
-     * @return object|string
-     */
-    private function upload(
-        UploadedFile $file,
-        string $pipelineStatus,
-        ?int $uploadedBy,
-        string $subDir,
-        array $extraFields,
-    ): object|string {
-        if ($file->getError() !== UPLOAD_ERR_OK) {
-            return 'No se recibió ningún archivo válido.';
-        }
-
-        if ($file->getSize() > self::MAX_DOC_SIZE) {
-            return 'El archivo excede el tamaño máximo de 20 MB.';
-        }
-
-        $mimeType = $file->getClientMediaType();
-        if (!in_array($mimeType, self::ALLOWED_DOC_MIMES)) {
-            return 'Tipo de archivo no permitido. Use PDF, imágenes, Word o Excel.';
-        }
-
-        $uploadDir = WWW_ROOT . 'uploads' . DS . $subDir;
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-
-        $originalName = $file->getClientFilename();
-        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-        $uniqueName = uniqid('nov_') . '.' . $extension;
-        $filePath = $uploadDir . DS . $uniqueName;
-
-        $file->moveTo($filePath);
-
-        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
-        $document = $documentsTable->newEntity(array_merge($extraFields, [
-            'pipeline_status' => $pipelineStatus,
-            'file_path' => 'uploads/' . $subDir . '/' . $uniqueName,
-            'file_name' => $originalName,
-            'file_size' => $file->getSize(),
-            'mime_type' => $mimeType,
-            'uploaded_by' => $uploadedBy,
-        ]));
-
-        if (!$documentsTable->save($document)) {
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
-
-            return 'No se pudo guardar el documento.';
-        }
-
-        return $document;
+        return $this->uploadAndSave(
+            $file,
+            self::TABLE,
+            'novelty_liquidations/' . $liquidationDocId,
+            self::PREFIX,
+            [
+                'liquidation_doc_id' => $liquidationDocId,
+                'pipeline_status' => $pipelineStatus,
+                'uploaded_by' => $uploadedBy,
+            ],
+        );
     }
 
     /**
@@ -123,15 +73,7 @@ class NoveltyDocumentService
      */
     public function deleteDocument(int $documentId): bool
     {
-        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
-        $document = $documentsTable->get($documentId);
-
-        $filePath = WWW_ROOT . $document->file_path;
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
-
-        return $documentsTable->delete($document);
+        return $this->deleteDocumentRecord(self::TABLE, $documentId);
     }
 
     /**
@@ -150,7 +92,7 @@ class NoveltyDocumentService
      */
     public function getDocumentsByStatus(int $noveltyId): array
     {
-        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
+        $documentsTable = TableRegistry::getTableLocator()->get(self::TABLE);
         $documents = $documentsTable->find()
             ->where(['novelty_id' => $noveltyId])
             ->contain(['UploadedByUsers'])
@@ -171,7 +113,7 @@ class NoveltyDocumentService
      */
     public function getGroupDocumentsByStatus(int $liquidationDocId): array
     {
-        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
+        $documentsTable = TableRegistry::getTableLocator()->get(self::TABLE);
         $documents = $documentsTable->find()
             ->where([
                 'liquidation_doc_id' => $liquidationDocId,
@@ -197,7 +139,7 @@ class NoveltyDocumentService
      */
     public function getLiquidationDocument(int $liquidationDocId): ?object
     {
-        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
+        $documentsTable = TableRegistry::getTableLocator()->get(self::TABLE);
 
         return $documentsTable->find()
             ->where([
@@ -226,14 +168,25 @@ class NoveltyDocumentService
             return 'Ya existe un documento de liquidación. Use la opción de actualizar.';
         }
 
-        return $this->upload($file, 'd. liquidacion', $uploadedBy, 'novelty_liquidations/' . $liquidationDocId, [
-            'liquidation_doc_id' => $liquidationDocId,
-            'document_type' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
-        ]);
+        return $this->uploadAndSave(
+            $file,
+            self::TABLE,
+            'novelty_liquidations/' . $liquidationDocId,
+            self::PREFIX,
+            [
+                'liquidation_doc_id' => $liquidationDocId,
+                'pipeline_status' => 'd. liquidacion',
+                'document_type' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
+                'uploaded_by' => $uploadedBy,
+            ],
+        );
     }
 
     /**
      * Update (replace) the liquidation document.
+     *
+     * Saves the new file first, then removes the previous record + physical file,
+     * so a validation/upload failure leaves the existing document intact.
      *
      * @param int $liquidationDocId Liquidation document ID.
      * @param \Laminas\Diactoros\UploadedFile $file Uploaded file.
@@ -250,51 +203,27 @@ class NoveltyDocumentService
             return 'No existe un documento de liquidación para actualizar.';
         }
 
-        if ($file->getError() !== UPLOAD_ERR_OK) {
-            return 'No se recibió ningún archivo válido.';
-        }
-        if ($file->getSize() > self::MAX_DOC_SIZE) {
-            return 'El archivo excede el tamaño máximo de 20 MB.';
-        }
-        $mimeType = $file->getClientMediaType();
-        if (!in_array($mimeType, self::ALLOWED_DOC_MIMES)) {
-            return 'Tipo de archivo no permitido. Use PDF, imágenes, Word o Excel.';
-        }
+        $previousId = (int)$existing->id;
 
-        // Delete old physical file
-        $oldPath = WWW_ROOT . $existing->file_path;
-        if (file_exists($oldPath)) {
-            unlink($oldPath);
-        }
+        $result = $this->uploadAndSave(
+            $file,
+            self::TABLE,
+            'novelty_liquidations/' . $liquidationDocId,
+            self::PREFIX,
+            [
+                'liquidation_doc_id' => $liquidationDocId,
+                'pipeline_status' => 'd. liquidacion',
+                'document_type' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
+                'uploaded_by' => $uploadedBy,
+            ],
+        );
 
-        // Save new file
-        $uploadDir = WWW_ROOT . 'uploads' . DS . 'novelty_liquidations' . DS . $liquidationDocId;
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
+        if (is_string($result)) {
+            return $result;
         }
 
-        $originalName = $file->getClientFilename();
-        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-        $uniqueName = uniqid('nov_') . '.' . $extension;
-        $filePath = $uploadDir . DS . $uniqueName;
-        $file->moveTo($filePath);
+        $this->deleteDocumentRecord(self::TABLE, $previousId);
 
-        // Update record
-        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
-        $existing->file_path = 'uploads/novelty_liquidations/' . $liquidationDocId . '/' . $uniqueName;
-        $existing->file_name = $originalName;
-        $existing->file_size = $file->getSize();
-        $existing->mime_type = $mimeType;
-        $existing->uploaded_by = $uploadedBy;
-
-        if (!$documentsTable->save($existing)) {
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
-
-            return 'No se pudo actualizar el documento.';
-        }
-
-        return $existing;
+        return $result;
     }
 }

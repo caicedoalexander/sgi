@@ -48,11 +48,11 @@ use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
 use App\Service\NoveltySignatureService;
 use App\Service\PaymentRegistryService;
+use App\Service\PaymentSchedulingAttachmentService;
 use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PaymentSchedulingService;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
-use App\Service\PipelineAuthorizationService;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
 use App\Service\Pipeline\InvoicePipelineStateRegistry;
 use App\Service\Pipeline\LinkedInvoiceLegalizer;
@@ -65,6 +65,7 @@ use App\Service\Pipeline\State\ContabilidadState;
 use App\Service\Pipeline\State\LegalizadaState;
 use App\Service\Pipeline\State\PagadaState;
 use App\Service\Pipeline\State\TesoreriaState;
+use App\Service\PipelineAuthorizationService;
 use App\Service\RefundService;
 use App\Service\SidebarCounterService;
 use App\Service\Strategy\InvoiceApprovalStrategy;
@@ -312,6 +313,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ->addArgument(PipelineAuthorizationService::class);
         $container->addShared(PaymentSchedulingService::class)
             ->addArgument(InvoicePaymentService::class);
+        $container->addShared(PaymentSchedulingAttachmentService::class);
         $container->addShared(PaymentRegistryService::class);
 
         // === Integrations ===

@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Constants\PaymentSchedulingConstants;
 use App\Controller\Trait\ObservationControllerTrait;
+use App\Service\PaymentSchedulingAttachmentService;
 use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PaymentSchedulingService;
 
@@ -18,12 +19,15 @@ class PaymentSchedulingsController extends AppController
 
     private PaymentSchedulingService $schedulingService;
 
+    private PaymentSchedulingAttachmentService $attachmentService;
+
     public function initialize(): void
     {
         parent::initialize();
         $container = $this->getContainer();
         $this->pipeline = $container->get(PaymentSchedulingPipelineService::class);
         $this->schedulingService = $container->get(PaymentSchedulingService::class);
+        $this->attachmentService = $container->get(PaymentSchedulingAttachmentService::class);
     }
 
     private function _getCurrentUser(): object
@@ -403,35 +407,22 @@ class PaymentSchedulingsController extends AppController
         $this->PaymentSchedulings->get($id);
 
         $file = $this->request->getUploadedFile('file');
-        if (!$file || $file->getError() !== UPLOAD_ERR_OK) {
+        if (!$file) {
             $this->Flash->error('No se recibió un archivo válido.');
 
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $fileName = $file->getClientFilename();
-        $uploadDir = WWW_ROOT . 'uploads' . DS . 'payment_schedulings' . DS . $id;
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
+        $result = $this->attachmentService->uploadAttachment(
+            (int)$id,
+            $file,
+            (int)$this->_getCurrentUser()->id,
+        );
 
-        $targetPath = $uploadDir . DS . $fileName;
-        $file->moveTo($targetPath);
-
-        $relativePath = 'uploads/payment_schedulings/' . $id . '/' . $fileName;
-
-        $attachmentsTable = $this->fetchTable('PaymentSchedulingAttachments');
-        $attachment = $attachmentsTable->newEntity([
-            'payment_scheduling_id' => $id,
-            'file_path' => $relativePath,
-            'file_name' => $fileName,
-            'uploaded_by' => $this->_getCurrentUser()->id,
-        ]);
-
-        if ($attachmentsTable->save($attachment)) {
-            $this->Flash->success('Soporte subido correctamente.');
+        if (is_string($result)) {
+            $this->Flash->error($result);
         } else {
-            $this->Flash->error('No se pudo guardar el soporte.');
+            $this->Flash->success('Soporte subido correctamente.');
         }
 
         return $this->redirect(['action' => 'edit', $id]);
@@ -440,15 +431,8 @@ class PaymentSchedulingsController extends AppController
     public function deleteAttachment($id = null, $attachmentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
-        $attachmentsTable = $this->fetchTable('PaymentSchedulingAttachments');
-        $attachment = $attachmentsTable->get($attachmentId);
 
-        $filePath = WWW_ROOT . $attachment->file_path;
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
-
-        if ($attachmentsTable->delete($attachment)) {
+        if ($this->attachmentService->deleteAttachment((int)$attachmentId)) {
             $this->Flash->success('Soporte eliminado.');
         } else {
             $this->Flash->error('No se pudo eliminar el soporte.');
