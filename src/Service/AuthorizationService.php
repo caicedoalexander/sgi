@@ -11,6 +11,13 @@ class AuthorizationService
     // Role name constants — reference centralized constants
     public const ROLE_ADMIN = RoleConstants::ADMIN;
 
+    /**
+     * Módulos donde Administrador conserva bypass automático. Para cualquier
+     * otro módulo, el rol Administrador pasa por el lookup normal en la tabla
+     * `permissions`. Cleanup post pipeline-permissions (2026-05-02).
+     */
+    public const ADMIN_BYPASS_MODULES = ['users', 'roles'];
+
     // Module constants (matching PermissionsTable::MODULES)
     public const MODULES = [
         'invoices' => 'Facturas',
@@ -47,8 +54,8 @@ class AuthorizationService
 
     public function isAllowed(int $roleId, string $roleName, string $module, string $action): bool
     {
-        // Admin bypasses all checks
-        if ($roleName === self::ROLE_ADMIN) {
+        // Admin bypass solo para módulos en ADMIN_BYPASS_MODULES.
+        if ($roleName === self::ROLE_ADMIN && in_array($module, self::ADMIN_BYPASS_MODULES, true)) {
             return true;
         }
 
