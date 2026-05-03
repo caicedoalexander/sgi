@@ -518,10 +518,13 @@ class PettyCashRecordsController extends AppController
     public function uploadDocument($id = null)
     {
         $this->request->allowMethod(['post']);
-        $this->PettyCashRecords->get($id); // Verify exists
+        $record = $this->PettyCashRecords->get($id);
 
         $file = $this->request->getUploadedFile('file');
         if (!$file) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'No se recibió ningún archivo válido.']);
+            }
             $this->Flash->error('No se recibió ningún archivo válido.');
 
             return $this->redirect(['action' => 'edit', $id]);
@@ -534,6 +537,32 @@ class PettyCashRecordsController extends AppController
             $identity ? (int)$identity->getIdentifier() : null,
             $this->request->getData('document_type'),
         );
+
+        if ($this->_isJsonRequest()) {
+            if (is_string($result)) {
+                return $this->_jsonResponse(['success' => false, 'error' => $result]);
+            }
+
+            $canDelete = !$record->isPagado();
+
+            return $this->_jsonResponse([
+                'success' => true,
+                'document' => [
+                    'id' => $result->id,
+                    'file_name' => $result->file_name,
+                    'document_type' => $result->document_type,
+                    'mime_type' => $result->mime_type,
+                    'file_path' => $result->file_path,
+                    'file_size' => $result->file_size,
+                    'pipeline_status' => null,
+                    'created' => $result->created->format('d/m/Y H:i'),
+                    'can_delete' => $canDelete,
+                    'delete_url' => $canDelete
+                        ? \Cake\Routing\Router::url(['action' => 'deleteDocument', $id, $result->id])
+                        : null,
+                ],
+            ]);
+        }
 
         if (is_string($result)) {
             $this->Flash->error($result);
@@ -568,9 +597,28 @@ class PettyCashRecordsController extends AppController
     public function deleteDocument($recordId = null, $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
-        $this->PettyCashRecords->get($recordId); // Verify exists
+        $record = $this->PettyCashRecords->get($recordId);
 
-        if ($this->documentService->deleteDocument((int)$documentId)) {
+        if ($record->isPagado()) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'No se puede eliminar un soporte de un registro pagado.']);
+            }
+            $this->Flash->error('No se puede eliminar un soporte de un registro pagado.');
+
+            return $this->redirect(['action' => 'edit', $recordId]);
+        }
+
+        $deleted = $this->documentService->deleteDocument((int)$documentId);
+
+        if ($this->_isJsonRequest()) {
+            return $this->_jsonResponse(
+                $deleted
+                    ? ['success' => true]
+                    : ['success' => false, 'error' => 'No se pudo eliminar el soporte.']
+            );
+        }
+
+        if ($deleted) {
             $this->Flash->success('El soporte ha sido eliminado.');
         } else {
             $this->Flash->error('No se pudo eliminar el soporte.');
