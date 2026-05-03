@@ -825,7 +825,10 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         ?>
 
         <?php if ($sectionName === 'treasury' && in_array('treasury', $visibleSections)
-                  && $currentStatus !== \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO): ?>
+                  && !in_array($currentStatus, [
+                      \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+                      \App\Constants\InvoiceConstants::STATUS_PAGADA,
+                  ], true)): ?>
         <?php
             $isTesoreriaEdit = ($roleName === \App\Constants\RoleConstants::TESORERIA || $roleName === \App\Constants\RoleConstants::ADMIN)
                 && $currentStatus === \App\Constants\InvoiceConstants::STATUS_TESORERIA;
@@ -839,7 +842,11 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         ]) ?>
         <?php endif; ?>
 
-        <?php if ($sectionName === 'payment_authorization' && in_array('payment_authorization', $visibleSections)): ?>
+        <?php if ($sectionName === 'payment_authorization' && in_array('payment_authorization', $visibleSections)
+                  && in_array($currentStatus, [
+                      \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+                      \App\Constants\InvoiceConstants::STATUS_PAGADA,
+                  ], true)): ?>
         <?php
             $isContadorAutPago = ($roleName === \App\Constants\RoleConstants::CONTADOR || $roleName === \App\Constants\RoleConstants::ADMIN)
                 && $currentStatus === \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO;
