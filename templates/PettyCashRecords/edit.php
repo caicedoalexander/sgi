@@ -6,6 +6,11 @@
  * @var iterable $operationCenters
  * @var array $groupFilters
  * @var bool $canDeleteDocuments
+ * @var array $bankingEntities
+ * @var string|null $previousStatus
+ * @var string|null $regressLockMessage
+ * @var string $currentStatus
+ * @var \App\Model\Entity\User|null $currentUser
  */
 use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
