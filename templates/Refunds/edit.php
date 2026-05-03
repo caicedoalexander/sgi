@@ -7,6 +7,18 @@
  * @var array $groupFilters
  * @var array $employees
  * @var array $providers
+ * @var bool $canDeleteDocuments
+ * @var array $bankingEntities
+ * @var string|null $previousStatus
+ * @var string|null $regressLockMessage
+ * @var string $currentStatus
+ * @var array $advanceErrors
+ * @var bool $canRegisterPayment
+ * @var bool $canAuthorizePayment
+ * @var bool $canRegress
+ * @var array $syntheticPayments
+ * @var array $pipelineLabels
+ * @var \App\Model\Entity\User|null $currentUser
  */
 use App\Constants\InvoiceConstants;
 use App\Constants\RefundConstants;
