@@ -17,9 +17,6 @@ final class NoveltyConstants
     public const STATUS_PAGADA = 'pagada';
     public const STATUS_RECHAZADA = 'rechazada';
 
-    // Backward compat for renamed status
-    public const STATUS_FIRMAS_APROBACION = self::STATUS_REVISION_FIRMAS;
-
     public const PIPELINE_STATUSES = [
         self::STATUS_APROBACION,
         self::STATUS_RRHH,
@@ -175,9 +172,4 @@ final class NoveltyConstants
         '#6366F1', // indigo
     ];
 
-    // Backward compat
-    public const STATUS_PENDING = self::STATUS_REGISTRO;
-    public const STATUS_APPROVED = self::STATUS_PAGADA;
-    public const STATUS_REJECTED = self::STATUS_RECHAZADA;
-    public const STATUSES = self::ALL_STATUSES;
 }
