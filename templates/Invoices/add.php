@@ -13,6 +13,7 @@ $documentTypes = [
     'Reintegro'           => 'Reintegro',
     'Legalización'        => 'Legalización',
     'Recibo'              => 'Recibo',
+    'Recibo de Caja'      => 'Recibo de Caja',
     'Anticipo'            => 'Anticipo',
 ];
 ?>
@@ -79,20 +80,9 @@ $documentTypes = [
                 </div>
             </div>
 
-            <!-- Documento Equivalente -->
-            <div class="row g-3 mt-1" id="equivalent-doc-row">
-                <div class="col-md-3">
-                    <div class="form-check mt-4">
-                        <?= $this->Form->checkbox('is_equivalent_document', [
-                            'class' => 'form-check-input',
-                            'id' => 'is-equivalent-document',
-                        ]) ?>
-                        <label class="form-check-label" for="is-equivalent-document">
-                            Es Documento Equivalente
-                        </label>
-                    </div>
-                </div>
-                <div class="col-md-3 d-none" id="holder-type-wrapper">
+            <!-- Sub-formulario disparado por document_type='Recibo de Caja' -->
+            <div class="row g-3 mt-1 d-none" id="equivalent-doc-row">
+                <div class="col-md-3" id="holder-type-wrapper">
                     <?= $this->Form->control('equivalent_holder_type', [
                         'class'   => 'form-select',
                         'label'   => ['text' => 'Titular del Documento', 'class' => 'form-label'],
@@ -219,33 +209,52 @@ $documentTypes = [
 <?php $this->append('script') ?>
 <script>
 (function () {
-    // Tipo de Documento: Legalización oculta campos no aplicables (Orden de Compra,
-    // Fecha de Vencimiento, Documento Equivalente). Cualquier otro tipo los muestra.
     var docTypeSelect = document.querySelector('select[name="document_type"]');
     if (!docTypeSelect) return;
 
     var purchaseOrder = document.getElementById('purchase-order-wrapper');
-    var dueDate = document.getElementById('due-date-wrapper');
+    var dueDate       = document.getElementById('due-date-wrapper');
     var equivalentRow = document.getElementById('equivalent-doc-row');
+    var holderSelect  = document.getElementById('equivalent-holder-type');
+    var employeeWrap  = document.getElementById('employee-wrapper');
+    var manualWrap    = document.getElementById('manual-doc-wrapper');
 
-    function setDisabled(wrapper, disabled) {
+    function setVisible(wrapper, visible) {
         if (!wrapper) return;
-        wrapper.classList.toggle('d-none', disabled);
+        wrapper.classList.toggle('d-none', !visible);
         wrapper.querySelectorAll('input,select,textarea').forEach(function (el) {
-            el.disabled = disabled;
-            if (disabled) { el.value = ''; el.checked = false; }
+            el.disabled = !visible;
+            if (!visible) { el.value = ''; el.checked = false; }
         });
     }
 
+    function applyHolderRules() {
+        var holder = holderSelect ? holderSelect.value : '';
+        setVisible(employeeWrap, holder === 'employee');
+        setVisible(manualWrap,   holder === 'manual');
+    }
+
     function applyDocTypeRules() {
-        var value = docTypeSelect.value;
-        var isLegalization = value === 'Legalización';
-        setDisabled(purchaseOrder, isLegalization);
-        setDisabled(dueDate, isLegalization);
-        setDisabled(equivalentRow, isLegalization);
+        var value           = docTypeSelect.value;
+        var isLegalization  = value === 'Legalización';
+        var isReciboDeCaja  = value === 'Recibo de Caja';
+
+        setVisible(purchaseOrder, !isLegalization);
+        setVisible(dueDate,       !isLegalization && !isReciboDeCaja);
+        setVisible(equivalentRow, isReciboDeCaja);
+
+        if (!isReciboDeCaja) {
+            // Reset holder + sub-campos cuando salimos de Recibo de Caja.
+            if (holderSelect) holderSelect.value = '';
+            setVisible(employeeWrap, false);
+            setVisible(manualWrap,   false);
+        } else {
+            applyHolderRules();
+        }
     }
 
     docTypeSelect.addEventListener('change', applyDocTypeRules);
+    if (holderSelect) holderSelect.addEventListener('change', applyHolderRules);
     applyDocTypeRules();
 })();
 </script>
