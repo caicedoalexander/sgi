@@ -251,55 +251,45 @@ foreach ($folders as $folder) {
     <?php endif; ?>
 
     <!-- Observaciones (chat) -->
-    <div style="border-top:1px solid var(--border-color)">
-        <div class="sgi-section-title">Observaciones</div>
-        <div style="max-height:400px;overflow-y:auto;padding:.5rem 1.25rem .875rem;">
-            <?php if (empty($employee->employee_observations)): ?>
-            <div class="text-center text-muted py-3" style="font-size:.8rem">
-                <i class="bi bi-chat-square-dots d-block mb-1" style="font-size:1.5rem;color:#ddd"></i>
-                Sin observaciones aún
-            </div>
-            <?php else: ?>
-            <?php foreach ($employee->employee_observations as $obs): ?>
-            <div class="d-flex align-items-start gap-2 mb-3">
-                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:32px;height:32px;background:var(--primary-color);color:#fff;font-size:.7rem;font-weight:700;">
-                    <?php
-                    $names = explode(' ', $obs->user->full_name ?? '');
-                    echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
-                    ?>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div class="d-flex align-items-center gap-2">
-                        <span style="font-size:.8rem;font-weight:600;color:#222;">
-                            <?= h($obs->user->full_name ?? '') ?>
-                        </span>
-                        <span style="font-size:.7rem;color:#aaa;">
-                            <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
-                        </span>
-                    </div>
-                    <div style="font-size:.84rem;color:#444;line-height:1.5;margin-top:.15rem;">
-                        <?= nl2br(h($obs->message)) ?>
-                    </div>
-                </div>
-            </div>
-            <?php endforeach; ?>
-            <?php endif; ?>
+    <?php
+    $obsCount = count($employee->employee_observations ?? []);
+    $currentUser = $this->getRequest()->getAttribute('identity');
+    ?>
+    <div class="sgi-obs-card" style="border-top:1px solid var(--border-color);display:flex;flex-direction:column;">
+        <div class="sgi-section-title d-flex align-items-center gap-2">
+            <span>Observaciones</span>
+            <span class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
         </div>
+
+        <div id="obs-chat-scroll" class="sgi-obs-list"
+             style="min-height:100px;max-height:400px;overflow-y:auto;padding:1rem 1.25rem;background:#f9fafb;display:flex;flex-direction:column;gap:.875rem;">
+            <?php foreach ($employee->employee_observations ?? [] as $obs): ?>
+                <?= $this->element('observation_bubble', [
+                    'observation' => $obs,
+                    'isMine' => $currentUser && $obs->user_id === $currentUser->id,
+                ]) ?>
+            <?php endforeach; ?>
+        </div>
+
+        <div id="obs-empty-state" class="sgi-obs-empty"
+             style="display:<?= $obsCount > 0 ? 'none' : 'flex' ?>;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 0;color:#c5c5c5;gap:.5rem;">
+            <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
+            <span style="font-size:.78rem;">Sin observaciones aún</span>
+        </div>
+
         <?php if (!empty($userPermissions['employees']['can_edit'])): ?>
-        <div style="border-top:1px solid var(--border-color);padding:.75rem 1.25rem;">
-            <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $employee->id]]) ?>
+        <div style="border-top:1px solid var(--border-color);padding:.75rem 1.25rem;background:#fff;">
+            <form id="obs-form" data-url="<?= $this->Url->build(['action' => 'addObservation', $employee->id]) ?>" method="post">
             <div class="d-flex gap-2 align-items-end">
-                <textarea name="message" class="form-control" rows="1"
-                          style="font-size:.82rem;resize:none;overflow:hidden;"
-                          placeholder="Escriba una observación..." required
-                          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';"></textarea>
+                <textarea name="message" class="form-control auto-resize" rows="1"
+                          style="font-size:.82rem;background:#f9fafb;border-color:var(--border-color);"
+                          placeholder="Escriba una observación..."></textarea>
                 <button type="submit" class="btn btn-primary flex-shrink-0"
-                        style="padding:.5rem .75rem;" title="Enviar">
+                        style="padding:.5rem .75rem;align-self:flex-end;" title="Enviar">
                     <i class="bi bi-send" style="font-size:.85rem;"></i>
                 </button>
             </div>
-            <?= $this->Form->end() ?>
+            </form>
         </div>
         <?php endif; ?>
     </div>
@@ -618,3 +608,32 @@ $novedades = $employee->employee_novelties ?? [];
         </div>
     </div>
 </div>
+
+<?= $this->Html->script('sgi-observation-chat', ['block' => true]) ?>
+<?= $this->element('observation_bubble_template') ?>
+
+<?php $this->append('script') ?>
+<script>
+(function(){
+    function syncHeight(el) {
+        el.style.height = '0px';
+        el.style.height = (el.scrollHeight + 2) + 'px';
+    }
+    document.querySelectorAll('textarea.auto-resize').forEach(function(el) {
+        el.style.overflow  = 'hidden';
+        el.style.resize    = 'none';
+        el.style.minHeight = '0px';
+        syncHeight(el);
+        el.addEventListener('input', function() { syncHeight(this); });
+    });
+
+    SgiObservationChat.init({
+        formSelector:           '#obs-form',
+        listSelector:           '#obs-chat-scroll',
+        emptySelector:          '#obs-empty-state',
+        bubbleTemplateSelector: '#observation-bubble-template',
+        csrfToken:              <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
+    });
+})();
+</script>
+<?php $this->end() ?>
