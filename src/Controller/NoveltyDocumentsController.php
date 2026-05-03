@@ -5,11 +5,14 @@ namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
 use App\Constants\StatusColorConstants;
+use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Service\NoveltyDocumentService;
 use Cake\Routing\Router;
 
 class NoveltyDocumentsController extends AppController
 {
+    use DocumentJsonPayloadTrait;
+
     private NoveltyDocumentService $documentService;
 
     public function initialize(): void
@@ -44,25 +47,19 @@ class NoveltyDocumentsController extends AppController
 
             $canDelete = $this->documentService->canDeleteDocument($result, $novelty->pipeline_status);
             [$badgeColors, $statusLabels] = $this->_noveltyDocumentLabels();
+            $deleteUrl = $canDelete
+                ? Router::url(['controller' => 'NoveltyDocuments', 'action' => 'delete', $novelty->id, $result->id])
+                : null;
 
             return $this->_jsonResponse([
                 'success' => true,
-                'document' => [
-                    'id' => $result->id,
-                    'file_name' => $result->file_name,
-                    'document_type' => $result->document_type ?? null,
-                    'mime_type' => $result->mime_type,
-                    'file_path' => $result->file_path,
-                    'file_size' => $result->file_size,
-                    'pipeline_status' => $result->pipeline_status,
-                    'created' => $result->created->format('d/m/Y H:i'),
-                    'can_delete' => $canDelete,
-                    'badge_class' => $badgeColors[$result->pipeline_status] ?? 'bg-secondary',
-                    'badge_label' => $statusLabels[$result->pipeline_status] ?? $result->pipeline_status,
-                    'delete_url' => $canDelete
-                        ? Router::url(['controller' => 'NoveltyDocuments', 'action' => 'delete', $novelty->id, $result->id])
-                        : null,
-                ],
+                'document' => $this->_buildDocumentPayload(
+                    $result,
+                    $canDelete,
+                    $deleteUrl,
+                    $badgeColors,
+                    $statusLabels,
+                ),
             ]);
         }
 

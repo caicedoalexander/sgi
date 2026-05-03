@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
+use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
 use App\Service\PipelineAuthorizationService;
@@ -16,6 +17,8 @@ use DateTimeInterface;
 
 class PettyCashRecordsController extends AppController
 {
+    use DocumentJsonPayloadTrait;
+
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     private PettyCashService $pettyCashService;
@@ -545,23 +548,13 @@ class PettyCashRecordsController extends AppController
             }
 
             $canDelete = !$record->isPagado();
+            $deleteUrl = $canDelete
+                ? Router::url(['action' => 'deleteDocument', $id, $result->id])
+                : null;
 
             return $this->_jsonResponse([
                 'success' => true,
-                'document' => [
-                    'id' => $result->id,
-                    'file_name' => $result->file_name,
-                    'document_type' => $result->document_type,
-                    'mime_type' => $result->mime_type,
-                    'file_path' => $result->file_path,
-                    'file_size' => $result->file_size,
-                    'pipeline_status' => null,
-                    'created' => $result->created->format('d/m/Y H:i'),
-                    'can_delete' => $canDelete,
-                    'delete_url' => $canDelete
-                        ? Router::url(['action' => 'deleteDocument', $id, $result->id])
-                        : null,
-                ],
+                'document' => $this->_buildDocumentPayload($result, $canDelete, $deleteUrl),
             ]);
         }
 

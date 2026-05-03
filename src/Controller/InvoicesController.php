@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\StatusColorConstants;
+use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 use App\Service\EmailLogService;
 use App\Service\InvoiceApprovalService;
@@ -20,6 +21,7 @@ use Cake\Routing\Router;
 
 class InvoicesController extends AppController
 {
+    use DocumentJsonPayloadTrait;
     use ExcelWizardTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -609,25 +611,19 @@ class InvoicesController extends AppController
             $canDelete = $this->_checkPermission('invoices', 'delete')
                 && $this->documentService->canDeleteDocument($result, $invoice->pipeline_status);
             [$badgeColors, $statusLabels] = $this->_invoiceDocumentLabels();
+            $deleteUrl = $canDelete
+                ? Router::url(['action' => 'deleteDocument', $invoice->id, $result->id])
+                : null;
 
             return $this->_jsonResponse([
                 'success' => true,
-                'document' => [
-                    'id' => $result->id,
-                    'file_name' => $result->file_name,
-                    'document_type' => $result->document_type,
-                    'mime_type' => $result->mime_type,
-                    'file_path' => $result->file_path,
-                    'file_size' => $result->file_size,
-                    'pipeline_status' => $result->pipeline_status,
-                    'created' => $result->created->format('d/m/Y H:i'),
-                    'can_delete' => $canDelete,
-                    'badge_class' => $badgeColors[$result->pipeline_status] ?? 'bg-secondary',
-                    'badge_label' => $statusLabels[$result->pipeline_status] ?? $result->pipeline_status,
-                    'delete_url' => $canDelete
-                        ? Router::url(['action' => 'deleteDocument', $invoice->id, $result->id])
-                        : null,
-                ],
+                'document' => $this->_buildDocumentPayload(
+                    $result,
+                    $canDelete,
+                    $deleteUrl,
+                    $badgeColors,
+                    $statusLabels,
+                ),
             ]);
         }
 
