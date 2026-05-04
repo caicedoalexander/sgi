@@ -4,6 +4,10 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use App\Constants\PettyCashConstants;
+use App\Service\CodeGeneratorService;
+use ArrayObject;
+use Cake\Datasource\EntityInterface;
+use Cake\Event\EventInterface;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -52,6 +56,22 @@ class PettyCashRecordsTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->belongsTo('OperationCenters', [
+            'foreignKey' => 'operation_center_id',
+        ]);
+    }
+
+    public function beforeSave(EventInterface $event, EntityInterface $entity, ArrayObject $options): void
+    {
+        if (!$entity->isNew() || !empty($entity->code)) {
+            return;
+        }
+        if (empty($entity->operation_center_id)) {
+            return;
+        }
+
+        $generator = new CodeGeneratorService();
+        $entity->code = $generator->generatePettyCashCode((int)$entity->operation_center_id);
     }
 
     public function validationDefault(Validator $validator): Validator
@@ -60,6 +80,11 @@ class PettyCashRecordsTable extends Table
             ->scalar('code')
             ->maxLength('code', 30)
             ->allowEmptyString('code');
+
+        $validator
+            ->integer('operation_center_id')
+            ->requirePresence('operation_center_id', 'create')
+            ->notEmptyString('operation_center_id', 'Selecciona un centro de operación.', 'create');
 
         $validator
             ->scalar('status')

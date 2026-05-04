@@ -157,7 +157,7 @@ class PettyCashRecordsController extends AppController
             $invoiceIds = array_map('intval', array_filter((array)($data['invoice_ids'] ?? [])));
 
             $record = $this->PettyCashRecords->patchEntity($record, [
-                'code' => !empty($data['code']) ? $data['code'] : null,
+                'operation_center_id' => $data['operation_center_id'] ?? null,
                 'status' => PettyCashConstants::STATUS_AGRUPACION,
                 'total_amount' => 0,
                 'notes' => $data['notes'] ?? null,
@@ -211,11 +211,6 @@ class PettyCashRecordsController extends AppController
 
             $data = $this->request->getData();
             $patchData = [];
-
-            // Code: editable in all non-final states
-            if (!$record->isPagado()) {
-                $patchData['code'] = !empty($data['code']) ? $data['code'] : null;
-            }
 
             // Notes: editable in agrupacion and contabilidad
             if ($record->isAgrupacion() || $record->isContabilidad()) {
