@@ -59,4 +59,7 @@ final class AdvanceConstants
 
     // Permission module slug (matches AuthorizationService::MODULES key)
     public const MODULE = 'advances';
+
+    // Código de invoice_number autogenerado para facturas-anticipo
+    public const CODE_PREFIX = 'ANT';
 }
