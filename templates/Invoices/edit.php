@@ -631,33 +631,33 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                                 <option value="<?= $appId ?>"><?= h($appName) ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <button type="submit" form="sendApprovalLinksForm"
-                                class="btn btn-primary btn-sm mt-2"
-                                onclick="return confirm('¿Enviar enlaces de aprobación a los aprobadores seleccionados?');">
-                            <i class="bi bi-send me-1"></i>Enviar link de aprobación
-                        </button>
-                        <small class="text-muted mt-1 d-block">
-                            <i class="bi bi-info-circle me-1"></i>El envío de enlaces es independiente del botón Guardar
-                        </small>
+                        <div class="d-flex align-items-center gap-2 mt-2">
+                            <button type="submit" form="sendApprovalLinksForm"
+                                    class="btn btn-primary btn-sm"
+                                    onclick="return confirm('¿Enviar enlaces de aprobación a los aprobadores seleccionados?');">
+                                <i class="bi bi-send me-1"></i>Enviar links
+                            </button>
+                            <span class="sgi-field-hint">Independiente del botón Guardar</span>
+                        </div>
                     <?php elseif ($canModifyApprovers): ?>
                         <?php if ($hasPendingApprovals): ?>
-                        <div class="d-flex align-items-center gap-2 py-2">
-                            <span class="spinner-border spinner-border-sm text-warning" role="status" style="width:.9rem;height:.9rem;"></span>
-                            <span style="font-size:.85rem;color:#888;">Aprobaciones en curso</span>
+                        <div class="sgi-status-chip --pending">
+                            <span class="spinner-border" role="status" style="width:.65rem;height:.65rem;border-width:1.5px;"></span>
+                            Aprobaciones en curso
                         </div>
                         <?php else: ?>
-                        <div class="py-2" style="font-size:.85rem;color:#666;">
-                            <i class="bi bi-check2-circle me-1"></i>Aprobaciones registradas
+                        <div class="sgi-status-chip --done">
+                            <i class="bi bi-check2-circle"></i> Aprobaciones registradas
                         </div>
                         <?php endif; ?>
-                        <button type="button" class="btn btn-sm btn-outline-warning mt-1" data-bs-toggle="modal" data-bs-target="#modifyApproversModal">
-                            <i class="bi bi-pencil-square me-1"></i>Modificar aprobadores
-                        </button>
-                        <small class="text-muted mt-1 d-block">
-                            <i class="bi bi-info-circle me-1"></i>Modificar reemplaza el conjunto y reinicia la aprobación
-                        </small>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modifyApproversModal">
+                                <i class="bi bi-pencil-square me-1"></i>Modificar aprobadores
+                            </button>
+                            <span class="sgi-field-hint">Reemplaza el conjunto y reinicia la aprobación</span>
+                        </div>
                     <?php else: ?>
-                        <div class="py-2" style="font-size:.85rem;color:#aaa;">No editable en este estado</div>
+                        <div class="sgi-status-chip --muted">No editable en este estado</div>
                     <?php endif; ?>
 
                     <?php if (($invoice->area_approval ?? '') === \App\Constants\InvoiceConstants::APPROVAL_REJECTED
@@ -666,21 +666,22 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                     <form method="post" action="<?= $this->Url->build(['action' => 'resetFlow', $invoice->id]) ?>"
                           class="mt-2" onsubmit="return confirm('¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.');">
                         <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
-                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                        <button type="submit" class="btn btn-sm btn-outline-dark">
                             <i class="bi bi-arrow-counterclockwise me-1"></i>Reiniciar flujo
                         </button>
                     </form>
                     <?php endif; ?>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Aprobación Área</label>
+                    <label class="form-label d-flex align-items-center gap-1">
+                        Aprobación Área <span class="sgi-field-hint">· vía enlace externo</span>
+                    </label>
                     <?= $this->Form->control('area_approval', [
                         'label' => false,
                         'options' => $approvalOptions,
                         'class' => 'form-select',
                         'disabled' => true,
                     ]) ?>
-                    <small class="text-muted">Se actualiza desde el enlace de aprobación</small>
                 </div>
                 <?php if ($invoice->area_approval_date): ?>
                 <div class="col-md-3">

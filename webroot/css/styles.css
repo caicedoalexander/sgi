@@ -2939,6 +2939,37 @@ input.currency-input:focus {
     font-style: italic;
 }
 
+/* Inline field hints — texto auxiliar compacto bajo un campo o en el label */
+.sgi-field-hint {
+    font-size: .6rem;
+    font-weight: 400;
+    color: #bbb;
+    letter-spacing: .02em;
+    text-transform: none;
+    line-height: 1.4;
+}
+
+/* Chip de estado inline (aprobaciones, procesos) */
+.sgi-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .7rem;
+    font-weight: 500;
+    color: #888;
+    padding: .25rem 0;
+}
+.sgi-status-chip.--pending {
+    color: #CD6A15;
+}
+.sgi-status-chip.--done {
+    color: var(--primary-color);
+}
+.sgi-status-chip.--muted {
+    color: #bbb;
+    font-style: italic;
+}
+
 /* Form sections flex container for reordering */
 .sgi-form-sections {
     display: flex;
