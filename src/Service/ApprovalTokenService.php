@@ -111,29 +111,43 @@ class ApprovalTokenService
         ?int $approvedByUserId = null,
     ): bool {
         $table = TableRegistry::getTableLocator()->get('ApprovalTokens');
-        $record = $table->find()
-            ->where(['token' => $token])
-            ->first();
 
-        if (!$record || $record->used_at !== null) {
+        // Marcar el token como consumido bajo lock pesimista para evitar
+        // que requests concurrentes con el mismo token disparen la strategy dos veces.
+        $consumed = $table->getConnection()->transactional(
+            function () use ($table, $token, $action, $observations, $ip, $userAgent, $approvedByUserId): ?object {
+                $record = $table->find()
+                    ->where(['token' => $token])
+                    ->epilog('FOR UPDATE')
+                    ->first();
+
+                if (!$record || $record->used_at !== null) {
+                    return null;
+                }
+
+                if ($record->expires_at < new DateTime()) {
+                    return null;
+                }
+
+                $record->used_at = new DateTime();
+                $record->action_taken = $action;
+                $record->observations = $observations;
+                $record->ip_address = $ip;
+                $record->user_agent = $userAgent;
+                $record->approved_by_user_id = $approvedByUserId;
+
+                return $table->save($record) ? $record : null;
+            },
+        );
+
+        if (!$consumed) {
             return false;
         }
 
-        $record->used_at = new DateTime();
-        $record->action_taken = $action;
-        $record->observations = $observations;
-        $record->ip_address = $ip;
-        $record->user_agent = $userAgent;
-        $record->approved_by_user_id = $approvedByUserId;
-
-        if (!$table->save($record)) {
-            return false;
-        }
-
-        $strategy = $this->strategies[$record->entity_type] ?? null;
+        $strategy = $this->strategies[$consumed->entity_type] ?? null;
 
         return $strategy
-            ? $strategy->apply($record->entity_id, $action, $observations, $approvedByUserId, $approvalDate)
+            ? $strategy->apply($consumed->entity_id, $action, $observations, $approvedByUserId, $approvalDate)
             : false;
     }
 

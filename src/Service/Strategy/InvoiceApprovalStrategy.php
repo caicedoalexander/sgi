@@ -16,6 +16,8 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
 {
     private StructuredLogger $logger;
 
+    private ?int $adminRoleId = null;
+
     /**
      * @param \App\Service\InvoiceHistoryService $historyService History service.
      * @param \App\Service\InvoicePipelineService $pipeline Invoice pipeline service.
@@ -50,6 +52,7 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
                     'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
                     'area_approval_date' => $parsedDate,
                 ],
+                $this->_getAdminRoleId(),
                 RoleConstants::ADMIN,
                 $userId,
             );
@@ -122,5 +125,22 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
             'message' => $message,
         ]);
         $observationsTable->save($observation);
+    }
+
+    /**
+     * Resuelve el id del rol Administrador. La aprobación externa actúa como admin
+     * para bypassear restricciones de rol/estado en saveAndAdvance.
+     */
+    private function _getAdminRoleId(): int
+    {
+        if ($this->adminRoleId === null) {
+            $rolesTable = TableRegistry::getTableLocator()->get('Roles');
+            $adminRole = $rolesTable->find()
+                ->where(['name' => RoleConstants::ADMIN])
+                ->firstOrFail();
+            $this->adminRoleId = (int)$adminRole->id;
+        }
+
+        return $this->adminRoleId;
     }
 }

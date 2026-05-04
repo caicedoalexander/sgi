@@ -418,6 +418,11 @@ class InvoicesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->Invoices->get($id);
+
+        if (!$this->_ensureExpectedStatus($invoice->pipeline_status)) {
+            return $this->_redirectForInvoice($invoice, 'edit', $id);
+        }
+
         $user = $this->_getCurrentUser();
         $reason = trim((string)$this->request->getData('reason', ''));
 
@@ -463,7 +468,20 @@ class InvoicesController extends AppController
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
-        $invoice = $this->Invoices->get($id);
+        $invoice = $this->Invoices->get($id, contain: ['InvoicePayments']);
+
+        if ($invoice->pipeline_status !== InvoiceConstants::STATUS_APROBACION) {
+            $this->Flash->error('Solo se pueden eliminar facturas en estado Aprobación.');
+
+            return $this->_redirectForInvoice($invoice, 'view', $id);
+        }
+
+        if (!empty($invoice->invoice_payments)) {
+            $this->Flash->error('No se puede eliminar una factura con pagos registrados.');
+
+            return $this->_redirectForInvoice($invoice, 'view', $id);
+        }
+
         if ($this->Invoices->delete($invoice)) {
             $this->Flash->success(__('La factura ha sido eliminada.'));
         } else {
