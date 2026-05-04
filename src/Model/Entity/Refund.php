@@ -9,7 +9,8 @@ use Cake\ORM\Entity;
 class Refund extends Entity
 {
     protected array $_accessible = [
-        'code' => true,
+        'code' => false,
+        'operation_center_id' => true,
         'status' => true,
         'total_amount' => true,
         'beneficiary_type' => true,

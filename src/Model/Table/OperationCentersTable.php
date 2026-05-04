@@ -37,6 +37,10 @@ class OperationCentersTable extends Table implements ExcelExportableInterface
         $validator
             ->scalar('code')
             ->maxLength('code', 20)
+            ->add('code', 'numeric', [
+                'rule' => fn($value) => $value === null || $value === '' || ctype_digit((string)$value),
+                'message' => 'El código del centro debe ser numérico (solo dígitos).',
+            ])
             ->allowEmptyString('code');
 
         $validator

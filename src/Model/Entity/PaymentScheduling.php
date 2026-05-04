@@ -9,7 +9,8 @@ use Cake\ORM\Entity;
 class PaymentScheduling extends Entity
 {
     protected array $_accessible = [
-        'code' => true,
+        'code' => false,
+        'operation_center_id' => true,
         'title' => true,
         'pipeline_status' => true,
         'created_by' => true,

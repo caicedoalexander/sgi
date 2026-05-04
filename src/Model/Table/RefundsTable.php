@@ -120,6 +120,7 @@ class RefundsTable extends Table
 
     public function buildRules(RulesChecker $rules): RulesChecker
     {
+        $rules->add($rules->isUnique(['code'], 'El código ya existe.'), ['errorField' => 'code', 'allowNullableNulls' => true]);
         $rules->add($rules->existsIn('created_by', 'CreatedByUsers'), ['errorField' => 'created_by']);
 
         // Beneficiary XOR rule: if type is set, exactly the matching FK must be set.
