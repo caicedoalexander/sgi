@@ -188,7 +188,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
-                    <?= $isAdvance ? ('Anticipo #' . h($invoice->id)) : h($invoice->invoice_number ?? ('# ' . $invoice->id)) ?>
+                    <?= $isAdvance ? ('Anticipo ' . h($invoice->invoice_number ?? '#' . $invoice->id)) : h($invoice->invoice_number ?? ('# ' . $invoice->id)) ?>
                 </div>
                 <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
                     Rol: <strong style="color:#777;"><?= h($roleName) ?></strong>
@@ -409,7 +409,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                     <label class="form-label">No. Factura</label>
                     <?= $this->Form->control('invoice_number', array_merge(
                         ['label' => false, 'placeholder' => 'Ej: FV-001234'],
-                        $canEdit('invoice_number')
+                        ($canEdit('invoice_number') && !$isAdvance)
                             ? ['class' => 'form-control']
                             : ['class' => 'form-control', 'disabled' => true]
                     )) ?>
@@ -543,7 +543,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                     <label class="form-label">Centro de Operación</label>
                     <?= $this->Form->control('operation_center_id', array_merge(
                         ['label' => false, 'options' => $operationCenters, 'empty' => '-- Seleccione --'],
-                        $canEdit('operation_center_id')
+                        ($canEdit('operation_center_id') && !$isAdvance)
                             ? ['class' => 'form-select']
                             : ['class' => 'form-select', 'disabled' => true]
                     )) ?>
