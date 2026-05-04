@@ -70,7 +70,7 @@ $legalizationBadge = [
                 <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'view', $a->id]) ?>">
                     <td>
                         <span style="font-family:monospace;font-weight:600;font-size:.85rem;">
-                            #<?= h($a->id) ?>
+                            <?= h($a->invoice_number ?? '#' . $a->id) ?>
                         </span>
                     </td>
                     <td><?= h($a->provider->name ?? ($a->employee->full_name ?? '—')) ?></td>

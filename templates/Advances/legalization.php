@@ -16,7 +16,7 @@
 use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 
-$this->assign('title', 'Legalización Anticipo #' . $invoice->id);
+$this->assign('title', 'Legalización Anticipo ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
 $legBadgeMap = [
     AdvanceConstants::STATUS_VALIDACION       => ['Validación', 'bg-info text-dark'],
@@ -98,7 +98,7 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
-                    Legalización Anticipo #<?= h($invoice->id) ?>
+                    Legalización Anticipo <?= h($invoice->invoice_number ?? '#' . $invoice->id) ?>
                 </div>
                 <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
                     Beneficiario: <strong style="color:#777;"><?= h($beneficiary) ?></strong>
