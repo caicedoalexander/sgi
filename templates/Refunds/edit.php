@@ -218,8 +218,8 @@ $invoiceCount = count($record->invoices ?? []);
         foreach ($sections as $section):
         ?>
 
-        <?php if ($section['key'] === 'beneficiary'): ?>
-        <!-- Beneficiario -->
+        <?php if ($section['key'] === 'beneficiary' && $section['editable']): ?>
+        <!-- Beneficiario (solo editable; en read-only ya aparece en el ledger superior) -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -228,48 +228,39 @@ $invoiceCount = count($record->invoices ?? []);
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
-            <?php if ($section['editable']): ?>
-                <div class="mb-3">
-                    <label class="form-label">Tipo</label>
-                    <div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="beneficiary_type" id="bt-employee" value="employee"
-                                   <?= $record->beneficiary_type === 'employee' ? 'checked' : '' ?>>
-                            <label class="form-check-label" for="bt-employee">Empleado</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="beneficiary_type" id="bt-provider" value="provider"
-                                   <?= $record->beneficiary_type === 'provider' ? 'checked' : '' ?>>
-                            <label class="form-check-label" for="bt-provider">Proveedor</label>
-                        </div>
+            <div class="mb-3">
+                <label class="form-label">Tipo</label>
+                <div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="beneficiary_type" id="bt-employee" value="employee"
+                               <?= $record->beneficiary_type === 'employee' ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="bt-employee">Empleado</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="beneficiary_type" id="bt-provider" value="provider"
+                               <?= $record->beneficiary_type === 'provider' ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="bt-provider">Proveedor</label>
                     </div>
                 </div>
-                <div class="mb-3 sgi-beneficiary-employee" <?= $record->beneficiary_type === 'employee' ? '' : 'style="display:none;"' ?>>
-                    <label class="form-label">Empleado</label>
-                    <select name="beneficiary_employee_id" class="form-select select2-enable">
-                        <option value="">Seleccione un empleado</option>
-                        <?php foreach ($employees as $eid => $ename): ?>
-                        <option value="<?= (int)$eid ?>" <?= (int)($record->beneficiary_employee_id ?? 0) === (int)$eid ? 'selected' : '' ?>><?= h($ename) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="mb-3 sgi-beneficiary-provider" <?= $record->beneficiary_type === 'provider' ? '' : 'style="display:none;"' ?>>
-                    <label class="form-label">Proveedor</label>
-                    <select name="beneficiary_provider_id" class="form-select select2-enable">
-                        <option value="">Seleccione un proveedor</option>
-                        <?php foreach ($providers as $pid => $pname): ?>
-                        <option value="<?= (int)$pid ?>" <?= (int)($record->beneficiary_provider_id ?? 0) === (int)$pid ? 'selected' : '' ?>><?= h($pname) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            <?php else: ?>
-                <dl class="row mb-0">
-                    <dt class="col-sm-3" style="font-size:.78rem;color:#888;">Tipo</dt>
-                    <dd class="col-sm-9" style="font-size:.85rem;"><?= h(RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?? '—') ?></dd>
-                    <dt class="col-sm-3" style="font-size:.78rem;color:#888;">Beneficiario</dt>
-                    <dd class="col-sm-9" style="font-size:.85rem;"><?= h($record->getBeneficiaryName() ?? '—') ?></dd>
-                </dl>
-            <?php endif; ?>
+            </div>
+            <div class="mb-3 sgi-beneficiary-employee" <?= $record->beneficiary_type === 'employee' ? '' : 'style="display:none;"' ?>>
+                <label class="form-label">Empleado</label>
+                <select name="beneficiary_employee_id" class="form-select select2-enable">
+                    <option value="">Seleccione un empleado</option>
+                    <?php foreach ($employees as $eid => $ename): ?>
+                    <option value="<?= (int)$eid ?>" <?= (int)($record->beneficiary_employee_id ?? 0) === (int)$eid ? 'selected' : '' ?>><?= h($ename) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="mb-3 sgi-beneficiary-provider" <?= $record->beneficiary_type === 'provider' ? '' : 'style="display:none;"' ?>>
+                <label class="form-label">Proveedor</label>
+                <select name="beneficiary_provider_id" class="form-select select2-enable">
+                    <option value="">Seleccione un proveedor</option>
+                    <?php foreach ($providers as $pid => $pname): ?>
+                    <option value="<?= (int)$pid ?>" <?= (int)($record->beneficiary_provider_id ?? 0) === (int)$pid ? 'selected' : '' ?>><?= h($pname) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
         </div>
         <?php endif; ?>
 
