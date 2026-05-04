@@ -188,7 +188,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
-                    <?= $isAdvance ? ('Anticipo ' . h($invoice->invoice_number ?? '#' . $invoice->id)) : h($invoice->invoice_number ?? ('# ' . $invoice->id)) ?>
+                    <?= h($invoice->invoice_number ?? '#' . $invoice->id) ?>
                 </div>
                 <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
                     Rol: <strong style="color:#777;"><?= h($roleName) ?></strong>

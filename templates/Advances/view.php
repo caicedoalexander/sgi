@@ -8,7 +8,7 @@
 use App\Constants\InvoiceConstants;
 use App\Service\InvoicePipelineService;
 
-$this->assign('title', 'Anticipo ' . ($invoice->invoice_number ?? '#' . $invoice->id));
+$this->assign('title', $invoice->invoice_number ?? '#' . $invoice->id);
 
 $pipelineBadge = [
     InvoiceConstants::STATUS_APROBACION        => 'bg-info text-dark',
@@ -56,7 +56,7 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
             </div>
             <div>
                 <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;font-family:monospace;">
-                    Anticipo <?= h($invoice->invoice_number ?? '#' . $invoice->id) ?>
+                    <?= h($invoice->invoice_number ?? '#' . $invoice->id) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
                     <span class="badge <?= $pipelineBadge[$invoice->pipeline_status] ?? 'bg-dark' ?>">
