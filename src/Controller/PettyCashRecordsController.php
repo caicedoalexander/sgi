@@ -521,6 +521,36 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $recordId]);
     }
 
+    public function linkInvoices($recordId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $record = $this->PettyCashRecords->get($recordId);
+
+        if (!$record->isAgrupacion()) {
+            $this->Flash->error('Solo se pueden vincular facturas en estado Agrupación.');
+
+            return $this->redirect(['action' => 'edit', $recordId]);
+        }
+
+        $invoiceIds = array_map('intval', array_filter((array)$this->request->getData('invoice_ids', [])));
+        if (empty($invoiceIds)) {
+            $this->Flash->warning('Seleccione al menos una factura para vincular.');
+
+            return $this->redirect(['action' => 'edit', $recordId]);
+        }
+
+        $errors = $this->pettyCashService->addInvoices($record, $invoiceIds);
+        if (empty($errors)) {
+            $this->Flash->success(sprintf('%d factura(s) vinculada(s).', count($invoiceIds)));
+        } else {
+            foreach ($errors as $err) {
+                $this->Flash->warning($err);
+            }
+        }
+
+        return $this->redirect(['action' => 'edit', $recordId]);
+    }
+
     public function uploadDocument($id = null)
     {
         $this->request->allowMethod(['post']);

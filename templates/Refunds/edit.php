@@ -342,58 +342,13 @@ $invoiceCount = count($record->invoices ?? []);
             </div>
             <?php endif; ?>
 
-            <!-- Agregar más facturas (solo agrupación) -->
+            <!-- Agregar más facturas (solo agrupación) — modal compartido -->
             <?php if ($record->isAgrupacion()): ?>
-            <div class="mt-2 p-3" style="background:#f9fafb;border:1px solid var(--border-color);">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <i class="bi bi-funnel" style="font-size:.8rem;color:#888;"></i>
-                    <span style="font-size:.78rem;font-weight:600;color:#555;">Buscar facturas para agrupar</span>
-                </div>
-                <div class="row g-2 align-items-end mb-3">
-                    <div class="col-md-3">
-                        <label class="form-label mb-1" style="font-size:.7rem;color:#888;">Desde</label>
-                        <input type="text" form="groupFilterForm" name="date_from" class="form-control form-control-sm flatpickr-date"
-                               value="<?= h($groupFilters['date_from'] ?? '') ?>">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label mb-1" style="font-size:.7rem;color:#888;">Hasta</label>
-                        <input type="text" form="groupFilterForm" name="date_to" class="form-control form-control-sm flatpickr-date"
-                               value="<?= h($groupFilters['date_to'] ?? '') ?>">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label mb-1" style="font-size:.7rem;color:#888;">Centro Op.</label>
-                        <select form="groupFilterForm" name="operation_center_id" class="form-select form-select-sm">
-                            <option value="">Todos</option>
-                            <?php foreach ($operationCenters as $ocId => $ocName): ?>
-                            <option value="<?= $ocId ?>" <?= ($groupFilters['operation_center_id'] ?? '') == $ocId ? 'selected' : '' ?>><?= h($ocName) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="submit" form="groupFilterForm" class="btn btn-sm btn-outline-primary w-100">
-                            <i class="bi bi-search me-1"></i>Buscar
-                        </button>
-                    </div>
-                </div>
-                <!-- Hidden form for GET filter -->
-                <form id="groupFilterForm" method="get" action="<?= $this->Url->build(['action' => 'edit', $record->id]) ?>"></form>
-
-                <?php if (!empty($invoiceOptions)): ?>
-                <label class="form-label" style="font-size:.78rem;color:#666;">
-                    Seleccionar facturas
-                    <span class="sgi-folder-count ms-1"><?= count($invoiceOptions) ?> disponible<?= count($invoiceOptions) !== 1 ? 's' : '' ?></span>
-                </label>
-                <select name="invoice_ids[]" class="form-select select2-enable" multiple
-                        data-placeholder="Seleccione facturas para agregar...">
-                    <?php foreach ($invoiceOptions as $id => $label): ?>
-                    <option value="<?= $id ?>"><?= h($label) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <?php else: ?>
-                <div class="text-muted" style="font-size:.8rem;">
-                    <i class="bi bi-info-circle me-1"></i>No hay facturas disponibles<?= !empty($groupFilters['date_from']) || !empty($groupFilters['date_to']) || !empty($groupFilters['operation_center_id']) ? ' con los filtros seleccionados' : '' ?>.
-                </div>
-                <?php endif; ?>
+            <div class="mt-2">
+                <button type="button" class="btn btn-sm sgi-btn-primary"
+                        data-bs-toggle="modal" data-bs-target="#linkRefundInvoicesModal">
+                    <i class="bi bi-link-45deg me-1"></i>Vincular facturas
+                </button>
             </div>
             <?php endif; ?>
         </div>
@@ -527,6 +482,19 @@ $invoiceCount = count($record->invoices ?? []);
         <?php endif; ?>
 
         <?= $this->Form->end() ?>
+
+        <?php if ($record->isAgrupacion()): ?>
+        <?= $this->element('link_invoices_modal', [
+            'modalId'    => 'linkRefundInvoicesModal',
+            'formUrl'    => ['action' => 'linkInvoices', $record->id],
+            'candidates' => $availableInvoices,
+            'title'      => 'Vincular facturas — Reintegro',
+            'helpText'   => 'Filtre por fecha o centro de operación para acotar la lista.',
+            'filterUrl'  => ['action' => 'edit', $record->id],
+            'filters'    => $groupFilters,
+            'operationCenters' => $operationCenters,
+        ]) ?>
+        <?php endif; ?>
     </div>
 </div>
 </div><!-- /columna izquierda -->
