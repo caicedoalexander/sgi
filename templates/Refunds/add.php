@@ -4,6 +4,7 @@
  * @var \App\Model\Entity\Refund $record
  * @var array $employees
  * @var array $providers
+ * @var iterable $operationCenters
  */
 $this->assign('title', 'Nuevo Reintegro');
 ?>
@@ -30,6 +31,17 @@ $this->assign('title', 'Nuevo Reintegro');
     </div>
     <div class="card-body p-4">
         <?= $this->Form->create($record) ?>
+
+        <div class="mb-4">
+            <label class="form-label" for="refund-operation-center">Centro de Operación <span class="text-danger">*</span></label>
+            <select name="operation_center_id" id="refund-operation-center" class="form-select select2-enable" required>
+                <option value="">Selecciona un centro...</option>
+                <?php foreach ($operationCenters as $id => $name): ?>
+                    <option value="<?= (int)$id ?>"><?= h($name) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <small class="text-muted">El código se generará automáticamente como <code>REI-{año}-{centro}-{consecutivo}</code>.</small>
+        </div>
 
         <div class="mb-4">
             <label class="form-label">Tipo de beneficiario <span class="text-danger">*</span></label>

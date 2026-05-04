@@ -130,6 +130,7 @@ class RefundsController extends AppController
     {
         $record = $this->Refunds->get($id, contain: [
             'CreatedByUsers',
+            'OperationCenters',
             'BeneficiaryEmployees',
             'BeneficiaryProviders',
             'BankingEntities',
@@ -220,6 +221,7 @@ class RefundsController extends AppController
     {
         $record = $this->Refunds->get($id, contain: [
             'CreatedByUsers',
+            'OperationCenters',
             'BeneficiaryEmployees',
             'BeneficiaryProviders',
             'Invoices' => ['Providers', 'OperationCenters'],
