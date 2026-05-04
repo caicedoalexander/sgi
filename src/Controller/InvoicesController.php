@@ -491,7 +491,7 @@ class InvoicesController extends AppController
         return $this->_redirectForInvoice($invoice, 'index');
     }
 
-    private function _buildInvoiceQuery(array $conditions = [], ?int $userId = null): SelectQuery
+    private function _buildInvoiceQuery(array $conditions = [], int $userId = 0): SelectQuery
     {
         $query = $this->Invoices->find()
             ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers'])
@@ -501,18 +501,21 @@ class InvoicesController extends AppController
             $query->where($conditions);
         }
 
-        if ($userId !== null) {
-            $query->selectAlso([
-                'unread_observations' => "(
-                    SELECT COUNT(*)
-                    FROM invoice_observations io
-                    LEFT JOIN invoice_reads ir
-                        ON ir.invoice_id = io.invoice_id AND ir.user_id = $userId
-                    WHERE io.invoice_id = Invoices.id
-                      AND io.user_id != $userId
-                      AND (ir.last_visited_at IS NULL OR io.created > ir.last_visited_at)
-                )",
-            ]);
+        if ($userId > 0) {
+            $subquery = '(
+                SELECT COUNT(*)
+                FROM invoice_observations io
+                LEFT JOIN invoice_reads ir
+                    ON ir.invoice_id = io.invoice_id AND ir.user_id = :uidJoin
+                WHERE io.invoice_id = Invoices.id
+                  AND io.user_id != :uidWhere
+                  AND (ir.last_visited_at IS NULL OR io.created > ir.last_visited_at)
+            )';
+
+            $query
+                ->selectAlso(['unread_observations' => $subquery])
+                ->bind(':uidJoin', $userId, 'integer')
+                ->bind(':uidWhere', $userId, 'integer');
         }
 
         $this->filterService->apply($query, $this->request->getQueryParams());
@@ -524,14 +527,14 @@ class InvoicesController extends AppController
 
     private function _getApprovalSummaries($invoices): array
     {
-        $summaries = [];
+        $ids = [];
         foreach ($invoices as $inv) {
             if ($inv->pipeline_status === InvoiceConstants::STATUS_APROBACION) {
-                $summaries[$inv->id] = $this->approvalService->getApprovalSummary($inv->id);
+                $ids[] = (int)$inv->id;
             }
         }
 
-        return $summaries;
+        return $this->approvalService->getApprovalSummariesBatch($ids);
     }
 
     private function _getFilterDropdowns(): array

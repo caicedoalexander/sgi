@@ -24,10 +24,14 @@ class InvoiceApprovalService
 {
     private $invoiceApprovalsTable;
 
+    private InvoiceHistoryService $historyService;
+
     public function __construct(
         private readonly NotificationService $notificationService,
+        ?InvoiceHistoryService $historyService = null,
     ) {
         $this->invoiceApprovalsTable = TableRegistry::getTableLocator()->get('InvoiceApprovals');
+        $this->historyService = $historyService ?? new InvoiceHistoryService();
     }
 
     /**
@@ -66,7 +70,7 @@ class InvoiceApprovalService
      *
      * @return array{success: bool, approvals: array, pending: array, errors: array}
      */
-    public function _persistApprovers(Invoice $invoice, array $approverUserIds, string $baseUrl): array
+    private function _persistApprovers(Invoice $invoice, array $approverUserIds, string $baseUrl): array
     {
         $errors = [];
         $approvals = [];
@@ -112,7 +116,7 @@ class InvoiceApprovalService
      * @param array<int, array{userId:int, approvalUrl:string}> $pending
      * @return array<string> Errores recolectados (vacío si todo OK).
      */
-    public function _sendApprovalEmails(Invoice $invoice, array $pending, int $createdByUserId): array
+    private function _sendApprovalEmails(Invoice $invoice, array $pending, int $createdByUserId): array
     {
         $errors = [];
 
@@ -239,6 +243,14 @@ class InvoiceApprovalService
                 $invoice->area_approval_date = new DateTime();
                 $invoicesTable->save($invoice);
 
+                $this->historyService->recordFieldChange(
+                    $invoiceId,
+                    'area_approval',
+                    InvoiceConstants::APPROVAL_PENDING,
+                    InvoiceConstants::APPROVAL_REJECTED,
+                    (int)$approval->user_id,
+                );
+
                 return ServiceResult::ok([
                     'allApproved' => false,
                     'rejected' => true,
@@ -254,6 +266,14 @@ class InvoiceApprovalService
                 $invoice->area_approval = InvoiceConstants::APPROVAL_APPROVED;
                 $invoice->area_approval_date = new DateTime();
                 $invoicesTable->save($invoice);
+
+                $this->historyService->recordFieldChange(
+                    $invoiceId,
+                    'area_approval',
+                    InvoiceConstants::APPROVAL_PENDING,
+                    InvoiceConstants::APPROVAL_APPROVED,
+                    (int)$approval->user_id,
+                );
             }
 
             return ServiceResult::ok([
@@ -317,7 +337,49 @@ class InvoiceApprovalService
      */
     public function getApprovalSummary(int $invoiceId): array
     {
-        $approvals = $this->getCurrentApprovals($invoiceId);
+        return $this->_summaryFromApprovals($this->getCurrentApprovals($invoiceId));
+    }
+
+    /**
+     * Devuelve los summaries de aprobación para múltiples facturas en una sola query.
+     *
+     * @param array<int> $invoiceIds
+     * @return array<int, array> indexado por invoice_id
+     */
+    public function getApprovalSummariesBatch(array $invoiceIds): array
+    {
+        if (empty($invoiceIds)) {
+            return [];
+        }
+
+        $rows = $this->invoiceApprovalsTable->find()
+            ->where([
+                'InvoiceApprovals.invoice_id IN' => $invoiceIds,
+                'InvoiceApprovals.status IN' => InvoiceConstants::APPROVER_STATUSES_ACTIVE,
+            ])
+            ->contain(['Users'])
+            ->orderBy(['InvoiceApprovals.created' => 'ASC'])
+            ->all()
+            ->toArray();
+
+        $byInvoice = [];
+        foreach ($rows as $row) {
+            $byInvoice[$row->invoice_id][] = $row;
+        }
+
+        $summaries = [];
+        foreach ($invoiceIds as $id) {
+            $summaries[$id] = $this->_summaryFromApprovals($byInvoice[$id] ?? []);
+        }
+
+        return $summaries;
+    }
+
+    /**
+     * Construye el summary desde un array de approvals ya cargado.
+     */
+    private function _summaryFromApprovals(array $approvals): array
+    {
         $total = count($approvals);
         $approved = 0;
         $rejected = 0;

@@ -305,12 +305,13 @@ class InvoicePipelineService
                         $refreshed = $invoicesTable->get($invoice->id);
 
                         if ($refreshed->payment_status === InvoiceConstants::PAYMENT_PARTIAL) {
+                            $intermediateStatus = $advanceNextStatus;
                             $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
                             $advanceNextStatus = InvoiceConstants::STATUS_TESORERIA;
                             $invoicesTable->save($invoice);
                             $this->historyService->recordStatusChange(
                                 $invoice->id,
-                                InvoiceConstants::STATUS_PAGADA,
+                                $intermediateStatus,
                                 InvoiceConstants::STATUS_TESORERIA,
                                 $userId,
                             );

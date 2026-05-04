@@ -135,7 +135,9 @@ class InvoicePaymentService
                 return false; // → rollback
             }
 
-            $this->recalculatePaymentStatus($payment->invoice_id);
+            if (!$this->recalculatePaymentStatus($payment->invoice_id)) {
+                return false;
+            }
 
             $invoice = $invoicesTable->get($payment->invoice_id);
             $previousStatus = $invoice->pipeline_status;
@@ -145,7 +147,9 @@ class InvoicePaymentService
                 : InvoiceConstants::STATUS_TESORERIA;
 
             $invoice->pipeline_status = $newPipelineStatus;
-            $invoicesTable->save($invoice);
+            if (!$invoicesTable->save($invoice)) {
+                return false;
+            }
 
             $this->historyService->recordStatusChange(
                 $invoice->id,
@@ -324,23 +328,44 @@ class InvoicePaymentService
             return ServiceResult::ok('Reintegro rechazado. La legalización volvió a Tesorería.');
         }
 
-        // No-refund: comportamiento original (sin transactional, fuera del scope del Plan 5).
-        $payment->status = InvoiceConstants::PAYMENT_RECORD_REJECTED;
-        $payment->rejection_reason = $reason;
-
-        if (!$paymentsTable->save($payment)) {
-            return ServiceResult::fail('No se pudo rechazar el pago.');
-        }
-
-        $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
-        $invoicesTable->save($invoice);
-
-        $this->historyService->recordStatusChange(
+        // No-refund: marcar pago rechazado, regresar la factura a tesorería
+        // y registrar historial — todo dentro de una sola TX.
+        $connection = $paymentsTable->getConnection();
+        $ok = $connection->transactional(function () use (
+            $paymentsTable,
+            $invoicesTable,
+            $payment,
+            $invoice,
             $invoiceId,
             $previousStatus,
-            InvoiceConstants::STATUS_TESORERIA,
+            $reason,
             $rejectedBy,
-        );
+        ): bool {
+            $payment->status = InvoiceConstants::PAYMENT_RECORD_REJECTED;
+            $payment->rejection_reason = $reason;
+
+            if (!$paymentsTable->save($payment)) {
+                return false;
+            }
+
+            $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
+            if (!$invoicesTable->save($invoice)) {
+                return false;
+            }
+
+            $this->historyService->recordStatusChange(
+                $invoiceId,
+                $previousStatus,
+                InvoiceConstants::STATUS_TESORERIA,
+                $rejectedBy,
+            );
+
+            return true;
+        });
+
+        if ($ok === false) {
+            return ServiceResult::fail('No se pudo rechazar el pago.');
+        }
 
         return ServiceResult::ok('Pago rechazado. Factura devuelta a Tesorería.');
     }
