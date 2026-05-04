@@ -4,6 +4,10 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use App\Constants\PaymentSchedulingConstants;
+use App\Service\CodeGeneratorService;
+use ArrayObject;
+use Cake\Datasource\EntityInterface;
+use Cake\Event\EventInterface;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -43,15 +47,30 @@ class PaymentSchedulingsTable extends Table
         $this->hasMany('InvoicePayments', [
             'foreignKey' => 'payment_scheduling_id',
         ]);
+        $this->belongsTo('OperationCenters', [
+            'foreignKey' => 'operation_center_id',
+        ]);
+    }
+
+    public function beforeSave(EventInterface $event, EntityInterface $entity, ArrayObject $options): void
+    {
+        if (!$entity->isNew() || !empty($entity->code)) {
+            return;
+        }
+        if (empty($entity->operation_center_id)) {
+            return;
+        }
+
+        $generator = new CodeGeneratorService();
+        $entity->code = $generator->generatePaymentSchedulingCode((int)$entity->operation_center_id);
     }
 
     public function validationDefault(Validator $validator): Validator
     {
         $validator
             ->scalar('code')
-            ->maxLength('code', 20)
-            ->requirePresence('code', 'create')
-            ->notEmptyString('code');
+            ->maxLength('code', 30)
+            ->allowEmptyString('code');
 
         $validator
             ->scalar('title')
@@ -68,6 +87,11 @@ class PaymentSchedulingsTable extends Table
             ->requirePresence('created_by', 'create')
             ->notEmptyString('created_by');
 
+        $validator
+            ->integer('operation_center_id')
+            ->requirePresence('operation_center_id', 'create')
+            ->notEmptyString('operation_center_id', 'Selecciona un centro de operación.', 'create');
+
         return $validator;
     }
 
@@ -77,25 +101,5 @@ class PaymentSchedulingsTable extends Table
         $rules->add($rules->existsIn('created_by', 'CreatedByUsers'), ['errorField' => 'created_by']);
 
         return $rules;
-    }
-
-    /**
-     * Genera el siguiente código PRO-XXX secuencial.
-     */
-    public function generateNextCode(): string
-    {
-        $last = $this->find()
-            ->select(['code'])
-            ->where(['code LIKE' => PaymentSchedulingConstants::CODE_PREFIX . '-%'])
-            ->order(['id' => 'DESC'])
-            ->first();
-
-        $nextNumber = 1;
-        if ($last) {
-            $parts = explode('-', $last->code);
-            $nextNumber = (int)($parts[1] ?? 0) + 1;
-        }
-
-        return PaymentSchedulingConstants::CODE_PREFIX . '-' . str_pad((string)$nextNumber, 3, '0', STR_PAD_LEFT);
     }
 }

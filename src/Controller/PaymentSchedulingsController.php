@@ -101,7 +101,7 @@ class PaymentSchedulingsController extends AppController
         if ($this->request->is('post')) {
             $user = $this->_getCurrentUser();
             $data = $this->request->getData();
-            $data['code'] = $this->PaymentSchedulings->generateNextCode();
+            $data['operation_center_id'] = $data['operation_center_id'] ?? null;
             $data['pipeline_status'] = PaymentSchedulingConstants::STATUS_BORRADOR;
             $data['created_by'] = $user->id;
 
@@ -114,7 +114,8 @@ class PaymentSchedulingsController extends AppController
             $this->Flash->error('No se pudo crear la programación.');
         }
 
-        $this->set(compact('record'));
+        $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
+        $this->set(compact('record', 'operationCenters'));
     }
 
     public function edit($id = null)
