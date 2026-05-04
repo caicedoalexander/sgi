@@ -162,11 +162,11 @@ $invoiceCount = count($record->invoices ?? []);
         <div class="sgi-ledger">
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Código</div>
-                <?php if (!$record->isPagado()): ?>
-                <div class="sgi-ledger-value"><input type="text" name="code" form="pettyCashEditForm" class="form-control form-control-sm" style="font-family:monospace;max-width:200px;" maxlength="30" value="<?= h($record->code ?? '') ?>" placeholder="Opcional"></div>
-                <?php else: ?>
                 <div class="sgi-ledger-value" style="font-family:monospace;"><?= h($record->code ?? '—') ?></div>
-                <?php endif; ?>
+            </div>
+            <div class="sgi-ledger-item">
+                <div class="sgi-ledger-label">Centro de Operación</div>
+                <div class="sgi-ledger-value"><?= h($record->operation_center->name ?? '—') ?></div>
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Facturas</div>

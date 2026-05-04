@@ -190,6 +190,7 @@ class PettyCashRecordsController extends AppController
     {
         $record = $this->PettyCashRecords->get($id, contain: [
             'CreatedByUsers',
+            'OperationCenters',
             'Invoices' => ['Providers', 'OperationCenters'],
             'PettyCashDocuments' => [
                 'UploadedByUsers',

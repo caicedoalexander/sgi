@@ -64,15 +64,21 @@ $groupFilters = $groupFilters ?? [];
         </div>
         <div>
             <div style="font-size:.95rem;font-weight:700;color:#111;">Crear Registro</div>
-            <div style="font-size:.72rem;color:#aaa;">El código es opcional</div>
+            <div style="font-size:.72rem;color:#aaa;">El código se autogenera</div>
         </div>
     </div>
     <div class="card-body p-4">
         <?= $this->Form->create($record) ?>
 
         <div class="mb-4">
-            <label class="form-label">Código <small class="text-muted">(opcional)</small></label>
-            <input type="text" name="code" class="form-control" maxlength="30" value="<?= h($record->code ?? '') ?>" placeholder="Ej. CM-2026-0001">
+            <label class="form-label" for="record-operation-center">Centro de Operación <span class="text-danger">*</span></label>
+            <select name="operation_center_id" id="record-operation-center" class="form-select select2-enable" required>
+                <option value="">Selecciona un centro...</option>
+                <?php foreach ($operationCenters as $id => $name): ?>
+                    <option value="<?= $id ?>" <?= ($record->operation_center_id ?? '') == $id ? 'selected' : '' ?>><?= h($name) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <small class="text-muted">El código se generará automáticamente como <code>CM-{año}-{centro}-{consecutivo}</code>.</small>
         </div>
 
         <div class="mb-4">
