@@ -163,7 +163,7 @@ class RefundsController extends AppController
                 : null;
 
             $record = $this->Refunds->patchEntity($record, [
-                'code' => !empty($data['code']) ? $data['code'] : null,
+                'operation_center_id' => $data['operation_center_id'] ?? null,
                 'status' => RefundConstants::STATUS_AGRUPACION,
                 'total_amount' => 0,
                 'beneficiary_type' => $beneficiaryType ?: null,
@@ -186,7 +186,8 @@ class RefundsController extends AppController
         }
 
         [$employees, $providers] = $this->_loadBeneficiaryLists();
-        $this->set(compact('record', 'employees', 'providers'));
+        $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
+        $this->set(compact('record', 'employees', 'providers', 'operationCenters'));
     }
 
     private function _loadBeneficiaryLists(): array
@@ -239,11 +240,6 @@ class RefundsController extends AppController
 
             $data = $this->request->getData();
             $patchData = [];
-
-            // Code: editable in all non-final states
-            if (!$record->isPagado()) {
-                $patchData['code'] = !empty($data['code']) ? $data['code'] : null;
-            }
 
             // Beneficiary: editable only in agrupacion
             if ($record->isAgrupacion()) {

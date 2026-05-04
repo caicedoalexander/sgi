@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use App\Constants\RefundConstants;
+use App\Service\CodeGeneratorService;
 use ArrayObject;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\EventInterface;
@@ -65,6 +66,9 @@ class RefundsTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->belongsTo('OperationCenters', [
+            'foreignKey' => 'operation_center_id',
+        ]);
     }
 
     public function validationDefault(Validator $validator): Validator
@@ -106,6 +110,11 @@ class RefundsTable extends Table
             ->requirePresence('created_by', 'create')
             ->notEmptyString('created_by');
 
+        $validator
+            ->integer('operation_center_id')
+            ->requirePresence('operation_center_id', 'create')
+            ->notEmptyString('operation_center_id', 'Selecciona un centro de operación.', 'create');
+
         return $validator;
     }
 
@@ -135,29 +144,16 @@ class RefundsTable extends Table
         return $rules;
     }
 
-    /**
-     * Generate `code` (REI-YYYY-NNNN) on create when missing.
-     */
     public function beforeSave(EventInterface $event, EntityInterface $entity, ArrayObject $options): void
     {
         if (!$entity->isNew() || !empty($entity->code)) {
             return;
         }
-
-        $year = (int)date('Y');
-        $prefix = RefundConstants::CODE_PREFIX . '-' . $year . '-';
-
-        $last = $this->find()
-            ->select(['code'])
-            ->where(['code LIKE' => $prefix . '%'])
-            ->order(['code' => 'DESC'])
-            ->first();
-
-        $next = 1;
-        if ($last !== null && preg_match('/-(\d+)$/', (string)$last->code, $m)) {
-            $next = (int)$m[1] + 1;
+        if (empty($entity->operation_center_id)) {
+            return;
         }
 
-        $entity->code = $prefix . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
+        $generator = new CodeGeneratorService();
+        $entity->code = $generator->generateRefundCode((int)$entity->operation_center_id);
     }
 }
