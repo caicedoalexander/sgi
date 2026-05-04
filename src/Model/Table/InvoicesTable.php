@@ -307,6 +307,11 @@ class InvoicesTable extends Table implements ExcelExportableInterface
             if (empty($entity->dian_validation)) {
                 $entity->dian_validation = InvoiceConstants::DIAN_APPROVED;
             }
+
+            if (empty($entity->invoice_number) && !empty($entity->operation_center_id)) {
+                $generator = new \App\Service\CodeGeneratorService();
+                $entity->invoice_number = $generator->generateAdvanceInvoiceNumber((int)$entity->operation_center_id);
+            }
         }
 
         // Limpiar campos exclusivos de Recibo de Caja cuando el doc type no aplica.
