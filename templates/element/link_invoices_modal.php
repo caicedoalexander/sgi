@@ -2,6 +2,13 @@
 /**
  * Modal genérico para vincular facturas a un registro (Anticipo, Reintegro, Caja Menor).
  *
+ * Soporta dos modos de render:
+ * - Modo completo (default): renderiza el shell `<div class="modal fade">` listo para
+ *   anclar con `data-bs-toggle`. Usado por Refunds y PettyCash con render server-side.
+ * - Modo fragment (`$fragmentOnly = true`): renderiza solo el contenido del
+ *   `.modal-content`. Usado por endpoints AJAX que reemplazan el contenido del modal
+ *   sin tocar el shell (audit SU-003 — Advances).
+ *
  * @var \App\View\AppView $this
  * @var string $modalId               DOM id del modal (ej. "linkInvoicesModal")
  * @var array $formUrl                URL array para el form POST que hace la vinculación
@@ -12,6 +19,7 @@
  * @var array|null $filters           Valores actuales de filtros (date_from, date_to, operation_center_id, provider_id)
  * @var iterable|null $operationCenters  Lista [id => name] para filtro de centro op (opcional)
  * @var iterable|null $providers       Lista [id => name] para filtro de proveedor (opcional)
+ * @var bool|null $fragmentOnly       true = renderizar solo el contenido del .modal-content (AJAX)
  */
 $title       = $title       ?? 'Vincular Facturas';
 $helpText    = $helpText    ?? null;
@@ -19,16 +27,19 @@ $filterUrl   = $filterUrl   ?? null;
 $filters     = $filters     ?? [];
 $operationCenters = $operationCenters ?? [];
 $providers   = $providers   ?? [];
+$fragmentOnly = $fragmentOnly ?? false;
 $filterFormId = $modalId . 'Filter';
 ?>
+<?php if (!$fragmentOnly): ?>
 <div class="modal fade" id="<?= h($modalId) ?>" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <?= $this->Form->create(null, ['url' => $formUrl]) ?>
         <div class="modal-content">
+<?php endif; ?>
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-link-45deg me-1"></i><?= h($title) ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <?= $this->Form->create(null, ['url' => $formUrl]) ?>
             <div class="modal-body">
                 <?php if ($helpText): ?>
                 <p class="text-muted small mb-3"><?= h($helpText) ?></p>
@@ -114,11 +125,13 @@ $filterFormId = $modalId . 'Filter';
                 <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" class="btn sgi-btn-primary"><i class="bi bi-link-45deg me-1"></i>Vincular seleccionadas</button>
             </div>
+            <?= $this->Form->end() ?>
+<?php if (!$fragmentOnly): ?>
         </div>
-        <?= $this->Form->end() ?>
     </div>
 </div>
+<?php endif; ?>
 
 <?php if ($filterUrl !== null): ?>
-<form id="<?= h($filterFormId) ?>" method="get" action="<?= $this->Url->build($filterUrl) ?>"></form>
+<form id="<?= h($filterFormId) ?>" method="get" action="<?= $this->Url->build($filterUrl) ?>"<?= $fragmentOnly ? ' data-modal-filter-form' : '' ?>></form>
 <?php endif; ?>
