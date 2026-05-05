@@ -9,8 +9,10 @@ use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\Interface\HistoryServiceInterface;
+use App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
+use InvalidArgumentException;
 
 class PettyCashService
 {
@@ -40,16 +42,19 @@ class PettyCashService
     private GroupedInvoiceService $grouped;
     private PipelineAuthorizationService $pipelineAuth;
     private PettyCashHistoryService $history;
+    private PettyCashPipelineStateRegistry $stateRegistry;
 
     /**
      * @param \App\Service\Interface\HistoryServiceInterface $historyService History service for child invoices.
      * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth
      * @param \App\Service\PettyCashHistoryService|null $history Audit trail for the petty cash record itself.
+     * @param \App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry|null $stateRegistry
      */
     public function __construct(
         HistoryServiceInterface $historyService,
         ?PipelineAuthorizationService $pipelineAuth = null,
         ?PettyCashHistoryService $history = null,
+        ?PettyCashPipelineStateRegistry $stateRegistry = null,
     ) {
         $this->grouped = new GroupedInvoiceService(
             documentType: InvoiceConstants::DOCTYPE_CAJA_MENOR,
@@ -60,6 +65,7 @@ class PettyCashService
         );
         $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
         $this->history = $history ?? new PettyCashHistoryService();
+        $this->stateRegistry = $stateRegistry ?? new PettyCashPipelineStateRegistry();
     }
 
     /**
@@ -236,7 +242,13 @@ class PettyCashService
      */
     public function canAdvance(int $roleId, string $roleName, string $currentStatus): bool
     {
-        if (!isset(PettyCashConstants::TRANSITIONS[$currentStatus])) {
+        try {
+            $state = $this->stateRegistry->get($currentStatus);
+        } catch (InvalidArgumentException) {
+            return false;
+        }
+
+        if ($state->getNext() === null) {
             return false;
         }
 
@@ -262,7 +274,14 @@ class PettyCashService
         int $userId,
     ): ServiceResult {
         $currentStatus = $record->status;
-        $nextStatus = PettyCashConstants::TRANSITIONS[$currentStatus] ?? null;
+
+        try {
+            $state = $this->stateRegistry->get($currentStatus);
+        } catch (InvalidArgumentException $e) {
+            return ServiceResult::fail($e->getMessage());
+        }
+
+        $nextStatus = $state->getNext();
 
         if ($nextStatus === null) {
             return ServiceResult::fail('Este registro ya está en su estado final.');
@@ -385,9 +404,8 @@ class PettyCashService
     /**
      * Validate petty cash specific transition requirements.
      *
-     * Solo `contabilidad → tesoreria` tiene preconditions de campos. Las demás
-     * transiciones (`agrupacion → contabilidad`, `tesoreria → aut_pago`)
-     * dependen únicamente de invariantes de pipeline que se validan fuera.
+     * Delega al State pattern: cada estado declara sus propios requisitos
+     * de avance vía PettyCashPipelineState::validateAdvance.
      *
      * @param string $fromStatus Current status.
      * @param \App\Model\Entity\PettyCashRecord $record Record.
@@ -395,18 +413,7 @@ class PettyCashService
      */
     private function _validateTransition(string $fromStatus, PettyCashRecord $record): array
     {
-        $errors = [];
-
-        if ($fromStatus === PettyCashConstants::STATUS_CONTABILIDAD) {
-            if (empty($record->accrued)) {
-                $errors[] = 'El registro debe estar marcado como Causado.';
-            }
-            if (empty($record->ready_for_payment)) {
-                $errors[] = 'Debe seleccionar "Lista para Pago".';
-            }
-        }
-
-        return $errors;
+        return $this->stateRegistry->get($fromStatus)->validateAdvance($record);
     }
 
     /**
@@ -703,10 +710,16 @@ class PettyCashService
     /**
      * Returns the previous pipeline status, or null if no predecessor exists
      * or the state is excluded from regression.
+     *
+     * Delega al State pattern: cada estado declara su predecesor.
      */
     public function getPreviousStatus(string $currentStatus): ?string
     {
-        return PettyCashConstants::BACKWARD_TRANSITIONS[$currentStatus] ?? null;
+        try {
+            return $this->stateRegistry->get($currentStatus)->getPrevious();
+        } catch (InvalidArgumentException) {
+            return null;
+        }
     }
 
     /**
