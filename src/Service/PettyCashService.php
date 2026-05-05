@@ -258,6 +258,10 @@ class PettyCashService
     /**
      * Validate petty cash specific transition requirements.
      *
+     * Solo `contabilidad → tesoreria` tiene preconditions de campos. Las demás
+     * transiciones (`agrupacion → contabilidad`, `tesoreria → aut_pago`)
+     * dependen únicamente de invariantes de pipeline que se validan fuera.
+     *
      * @param string $fromStatus Current status.
      * @param \App\Model\Entity\PettyCashRecord $record Record.
      * @return array
@@ -266,21 +270,13 @@ class PettyCashService
     {
         $errors = [];
 
-        switch ($fromStatus) {
-            case PettyCashConstants::STATUS_AGRUPACION:
-                break;
-
-            case PettyCashConstants::STATUS_CONTABILIDAD:
-                if (empty($record->accrued)) {
-                    $errors[] = 'El registro debe estar marcado como Causado.';
-                }
-                if (empty($record->ready_for_payment)) {
-                    $errors[] = 'Debe seleccionar "Lista para Pago".';
-                }
-                break;
-
-            case PettyCashConstants::STATUS_TESORERIA:
-                break;
+        if ($fromStatus === PettyCashConstants::STATUS_CONTABILIDAD) {
+            if (empty($record->accrued)) {
+                $errors[] = 'El registro debe estar marcado como Causado.';
+            }
+            if (empty($record->ready_for_payment)) {
+                $errors[] = 'Debe seleccionar "Lista para Pago".';
+            }
         }
 
         return $errors;
@@ -461,25 +457,26 @@ class PettyCashService
                 ->all();
 
             foreach ($childInvoices as $invoice) {
-                if ((float)$invoice->amount <= 0) {
-                    continue;
-                }
+                // Materializar invoice_payment solo cuando hay monto efectivo.
+                // Facturas con amount = 0 (caso atípico pero posible) se marcan
+                // pagada sin crear un pago de cero pesos.
+                if ((float)$invoice->amount > 0) {
+                    $invoicePayment = $invoicePaymentsTable->newEntity([
+                        'invoice_id' => $invoice->id,
+                        'banking_entity_id' => $record->banking_entity_id,
+                        'amount' => $invoice->amount,
+                        'payment_date' => $record->payment_date,
+                        'petty_cash_record_id' => $record->id,
+                        'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
+                        'authorized' => true,
+                        'authorized_by' => $authorizedBy,
+                        'authorized_date' => date('Y-m-d'),
+                        'created_by' => $record->payment_created_by,
+                    ]);
 
-                $invoicePayment = $invoicePaymentsTable->newEntity([
-                    'invoice_id' => $invoice->id,
-                    'banking_entity_id' => $record->banking_entity_id,
-                    'amount' => $invoice->amount,
-                    'payment_date' => $record->payment_date,
-                    'petty_cash_record_id' => $record->id,
-                    'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
-                    'authorized' => true,
-                    'authorized_by' => $authorizedBy,
-                    'authorized_date' => date('Y-m-d'),
-                    'created_by' => $record->payment_created_by,
-                ]);
-
-                if (!$invoicePaymentsTable->save($invoicePayment)) {
-                    return false;
+                    if (!$invoicePaymentsTable->save($invoicePayment)) {
+                        return false;
+                    }
                 }
 
                 $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;

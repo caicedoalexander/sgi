@@ -47,6 +47,31 @@ class PettyCashRecordsController extends AppController
     }
 
     /**
+     * Build a human-readable error string from entity validation errors.
+     *
+     * @param string $prefix Base message shown to the user.
+     * @param array $errors getErrors() output ([field => [rule => msg]]).
+     * @return string
+     */
+    private function _formatRecordErrors(string $prefix, array $errors): string
+    {
+        $messages = [];
+        foreach ($errors as $fieldErrors) {
+            foreach ($fieldErrors as $msg) {
+                if (is_string($msg) && $msg !== '') {
+                    $messages[] = $msg;
+                }
+            }
+        }
+
+        if (empty($messages)) {
+            return $prefix . ' Intente de nuevo.';
+        }
+
+        return $prefix . ' ' . implode(' ', $messages);
+    }
+
+    /**
      * "Mis Registros" — filtra por los status visibles del rol.
      */
     public function index(): void
@@ -177,7 +202,10 @@ class PettyCashRecordsController extends AppController
                 return $this->redirect(['action' => 'edit', $record->id]);
             }
 
-            $this->Flash->error('No se pudo crear el registro. Intente de nuevo.');
+            $this->Flash->error($this->_formatRecordErrors(
+                'No se pudo crear el registro.',
+                $record->getErrors(),
+            ));
         }
 
         $groupFilters = $this->request->getQueryParams();
