@@ -33,6 +33,7 @@ final class PettyCashEditViewModel
         // Dropdowns / listados del formulario
         public readonly mixed $availableInvoices,
         public readonly mixed $operationCenters,
+        public readonly mixed $providers,
         public readonly mixed $bankingEntities,
         public readonly array $groupFilters,
     ) {

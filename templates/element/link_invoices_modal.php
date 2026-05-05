@@ -9,14 +9,16 @@
  * @var string $title                 Título del modal
  * @var string|null $helpText         Texto de ayuda opcional bajo el título
  * @var array|null $filterUrl         URL array para el form GET de filtros (opcional)
- * @var array|null $filters           Valores actuales de filtros (date_from, date_to, operation_center_id)
+ * @var array|null $filters           Valores actuales de filtros (date_from, date_to, operation_center_id, provider_id)
  * @var iterable|null $operationCenters  Lista [id => name] para filtro de centro op (opcional)
+ * @var iterable|null $providers       Lista [id => name] para filtro de proveedor (opcional)
  */
 $title       = $title       ?? 'Vincular Facturas';
 $helpText    = $helpText    ?? null;
 $filterUrl   = $filterUrl   ?? null;
 $filters     = $filters     ?? [];
 $operationCenters = $operationCenters ?? [];
+$providers   = $providers   ?? [];
 $filterFormId = $modalId . 'Filter';
 ?>
 <div class="modal fade" id="<?= h($modalId) ?>" tabindex="-1">
@@ -52,6 +54,17 @@ $filterFormId = $modalId . 'Filter';
                                 <option value="">Todos</option>
                                 <?php foreach ($operationCenters as $ocId => $ocName): ?>
                                 <option value="<?= (int)$ocId ?>" <?= ($filters['operation_center_id'] ?? '') == $ocId ? 'selected' : '' ?>><?= h($ocName) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <?php endif; ?>
+                        <?php if (!empty($providers)): ?>
+                        <div class="col-md-3">
+                            <label class="form-label mb-1" style="font-size:.7rem;color:#888;">Proveedor</label>
+                            <select form="<?= h($filterFormId) ?>" name="provider_id" class="form-select form-select-sm">
+                                <option value="">Todos</option>
+                                <?php foreach ($providers as $pId => $pName): ?>
+                                <option value="<?= (int)$pId ?>" <?= ($filters['provider_id'] ?? '') == $pId ? 'selected' : '' ?>><?= h($pName) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

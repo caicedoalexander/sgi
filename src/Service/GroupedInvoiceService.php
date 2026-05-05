@@ -168,9 +168,16 @@ class GroupedInvoiceService
     }
 
     /**
+     * Default lookback window when no date_from filter is provided.
+     * Cap aplicado para evitar cargar todo el histórico al alimentar el
+     * <select multiple> de facturas disponibles.
+     */
+    private const DEFAULT_LOOKBACK_DAYS = 90;
+
+    /**
      * Get available invoices for grouping.
      *
-     * @param array $filters Optional filters (date_from, date_to, operation_center_id).
+     * @param array $filters Optional filters (date_from, date_to, operation_center_id, provider_id).
      * @return \Cake\ORM\Query\SelectQuery
      */
     public function getAvailableInvoices(array $filters = []): SelectQuery
@@ -188,12 +195,19 @@ class GroupedInvoiceService
 
         if (!empty($filters['date_from'])) {
             $query->where(['Invoices.issue_date >=' => $filters['date_from']]);
+        } else {
+            // Sin date_from explícito, limitar al horizonte por defecto.
+            $defaultFrom = date('Y-m-d', strtotime('-' . self::DEFAULT_LOOKBACK_DAYS . ' days'));
+            $query->where(['Invoices.issue_date >=' => $defaultFrom]);
         }
         if (!empty($filters['date_to'])) {
             $query->where(['Invoices.issue_date <=' => $filters['date_to']]);
         }
         if (!empty($filters['operation_center_id'])) {
             $query->where(['Invoices.operation_center_id' => $filters['operation_center_id']]);
+        }
+        if (!empty($filters['provider_id'])) {
+            $query->where(['Invoices.provider_id' => $filters['provider_id']]);
         }
 
         return $query;

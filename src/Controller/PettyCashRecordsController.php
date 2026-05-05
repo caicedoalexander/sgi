@@ -213,7 +213,8 @@ class PettyCashRecordsController extends AppController
         $groupFilters = $this->request->getQueryParams();
         $availableInvoices = $this->pettyCashService->getAvailableInvoices($groupFilters)->all();
         $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
-        $this->set(compact('record', 'availableInvoices', 'operationCenters', 'groupFilters'));
+        $providers = $this->fetchTable('Providers')->find('list')->orderBy(['name' => 'ASC'])->toArray();
+        $this->set(compact('record', 'availableInvoices', 'operationCenters', 'providers', 'groupFilters'));
     }
 
     public function edit($id = null)
@@ -330,6 +331,7 @@ class PettyCashRecordsController extends AppController
             availableInvoices: $this->pettyCashService
                 ->getAvailableInvoices($this->request->getQueryParams())->all(),
             operationCenters: $this->fetchTable('OperationCenters')->find('codeList')->all(),
+            providers: $this->fetchTable('Providers')->find('list')->orderBy(['name' => 'ASC'])->toArray(),
             bankingEntities: $this->fetchTable('BankingEntities')->find('list')->toArray(),
             groupFilters: $this->request->getQueryParams(),
         );

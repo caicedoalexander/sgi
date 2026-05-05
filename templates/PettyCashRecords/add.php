@@ -28,12 +28,12 @@ $groupFilters = $groupFilters ?? [];
     <div class="card-body py-2 px-3">
         <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
         <div class="row g-2 align-items-end">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label mb-1" style="font-size:.75rem;">Fecha Emisión Desde</label>
                 <input type="text" name="date_from" class="form-control form-control-sm flatpickr-date"
                        value="<?= h($groupFilters['date_from'] ?? '') ?>">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="form-label mb-1" style="font-size:.75rem;">Fecha Emisión Hasta</label>
                 <input type="text" name="date_to" class="form-control form-control-sm flatpickr-date"
                        value="<?= h($groupFilters['date_to'] ?? '') ?>">
@@ -47,10 +47,23 @@ $groupFilters = $groupFilters ?? [];
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-3 d-flex gap-2">
+            <div class="col-md-3">
+                <label class="form-label mb-1" style="font-size:.75rem;">Proveedor</label>
+                <select name="provider_id" class="form-select form-select-sm select2-enable">
+                    <option value="">Todos</option>
+                    <?php foreach (($providers ?? []) as $id => $name): ?>
+                    <option value="<?= $id ?>" <?= ($groupFilters['provider_id'] ?? '') == $id ? 'selected' : '' ?>><?= h($name) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Buscar</button>
                 <?= $this->Html->link('Limpiar', ['action' => 'add'], ['class' => 'btn btn-sm btn-outline-secondary']) ?>
             </div>
+        </div>
+        <div class="mt-2" style="font-size:.7rem;color:#aaa;">
+            <i class="bi bi-info-circle"></i>
+            Por defecto se muestran facturas emitidas en los últimos 90 días. Use "Fecha Desde" para ampliar el rango.
         </div>
         <?= $this->Form->end() ?>
     </div>
@@ -99,7 +112,7 @@ $groupFilters = $groupFilters ?? [];
             <?php if (empty($availableInvoices) || count($availableInvoices) === 0): ?>
             <div class="alert alert-info">
                 <i class="bi bi-info-circle me-1"></i>
-                No hay facturas de tipo "Caja menor" disponibles<?= !empty($groupFilters['date_from']) || !empty($groupFilters['date_to']) || !empty($groupFilters['operation_center_id']) ? ' con los filtros seleccionados' : '' ?>.
+                No hay facturas de tipo "Caja menor" disponibles<?= !empty($groupFilters['date_from']) || !empty($groupFilters['date_to']) || !empty($groupFilters['operation_center_id']) || !empty($groupFilters['provider_id']) ? ' con los filtros seleccionados' : '' ?>.
             </div>
             <?php else: ?>
             <select name="invoice_ids[]" class="form-select select2-enable" multiple

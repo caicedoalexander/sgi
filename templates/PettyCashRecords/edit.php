@@ -447,10 +447,11 @@ $invoiceCount = count($record->invoices ?? []);
             'formUrl'    => ['action' => 'linkInvoices', $record->id],
             'candidates' => $availableInvoices,
             'title'      => 'Vincular facturas — Caja Menor',
-            'helpText'   => 'Filtre por fecha o centro de operación para acotar la lista.',
+            'helpText'   => 'Filtre por fecha, centro de operación o proveedor. Por defecto, últimos 90 días.',
             'filterUrl'  => ['action' => 'edit', $record->id],
             'filters'    => $groupFilters,
             'operationCenters' => $operationCenters,
+            'providers'  => $providers ?? [],
         ]) ?>
         <?php endif; ?>
     </div>
