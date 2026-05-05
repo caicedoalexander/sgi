@@ -12,6 +12,7 @@ use App\Model\Entity\PettyCashRecord;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
 use App\Service\PipelineAuthorizationService;
+use App\ViewModel\PettyCashAddViewModel;
 use App\ViewModel\PettyCashEditViewModel;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
@@ -210,11 +211,16 @@ class PettyCashRecordsController extends AppController
             ));
         }
 
-        $groupFilters = $this->request->getQueryParams();
-        $availableInvoices = $this->pettyCashService->getAvailableInvoices($groupFilters)->all();
-        $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
-        $providers = $this->fetchTable('Providers')->find('list')->orderBy(['name' => 'ASC'])->toArray();
-        $this->set(compact('record', 'availableInvoices', 'operationCenters', 'providers', 'groupFilters'));
+        $vm = new PettyCashAddViewModel(
+            record: $record,
+            availableInvoices: $this->pettyCashService
+                ->getAvailableInvoices($this->request->getQueryParams())->all(),
+            operationCenters: $this->fetchTable('OperationCenters')->find('codeList')->all(),
+            providers: $this->fetchTable('Providers')->find('list')->orderBy(['name' => 'ASC'])->toArray(),
+            groupFilters: $this->request->getQueryParams(),
+        );
+
+        $this->set(get_object_vars($vm));
     }
 
     public function edit($id = null)
