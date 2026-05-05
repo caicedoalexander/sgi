@@ -23,23 +23,23 @@ $groupFilters = $groupFilters ?? [];
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-funnel"></i>
-        <span style="font-size:.85rem;font-weight:600;">Filtrar facturas para agrupar</span>
+        <span class="fw-semibold" style="font-size:.85rem;">Filtrar facturas para agrupar</span>
     </div>
     <div class="card-body py-2 px-3">
         <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
         <div class="row g-2 align-items-end">
             <div class="col-md-2">
-                <label class="form-label mb-1" style="font-size:.75rem;">Fecha Emisión Desde</label>
+                <label class="form-label mb-1 sgi-filter-label">Fecha Emisión Desde</label>
                 <input type="text" name="date_from" class="form-control form-control-sm flatpickr-date"
                        value="<?= h($groupFilters['date_from'] ?? '') ?>">
             </div>
             <div class="col-md-2">
-                <label class="form-label mb-1" style="font-size:.75rem;">Fecha Emisión Hasta</label>
+                <label class="form-label mb-1 sgi-filter-label">Fecha Emisión Hasta</label>
                 <input type="text" name="date_to" class="form-control form-control-sm flatpickr-date"
                        value="<?= h($groupFilters['date_to'] ?? '') ?>">
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1" style="font-size:.75rem;">Centro de Operación</label>
+                <label class="form-label mb-1 sgi-filter-label">Centro de Operación</label>
                 <select name="operation_center_id" class="form-select form-select-sm">
                     <option value="">Todos</option>
                     <?php foreach ($operationCenters as $id => $name): ?>
@@ -48,7 +48,7 @@ $groupFilters = $groupFilters ?? [];
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1" style="font-size:.75rem;">Proveedor</label>
+                <label class="form-label mb-1 sgi-filter-label">Proveedor</label>
                 <select name="provider_id" class="form-select form-select-sm select2-enable">
                     <option value="">Todos</option>
                     <?php foreach (($providers ?? []) as $id => $name): ?>
@@ -61,7 +61,7 @@ $groupFilters = $groupFilters ?? [];
                 <?= $this->Html->link('Limpiar', ['action' => 'add'], ['class' => 'btn btn-sm btn-outline-secondary']) ?>
             </div>
         </div>
-        <div class="mt-2" style="font-size:.7rem;color:#aaa;">
+        <div class="mt-2 sgi-hint">
             <i class="bi bi-info-circle"></i>
             Por defecto se muestran facturas emitidas en los últimos 90 días. Use "Fecha Desde" para ampliar el rango.
         </div>
@@ -71,13 +71,12 @@ $groupFilters = $groupFilters ?? [];
 
 <div class="card card-primary">
     <div class="card-header d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
+        <div class="sgi-icon-chip">
             <i class="bi bi-wallet2"></i>
         </div>
         <div>
-            <div style="font-size:.95rem;font-weight:700;color:#111;">Crear Registro</div>
-            <div style="font-size:.72rem;color:#aaa;">El código se autogenera</div>
+            <div class="sgi-card-title">Crear Registro</div>
+            <div class="sgi-card-subtitle">El código se autogenera</div>
         </div>
     </div>
     <div class="card-body p-4">
@@ -101,11 +100,10 @@ $groupFilters = $groupFilters ?? [];
 
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                <span class="sgi-micro-caps flex-shrink-0">
                     <i class="bi bi-receipt me-1"></i>Facturas Disponibles
                 </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+                <div class="sgi-flex-divider"></div>
                 <span class="sgi-folder-count"><?= count($availableInvoices) ?></span>
             </div>
 

@@ -134,15 +134,12 @@ $invoiceCount = count($record->invoices ?? []);
     <!-- Header -->
     <div class="card-header d-flex align-items-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
+            <div class="sgi-icon-chip">
                 <i class="bi bi-wallet2"></i>
             </div>
             <div>
-                <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
-                    <?= h($record->code) ?>
-                </div>
-                <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+                <div class="sgi-card-title mono"><?= h($record->code) ?></div>
+                <div class="sgi-card-subtitle mt-1">
                     Total: <strong style="color:var(--primary-color);">$ <?= $this->Number->format($record->total_amount, ['places' => 2]) ?></strong>
                 </div>
             </div>
@@ -235,11 +232,10 @@ $invoiceCount = count($record->invoices ?? []);
         <!-- Facturas agrupadas -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                <span class="sgi-micro-caps flex-shrink-0">
                     <i class="bi bi-receipt me-1"></i>Facturas Agrupadas
                 </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+                <div class="sgi-flex-divider"></div>
                 <span class="sgi-folder-count"><?= $invoiceCount ?></span>
             </div>
 
@@ -316,11 +312,10 @@ $invoiceCount = count($record->invoices ?? []);
         <!-- ── Sección: Contabilidad ── -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                <span class="sgi-micro-caps flex-shrink-0">
                     <i class="bi bi-calculator me-1"></i>Contabilidad
                 </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+                <div class="sgi-flex-divider"></div>
             </div>
             <div class="row g-3">
                 <div class="col-md-4">

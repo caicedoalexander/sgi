@@ -3210,3 +3210,67 @@ input.currency-input:focus {
     font-size: .72rem;
     line-height: 1;
 }
+
+/* =============================================
+   Utilidades transversales (extraídas de inline)
+   ============================================= */
+
+/* Etiqueta micro-caps usada como divisor de sección dentro de cards */
+.sgi-micro-caps {
+    font-size: .58rem;
+    letter-spacing: .14em;
+    color: #bbb;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Línea horizontal flexible que crece para llenar el espacio sobrante en
+   un contenedor flex (ej. junto a una etiqueta de sección). */
+.sgi-flex-divider {
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+/* Chip cuadrado 36x36 con ícono — header de cards de detalle */
+.sgi-icon-chip {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--primary-color);
+    color: #fff;
+    font-size: .9rem;
+}
+.sgi-icon-chip.accent-secondary { background: var(--secondary-color); }
+.sgi-icon-chip.accent-dark { background: var(--bg-dark); }
+
+/* Título compacto de card (junto a sgi-icon-chip) */
+.sgi-card-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: -.01em;
+}
+.sgi-card-title.mono {
+    font-family: monospace;
+}
+.sgi-card-subtitle {
+    font-size: .72rem;
+    color: #aaa;
+}
+
+/* Hint discreto bajo formularios o filtros */
+.sgi-hint {
+    font-size: .7rem;
+    color: #aaa;
+}
+
+/* Pequeña etiqueta de filtro (encima de inputs sm) */
+.sgi-filter-label {
+    font-size: .75rem;
+    margin-bottom: .25rem;
+}
+
