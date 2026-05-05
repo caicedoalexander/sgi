@@ -486,20 +486,18 @@ class InvoicesController extends AppController
         }
 
         if ($userId > 0) {
-            $subquery = '(
+            $uid = (int)$userId;
+            $subquery = "(
                 SELECT COUNT(*)
                 FROM invoice_observations io
                 LEFT JOIN invoice_reads ir
-                    ON ir.invoice_id = io.invoice_id AND ir.user_id = :uidJoin
+                    ON ir.invoice_id = io.invoice_id AND ir.user_id = {$uid}
                 WHERE io.invoice_id = Invoices.id
-                  AND io.user_id != :uidWhere
+                  AND io.user_id != {$uid}
                   AND (ir.last_visited_at IS NULL OR io.created > ir.last_visited_at)
-            )';
+            )";
 
-            $query
-                ->selectAlso(['unread_observations' => $subquery])
-                ->bind(':uidJoin', $userId, 'integer')
-                ->bind(':uidWhere', $userId, 'integer');
+            $query->selectAlso(['unread_observations' => $subquery]);
         }
 
         $this->filterService->apply($query, $this->request->getQueryParams());
