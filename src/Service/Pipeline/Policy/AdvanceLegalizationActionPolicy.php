@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Policy;
 
-use App\Constants\AdvanceConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\AdvanceLegalization;
 
@@ -18,122 +17,80 @@ use App\Model\Entity\AdvanceLegalization;
  *   registerShortage, registerSurplus.
  * - Tesorería/Admin: confirmShortage, registerRefund.
  *
- * Each predicate combines role membership with the legalization status that
- * the action expects. The service layer still enforces state guards on its
- * own; this policy is the gatekeeper for HTTP entry points.
+ * Audit MA-010 — la regla de **estado** vive en los predicates `canXxx()` de
+ * `AdvanceLegalization`. Este policy compone solo la dimensión de **rol**:
+ * delega el chequeo de estado a la entidad, evitando duplicación de la
+ * matriz de transiciones.
  */
 final class AdvanceLegalizationActionPolicy
 {
-    /**
-     * Contabilidad/Admin can bulk-link invoices while the leg is in Validación.
-     */
+    /** Contabilidad/Admin puede vincular facturas (estado-only delegado a la entidad). */
     public function canLinkInvoices(AdvanceLegalization $leg, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName)
-            && $leg->status === AdvanceConstants::STATUS_VALIDACION;
+        return $this->_isAccountingOrAdmin($roleName) && $leg->canLinkInvoices();
     }
 
-    /**
-     * Contabilidad/Admin can detach a linked invoice while the leg is in Validación.
-     */
+    /** Contabilidad/Admin puede desvincular una factura. */
     public function canUnlinkInvoice(AdvanceLegalization $leg, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName)
-            && $leg->status === AdvanceConstants::STATUS_VALIDACION;
+        return $this->_isAccountingOrAdmin($roleName) && $leg->canUnlinkInvoice();
     }
 
-    /**
-     * Contabilidad/Admin can upload the relation-of-invoices PDF in Validación
-     * or Revisión y Firmas (re-upload after signature rejection).
-     */
+    /** Contabilidad/Admin puede (re)subir la relación de facturas en Validación o Revisión. */
     public function canUploadRelationDocument(AdvanceLegalization $leg, string $roleName): bool
     {
-        $allowedStatuses = [
-            AdvanceConstants::STATUS_VALIDACION,
-            AdvanceConstants::STATUS_REVISION_FIRMAS,
-        ];
-
-        return $this->_isAccountingOrAdmin($roleName)
-            && in_array($leg->status, $allowedStatuses, true);
+        return $this->_isAccountingOrAdmin($roleName) && $leg->canUploadRelationDocument();
     }
 
-    /**
-     * Contabilidad/Admin can advance from Validación to Revisión y Firmas.
-     */
+    /** Contabilidad/Admin puede avanzar a Revisión y Firmas. */
     public function canMoveToRevision(AdvanceLegalization $leg, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName)
-            && $leg->status === AdvanceConstants::STATUS_VALIDACION;
+        return $this->_isAccountingOrAdmin($roleName) && $leg->canMoveToRevision();
     }
 
-    /**
-     * Contabilidad/Admin can mark the relation document as signed in Revisión y Firmas.
-     */
+    /** Contabilidad/Admin puede marcar la firma como completa. */
     public function canMarkSigned(AdvanceLegalization $leg, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName)
-            && $leg->status === AdvanceConstants::STATUS_REVISION_FIRMAS;
+        return $this->_isAccountingOrAdmin($roleName) && $leg->canMarkSigned();
     }
 
-    /**
-     * Contabilidad/Admin can reject the signature and bounce back to Validación.
-     */
+    /** Contabilidad/Admin puede devolver a Validación con motivo. */
     public function canReturnToValidacion(AdvanceLegalization $leg, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName)
-            && $leg->status === AdvanceConstants::STATUS_REVISION_FIRMAS;
+        return $this->_isAccountingOrAdmin($roleName) && $leg->canReturnToValidacion();
     }
 
-    /**
-     * Contabilidad/Admin can close as caso exacto in Contabilidad.
-     */
+    /** Contabilidad/Admin puede declarar caso exacto. */
     public function canMarkExact(AdvanceLegalization $leg, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName)
-            && $leg->status === AdvanceConstants::STATUS_CONTABILIDAD;
+        return $this->_isAccountingOrAdmin($roleName) && $leg->canMarkExact();
     }
 
-    /**
-     * Contabilidad/Admin can declare a shortage in Contabilidad.
-     */
+    /** Contabilidad/Admin puede declarar faltante. */
     public function canRegisterShortage(AdvanceLegalization $leg, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName)
-            && $leg->status === AdvanceConstants::STATUS_CONTABILIDAD;
+        return $this->_isAccountingOrAdmin($roleName) && $leg->canRegisterShortage();
     }
 
-    /**
-     * Contabilidad/Admin can declare a surplus in Contabilidad.
-     */
+    /** Contabilidad/Admin puede declarar sobrante. */
     public function canRegisterSurplus(AdvanceLegalization $leg, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName)
-            && $leg->status === AdvanceConstants::STATUS_CONTABILIDAD;
+        return $this->_isAccountingOrAdmin($roleName) && $leg->canRegisterSurplus();
     }
 
-    /**
-     * Tesorería/Admin can confirm the beneficiary's shortage deposit in Tesorería.
-     */
+    /** Tesorería/Admin puede confirmar consignación de faltante. */
     public function canConfirmShortage(AdvanceLegalization $leg, string $roleName): bool
     {
-        return $this->_isTreasuryOrAdmin($roleName)
-            && $leg->status === AdvanceConstants::STATUS_TESORERIA
-            && $leg->case_type === AdvanceConstants::CASE_FALTANTE;
+        return $this->_isTreasuryOrAdmin($roleName) && $leg->canConfirmShortage();
     }
 
-    /**
-     * Tesorería/Admin can register the refund payment to the beneficiary in Tesorería.
-     */
+    /** Tesorería/Admin puede registrar el pago de reintegro al beneficiario. */
     public function canRegisterRefund(AdvanceLegalization $leg, string $roleName): bool
     {
-        return $this->_isTreasuryOrAdmin($roleName)
-            && $leg->status === AdvanceConstants::STATUS_TESORERIA
-            && $leg->case_type === AdvanceConstants::CASE_SOBRANTE;
+        return $this->_isTreasuryOrAdmin($roleName) && $leg->canRegisterRefund();
     }
 
-    /**
-     * Whether the role is Contabilidad or Administrador.
-     */
+    /** @return bool true si el rol es Contabilidad o Administrador. */
     private function _isAccountingOrAdmin(string $roleName): bool
     {
         return in_array(
@@ -143,9 +100,7 @@ final class AdvanceLegalizationActionPolicy
         );
     }
 
-    /**
-     * Whether the role is Tesorería or Administrador.
-     */
+    /** @return bool true si el rol es Tesorería o Administrador. */
     private function _isTreasuryOrAdmin(string $roleName): bool
     {
         return in_array(

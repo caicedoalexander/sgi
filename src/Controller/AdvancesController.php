@@ -364,6 +364,81 @@ class AdvancesController extends AppController
     }
 
     /**
+     * AJAX endpoint que devuelve el fragment HTML del modal "Vincular facturas".
+     *
+     * Audit SU-003 — el modal precargaba todas las facturas Legalización del OC en
+     * cada render de `legalization()`. Ahora la query corre solo cuando se abre el
+     * modal (o se aplica un filtro). Acepta filtros vía query string: date_from,
+     * date_to, provider_id, operation_center_id (default: OC del anticipo).
+     */
+    public function linkCandidates(?int $id = null): ?Response
+    {
+        $this->request->allowMethod(['get']);
+        $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canLinkInvoices($leg, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
+
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $advance = $invoicesTable->get($leg->advance_invoice_id, [
+            'fields' => ['id', 'operation_center_id'],
+        ]);
+
+        $filters = [
+            'date_from' => $this->request->getQuery('date_from') ?: '',
+            'date_to' => $this->request->getQuery('date_to') ?: '',
+            'provider_id' => $this->request->getQuery('provider_id') ?: '',
+            'operation_center_id' => $this->request->getQuery('operation_center_id')
+                ?: ($advance->operation_center_id ?? ''),
+        ];
+
+        $conditions = [
+            'Invoices.document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+            'Invoices.advance_id IS' => null,
+        ];
+        if (!empty($filters['operation_center_id'])) {
+            $conditions['Invoices.operation_center_id'] = (int)$filters['operation_center_id'];
+        }
+        if (!empty($filters['date_from'])) {
+            $conditions['Invoices.issue_date >='] = $filters['date_from'];
+        }
+        if (!empty($filters['date_to'])) {
+            $conditions['Invoices.issue_date <='] = $filters['date_to'];
+        }
+        if (!empty($filters['provider_id'])) {
+            $conditions['Invoices.provider_id'] = (int)$filters['provider_id'];
+        }
+
+        // Límite duro como red de seguridad — si el set crece, se añade paginación
+        // sin romper la API. 200 cubre el caso operativo realista por OC.
+        $candidates = $invoicesTable->find()
+            ->where($conditions)
+            ->contain(['Providers', 'Employees', 'OperationCenters'])
+            ->order(['Invoices.issue_date' => 'DESC'])
+            ->limit(200)
+            ->all();
+
+        $providers = TableRegistry::getTableLocator()->get('Providers')
+            ->find('list', keyField: 'id', valueField: 'name')
+            ->where(['active' => true])
+            ->order(['name' => 'ASC'])
+            ->toArray();
+        $operationCenters = TableRegistry::getTableLocator()->get('OperationCenters')
+            ->find('list', keyField: 'id', valueField: 'name')
+            ->order(['name' => 'ASC'])
+            ->toArray();
+
+        $this->set(compact('leg', 'candidates', 'filters', 'providers', 'operationCenters'));
+        $this->viewBuilder()->disableAutoLayout();
+
+        return null;
+    }
+
+    /**
      * Bulk-link Legalización invoices to this advance (POST).
      */
     public function linkInvoices(?int $id = null): Response

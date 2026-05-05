@@ -648,7 +648,27 @@ $docIconColor = fn(?string $mime): string => match (true) {
 </div><!-- /layout -->
 
 <?php if ($leg && $leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
-<?= $this->element('advance_link_modal', ['leg' => $leg]) ?>
+<?php
+// Shell del modal — el contenido se carga vía AJAX al abrir (audit SU-003).
+// El JS global en sgi-common.js intercepta `show.bs.modal` cuando el modal
+// declara data-load-url, hace fetch del fragment y reemplaza .modal-content.
+$linkCandidatesUrl = $this->Url->build([
+    'controller' => 'Advances',
+    'action' => 'linkCandidates',
+    $leg->advance_invoice_id,
+]);
+?>
+<div class="modal fade" id="advanceLinkModal" tabindex="-1"
+     data-load-url="<?= h($linkCandidatesUrl) ?>">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5 text-muted modal-loading-state">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                Cargando facturas disponibles...
+            </div>
+        </div>
+    </div>
+</div>
 <?php endif; ?>
 
 <?= $this->element('observation_chat_init') ?>

@@ -494,6 +494,11 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
+            '/advances/link-candidates/{id}',
+            ['controller' => 'Advances', 'action' => 'linkCandidates'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
             '/advances/unlink-invoice/{id}/{invoiceId}',
             ['controller' => 'Advances', 'action' => 'unlinkInvoice'],
             ['id' => '\d+', 'invoiceId' => '\d+', 'pass' => ['id', 'invoiceId']],

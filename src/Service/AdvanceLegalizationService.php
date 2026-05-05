@@ -8,6 +8,7 @@ use App\Constants\InvoiceConstants;
 use App\Event\AdvanceLegalizedEvent;
 use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
+use App\Service\Pipeline\Advance\AdvanceLegalizationPipelineStateRegistry;
 use App\Service\Trait\DocumentUploadTrait;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
@@ -20,10 +21,14 @@ class AdvanceLegalizationService
 {
     use DocumentUploadTrait;
 
+    private AdvanceLegalizationPipelineStateRegistry $stateRegistry;
+
     public function __construct(
         private readonly EventManagerInterface $events,
         private readonly AdvanceLegalizationHistoryService $historyService,
+        ?AdvanceLegalizationPipelineStateRegistry $stateRegistry = null,
     ) {
+        $this->stateRegistry = $stateRegistry ?? new AdvanceLegalizationPipelineStateRegistry();
     }
 
     /**
@@ -84,7 +89,7 @@ class AdvanceLegalizationService
      */
     public function linkInvoices(AdvanceLegalization $leg, array $invoiceIds, int $userId): ServiceResult
     {
-        if ($leg->status !== AdvanceConstants::STATUS_VALIDACION) {
+        if (!$leg->canLinkInvoices()) {
             return ServiceResult::fail('Solo se pueden vincular facturas en estado Validación.');
         }
         if (empty($invoiceIds)) {
@@ -129,7 +134,7 @@ class AdvanceLegalizationService
      */
     public function unlinkInvoice(AdvanceLegalization $leg, int $invoiceId, int $userId): ServiceResult
     {
-        if ($leg->status !== AdvanceConstants::STATUS_VALIDACION) {
+        if (!$leg->canUnlinkInvoice()) {
             return ServiceResult::fail('Solo se pueden desvincular facturas en estado Validación.');
         }
 
@@ -176,8 +181,7 @@ class AdvanceLegalizationService
      */
     public function attachRelationDocument(AdvanceLegalization $leg, UploadedFile $file, int $userId): ServiceResult
     {
-        $allowed = [AdvanceConstants::STATUS_VALIDACION, AdvanceConstants::STATUS_REVISION_FIRMAS];
-        if (!in_array($leg->status, $allowed, true)) {
+        if (!$leg->canUploadRelationDocument()) {
             return ServiceResult::fail('Solo se puede subir el documento en Validación o Revisión y Firmas.');
         }
 
@@ -253,42 +257,15 @@ class AdvanceLegalizationService
      */
     public function moveToRevisionFirmas(AdvanceLegalization $leg, int $userId): ServiceResult
     {
-        if ($leg->status !== AdvanceConstants::STATUS_VALIDACION) {
+        if (!$leg->canMoveToRevision()) {
             return ServiceResult::fail('La legalización no está en Validación.');
         }
 
-        $invoices = TableRegistry::getTableLocator()->get('Invoices');
-        $linked = $invoices->find()
-            ->where([
-                'advance_id' => $leg->advance_invoice_id,
-                'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
-            ])
-            ->all();
-
-        if ($linked->isEmpty()) {
-            return ServiceResult::fail('Vincule al menos una factura antes de avanzar.');
-        }
-
-        // Restringido a CONTABILIDAD: LinkedInvoiceLegalizer solo promueve desde
-        // este estado al cierre de la legalización. Aceptar PAGADA aquí permitiría
-        // facturas vinculadas en estado terminal que nunca se promoverían a
-        // LEGALIZADA, dejando inconsistencia silenciosa (audit MA-006).
-        foreach ($linked as $li) {
-            if ($li->pipeline_status !== InvoiceConstants::STATUS_CONTABILIDAD) {
-                return ServiceResult::fail(
-                    'Todas las facturas vinculadas deben estar en Contabilidad. '
-                    . 'Falta: factura ' . ($li->invoice_number ?: '#' . $li->id),
-                );
-            }
-        }
-
-        $sigTable = TableRegistry::getTableLocator()->get('AdvanceLegalizationSignatures');
-        $hasDoc = $sigTable->exists([
-            'legalization_id' => $leg->id,
-            'signature_status' => AdvanceConstants::SIGNATURE_PENDING,
-        ]);
-        if (!$hasDoc) {
-            return ServiceResult::fail('Debe adjuntar la relación de facturas (PDF).');
+        // Los requirements (≥1 factura vinculada, todas en CONTABILIDAD, doc PDF)
+        // viven en ValidacionState::validateAdvance — audit MA-010 / SU-001.
+        $errors = $this->stateRegistry->get($leg->status)->validateAdvance($leg);
+        if (!empty($errors)) {
+            return ServiceResult::fail($errors[0]);
         }
 
         return $this->_setStatus($leg, AdvanceConstants::STATUS_REVISION_FIRMAS, $userId);
@@ -299,7 +276,7 @@ class AdvanceLegalizationService
      */
     public function markSigned(AdvanceLegalization $leg, int $userId): ServiceResult
     {
-        if ($leg->status !== AdvanceConstants::STATUS_REVISION_FIRMAS) {
+        if (!$leg->canMarkSigned()) {
             return ServiceResult::fail('La legalización no está en Revisión y Firmas.');
         }
 
@@ -348,7 +325,7 @@ class AdvanceLegalizationService
      */
     public function returnToValidacion(AdvanceLegalization $leg, string $reason, int $userId): ServiceResult
     {
-        if ($leg->status !== AdvanceConstants::STATUS_REVISION_FIRMAS) {
+        if (!$leg->canReturnToValidacion()) {
             return ServiceResult::fail('La legalización no está en Revisión y Firmas.');
         }
         if (trim($reason) === '') {
@@ -439,8 +416,8 @@ class AdvanceLegalizationService
      */
     public function markExact(AdvanceLegalization $leg, int $userId): ServiceResult
     {
-        if ($leg->status !== AdvanceConstants::STATUS_CONTABILIDAD) {
-            return ServiceResult::fail('La legalización no está en Contabilidad.');
+        if (!$leg->canMarkExact()) {
+            return ServiceResult::fail('La legalización no permite marcarse como exacta.');
         }
 
         if (abs($this->getDifference($leg)) > 0.005) {
@@ -461,12 +438,9 @@ class AdvanceLegalizationService
      */
     public function registerShortage(AdvanceLegalization $leg, float $amount, int $userId): ServiceResult
     {
-        if ($leg->status !== AdvanceConstants::STATUS_CONTABILIDAD) {
-            return ServiceResult::fail('La legalización no está en Contabilidad.');
-        }
-        // Guard contra doble registro de caso por requests concurrentes (audit MA-005).
-        if ($leg->case_type !== null) {
-            return ServiceResult::fail('Ya se declaró un caso para esta legalización.');
+        // canRegisterShortage cubre status=contabilidad + case_type=null (MA-005).
+        if (!$leg->canRegisterShortage()) {
+            return ServiceResult::fail('La legalización no permite declarar un faltante.');
         }
         if ($amount <= 0) {
             return ServiceResult::fail('El monto del faltante debe ser mayor a cero.');
@@ -493,9 +467,7 @@ class AdvanceLegalizationService
      */
     public function confirmShortageReceipt(AdvanceLegalization $leg, array $data, int $userId): ServiceResult
     {
-        $isWaiting = $leg->status === AdvanceConstants::STATUS_TESORERIA
-            && $leg->case_type === AdvanceConstants::CASE_FALTANTE;
-        if (!$isWaiting) {
+        if (!$leg->canConfirmShortage()) {
             return ServiceResult::fail('La legalización no está esperando consignación de faltante.');
         }
         $number = trim((string)($data['receipt_number'] ?? ''));
@@ -533,12 +505,9 @@ class AdvanceLegalizationService
      */
     public function registerSurplus(AdvanceLegalization $leg, float $amount, int $userId): ServiceResult
     {
-        if ($leg->status !== AdvanceConstants::STATUS_CONTABILIDAD) {
-            return ServiceResult::fail('La legalización no está en Contabilidad.');
-        }
-        // Guard contra doble registro de caso por requests concurrentes (audit MA-005).
-        if ($leg->case_type !== null) {
-            return ServiceResult::fail('Ya se declaró un caso para esta legalización.');
+        // canRegisterSurplus cubre status=contabilidad + case_type=null (MA-005).
+        if (!$leg->canRegisterSurplus()) {
+            return ServiceResult::fail('La legalización no permite declarar un sobrante.');
         }
         if ($amount <= 0) {
             return ServiceResult::fail('El monto del sobrante debe ser mayor a cero.');
@@ -565,13 +534,9 @@ class AdvanceLegalizationService
      */
     public function registerRefundPayment(AdvanceLegalization $leg, array $data, int $userId): ServiceResult
     {
-        $isWaiting = $leg->status === AdvanceConstants::STATUS_TESORERIA
-            && $leg->case_type === AdvanceConstants::CASE_SOBRANTE;
-        if (!$isWaiting) {
-            return ServiceResult::fail('La legalización no está esperando reintegro.');
-        }
-        if (!empty($leg->surplus_payment_id)) {
-            return ServiceResult::fail('Ya existe un pago de reintegro registrado.');
+        // canRegisterRefund cubre status=tesoreria + case_type=sobrante + sin pago previo.
+        if (!$leg->canRegisterRefund()) {
+            return ServiceResult::fail('La legalización no permite registrar reintegro.');
         }
         if ($leg->surplus_amount === null) {
             return ServiceResult::fail('Monto del sobrante no definido.');

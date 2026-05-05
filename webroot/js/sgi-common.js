@@ -1,5 +1,5 @@
 /**
- * SGI Common JS - Flatpickr + AutoNumeric + Row click
+ * SGI Common JS - Flatpickr + AutoNumeric + Row click + Modal AJAX loader
  */
 
 window.SGI_MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
@@ -28,13 +28,20 @@ document.addEventListener('submit', function (e) {
     }
 }, true);
 
-document.addEventListener('DOMContentLoaded', function () {
+/**
+ * Inicializa Flatpickr/AutoNumeric/Select2 dentro de un sub-árbol del DOM.
+ * Llamado en DOMContentLoaded (root=document) y tras inyectar HTML por AJAX
+ * en un modal (audit SU-003).
+ */
+window.sgiInit = function (root) {
+    root = root || document;
 
-    // ── Flatpickr para inputs de fecha ──────────────────────────────────────
     if (typeof flatpickr !== 'undefined') {
-        flatpickr.localize(flatpickr.l10ns.es);
-
-        document.querySelectorAll('input.flatpickr-date').forEach(function (el) {
+        if (flatpickr.l10ns && flatpickr.l10ns.es) {
+            flatpickr.localize(flatpickr.l10ns.es);
+        }
+        root.querySelectorAll('input.flatpickr-date').forEach(function (el) {
+            if (el._flatpickr) return; // evita doble init
             flatpickr(el, {
                 dateFormat: 'Y-m-d',
                 altInput: true,
@@ -45,6 +52,38 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
+
+    if (typeof AutoNumeric !== 'undefined') {
+        root.querySelectorAll('input.currency-input').forEach(function (el) {
+            if (AutoNumeric.getAutoNumericElement && AutoNumeric.getAutoNumericElement(el)) return;
+            new AutoNumeric(el, {
+                digitGroupSeparator: '.',
+                decimalCharacter: ',',
+                currencySymbol: '$ ',
+                currencySymbolPlacement: 'p',
+                decimalPlaces: 0,
+                unformatOnSubmit: true,
+                modifyValueOnUpDownArrow: false,
+            });
+        });
+    }
+
+    if (typeof $ !== 'undefined' && $.fn && $.fn.select2) {
+        $(root).find('select.select2-enable').each(function () {
+            if ($(this).hasClass('select2-hidden-accessible')) return;
+            var $modal = $(this).closest('.modal');
+            $(this).select2({
+                width: '100%',
+                language: 'es',
+                minimumResultsForSearch: 7,
+                dropdownParent: $modal.length ? $modal : $(document.body),
+            });
+        });
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function () {
+    window.sgiInit(document);
 
     // ── Tooltips Bootstrap en botones deshabilitados con title ──
     if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
@@ -59,21 +98,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── AutoNumeric para campo de monto COP ─────────────────────────────────
-    if (typeof AutoNumeric !== 'undefined') {
-        document.querySelectorAll('input.currency-input').forEach(function (el) {
-            new AutoNumeric(el, {
-                digitGroupSeparator: '.',
-                decimalCharacter: ',',
-                currencySymbol: '$ ',
-                currencySymbolPlacement: 'p',
-                decimalPlaces: 0,
-                unformatOnSubmit: true,
-                modifyValueOnUpDownArrow: false,
-            });
-        });
-    }
-
     // ── Sidebar: mantener --sidebar-width sincronizado con el ancho real ──────
     (function () {
         var sidebar = document.querySelector('.sidebar');
@@ -81,11 +105,9 @@ document.addEventListener('DOMContentLoaded', function () {
         function syncWidth() {
             document.documentElement.style.setProperty('--sidebar-width', sidebar.offsetWidth + 'px');
         }
-        // Actualizar cuando carguen fuentes (Bootstrap Icons, Inter)
         if (document.fonts && document.fonts.ready) {
             document.fonts.ready.then(syncWidth);
         }
-        // Actualizar si el sidebar cambia de tamaño por cualquier razón
         if (typeof ResizeObserver !== 'undefined') {
             new ResizeObserver(syncWidth).observe(sidebar);
         }
@@ -101,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var stored = localStorage.getItem(storageKey);
         var serverShow = collapseEl.classList.contains('show');
 
-        // Aplicar preferencia guardada sin animación (antes del primer render)
         if (!serverShow && stored === 'show') {
             collapseEl.classList.add('show');
             btn.setAttribute('aria-expanded', 'true');
@@ -127,19 +148,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 4000);
     });
 
-    // ── Select2 solo para selects con clase .select2-enable ──────────────────
-    if (typeof $ !== 'undefined' && $.fn && $.fn.select2) {
-        $('select.select2-enable').each(function () {
-            var $modal = $(this).closest('.modal');
-            $(this).select2({
-                width: '100%',
-                language: 'es',
-                minimumResultsForSearch: 7,
-                dropdownParent: $modal.length ? $modal : $(document.body),
-            });
-        });
-    }
-
     // ── Click en fila/card para navegar ─────────────────────────────────────
     document.querySelectorAll('.clickable-row').forEach(function (el) {
         el.style.cursor = 'pointer';
@@ -150,4 +158,59 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // ── Modal AJAX loader (audit SU-003) ─────────────────────────────────────
+    // Cualquier modal con data-load-url carga su .modal-content vía fetch al
+    // momento de abrirse. Evita cargas de queries pesadas en el render del
+    // template host. Filtros internos (forms con data-modal-filter-form) se
+    // interceptan para refrescar solo el cuerpo del modal sin recargar página.
+    document.addEventListener('show.bs.modal', function (ev) {
+        var modal = ev.target;
+        var url = modal.dataset.loadUrl;
+        if (!url) return;
+        // Solo cargar la primera vez. Si ya tiene contenido, dejarlo.
+        if (modal.dataset.loaded === '1') return;
+        var content = modal.querySelector('.modal-content');
+        if (!content) return;
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.text();
+            })
+            .then(function (html) {
+                content.innerHTML = html;
+                modal.dataset.loaded = '1';
+                window.sgiInit(content);
+            })
+            .catch(function (err) {
+                content.innerHTML = '<div class="modal-body text-danger text-center py-4">' +
+                    '<i class="bi bi-exclamation-triangle me-1"></i>No se pudo cargar el contenido. ' +
+                    'Cierra y vuelve a abrir el modal.</div>';
+                console.error('Modal AJAX load failed:', err);
+            });
+    });
+
+    // Reset del flag al cerrar para forzar recarga la próxima vez (datos frescos).
+    document.addEventListener('hidden.bs.modal', function (ev) {
+        if (ev.target.dataset.loadUrl) {
+            ev.target.dataset.loaded = '';
+        }
+    });
+
+    // Submit del form de filtros dentro del modal: fetch + reemplazo del cuerpo.
+    document.addEventListener('submit', function (ev) {
+        var form = ev.target;
+        if (!form.matches('[data-modal-filter-form]')) return;
+        var modal = form.closest('.modal');
+        if (!modal) return;
+        ev.preventDefault();
+        var content = modal.querySelector('.modal-content');
+        if (!content) return;
+        var url = form.action + '?' + new URLSearchParams(new FormData(form));
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (res) { return res.text(); })
+            .then(function (html) {
+                content.innerHTML = html;
+                window.sgiInit(content);
+            });
+    });
 });
