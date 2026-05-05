@@ -253,10 +253,21 @@ class PettyCashRecordsController extends AppController
 
             // Try to advance automatically (save + advance unified)
             $user = $this->_getCurrentUser();
-            $canAdvance = !$record->isPagado() && (PettyCashConstants::TRANSITIONS[$record->status] ?? null) !== null;
+            $roleName = $this->_getUserRoleName($user);
+            $canAdvance = !$record->isPagado()
+                && $this->pettyCashService->canAdvance(
+                    (int)$user->role_id,
+                    $roleName,
+                    $record->status,
+                );
             $advanced = false;
             if ($canAdvance) {
-                $result = $this->pettyCashService->advanceStatus($record, $user->id);
+                $result = $this->pettyCashService->advanceStatus(
+                    $record,
+                    (int)$user->role_id,
+                    $roleName,
+                    $user->id,
+                );
                 if ($result['success']) {
                     $advanced = true;
                     $nextLabel = PettyCashConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
@@ -366,8 +377,14 @@ class PettyCashRecordsController extends AppController
         }
 
         $user = $this->_getCurrentUser();
+        $roleName = $this->_getUserRoleName($user);
 
-        $result = $this->pettyCashService->advanceStatus($record, $user->id);
+        $result = $this->pettyCashService->advanceStatus(
+            $record,
+            (int)$user->role_id,
+            $roleName,
+            $user->id,
+        );
 
         if ($result['success']) {
             $nextLabel = PettyCashConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];

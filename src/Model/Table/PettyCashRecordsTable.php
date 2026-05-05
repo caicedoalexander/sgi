@@ -104,6 +104,7 @@ class PettyCashRecordsTable extends Table
 
         $validator->integer('banking_entity_id')->allowEmptyString('banking_entity_id');
         $validator->decimal('payment_amount')->allowEmptyString('payment_amount');
+        $validator->date('payment_date')->allowEmptyDate('payment_date');
         $validator->integer('payment_created_by')->allowEmptyString('payment_created_by');
         $validator->integer('payment_authorized_by')->allowEmptyString('payment_authorized_by');
         $validator->date('payment_authorized_date')->allowEmptyDate('payment_authorized_date');
@@ -116,6 +117,14 @@ class PettyCashRecordsTable extends Table
     {
         $rules->add($rules->isUnique(['code'], 'El código ya existe.'), ['errorField' => 'code', 'allowNullableNulls' => true]);
         $rules->add($rules->existsIn('created_by', 'CreatedByUsers'), ['errorField' => 'created_by']);
+        $rules->add(
+            $rules->existsIn('operation_center_id', 'OperationCenters'),
+            ['errorField' => 'operation_center_id'],
+        );
+        $rules->add(
+            $rules->existsIn('banking_entity_id', 'BankingEntities'),
+            ['errorField' => 'banking_entity_id', 'allowNullableNulls' => true],
+        );
 
         return $rules;
     }

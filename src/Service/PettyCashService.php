@@ -114,17 +114,49 @@ class PettyCashService
     }
 
     /**
+     * Returns true if the role can advance the record from the current status.
+     *
+     * @param int $roleId Role ID.
+     * @param string $roleName Role name (kept for compat with PipelineAuthorizationService API).
+     * @param string $currentStatus Current pipeline status.
+     * @return bool
+     */
+    public function canAdvance(int $roleId, string $roleName, string $currentStatus): bool
+    {
+        if (!isset(PettyCashConstants::TRANSITIONS[$currentStatus])) {
+            return false;
+        }
+
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PETTY_CASH,
+            $currentStatus,
+        );
+    }
+
+    /**
      * @param \App\Model\Entity\PettyCashRecord $record Record.
+     * @param int $roleId Role ID of the caller (for pipeline authorization).
+     * @param string $roleName Role name of the caller (for pipeline authorization).
      * @param int $userId User ID.
      * @return array
      */
-    public function advanceStatus(PettyCashRecord $record, int $userId): array
-    {
+    public function advanceStatus(
+        PettyCashRecord $record,
+        int $roleId,
+        string $roleName,
+        int $userId,
+    ): array {
         $currentStatus = $record->status;
         $nextStatus = PettyCashConstants::TRANSITIONS[$currentStatus] ?? null;
 
         if ($nextStatus === null) {
             return ['success' => false, 'error' => 'Este registro ya está en su estado final.'];
+        }
+
+        if (!$this->canAdvance($roleId, $roleName, $currentStatus)) {
+            return ['success' => false, 'error' => 'No tiene permisos para avanzar este registro.'];
         }
 
         if ($nextStatus === PettyCashConstants::STATUS_AUT_PAGO) {
@@ -339,9 +371,16 @@ class PettyCashService
             return ServiceResult::fail('Ya existe un pago pendiente de autorización.');
         }
 
+        if ((float)$record->total_amount <= 0) {
+            return ServiceResult::fail('El registro no tiene un monto total válido.');
+        }
+
+        // El pago de Caja Menor siempre cubre el total del registro consolidado.
+        // Forzamos payment_amount = total_amount para evitar manipulación del POST
+        // y mantener consistencia con la materialización en invoice_payments.
         $record = $recordsTable->patchEntity($record, [
             'banking_entity_id' => $data['banking_entity_id'] ?? null,
-            'payment_amount' => $data['payment_amount'] ?? null,
+            'payment_amount' => $record->total_amount,
             'payment_date' => $data['payment_date'] ?? null,
             'payment_created_by' => $createdBy,
             'payment_rejection_reason' => null,
