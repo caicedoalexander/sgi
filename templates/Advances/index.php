@@ -61,12 +61,14 @@ $legalizationBadge = [
                 </tr>
             </thead>
             <tbody>
-                <?php if (empty($advances) || $advances->count() === 0): ?>
+                <?php // PaginatedResultSet no garantiza count() ni rewind (audit SU-005); materializamos. ?>
+                <?php $advancesArr = is_array($advances) ? $advances : iterator_to_array($advances); ?>
+                <?php if (empty($advancesArr)): ?>
                 <tr>
                     <td colspan="6" class="text-center text-muted py-4">No hay anticipos registrados.</td>
                 </tr>
                 <?php else: ?>
-                <?php foreach ($advances as $a): ?>
+                <?php foreach ($advancesArr as $a): ?>
                 <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'view', $a->id]) ?>">
                     <td>
                         <span style="font-family:monospace;font-weight:600;font-size:.85rem;">

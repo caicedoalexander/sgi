@@ -49,6 +49,11 @@ class AdvanceLegalizationsTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->hasMany('AdvanceLegalizationHistories', [
+            'foreignKey' => 'legalization_id',
+            'dependent' => true,
+            'cascadeCallbacks' => false,
+        ]);
     }
 
     /**
@@ -119,6 +124,47 @@ class AdvanceLegalizationsTable extends Table
             'errorField' => 'advance_invoice_id',
         ]);
         $rules->add($rules->existsIn('created_by', 'CreatedByUsers'), ['errorField' => 'created_by']);
+        // Permitir null (caso exacto / faltante no tienen pago de reintegro)
+        // pero validar referencia cuando está fijado (audit SU-007).
+        $rules->add(
+            $rules->existsIn('surplus_payment_id', 'SurplusPayments', ['allowNullableNulls' => true]),
+            ['errorField' => 'surplus_payment_id'],
+        );
+
+        // Coherencia case_type ↔ amounts (audit MI-008): cada caso permite
+        // exactamente uno de los dos montos (o ninguno, en exacto).
+        $rules->add(
+            function ($entity): bool {
+                if ($entity->case_type === AdvanceConstants::CASE_EXACTO) {
+                    return $entity->shortage_amount === null && $entity->surplus_amount === null;
+                }
+                if ($entity->case_type === AdvanceConstants::CASE_FALTANTE) {
+                    return (float)$entity->shortage_amount > 0 && $entity->surplus_amount === null;
+                }
+                if ($entity->case_type === AdvanceConstants::CASE_SOBRANTE) {
+                    return (float)$entity->surplus_amount > 0 && $entity->shortage_amount === null;
+                }
+                // case_type=null: ambos montos deben ser null.
+                return $entity->shortage_amount === null && $entity->surplus_amount === null;
+            },
+            'caseAmountsCoherence',
+            [
+                'errorField' => 'case_type',
+                'message' => 'Los montos no son coherentes con el caso declarado.',
+            ],
+        );
+
+        // legalized_at solo puede estar fijado cuando status=legalizada
+        // (audit MI-008). En estados intermedios debe ser null.
+        $rules->add(
+            fn($entity): bool => $entity->legalized_at === null
+                || $entity->status === AdvanceConstants::STATUS_LEGALIZADA,
+            'legalizedAtRequiresLegalizedStatus',
+            [
+                'errorField' => 'legalized_at',
+                'message' => 'legalized_at solo puede fijarse cuando status=legalizada.',
+            ],
+        );
 
         return $rules;
     }

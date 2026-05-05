@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use Cake\Datasource\ConnectionManager;
 use Migrations\BaseMigration;
 
 class SeedAdvancesPermissions extends BaseMigration
@@ -21,23 +22,38 @@ class SeedAdvancesPermissions extends BaseMigration
 
     public function up(): void
     {
+        // Sentencias preparadas para evitar concatenación + addslashes (audit MI-001).
+        $conn = ConnectionManager::get('default');
+
         foreach (self::MATRIX as $roleName => $perms) {
-            $row = $this->fetchRow("SELECT id FROM roles WHERE name = '" . addslashes($roleName) . "'");
+            $row = $conn->execute(
+                'SELECT id FROM roles WHERE name = :name',
+                ['name' => $roleName],
+            )->fetch('assoc');
             if (!$row) {
                 continue;
             }
-            $roleId = $row['id'] ?? $row[0];
+            $roleId = (int)$row['id'];
 
-            $existing = $this->fetchRow(
-                "SELECT id FROM permissions WHERE role_id = $roleId AND module = 'advances'"
-            );
+            $existing = $conn->execute(
+                'SELECT id FROM permissions WHERE role_id = :role_id AND module = :module',
+                ['role_id' => $roleId, 'module' => 'advances'],
+            )->fetch('assoc');
             if ($existing) {
                 continue;
             }
 
-            $this->execute(
-                "INSERT INTO permissions (role_id, module, can_view, can_create, can_edit, can_delete, created, modified)
-                 VALUES ($roleId, 'advances', {$perms['view']}, {$perms['create']}, {$perms['edit']}, {$perms['delete']}, NOW(), NOW())"
+            $conn->execute(
+                'INSERT INTO permissions (role_id, module, can_view, can_create, can_edit, can_delete, created, modified)
+                 VALUES (:role_id, :module, :can_view, :can_create, :can_edit, :can_delete, NOW(), NOW())',
+                [
+                    'role_id' => $roleId,
+                    'module' => 'advances',
+                    'can_view' => $perms['view'],
+                    'can_create' => $perms['create'],
+                    'can_edit' => $perms['edit'],
+                    'can_delete' => $perms['delete'],
+                ],
             );
         }
     }

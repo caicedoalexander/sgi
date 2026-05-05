@@ -8,6 +8,7 @@ use App\Middleware\CorrelationIdMiddleware;
 use App\Middleware\HostHeaderMiddleware;
 use App\Service\Adapter\CakeMailerAdapter;
 use App\Service\Adapter\PhpSpreadsheetAdapter;
+use App\Service\AdvanceLegalizationHistoryService;
 use App\Service\AdvanceLegalizationService;
 use App\Service\ApprovalTokenService;
 use App\Service\AuthorizationService;
@@ -56,6 +57,7 @@ use App\Service\PettyCashService;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
 use App\Service\Pipeline\InvoicePipelineStateRegistry;
 use App\Service\Pipeline\LinkedInvoiceLegalizer;
+use App\Service\Pipeline\Policy\AdvanceLegalizationActionPolicy;
 use App\Service\Pipeline\Policy\AnticipoDocumentTypePolicy;
 use App\Service\Pipeline\Policy\LegalizacionDocumentTypePolicy;
 use App\Service\Pipeline\Policy\StandardDocumentTypePolicy;
@@ -212,8 +214,13 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 DocumentTypePolicyFactory::class,
                 EventManagerInterface::class,
             ]);
+        $container->addShared(AdvanceLegalizationHistoryService::class);
         $container->addShared(AdvanceLegalizationService::class)
-            ->addArgument(EventManagerInterface::class);
+            ->addArguments([
+                EventManagerInterface::class,
+                AdvanceLegalizationHistoryService::class,
+            ]);
+        $container->addShared(AdvanceLegalizationActionPolicy::class);
         $container->addShared(InvoicePipelineService::class)
             ->addArguments([
                 InvoiceHistoryService::class,

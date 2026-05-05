@@ -8,19 +8,26 @@ use Cake\ORM\Entity;
 
 class AdvanceLegalization extends Entity
 {
+    /**
+     * Pipeline-controlled fields are non-mass-assignable. Solo
+     * AdvanceLegalizationService los muta vía property assignment directo,
+     * que bypassa _accessible. Esto evita que un patchEntity con datos del
+     * cliente pueda mover el estado, declarar caso, o falsificar montos
+     * (audit MI-002).
+     */
     protected array $_accessible = [
         'advance_invoice_id' => true,
-        'status' => true,
-        'case_type' => true,
-        'shortage_amount' => true,
-        'surplus_amount' => true,
-        'shortage_received_at' => true,
-        'shortage_receipt_number' => true,
-        'shortage_receipt_path' => true,
-        'surplus_payment_id' => true,
-        'legalized_at' => true,
+        'status' => false,
+        'case_type' => false,
+        'shortage_amount' => false,
+        'surplus_amount' => false,
+        'shortage_received_at' => false,
+        'shortage_receipt_number' => false,
+        'shortage_receipt_path' => false,
+        'surplus_payment_id' => false,
+        'legalized_at' => false,
         'created_by' => true,
-        'updated_by' => true,
+        'updated_by' => false,
         'advance_invoice' => true,
         'linked_invoices' => true,
         'advance_legalization_signatures' => true,

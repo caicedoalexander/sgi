@@ -22,8 +22,11 @@ class CreateAdvanceLegalizations extends BaseMigration
             ->addColumn('shortage_receipt_path', 'string', ['limit' => 500, 'null' => true, 'default' => null])
             ->addColumn('surplus_payment_id', 'integer', ['null' => true, 'default' => null])
             ->addColumn('legalized_at', 'datetime', ['null' => true, 'default' => null])
-            ->addColumn('created_by', 'integer', ['null' => false])
-            ->addColumn('updated_by', 'integer', ['null' => true, 'default' => null])
+            // signed=true explícito para alinearse con users.id (audit MI-010).
+            // Phinx defaults integer a signed=true, pero el flag explícito documenta
+            // la consistencia con la tabla referenciada vía FK.
+            ->addColumn('created_by', 'integer', ['null' => false, 'signed' => true])
+            ->addColumn('updated_by', 'integer', ['null' => true, 'default' => null, 'signed' => true])
             ->addColumn('created', 'datetime', ['null' => true])
             ->addColumn('modified', 'datetime', ['null' => true])
             ->addIndex(['advance_invoice_id'], ['unique' => true])

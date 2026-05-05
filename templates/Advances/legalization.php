@@ -19,11 +19,12 @@ use App\Constants\InvoiceConstants;
 $this->assign('title', 'Legalización ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
 $legBadgeMap = [
-    AdvanceConstants::STATUS_VALIDACION       => ['Validación', 'bg-info text-dark'],
-    AdvanceConstants::STATUS_REVISION_FIRMAS  => ['Revisión y Firmas', 'bg-primary'],
-    AdvanceConstants::STATUS_CONTABILIDAD     => ['Contabilidad', 'bg-warning text-dark'],
-    AdvanceConstants::STATUS_TESORERIA        => ['Tesorería', 'bg-warning text-dark'],
-    AdvanceConstants::STATUS_LEGALIZADA       => ['Legalizada', 'bg-success'],
+    AdvanceConstants::STATUS_VALIDACION        => ['Validación', 'bg-info text-dark'],
+    AdvanceConstants::STATUS_REVISION_FIRMAS   => ['Revisión y Firmas', 'bg-primary'],
+    AdvanceConstants::STATUS_CONTABILIDAD      => ['Contabilidad', 'bg-warning text-dark'],
+    AdvanceConstants::STATUS_TESORERIA         => ['Tesorería', 'bg-warning text-dark'],
+    AdvanceConstants::STATUS_AUTORIZACION_PAGO => ['Aut. Pago', 'bg-warning text-dark'],
+    AdvanceConstants::STATUS_LEGALIZADA        => ['Legalizada', 'bg-success'],
 ];
 $legPipelineLabels = AdvanceConstants::STATUS_LABELS;
 
@@ -65,10 +66,12 @@ $docIconColor = fn(?string $mime): string => match (true) {
 ?>
 
 <?php
-// CSRF token disponible para el JS dinámico de payment_section (que arma forms ad-hoc).
-$csrfToken = $this->request->getAttribute('csrfToken') ?? '';
+// El layout default.php ya expone el CSRF token vía <meta name="csrfToken">.
+// Este template lo inyecta directo a las llamadas fetch() inline (ver bloque
+// <script> al final). Antes había un <input type="hidden" name="_csrfToken">
+// flotante fuera de cualquier <form>, sin lectores en JS — eliminado por
+// audit SU-008.
 ?>
-<input type="hidden" name="_csrfToken" value="<?= h($csrfToken) ?>">
 
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
@@ -303,6 +306,7 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
             ) ?>
             <?php elseif ($diff > 0.005): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'registerShortage', $leg->advance_invoice_id]]) ?>
+            <input type="hidden" name="expected_status" value="<?= h($leg->status) ?>">
             <div class="row g-2 align-items-end">
                 <div class="col-md-6">
                     <label class="form-label">Monto del faltante (consignación pendiente)</label>
@@ -318,6 +322,7 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
             <?= $this->Form->end() ?>
             <?php else: ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'registerSurplus', $leg->advance_invoice_id]]) ?>
+            <input type="hidden" name="expected_status" value="<?= h($leg->status) ?>">
             <div class="row g-2 align-items-end">
                 <div class="col-md-6">
                     <label class="form-label">Monto del sobrante (reintegro a beneficiario)</label>
@@ -462,7 +467,7 @@ $csrfToken = $this->request->getAttribute('csrfToken') ?? '';
                 <?= h($relationDocument->file_name ?? 'Documento') ?>
             </div>
             <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
-                <?php if ($relationDocument->signature_status === AdvanceConstants::SIGNATURE_SIGNED): ?>
+                <?php if ($relationDocument->isSigned()): ?>
                 <span class="badge bg-success" style="font-size:.6rem;">
                     <i class="bi bi-check-circle me-1"></i>Firmado
                     <?php if ($relationDocument->signed_by_user): ?>

@@ -9,10 +9,12 @@ use App\Event\AdvanceLegalizedEvent;
 use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
 use App\Service\Trait\DocumentUploadTrait;
+use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
 use Laminas\Diactoros\UploadedFile;
+use Throwable;
 
 class AdvanceLegalizationService
 {
@@ -20,6 +22,7 @@ class AdvanceLegalizationService
 
     public function __construct(
         private readonly EventManagerInterface $events,
+        private readonly AdvanceLegalizationHistoryService $historyService,
     ) {
     }
 
@@ -48,13 +51,14 @@ class AdvanceLegalizationService
 
         $entity = $table->newEntity([
             'advance_invoice_id' => $advance->id,
-            'status' => AdvanceConstants::STATUS_VALIDACION,
             'created_by' => $userId,
         ]);
+        // `status` es non-accessible (MI-002): direct assignment por el service.
+        $entity->status = AdvanceConstants::STATUS_VALIDACION;
 
         if (!$table->save($entity)) {
             return ServiceResult::fail(
-                'No se pudo crear la legalización: ' . json_encode($entity->getErrors()),
+                'No se pudo crear la legalización: ' . $this->_firstErrorMessage($entity->getErrors()),
             );
         }
 
@@ -88,19 +92,36 @@ class AdvanceLegalizationService
         }
 
         $invoices = TableRegistry::getTableLocator()->get('Invoices');
+        $legTable = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
 
-        $count = $invoices->updateAll(
-            ['advance_id' => $leg->advance_invoice_id],
-            [
-                'id IN' => $invoiceIds,
-                'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
-                'advance_id IS' => null,
-            ],
+        $result = null;
+        $invoices->getConnection()->transactional(
+            function () use ($leg, $invoiceIds, $userId, $invoices, $legTable, &$result): bool {
+                $count = $invoices->updateAll(
+                    ['advance_id' => $leg->advance_invoice_id],
+                    [
+                        'id IN' => $invoiceIds,
+                        'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+                        'advance_id IS' => null,
+                    ],
+                );
+
+                $leg->updated_by = $userId;
+                if (!$legTable->save($leg)) {
+                    $result = ServiceResult::fail(
+                        'No se pudo actualizar la legalización: ' . $this->_firstErrorMessage($leg->getErrors()),
+                    );
+
+                    return false;
+                }
+
+                $result = ServiceResult::ok(['linked' => (int)$count]);
+
+                return true;
+            },
         );
 
-        $this->_touchUpdatedBy($leg, $userId);
-
-        return ServiceResult::ok(['linked' => (int)$count]);
+        return $result ?? ServiceResult::fail('La transacción falló.');
     }
 
     /**
@@ -113,21 +134,41 @@ class AdvanceLegalizationService
         }
 
         $invoices = TableRegistry::getTableLocator()->get('Invoices');
-        $count = $invoices->updateAll(
-            ['advance_id' => null],
-            [
-                'id' => $invoiceId,
-                'advance_id' => $leg->advance_invoice_id,
-            ],
+        $legTable = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
+
+        $result = null;
+        $invoices->getConnection()->transactional(
+            function () use ($leg, $invoiceId, $userId, $invoices, $legTable, &$result): bool {
+                $count = $invoices->updateAll(
+                    ['advance_id' => null],
+                    [
+                        'id' => $invoiceId,
+                        'advance_id' => $leg->advance_invoice_id,
+                    ],
+                );
+
+                if ($count === 0) {
+                    $result = ServiceResult::fail('La factura no estaba vinculada a este anticipo.');
+
+                    return false;
+                }
+
+                $leg->updated_by = $userId;
+                if (!$legTable->save($leg)) {
+                    $result = ServiceResult::fail(
+                        'No se pudo actualizar la legalización: ' . $this->_firstErrorMessage($leg->getErrors()),
+                    );
+
+                    return false;
+                }
+
+                $result = ServiceResult::ok(['unlinked' => 1]);
+
+                return true;
+            },
         );
 
-        if ($count === 0) {
-            return ServiceResult::fail('La factura no estaba vinculada a este anticipo.');
-        }
-
-        $this->_touchUpdatedBy($leg, $userId);
-
-        return ServiceResult::ok(['unlinked' => 1]);
+        return $result ?? ServiceResult::fail('La transacción falló.');
     }
 
     /**
@@ -140,32 +181,70 @@ class AdvanceLegalizationService
             return ServiceResult::fail('Solo se puede subir el documento en Validación o Revisión y Firmas.');
         }
 
-        $result = $this->uploadAndSave(
-            $file,
-            'AdvanceLegalizationSignatures',
-            'advances/' . $leg->id,
-            'leg_',
-            [
-                'legalization_id' => $leg->id,
-                'signature_status' => AdvanceConstants::SIGNATURE_PENDING,
-            ],
+        $sigTable = TableRegistry::getTableLocator()->get('AdvanceLegalizationSignatures');
+        $legTable = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
+
+        $result = null;
+        $sigTable->getConnection()->transactional(
+            function () use ($leg, $file, $userId, $sigTable, $legTable, &$result): bool {
+                $upload = $this->uploadAndSave(
+                    $file,
+                    'AdvanceLegalizationSignatures',
+                    'advances/' . $leg->id,
+                    'leg_',
+                    [
+                        'legalization_id' => $leg->id,
+                        'signature_status' => AdvanceConstants::SIGNATURE_PENDING,
+                    ],
+                );
+
+                if (is_string($upload)) {
+                    $result = ServiceResult::fail($upload);
+
+                    return false;
+                }
+
+                // Borrar archivos físicos de los pendientes anteriores antes del
+                // deleteAll para no dejar huérfanos en webroot/uploads/ (audit MA-004).
+                $stalePending = $sigTable->find()
+                    ->where([
+                        'legalization_id' => $leg->id,
+                        'id !=' => $upload->id,
+                        'signature_status' => AdvanceConstants::SIGNATURE_PENDING,
+                    ])
+                    ->all();
+                foreach ($stalePending as $stale) {
+                    if (!empty($stale->file_path)) {
+                        $diskPath = WWW_ROOT . str_replace('/', DS, $stale->file_path);
+                        if (file_exists($diskPath)) {
+                            @unlink($diskPath);
+                        }
+                    }
+                }
+
+                // Mark prior pending docs as superseded by deleting them — keep history simple.
+                $sigTable->deleteAll([
+                    'legalization_id' => $leg->id,
+                    'id !=' => $upload->id,
+                    'signature_status' => AdvanceConstants::SIGNATURE_PENDING,
+                ]);
+
+                $leg->updated_by = $userId;
+                if (!$legTable->save($leg)) {
+                    $result = ServiceResult::fail(
+                        'No se pudo actualizar la legalización: ' . $this->_firstErrorMessage($leg->getErrors()),
+                    );
+
+                    return false;
+                }
+
+                $result = ServiceResult::ok($upload);
+
+                return true;
+            },
         );
 
-        if (is_string($result)) {
-            return ServiceResult::fail($result);
-        }
-
-        // Mark prior pending docs as superseded by deleting them — keep history simple.
-        $sigTable = TableRegistry::getTableLocator()->get('AdvanceLegalizationSignatures');
-        $sigTable->deleteAll([
-            'legalization_id' => $leg->id,
-            'id !=' => $result->id,
-            'signature_status' => AdvanceConstants::SIGNATURE_PENDING,
-        ]);
-
-        $this->_touchUpdatedBy($leg, $userId);
-
-        return ServiceResult::ok($result);
+        return $result ?? ServiceResult::fail('La transacción falló.');
     }
 
     /**
@@ -190,14 +269,14 @@ class AdvanceLegalizationService
             return ServiceResult::fail('Vincule al menos una factura antes de avanzar.');
         }
 
-        $allowedStatuses = [
-            InvoiceConstants::STATUS_CONTABILIDAD,
-            InvoiceConstants::STATUS_PAGADA,
-        ];
+        // Restringido a CONTABILIDAD: LinkedInvoiceLegalizer solo promueve desde
+        // este estado al cierre de la legalización. Aceptar PAGADA aquí permitiría
+        // facturas vinculadas en estado terminal que nunca se promoverían a
+        // LEGALIZADA, dejando inconsistencia silenciosa (audit MA-006).
         foreach ($linked as $li) {
-            if (!in_array($li->pipeline_status, $allowedStatuses, true)) {
+            if ($li->pipeline_status !== InvoiceConstants::STATUS_CONTABILIDAD) {
                 return ServiceResult::fail(
-                    'Todas las facturas vinculadas deben estar al menos en Contabilidad. '
+                    'Todas las facturas vinculadas deben estar en Contabilidad. '
                     . 'Falta: factura ' . ($li->invoice_number ?: '#' . $li->id),
                 );
             }
@@ -234,12 +313,34 @@ class AdvanceLegalizationService
             return ServiceResult::fail('No hay documento pendiente para firmar.');
         }
 
-        $pending->signed_by_user_id = $userId;
-        $pending->signed_at = date('Y-m-d H:i:s');
-        $pending->signature_status = AdvanceConstants::SIGNATURE_SIGNED;
-        $sigTable->save($pending);
+        $result = null;
+        $sigTable->getConnection()->transactional(
+            function () use ($pending, $userId, $sigTable, $leg, &$result): bool {
+                $pending->signed_by_user_id = $userId;
+                $pending->signed_at = date('Y-m-d H:i:s');
+                $pending->signature_status = AdvanceConstants::SIGNATURE_SIGNED;
+                if (!$sigTable->save($pending)) {
+                    $result = ServiceResult::fail(
+                        'No se pudo guardar la firma: ' . $this->_firstErrorMessage($pending->getErrors()),
+                    );
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_CONTABILIDAD, $userId);
+                    return false;
+                }
+
+                $inner = $this->_setStatus($leg, AdvanceConstants::STATUS_CONTABILIDAD, $userId);
+                if (!$inner->success) {
+                    $result = $inner;
+
+                    return false;
+                }
+
+                $result = $inner;
+
+                return true;
+            },
+        );
+
+        return $result ?? ServiceResult::fail('La transacción falló.');
     }
 
     /**
@@ -255,17 +356,43 @@ class AdvanceLegalizationService
         }
 
         $sigTable = TableRegistry::getTableLocator()->get('AdvanceLegalizationSignatures');
-        $pending = $sigTable->find()
-            ->where(['legalization_id' => $leg->id, 'signature_status' => AdvanceConstants::SIGNATURE_PENDING])
-            ->order(['id' => 'DESC'])
-            ->first();
-        if ($pending) {
-            $pending->signature_status = AdvanceConstants::SIGNATURE_REJECTED;
-            $pending->rejection_reason = $reason;
-            $sigTable->save($pending);
-        }
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_VALIDACION, $userId);
+        $result = null;
+        $sigTable->getConnection()->transactional(
+            function () use ($leg, $reason, $userId, $sigTable, &$result): bool {
+                $pending = $sigTable->find()
+                    ->where([
+                        'legalization_id' => $leg->id,
+                        'signature_status' => AdvanceConstants::SIGNATURE_PENDING,
+                    ])
+                    ->order(['id' => 'DESC'])
+                    ->first();
+                if ($pending) {
+                    $pending->signature_status = AdvanceConstants::SIGNATURE_REJECTED;
+                    $pending->rejection_reason = $reason;
+                    if (!$sigTable->save($pending)) {
+                        $result = ServiceResult::fail(
+                            'No se pudo registrar el rechazo: ' . $this->_firstErrorMessage($pending->getErrors()),
+                        );
+
+                        return false;
+                    }
+                }
+
+                $inner = $this->_setStatus($leg, AdvanceConstants::STATUS_VALIDACION, $userId);
+                if (!$inner->success) {
+                    $result = $inner;
+
+                    return false;
+                }
+
+                $result = $inner;
+
+                return true;
+            },
+        );
+
+        return $result ?? ServiceResult::fail('La transacción falló.');
     }
 
     /**
@@ -288,13 +415,23 @@ class AdvanceLegalizationService
      * Difference: advance.amount - sum(linked.amount).
      * - >0 means shortage (anticipo > linked invoices; beneficiary returns the rest).
      * - <0 means surplus (linked > anticipo; company refunds the beneficiary).
+     *
+     * @param float|null $linkedTotal Si el caller ya calculó el total vinculado,
+     *     pasarlo para evitar la query redundante de getLinkedTotal (audit SU-002).
      */
-    public function getDifference(AdvanceLegalization $leg): float
+    public function getDifference(AdvanceLegalization $leg, ?float $linkedTotal = null): float
     {
         $invoices = TableRegistry::getTableLocator()->get('Invoices');
-        $advance = $invoices->get($leg->advance_invoice_id);
+        try {
+            $advance = $invoices->get($leg->advance_invoice_id);
+        } catch (RecordNotFoundException) {
+            // El anticipo asociado fue borrado/cascadeado; no hay diferencia que calcular.
+            return 0.0;
+        }
 
-        return (float)$advance->amount - $this->getLinkedTotal($leg);
+        $total = $linkedTotal ?? $this->getLinkedTotal($leg);
+
+        return (float)$advance->amount - $total;
     }
 
     /**
@@ -313,7 +450,9 @@ class AdvanceLegalizationService
         $leg->case_type = AdvanceConstants::CASE_EXACTO;
         $leg->legalized_at = date('Y-m-d H:i:s');
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_LEGALIZADA, $userId);
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_LEGALIZADA, $userId, [
+            'case_type' => [null, AdvanceConstants::CASE_EXACTO],
+        ]);
     }
 
     /**
@@ -325,6 +464,10 @@ class AdvanceLegalizationService
         if ($leg->status !== AdvanceConstants::STATUS_CONTABILIDAD) {
             return ServiceResult::fail('La legalización no está en Contabilidad.');
         }
+        // Guard contra doble registro de caso por requests concurrentes (audit MA-005).
+        if ($leg->case_type !== null) {
+            return ServiceResult::fail('Ya se declaró un caso para esta legalización.');
+        }
         if ($amount <= 0) {
             return ServiceResult::fail('El monto del faltante debe ser mayor a cero.');
         }
@@ -332,14 +475,21 @@ class AdvanceLegalizationService
         $leg->case_type = AdvanceConstants::CASE_FALTANTE;
         $leg->shortage_amount = $amount;
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId);
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId, [
+            'case_type' => [null, AdvanceConstants::CASE_FALTANTE],
+            'shortage_amount' => [null, (string)$amount],
+        ]);
     }
 
     /**
-     * Tesorería confirms the beneficiary's deposit. Payload keys:
-     *   - receipt_number (string, required)
-     *   - received_at (Y-m-d, optional)
-     *   - receipt_file (UploadedFile, optional)
+     * Tesorería confirms the beneficiary's deposit.
+     *
+     * @param array{
+     *     receipt_number?: string,
+     *     received_at?: string,
+     *     receipt_file?: \Laminas\Diactoros\UploadedFile|null,
+     * } $data Payload del form: receipt_number es obligatorio, received_at en
+     *     formato Y-m-d (opcional, default hoy), receipt_file opcional.
      */
     public function confirmShortageReceipt(AdvanceLegalization $leg, array $data, int $userId): ServiceResult
     {
@@ -359,20 +509,22 @@ class AdvanceLegalizationService
             : date('Y-m-d H:i:s');
 
         if (!empty($data['receipt_file']) && $data['receipt_file'] instanceof UploadedFile) {
-            $file = $data['receipt_file'];
-            $uploadDir = WWW_ROOT . 'uploads/advances/' . $leg->id;
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
+            $info = $this->validateAndMoveUpload(
+                $data['receipt_file'],
+                'advances/' . $leg->id,
+                'shortage_',
+            );
+            if (is_string($info)) {
+                return ServiceResult::fail($info);
             }
-            $ext = pathinfo($file->getClientFilename() ?? '', PATHINFO_EXTENSION) ?: 'pdf';
-            $name = uniqid('shortage_') . '.' . $ext;
-            $file->moveTo($uploadDir . DS . $name);
-            $leg->shortage_receipt_path = 'uploads/advances/' . $leg->id . '/' . $name;
+            $leg->shortage_receipt_path = $info['file_path'];
         }
 
         $leg->legalized_at = date('Y-m-d H:i:s');
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_LEGALIZADA, $userId);
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_LEGALIZADA, $userId, [
+            'shortage_receipt_number' => [null, $number],
+        ]);
     }
 
     /**
@@ -384,6 +536,10 @@ class AdvanceLegalizationService
         if ($leg->status !== AdvanceConstants::STATUS_CONTABILIDAD) {
             return ServiceResult::fail('La legalización no está en Contabilidad.');
         }
+        // Guard contra doble registro de caso por requests concurrentes (audit MA-005).
+        if ($leg->case_type !== null) {
+            return ServiceResult::fail('Ya se declaró un caso para esta legalización.');
+        }
         if ($amount <= 0) {
             return ServiceResult::fail('El monto del sobrante debe ser mayor a cero.');
         }
@@ -391,12 +547,21 @@ class AdvanceLegalizationService
         $leg->case_type = AdvanceConstants::CASE_SOBRANTE;
         $leg->surplus_amount = $amount;
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId);
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId, [
+            'case_type' => [null, AdvanceConstants::CASE_SOBRANTE],
+            'surplus_amount' => [null, (string)$amount],
+        ]);
     }
 
     /**
      * Crea un InvoicePayment con is_refund=true sobre el Invoice del Anticipo,
      * y deja la legalización en Tesorería esperando autorización.
+     *
+     * @param array{
+     *     banking_entity_id?: int|null,
+     *     payment_date?: string,
+     * } $data Payload del form: banking_entity_id de la entidad receptora del
+     *     reintegro y payment_date en formato Y-m-d (default hoy).
      */
     public function registerRefundPayment(AdvanceLegalization $leg, array $data, int $userId): ServiceResult
     {
@@ -415,35 +580,64 @@ class AdvanceLegalizationService
         $payments = TableRegistry::getTableLocator()->get('InvoicePayments');
         $legTable = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
 
-        $connection = $payments->getConnection();
+        $result = null;
+        $payments->getConnection()->transactional(
+            function () use ($leg, $data, $userId, $payments, $legTable, &$result): bool {
+                $payment = $payments->newEntity([
+                    'invoice_id' => $leg->advance_invoice_id,
+                    'banking_entity_id' => $data['banking_entity_id'] ?? null,
+                    'amount' => (float)$leg->surplus_amount,
+                    'payment_date' => $data['payment_date'] ?? date('Y-m-d'),
+                    'is_refund' => true,
+                    'status' => InvoiceConstants::PAYMENT_RECORD_PENDING,
+                    'authorized' => false,
+                    'created_by' => $userId,
+                ]);
 
-        return $connection->transactional(function () use ($leg, $data, $userId, $payments, $legTable) {
-            $payment = $payments->newEntity([
-                'invoice_id' => $leg->advance_invoice_id,
-                'banking_entity_id' => $data['banking_entity_id'] ?? null,
-                'amount' => (float)$leg->surplus_amount,
-                'payment_date' => $data['payment_date'] ?? date('Y-m-d'),
-                'is_refund' => true,
-                'status' => InvoiceConstants::PAYMENT_RECORD_PENDING,
-                'authorized' => false,
-                'created_by' => $userId,
-            ]);
+                if (!$payments->save($payment)) {
+                    $result = ServiceResult::fail(
+                        'No se pudo crear el reintegro: ' . $this->_firstErrorMessage($payment->getErrors()),
+                    );
 
-            if (!$payments->save($payment)) {
-                return ServiceResult::fail('No se pudo crear el reintegro: ' . json_encode($payment->getErrors()));
-            }
+                    return false;
+                }
 
-            // El estado del Anticipo (Invoice) queda en `pagada`: el reintegro es un
-            // movimiento posterior que vive solo en la legalización.
-            $leg->surplus_payment_id = $payment->id;
-            $leg->status = AdvanceConstants::STATUS_AUTORIZACION_PAGO;
-            $leg->updated_by = $userId;
-            if (!$legTable->save($leg)) {
-                return ServiceResult::fail('No se pudo actualizar la legalización: ' . json_encode($leg->getErrors()));
-            }
+                // El estado del Anticipo (Invoice) queda en `pagada`: el reintegro es un
+                // movimiento posterior que vive solo en la legalización.
+                $oldStatus = $leg->status;
+                $leg->surplus_payment_id = $payment->id;
+                $leg->status = AdvanceConstants::STATUS_AUTORIZACION_PAGO;
+                $leg->updated_by = $userId;
+                if (!$legTable->save($leg)) {
+                    $result = ServiceResult::fail(
+                        'No se pudo actualizar la legalización: ' . $this->_firstErrorMessage($leg->getErrors()),
+                    );
 
-            return ServiceResult::ok($payment);
-        });
+                    return false;
+                }
+
+                // Audit trail dentro de la transacción (audit SU-004).
+                $this->historyService->recordStatusChange(
+                    $leg->id,
+                    $oldStatus,
+                    AdvanceConstants::STATUS_AUTORIZACION_PAGO,
+                    $userId,
+                );
+                $this->historyService->recordFieldChange(
+                    $leg->id,
+                    'surplus_payment_id',
+                    null,
+                    (string)$payment->id,
+                    $userId,
+                );
+
+                $result = ServiceResult::ok($payment);
+
+                return true;
+            },
+        );
+
+        return $result ?? ServiceResult::fail('La transacción falló.');
     }
 
     /**
@@ -485,9 +679,31 @@ class AdvanceLegalizationService
             return ServiceResult::ok($leg);
         }
 
+        $oldPaymentId = $leg->surplus_payment_id;
         $leg->surplus_payment_id = null;
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId);
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId, [
+            'surplus_payment_id' => [(string)$oldPaymentId, null],
+        ]);
+    }
+
+    /**
+     * Aplana los errores de validación de una entidad y devuelve el primer
+     * mensaje legible — evita exponer texto crudo de json_encode($entity->getErrors())
+     * al usuario final (audit MI-004).
+     *
+     * @param array<string, mixed> $errors Errores como los devuelve Entity::getErrors().
+     */
+    private function _firstErrorMessage(array $errors): string
+    {
+        $flat = [];
+        array_walk_recursive($errors, function ($message) use (&$flat): void {
+            if (is_string($message) && $message !== '') {
+                $flat[] = $message;
+            }
+        });
+
+        return $flat[0] ?? 'Error de validación.';
     }
 
     /**
@@ -495,33 +711,80 @@ class AdvanceLegalizationService
      * STATUS_LEGALIZADA, publica AdvanceLegalizedEvent (Plan 5) en lugar de llamar
      * directamente al pipeline service. El subscriber LinkedInvoicesPromoterSubscriber
      * promueve las facturas vinculadas vía LinkedInvoiceLegalizer.
+     *
+     * El save, las entradas de historial y el dispatch del evento corren en una
+     * misma transacción: si el subscriber lanza, el cambio de estado del leg y
+     * el historial se rollbackean juntos (audit CR-004 + SU-004).
+     *
+     * @param array<string, array{0: scalar|null, 1: scalar|null}> $extraChanges
+     *     Cambios de campo adicionales a registrar en el audit trail, formato
+     *     [field => [oldValue, newValue]]. Útil para registrar case_type, montos,
+     *     comprobantes en la misma transacción que el cambio de estado.
      */
-    private function _setStatus(AdvanceLegalization $leg, string $newStatus, int $userId): ServiceResult
-    {
-        $leg->status = $newStatus;
-        $leg->updated_by = $userId;
+    private function _setStatus(
+        AdvanceLegalization $leg,
+        string $newStatus,
+        int $userId,
+        array $extraChanges = [],
+    ): ServiceResult {
+        $oldStatus = $leg->status;
         $table = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
-        if (!$table->save($leg)) {
-            return ServiceResult::fail('No se pudo guardar la legalización: ' . json_encode($leg->getErrors()));
-        }
 
-        if ($newStatus === AdvanceConstants::STATUS_LEGALIZADA) {
-            $this->events->dispatch(new Event(
-                'AdvanceLegalization.legalized',
-                null,
-                ['payload' => new AdvanceLegalizedEvent($leg, $userId)],
-            ));
-        }
+        $result = null;
+        $table->getConnection()->transactional(
+            function () use (
+                $leg,
+                $oldStatus,
+                $newStatus,
+                $userId,
+                $extraChanges,
+                $table,
+                &$result,
+            ): bool {
+                $leg->status = $newStatus;
+                $leg->updated_by = $userId;
+                if (!$table->save($leg)) {
+                    $result = ServiceResult::fail(
+                        'No se pudo guardar la legalización: ' . $this->_firstErrorMessage($leg->getErrors()),
+                    );
 
-        return ServiceResult::ok($leg);
-    }
+                    return false;
+                }
 
-    /**
-     * Bump updated_by without status change.
-     */
-    private function _touchUpdatedBy(AdvanceLegalization $leg, int $userId): void
-    {
-        $leg->updated_by = $userId;
-        TableRegistry::getTableLocator()->get('AdvanceLegalizations')->save($leg);
+                $this->historyService->recordStatusChange($leg->id, $oldStatus, $newStatus, $userId);
+                foreach ($extraChanges as $field => $values) {
+                    [$oldVal, $newVal] = $values;
+                    $this->historyService->recordFieldChange(
+                        $leg->id,
+                        $field,
+                        $oldVal === null ? null : (string)$oldVal,
+                        $newVal === null ? null : (string)$newVal,
+                        $userId,
+                    );
+                }
+
+                if ($newStatus === AdvanceConstants::STATUS_LEGALIZADA) {
+                    try {
+                        $this->events->dispatch(new Event(
+                            'AdvanceLegalization.legalized',
+                            null,
+                            ['payload' => new AdvanceLegalizedEvent($leg, $userId)],
+                        ));
+                    } catch (Throwable $e) {
+                        $result = ServiceResult::fail(
+                            'No se pudo cerrar la legalización: ' . $e->getMessage(),
+                        );
+
+                        return false;
+                    }
+                }
+
+                $result = ServiceResult::ok($leg);
+
+                return true;
+            },
+        );
+
+        return $result ?? ServiceResult::fail('La transacción falló.');
     }
 }

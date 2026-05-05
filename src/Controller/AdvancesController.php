@@ -7,8 +7,10 @@ use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Model\Entity\AdvanceLegalization;
+use App\Model\Entity\Invoice;
 use App\Service\AdvanceLegalizationService;
 use App\Service\InvoicePipelineService;
+use App\Service\Pipeline\Policy\AdvanceLegalizationActionPolicy;
 use Cake\Http\Response;
 use Cake\ORM\TableRegistry;
 
@@ -22,17 +24,43 @@ class AdvancesController extends AppController
 
     private InvoicePipelineService $pipelineService;
 
+    private AdvanceLegalizationActionPolicy $actionPolicy;
+
     public function initialize(): void
     {
         parent::initialize();
         $this->legalizationService = $this->getContainer()->get(AdvanceLegalizationService::class);
         $this->pipelineService = $this->getContainer()->get(InvoicePipelineService::class);
+        $this->actionPolicy = $this->getContainer()->get(AdvanceLegalizationActionPolicy::class);
         $this->fetchTable('Invoices');
     }
 
     private function _getCurrentUser(): object
     {
         return $this->Authentication->getIdentity()->getOriginalData();
+    }
+
+    /**
+     * Parse a Colombian-formatted amount string ("1.234,56") into a float.
+     * Empty string or invalid input returns 0.0.
+     */
+    private function _parseCop(string $raw): float
+    {
+        $normalized = str_replace('.', '', $raw);
+        $normalized = str_replace(',', '.', $normalized);
+
+        return (float)$normalized;
+    }
+
+    /**
+     * Reject the action when the current role cannot perform it on the leg's
+     * current state. Caller does `return $this->_denyAction(...)`.
+     */
+    private function _denyAction(int $advanceId): Response
+    {
+        $this->Flash->error('No tienes permiso para esta acción en el estado actual.');
+
+        return $this->redirect(['action' => 'view', $advanceId]);
     }
 
     /**
@@ -93,22 +121,25 @@ class AdvancesController extends AppController
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
 
+        // innerJoinWith filtra a anticipos que tengan legalización en curso sin
+        // duplicar el JOIN al hacer el contain (audit MA-009). matching() habría
+        // hidratado además el alias _matchingData en cada fila.
         $query = $invoicesTable->find()
             ->where([
                 'Invoices.document_type' => InvoiceConstants::DOCTYPE_ANTICIPO,
                 'Invoices.pipeline_status' => InvoiceConstants::STATUS_PAGADA,
             ])
+            ->innerJoinWith('AdvanceLegalization', function ($q) {
+                return $q->where([
+                    'AdvanceLegalization.status !=' => AdvanceConstants::STATUS_LEGALIZADA,
+                ]);
+            })
             ->contain([
                 'Providers',
                 'Employees',
                 'OperationCenters',
                 'AdvanceLegalization',
             ])
-            ->matching('AdvanceLegalization', function ($q) {
-                return $q->where([
-                    'AdvanceLegalization.status !=' => AdvanceConstants::STATUS_LEGALIZADA,
-                ]);
-            })
             ->order(['Invoices.created' => 'DESC']);
 
         $advances = $this->paginate($query);
@@ -138,7 +169,26 @@ class AdvancesController extends AppController
             if (empty($data['provider_id']) && empty($data['employee_id'])) {
                 $this->Flash->error('Debe seleccionar un proveedor o un empleado como beneficiario.');
             } else {
-                $invoice = $invoicesTable->patchEntity($invoice, $data);
+                // Lista blanca explícita de campos aceptados desde el formulario.
+                // Bloquea mass-assignment de approver_id, area_approval, payment_status,
+                // confirmed_by, accrued, advance_id (audit CR-001).
+                $allowedFields = [
+                    'provider_id', 'employee_id', 'operation_center_id',
+                    'expense_type_id', 'cost_center_id', 'amount', 'detail',
+                    'issue_date', 'due_date', 'document_type', 'registered_by',
+                    'pipeline_status', 'registration_date',
+                ];
+                $accessibleFields = array_fill_keys($allowedFields, true) + [
+                    'approver_id' => false,
+                    'area_approval' => false,
+                    'payment_status' => false,
+                    'confirmed_by' => false,
+                    'accrued' => false,
+                    'advance_id' => false,
+                ];
+                $invoice = $invoicesTable->patchEntity($invoice, $data, [
+                    'accessibleFields' => $accessibleFields,
+                ]);
                 if ($invoicesTable->save($invoice)) {
                     $this->Flash->success('Anticipo creado.');
 
@@ -212,12 +262,38 @@ class AdvancesController extends AppController
 
         $leg = $invoice->advance_legalization ?? null;
         if (!$leg) {
+            // Branch defensivo: cubre acceso directo por URL a /advances/legalization/{id}
+            // cuando el anticipo todavía no ha sido pagado y por tanto el subscriber
+            // LegalizationInitializerSubscriber aún no ha creado la fila en
+            // advance_legalizations. En el flujo normal, view() redirige aquí solo
+            // cuando la legalización ya existe (audit MA-007).
             $this->Flash->info('La legalización aún no ha iniciado. Espere a que el anticipo esté en estado Pagada.');
 
             return $this->redirect(['action' => 'view', $invoice->id]);
         }
 
-        // Facturas vinculadas
+        $viewModel = $this->_buildLegalizationViewModel($invoice, $leg);
+        $this->set($viewModel);
+        $this->set('actionPolicy', $this->actionPolicy);
+
+        return null;
+    }
+
+    /**
+     * Build the data set passed to templates/Advances/legalization.ctp.
+     *
+     * Centraliza la carga de linked invoices, separación signature actual vs
+     * historial, totales, diff, banking entities y surplus payment para
+     * mantener la action delgada (audit MI-005).
+     *
+     * @return array<string, mixed>
+     */
+    private function _buildLegalizationViewModel(
+        Invoice $invoice,
+        AdvanceLegalization $leg,
+    ): array {
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+
         $linkedInvoices = $invoicesTable->find()
             ->where([
                 'Invoices.document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
@@ -234,20 +310,14 @@ class AdvancesController extends AppController
         $advanceTotal = (float)$invoice->amount;
         $diff = $advanceTotal - $linkedTotal;
 
-        // Documento "Relación de facturas" actual (signature pendiente o firmada más reciente)
+        // Separar signature activa (pendiente o firmada más reciente) del historial.
         $relationDocument = null;
         $signatureHistory = [];
         if ($leg->advance_legalization_signatures) {
             $sigs = $leg->advance_legalization_signatures;
             usort($sigs, fn($a, $b) => $b->id <=> $a->id);
             foreach ($sigs as $sig) {
-                if (
-                    $relationDocument === null && in_array(
-                        $sig->signature_status,
-                        [AdvanceConstants::SIGNATURE_PENDING, AdvanceConstants::SIGNATURE_SIGNED],
-                        true,
-                    )
-                ) {
+                if ($relationDocument === null && ($sig->isPending() || $sig->isSigned())) {
                     $relationDocument = $sig;
                 } else {
                     $signatureHistory[] = $sig;
@@ -255,11 +325,11 @@ class AdvancesController extends AppController
             }
         }
 
-        // Refund payment + banking entities (caso sobrante)
         $bankingEntities = TableRegistry::getTableLocator()->get('BankingEntities')
             ->find('list')
             ->all()
             ->toArray();
+
         $surplusPayment = null;
         if ($leg->surplus_payment_id) {
             $surplusPayment = TableRegistry::getTableLocator()->get('InvoicePayments')->get(
@@ -270,7 +340,7 @@ class AdvancesController extends AppController
 
         $roleName = $this->_getCurrentUser()->role->name ?? '';
 
-        $this->set(compact(
+        return compact(
             'invoice',
             'leg',
             'linkedInvoices',
@@ -282,9 +352,7 @@ class AdvancesController extends AppController
             'bankingEntities',
             'surplusPayment',
             'roleName',
-        ));
-
-        return null;
+        );
     }
 
     /**
@@ -302,6 +370,13 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canLinkInvoices($leg, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
         $userId = (int)$this->_getCurrentUser()->id;
 
         $invoiceIds = (array)$this->request->getData('invoice_ids', []);
@@ -324,6 +399,13 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canUnlinkInvoice($leg, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
         $result = $this->legalizationService->unlinkInvoice($leg, (int)$invoiceId, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
             $this->Flash->success('Factura desvinculada.');
@@ -341,6 +423,20 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canUploadRelationDocument($leg, $roleName)) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse([
+                    'success' => false,
+                    'error' => 'No tienes permiso para esta acción en el estado actual.',
+                ]);
+            }
+
+            return $this->_denyAction((int)$id);
+        }
         $file = $this->request->getUploadedFile('relation_document');
         if (!$file) {
             if ($this->_isJsonRequest()) {
@@ -377,6 +473,13 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canMoveToRevision($leg, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
         $result = $this->legalizationService->moveToRevisionFirmas($leg, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
             $this->Flash->success('Legalización enviada a Revisión y Firmas.');
@@ -394,6 +497,13 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canMarkSigned($leg, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
         $result = $this->legalizationService->markSigned($leg, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
             $this->Flash->success('Documento marcado como firmado.');
@@ -411,6 +521,13 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canReturnToValidacion($leg, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
         $reason = (string)$this->request->getData('reason', '');
         $result = $this->legalizationService->returnToValidacion($leg, $reason, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
@@ -429,6 +546,13 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canMarkExact($leg, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
         $result = $this->legalizationService->markExact($leg, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
             $this->Flash->success('Anticipo legalizado (caso exacto).');
@@ -446,8 +570,17 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
-        $raw = (string)$this->request->getData('shortage_amount');
-        $amount = (float)str_replace([',', '.'], ['.', ''], $raw);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canRegisterShortage($leg, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
+        if (!$this->_ensureExpectedStatus($leg->status)) {
+            return $this->redirect(['action' => 'view', $id]);
+        }
+        $amount = $this->_parseCop((string)$this->request->getData('shortage_amount'));
         $result = $this->legalizationService->registerShortage($leg, $amount, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
             $this->Flash->success('Faltante registrado. La legalización pasó a Tesorería.');
@@ -465,6 +598,20 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canConfirmShortage($leg, $roleName)) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse([
+                    'success' => false,
+                    'error' => 'No tienes permiso para esta acción en el estado actual.',
+                ]);
+            }
+
+            return $this->_denyAction((int)$id);
+        }
         $data = $this->request->getData();
         $data['receipt_file'] = $this->request->getUploadedFile('receipt_file');
         $result = $this->legalizationService->confirmShortageReceipt(
@@ -497,8 +644,17 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
-        $raw = (string)$this->request->getData('surplus_amount');
-        $amount = (float)str_replace([',', '.'], ['.', ''], $raw);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canRegisterSurplus($leg, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
+        if (!$this->_ensureExpectedStatus($leg->status)) {
+            return $this->redirect(['action' => 'view', $id]);
+        }
+        $amount = $this->_parseCop((string)$this->request->getData('surplus_amount'));
         $result = $this->legalizationService->registerSurplus($leg, $amount, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
             $this->Flash->success('Sobrante registrado. La legalización pasó a Tesorería.');
@@ -516,6 +672,13 @@ class AdvancesController extends AppController
     {
         $this->request->allowMethod(['post']);
         $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
+        if (!$this->actionPolicy->canRegisterRefund($leg, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
         $data = $this->request->getData();
         $result = $this->legalizationService->registerRefundPayment(
             $leg,
@@ -533,14 +696,34 @@ class AdvancesController extends AppController
 
     /**
      * Resolve the AdvanceLegalization tied to a given Anticipo invoice id.
+     *
+     * Scope: by design, all users with `advances.edit` see all advances regardless
+     * of operation_center_id. Action-level authorization (rol×state) is enforced
+     * via AdvanceLegalizationActionPolicy before any mutating operation. See audit
+     * 2026-05-05 (MA-002) for the rationale.
+     *
+     * Returns null when no legalization exists for the given anticipo. The caller
+     * uses _redirectMissing() to flash + redirect (audit MI-007), evitando un 404
+     * genérico sin contexto.
      */
-    private function _loadLegalization(int $advanceInvoiceId): AdvanceLegalization
+    private function _loadLegalization(int $advanceInvoiceId): ?AdvanceLegalization
     {
         return TableRegistry::getTableLocator()
             ->get('AdvanceLegalizations')
             ->find()
             ->where(['advance_invoice_id' => $advanceInvoiceId])
-            ->firstOrFail();
+            ->first();
+    }
+
+    /**
+     * Flash de error + redirect a la lista de anticipos cuando _loadLegalization
+     * devuelve null.
+     */
+    private function _redirectMissing(): Response
+    {
+        $this->Flash->error('Legalización no encontrada.');
+
+        return $this->redirect(['action' => 'index']);
     }
 
     /**

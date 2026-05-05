@@ -6,6 +6,7 @@ namespace App\Service\Pipeline;
 use App\Constants\InvoiceConstants;
 use App\Service\InvoiceHistoryService;
 use Cake\ORM\TableRegistry;
+use RuntimeException;
 
 /**
  * Promueve a `legalizada` todas las facturas tipo Legalización vinculadas al
@@ -48,7 +49,15 @@ final class LinkedInvoiceLegalizer
                     $from = $inv->pipeline_status;
                     $inv->pipeline_status = InvoiceConstants::STATUS_LEGALIZADA;
                     if (!$invoicesTable->save($inv)) {
-                        return false;
+                        // Throwing instead of `return false` ensures the rollback
+                        // propagates upstream to AdvanceLegalizationService::_setStatus,
+                        // which wraps the leg save + event dispatch in a transaction.
+                        // See audit 2026-05-05 (CR-004).
+                        throw new RuntimeException(sprintf(
+                            'No se pudo promover la factura #%d: %s',
+                            $inv->id,
+                            json_encode($inv->getErrors()),
+                        ));
                     }
                     $this->historyService->recordStatusChange(
                         $inv->id,
