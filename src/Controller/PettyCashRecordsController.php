@@ -392,14 +392,15 @@ class PettyCashRecordsController extends AppController
             $user->id,
         );
 
-        if ($result['success']) {
-            $nextLabel = PettyCashConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
+        if ($result->success) {
+            $next = $result->data['nextStatus'] ?? '';
+            $nextLabel = PettyCashConstants::STATUS_LABELS[$next] ?? $next;
             $this->Flash->success(sprintf('Registro avanzado a: %s', $nextLabel));
 
             return $this->redirect(['action' => 'index']);
         }
 
-        $this->Flash->error($result['error']);
+        $this->Flash->error($result->firstError() ?? 'No se pudo avanzar el registro.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
@@ -420,15 +421,15 @@ class PettyCashRecordsController extends AppController
             $reason,
         );
 
-        if ($result['success']) {
-            $prevLabel = PettyCashConstants::STATUS_LABELS[$result['previousStatus']]
-                ?? $result['previousStatus'];
+        if ($result->success) {
+            $prev = $result->data['previousStatus'] ?? '';
+            $prevLabel = PettyCashConstants::STATUS_LABELS[$prev] ?? $prev;
             $this->Flash->success(sprintf('Registro regresado a: %s', $prevLabel));
 
             return $this->redirect(['action' => 'index']);
         }
 
-        $this->Flash->error($result['error']);
+        $this->Flash->error($result->firstError() ?? 'No se pudo regresar el registro.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }

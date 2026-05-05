@@ -206,11 +206,11 @@ class PettyCashService
         $advanceWarning = null;
         if (!$record->isPagado() && $this->canAdvance($roleId, $roleName, $record->status)) {
             $advanceResult = $this->advanceStatus($record, $roleId, $roleName, $userId);
-            if (!empty($advanceResult['success'])) {
+            if ($advanceResult->success) {
                 $advanced = true;
-                $nextStatus = $advanceResult['nextStatus'] ?? null;
+                $nextStatus = $advanceResult->data['nextStatus'] ?? null;
             } else {
-                $advanceWarning = $advanceResult['error'] ?? null;
+                $advanceWarning = $advanceResult->firstError();
             }
         }
 
@@ -249,31 +249,31 @@ class PettyCashService
      * @param int $roleId Role ID of the caller (for pipeline authorization).
      * @param string $roleName Role name of the caller (for pipeline authorization).
      * @param int $userId User ID.
-     * @return array
+     * @return \App\Service\ServiceResult on success: data = ['nextStatus' => string]
      */
     public function advanceStatus(
         PettyCashRecord $record,
         int $roleId,
         string $roleName,
         int $userId,
-    ): array {
+    ): ServiceResult {
         $currentStatus = $record->status;
         $nextStatus = PettyCashConstants::TRANSITIONS[$currentStatus] ?? null;
 
         if ($nextStatus === null) {
-            return ['success' => false, 'error' => 'Este registro ya está en su estado final.'];
+            return ServiceResult::fail('Este registro ya está en su estado final.');
         }
 
         if (!$this->canAdvance($roleId, $roleName, $currentStatus)) {
-            return ['success' => false, 'error' => 'No tiene permisos para avanzar este registro.'];
+            return ServiceResult::fail('No tiene permisos para avanzar este registro.');
         }
 
         if ($nextStatus === PettyCashConstants::STATUS_AUT_PAGO) {
-            return ['success' => false, 'error' => 'Debe registrar un pago para avanzar desde Tesorería.'];
+            return ServiceResult::fail('Debe registrar un pago para avanzar desde Tesorería.');
         }
 
         if ($currentStatus === PettyCashConstants::STATUS_AUT_PAGO) {
-            return ['success' => false, 'error' => 'La autorización de pago se gestiona desde la sección de pagos.'];
+            return ServiceResult::fail('La autorización de pago se gestiona desde la sección de pagos.');
         }
 
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
@@ -284,63 +284,71 @@ class PettyCashService
             ->toArray();
 
         if (empty($invoices)) {
-            return ['success' => false, 'error' => 'El registro debe tener al menos una factura agrupada.'];
+            return ServiceResult::fail('El registro debe tener al menos una factura agrupada.');
         }
 
         $validationErrors = $this->_validateTransition($currentStatus, $record);
         if (!empty($validationErrors)) {
-            return [
-                'success' => false,
-                'error' => 'No se puede avanzar. ' . implode('. ', $validationErrors),
-            ];
+            return ServiceResult::fail(
+                'No se puede avanzar. ' . implode('. ', $validationErrors),
+            );
         }
 
         $connection = $invoicesTable->getConnection();
 
-        return $connection->transactional(function () use ($record, $nextStatus, $invoicesTable, $fkField, $userId) {
-            $today = date('Y-m-d');
-            $updateData = [];
+        $advanced = $connection->transactional(
+            function () use ($record, $nextStatus, $invoicesTable, $fkField, $userId): bool {
+                $today = date('Y-m-d');
+                $updateData = [];
 
-            if ($nextStatus === PettyCashConstants::STATUS_CONTABILIDAD) {
-                $updateData = [
-                    'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
-                ];
-            } elseif ($nextStatus === PettyCashConstants::STATUS_TESORERIA) {
-                $updateData = [
-                    'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
-                    'accrued' => (bool)$record->accrued,
-                    'accrual_date' => $record->accrual_date ?? $today,
-                    'ready_for_payment' => $record->ready_for_payment,
-                ];
-            }
-
-            $invoicesBefore = $invoicesTable->find()
-                ->select(['id', 'pipeline_status'])
-                ->where([$fkField => $record->id])
-                ->all()
-                ->toArray();
-
-            if (!empty($updateData)) {
-                $invoicesTable->updateAll(
-                    $updateData,
-                    [$fkField => $record->id],
-                );
-
-                $newPipelineStatus = $updateData['pipeline_status'] ?? null;
-                if ($newPipelineStatus) {
-                    $this->grouped->recordBulkHistory($record->id, $invoicesBefore, $newPipelineStatus, $userId);
+                if ($nextStatus === PettyCashConstants::STATUS_CONTABILIDAD) {
+                    $updateData = [
+                        'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
+                    ];
+                } elseif ($nextStatus === PettyCashConstants::STATUS_TESORERIA) {
+                    $updateData = [
+                        'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
+                        'accrued' => (bool)$record->accrued,
+                        'accrual_date' => $record->accrual_date ?? $today,
+                        'ready_for_payment' => $record->ready_for_payment,
+                    ];
                 }
-            }
 
-            $table = TableRegistry::getTableLocator()->get('PettyCashRecords');
-            $record->status = $nextStatus;
-            $table->save($record);
+                $invoicesBefore = $invoicesTable->find()
+                    ->select(['id', 'pipeline_status'])
+                    ->where([$fkField => $record->id])
+                    ->all()
+                    ->toArray();
 
-            return [
-                'success' => true,
-                'nextStatus' => $nextStatus,
-            ];
-        });
+                if (!empty($updateData)) {
+                    $invoicesTable->updateAll(
+                        $updateData,
+                        [$fkField => $record->id],
+                    );
+
+                    $newPipelineStatus = $updateData['pipeline_status'] ?? null;
+                    if ($newPipelineStatus) {
+                        $this->grouped->recordBulkHistory(
+                            $record->id,
+                            $invoicesBefore,
+                            $newPipelineStatus,
+                            $userId,
+                        );
+                    }
+                }
+
+                $table = TableRegistry::getTableLocator()->get('PettyCashRecords');
+                $record->status = $nextStatus;
+
+                return (bool)$table->save($record);
+            },
+        );
+
+        if (!$advanced) {
+            return ServiceResult::fail('No se pudo avanzar el registro.');
+        }
+
+        return ServiceResult::ok(['nextStatus' => $nextStatus]);
     }
 
     /**
@@ -711,7 +719,7 @@ class PettyCashService
      * Propagates the change to child invoices for contabilidad and tesoreria,
      * and stores the reason as a typed observation.
      *
-     * @return array{success: bool, error: ?string, previousStatus: ?string}
+     * @return \App\Service\ServiceResult on success: data = ['previousStatus' => string]
      */
     public function regress(
         PettyCashRecord $record,
@@ -719,7 +727,7 @@ class PettyCashService
         string $roleName,
         int $userId,
         string $reason,
-    ): array {
+    ): ServiceResult {
         $reason = trim($reason);
         $currentStatus = $record->status;
 
@@ -729,27 +737,19 @@ class PettyCashService
                 ? 'Este registro ya está en el primer paso del flujo.'
                 : 'No tiene permisos para regresar este registro.';
 
-            return ['success' => false, 'error' => $error, 'previousStatus' => null];
+            return ServiceResult::fail($error);
         }
 
         $lock = $this->getRegressionLockMessage($record);
         if ($lock !== null) {
-            return ['success' => false, 'error' => $lock, 'previousStatus' => null];
+            return ServiceResult::fail($lock);
         }
 
         if (mb_strlen($reason) < 10) {
-            return [
-                'success' => false,
-                'error' => 'El motivo es obligatorio (mínimo 10 caracteres).',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail('El motivo es obligatorio (mínimo 10 caracteres).');
         }
         if (mb_strlen($reason) > 500) {
-            return [
-                'success' => false,
-                'error' => 'El motivo no puede superar 500 caracteres.',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail('El motivo no puede superar 500 caracteres.');
         }
 
         $previousStatus = $this->getPreviousStatus($currentStatus);
@@ -820,13 +820,9 @@ class PettyCashService
         );
 
         if (!$ok) {
-            return [
-                'success' => false,
-                'error' => 'No se pudo regresar el registro. Intente de nuevo.',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail('No se pudo regresar el registro. Intente de nuevo.');
         }
 
-        return ['success' => true, 'error' => null, 'previousStatus' => $previousStatus];
+        return ServiceResult::ok(['previousStatus' => $previousStatus]);
     }
 }
