@@ -3,18 +3,18 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
+use App\Model\Entity\Refund;
 use App\Service\PipelineAuthorizationService;
 use App\Service\RefundDocumentService;
+use App\Service\RefundPaymentService;
 use App\Service\RefundService;
-use Cake\I18n\Date;
+use Cake\Http\Response;
 use Cake\ORM\Query\SelectQuery;
 use Cake\Routing\Router;
-use DateTimeInterface;
 
 class RefundsController extends AppController
 {
@@ -24,6 +24,7 @@ class RefundsController extends AppController
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     private RefundService $refundService;
+    private RefundPaymentService $paymentService;
     private PipelineAuthorizationService $pipelineAuth;
     private RefundDocumentService $documentService;
 
@@ -35,6 +36,7 @@ class RefundsController extends AppController
         parent::initialize();
         $container = $this->getContainer();
         $this->refundService = $container->get(RefundService::class);
+        $this->paymentService = $container->get(RefundPaymentService::class);
         $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
         $this->documentService = $container->get(RefundDocumentService::class);
     }
@@ -42,6 +44,67 @@ class RefundsController extends AppController
     private function _getCurrentUser(): object
     {
         return $this->Authentication->getIdentity()->getOriginalData();
+    }
+
+    /**
+     * True si el rol del usuario actual puede operar en el step indicado del
+     * pipeline de reembolsos. Se usa para gates de upload/delete de soportes.
+     */
+    private function _canOperateRefundStep(string $step): bool
+    {
+        $user = $this->_getCurrentUser();
+
+        return $this->pipelineAuth->canOperate(
+            (int)$user->role_id,
+            $this->_getUserRoleName($user),
+            PipelineStepConstants::PIPELINE_REFUNDS,
+            $step,
+        );
+    }
+
+    /**
+     * Gate compartido entre uploadDocument/deleteDocument: verifica que el
+     * reintegro no esté pagado y que el rol pueda operar el step actual.
+     * Devuelve la Response apropiada (JSON con HTTP 403 o redirect con flash)
+     * cuando el gate falla, o null cuando puede continuar.
+     */
+    private function _documentGate(Refund $record, string $blockedActionLabel): ?Response
+    {
+        if ($record->isPagado()) {
+            return $this->_documentGateError(
+                sprintf('No se puede %s un soporte de un reintegro pagado.', $blockedActionLabel),
+                $record->id,
+                statusCode: 409,
+            );
+        }
+
+        if (!$this->_canOperateRefundStep($record->status)) {
+            return $this->_documentGateError(
+                'No tiene permisos para gestionar soportes en este paso.',
+                $record->id,
+                statusCode: 403,
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * Construye la respuesta de error del gate de documentos. JSON con status
+     * HTTP apropiado para AJAX, redirect con flash para POST tradicional.
+     */
+    private function _documentGateError(string $message, int $refundId, int $statusCode): Response
+    {
+        if ($this->_isJsonRequest()) {
+            return $this->_jsonResponse(
+                ['success' => false, 'error' => $message],
+                $statusCode,
+            );
+        }
+
+        $this->Flash->error($message);
+
+        return $this->redirect(['action' => 'edit', $refundId]);
     }
 
     /**
@@ -113,17 +176,32 @@ class RefundsController extends AppController
         $params = $this->request->getQueryParams();
 
         if (!empty($params['code'])) {
-            $query->where(['Refunds.code LIKE' => '%' . $params['code'] . '%']);
+            // Escapar wildcards SQL para evitar abuso (DoS por LIKE costoso,
+            // bypass de filtro). El backslash debe escaparse primero.
+            $code = (string)$params['code'];
+            $escaped = strtr($code, ['\\' => '\\\\', '%' => '\\%', '_' => '\\_']);
+            $query->where(['Refunds.code LIKE' => '%' . $escaped . '%']);
         }
-        if (!$skipStatus && !empty($params['status'])) {
+        if (
+            !$skipStatus
+            && !empty($params['status'])
+            && in_array($params['status'], array_keys(RefundConstants::STATUS_LABELS), true)
+        ) {
             $query->where(['Refunds.status' => $params['status']]);
         }
-        if (!empty($params['date_from'])) {
-            $query->where(['Refunds.created >=' => $params['date_from']]);
+        if (!empty($params['date_from']) && self::_isValidDate((string)$params['date_from'])) {
+            $query->where(['Refunds.created >=' => $params['date_from'] . ' 00:00:00']);
         }
-        if (!empty($params['date_to'])) {
+        if (!empty($params['date_to']) && self::_isValidDate((string)$params['date_to'])) {
             $query->where(['Refunds.created <=' => $params['date_to'] . ' 23:59:59']);
         }
+    }
+
+    private static function _isValidDate(string $value): bool
+    {
+        $d = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
+
+        return $d !== false && $d->format('Y-m-d') === $value;
     }
 
     public function view($id = null): void
@@ -165,8 +243,6 @@ class RefundsController extends AppController
 
             $record = $this->Refunds->patchEntity($record, [
                 'operation_center_id' => $data['operation_center_id'] ?? null,
-                'status' => RefundConstants::STATUS_AGRUPACION,
-                'total_amount' => 0,
                 'beneficiary_type' => $beneficiaryType ?: null,
                 'beneficiary_employee_id' => $beneficiaryType === RefundConstants::BENEFICIARY_TYPE_EMPLOYEE
                     ? $beneficiaryEmployeeId
@@ -174,8 +250,11 @@ class RefundsController extends AppController
                 'beneficiary_provider_id' => $beneficiaryType === RefundConstants::BENEFICIARY_TYPE_PROVIDER
                     ? $beneficiaryProviderId
                     : null,
-                'created_by' => $user->id,
             ]);
+            // Campos protegidos (no mass-assignable) se asignan directamente.
+            $record->status = RefundConstants::STATUS_AGRUPACION;
+            $record->total_amount = 0;
+            $record->created_by = $user->id;
 
             if ($this->Refunds->save($record)) {
                 $this->Flash->success('Reintegro creado exitosamente.');
@@ -265,9 +344,8 @@ class RefundsController extends AppController
                     $submittedDate = !empty($data['accrual_date']) ? $data['accrual_date'] : null;
                     if (empty($submittedDate)) {
                         $this->Flash->error('La fecha de causación es requerida cuando el registro está marcado como causado.');
-                        $this->redirect(['action' => 'edit', $id]);
 
-                        return;
+                        return $this->redirect(['action' => 'edit', $id]);
                     }
                     $patchData['accrual_date'] = $submittedDate;
                 } else {
@@ -278,7 +356,20 @@ class RefundsController extends AppController
 
             if (!empty($patchData)) {
                 $record = $this->Refunds->patchEntity($record, $patchData);
-                $this->Refunds->save($record);
+                if (!$this->Refunds->save($record)) {
+                    $errors = [];
+                    foreach ($record->getErrors() as $field => $fieldErrors) {
+                        foreach ($fieldErrors as $msg) {
+                            $errors[] = "$field: $msg";
+                        }
+                    }
+                    $this->Flash->error(
+                        'No se pudo guardar el registro.'
+                        . (!empty($errors) ? ' ' . implode(', ', $errors) : ''),
+                    );
+
+                    return $this->redirect(['action' => 'edit', $id]);
+                }
             }
 
             // Add invoices (only in agrupacion)
@@ -292,10 +383,13 @@ class RefundsController extends AppController
 
             // Try to advance automatically (save + advance unified)
             $user = $this->_getCurrentUser();
-            $canAdvance = !$record->isPagado() && (RefundConstants::TRANSITIONS[$record->status] ?? null) !== null;
             $advanced = false;
-            if ($canAdvance) {
-                $result = $this->refundService->advanceStatus($record, $user->id);
+            if ($record->canAdvancePipeline()) {
+                $result = $this->refundService->advanceStatus(
+                    $record,
+                    (int)$user->id,
+                    (int)$user->role_id,
+                );
                 if ($result['success']) {
                     $advanced = true;
                     $nextLabel = RefundConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
@@ -308,7 +402,11 @@ class RefundsController extends AppController
                 $this->Flash->success('Registro actualizado.');
             }
 
-            return $this->redirect(['action' => $advanced ? 'index' : 'edit', ...($advanced ? [] : [$id])]);
+            if ($advanced) {
+                return $this->redirect(['action' => 'index']);
+            }
+
+            return $this->redirect(['action' => 'edit', $id]);
         }
 
         // Compute advance errors for the view (to decide button label)
@@ -340,35 +438,9 @@ class RefundsController extends AppController
             RefundConstants::STATUS_AUT_PAGO,
         );
 
-        // Synthesize a pseudo-payment from record columns so the shared
-        // payment_section element can render it. Reintegro stores a single
-        // bulk payment as columns on the record itself (not in a payments table).
-        $syntheticPayments = [];
-        if (!empty($record->banking_entity_id)) {
-            $isAuthorized = $record->isPagado();
-            $syntheticPayments[] = (object)[
-                'id' => $record->id,
-                'banking_entity' => $record->banking_entity,
-                'amount' => $record->payment_amount,
-                'payment_date' => $record->payment_date instanceof DateTimeInterface
-                    ? $record->payment_date
-                    : (is_string($record->payment_date) && $record->payment_date !== ''
-                        ? new Date($record->payment_date)
-                        : null),
-                'status' => $isAuthorized
-                    ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED
-                    : InvoiceConstants::PAYMENT_RECORD_PENDING,
-                'authorized' => $isAuthorized,
-                'authorized_by_user' => $record->payment_authorized_by_user ?? null,
-                'authorized_date' => $record->payment_authorized_date instanceof DateTimeInterface
-                    ? $record->payment_authorized_date
-                    : null,
-                'created_by_user' => $record->payment_created_by_user ?? null,
-                'rejection_reason' => null,
-            ];
-        }
+        $syntheticPayments = $this->refundService->buildSyntheticPayments($record);
 
-        $canRegress = $this->refundService->canRegress((int)$this->_getCurrentUser()->role_id, $roleName, $record->status);
+        $canRegress = $this->refundService->canRegress((int)$user->role_id, $record->status);
         $previousStatus = $this->refundService->getPreviousStatus($record->status);
         $regressLockMessage = $this->refundService->getRegressionLockMessage($record);
         $pipelineLabels = RefundConstants::STATUS_LABELS;
@@ -407,7 +479,11 @@ class RefundsController extends AppController
 
         $user = $this->_getCurrentUser();
 
-        $result = $this->refundService->advanceStatus($record, $user->id);
+        $result = $this->refundService->advanceStatus(
+            $record,
+            (int)$user->id,
+            (int)$user->role_id,
+        );
 
         if ($result['success']) {
             $nextLabel = RefundConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
@@ -425,14 +501,17 @@ class RefundsController extends AppController
     {
         $this->request->allowMethod(['post']);
         $record = $this->Refunds->get($id);
+
+        if (!$this->_ensureExpectedStatus($record->status)) {
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
         $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
         $reason = trim((string)$this->request->getData('reason', ''));
 
         $result = $this->refundService->regress(
             $record,
             (int)$user->role_id,
-            $roleName,
             (int)$user->id,
             $reason,
         );
@@ -462,10 +541,11 @@ class RefundsController extends AppController
             $data['payment_amount'] = $data['amount'];
         }
 
-        $result = $this->refundService->registerPayment(
+        $result = $this->paymentService->registerPayment(
             (int)$id,
             $data,
-            $user->id,
+            (int)$user->id,
+            (int)$user->role_id,
         );
 
         if ($result->success) {
@@ -482,7 +562,11 @@ class RefundsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        $result = $this->refundService->authorizePayment((int)$id, $user->id);
+        $result = $this->paymentService->authorizePayment(
+            (int)$id,
+            (int)$user->id,
+            (int)$user->role_id,
+        );
 
         if ($result->success) {
             $this->Flash->success($result->data ?? 'Pago autorizado.');
@@ -505,7 +589,12 @@ class RefundsController extends AppController
         }
 
         $user = $this->_getCurrentUser();
-        $result = $this->refundService->rejectPayment((int)$id, $user->id, $reason);
+        $result = $this->paymentService->rejectPayment(
+            (int)$id,
+            (int)$user->id,
+            $reason,
+            (int)$user->role_id,
+        );
 
         if ($result->success) {
             $this->Flash->success($result->data ?? 'Pago rechazado.');
@@ -521,7 +610,7 @@ class RefundsController extends AppController
         $this->request->allowMethod(['post', 'delete']);
         $record = $this->Refunds->get($id);
 
-        if (!$this->refundService->canDelete($record)) {
+        if (!$record->canBeDeleted()) {
             $this->Flash->error('Solo se pueden eliminar registros en estado Agrupación.');
 
             return $this->redirect(['action' => 'index']);
@@ -598,32 +687,34 @@ class RefundsController extends AppController
         );
     }
 
+    /**
+     * Sube un soporte al reintegro.
+     *
+     * Doble enforcement de RBAC (defensa en profundidad):
+     * 1. `AppController::_enforcePermission` ya valida `refunds.can_create`
+     *    para esta acción (mapeo `uploadDocument` → `add` en
+     *    `_actionToPermission`). Sin ese permiso de módulo el request es
+     *    rechazado con 403 antes de entrar al método.
+     * 2. `_canOperateRefundStep` valida que el rol tenga permiso de pipeline
+     *    para operar en el step actual del reintegro.
+     */
     public function uploadDocument($id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->Refunds->get($id);
 
-        if ($record->isPagado()) {
-            if ($this->_isJsonRequest()) {
-                return $this->_jsonResponse([
-                    'success' => false,
-                    'error' => 'No se puede subir soportes a un reintegro pagado.',
-                ]);
-            }
-            $this->Flash->error('No se puede subir soportes a un reintegro pagado.');
-
-            return $this->redirect(['action' => 'edit', $id]);
+        $gate = $this->_documentGate($record, 'subir');
+        if ($gate !== null) {
+            return $gate;
         }
 
         $file = $this->request->getUploadedFile('file');
         if (!$file) {
+            $msg = 'No se recibió ningún archivo válido.';
             if ($this->_isJsonRequest()) {
-                return $this->_jsonResponse([
-                    'success' => false,
-                    'error' => 'No se recibió ningún archivo válido.',
-                ]);
+                return $this->_jsonResponse(['success' => false, 'error' => $msg], 400);
             }
-            $this->Flash->error('No se recibió ningún archivo válido.');
+            $this->Flash->error($msg);
 
             return $this->redirect(['action' => 'edit', $id]);
         }
@@ -638,7 +729,7 @@ class RefundsController extends AppController
 
         if ($this->_isJsonRequest()) {
             if (is_string($result)) {
-                return $this->_jsonResponse(['success' => false, 'error' => $result]);
+                return $this->_jsonResponse(['success' => false, 'error' => $result], 400);
             }
 
             $canDelete = !$record->isPagado();
@@ -661,30 +752,37 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * Elimina un soporte del reintegro.
+     *
+     * Doble enforcement de RBAC (defensa en profundidad):
+     * 1. `AppController::_enforcePermission` ya valida `refunds.can_delete`
+     *    para esta acción (mapeo `deleteDocument` → `delete` en
+     *    `_actionToPermission`).
+     * 2. `_canOperateRefundStep` valida permiso de pipeline para el step
+     *    actual; el servicio además valida la pertenencia del documento al
+     *    refund (anti-IDOR).
+     */
     public function deleteDocument($refundId = null, $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $record = $this->Refunds->get($refundId);
 
-        if ($record->isPagado()) {
-            if ($this->_isJsonRequest()) {
-                return $this->_jsonResponse([
-                    'success' => false,
-                    'error' => 'No se puede eliminar un soporte de un reintegro pagado.',
-                ]);
-            }
-            $this->Flash->error('No se puede eliminar un soporte de un reintegro pagado.');
-
-            return $this->redirect(['action' => 'edit', $refundId]);
+        $gate = $this->_documentGate($record, 'eliminar');
+        if ($gate !== null) {
+            return $gate;
         }
 
-        $deleted = $this->documentService->deleteDocument((int)$documentId);
+        $deleted = $this->documentService->deleteDocument((int)$documentId, (int)$refundId);
 
         if ($this->_isJsonRequest()) {
+            if ($deleted) {
+                return $this->_jsonResponse(['success' => true]);
+            }
+
             return $this->_jsonResponse(
-                $deleted
-                    ? ['success' => true]
-                    : ['success' => false, 'error' => 'No se pudo eliminar el soporte.'],
+                ['success' => false, 'error' => 'No se pudo eliminar el soporte.'],
+                404,
             );
         }
 

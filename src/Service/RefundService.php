@@ -4,16 +4,21 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
-use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\Refund;
+use App\Service\Dto\RefundSyntheticPayment;
 use App\Service\Interface\HistoryServiceInterface;
+use App\Service\Trait\RefundPipelineHelpersTrait;
+use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
+use DateTimeInterface;
 
 class RefundService
 {
+    use RefundPipelineHelpersTrait;
+
     // Active refund statuses (excludes pagado — terminal para "Mis Registros").
     private const ACTIVE_STATUSES = [
         RefundConstants::STATUS_AGRUPACION,
@@ -24,29 +29,31 @@ class RefundService
 
     // Which refund statuses each role sees in "Mis Registros".
     private const ROLE_VISIBLE_STATUSES = [
-        RoleConstants::REGISTRO_REVISION  => [RefundConstants::STATUS_AGRUPACION],
-        RoleConstants::CONTABILIDAD       => [RefundConstants::STATUS_CONTABILIDAD],
-        RoleConstants::TESORERIA          => [
+        RoleConstants::REGISTRO_REVISION => [RefundConstants::STATUS_AGRUPACION],
+        RoleConstants::CONTABILIDAD => [RefundConstants::STATUS_CONTABILIDAD],
+        RoleConstants::TESORERIA => [
             RefundConstants::STATUS_TESORERIA,
             RefundConstants::STATUS_AUT_PAGO,
         ],
-        RoleConstants::CONTADOR           => [RefundConstants::STATUS_AUT_PAGO],
-        RoleConstants::AUXILIAR_PERSONAL  => self::ACTIVE_STATUSES,
+        RoleConstants::CONTADOR => [RefundConstants::STATUS_AUT_PAGO],
+        RoleConstants::AUXILIAR_PERSONAL => self::ACTIVE_STATUSES,
         RoleConstants::ASISTENTE_PERSONAL => self::ACTIVE_STATUSES,
-        RoleConstants::COORDINADOR_ADMIN  => self::ACTIVE_STATUSES,
-        RoleConstants::ADMIN              => self::ACTIVE_STATUSES,
+        RoleConstants::COORDINADOR_ADMIN => self::ACTIVE_STATUSES,
+        RoleConstants::ADMIN => self::ACTIVE_STATUSES,
     ];
 
     private GroupedInvoiceService $grouped;
-    private PipelineAuthorizationService $pipelineAuth;
+    private RefundHistoryService $refundHistory;
 
     /**
-     * @param \App\Service\Interface\HistoryServiceInterface $historyService History service.
-     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth
+     * @param \App\Service\Interface\HistoryServiceInterface $historyService History service for child invoices.
+     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth Pipeline authorization service.
+     * @param \App\Service\RefundHistoryService|null $refundHistory Refund-specific audit trail.
      */
     public function __construct(
         HistoryServiceInterface $historyService,
         ?PipelineAuthorizationService $pipelineAuth = null,
+        ?RefundHistoryService $refundHistory = null,
     ) {
         $this->grouped = new GroupedInvoiceService(
             documentType: InvoiceConstants::DOCTYPE_REINTEGRO,
@@ -56,6 +63,7 @@ class RefundService
             historyService: $historyService,
         );
         $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+        $this->refundHistory = $refundHistory ?? new RefundHistoryService();
     }
 
     /**
@@ -116,9 +124,10 @@ class RefundService
     /**
      * @param \App\Model\Entity\Refund $record Record.
      * @param int $userId User ID.
-     * @return array
+     * @param int $roleId Role ID (para enforcement RBAC).
+     * @return array{success: bool, error?: string, nextStatus?: string}
      */
-    public function advanceStatus(Refund $record, int $userId): array
+    public function advanceStatus(Refund $record, int $userId, int $roleId): array
     {
         $currentStatus = $record->status;
         $nextStatus = RefundConstants::TRANSITIONS[$currentStatus] ?? null;
@@ -135,15 +144,8 @@ class RefundService
             return ['success' => false, 'error' => 'La autorización de pago se gestiona desde la sección de pagos.'];
         }
 
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $fkField = $this->grouped->getFkField();
-        $invoices = $invoicesTable->find()
-            ->where([$fkField => $record->id])
-            ->all()
-            ->toArray();
-
-        if (empty($invoices)) {
-            return ['success' => false, 'error' => 'El registro debe tener al menos una factura agrupada.'];
+        if (!$this->_canOperate($roleId, $currentStatus)) {
+            return ['success' => false, 'error' => 'No tiene permisos para avanzar este registro.'];
         }
 
         $validationErrors = $this->_validateTransition($currentStatus, $record);
@@ -154,10 +156,55 @@ class RefundService
             ];
         }
 
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $recordsTable = TableRegistry::getTableLocator()->get('Refunds');
+        $fkField = $this->grouped->getFkField();
         $connection = $invoicesTable->getConnection();
 
-        return $connection->transactional(function () use ($record, $nextStatus, $invoicesTable, $fkField, $userId) {
-            $today = date('Y-m-d');
+        // Capturado por referencia: la closure retorna `false` para forzar
+        // rollback en caso de error y dejamos el resultado final aquí.
+        $finalResult = null;
+
+        $connection->transactional(function () use (
+            $record,
+            $currentStatus,
+            $nextStatus,
+            $invoicesTable,
+            $recordsTable,
+            $fkField,
+            $userId,
+            &$finalResult,
+        ): bool {
+            // Lock pesimista + revalidación TOCTOU.
+            $locked = $recordsTable->find()
+                ->where(['id' => $record->id])
+                ->epilog('FOR UPDATE')
+                ->first();
+            if ($locked === null || $locked->status !== $currentStatus) {
+                $finalResult = [
+                    'success' => false,
+                    'error' => 'El registro fue modificado por otro usuario. Recargue la página.',
+                ];
+
+                return false;
+            }
+
+            // Conteo de facturas hijas DENTRO del lock — evita TOCTOU si una
+            // request concurrente desvinculó la última factura entre el chequeo
+            // inicial y el FOR UPDATE.
+            $hasInvoices = $invoicesTable->find()
+                ->where([$fkField => $record->id])
+                ->count() > 0;
+            if (!$hasInvoices) {
+                $finalResult = [
+                    'success' => false,
+                    'error' => 'El registro debe tener al menos una factura agrupada.',
+                ];
+
+                return false;
+            }
+
+            $today = self::_today();
             $updateData = [];
 
             if ($nextStatus === RefundConstants::STATUS_CONTABILIDAD) {
@@ -165,21 +212,24 @@ class RefundService
                     'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
                 ];
             } elseif ($nextStatus === RefundConstants::STATUS_TESORERIA) {
+                // Snapshot bajo lock — evita propagar valores stale si otro
+                // proceso editó accrued/accrual_date/ready_for_payment entre
+                // el get() inicial y el FOR UPDATE.
                 $updateData = [
                     'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
-                    'accrued' => (bool)$record->accrued,
-                    'accrual_date' => $record->accrual_date ?? $today,
-                    'ready_for_payment' => $record->ready_for_payment,
+                    'accrued' => (bool)$locked->accrued,
+                    'accrual_date' => $locked->accrual_date ?? $today,
+                    'ready_for_payment' => $locked->ready_for_payment,
                 ];
             }
 
-            $invoicesBefore = $invoicesTable->find()
-                ->select(['id', 'pipeline_status'])
-                ->where([$fkField => $record->id])
-                ->all()
-                ->toArray();
-
             if (!empty($updateData)) {
+                $invoicesBefore = $invoicesTable->find()
+                    ->select(['id', 'pipeline_status'])
+                    ->where([$fkField => $record->id])
+                    ->all()
+                    ->toArray();
+
                 $invoicesTable->updateAll(
                     $updateData,
                     [$fkField => $record->id],
@@ -191,15 +241,79 @@ class RefundService
                 }
             }
 
-            $table = TableRegistry::getTableLocator()->get('Refunds');
-            $record->status = $nextStatus;
-            $table->save($record);
+            $locked->status = $nextStatus;
+            if (!$recordsTable->save($locked)) {
+                $finalResult = [
+                    'success' => false,
+                    'error' => self::_buildSaveErrorMessage(
+                        'No se pudo guardar el avance del registro.',
+                        $locked->getErrors(),
+                    ),
+                ];
 
-            return [
-                'success' => true,
-                'nextStatus' => $nextStatus,
-            ];
+                return false;
+            }
+            $record->status = $nextStatus;
+            $this->refundHistory->recordStatusChange($record->id, $currentStatus, $nextStatus, $userId);
+
+            $finalResult = ['success' => true, 'nextStatus' => $nextStatus];
+
+            return true;
         });
+
+        return $finalResult ?? ['success' => false, 'error' => 'No se pudo guardar el avance del registro.'];
+    }
+
+    /**
+     * Construye una representación uniforme del pago bulk del registro para
+     * que la vista pueda reusar el element compartido `payment_section`.
+     *
+     * Reintegro guarda un único pago como columnas en la tabla `refunds` (no
+     * tiene tabla de pagos propia); este método materializa esas columnas en
+     * la forma que espera el element.
+     *
+     * @return array<int, \App\Service\Dto\RefundSyntheticPayment> 0 o 1 elementos.
+     */
+    public function buildSyntheticPayments(Refund $record): array
+    {
+        if (empty($record->banking_entity_id)) {
+            return [];
+        }
+
+        $isAuthorized = $record->isPagado();
+
+        return [
+            new RefundSyntheticPayment(
+                id: $record->id,
+                banking_entity: $record->banking_entity ?? null,
+                amount: $record->payment_amount,
+                payment_date: self::_normalizeDate($record->payment_date),
+                status: $isAuthorized
+                    ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED
+                    : InvoiceConstants::PAYMENT_RECORD_PENDING,
+                authorized: $isAuthorized,
+                authorized_by_user: $record->payment_authorized_by_user ?? null,
+                authorized_date: self::_normalizeDate($record->payment_authorized_date),
+                created_by_user: $record->payment_created_by_user ?? null,
+                rejection_reason: null,
+            ),
+        ];
+    }
+
+    /**
+     * Normaliza un valor de fecha a un DateTimeInterface o null. Acepta
+     * instancias DateTimeInterface (passthrough) o strings ISO no vacíos.
+     */
+    private static function _normalizeDate(mixed $value): ?DateTimeInterface
+    {
+        if ($value instanceof DateTimeInterface) {
+            return $value;
+        }
+        if (is_string($value) && $value !== '') {
+            return new Date($value);
+        }
+
+        return null;
     }
 
     /**
@@ -267,182 +381,6 @@ class RefundService
     }
 
     /**
-     * @param \App\Model\Entity\Refund $record Record.
-     * @return bool
-     */
-    public function canDelete(Refund $record): bool
-    {
-        return $record->isAgrupacion();
-    }
-
-    /**
-     * Register a pending payment for a refund record in Tesorería.
-     * Moves the record to Aut. Pago.
-     *
-     * @param int $recordId Record ID.
-     * @param array $data Payment data (banking_entity_id, payment_amount, payment_date).
-     * @param int $createdBy User ID registering the payment.
-     * @return \App\Service\ServiceResult
-     */
-    public function registerPayment(int $recordId, array $data, int $createdBy): ServiceResult
-    {
-        $recordsTable = TableRegistry::getTableLocator()->get('Refunds');
-        $record = $recordsTable->get($recordId);
-
-        if ($record->status !== RefundConstants::STATUS_TESORERIA) {
-            return ServiceResult::fail('Solo se pueden registrar pagos en estado Tesorería.');
-        }
-
-        if (!empty($record->banking_entity_id)) {
-            return ServiceResult::fail('Ya existe un pago pendiente de autorización.');
-        }
-
-        $record = $recordsTable->patchEntity($record, [
-            'banking_entity_id' => $data['banking_entity_id'] ?? null,
-            'payment_amount' => $data['payment_amount'] ?? null,
-            'payment_date' => $data['payment_date'] ?? null,
-            'payment_created_by' => $createdBy,
-            'payment_rejection_reason' => null,
-            'status' => RefundConstants::STATUS_AUT_PAGO,
-        ]);
-
-        if (!$recordsTable->save($record)) {
-            $errors = [];
-            foreach ($record->getErrors() as $field => $fieldErrors) {
-                foreach ($fieldErrors as $msg) {
-                    $errors[] = "$field: $msg";
-                }
-            }
-
-            $msg = 'No se pudo registrar el pago.';
-            if (!empty($errors)) {
-                $msg .= ' ' . implode(', ', $errors);
-            }
-
-            return ServiceResult::fail($msg);
-        }
-
-        return ServiceResult::ok('Pago registrado. Registro avanzado a Autorización de Pago.');
-    }
-
-    /**
-     * Authorize a pending refund payment.
-     * Materializes invoice_payments for child invoices and moves record to Pagado.
-     *
-     * @param int $recordId Record ID.
-     * @param int $authorizedBy User ID authorizing.
-     * @return \App\Service\ServiceResult
-     */
-    public function authorizePayment(int $recordId, int $authorizedBy): ServiceResult
-    {
-        $recordsTable = TableRegistry::getTableLocator()->get('Refunds');
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $invoicePaymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
-
-        $record = $recordsTable->get($recordId);
-
-        if ($record->status !== RefundConstants::STATUS_AUT_PAGO) {
-            return ServiceResult::fail('El registro no está en estado Autorización de Pago.');
-        }
-
-        if (empty($record->banking_entity_id)) {
-            return ServiceResult::fail('No hay un pago pendiente para autorizar.');
-        }
-
-        $connection = $recordsTable->getConnection();
-
-        $ok = $connection->transactional(function () use (
-            $record,
-            $authorizedBy,
-            $recordsTable,
-            $invoicesTable,
-            $invoicePaymentsTable,
-        ) {
-            $childInvoices = $invoicesTable->find()
-                ->where(['refund_id' => $record->id])
-                ->all();
-
-            foreach ($childInvoices as $invoice) {
-                if ((float)$invoice->amount <= 0) {
-                    continue;
-                }
-
-                $invoicePayment = $invoicePaymentsTable->newEntity([
-                    'invoice_id' => $invoice->id,
-                    'banking_entity_id' => $record->banking_entity_id,
-                    'amount' => $invoice->amount,
-                    'payment_date' => $record->payment_date,
-                    'refund_id' => $record->id,
-                    'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
-                    'authorized' => true,
-                    'authorized_by' => $authorizedBy,
-                    'authorized_date' => date('Y-m-d'),
-                    'created_by' => $record->payment_created_by,
-                ]);
-
-                if (!$invoicePaymentsTable->save($invoicePayment)) {
-                    return false;
-                }
-
-                $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
-                $invoice->payment_status = InvoiceConstants::PAYMENT_FULL;
-                $invoice->full_payment_date = $record->payment_date;
-
-                if (!$invoicesTable->save($invoice)) {
-                    return false;
-                }
-            }
-
-            $record->status = RefundConstants::STATUS_PAGADO;
-            $record->payment_status = InvoiceConstants::PAYMENT_FULL;
-            $record->payment_authorized_by = $authorizedBy;
-            $record->payment_authorized_date = date('Y-m-d');
-
-            return (bool)$recordsTable->save($record);
-        });
-
-        if ($ok === false) {
-            return ServiceResult::fail('No se pudo autorizar el pago.');
-        }
-
-        return ServiceResult::ok('Pago autorizado. Registro marcado como Pagado.');
-    }
-
-    /**
-     * Reject a pending refund payment.
-     * Clears pending fields and returns record to Tesorería with rejection reason.
-     *
-     * @param int $recordId Record ID.
-     * @param int $rejectedBy User ID rejecting (currently unused, reserved for audit).
-     * @param string $reason Rejection reason (required).
-     * @return \App\Service\ServiceResult
-     */
-    public function rejectPayment(int $recordId, int $rejectedBy, string $reason): ServiceResult
-    {
-        $recordsTable = TableRegistry::getTableLocator()->get('Refunds');
-        $record = $recordsTable->get($recordId);
-
-        if ($record->status !== RefundConstants::STATUS_AUT_PAGO) {
-            return ServiceResult::fail('Solo se pueden rechazar pagos en estado Autorización de Pago.');
-        }
-
-        $record = $recordsTable->patchEntity($record, [
-            'banking_entity_id' => null,
-            'payment_amount' => null,
-            'payment_date' => null,
-            'payment_created_by' => null,
-            'payment_rejection_reason' => $reason,
-            'status' => RefundConstants::STATUS_TESORERIA,
-        ]);
-
-        if (!$recordsTable->save($record)) {
-            return ServiceResult::fail('No se pudo rechazar el pago.');
-        }
-
-        return ServiceResult::ok('Pago rechazado. Registro devuelto a Tesorería.');
-    }
-
-    /**
      * Returns the previous pipeline status, or null if no predecessor exists
      * or the state is excluded from regression.
      */
@@ -454,18 +392,13 @@ class RefundService
     /**
      * Returns true if the role can regress the record from the current status.
      */
-    public function canRegress(int $roleId, string $roleName, string $currentStatus): bool
+    public function canRegress(int $roleId, string $currentStatus): bool
     {
         if ($this->getPreviousStatus($currentStatus) === null) {
             return false;
         }
 
-        return $this->pipelineAuth->canOperate(
-            $roleId,
-            $roleName,
-            PipelineStepConstants::PIPELINE_REFUNDS,
-            $currentStatus,
-        );
+        return $this->_canOperate($roleId, $currentStatus);
     }
 
     /**
@@ -478,7 +411,8 @@ class RefundService
             $record->status === RefundConstants::STATUS_TESORERIA
             && !empty($record->payment_amount)
         ) {
-            return 'No se puede regresar a Contabilidad: existe un pago pendiente registrado. Anule o reasigne el pago primero.';
+            return 'No se puede regresar a Contabilidad: existe un pago pendiente registrado.'
+                . ' Anule o reasigne el pago primero.';
         }
 
         return null;
@@ -494,14 +428,13 @@ class RefundService
     public function regress(
         Refund $record,
         int $roleId,
-        string $roleName,
         int $userId,
         string $reason,
     ): array {
         $reason = trim($reason);
         $currentStatus = $record->status;
 
-        if (!$this->canRegress($roleId, $roleName, $currentStatus)) {
+        if (!$this->canRegress($roleId, $currentStatus)) {
             $previous = $this->getPreviousStatus($currentStatus);
             $error = $previous === null
                 ? 'Este registro ya está en el primer paso del flujo.'
@@ -543,7 +476,9 @@ class RefundService
             RefundConstants::STATUS_TESORERIA => InvoiceConstants::STATUS_TESORERIA,
         ];
 
-        $ok = $invoicesTable->getConnection()->transactional(
+        $finalResult = null;
+
+        $invoicesTable->getConnection()->transactional(
             function () use (
                 $recordsTable,
                 $invoicesTable,
@@ -555,11 +490,37 @@ class RefundService
                 $reason,
                 $fkField,
                 $childPipelineMap,
+                &$finalResult,
             ): bool {
-                $record->status = $previousStatus;
-                if (!$recordsTable->save($record)) {
+                // Lock pesimista + revalidación TOCTOU.
+                $locked = $recordsTable->find()
+                    ->where(['id' => $record->id])
+                    ->epilog('FOR UPDATE')
+                    ->first();
+                if ($locked === null || $locked->status !== $currentStatus) {
+                    $finalResult = [
+                        'success' => false,
+                        'error' => 'El registro fue modificado por otro usuario. Recargue la página.',
+                        'previousStatus' => null,
+                    ];
+
                     return false;
                 }
+                $locked->status = $previousStatus;
+                if (!$recordsTable->save($locked)) {
+                    $finalResult = [
+                        'success' => false,
+                        'error' => self::_buildSaveErrorMessage(
+                            'No se pudo regresar el registro.',
+                            $locked->getErrors(),
+                        ),
+                        'previousStatus' => null,
+                    ];
+
+                    return false;
+                }
+                $record->status = $previousStatus;
+                $this->refundHistory->recordStatusChange($record->id, $currentStatus, $previousStatus, $userId);
 
                 if (isset($childPipelineMap[$previousStatus])) {
                     $newPipelineStatus = $childPipelineMap[$previousStatus];
@@ -593,18 +554,30 @@ class RefundService
                     ],
                 ]);
 
-                return (bool)$observationsTable->save($observation);
+                if (!$observationsTable->save($observation)) {
+                    $finalResult = [
+                        'success' => false,
+                        'error' => 'No se pudo registrar la observación de regresión.',
+                        'previousStatus' => null,
+                    ];
+
+                    return false;
+                }
+
+                $finalResult = [
+                    'success' => true,
+                    'error' => null,
+                    'previousStatus' => $previousStatus,
+                ];
+
+                return true;
             },
         );
 
-        if (!$ok) {
-            return [
-                'success' => false,
-                'error' => 'No se pudo regresar el registro. Intente de nuevo.',
-                'previousStatus' => null,
-            ];
-        }
-
-        return ['success' => true, 'error' => null, 'previousStatus' => $previousStatus];
+        return $finalResult ?? [
+            'success' => false,
+            'error' => 'No se pudo regresar el registro. Intente de nuevo.',
+            'previousStatus' => null,
+        ];
     }
 }

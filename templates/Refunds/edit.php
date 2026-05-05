@@ -645,6 +645,7 @@ $invoiceCount = count($record->invoices ?? []);
               action="<?= $this->Url->build(['action' => 'regressStatus', $record->id]) ?>"
               id="regressStatusForm">
             <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
+            <?= $this->Form->hidden('expected_status', ['value' => $record->status]) ?>
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">

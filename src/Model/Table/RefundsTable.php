@@ -122,6 +122,30 @@ class RefundsTable extends Table
     {
         $rules->add($rules->isUnique(['code'], 'El código ya existe.'), ['errorField' => 'code', 'allowNullableNulls' => true]);
         $rules->add($rules->existsIn('created_by', 'CreatedByUsers'), ['errorField' => 'created_by']);
+        $rules->add(
+            $rules->existsIn('operation_center_id', 'OperationCenters'),
+            ['errorField' => 'operation_center_id'],
+        );
+        $rules->add(
+            $rules->existsIn(['beneficiary_employee_id'], 'BeneficiaryEmployees'),
+            ['errorField' => 'beneficiary_employee_id', 'allowNullableNulls' => true],
+        );
+        $rules->add(
+            $rules->existsIn(['beneficiary_provider_id'], 'BeneficiaryProviders'),
+            ['errorField' => 'beneficiary_provider_id', 'allowNullableNulls' => true],
+        );
+        $rules->add(
+            $rules->existsIn(['banking_entity_id'], 'BankingEntities'),
+            ['errorField' => 'banking_entity_id', 'allowNullableNulls' => true],
+        );
+        $rules->add(
+            $rules->existsIn(['payment_created_by'], 'PaymentCreatedByUsers'),
+            ['errorField' => 'payment_created_by', 'allowNullableNulls' => true],
+        );
+        $rules->add(
+            $rules->existsIn(['payment_authorized_by'], 'PaymentAuthorizedByUsers'),
+            ['errorField' => 'payment_authorized_by', 'allowNullableNulls' => true],
+        );
 
         // Beneficiary XOR rule: if type is set, exactly the matching FK must be set.
         $rules->add(function ($entity) {

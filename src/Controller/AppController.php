@@ -231,12 +231,13 @@ class AppController extends Controller
             || str_contains($this->request->getHeaderLine('Accept'), 'application/json');
     }
 
-    protected function _jsonResponse(array $data): Response
+    protected function _jsonResponse(array $data, int $status = 200): Response
     {
         $this->autoRender = false;
 
         return $this->response
             ->withType('application/json')
+            ->withStatus($status)
             ->withStringBody(json_encode($data));
     }
 
