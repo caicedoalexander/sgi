@@ -28,6 +28,7 @@ class PettyCashService
     private const ROLE_VISIBLE_STATUSES = [
         RoleConstants::REGISTRO_REVISION  => [PettyCashConstants::STATUS_AGRUPACION],
         RoleConstants::CONTABILIDAD       => [PettyCashConstants::STATUS_CONTABILIDAD],
+        // Tesorería registra el pago (tesoreria) y monitorea la autorización (aut_pago) antes de pagado.
         RoleConstants::TESORERIA          => [
             PettyCashConstants::STATUS_TESORERIA,
             PettyCashConstants::STATUS_AUT_PAGO,
@@ -786,6 +787,8 @@ class PettyCashService
             return ServiceResult::fail($lock);
         }
 
+        // La table permite vacío (campo opcional en flujo normal); aquí validamos que
+        // el motivo de regresión sea suficientemente descriptivo.
         if (mb_strlen($reason) < 10) {
             return ServiceResult::fail('El motivo es obligatorio (mínimo 10 caracteres).');
         }

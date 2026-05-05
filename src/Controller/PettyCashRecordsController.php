@@ -44,7 +44,7 @@ class PettyCashRecordsController extends AppController
         $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
     }
 
-    private function _getCurrentUser(): object
+    private function _getCurrentUser(): \App\Model\Entity\User
     {
         return $this->Authentication->getIdentity()->getOriginalData();
     }
@@ -160,6 +160,9 @@ class PettyCashRecordsController extends AppController
     {
         $record = $this->PettyCashRecords->get($id, contain: [
             'CreatedByUsers',
+            'BankingEntities',
+            'PaymentCreatedByUsers',
+            'PaymentAuthorizedByUsers',
             'Invoices' => ['Providers'],
             'PettyCashDocuments' => [
                 'UploadedByUsers',
@@ -546,7 +549,7 @@ class PettyCashRecordsController extends AppController
         $record = $this->PettyCashRecords->get($recordId);
 
         if ($this->pettyCashService->removeInvoice($record, (int)$invoiceId)) {
-            $this->Flash->success('Factura removida del registro.');
+            $this->Flash->success('Factura removida del registro de caja menor.');
         } else {
             $this->Flash->error('No se puede remover facturas de un registro que no esté en Agrupación.');
         }

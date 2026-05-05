@@ -27,6 +27,14 @@ final class PettyCashConstants
         'pagado' => 'Pagado',
     ];
 
+    public const STATUS_BADGES = [
+        self::STATUS_AGRUPACION   => 'bg-info text-dark',
+        self::STATUS_CONTABILIDAD => 'bg-primary',
+        self::STATUS_TESORERIA    => 'bg-warning text-dark',
+        self::STATUS_AUT_PAGO     => 'bg-info',
+        self::STATUS_PAGADO       => 'bg-success',
+    ];
+
     public const STATUS_ICONS = [
         'agrupacion' => 'bi-collection',
         'contabilidad' => 'bi-calculator',
@@ -43,8 +51,8 @@ final class PettyCashConstants
         'pagado' => null,
     ];
 
-    // Backward transitions for the regress operation.
-    // Excluido `pagado` por riesgo de inconsistencia con datos colaterales.
+    // Grafo de regresión: agrupacion←contabilidad←tesoreria←aut_pago. pagado es terminal.
+    // Se excluye `pagado` porque la autorización ya materializó pagos en las facturas hijas.
     public const BACKWARD_TRANSITIONS = [
         self::STATUS_AGRUPACION => null,
         self::STATUS_CONTABILIDAD => self::STATUS_AGRUPACION,

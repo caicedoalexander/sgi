@@ -3,16 +3,13 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\PettyCashRecord $record
  */
+use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
+use App\Constants\StatusColorConstants;
 
 $this->assign('title', 'Caja Menor ' . $record->code);
 
-$statusBadge = [
-    'agrupacion' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'tesoreria' => 'bg-warning text-dark',
-    'pagado' => 'bg-success',
-];
+$statusBadge = PettyCashConstants::STATUS_BADGES;
 $statusLabels = PettyCashConstants::STATUS_LABELS;
 
 $docIcon = fn(?string $mime): string => match(true) {
@@ -116,6 +113,70 @@ $docIconColor = fn(?string $mime): string => match(true) {
     </div>
 </div>
 
+<?php if ($record->isAutPago() || $record->isPagado()): ?>
+<!-- Datos de pago -->
+<div class="card card-primary mb-4">
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-bank"></i>
+        <span>Pago</span>
+    </div>
+    <div class="row g-0">
+        <div class="col-md-6" style="border-right:1px solid var(--border-color);">
+            <div class="sgi-section-title">Información de Pago</div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Entidad Bancaria</span>
+                <span class="sgi-data-value"><?= $record->hasValue('banking_entity') ? h($record->banking_entity->name) : '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Monto Pagado</span>
+                <span class="sgi-data-value">$ <?= $record->payment_amount ? $this->Number->format($record->payment_amount, ['places' => 2]) : '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Fecha de Pago</span>
+                <span class="sgi-data-value"><?= $record->payment_date?->format('d/m/Y') ?? '—' ?></span>
+            </div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Registrado por</span>
+                <span class="sgi-data-value"><?= $record->hasValue('payment_created_by_user') ? h($record->payment_created_by_user->full_name) : '—' ?></span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="sgi-section-title">Autorización</div>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Estado</span>
+                <span class="sgi-data-value">
+                    <?php if ($record->isPagado()): ?>
+                        <span class="badge bg-success">Autorizado</span>
+                    <?php elseif (!empty($record->payment_rejection_reason)): ?>
+                        <span class="badge bg-danger">Rechazado</span>
+                    <?php else: ?>
+                        <span class="badge bg-warning text-dark">Pendiente</span>
+                    <?php endif; ?>
+                </span>
+            </div>
+            <?php if ($record->hasValue('payment_authorized_by_user')): ?>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Autorizado por</span>
+                <span class="sgi-data-value"><?= h($record->payment_authorized_by_user->full_name) ?></span>
+            </div>
+            <?php endif; ?>
+            <?php if ($record->payment_authorized_date): ?>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Fecha Autorización</span>
+                <span class="sgi-data-value"><?= $record->payment_authorized_date->format('d/m/Y') ?></span>
+            </div>
+            <?php endif; ?>
+            <?php if (!empty($record->payment_rejection_reason)): ?>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Motivo Rechazo</span>
+                <span class="sgi-data-value text-danger"><?= h($record->payment_rejection_reason) ?></span>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Facturas agrupadas -->
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-2">
@@ -147,16 +208,8 @@ $docIconColor = fn(?string $mime): string => match(true) {
                     <td class="text-end">$ <?= $this->Number->format($inv->amount, ['places' => 2]) ?></td>
                     <td><?= $inv->issue_date?->format('d/m/Y') ?? '—' ?></td>
                     <td>
-                        <?php
-                        $pBadge = match($inv->pipeline_status) {
-                            'aprobacion' => 'bg-info text-dark',
-                            'contabilidad' => 'bg-primary',
-                            'tesoreria' => 'bg-warning text-dark',
-                            'pagada' => 'bg-success',
-                            default => 'bg-dark',
-                        };
-                        ?>
-                        <span class="badge <?= $pBadge ?>"><?= h($inv->pipeline_status) ?></span>
+                        <?php $pBadge = StatusColorConstants::PIPELINE_STATUS_BADGES[$inv->pipeline_status] ?? 'bg-dark'; ?>
+                        <span class="badge <?= $pBadge ?>"><?= InvoiceConstants::STATUS_LABELS[$inv->pipeline_status] ?? h($inv->pipeline_status) ?></span>
                     </td>
                 </tr>
                 <?php endforeach; ?>

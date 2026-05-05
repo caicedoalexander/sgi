@@ -43,6 +43,11 @@ class PettyCashRecord extends Entity
         return ($this->status ?? '') === PettyCashConstants::STATUS_TESORERIA;
     }
 
+    public function isAutPago(): bool
+    {
+        return ($this->status ?? '') === PettyCashConstants::STATUS_AUT_PAGO;
+    }
+
     public function isPagado(): bool
     {
         return ($this->status ?? '') === PettyCashConstants::STATUS_PAGADO;
