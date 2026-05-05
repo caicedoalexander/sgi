@@ -8,9 +8,11 @@ use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
+use App\Model\Entity\PettyCashRecord;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
 use App\Service\PipelineAuthorizationService;
+use App\ViewModel\PettyCashEditViewModel;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
 use Cake\Routing\Router;
@@ -238,95 +240,66 @@ class PettyCashRecordsController extends AppController
                 return $this->redirect(['action' => 'edit', $id]);
             }
 
-            $data = $this->request->getData();
-            $patchData = [];
-
-            // Notes: editable in agrupacion and contabilidad
-            if ($record->isAgrupacion() || $record->isContabilidad()) {
-                $patchData['notes'] = $data['notes'] ?? $record->notes;
-            }
-
-            // Accounting fields: editable in contabilidad
-            if ($record->isContabilidad()) {
-                $isAccrued = !empty($data['accrued']);
-                $patchData['accrued'] = $isAccrued;
-                if ($isAccrued) {
-                    $submittedDate = !empty($data['accrual_date']) ? $data['accrual_date'] : null;
-                    if (empty($submittedDate)) {
-                        $this->Flash->error('La fecha de causación es requerida cuando el registro está marcado como causado.');
-                        $this->redirect(['action' => 'edit', $id]);
-
-                        return;
-                    }
-                    $patchData['accrual_date'] = $submittedDate;
-                } else {
-                    $patchData['accrual_date'] = null;
-                }
-                $patchData['ready_for_payment'] = $data['ready_for_payment'] ?? null;
-            }
-
-            if (!empty($patchData)) {
-                $record = $this->PettyCashRecords->patchEntity($record, $patchData);
-                $this->PettyCashRecords->save($record);
-            }
-
-            // Add invoices (only in agrupacion)
-            if ($record->isAgrupacion() && !empty($data['invoice_ids'])) {
-                $invoiceIds = array_map('intval', array_filter((array)$data['invoice_ids']));
-                $errors = $this->pettyCashService->addInvoices($record, $invoiceIds);
-                foreach ($errors as $err) {
-                    $this->Flash->warning($err);
-                }
-            }
-
-            // Try to advance automatically (save + advance unified)
             $user = $this->_getCurrentUser();
             $roleName = $this->_getUserRoleName($user);
-            $canAdvance = !$record->isPagado()
-                && $this->pettyCashService->canAdvance(
-                    (int)$user->role_id,
-                    $roleName,
-                    $record->status,
-                );
-            $advanced = false;
-            if ($canAdvance) {
-                $result = $this->pettyCashService->advanceStatus(
-                    $record,
-                    (int)$user->role_id,
-                    $roleName,
-                    $user->id,
-                );
-                if ($result['success']) {
-                    $advanced = true;
-                    $nextLabel = PettyCashConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
-                    $this->Flash->success(sprintf('Registro guardado y avanzado a: %s', $nextLabel));
-                } else {
-                    $this->Flash->success('Registro actualizado.');
-                    $this->Flash->warning($result['error']);
+
+            $result = $this->pettyCashService->saveAndAdvance(
+                $record,
+                (int)$user->role_id,
+                $roleName,
+                (int)$user->id,
+                $this->request->getData(),
+            );
+
+            if (!$result->success) {
+                foreach ($result->errors as $err) {
+                    $this->Flash->error($err);
                 }
-            } else {
-                $this->Flash->success('Registro actualizado.');
+
+                return $this->redirect(['action' => 'edit', $id]);
             }
 
-            return $this->redirect(['action' => $advanced ? 'index' : 'edit', ...($advanced ? [] : [$id])]);
+            foreach ($result->data['linkWarnings'] ?? [] as $warning) {
+                $this->Flash->warning($warning);
+            }
+
+            if (!empty($result->data['advanced'])) {
+                $next = $result->data['nextStatus'] ?? '';
+                $nextLabel = PettyCashConstants::STATUS_LABELS[$next] ?? $next;
+                $this->Flash->success(sprintf('Registro guardado y avanzado a: %s', $nextLabel));
+
+                return $this->redirect(['action' => 'index']);
+            }
+
+            $this->Flash->success('Registro actualizado.');
+            if (!empty($result->data['advanceWarning'])) {
+                $this->Flash->warning($result->data['advanceWarning']);
+            }
+
+            return $this->redirect(['action' => 'edit', $id]);
         }
 
-        // Compute advance errors for the view (to decide button label)
-        $nextStatus = PettyCashConstants::TRANSITIONS[$record->status] ?? null;
-        $advanceErrors = [];
-        if ($nextStatus) {
-            $advanceErrors = $this->pettyCashService->getTransitionErrors($record);
-        }
+        $vm = $this->_buildEditViewModel($record);
 
-        $groupFilters = $this->request->getQueryParams();
-        $availableInvoices = $this->pettyCashService->getAvailableInvoices($groupFilters)->all();
-        $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
-        $canDeleteDocuments = $this->_checkPermission('petty_cash', 'delete');
+        $this->set(get_object_vars($vm));
+    }
 
+    /**
+     * Build the read-side view model for `edit()`. Encapsulates dropdown
+     * loading, permission flags, advance/regress state, and synthetic payment
+     * adaptation for the shared `payment_section` element.
+     */
+    private function _buildEditViewModel(PettyCashRecord $record): PettyCashEditViewModel
+    {
         $user = $this->_getCurrentUser();
         $roleName = $this->_getUserRoleName($user);
-        $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
         $roleId = (int)$user->role_id;
+
+        $nextStatus = PettyCashConstants::TRANSITIONS[$record->status] ?? null;
+        $advanceErrors = $nextStatus
+            ? $this->pettyCashService->getTransitionErrors($record)
+            : [];
+
         $canRegisterPayment = $this->pipelineAuth->canOperate(
             $roleId,
             $roleName,
@@ -340,59 +313,64 @@ class PettyCashRecordsController extends AppController
             PettyCashConstants::STATUS_AUT_PAGO,
         );
 
-        // Synthesize a pseudo-payment from record columns so the shared
-        // payment_section element can render it. Caja Menor stores a single
-        // bulk payment as columns on the record itself (not in a payments table).
-        $syntheticPayments = [];
-        if (!empty($record->banking_entity_id)) {
-            $isAuthorized = $record->isPagado();
-            $syntheticPayments[] = (object)[
-                'id' => $record->id,
-                'banking_entity' => $record->banking_entity,
-                'amount' => $record->payment_amount,
-                'payment_date' => $record->payment_date instanceof DateTimeInterface
-                    ? $record->payment_date
-                    : (is_string($record->payment_date) && $record->payment_date !== ''
-                        ? new Date($record->payment_date)
-                        : null),
-                'status' => $isAuthorized
-                    ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED
-                    : InvoiceConstants::PAYMENT_RECORD_PENDING,
-                'authorized' => $isAuthorized,
-                'authorized_by_user' => $record->payment_authorized_by_user ?? null,
-                'authorized_date' => $record->payment_authorized_date instanceof DateTimeInterface
-                    ? $record->payment_authorized_date
-                    : null,
-                'created_by_user' => $record->payment_created_by_user ?? null,
-                'rejection_reason' => null,
-            ];
+        return new PettyCashEditViewModel(
+            record: $record,
+            currentStatus: $record->status,
+            roleName: $roleName,
+            canDeleteDocuments: $this->_checkPermission('petty_cash', 'delete'),
+            canRegisterPayment: $canRegisterPayment,
+            canAuthorizePayment: $canAuthorizePayment,
+            canRegress: $this->pettyCashService->canRegress($roleId, $roleName, $record->status),
+            advanceErrors: $advanceErrors,
+            nextStatus: $nextStatus,
+            previousStatus: $this->pettyCashService->getPreviousStatus($record->status),
+            regressLockMessage: $this->pettyCashService->getRegressionLockMessage($record),
+            pipelineLabels: PettyCashConstants::STATUS_LABELS,
+            syntheticPayments: $this->_buildSyntheticPayments($record),
+            availableInvoices: $this->pettyCashService
+                ->getAvailableInvoices($this->request->getQueryParams())->all(),
+            operationCenters: $this->fetchTable('OperationCenters')->find('codeList')->all(),
+            bankingEntities: $this->fetchTable('BankingEntities')->find('list')->toArray(),
+            groupFilters: $this->request->getQueryParams(),
+        );
+    }
+
+    /**
+     * Adapt the bulk-payment columns of a Caja Menor record into the shape
+     * expected by the shared `payment_section` element (which iterates over
+     * a list of payment-like objects). Returns an empty array when no payment
+     * has been registered yet.
+     *
+     * @return array<int, object>
+     */
+    private function _buildSyntheticPayments(PettyCashRecord $record): array
+    {
+        if (empty($record->banking_entity_id)) {
+            return [];
         }
 
-        $canRegress = $this->pettyCashService->canRegress((int)$this->_getCurrentUser()->role_id, $roleName, $record->status);
-        $previousStatus = $this->pettyCashService->getPreviousStatus($record->status);
-        $regressLockMessage = $this->pettyCashService->getRegressionLockMessage($record);
-        $pipelineLabels = PettyCashConstants::STATUS_LABELS;
-        $currentStatus = $record->status;
+        $isAuthorized = $record->isPagado();
 
-        $this->set(compact(
-            'record',
-            'availableInvoices',
-            'operationCenters',
-            'canDeleteDocuments',
-            'groupFilters',
-            'nextStatus',
-            'advanceErrors',
-            'roleName',
-            'bankingEntities',
-            'canRegisterPayment',
-            'canAuthorizePayment',
-            'syntheticPayments',
-            'canRegress',
-            'previousStatus',
-            'regressLockMessage',
-            'pipelineLabels',
-            'currentStatus',
-        ));
+        return [(object)[
+            'id' => $record->id,
+            'banking_entity' => $record->banking_entity,
+            'amount' => $record->payment_amount,
+            'payment_date' => $record->payment_date instanceof DateTimeInterface
+                ? $record->payment_date
+                : (is_string($record->payment_date) && $record->payment_date !== ''
+                    ? new Date($record->payment_date)
+                    : null),
+            'status' => $isAuthorized
+                ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED
+                : InvoiceConstants::PAYMENT_RECORD_PENDING,
+            'authorized' => $isAuthorized,
+            'authorized_by_user' => $record->payment_authorized_by_user ?? null,
+            'authorized_date' => $record->payment_authorized_date instanceof DateTimeInterface
+                ? $record->payment_authorized_date
+                : null,
+            'created_by_user' => $record->payment_created_by_user ?? null,
+            'rejection_reason' => null,
+        ]];
     }
 
     public function advanceStatus($id = null)

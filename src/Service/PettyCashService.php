@@ -114,6 +114,115 @@ class PettyCashService
     }
 
     /**
+     * Filter raw POST data into editable fields per current status, and detect
+     * inline validation errors that block the save (e.g. accrual_date required
+     * when accrued is true).
+     *
+     * @param \App\Model\Entity\PettyCashRecord $record Record.
+     * @param array $data Raw request data.
+     * @return array{patch: array, errors: array<string>}
+     */
+    private function _filterEditPatch(PettyCashRecord $record, array $data): array
+    {
+        $patch = [];
+        $errors = [];
+
+        if ($record->isAgrupacion() || $record->isContabilidad()) {
+            $patch['notes'] = $data['notes'] ?? $record->notes;
+        }
+
+        if ($record->isContabilidad()) {
+            $isAccrued = !empty($data['accrued']);
+            $patch['accrued'] = $isAccrued;
+            if ($isAccrued) {
+                $submittedDate = !empty($data['accrual_date']) ? $data['accrual_date'] : null;
+                if (empty($submittedDate)) {
+                    $errors[] = 'La fecha de causación es requerida cuando el registro está marcado como causado.';
+                }
+                $patch['accrual_date'] = $submittedDate;
+            } else {
+                $patch['accrual_date'] = null;
+            }
+            $patch['ready_for_payment'] = $data['ready_for_payment'] ?? null;
+        }
+
+        return ['patch' => $patch, 'errors' => $errors];
+    }
+
+    /**
+     * Persist editable fields, link any new invoices, and try to advance the
+     * pipeline in a single coordinated operation. Mirrors the save+advance
+     * pattern of `InvoicePipelineService::saveAndAdvance`.
+     *
+     * @return \App\Service\ServiceResult on success: data = [
+     *   'advanced' => bool,
+     *   'nextStatus' => ?string,
+     *   'advanceWarning' => ?string,
+     *   'linkWarnings' => string[],
+     * ]
+     */
+    public function saveAndAdvance(
+        PettyCashRecord $record,
+        int $roleId,
+        string $roleName,
+        int $userId,
+        array $data,
+    ): ServiceResult {
+        $filtered = $this->_filterEditPatch($record, $data);
+        if (!empty($filtered['errors'])) {
+            return ServiceResult::fail($filtered['errors']);
+        }
+
+        $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
+
+        if (!empty($filtered['patch'])) {
+            $record = $recordsTable->patchEntity($record, $filtered['patch']);
+            if (!$recordsTable->save($record)) {
+                $messages = [];
+                foreach ($record->getErrors() as $fieldErrors) {
+                    foreach ($fieldErrors as $msg) {
+                        if (is_string($msg) && $msg !== '') {
+                            $messages[] = $msg;
+                        }
+                    }
+                }
+
+                return ServiceResult::fail(
+                    !empty($messages) ? $messages : ['No se pudo guardar el registro.'],
+                );
+            }
+        }
+
+        $linkWarnings = [];
+        if ($record->isAgrupacion() && !empty($data['invoice_ids'])) {
+            $invoiceIds = array_map('intval', array_filter((array)$data['invoice_ids']));
+            if (!empty($invoiceIds)) {
+                $linkWarnings = $this->addInvoices($record, $invoiceIds);
+            }
+        }
+
+        $advanced = false;
+        $nextStatus = null;
+        $advanceWarning = null;
+        if (!$record->isPagado() && $this->canAdvance($roleId, $roleName, $record->status)) {
+            $advanceResult = $this->advanceStatus($record, $roleId, $roleName, $userId);
+            if (!empty($advanceResult['success'])) {
+                $advanced = true;
+                $nextStatus = $advanceResult['nextStatus'] ?? null;
+            } else {
+                $advanceWarning = $advanceResult['error'] ?? null;
+            }
+        }
+
+        return ServiceResult::ok([
+            'advanced' => $advanced,
+            'nextStatus' => $nextStatus,
+            'advanceWarning' => $advanceWarning,
+            'linkWarnings' => $linkWarnings,
+        ]);
+    }
+
+    /**
      * Returns true if the role can advance the record from the current status.
      *
      * @param int $roleId Role ID.
