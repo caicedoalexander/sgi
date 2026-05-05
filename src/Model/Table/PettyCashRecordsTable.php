@@ -56,6 +56,11 @@ class PettyCashRecordsTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
+        $this->hasMany('PettyCashHistories', [
+            'foreignKey' => 'petty_cash_record_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
         $this->belongsTo('OperationCenters', [
             'foreignKey' => 'operation_center_id',
         ]);

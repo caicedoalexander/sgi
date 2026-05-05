@@ -39,14 +39,17 @@ class PettyCashService
 
     private GroupedInvoiceService $grouped;
     private PipelineAuthorizationService $pipelineAuth;
+    private PettyCashHistoryService $history;
 
     /**
-     * @param \App\Service\Interface\HistoryServiceInterface $historyService History service.
+     * @param \App\Service\Interface\HistoryServiceInterface $historyService History service for child invoices.
      * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth
+     * @param \App\Service\PettyCashHistoryService|null $history Audit trail for the petty cash record itself.
      */
     public function __construct(
         HistoryServiceInterface $historyService,
         ?PipelineAuthorizationService $pipelineAuth = null,
+        ?PettyCashHistoryService $history = null,
     ) {
         $this->grouped = new GroupedInvoiceService(
             documentType: InvoiceConstants::DOCTYPE_CAJA_MENOR,
@@ -56,6 +59,7 @@ class PettyCashService
             historyService: $historyService,
         );
         $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+        $this->history = $history ?? new PettyCashHistoryService();
     }
 
     /**
@@ -297,7 +301,7 @@ class PettyCashService
         $connection = $invoicesTable->getConnection();
 
         $advanced = $connection->transactional(
-            function () use ($record, $nextStatus, $invoicesTable, $fkField, $userId): bool {
+            function () use ($record, $currentStatus, $nextStatus, $invoicesTable, $fkField, $userId): bool {
                 $today = date('Y-m-d');
                 $updateData = [];
 
@@ -340,7 +344,13 @@ class PettyCashService
                 $table = TableRegistry::getTableLocator()->get('PettyCashRecords');
                 $record->status = $nextStatus;
 
-                return (bool)$table->save($record);
+                if (!$table->save($record)) {
+                    return false;
+                }
+
+                $this->history->recordStatusChange($record->id, $currentStatus, $nextStatus, $userId);
+
+                return true;
             },
         );
 
@@ -491,6 +501,7 @@ class PettyCashService
         // El pago de Caja Menor siempre cubre el total del registro consolidado.
         // Forzamos payment_amount = total_amount para evitar manipulación del POST
         // y mantener consistencia con la materialización en invoice_payments.
+        $previousStatus = $record->status;
         $record = $recordsTable->patchEntity($record, [
             'banking_entity_id' => $data['banking_entity_id'] ?? null,
             'payment_amount' => $record->total_amount,
@@ -515,6 +526,8 @@ class PettyCashService
 
             return ServiceResult::fail($msg);
         }
+
+        $this->history->recordStatusChange($record->id, $previousStatus, $record->status, $createdBy);
 
         return ServiceResult::ok('Pago registrado. Registro avanzado a Autorización de Pago.');
     }
@@ -605,12 +618,24 @@ class PettyCashService
                 }
             }
 
+            $previousStatus = $record->status;
             $record->status = PettyCashConstants::STATUS_PAGADO;
             $record->payment_status = InvoiceConstants::PAYMENT_FULL;
             $record->payment_authorized_by = $authorizedBy;
             $record->payment_authorized_date = date('Y-m-d');
 
-            return (bool)$recordsTable->save($record);
+            if (!$recordsTable->save($record)) {
+                return false;
+            }
+
+            $this->history->recordStatusChange(
+                $record->id,
+                $previousStatus,
+                $record->status,
+                $authorizedBy,
+            );
+
+            return true;
         });
 
         if ($ok === false) {
@@ -656,6 +681,7 @@ class PettyCashService
             return ServiceResult::fail('Solo se pueden rechazar pagos en estado Autorización de Pago.');
         }
 
+        $previousStatus = $record->status;
         $record = $recordsTable->patchEntity($record, [
             'banking_entity_id' => null,
             'payment_amount' => null,
@@ -668,6 +694,8 @@ class PettyCashService
         if (!$recordsTable->save($record)) {
             return ServiceResult::fail('No se pudo rechazar el pago.');
         }
+
+        $this->history->recordStatusChange($record->id, $previousStatus, $record->status, $rejectedBy);
 
         return ServiceResult::ok('Pago rechazado. Registro devuelto a Tesorería.');
     }
@@ -815,7 +843,13 @@ class PettyCashService
                     ],
                 ]);
 
-                return (bool)$observationsTable->save($observation);
+                if (!$observationsTable->save($observation)) {
+                    return false;
+                }
+
+                $this->history->recordStatusChange($record->id, $currentStatus, $previousStatus, $userId);
+
+                return true;
             },
         );
 
