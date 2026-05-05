@@ -52,7 +52,7 @@ class InvoicePaymentService
             $lastPaymentDate = $payment->payment_date;
         }
 
-        if ($totalPaid >= (float)$invoice->amount && $totalPaid > 0) {
+        if (bccomp((string)$totalPaid, (string)$invoice->amount, 2) >= 0 && $totalPaid > 0) {
             $invoice->payment_status = InvoiceConstants::PAYMENT_FULL;
             $invoice->full_payment_date = $lastPaymentDate;
         } elseif ($totalPaid > 0) {
@@ -84,7 +84,7 @@ class InvoicePaymentService
             ->all()
             ->sumOf('amount');
 
-        return max(0, (float)$invoice->amount - $totalPaid);
+        return max(0, (float)bcsub((string)$invoice->amount, (string)$totalPaid, 2));
     }
 
     /**

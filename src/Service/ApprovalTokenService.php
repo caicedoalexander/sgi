@@ -17,6 +17,9 @@ use DateTime;
  *
  * For multi-approver invoice workflows, see InvoiceApprovalService which
  * manages its own tokens in the invoice_approvals table.
+ *
+ * @deprecated Para facturas, migrar a InvoiceApprovalService (invoice_approvals table).
+ *             Ver docs/decisions/approval-service-migration.md
  */
 class ApprovalTokenService
 {

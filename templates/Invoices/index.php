@@ -22,7 +22,7 @@ $this->assign('title', $pageTitle);
 
 $query = $this->request->getQueryParams();
 $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
-$pipelineOptions = InvoicePipelineService::STATUS_LABELS;
+$pipelineOptions = InvoiceConstants::STATUS_LABELS;
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
@@ -157,7 +157,7 @@ $pipelineOptions = InvoicePipelineService::STATUS_LABELS;
             <tbody>
                 <?php foreach ($invoices as $invoice):
                     $ps = [
-                        InvoicePipelineService::STATUS_LABELS[$invoice->pipeline_status] ?? 'Desconocido',
+                        InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? 'Desconocido',
                         StatusColorConstants::PIPELINE_STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-dark',
                     ];
                     $isRejected     = ($invoice->area_approval === InvoiceConstants::APPROVAL_REJECTED);

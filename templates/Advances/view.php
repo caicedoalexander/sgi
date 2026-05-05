@@ -78,7 +78,7 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
         <?= $this->element('pipeline_progress', [
             'currentStatus' => $invoice->pipeline_status,
             'pipelineStatuses' => InvoiceConstants::PIPELINE_STATUSES,
-            'pipelineLabels' => InvoicePipelineService::STATUS_LABELS,
+            'pipelineLabels' => InvoiceConstants::STATUS_LABELS,
             'isRejected' => false,
             'paymentStatus' => $invoice->payment_status ?? null,
         ]) ?>

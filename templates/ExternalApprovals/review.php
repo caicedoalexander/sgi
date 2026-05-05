@@ -50,7 +50,7 @@ $entityType = $tokenRecord->entity_type;
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Estado Actual</span>
-                <span class="sgi-data-value"><?= h(\App\Service\InvoicePipelineService::STATUS_LABELS[$entity->pipeline_status] ?? $entity->pipeline_status) ?></span>
+                <span class="sgi-data-value"><?= h(\App\Constants\InvoiceConstants::STATUS_LABELS[$entity->pipeline_status] ?? $entity->pipeline_status) ?></span>
             </div>
         <?php elseif ($entityType === 'employee_novelties'): ?>
             <div class="sgi-section-title">Novedad</div>

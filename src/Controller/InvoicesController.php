@@ -6,6 +6,8 @@ namespace App\Controller;
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\StatusColorConstants;
+use App\Model\Entity\Invoice;
+use App\ViewModel\InvoiceEditViewModel;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 use App\Controller\Trait\ObservationControllerTrait;
@@ -178,7 +180,7 @@ class InvoicesController extends AppController
         $isLockedByScheduling = $this->pipeline->isLockedByPaidScheduling((int)$id);
         $isLocked = $isLockedByPettyCash || $isLockedByScheduling;
         $pipelineStatuses = $this->pipeline->getPipelineStatusesFor($invoice->document_type);
-        $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
+        $pipelineLabels = InvoiceConstants::STATUS_LABELS;
 
         $documentsByStatus = [];
         foreach ($invoice->invoice_documents as $doc) {
@@ -244,13 +246,11 @@ class InvoicesController extends AppController
             ],
         ]);
 
-        // Paid/legalized invoices are read-only: redirect to view.
         $terminalStatuses = [InvoiceConstants::STATUS_PAGADA, InvoiceConstants::STATUS_LEGALIZADA];
         if (in_array($invoice->pipeline_status, $terminalStatuses, true)) {
             return $this->_redirectForInvoice($invoice, 'view', $id);
         }
 
-        // Unified lock: petty cash or paid scheduling.
         $lockMessage = $this->pipeline->getEditLockMessage($invoice);
         if ($lockMessage !== null) {
             $this->Flash->warning($lockMessage);
@@ -262,42 +262,17 @@ class InvoicesController extends AppController
         $roleId = (int)$this->_getCurrentUser()->role_id;
         $currentStatus = $invoice->pipeline_status;
 
-        $editableFields = $this->pipeline->getEditableFields($roleId, $roleName, $currentStatus);
-        $canAdvance = $this->pipeline->canAdvance($roleId, $roleName, $currentStatus, $invoice->document_type);
-        $visibleSections = $this->pipeline->getVisibleSections($roleId, $roleName, $currentStatus, $invoice->document_type);
-        $collapsibleSections = $this->pipeline->getCollapsibleSections($roleId, $roleName, $currentStatus);
-        $isRejected = $this->pipeline->isRejected($invoice);
-        $isApproved = $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED;
-
-        // Pre-compute advance errors for GET
-        $advanceErrors = [];
-        $nextStatus = null;
-        if ($canAdvance && !$isRejected) {
-            $rawErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
-            $rules = $this->pipeline->getTransitionRules($currentStatus);
-            $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleId, $roleName, $currentStatus);
-            if (empty($rawErrors)) {
-                $nextStatus = $this->pipeline->getNextStatus($currentStatus);
-            }
-        }
-
-        // Regression button visibility / lock state
-        $canRegress = $this->pipeline->canRegress($roleId, $roleName, $currentStatus);
-        $previousStatus = $this->pipeline->getPreviousStatus($currentStatus);
-        $regressLockMessage = $canRegress ? $this->pipeline->getRegressionLockMessage($invoice) : null;
-
         if ($this->request->is(['patch', 'post', 'put'])) {
             if (!$this->_ensureExpectedStatus($invoice->pipeline_status)) {
                 return $this->_redirectForInvoice($invoice, 'edit', $id);
             }
 
-            $user = $this->_getCurrentUser();
             $result = $this->pipeline->saveAndAdvance(
                 $invoice,
                 $this->request->getData(),
                 $roleId,
                 $roleName,
-                $user->id,
+                $this->_getCurrentUser()->id,
                 $this->_getBaseUrl(),
             );
 
@@ -307,17 +282,13 @@ class InvoicesController extends AppController
                 $advanceErrors = $result->data['advanceErrors'] ?? [];
 
                 if ($advanced) {
-                    $nextLabel = InvoicePipelineService::STATUS_LABELS[$nextStatus] ?? $nextStatus;
+                    $nextLabel = InvoiceConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
                     $this->Flash->success(sprintf('Factura guardada y avanzada a: %s', $nextLabel));
                 } else {
                     $this->Flash->success('La factura ha sido actualizada.');
                     $rules = $this->pipeline->getTransitionRules($currentStatus);
                     $filteredErrors = $this->pipeline->filterAdvanceErrorsForRole(
-                        $advanceErrors,
-                        $rules,
-                        $roleId,
-                        $roleName,
-                        $currentStatus,
+                        $advanceErrors, $rules, $roleId, $roleName, $currentStatus,
                     );
                     foreach ($filteredErrors as $err) {
                         $this->Flash->warning($err);
@@ -332,53 +303,66 @@ class InvoicesController extends AppController
             $this->Flash->error($result->firstError() ?? 'No se pudo guardar la factura. Verifique los datos e intente de nuevo.');
         }
 
-        $pipelineStatuses = $this->pipeline->getPipelineStatusesFor($invoice->document_type);
-        $pipelineLabels = InvoicePipelineService::STATUS_LABELS;
+        $this->set('viewModel', $this->_buildEditViewModel($invoice, $roleId, $roleName));
+    }
 
-        $canDeleteDocuments = $this->_checkPermission('invoices', 'delete');
+    private function _buildEditViewModel(Invoice $invoice, int $roleId, string $roleName): InvoiceEditViewModel
+    {
+        $currentStatus = $invoice->pipeline_status;
+        $editableFields = $this->pipeline->getEditableFields($roleId, $roleName, $currentStatus);
+        $canAdvance = $this->pipeline->canAdvance($roleId, $roleName, $currentStatus, $invoice->document_type);
+        $isRejected = $this->pipeline->isRejected($invoice);
 
-        // Multi-approver data
-        $currentApprovals = $this->approvalService->getCurrentApprovals($invoice->id);
-        $hasPendingApprovals = $this->approvalService->hasPendingApprovals($invoice->id);
+        $advanceErrors = [];
+        $nextStatus = null;
+        if ($canAdvance && !$isRejected) {
+            $rawErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
+            $rules = $this->pipeline->getTransitionRules($currentStatus);
+            $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleId, $roleName, $currentStatus);
+            if (empty($rawErrors)) {
+                $nextStatus = $this->pipeline->getNextStatus($currentStatus);
+            }
+        }
+
+        $canRegress = $this->pipeline->canRegress($roleId, $roleName, $currentStatus);
         $hasAnyActiveApprovals = $this->approvalService->hasAnyActiveApprovals($invoice->id);
         $isApprovalEditableState = $currentStatus === InvoiceConstants::STATUS_APROBACION && !empty($editableFields);
-        $canSendLinks = $isApprovalEditableState && !$hasAnyActiveApprovals;
-        $canModifyApprovers = $isApprovalEditableState && $hasAnyActiveApprovals;
-
-        $paymentsTotal = array_sum(array_map(
-            fn($p) => (float)$p->amount,
-            $invoice->invoice_payments ?? [],
-        ));
-
-        // Email logs para el panel inline (Plan 2 — W8)
+        $dropdowns = $this->_getFormDropdowns();
         $emailLogService = $this->getContainer()->get(EmailLogService::class);
-        $this->set('emailLogs', $emailLogService->forEntity('invoice', (int)$invoice->id));
 
-        $this->set(compact(
-            'invoice',
-            'editableFields',
-            'canAdvance',
-            'canDeleteDocuments',
-            'roleName',
-            'pipelineStatuses',
-            'pipelineLabels',
-            'currentStatus',
-            'visibleSections',
-            'collapsibleSections',
-            'isRejected',
-            'isApproved',
-            'advanceErrors',
-            'nextStatus',
-            'canRegress',
-            'previousStatus',
-            'regressLockMessage',
-            'currentApprovals',
-            'hasPendingApprovals',
-            'canSendLinks',
-            'canModifyApprovers',
-            'paymentsTotal',
-        ));
-        $this->set($this->_getFormDropdowns());
+        return new InvoiceEditViewModel(
+            invoice: $invoice,
+            currentStatus: $currentStatus,
+            roleName: $roleName,
+            editableFields: $editableFields,
+            canAdvance: $canAdvance,
+            canDeleteDocuments: $this->_checkPermission('invoices', 'delete'),
+            canRegress: $canRegress,
+            isRejected: $isRejected,
+            isApproved: $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION
+                && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED,
+            visibleSections: $this->pipeline->getVisibleSections($roleId, $roleName, $currentStatus, $invoice->document_type),
+            collapsibleSections: $this->pipeline->getCollapsibleSections($roleId, $roleName, $currentStatus),
+            advanceErrors: $advanceErrors,
+            nextStatus: $nextStatus,
+            previousStatus: $this->pipeline->getPreviousStatus($currentStatus),
+            regressLockMessage: $canRegress ? $this->pipeline->getRegressionLockMessage($invoice) : null,
+            pipelineStatuses: $this->pipeline->getPipelineStatusesFor($invoice->document_type),
+            pipelineLabels: InvoiceConstants::STATUS_LABELS,
+            currentApprovals: $this->approvalService->getCurrentApprovals($invoice->id),
+            hasPendingApprovals: $this->approvalService->hasPendingApprovals($invoice->id),
+            canSendLinks: $isApprovalEditableState && !$hasAnyActiveApprovals,
+            canModifyApprovers: $isApprovalEditableState && $hasAnyActiveApprovals,
+            paymentsTotal: array_sum(array_map(fn($p) => (float)$p->amount, $invoice->invoice_payments ?? [])),
+            providers: $dropdowns['providers'],
+            operationCenters: $dropdowns['operationCenters'],
+            expenseTypes: $dropdowns['expenseTypes'],
+            costCenters: $dropdowns['costCenters'],
+            approvers: $dropdowns['approvers'],
+            employees: $dropdowns['employees'],
+            bankingEntities: $dropdowns['bankingEntities'],
+            emailLogs: $emailLogService->forEntity('invoice', (int)$invoice->id),
+        );
     }
 
     public function advanceStatus($id = null)
@@ -403,7 +387,7 @@ class InvoicesController extends AppController
 
         if ($result->success) {
             $nextStatus = $result->data['nextStatus'] ?? null;
-            $nextLabel = InvoicePipelineService::STATUS_LABELS[$nextStatus] ?? $nextStatus;
+            $nextLabel = InvoiceConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
             $this->Flash->success(sprintf('Factura avanzada a: %s', $nextLabel));
 
             return $this->_redirectForInvoice($invoice, 'index');
@@ -436,7 +420,7 @@ class InvoicesController extends AppController
 
         if ($result->success) {
             $previousStatus = $result->data['previousStatus'] ?? null;
-            $prevLabel = InvoicePipelineService::STATUS_LABELS[$previousStatus] ?? $previousStatus;
+            $prevLabel = InvoiceConstants::STATUS_LABELS[$previousStatus] ?? $previousStatus;
             $this->Flash->success(sprintf('Factura regresada a: %s', $prevLabel));
 
             return $this->_redirectForInvoice($invoice, 'index');
@@ -608,7 +592,8 @@ class InvoicesController extends AppController
 
             $canDelete = $this->_checkPermission('invoices', 'delete')
                 && $this->documentService->canDeleteDocument($result, $invoice->pipeline_status);
-            [$badgeColors, $statusLabels] = $this->_invoiceDocumentLabels();
+            $badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
+            $statusLabels = InvoiceConstants::STATUS_LABELS;
             $deleteUrl = $canDelete
                 ? Router::url(['action' => 'deleteDocument', $invoice->id, $result->id])
                 : null;
@@ -748,24 +733,5 @@ class InvoicesController extends AppController
         }
 
         return $this->_redirectForInvoice($invoice, 'edit', $id);
-    }
-
-    /**
-     * Returns invoice document badge colors and status labels.
-     * Single source for both edit template and uploadDocument JSON payload.
-     *
-     * @return array{0: array<string,string>, 1: array<string,string>}
-     */
-    private function _invoiceDocumentLabels(): array
-    {
-        $statusLabels = [
-            'aprobacion' => 'Aprobación',
-            'contabilidad' => 'Contabilidad',
-            'tesoreria' => 'Tesorería',
-            'autorizacion_pago' => 'Aut. Pago',
-            'pagada' => 'Pagada',
-        ];
-
-        return [StatusColorConstants::PIPELINE_STATUS_BADGES, $statusLabels];
     }
 }

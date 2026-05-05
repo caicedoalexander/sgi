@@ -46,15 +46,6 @@ class InvoicePipelineService
         InvoiceConstants::STATUS_LEGALIZADA,
     ];
 
-    public const STATUS_LABELS = [
-        InvoiceConstants::STATUS_APROBACION        => 'Aprobación',
-        InvoiceConstants::STATUS_CONTABILIDAD      => 'Contabilidad',
-        InvoiceConstants::STATUS_TESORERIA         => 'Tesorería',
-        InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
-        InvoiceConstants::STATUS_PAGADA            => 'Pagada',
-        InvoiceConstants::STATUS_LEGALIZADA        => 'Legalizada',
-    ];
-
     public const STATUS_ICONS = [
         InvoiceConstants::STATUS_APROBACION        => 'bi-check-circle',
         InvoiceConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
@@ -157,9 +148,9 @@ class InvoicePipelineService
         return $this->docTypePolicies->for($invoice->document_type ?? null)->getRegressionLockReason($invoice);
     }
 
-    public function validateTransitionRequirements(object $invoice, string $fromStatus): array
+    public function validateTransitionRequirements(object $invoice, string $fromStatus, array $overrides = []): array
     {
-        return $this->transitionValidator->validateAdvance($invoice, $fromStatus);
+        return $this->transitionValidator->validateAdvance($invoice, $fromStatus, $overrides);
     }
 
     public function getTransitionRules(string $fromStatus): array
@@ -250,15 +241,13 @@ class InvoicePipelineService
         $currentStatus = $invoice->pipeline_status;
         $filteredData = $this->filterEntityData($data, $roleId, $roleName, $currentStatus);
 
-        // Auto-set area_approval_date when area_approval changes to Aprobada or Rechazada
+        $original = clone $invoice;
+
         if (array_key_exists('area_approval', $filteredData)) {
             $newApproval = $filteredData['area_approval'] ?? '';
-            $oldApproval = $invoice->area_approval ?? '';
-            if (
-                $newApproval !== $oldApproval
-                && in_array($newApproval, [InvoiceConstants::APPROVAL_APPROVED, InvoiceConstants::APPROVAL_REJECTED])
-            ) {
-                $invoice->area_approval_date = date('Y-m-d');
+            if ($newApproval !== ($invoice->area_approval ?? '')) {
+                $invoice->setApprovalResult($newApproval);
+                unset($filteredData['area_approval']);
             }
         }
 
@@ -268,14 +257,11 @@ class InvoicePipelineService
         $advanceNextStatus = null;
         $postAdvanceErrors = [];
         if ($canAdvance && !$isRejected) {
-            $testEntity = $invoicesTable->patchEntity(clone $invoice, $filteredData);
-            $postAdvanceErrors = $this->validateTransitionRequirements($testEntity, $currentStatus);
+            $postAdvanceErrors = $this->validateTransitionRequirements($invoice, $currentStatus, $filteredData);
             if (empty($postAdvanceErrors)) {
                 $advanceNextStatus = $this->getNextStatus($currentStatus, $invoice->document_type);
             }
         }
-
-        $original = clone $invoice;
 
         $saved = $invoicesTable->getConnection()->transactional(
             function () use ($invoicesTable, &$invoice, $filteredData, $advanceNextStatus, $currentStatus, $userId, $original) {

@@ -41,6 +41,14 @@ class Invoice extends Entity
         'advance_id' => true,
     ];
 
+    public function setApprovalResult(string $approval): void
+    {
+        $this->area_approval = $approval;
+        if (in_array($approval, [InvoiceConstants::APPROVAL_APPROVED, InvoiceConstants::APPROVAL_REJECTED], true)) {
+            $this->area_approval_date = date('Y-m-d');
+        }
+    }
+
     public function isInPettyCash(): bool
     {
         return !empty($this->petty_cash_record_id);
@@ -59,6 +67,25 @@ class Invoice extends Entity
     public function isPaid(): bool
     {
         return ($this->pipeline_status ?? '') === InvoiceConstants::STATUS_PAGADA;
+    }
+
+    public function isInFinalState(): bool
+    {
+        return in_array($this->pipeline_status ?? '', [
+            InvoiceConstants::STATUS_PAGADA,
+            InvoiceConstants::STATUS_LEGALIZADA,
+        ], true);
+    }
+
+    public function isEditable(): bool
+    {
+        return !$this->isInFinalState();
+    }
+
+    public function requiresApproval(): bool
+    {
+        return ($this->pipeline_status ?? '') === InvoiceConstants::STATUS_APROBACION
+            && ($this->area_approval ?? '') !== InvoiceConstants::APPROVAL_APPROVED;
     }
 
     /**

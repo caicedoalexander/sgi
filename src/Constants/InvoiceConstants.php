@@ -66,6 +66,15 @@ final class InvoiceConstants
         self::STATUS_LEGALIZADA,
     ];
 
+    public const STATUS_LABELS = [
+        self::STATUS_APROBACION        => 'Aprobación',
+        self::STATUS_CONTABILIDAD      => 'Contabilidad',
+        self::STATUS_TESORERIA         => 'Tesorería',
+        self::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
+        self::STATUS_PAGADA            => 'Pagada',
+        self::STATUS_LEGALIZADA        => 'Legalizada',
+    ];
+
     // Document types
     public const DOCTYPE_FACTURA = 'Factura';
     public const DOCTYPE_NOTA_DEBITO = 'Nota Debito';

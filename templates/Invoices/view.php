@@ -218,7 +218,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
 
     <!-- Sección: Observaciones (chat) -->
     <?php if (!empty($invoice->invoice_observations)): ?>
-    <?php $statusLabels = \App\Service\InvoicePipelineService::STATUS_LABELS; ?>
+    <?php $statusLabels = InvoiceConstants::STATUS_LABELS; ?>
     <div style="border-bottom:1px solid var(--border-color);">
         <div class="sgi-section-title">Observaciones</div>
         <div style="padding:.5rem 1.25rem .875rem;max-height:400px;overflow-y:auto;">
@@ -440,7 +440,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
 <!-- Soportes Documentales (solo lectura) -->
 <?php
 $documentsByStatus = $documentsByStatus ?? [];
-$statusLabels = InvoicePipelineService::STATUS_LABELS;
+$statusLabels = InvoiceConstants::STATUS_LABELS;
 $docIcon = fn(?string $mime): string => match(true) {
     str_contains($mime ?? '', 'pdf') => 'bi-file-earmark-pdf',
     str_contains($mime ?? '', 'image') => 'bi-file-earmark-image',

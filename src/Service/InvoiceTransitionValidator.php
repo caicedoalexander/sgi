@@ -38,23 +38,32 @@ final class InvoiceTransitionValidator
     /**
      * Errores de avance: rejection + doctype block + state validation.
      *
+     * @param array<string, mixed> $overrides Campos pendientes de guardar a evaluar como si ya estuvieran en el invoice.
      * @return array<string>
      */
-    public function validateAdvance(object $invoice, string $fromStatus): array
+    public function validateAdvance(object $invoice, string $fromStatus, array $overrides = []): array
     {
-        if (($invoice->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED) {
+        $subject = $invoice;
+        if (!empty($overrides)) {
+            $subject = clone $invoice;
+            foreach ($overrides as $field => $value) {
+                $subject->$field = $value;
+            }
+        }
+
+        if (($subject->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED) {
             return ['La factura fue rechazada. El flujo ha terminado.'];
         }
 
         $state = $this->states->get($fromStatus);
-        $policy = $this->policies->for($invoice->document_type ?? null);
+        $policy = $this->policies->for($subject->document_type ?? null);
 
-        $blockMsg = $policy->blocksAdvance($state, $invoice);
+        $blockMsg = $policy->blocksAdvance($state, $subject);
         if ($blockMsg !== null) {
             return [$blockMsg];
         }
 
-        return $state->validateAdvance($invoice);
+        return $state->validateAdvance($subject);
     }
 
     /**
