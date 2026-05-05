@@ -44,12 +44,12 @@ The dotenv loader is enabled in `config/bootstrap.php` (~line 69) pointing to `R
 
 ## Architecture
 
-See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
+Sistema de diseño: ver `.claude/rules/design.md`.
 
 ### Layer Summary
 
 - **Controller** → HTTP concerns, input validation, delegates to services. One per resource, extends `AppController`.
-- **Service** (`src/Service/`) → Business logic, state transitions, DB transactions. ~36 services. Retornan `ServiceResult`.
+- **Service** (`src/Service/`) → Business logic, state transitions, DB transactions. Retornan `ServiceResult`.
 - **Table/Entity** (`src/Model/`) → ORM associations, validation rules, custom finders.
 - **Constants** (`src/Constants/`) → Domain values (states, roles, types). Never hardcode strings like `'Rechazada'` — use constants.
 - **Templates** (`templates/`) → PHP views. Layouts: `default.php` (authenticated), `login.php` (split-panel), `external.php` (approval tokens).
@@ -70,7 +70,8 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 | `InvoiceHistoryService` | Field-by-field audit trail in `invoice_histories` |
 | `ApprovalTokenService` | External approval via SHA256 tokens (48h TTL) |
 | `NotificationService` | Email para links de aprobación (facturas y novedades) y prueba SMTP |
-| `LegalizationService` | Legalization records business logic |
+| `AdvanceLegalizationService` | Advance legalization workflow |
+| `RefundService` | Refund records and outcomes |
 | `PettyCashService` | Petty cash records management |
 | `DianCrosscheckService` | DIAN crosscheck validation |
 | `N8nService` | n8n workflow integration |
@@ -88,6 +89,10 @@ See `ARCHITECTURE.md` for full details. See `STYLES.md` for design system rules.
 - `Service/Strategy/` — `InvoiceApprovalStrategy`, `NoveltyApprovalStrategy` (strategy pattern for approval logic)
 - `Service/Trait/` — `DocumentUploadTrait`, `HistoryNormalizationTrait`
 - `Service/Dashboard/` — `EmployeeStatisticsService`, `InvoiceStatisticsService`
+- `Service/Pipeline/` — State pattern del pipeline de facturas (`InvoicePipelineState`, `InvoicePipelineStateRegistry`, `Policy/`, `State/`, `LinkedInvoiceLegalizer`)
+- `Service/HealthCheck/` — `HealthCheckInterface` + implementaciones (`Database`, `Cache`, `EmailLog`, `CircuitBreaker`)
+- `Service/Resilience/` — `Retryer`, `RetryPolicy` (retry con backoff)
+- `Service/Subscriber/` — Event subscribers (`LegalizationInitializerSubscriber`, `LinkedInvoicesPromoterSubscriber`, `RefundOutcomeSubscriber`)
 
 ### Middlewares
 
