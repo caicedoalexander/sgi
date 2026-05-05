@@ -415,6 +415,7 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
+        $roleName = $this->_getUserRoleName($user);
 
         // The shared payment_section JS posts 'amount'; map to 'payment_amount'.
         $data = $this->request->getData();
@@ -424,6 +425,8 @@ class PettyCashRecordsController extends AppController
 
         $result = $this->pettyCashService->registerPayment(
             (int)$id,
+            (int)$user->role_id,
+            $roleName,
             $data,
             $user->id,
         );
@@ -442,7 +445,13 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        $result = $this->pettyCashService->authorizePayment((int)$id, $user->id);
+        $roleName = $this->_getUserRoleName($user);
+        $result = $this->pettyCashService->authorizePayment(
+            (int)$id,
+            (int)$user->role_id,
+            $roleName,
+            $user->id,
+        );
 
         if ($result->success) {
             $this->Flash->success($result->data ?? 'Pago autorizado.');
@@ -465,7 +474,14 @@ class PettyCashRecordsController extends AppController
         }
 
         $user = $this->_getCurrentUser();
-        $result = $this->pettyCashService->rejectPayment((int)$id, $user->id, $reason);
+        $roleName = $this->_getUserRoleName($user);
+        $result = $this->pettyCashService->rejectPayment(
+            (int)$id,
+            (int)$user->role_id,
+            $roleName,
+            $user->id,
+            $reason,
+        );
 
         if ($result->success) {
             $this->Flash->success($result->data ?? 'Pago rechazado.');
@@ -481,23 +497,12 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post', 'delete']);
         $record = $this->PettyCashRecords->get($id);
 
-        if (!$this->pettyCashService->canDelete($record)) {
-            $this->Flash->error('Solo se pueden eliminar registros en estado Agrupación.');
+        $result = $this->pettyCashService->deleteRecord($record);
 
-            return $this->redirect(['action' => 'index']);
-        }
-
-        // Unlink invoices first
-        $invoicesTable = $this->fetchTable('Invoices');
-        $invoicesTable->updateAll(
-            ['petty_cash_record_id' => null],
-            ['petty_cash_record_id' => $record->id],
-        );
-
-        if ($this->PettyCashRecords->delete($record)) {
-            $this->Flash->success('Registro de Caja Menor eliminado.');
+        if ($result->success) {
+            $this->Flash->success($result->data ?? 'Registro de Caja Menor eliminado.');
         } else {
-            $this->Flash->error('No se pudo eliminar el registro.');
+            $this->Flash->error($result->firstError() ?? 'No se pudo eliminar el registro.');
         }
 
         return $this->redirect(['action' => 'index']);

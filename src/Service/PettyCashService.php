@@ -264,16 +264,70 @@ class PettyCashService
     }
 
     /**
+     * Delete a petty cash record and unlink its child invoices atomically.
+     * Both operations run in a single transaction so a partial failure cannot
+     * leave invoices unlinked from a still-existing record.
+     *
+     * @param \App\Model\Entity\PettyCashRecord $record Record to delete.
+     * @return \App\Service\ServiceResult
+     */
+    public function deleteRecord(PettyCashRecord $record): ServiceResult
+    {
+        if (!$this->canDelete($record)) {
+            return ServiceResult::fail('Solo se pueden eliminar registros en estado Agrupación.');
+        }
+
+        $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $fkField = $this->grouped->getFkField();
+
+        $ok = $recordsTable->getConnection()->transactional(
+            function () use ($recordsTable, $invoicesTable, $record, $fkField): bool {
+                $invoicesTable->updateAll(
+                    [$fkField => null],
+                    [$fkField => $record->id],
+                );
+
+                return (bool)$recordsTable->delete($record);
+            },
+        );
+
+        if (!$ok) {
+            return ServiceResult::fail('No se pudo eliminar el registro.');
+        }
+
+        return ServiceResult::ok('Registro de Caja Menor eliminado.');
+    }
+
+    /**
      * Register a pending payment for a petty cash record in Tesorería.
      * Moves the record to Aut. Pago.
      *
      * @param int $recordId Record ID.
+     * @param int $roleId Role ID of the caller (for pipeline authorization).
+     * @param string $roleName Role name of the caller (for pipeline authorization).
      * @param array $data Payment data (banking_entity_id, payment_amount, payment_date).
      * @param int $createdBy User ID registering the payment.
      * @return \App\Service\ServiceResult
      */
-    public function registerPayment(int $recordId, array $data, int $createdBy): ServiceResult
-    {
+    public function registerPayment(
+        int $recordId,
+        int $roleId,
+        string $roleName,
+        array $data,
+        int $createdBy,
+    ): ServiceResult {
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_PETTY_CASH,
+                PettyCashConstants::STATUS_TESORERIA,
+            )
+        ) {
+            return ServiceResult::fail('No tiene permisos para registrar pagos en este registro.');
+        }
+
         $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
         $record = $recordsTable->get($recordId);
 
@@ -318,11 +372,28 @@ class PettyCashService
      * Materializes invoice_payments for child invoices and moves record to Pagado.
      *
      * @param int $recordId Record ID.
+     * @param int $roleId Role ID of the caller (for pipeline authorization).
+     * @param string $roleName Role name of the caller (for pipeline authorization).
      * @param int $authorizedBy User ID authorizing.
      * @return \App\Service\ServiceResult
      */
-    public function authorizePayment(int $recordId, int $authorizedBy): ServiceResult
-    {
+    public function authorizePayment(
+        int $recordId,
+        int $roleId,
+        string $roleName,
+        int $authorizedBy,
+    ): ServiceResult {
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_PETTY_CASH,
+                PettyCashConstants::STATUS_AUT_PAGO,
+            )
+        ) {
+            return ServiceResult::fail('No tiene permisos para autorizar pagos de este registro.');
+        }
+
         $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $invoicePaymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
@@ -401,12 +472,30 @@ class PettyCashService
      * Clears pending fields and returns record to Tesorería with rejection reason.
      *
      * @param int $recordId Record ID.
+     * @param int $roleId Role ID of the caller (for pipeline authorization).
+     * @param string $roleName Role name of the caller (for pipeline authorization).
      * @param int $rejectedBy User ID rejecting (currently unused, reserved for audit).
      * @param string $reason Rejection reason (required).
      * @return \App\Service\ServiceResult
      */
-    public function rejectPayment(int $recordId, int $rejectedBy, string $reason): ServiceResult
-    {
+    public function rejectPayment(
+        int $recordId,
+        int $roleId,
+        string $roleName,
+        int $rejectedBy,
+        string $reason,
+    ): ServiceResult {
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_PETTY_CASH,
+                PettyCashConstants::STATUS_AUT_PAGO,
+            )
+        ) {
+            return ServiceResult::fail('No tiene permisos para rechazar pagos de este registro.');
+        }
+
         $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
         $record = $recordsTable->get($recordId);
 
