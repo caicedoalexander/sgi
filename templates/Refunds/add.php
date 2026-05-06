@@ -1,11 +1,12 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\Refund $record
- * @var array $employees
- * @var array $providers
- * @var iterable $operationCenters
+ * @var \App\ViewModel\RefundAddViewModel $viewModel
  */
+$record = $viewModel->record;
+$employees = $viewModel->employees;
+$providers = $viewModel->providers;
+$operationCenters = $viewModel->operationCenters;
 $this->assign('title', 'Nuevo Reintegro');
 ?>
 

@@ -12,6 +12,8 @@ use App\Service\PipelineAuthorizationService;
 use App\Service\RefundDocumentService;
 use App\Service\RefundPaymentService;
 use App\Service\RefundService;
+use App\ViewModel\RefundAddViewModel;
+use App\ViewModel\RefundEditViewModel;
 use Cake\Http\Response;
 use Cake\ORM\Query\SelectQuery;
 use Cake\Routing\Router;
@@ -266,8 +268,12 @@ class RefundsController extends AppController
         }
 
         [$employees, $providers] = $this->_loadBeneficiaryLists();
-        $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
-        $this->set(compact('record', 'employees', 'providers', 'operationCenters'));
+        $this->set('viewModel', new RefundAddViewModel(
+            record: $record,
+            employees: $employees,
+            providers: $providers,
+            operationCenters: $this->fetchTable('OperationCenters')->find('codeList')->all(),
+        ));
     }
 
     private function _loadBeneficiaryLists(): array
@@ -409,63 +415,58 @@ class RefundsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        // Compute advance errors for the view (to decide button label)
+        $user = $this->_getCurrentUser();
+        $this->set('viewModel', $this->_buildEditViewModel($record, $user));
+    }
+
+    /**
+     * Builds the read-only view-model that `templates/Refunds/edit.php` consumes.
+     *
+     * @param \App\Model\Entity\Refund $record Loaded refund.
+     * @param object $user Current user identity object.
+     */
+    private function _buildEditViewModel(Refund $record, object $user): RefundEditViewModel
+    {
         $nextStatus = RefundConstants::TRANSITIONS[$record->status] ?? null;
-        $advanceErrors = [];
-        if ($nextStatus) {
-            $advanceErrors = $this->refundService->getTransitionErrors($record);
-        }
+        $advanceErrors = $nextStatus
+            ? $this->refundService->getTransitionErrors($record)
+            : [];
 
         $groupFilters = $this->request->getQueryParams();
-        $availableInvoices = $this->refundService->getAvailableInvoices($groupFilters)->all();
-        $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
         [$employees, $providers] = $this->_loadBeneficiaryLists();
-
-        $user = $this->_getCurrentUser();
         $roleName = $this->_getUserRoleName($user);
-        $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
         $roleId = (int)$user->role_id;
-        $canRegisterPayment = $this->pipelineAuth->canOperate(
-            $roleId,
-            $roleName,
-            PipelineStepConstants::PIPELINE_REFUNDS,
-            RefundConstants::STATUS_TESORERIA,
+
+        return new RefundEditViewModel(
+            record: $record,
+            currentStatus: $record->status,
+            employees: $employees,
+            providers: $providers,
+            operationCenters: $this->fetchTable('OperationCenters')->find('codeList')->all(),
+            bankingEntities: $this->fetchTable('BankingEntities')->find('list')->toArray(),
+            availableInvoices: $this->refundService->getAvailableInvoices($groupFilters)->all(),
+            groupFilters: $groupFilters,
+            nextStatus: $nextStatus,
+            advanceErrors: $advanceErrors,
+            canRegress: $this->refundService->canRegress($roleId, $record->status),
+            previousStatus: $this->refundService->getPreviousStatus($record->status),
+            regressLockMessage: $this->refundService->getRegressionLockMessage($record),
+            canRegisterPayment: $this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                RefundConstants::STATUS_TESORERIA,
+            ),
+            canAuthorizePayment: $this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                RefundConstants::STATUS_AUT_PAGO,
+            ),
+            syntheticPayments: $this->refundService->buildSyntheticPayments($record),
+            roleName: $roleName,
+            pipelineLabels: RefundConstants::STATUS_LABELS,
         );
-        $canAuthorizePayment = $this->pipelineAuth->canOperate(
-            $roleId,
-            $roleName,
-            PipelineStepConstants::PIPELINE_REFUNDS,
-            RefundConstants::STATUS_AUT_PAGO,
-        );
-
-        $syntheticPayments = $this->refundService->buildSyntheticPayments($record);
-
-        $canRegress = $this->refundService->canRegress((int)$user->role_id, $record->status);
-        $previousStatus = $this->refundService->getPreviousStatus($record->status);
-        $regressLockMessage = $this->refundService->getRegressionLockMessage($record);
-        $pipelineLabels = RefundConstants::STATUS_LABELS;
-        $currentStatus = $record->status;
-
-        $this->set(compact(
-            'record',
-            'availableInvoices',
-            'operationCenters',
-            'employees',
-            'providers',
-            'groupFilters',
-            'nextStatus',
-            'advanceErrors',
-            'roleName',
-            'bankingEntities',
-            'canRegisterPayment',
-            'canAuthorizePayment',
-            'syntheticPayments',
-            'canRegress',
-            'previousStatus',
-            'regressLockMessage',
-            'pipelineLabels',
-            'currentStatus',
-        ));
     }
 
     public function advanceStatus($id = null)
