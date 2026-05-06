@@ -5,7 +5,7 @@ namespace App\Model\Entity;
 
 use Cake\ORM\Entity;
 
-class PaymentSchedulingAttachment extends Entity
+class PaymentSchedulingDocument extends Entity
 {
     protected array $_accessible = [
         'payment_scheduling_id' => true,

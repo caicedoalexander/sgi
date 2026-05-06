@@ -7,13 +7,13 @@ use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
-class PaymentSchedulingAttachmentsTable extends Table
+class PaymentSchedulingDocumentsTable extends Table
 {
     public function initialize(array $config): void
     {
         parent::initialize($config);
 
-        $this->setTable('payment_scheduling_attachments');
+        $this->setTable('payment_scheduling_documents');
         $this->setDisplayField('file_name');
         $this->setPrimaryKey('id');
 

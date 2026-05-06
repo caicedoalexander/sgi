@@ -34,7 +34,7 @@ class PaymentSchedulingsTable extends Table
             'dependent' => true,
             'cascadeCallbacks' => true,
         ]);
-        $this->hasMany('PaymentSchedulingAttachments', [
+        $this->hasMany('PaymentSchedulingDocuments', [
             'foreignKey' => 'payment_scheduling_id',
             'dependent' => true,
             'cascadeCallbacks' => true,
