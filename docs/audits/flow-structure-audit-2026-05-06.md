@@ -96,7 +96,7 @@ src/
 |---|---|---|---|
 | 🔴 Alta | **PaymentSchedulings** | Renombrar `Attachment` → `Document`. Fusionar `…PipelineService` en `…Service` + extraer `Pipeline/PaymentScheduling/State/*`. Crear Add/Edit ViewModels. Crear `…HistoryService` si aplica. | **Pendiente — Plan A** |
 | 🔴 Alta | **Novelties** | Renombrar `NoveltyPipelineService` → `NoveltyService`. Extraer `Pipeline/Novelty/State/*`. Crear Add/Edit ViewModels. Adelgazar controller (922 → ~600). | **Pendiente — Plan B** |
-| 🟠 Media | **Refunds** | Reemplazar `Trait/RefundPipelineHelpersTrait` por `Pipeline/Refund/State/*`. Crear Add/Edit ViewModels. Evaluar si `Dto/RefundSyntheticPayment` y `Subscriber/RefundOutcomeSubscriber` se generalizan o se quedan como caso particular justificado. | Backlog (no entra en opción 2) |
+| 🟠 Media | **Refunds** | Reemplazar `Trait/RefundPipelineHelpersTrait` por `Pipeline/Refund/State/*`. Crear Add/Edit ViewModels. Evaluar si `Dto/RefundSyntheticPayment` y `Subscriber/RefundOutcomeSubscriber` se generalizan o se quedan como caso particular justificado. | **Completado — Plan C** |
 | 🟡 Media | **Advances** | Crear `AdvanceLegalizationDocumentService` propio (despegar de `InvoiceDocumentService`). Convertir `_buildLegalizationViewModel` privado en clase. Crear Add ViewModel. | Backlog (no entra en opción 2) |
 | 🟢 Baja | **Invoices** | Crear `InvoiceAddViewModel` para simetría. Resto se mantiene — sus servicios extra están justificados. | Backlog (no entra en opción 2) |
 | 🟢 Baja | **PettyCash** | Ya cumple. Ningún cambio. | ✅ OK |
@@ -119,8 +119,9 @@ Solo se ejecutan **Plan A (PaymentSchedulings)** y **Plan B (Novelties)**.
 
 | Plan | Flujo | Estado | Fecha cierre |
 |---|---|---|---|
-| Plan A | PaymentSchedulings | 🟢 Completado | 2026-05-08 9:45 AM |
+| Plan A | PaymentSchedulings | 🟢 Completado | 2026-05-06 |
 | Plan B | Novelties | 🟢 Completado | 2026-05-06 |
+| Plan C | Refunds | 🟢 Completado | 2026-05-06 |
 
 ---
 
@@ -129,3 +130,7 @@ Solo se ejecutan **Plan A (PaymentSchedulings)** y **Plan B (Novelties)**.
 > Cualquier desviación (fusionar planes, cambiar el alcance, mover ítems del backlog al activo) debe quedar registrada aquí con fecha y razón.
 
 - **2026-05-06** — Creación inicial. Adopción de opción 2.
+- **2026-05-06** — Activación Plan C (Refunds). Se promueve desde Backlog. Justificación: continuación natural tras Plan A/B completados; los hallazgos de Refunds (DTO mal generalizado en PettyCash) salieron a la luz solo al rediseñarlo.
+- **2026-05-06** — Desviación Plan C: el `Trait/RefundPipelineHelpersTrait` se elimina por completo (audit pidió "reemplazar por State/*"; en realidad el trait también tenía RBAC + helpers no-pipeline que se inlinearon en cada service).
+- **2026-05-06** — Hallazgo Plan C: `Dto/RefundSyntheticPayment` se renombra a `BulkPaymentView` y se promueve a convención compartida del proyecto. **PettyCash queda con `_buildSyntheticPayments` legacy `(object)[...]`** pendiente de adoptar el Dto. No es parte de este plan; se anota como deuda para su próxima sesión.
+- **2026-05-06** — Plan C también deja constancia de que `Subscriber/RefundOutcomeSubscriber` se conserva como patrón sano del proyecto (3 Subscribers ya: `LegalizationInitializer`, `LinkedInvoicesPromoter`, `RefundOutcome` — convención, no excepción).
