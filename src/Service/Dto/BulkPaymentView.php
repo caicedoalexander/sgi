@@ -7,20 +7,18 @@ use Cake\ORM\Entity;
 use DateTimeInterface;
 
 /**
- * Representación uniforme del pago bulk de un Refund para que las vistas puedan
- * reusar el element compartido `payment_section`.
+ * Vista uniforme del pago bulk de un dominio que guarda **un único pago como
+ * columnas en su tabla principal** (Refunds, PettyCashRecords). Materializa
+ * esas columnas en la forma que espera el element compartido
+ * `templates/element/payment_section.php`, garantizando tipado estático:
+ * cualquier mismatch falla en IDE en lugar de runtime.
  *
- * Refund guarda un único pago como columnas en la propia tabla `refunds`
- * (no tiene tabla de pagos propia). Este DTO materializa esas columnas en
- * la forma que espera el element y, a diferencia del `(object)[...]` que
- * existía antes, garantiza tipado estático: cualquier cambio en la vista
- * que asuma una propiedad inexistente falla en compile-time/IDE en lugar
- * de en runtime.
+ * Convención del proyecto — ver auditoría 2026-05-06 sección 9.
  */
-final readonly class RefundSyntheticPayment
+final readonly class BulkPaymentView
 {
     /**
-     * @param int $id ID del refund propietario.
+     * @param int $id ID del registro propietario.
      * @param \Cake\ORM\Entity|null $banking_entity Entidad bancaria asociada.
      * @param float|int|null $amount Monto del pago.
      * @param \DateTimeInterface|null $payment_date Fecha del pago.

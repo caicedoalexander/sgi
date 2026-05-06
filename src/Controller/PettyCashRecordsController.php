@@ -352,6 +352,10 @@ class PettyCashRecordsController extends AppController
      * a list of payment-like objects). Returns an empty array when no payment
      * has been registered yet.
      *
+     * TODO: migrar a App\Service\Dto\BulkPaymentView (Service/Dto/) en próxima sesión.
+     *       El cast (object)[...] perdió tipado estático cuando Refunds adoptó BulkPaymentView.
+     *       Ver auditoría 2026-05-06 sección 9.
+     *
      * @return array<int, object>
      */
     private function _buildSyntheticPayments(PettyCashRecord $record): array
