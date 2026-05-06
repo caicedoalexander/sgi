@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
-use App\Service\Trait\RefundPipelineHelpersTrait;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -18,9 +18,8 @@ use Cake\ORM\TableRegistry;
  */
 class RefundPaymentService
 {
-    use RefundPipelineHelpersTrait;
-
     private RefundHistoryService $refundHistory;
+    private PipelineAuthorizationService $pipelineAuth;
 
     /**
      * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth Pipeline authorization service.
@@ -50,7 +49,14 @@ class RefundPaymentService
         int $createdBy,
         int $roleId,
     ): ServiceResult {
-        if (!$this->_canOperate($roleId, RefundConstants::STATUS_TESORERIA)) {
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                '',
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                RefundConstants::STATUS_TESORERIA,
+            )
+        ) {
             return ServiceResult::fail('No tiene permisos para registrar pagos en este registro.');
         }
 
@@ -178,7 +184,14 @@ class RefundPaymentService
         int $authorizedBy,
         int $roleId,
     ): ServiceResult {
-        if (!$this->_canOperate($roleId, RefundConstants::STATUS_AUT_PAGO)) {
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                '',
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                RefundConstants::STATUS_AUT_PAGO,
+            )
+        ) {
             return ServiceResult::fail('No tiene permisos para autorizar pagos en este registro.');
         }
 
@@ -258,7 +271,7 @@ class RefundPaymentService
                 return false;
             }
 
-            $today = self::_today();
+            $today = date('Y-m-d');
             foreach ($childInvoices as $invoice) {
                 $invoicePayment = $invoicePaymentsTable->newEntity([
                     'invoice_id' => $invoice->id,
@@ -347,7 +360,14 @@ class RefundPaymentService
         string $reason,
         int $roleId,
     ): ServiceResult {
-        if (!$this->_canOperate($roleId, RefundConstants::STATUS_AUT_PAGO)) {
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                '',
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                RefundConstants::STATUS_AUT_PAGO,
+            )
+        ) {
             return ServiceResult::fail('No tiene permisos para rechazar pagos en este registro.');
         }
 
@@ -415,5 +435,25 @@ class RefundPaymentService
         });
 
         return $serviceResult ?? ServiceResult::fail('No se pudo rechazar el pago.');
+    }
+
+    /**
+     * Builds a readable error message including entity validation details.
+     *
+     * @param string $base Base message.
+     * @param array $entityErrors Errors returned by `Entity::getErrors()`.
+     */
+    private static function _buildSaveErrorMessage(string $base, array $entityErrors): string
+    {
+        $details = [];
+        foreach ($entityErrors as $field => $fieldErrors) {
+            foreach ((array)$fieldErrors as $msg) {
+                if (is_string($msg) && $msg !== '') {
+                    $details[] = sprintf('%s: %s', $field, $msg);
+                }
+            }
+        }
+
+        return empty($details) ? $base : ($base . ' ' . implode(', ', $details));
     }
 }

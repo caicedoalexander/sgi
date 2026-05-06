@@ -4,12 +4,13 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
+use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\Refund;
-use App\Service\Dto\RefundSyntheticPayment;
+use App\Service\Dto\BulkPaymentView;
 use App\Service\Interface\HistoryServiceInterface;
-use App\Service\Trait\RefundPipelineHelpersTrait;
+use App\Service\Pipeline\Refund\RefundPipelineStateRegistry;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
@@ -17,8 +18,6 @@ use DateTimeInterface;
 
 class RefundService
 {
-    use RefundPipelineHelpersTrait;
-
     // Active refund statuses (excludes pagado — terminal para "Mis Registros").
     private const ACTIVE_STATUSES = [
         RefundConstants::STATUS_AGRUPACION,
@@ -44,16 +43,20 @@ class RefundService
 
     private GroupedInvoiceService $grouped;
     private RefundHistoryService $refundHistory;
+    private RefundPipelineStateRegistry $stateRegistry;
+    private PipelineAuthorizationService $pipelineAuth;
 
     /**
      * @param \App\Service\Interface\HistoryServiceInterface $historyService History service for child invoices.
      * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth Pipeline authorization service.
      * @param \App\Service\RefundHistoryService|null $refundHistory Refund-specific audit trail.
+     * @param \App\Service\Pipeline\Refund\RefundPipelineStateRegistry|null $stateRegistry Pipeline states.
      */
     public function __construct(
         HistoryServiceInterface $historyService,
         ?PipelineAuthorizationService $pipelineAuth = null,
         ?RefundHistoryService $refundHistory = null,
+        ?RefundPipelineStateRegistry $stateRegistry = null,
     ) {
         $this->grouped = new GroupedInvoiceService(
             documentType: InvoiceConstants::DOCTYPE_REINTEGRO,
@@ -64,6 +67,7 @@ class RefundService
         );
         $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
         $this->refundHistory = $refundHistory ?? new RefundHistoryService();
+        $this->stateRegistry = $stateRegistry ?? new RefundPipelineStateRegistry();
     }
 
     /**
@@ -144,11 +148,18 @@ class RefundService
             return ['success' => false, 'error' => 'La autorización de pago se gestiona desde la sección de pagos.'];
         }
 
-        if (!$this->_canOperate($roleId, $currentStatus)) {
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                '',
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                $currentStatus,
+            )
+        ) {
             return ['success' => false, 'error' => 'No tiene permisos para avanzar este registro.'];
         }
 
-        $validationErrors = $this->_validateTransition($currentStatus, $record);
+        $validationErrors = $this->stateRegistry->get($currentStatus)->validateAdvance($record);
         if (!empty($validationErrors)) {
             return [
                 'success' => false,
@@ -204,7 +215,7 @@ class RefundService
                 return false;
             }
 
-            $today = self::_today();
+            $today = date('Y-m-d');
             $updateData = [];
 
             if ($nextStatus === RefundConstants::STATUS_CONTABILIDAD) {
@@ -272,7 +283,7 @@ class RefundService
      * tiene tabla de pagos propia); este método materializa esas columnas en
      * la forma que espera el element.
      *
-     * @return array<int, \App\Service\Dto\RefundSyntheticPayment> 0 o 1 elementos.
+     * @return array<int, \App\Service\Dto\BulkPaymentView> 0 o 1 elementos.
      */
     public function buildSyntheticPayments(Refund $record): array
     {
@@ -283,7 +294,7 @@ class RefundService
         $isAuthorized = $record->isPagado();
 
         return [
-            new RefundSyntheticPayment(
+            new BulkPaymentView(
                 id: $record->id,
                 banking_entity: $record->banking_entity ?? null,
                 amount: $record->payment_amount,
@@ -334,50 +345,7 @@ class RefundService
             return ['El registro debe tener al menos una factura agrupada.'];
         }
 
-        return $this->_validateTransition($record->status, $record);
-    }
-
-    /**
-     * Validate refund specific transition requirements.
-     *
-     * @param string $fromStatus Current status.
-     * @param \App\Model\Entity\Refund $record Record.
-     * @return array
-     */
-    private function _validateTransition(string $fromStatus, Refund $record): array
-    {
-        $errors = [];
-
-        switch ($fromStatus) {
-            case RefundConstants::STATUS_AGRUPACION:
-                $type = $record->beneficiary_type;
-                if ($type === RefundConstants::BENEFICIARY_TYPE_EMPLOYEE) {
-                    if (empty($record->beneficiary_employee_id)) {
-                        $errors[] = 'Debe seleccionar un beneficiario antes de avanzar.';
-                    }
-                } elseif ($type === RefundConstants::BENEFICIARY_TYPE_PROVIDER) {
-                    if (empty($record->beneficiary_provider_id)) {
-                        $errors[] = 'Debe seleccionar un beneficiario antes de avanzar.';
-                    }
-                } else {
-                    $errors[] = 'Debe seleccionar un beneficiario antes de avanzar.';
-                }
-                break;
-
-            case RefundConstants::STATUS_CONTABILIDAD:
-                if (empty($record->accrued)) {
-                    $errors[] = 'El registro debe estar marcado como Causado.';
-                }
-                if (empty($record->ready_for_payment)) {
-                    $errors[] = 'Debe seleccionar "Lista para Pago".';
-                }
-                break;
-
-            case RefundConstants::STATUS_TESORERIA:
-                break;
-        }
-
-        return $errors;
+        return $this->stateRegistry->get($record->status)->validateAdvance($record);
     }
 
     /**
@@ -386,7 +354,7 @@ class RefundService
      */
     public function getPreviousStatus(string $currentStatus): ?string
     {
-        return RefundConstants::BACKWARD_TRANSITIONS[$currentStatus] ?? null;
+        return $this->stateRegistry->get($currentStatus)->getPrevious();
     }
 
     /**
@@ -398,7 +366,12 @@ class RefundService
             return false;
         }
 
-        return $this->_canOperate($roleId, $currentStatus);
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            '',
+            PipelineStepConstants::PIPELINE_REFUNDS,
+            $currentStatus,
+        );
     }
 
     /**
@@ -406,16 +379,7 @@ class RefundService
      */
     public function getRegressionLockMessage(Refund $record): ?string
     {
-        // Único bloqueo: tesoreria → contabilidad con pago pendiente registrado.
-        if (
-            $record->status === RefundConstants::STATUS_TESORERIA
-            && !empty($record->payment_amount)
-        ) {
-            return 'No se puede regresar a Contabilidad: existe un pago pendiente registrado.'
-                . ' Anule o reasigne el pago primero.';
-        }
-
-        return null;
+        return $this->stateRegistry->get($record->status)->getRegressionLockMessage($record);
     }
 
     /**
@@ -579,5 +543,25 @@ class RefundService
             'error' => 'No se pudo regresar el registro. Intente de nuevo.',
             'previousStatus' => null,
         ];
+    }
+
+    /**
+     * Builds a readable error message including entity validation details.
+     *
+     * @param string $base Base message.
+     * @param array $entityErrors Errors returned by `Entity::getErrors()`.
+     */
+    private static function _buildSaveErrorMessage(string $base, array $entityErrors): string
+    {
+        $details = [];
+        foreach ($entityErrors as $field => $fieldErrors) {
+            foreach ((array)$fieldErrors as $msg) {
+                if (is_string($msg) && $msg !== '') {
+                    $details[] = sprintf('%s: %s', $field, $msg);
+                }
+            }
+        }
+
+        return empty($details) ? $base : ($base . ' ' . implode(', ', $details));
     }
 }
