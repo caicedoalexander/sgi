@@ -119,8 +119,8 @@ Solo se ejecutan **Plan A (PaymentSchedulings)** y **Plan B (Novelties)**.
 
 | Plan | Flujo | Estado | Fecha cierre |
 |---|---|---|---|
-| Plan A | PaymentSchedulings | 🟡 Pendiente | — |
-| Plan B | Novelties | 🟡 Pendiente | — |
+| Plan A | PaymentSchedulings | 🟢 Completado | 2026-05-08 9:45 AM |
+| Plan B | Novelties | 🟢 Completado | 2026-05-06 |
 
 ---
 
