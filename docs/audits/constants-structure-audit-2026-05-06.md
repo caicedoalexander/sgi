@@ -14,11 +14,12 @@
 | **C3** Esquema repetido en 6 *PipelineConstants sin contrato común | ⚠️ No procede | Re-evaluado 2026-05-06 — ver Notas C3 |
 | **M1** Mezcla dominio/presentación en StatusColorConstants | ⏳ Pendiente | — |
 | **M2** God-array `PIPELINE_STATUS_BADGES` cross-domain | 🟡 Parcial | Aliases `'aut_pago'` y `'pagado'` eliminados al resolver C1 |
-| **M3** Drift `Aut. Pago` vs `Autorización de pago` en STATUS_LABELS | ⏳ Pendiente | — |
-| **M4** `EmployeeStatusConstants` acopla código a IDs de seed | ⏳ Pendiente | — |
+| **M3** Drift `Aut. Pago` vs `Autorización de pago` en STATUS_LABELS | ✅ Resuelto | PR `91f78dd` — canonicalización a forma larga (2026-05-06) |
+| **M4** `EmployeeStatusConstants` acopla código a IDs de seed | ✅ Resuelto | Migración `20260506213953_ReplaceEmployeeStatusesTableWithStatusColumn` + PR `1c53032` (2026-05-06) |
 | **M5** Inconsistencia estilo `self::*` vs literal en PettyCash/Refund | ✅ Resuelto | Reescritura de constants al resolver C1 |
-| **M6** Duplicación `ALL_STATUSES`/`TRANSITIONS` Service vs Constants | ⏳ Pendiente | — |
-| Menores (m1-m7) y sugerencias (S1-S3) | ⏳ Pendientes | — |
+| **M6** Duplicación `ALL_STATUSES`/`TRANSITIONS` Service vs Constants | ✅ Resuelto | PR `f4fd900` — movidas a `InvoiceConstants` (2026-05-06) |
+| Menores **m6** (`OBSERVATION_TYPE_*` repetido) | ✅ Resuelto | PR `f4fd900` — promovido a `ObservationConstants::TYPE_*` (2026-05-06) |
+| Menores restantes (m1–m5, m7) y sugerencias (S1–S3) | ⏳ Pendientes | Postergados — ver `docs/plans/2026-05-06-constants-audit-plan-a-design.md` §4 |
 
 ### Notas C1 (2026-05-06)
 
@@ -66,6 +67,28 @@ Una `interface PipelineDefinition` común tendría que aceptar todos estos campo
 **Cuándo reabrir C3:**
 
 Si llega un séptimo pipeline con shape muy similar a uno existente, o si los 6 actuales convergen orgánicamente al mismo shape (hoy divergen). Hasta entonces, la estructura actual refleja diferencias reales de dominio y debe mantenerse.
+
+### Notas M3, M4, M6, m6 (2026-05-06)
+
+Plan de ejecución completo en [`docs/plans/2026-05-06-constants-audit-plan-a-design.md`](../plans/2026-05-06-constants-audit-plan-a-design.md). Tres PRs en `main`:
+
+- **PR `f4fd900`** — `refactor(constants): centralize observation types and pipeline status arrays`
+  - **m6**: agregadas `ObservationConstants::TYPE_GENERAL`, `TYPE_REGRESSION`, `TYPES`. Las 4 declaraciones locales (`InvoiceConstants`, `PaymentSchedulingConstants`, `GroupingPipelineConstantsTrait`) se redefinen como referencias a `ObservationConstants` para preservar API en ~25 call-sites de Tables/Services/templates.
+  - **M6**: `ALL_STATUSES` y `TRANSITIONS` movidas de `InvoicePipelineService` a `InvoiceConstants` (incluyen `STATUS_LEGALIZADA`, terminal fuera de `PIPELINE_STATUSES`). `InvoicesTable.php:214` actualizado a `InvoiceConstants::ALL_STATUSES`; import obsoleto de `InvoicePipelineService` removido. `STATUS_ICONS` permanece en el service (M1, fuera de alcance).
+  - Alcance verificado: solo `InvoicePipelineService` tenía estas constantes — `NoveltyPipelineService` y `PaymentSchedulingPipelineService` no existen como archivos independientes.
+
+- **PR `91f78dd`** — `refactor(constants): canonicalize 'Autorización de pago' label across pipelines`
+  - **M3**: `'Aut. Pago'` reemplazado por `'Autorización de pago'` en los 5 `*Constants` con `STATUS_LABELS` (Invoice, Novelty, PaymentScheduling, Advance, `GroupingPipelineConstantsTrait`) y en 7 templates con badges inline (Advances, Invoices, PaymentSchedulings views/edits).
+  - Ahora `*Constants::STATUS_LABELS` y `PipelineStepConstants::STEP_LABELS` coinciden. Slug `'autorizacion_pago'` sin cambios; pre-grep confirmó que ninguna query filtra por el string del label.
+  - 3 comentarios internos en services (`RefundPaymentService:38`, `PettyCashService:470`, `AutorizacionPagoState:29`) no se tocaron por principio de cambios quirúrgicos — no afectan UX.
+
+- **PR `1c53032`** — `refactor(employees): replace employee_statuses table with status enum column`
+  - **M4**: gate de auditoría previa pasó (tabla sin metadatos, 2 filas estables, FKs entrantes solo la propia, 238 empleados todos con `Activo`). Se procedió con la opción radical (drop tabla + columna string).
+  - `EmployeeStatusConstants` cambia de PKs (1, 2) a slugs (`'activo'`, `'retirado'`); incorpora `STATUSES` y `STATUS_LABELS`.
+  - Migración `20260506213953`: agrega `employees.status VARCHAR(20) NOT NULL DEFAULT 'activo'`, backfill desde `employee_status_id`, drop FK + columna, drop tabla `employee_statuses`, limpieza de 8 filas en `permissions WHERE module='employee_statuses'`. `down()` reversa exacta.
+  - Cambios de código: `Employee` entity (`$_accessible`), `EmployeesTable` (sin `belongsTo('EmployeeStatuses')`, validación `inList`, ExcelExportable simplificado), `EmployeesController`, `InvoicesController`, `EmployeeStatisticsService`, `EmployeeFilterService`, `EmployeeHistoryService`, `AppController` (`controllerModuleMap`), `AuthorizationService` (`MODULES`), templates de `Employees/`, sidebar (`templates/layout/default.php`).
+  - Borrados: `EmployeeStatusesController`, `EmployeeStatusesTable`, `EmployeeStatus` entity, `templates/EmployeeStatuses/` (4 archivos).
+  - Nota Excel: import/export del campo de estado ahora usa el slug (`'activo'`/`'retirado'`) en lugar del label. Sheets antiguas con `'Activo'`/`'Retirado'` fallarán validación `inList`.
 
 ---
 
