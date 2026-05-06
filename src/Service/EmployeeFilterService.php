@@ -19,7 +19,7 @@ class EmployeeFilterService
         $this->applySearch($query, $params['search'] ?? null);
         $this->applyExact($query, 'Employees.position_id', $params['position_id'] ?? null);
         $this->applyExact($query, 'Employees.operation_center_id', $params['operation_center_id'] ?? null);
-        $this->applyExact($query, 'Employees.employee_status_id', $params['employee_status_id'] ?? null);
+        $this->applyExact($query, 'Employees.status', $params['status'] ?? null);
 
         return $query;
     }

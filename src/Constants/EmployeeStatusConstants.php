@@ -5,6 +5,16 @@ namespace App\Constants;
 
 final class EmployeeStatusConstants
 {
-    public const ACTIVO = 1;
-    public const RETIRADO = 2;
+    public const ACTIVO = 'activo';
+    public const RETIRADO = 'retirado';
+
+    public const STATUSES = [
+        self::ACTIVO,
+        self::RETIRADO,
+    ];
+
+    public const STATUS_LABELS = [
+        self::ACTIVO => 'Activo',
+        self::RETIRADO => 'Retirado',
+    ];
 }

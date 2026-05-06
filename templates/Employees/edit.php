@@ -90,7 +90,7 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
     <div class="card-body">
         <div class="row">
             <div class="col-md-3 mb-3">
-                <?= $this->Form->control('employee_status_id', ['class' => 'form-select', 'label' => ['text' => 'Estado Empleado', 'class' => 'form-label'], 'empty' => '-- Seleccione --']) ?>
+                <?= $this->Form->control('status', ['type' => 'select', 'options' => $employeeStatuses, 'class' => 'form-select', 'label' => ['text' => 'Estado Empleado', 'class' => 'form-label']]) ?>
             </div>
             <div class="col-md-3 mb-3">
                 <?= $this->Form->control('position_id', ['class' => 'form-select', 'label' => ['text' => 'Cargo', 'class' => 'form-label'], 'empty' => '-- Seleccione --']) ?>

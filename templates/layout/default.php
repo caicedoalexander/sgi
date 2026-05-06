@@ -405,7 +405,6 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     $canView('expense_types') ? 'expense_types' : null,
                     $canView('cost_centers') ? 'cost_centers' : null,
                     $canView('positions') ? 'positions' : null,
-                    $canView('employee_statuses') ? 'employee_statuses' : null,
                     $canView('marital_statuses') ? 'marital_statuses' : null,
                     $canView('education_levels') ? 'education_levels' : null,
                     $canView('default_folders') ? 'default_folders' : null,
@@ -475,15 +474,6 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             '<i class="bi bi-briefcase me-2"></i>Cargos',
                             ['controller' => 'Positions', 'action' => 'index'],
                             ['class' => $navLink('Positions'), 'escape' => false],
-                        ) ?>
-                </li>
-                    <?php endif; ?>
-                    <?php if ($canView('employee_statuses')) : ?>
-                <li class="nav-item">
-                        <?= $this->Html->link(
-                            '<i class="bi bi-card-checklist me-2"></i>Estados de Empleado',
-                            ['controller' => 'EmployeeStatuses', 'action' => 'index'],
-                            ['class' => $navLink('EmployeeStatuses'), 'escape' => false],
                         ) ?>
                 </li>
                     <?php endif; ?>

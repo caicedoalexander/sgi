@@ -546,7 +546,7 @@ class InvoicesController extends AppController
                 ->all(),
             'employees' => $this->fetchTable('Employees')
                 ->find()
-                ->where(['Employees.employee_status_id' => EmployeeStatusConstants::ACTIVO])
+                ->where(['Employees.status' => EmployeeStatusConstants::ACTIVO])
                 ->order(['Employees.first_name' => 'ASC', 'Employees.last_name1' => 'ASC'])
                 ->all()
                 ->combine('id', function ($employee) {

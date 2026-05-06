@@ -69,7 +69,6 @@ class AppController extends Controller
         'Approvers' => 'approvers',
         'InvoiceHistories' => 'invoices',
         'Employees' => 'employees',
-        'EmployeeStatuses' => 'employee_statuses',
         'MaritalStatuses' => 'marital_statuses',
         'EducationLevels' => 'education_levels',
         'Positions' => 'positions',

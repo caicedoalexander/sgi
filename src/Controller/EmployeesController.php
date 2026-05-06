@@ -36,7 +36,7 @@ class EmployeesController extends AppController
     public function index()
     {
         $query = $this->Employees->find('withCurrentNovelty')
-            ->contain(['EmployeeStatuses', 'Positions', 'OperationCenters'])
+            ->contain(['Positions', 'OperationCenters'])
             ->order(['Employees.last_name1' => 'ASC', 'Employees.last_name2' => 'ASC']);
 
         $this->filterService->apply($query, $this->request->getQueryParams());
@@ -45,7 +45,7 @@ class EmployeesController extends AppController
 
         $positions = $this->Employees->Positions->find('codeList')->all();
         $operationCenters = $this->Employees->OperationCenters->find('codeList')->all();
-        $employeeStatuses = $this->Employees->EmployeeStatuses->find('list')->all();
+        $employeeStatuses = \App\Constants\EmployeeStatusConstants::STATUS_LABELS;
 
         $this->set(compact('employees', 'positions', 'operationCenters', 'employeeStatuses'));
     }
@@ -53,7 +53,6 @@ class EmployeesController extends AppController
     public function view($id = null)
     {
         $employee = $this->Employees->get($id, contain: [
-            'EmployeeStatuses',
             'MaritalStatuses',
             'EducationLevels',
             'Positions',
@@ -255,7 +254,7 @@ class EmployeesController extends AppController
 
     protected function _setFormDropdowns(): void
     {
-        $employeeStatuses = $this->Employees->EmployeeStatuses->find('list')->all();
+        $employeeStatuses = \App\Constants\EmployeeStatusConstants::STATUS_LABELS;
         $maritalStatuses = $this->Employees->MaritalStatuses->find('list')->all();
         $educationLevels = $this->Employees->EducationLevels->find('list')->all();
         $positions = $this->Employees->Positions->find('codeList')->all();

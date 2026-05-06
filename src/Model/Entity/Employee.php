@@ -23,7 +23,7 @@ class Employee extends Entity
         'phone' => true,
         'address' => true,
         'city' => true,
-        'employee_status_id' => true,
+        'status' => true,
         'position_id' => true,
         'supervisor_position_id' => true,
         'operation_center_id' => true,

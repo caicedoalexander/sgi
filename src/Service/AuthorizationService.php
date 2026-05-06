@@ -30,7 +30,6 @@ class AuthorizationService
         'roles' => 'Roles',
         'approvers' => 'Aprobadores',
         'employees' => 'Empleados',
-        'employee_statuses' => 'Estados de Empleado',
         'marital_statuses' => 'Estados Civiles',
         'education_levels' => 'Niveles Educativos',
         'positions' => 'Cargos',

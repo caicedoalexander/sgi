@@ -96,9 +96,9 @@ foreach ($folders as $folder) {
             <div class="sgi-profile-sub"><?= implode(' &middot; ', $sub) ?></div>
             <?php endif; ?>
             <div class="mt-2 d-flex gap-1 flex-wrap">
-                <?php if ($employee->has('employee_status') && $employee->employee_status): ?>
-                    <span class="badge <?= $employee->employee_status_id === \App\Constants\EmployeeStatusConstants::RETIRADO ? 'bg-danger' : 'bg-info' ?>">
-                        <?= h($employee->employee_status->name) ?>
+                <?php if (!empty($employee->status)): ?>
+                    <span class="badge <?= $employee->status === \App\Constants\EmployeeStatusConstants::RETIRADO ? 'bg-danger' : 'bg-info' ?>">
+                        <?= h(\App\Constants\EmployeeStatusConstants::STATUS_LABELS[$employee->status] ?? $employee->status) ?>
                     </span>
                 <?php endif; ?>
                 <?php if (!empty($currentNovelty)): ?>

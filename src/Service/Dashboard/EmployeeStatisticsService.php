@@ -62,7 +62,7 @@ class EmployeeStatisticsService
         $stats = [];
         $stats['active_employees'] = $this->_safeCount(
             'Employees',
-            ['employee_status_id' => EmployeeStatusConstants::ACTIVO],
+            ['status' => EmployeeStatusConstants::ACTIVO],
         );
 
         $monthStart = date('Y-m-01 00:00:00');
@@ -114,20 +114,20 @@ class EmployeeStatisticsService
             $avgAge = $empTable->getConnection()->execute(
                 "SELECT AVG(TIMESTAMPDIFF(YEAR, birth_date, CURDATE())) as avg_age
                  FROM employees
-                 WHERE employee_status_id = ? AND birth_date IS NOT NULL",
+                 WHERE status = ? AND birth_date IS NOT NULL",
                 [EmployeeStatusConstants::ACTIVO],
             )->fetch('assoc');
 
             $avgTenure = $empTable->getConnection()->execute(
                 "SELECT AVG(TIMESTAMPDIFF(YEAR, hire_date, CURDATE())) as avg_tenure
                  FROM employees
-                 WHERE employee_status_id = ? AND hire_date IS NOT NULL",
+                 WHERE status = ? AND hire_date IS NOT NULL",
                 [EmployeeStatusConstants::ACTIVO],
             )->fetch('assoc');
 
             $newHires = $empTable->find()
                 ->where([
-                    'employee_status_id' => EmployeeStatusConstants::ACTIVO,
+                    'status' => EmployeeStatusConstants::ACTIVO,
                     'hire_date >=' => $from,
                     'hire_date <=' => $to,
                 ])
@@ -173,7 +173,7 @@ class EmployeeStatisticsService
             foreach (ContractTypeConstants::ALL as $type) {
                 $contractTypes[$type] = $empTable->find()
                     ->where([
-                        'employee_status_id' => EmployeeStatusConstants::ACTIVO,
+                        'status' => EmployeeStatusConstants::ACTIVO,
                         'contract_type' => $type,
                     ])
                     ->count();

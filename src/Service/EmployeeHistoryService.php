@@ -25,7 +25,7 @@ class EmployeeHistoryService
         'phone' => 'Teléfono',
         'address' => 'Dirección',
         'city' => 'Ciudad',
-        'employee_status_id' => 'Estado del Empleado',
+        'status' => 'Estado del Empleado',
         'position_id' => 'Cargo',
         'supervisor_position_id' => 'Jefe Inmediato',
         'operation_center_id' => 'Centro de Operación',

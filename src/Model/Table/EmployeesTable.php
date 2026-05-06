@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use App\Constants\ContractTypeConstants;
+use App\Constants\EmployeeStatusConstants;
 use App\Constants\NoveltyConstants;
 use App\Model\Excel\ExcelExportableInterface;
 use App\Model\Excel\ExcelExportableTrait;
@@ -29,9 +30,6 @@ class EmployeesTable extends Table implements ExcelExportableInterface
 
         $this->addBehavior('Timestamp');
 
-        $this->belongsTo('EmployeeStatuses', [
-            'foreignKey' => 'employee_status_id',
-        ]);
         $this->belongsTo('MaritalStatuses', [
             'foreignKey' => 'marital_status_id',
         ]);
@@ -142,6 +140,11 @@ class EmployeesTable extends Table implements ExcelExportableInterface
             ->allowEmptyString('contract_type');
 
         $validator
+            ->scalar('status')
+            ->inList('status', EmployeeStatusConstants::STATUSES, 'Estado de empleado inválido.')
+            ->notEmptyString('status');
+
+        $validator
             ->scalar('vest_number')
             ->maxLength('vest_number', 20)
             ->allowEmptyString('vest_number');
@@ -154,7 +157,6 @@ class EmployeesTable extends Table implements ExcelExportableInterface
         $rules->add($rules->isUnique(['document_number'], message: 'El número de documento ya existe.'), [
             'errorField' => 'document_number',
         ]);
-        $rules->add($rules->existsIn('employee_status_id', 'EmployeeStatuses'), ['errorField' => 'employee_status_id', 'allowNullableNulls' => true]);
         $rules->add($rules->existsIn('marital_status_id', 'MaritalStatuses'), ['errorField' => 'marital_status_id', 'allowNullableNulls' => true]);
         $rules->add($rules->existsIn('education_level_id', 'EducationLevels'), ['errorField' => 'education_level_id', 'allowNullableNulls' => true]);
         $rules->add($rules->existsIn('position_id', 'Positions'), ['errorField' => 'position_id', 'allowNullableNulls' => true]);
@@ -273,9 +275,8 @@ class EmployeesTable extends Table implements ExcelExportableInterface
                 'fk' => true, 'fk_table' => 'CostCenters', 'fk_code' => 'code',
                 'aliases' => ['id ccosto'],
             ],
-            'employee_status_id' => [
+            'status' => [
                 'label' => 'Estado empleado', 'type' => 'string',
-                'fk' => true, 'fk_table' => 'EmployeeStatuses', 'fk_code' => 'name',
             ],
             'marital_status_id' => [
                 'label' => 'Estado civil', 'type' => 'string',
@@ -309,11 +310,6 @@ class EmployeesTable extends Table implements ExcelExportableInterface
                 'label' => 'Centro de costos', 'type' => 'string', 'display_only' => true,
                 'fk_resolve' => 'name', 'fk_table' => 'CostCenters', 'fk_target' => 'cost_center_id',
                 'aliases' => ['descripcion ccosto'],
-            ],
-            'employee_status' => [
-                'label' => 'Estado', 'type' => 'string', 'display_only' => true,
-                'fk_resolve' => 'name', 'fk_table' => 'EmployeeStatuses', 'fk_target' => 'employee_status_id',
-                'aliases' => ['descripcion estado'],
             ],
             'marital_status' => [
                 'label' => 'Estado civil', 'type' => 'string', 'display_only' => true,
@@ -355,7 +351,7 @@ class EmployeesTable extends Table implements ExcelExportableInterface
     public function getExcelExportContains(): array
     {
         return [
-            'EmployeeStatuses', 'Positions', 'SupervisorPositions',
+            'Positions', 'SupervisorPositions',
             'OperationCenters', 'CostCenters', 'MaritalStatuses',
             'EducationLevels', 'TemporaryOrganizations',
         ];
