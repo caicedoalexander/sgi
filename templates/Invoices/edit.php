@@ -20,7 +20,10 @@ $this->assign(
 $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstants::DOCUMENT_TYPES);
 $approvalOptions       = array_combine(InvoiceConstants::APPROVAL_STATUSES, InvoiceConstants::APPROVAL_STATUSES);
 $dianOptions           = array_combine(InvoiceConstants::DIAN_STATUSES, InvoiceConstants::DIAN_STATUSES);
-$readyForPaymentLabels = ['Si' => 'Sí', 'Pago prioritario' => 'Pago Prioritario'];
+$readyForPaymentLabels = [
+    InvoiceConstants::READY_FOR_PAYMENT_SI => 'Sí',
+    InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'Pago Prioritario',
+];
 $readyForPaymentOptions = ['' => '-- Seleccione --'] + array_combine(
     InvoiceConstants::READY_FOR_PAYMENT_OPTIONS,
     array_map(fn($v) => $readyForPaymentLabels[$v] ?? $v, InvoiceConstants::READY_FOR_PAYMENT_OPTIONS)

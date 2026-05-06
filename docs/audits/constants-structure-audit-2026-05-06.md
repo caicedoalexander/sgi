@@ -19,7 +19,12 @@
 | **M5** Inconsistencia estilo `self::*` vs literal en PettyCash/Refund | ✅ Resuelto | Reescritura de constants al resolver C1 |
 | **M6** Duplicación `ALL_STATUSES`/`TRANSITIONS` Service vs Constants | ✅ Resuelto | PR `f4fd900` — movidas a `InvoiceConstants` (2026-05-06) |
 | Menores **m6** (`OBSERVATION_TYPE_*` repetido) | ✅ Resuelto | PR `f4fd900` — promovido a `ObservationConstants::TYPE_*` (2026-05-06) |
-| Menores restantes (m1–m5, m7) y sugerencias (S1–S3) | ⏳ Pendientes | Postergados — ver `docs/plans/2026-05-06-constants-audit-plan-a-design.md` §4 |
+| Menores **m2** (orden de declaración en `InvoiceConstants`) | ✅ Resuelto | Quick wins PR (2026-05-06) — ver `docs/plans/2026-05-06-constants-quick-wins-design.md` |
+| Menores **m3** (`DIAN_STATUSES` literal `'Pendiente'`) | ✅ Resuelto | Quick wins PR (2026-05-06) — `DIAN_PENDING` extraído como constante |
+| Menores **m4** (`READY_FOR_PAYMENT_OPTIONS` magic strings) | ✅ Resuelto | Quick wins PR (2026-05-06) — 3 constantes simbólicas + referencias en `READY_FOR_PAYMENT_BADGES` y templates |
+| Menores **m5** (`NoveltyConstants::ACTIVE_STATUSES` semántica ambigua) | ✅ Resuelto | Quick wins PR (2026-05-06) — PHPDoc explicando exclusiones |
+| Menores **m7** (`PipelineStepConstants::isValid()` estático) | 📌 Descartado | Decisión 2026-05-06: dejar donde está; mover sería over-engineering por purismo |
+| Menores restantes (m1) y sugerencias (S1–S3) | ⏳ Pendientes | Postergados — ver `docs/plans/2026-05-06-constants-audit-plan-a-design.md` §4 |
 
 ### Notas C1 (2026-05-06)
 

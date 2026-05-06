@@ -5,7 +5,17 @@ namespace App\Constants;
 
 final class InvoiceConstants
 {
-    // Tipos de documento
+    // Document types
+    public const DOCTYPE_FACTURA = 'Factura';
+    public const DOCTYPE_NOTA_DEBITO = 'Nota Debito';
+    public const DOCTYPE_CAJA_MENOR = 'Caja menor';
+    public const DOCTYPE_TARJETA_CREDITO = 'Tarjeta de Crédito';
+    public const DOCTYPE_REINTEGRO = 'Reintegro';
+    public const DOCTYPE_LEGALIZACION = 'Legalización';
+    public const DOCTYPE_RECIBO = 'Recibo';
+    public const DOCTYPE_RECIBO_CAJA = 'Recibo de Caja';
+    public const DOCTYPE_ANTICIPO = 'Anticipo';
+
     public const DOCUMENT_TYPES = [
         self::DOCTYPE_FACTURA,
         self::DOCTYPE_NOTA_DEBITO,
@@ -37,9 +47,10 @@ final class InvoiceConstants
     ];
 
     // Validacion DIAN
+    public const DIAN_PENDING = 'Pendiente';
     public const DIAN_APPROVED = 'Aprobada';
     public const DIAN_REJECTED = 'Rechazado';
-    public const DIAN_STATUSES = ['Pendiente', self::DIAN_APPROVED, self::DIAN_REJECTED];
+    public const DIAN_STATUSES = [self::DIAN_PENDING, self::DIAN_APPROVED, self::DIAN_REJECTED];
 
     // Pipeline statuses
     public const STATUS_APROBACION = 'aprobacion';
@@ -95,17 +106,6 @@ final class InvoiceConstants
         self::STATUS_LEGALIZADA        => 'Legalizada',
     ];
 
-    // Document types
-    public const DOCTYPE_FACTURA = 'Factura';
-    public const DOCTYPE_NOTA_DEBITO = 'Nota Debito';
-    public const DOCTYPE_CAJA_MENOR = 'Caja menor';
-    public const DOCTYPE_TARJETA_CREDITO = 'Tarjeta de Crédito';
-    public const DOCTYPE_REINTEGRO = 'Reintegro';
-    public const DOCTYPE_LEGALIZACION = 'Legalización';
-    public const DOCTYPE_RECIBO = 'Recibo';
-    public const DOCTYPE_RECIBO_CAJA = 'Recibo de Caja';
-    public const DOCTYPE_ANTICIPO = 'Anticipo';
-
     // Estados de pago
     public const PAYMENT_FULL = 'Pago total';
     public const PAYMENT_PARTIAL = 'Pago Parcial';
@@ -117,8 +117,14 @@ final class InvoiceConstants
     public const PAYMENT_RECORD_REJECTED = 'rejected';
 
     // Lista para pago
+    public const READY_FOR_PAYMENT_SI = 'Si';
+    public const READY_FOR_PAYMENT_PSE = 'Pago PSE';
+    public const READY_FOR_PAYMENT_PRIORITARIO = 'Pago prioritario';
+
     public const READY_FOR_PAYMENT_OPTIONS = [
-        'Si', 'Pago PSE', 'Pago prioritario',
+        self::READY_FOR_PAYMENT_SI,
+        self::READY_FOR_PAYMENT_PSE,
+        self::READY_FOR_PAYMENT_PRIORITARIO,
     ];
 
     // Token de aprobacion (horas de validez)

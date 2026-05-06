@@ -293,7 +293,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Validación DIAN</span>
                 <span class="sgi-data-value">
-                    <span class="badge <?= $dianClass ?>"><?= h($invoice->dian_validation ?? 'Pendiente') ?></span>
+                    <span class="badge <?= $dianClass ?>"><?= h($invoice->dian_validation ?? InvoiceConstants::DIAN_PENDING) ?></span>
                 </span>
             </div>
         </div>

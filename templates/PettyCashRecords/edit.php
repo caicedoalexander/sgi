@@ -35,7 +35,10 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
 
 $nextStatus = PettyCashConstants::TRANSITIONS[$record->status] ?? null;
 
-$readyForPaymentLabels = ['Si' => 'Sí', 'Pago prioritario' => 'Pago Prioritario'];
+$readyForPaymentLabels = [
+    InvoiceConstants::READY_FOR_PAYMENT_SI => 'Sí',
+    InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'Pago Prioritario',
+];
 $readyForPaymentOptions = ['' => '-- Seleccione --'] + array_combine(
     InvoiceConstants::READY_FOR_PAYMENT_OPTIONS,
     array_map(fn($v) => $readyForPaymentLabels[$v] ?? $v, InvoiceConstants::READY_FOR_PAYMENT_OPTIONS)

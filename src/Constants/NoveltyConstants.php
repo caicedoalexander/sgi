@@ -35,7 +35,20 @@ final class NoveltyConstants
         self::STATUS_CONTABILIDAD,
     ];
 
-    // Statuses considered "active" (approved and processed)
+    /**
+     * Estados considerados "activos" para conteos del sidebar, filtros del listado
+     * de empleados y estadísticas de novedades.
+     *
+     * Excluye intencionalmente:
+     *  - STATUS_REGISTRO, STATUS_APROBACION: la novedad aún no fue procesada por RRHH.
+     *  - STATUS_AUTORIZACION_PAGO: estado transitorio de autorización del Contador;
+     *    se considera "en flujo de pago", no "activa" en el sentido operativo.
+     *  - STATUS_RECHAZADA: terminal, no cuenta como activa.
+     *
+     * Si la semántica de "activa" cambia (p.ej. incluir AUTORIZACION_PAGO),
+     * revisar los 3 call-sites: EmployeeNoveltiesController::index,
+     * SidebarCounterService, EmployeeStatisticsService.
+     */
     public const ACTIVE_STATUSES = [
         self::STATUS_RRHH,
         self::STATUS_CONTABILIDAD,

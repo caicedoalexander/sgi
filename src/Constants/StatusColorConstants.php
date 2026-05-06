@@ -22,12 +22,12 @@ final class StatusColorConstants
     ];
 
     public const READY_FOR_PAYMENT_BADGES = [
-        'Si' => 'bg-success',
+        InvoiceConstants::READY_FOR_PAYMENT_SI => 'bg-success',
         'No' => 'bg-secondary',
         'Anticipo Empleado' => 'bg-info text-dark',
         'Anticipo Proveedor' => 'bg-primary',
-        'Pago prioritario' => 'bg-danger',
-        'Pago PSE' => 'bg-dark',
+        InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'bg-danger',
+        InvoiceConstants::READY_FOR_PAYMENT_PSE => 'bg-dark',
         'No Legalización' => 'bg-warning text-dark',
         'Reintegro' => 'bg-secondary',
     ];
