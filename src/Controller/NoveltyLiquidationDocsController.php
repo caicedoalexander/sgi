@@ -8,12 +8,15 @@ use App\Constants\PipelineStepConstants;
 use App\Constants\StatusColorConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
+use App\Model\Entity\NoveltyLiquidationDoc;
+use App\Model\Entity\User;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
 use App\Service\PipelineAuthorizationService;
+use App\ViewModel\NoveltyLiquidationDocEditViewModel;
 use Cake\Routing\Router;
 use DateTime;
 
@@ -203,6 +206,15 @@ class NoveltyLiquidationDocsController extends AppController
         $user = $this->Authentication->getIdentity()->getOriginalData();
         $this->observationService->markAsRead($user->id, liquidationDocId: $doc->id);
 
+        $roleName = $this->_getUserRoleName($user);
+        $this->set('viewModel', $this->_buildLiquidationEditViewModel($doc, $user, $roleName));
+    }
+
+    private function _buildLiquidationEditViewModel(
+        NoveltyLiquidationDoc $doc,
+        User $user,
+        string $roleName,
+    ): NoveltyLiquidationDocEditViewModel {
         $groupErrors = $this->pipelineService->validateGroupTransition($doc);
         $firstNovelty = $doc->employee_novelties[0] ?? null;
         $noveltyType = $firstNovelty?->novelty_type;
@@ -211,8 +223,6 @@ class NoveltyLiquidationDocsController extends AppController
         $documentsByStatus = $this->documentService->getGroupDocumentsByStatus($doc->id);
         $liquidationDocument = $this->documentService->getLiquidationDocument($doc->id);
 
-        $currentUser = $user;
-        $roleName = $this->_getUserRoleName($user);
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
         $roleId = (int)$user->role_id;
         $canOpTesoreria = $this->pipelineAuth->canOperate(
@@ -231,19 +241,20 @@ class NoveltyLiquidationDocsController extends AppController
             && $doc->pipeline_status === NoveltyConstants::STATUS_TESORERIA;
         $isContadorAutPago = $canOpAutPago
             && $doc->pipeline_status === NoveltyConstants::STATUS_AUT_PAGO;
-        $this->set(compact(
-            'doc',
-            'groupErrors',
-            'effectiveStatuses',
-            'documentsByStatus',
-            'liquidationDocument',
-            'currentUser',
-            'skipsGdp',
-            'roleName',
-            'bankingEntities',
-            'isTesoreriaEdit',
-            'isContadorAutPago',
-        ));
+
+        return new NoveltyLiquidationDocEditViewModel(
+            doc: $doc,
+            roleName: $roleName,
+            groupErrors: $groupErrors,
+            effectiveStatuses: $effectiveStatuses,
+            documentsByStatus: $documentsByStatus,
+            liquidationDocument: $liquidationDocument,
+            currentUser: $user,
+            skipsGdp: (bool)$skipsGdp,
+            bankingEntities: $bankingEntities,
+            isTesoreriaEdit: $isTesoreriaEdit,
+            isContadorAutPago: $isContadorAutPago,
+        );
     }
 
     /**

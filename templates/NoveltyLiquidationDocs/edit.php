@@ -1,17 +1,23 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\NoveltyLiquidationDoc $doc
- * @var array $groupErrors
- * @var array $effectiveStatuses
- * @var array $documentsByStatus
- * @var object|null $liquidationDocument
- * @var \App\Model\Entity\User $currentUser
- * @var array $bankingEntities
+ * @var \App\ViewModel\NoveltyLiquidationDocEditViewModel $viewModel
  * @var string $currentStatus
  */
 use App\Constants\NoveltyConstants;
 use App\Constants\StatusColorConstants;
+
+$doc = $viewModel->doc;
+$roleName = $viewModel->roleName;
+$groupErrors = $viewModel->groupErrors;
+$effectiveStatuses = $viewModel->effectiveStatuses;
+$documentsByStatus = $viewModel->documentsByStatus;
+$liquidationDocument = $viewModel->liquidationDocument;
+$currentUser = $viewModel->currentUser;
+$skipsGdp = $viewModel->skipsGdp;
+$bankingEntities = $viewModel->bankingEntities;
+$isTesoreriaEdit = $viewModel->isTesoreriaEdit;
+$isContadorAutPago = $viewModel->isContadorAutPago;
 
 $this->assign('title', 'Editar Liquidación: ' . h($doc->liquidation_number));
 
