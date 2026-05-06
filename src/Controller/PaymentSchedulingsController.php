@@ -7,7 +7,7 @@ use App\Constants\PaymentSchedulingConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Service\PaymentSchedulingDocumentService;
-use App\Service\PaymentSchedulingPipelineService;
+use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
 use Cake\Routing\Router;
 
@@ -18,19 +18,19 @@ class PaymentSchedulingsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
-    private PaymentSchedulingPipelineService $pipeline;
-
     private PaymentSchedulingService $schedulingService;
 
     private PaymentSchedulingDocumentService $documentService;
+
+    private PaymentSchedulingImportService $importService;
 
     public function initialize(): void
     {
         parent::initialize();
         $container = $this->getContainer();
-        $this->pipeline = $container->get(PaymentSchedulingPipelineService::class);
         $this->schedulingService = $container->get(PaymentSchedulingService::class);
         $this->documentService = $container->get(PaymentSchedulingDocumentService::class);
+        $this->importService = $container->get(PaymentSchedulingImportService::class);
     }
 
     private function _getCurrentUser(): object
@@ -46,7 +46,7 @@ class PaymentSchedulingsController extends AppController
     public function index()
     {
         $roleName = $this->_getRoleName();
-        $visibleStatuses = $this->pipeline->getVisibleStatuses($roleName);
+        $visibleStatuses = $this->schedulingService->getVisibleStatuses($roleName);
 
         $query = $this->PaymentSchedulings->find()
             ->contain(['CreatedByUsers', 'PaymentSchedulingItems'])
@@ -139,22 +139,22 @@ class PaymentSchedulingsController extends AppController
         $roleName = $this->_getRoleName();
         $roleId = (int)$this->_getCurrentUser()->role_id;
         $currentStatus = $record->pipeline_status;
-        $canAdvance = $this->pipeline->canAdvance($roleId, $roleName, $currentStatus);
-        $canReject = $this->pipeline->canReject($roleId, $roleName, $currentStatus);
+        $canAdvance = $this->schedulingService->canAdvance($roleId, $roleName, $currentStatus);
+        $canReject = $this->schedulingService->canReject($roleId, $roleName, $currentStatus);
         $total = $this->schedulingService->calculateTotal($record->id);
 
         $advanceErrors = [];
         if ($canAdvance) {
-            $advanceErrors = $this->pipeline->validateTransitionRequirements($record, $currentStatus);
+            $advanceErrors = $this->schedulingService->validateTransitionRequirements($record, $currentStatus);
         }
 
         $pipelineLabels = PaymentSchedulingConstants::STATUS_LABELS;
-        $nextStatus = $this->pipeline->getNextStatus($currentStatus);
+        $nextStatus = $this->schedulingService->getNextStatus($currentStatus);
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->all();
 
-        $canRegress = $this->pipeline->canRegress($roleId, $roleName, $currentStatus);
-        $previousStatus = $this->pipeline->getPreviousStatus($currentStatus);
-        $regressLockMessage = $this->pipeline->getRegressionLockMessage($record);
+        $canRegress = $this->schedulingService->canRegress($roleId, $roleName, $currentStatus);
+        $previousStatus = $this->schedulingService->getPreviousStatus($currentStatus);
+        $regressLockMessage = $this->schedulingService->getRegressionLockMessage($record);
 
         $this->set(compact(
             'record',
@@ -185,13 +185,13 @@ class PaymentSchedulingsController extends AppController
         $roleName = $this->_getRoleName();
         $user = $this->_getCurrentUser();
 
-        if (!$this->pipeline->canAdvance((int)$user->role_id, $roleName, $record->pipeline_status)) {
+        if (!$this->schedulingService->canAdvance((int)$user->role_id, $roleName, $record->pipeline_status)) {
             $this->Flash->error('No tiene permisos para avanzar esta programación.');
 
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $errors = $this->pipeline->validateTransitionRequirements($record, $record->pipeline_status);
+        $errors = $this->schedulingService->validateTransitionRequirements($record, $record->pipeline_status);
         if (!empty($errors)) {
             foreach ($errors as $err) {
                 $this->Flash->error($err);
@@ -200,7 +200,7 @@ class PaymentSchedulingsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $nextStatus = $this->pipeline->getNextStatus($record->pipeline_status);
+        $nextStatus = $this->schedulingService->getNextStatus($record->pipeline_status);
 
         // Si avanza a pagada (desde aut_pago), aplicar pagos
         if ($nextStatus === PaymentSchedulingConstants::STATUS_PAGADA) {
@@ -243,13 +243,13 @@ class PaymentSchedulingsController extends AppController
         $roleName = $this->_getRoleName();
         $roleId = (int)$this->_getCurrentUser()->role_id;
 
-        if (!$this->pipeline->canReject($roleId, $roleName, $record->pipeline_status)) {
+        if (!$this->schedulingService->canReject($roleId, $roleName, $record->pipeline_status)) {
             $this->Flash->error('No tiene permisos para rechazar esta programación.');
 
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $record->pipeline_status = PaymentSchedulingPipelineService::REJECTION_TARGET;
+        $record->pipeline_status = PaymentSchedulingConstants::REJECTION_TARGET;
         if ($this->PaymentSchedulings->save($record)) {
             $this->Flash->warning('Programación devuelta a Tesorería para corrección.');
         } else {
@@ -267,7 +267,7 @@ class PaymentSchedulingsController extends AppController
         $roleName = $this->_getRoleName();
         $reason = trim((string)$this->request->getData('reason', ''));
 
-        $result = $this->pipeline->regress(
+        $result = $this->schedulingService->regress(
             $record,
             (int)$user->role_id,
             $roleName,
@@ -308,7 +308,7 @@ class PaymentSchedulingsController extends AppController
         }
 
         $tmpPath = $file->getStream()->getMetadata('uri');
-        $result = $this->schedulingService->parseExcel($tmpPath);
+        $result = $this->importService->parseExcel($tmpPath);
 
         // Guardar resultados en sesión para confirmar
         $this->request->getSession()->write("import_preview_{$id}", $result);

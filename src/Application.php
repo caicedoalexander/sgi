@@ -50,7 +50,7 @@ use App\Service\NoveltyPipelineService;
 use App\Service\NoveltySignatureService;
 use App\Service\PaymentRegistryService;
 use App\Service\PaymentSchedulingDocumentService;
-use App\Service\PaymentSchedulingPipelineService;
+use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
@@ -318,9 +318,9 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoiceHistoryService::class,
                 PipelineAuthorizationService::class,
             ]);
-        $container->addShared(PaymentSchedulingPipelineService::class)
-            ->addArgument(PipelineAuthorizationService::class);
         $container->addShared(PaymentSchedulingService::class)
+            ->addArgument(InvoicePaymentService::class);
+        $container->addShared(PaymentSchedulingImportService::class)
             ->addArgument(InvoicePaymentService::class);
         $container->addShared(PaymentSchedulingDocumentService::class);
         $container->addShared(PaymentRegistryService::class);

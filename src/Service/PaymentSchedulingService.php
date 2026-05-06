@@ -4,205 +4,181 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\InvoiceConstants;
+use App\Constants\PaymentSchedulingConstants;
+use App\Constants\PipelineStepConstants;
+use App\Constants\RoleConstants;
+use App\Model\Entity\PaymentScheduling;
+use App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineStateRegistry;
 use Cake\ORM\TableRegistry;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class PaymentSchedulingService
 {
-    /**
-     * @param \App\Service\InvoicePaymentService $paymentService Resolves invoice payment balances and recalculations.
-     */
+    private const ROLE_VISIBLE_STATUSES = [
+        RoleConstants::TESORERIA => [
+            PaymentSchedulingConstants::STATUS_BORRADOR,
+            PaymentSchedulingConstants::STATUS_TESORERIA,
+            PaymentSchedulingConstants::STATUS_AUT_PAGO,
+            PaymentSchedulingConstants::STATUS_PAGADA,
+        ],
+        RoleConstants::CONTADOR => [
+            PaymentSchedulingConstants::STATUS_AUT_PAGO,
+            PaymentSchedulingConstants::STATUS_PAGADA,
+        ],
+        RoleConstants::ADMIN => PaymentSchedulingConstants::PIPELINE_STATUSES,
+    ];
+
+    private PipelineAuthorizationService $pipelineAuth;
+    private PaymentSchedulingPipelineStateRegistry $stateRegistry;
+
     public function __construct(
         private readonly InvoicePaymentService $paymentService,
+        ?PipelineAuthorizationService $pipelineAuth = null,
+        ?PaymentSchedulingPipelineStateRegistry $stateRegistry = null,
     ) {
+        $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+        $this->stateRegistry = $stateRegistry ?? new PaymentSchedulingPipelineStateRegistry();
     }
 
-    /**
-     * Transforma número de factura de formato Siesa al formato SGI.
-     * Ej: "FVE-00080933-00" → "FVE80933", "-00006755-00" → "6755"
-     */
-    private function _normalizeSiesaInvoiceNumber(string $raw): string
+    public function getVisibleStatuses(string $roleName): array
     {
-        $parts = explode('-', $raw);
+        return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+    }
 
-        $letters = '';
-        $number = '';
+    public function getNextStatus(string $currentStatus): ?string
+    {
+        return PaymentSchedulingConstants::FORWARD_TRANSITIONS[$currentStatus] ?? null;
+    }
 
-        foreach ($parts as $part) {
-            if ($part === '') {
-                continue;
-            }
-            if (ctype_alpha($part)) {
-                $letters .= $part;
-            } elseif (ctype_digit($part)) {
-                // Tomar el primer grupo numérico significativo (ignorar sufijo "00")
-                if ($number === '') {
-                    $number = ltrim($part, '0') ?: '0';
-                }
-            } else {
-                // Parte mixta: separar letras y dígitos
-                $letterPart = preg_replace('/[^A-Za-z]/', '', $part);
-                $digitPart = preg_replace('/[^0-9]/', '', $part);
-                if ($letterPart !== '') {
-                    $letters .= $letterPart;
-                }
-                if ($digitPart !== '' && $number === '') {
-                    $number = ltrim($digitPart, '0') ?: '0';
-                }
-            }
+    public function getPreviousStatus(string $currentStatus): ?string
+    {
+        return PaymentSchedulingConstants::BACKWARD_TRANSITIONS[$currentStatus] ?? null;
+    }
+
+    public function canAdvance(int $roleId, string $roleName, string $currentStatus): bool
+    {
+        if ($this->getNextStatus($currentStatus) === null) {
+            return false;
         }
 
-        return $letters . $number;
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+            $currentStatus,
+        );
     }
 
-    /**
-     * Extrae el NIT puro del formato Siesa (sin sufijo de sucursal).
-     * Ej: "900474383-001" → "900474383"
-     */
-    private function _extractNit(string $raw): string
+    public function canReject(int $roleId, string $roleName, string $currentStatus): bool
     {
-        $parts = explode('-', $raw);
-
-        return trim($parts[0]);
-    }
-
-    /**
-     * Parsea el Excel de preprogramación de pagos (5 columnas).
-     * Formato multi-fila: encabezado proveedor → factura(s).
-     * Columnas: Banco aprovador (A), Proveedor/NIT (B), Razón Social (C), Saldo (D), Programado (E).
-     * Retorna ['valid' => [...], 'errors' => [...]]
-     */
-    public function parseExcel(string $filePath): array
-    {
-        $spreadsheet = IOFactory::load($filePath);
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray(null, true, false, true);
-
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $providersTable = TableRegistry::getTableLocator()->get('Providers');
-        $bankingTable = TableRegistry::getTableLocator()->get('BankingEntities');
-
-        $valid = [];
-        $errors = [];
-
-        // Estado del proveedor actual mientras recorremos filas
-        $currentProvider = null;
-        $currentBank = null;
-        $currentBankCode = null;
-        $currentNit = null;
-        $headerSkipped = false;
-
-        foreach ($rows as $rowNum => $row) {
-            // Saltar encabezado
-            if (!$headerSkipped) {
-                $headerSkipped = true;
-                continue;
-            }
-
-            $colA = trim((string)($row['A'] ?? ''));
-            $colB = trim((string)($row['B'] ?? ''));
-            $colE = $row['E'] ?? null;
-
-            // Fila vacía
-            if (empty($colA) && empty($colB) && ($colE === null || trim((string)$colE) === '')) {
-                continue;
-            }
-
-            // --- TIPO 1: Encabezado de proveedor ---
-            // Col A tiene una letra (código banco) y Col B tiene NIT
-            if ($colA !== '' && ctype_alpha($colA) && preg_match('/^\d+/', $colB)) {
-                $currentBankCode = $colA;
-                $currentNit = $this->_extractNit($colB);
-
-                // Buscar proveedor
-                $currentProvider = $providersTable->find()
-                    ->where(['document_number' => $currentNit])
-                    ->first();
-
-                if (!$currentProvider) {
-                    $errors[] = "Fila {$rowNum}: Proveedor con NIT '{$currentNit}' no encontrado en SGI.";
-                    $currentProvider = null;
-                }
-
-                // Buscar banco por código
-                $currentBank = $bankingTable->find()
-                    ->where(['code' => $currentBankCode, 'active' => true])
-                    ->first();
-
-                if (!$currentBank) {
-                    $errors[] = "Fila {$rowNum}: Banco con código '{$currentBankCode}' no encontrado.";
-                    $currentBank = null;
-                }
-
-                continue;
-            }
-
-            // --- TIPO 2: Fila de factura ---
-            // Col B tiene número de factura Siesa, Col E tiene monto programado
-            if (!empty($colB) && $colE !== null && trim((string)$colE) !== '') {
-                $amount = (float)$colE;
-
-                // Si no hay proveedor/banco válido del encabezado, saltar
-                if (!$currentProvider) {
-                    $errors[] = "Fila {$rowNum}: Factura '{$colB}' sin proveedor válido asociado.";
-                    continue;
-                }
-                if (!$currentBank) {
-                    $errors[] = "Fila {$rowNum}: Factura '{$colB}' sin banco válido asociado.";
-                    continue;
-                }
-
-                // Transformar número de factura
-                $invoiceNumber = $this->_normalizeSiesaInvoiceNumber($colB);
-
-                // Buscar factura en SGI
-                $invoice = $invoicesTable->find()
-                    ->where([
-                        'invoice_number' => $invoiceNumber,
-                        'provider_id' => $currentProvider->id,
-                    ])
-                    ->first();
-
-                if (!$invoice) {
-                    $errors[] = "Fila {$rowNum}: Factura '{$invoiceNumber}' (Siesa: '{$colB}') del proveedor '{$currentProvider->name}' no encontrada.";
-                    continue;
-                }
-
-                if ($invoice->pipeline_status !== InvoiceConstants::STATUS_TESORERIA) {
-                    $errors[] = "Fila {$rowNum}: Factura '{$invoiceNumber}' no está en estado Tesorería (estado actual: {$invoice->pipeline_status}).";
-                    continue;
-                }
-
-                // Validar monto
-                if ($amount <= 0) {
-                    $errors[] = "Fila {$rowNum}: El monto debe ser positivo.";
-                    continue;
-                }
-
-                $pendingBalance = $this->paymentService->getPendingBalance($invoice->id);
-                if ($amount > $pendingBalance) {
-                    $errors[] = "Fila {$rowNum}: El monto (\${$amount}) excede el saldo pendiente (\${$pendingBalance}) de la factura '{$invoiceNumber}'.";
-                    continue;
-                }
-
-                $valid[] = [
-                    'row' => $rowNum,
-                    'invoice_id' => $invoice->id,
-                    'invoice_number' => $invoiceNumber,
-                    'provider_name' => $currentProvider->name,
-                    'banking_entity_id' => $currentBank->id,
-                    'bank_name' => $currentBank->name,
-                    'amount' => $amount,
-                ];
-
-                continue;
-            }
-
-            // --- Fila TOTAL u otras filas no relevantes ---
-            // Se ignoran silenciosamente
+        if ($currentStatus !== PaymentSchedulingConstants::STATUS_AUT_PAGO) {
+            return false;
         }
 
-        return ['valid' => $valid, 'errors' => $errors];
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+            $currentStatus,
+        );
+    }
+
+    public function canRegress(int $roleId, string $roleName, string $currentStatus): bool
+    {
+        if ($this->getPreviousStatus($currentStatus) === null) {
+            return false;
+        }
+
+        return $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+            $currentStatus,
+        );
+    }
+
+    public function validateTransitionRequirements(PaymentScheduling $scheduling, string $fromStatus): array
+    {
+        return $this->stateRegistry->get($fromStatus)->validateAdvance($scheduling);
+    }
+
+    public function getRegressionLockMessage(PaymentScheduling $scheduling): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Cold regression — only changes pipeline_status, doesn't touch items or payments.
+     */
+    public function regress(
+        PaymentScheduling $scheduling,
+        int $roleId,
+        string $roleName,
+        int $userId,
+        string $reason,
+    ): ServiceResult {
+        $reason = trim($reason);
+        $currentStatus = $scheduling->pipeline_status;
+
+        if (!$this->canRegress($roleId, $roleName, $currentStatus)) {
+            $previous = $this->getPreviousStatus($currentStatus);
+            $error = $previous === null
+                ? 'Esta programación ya está en el primer paso del flujo.'
+                : 'No tiene permisos para regresar esta programación.';
+
+            return ServiceResult::fail([$error]);
+        }
+
+        $lock = $this->getRegressionLockMessage($scheduling);
+        if ($lock !== null) {
+            return ServiceResult::fail([$lock]);
+        }
+
+        if (mb_strlen($reason) < 10) {
+            return ServiceResult::fail(['El motivo es obligatorio (mínimo 10 caracteres).']);
+        }
+        if (mb_strlen($reason) > 500) {
+            return ServiceResult::fail(['El motivo no puede superar 500 caracteres.']);
+        }
+
+        $previousStatus = $this->getPreviousStatus($currentStatus);
+        $schedulingsTable = TableRegistry::getTableLocator()->get('PaymentSchedulings');
+        $observationsTable = TableRegistry::getTableLocator()->get('PaymentSchedulingObservations');
+
+        $ok = $schedulingsTable->getConnection()->transactional(
+            function () use (
+                $schedulingsTable,
+                $observationsTable,
+                $scheduling,
+                $previousStatus,
+                $currentStatus,
+                $userId,
+                $reason,
+            ): bool {
+                $scheduling->pipeline_status = $previousStatus;
+                if (!$schedulingsTable->save($scheduling)) {
+                    return false;
+                }
+
+                $observation = $observationsTable->newEntity([
+                    'payment_scheduling_id' => $scheduling->id,
+                    'user_id' => $userId,
+                    'type' => PaymentSchedulingConstants::OBSERVATION_TYPE_REGRESSION,
+                    'message' => $reason,
+                    'metadata' => [
+                        'from_status' => $currentStatus,
+                        'to_status' => $previousStatus,
+                    ],
+                ]);
+
+                return (bool)$observationsTable->save($observation);
+            },
+        );
+
+        if (!$ok) {
+            return ServiceResult::fail(['No se pudo regresar la programación. Intente de nuevo.']);
+        }
+
+        return ServiceResult::ok(['previousStatus' => $previousStatus]);
     }
 
     /**
@@ -230,7 +206,6 @@ class PaymentSchedulingService
 
     /**
      * Aplica los pagos de una programación autorizada.
-     * Crea invoice_payments, recalcula payment_status, avanza facturas.
      */
     public function applyPayments(int $schedulingId, int $authorizedBy): array
     {
