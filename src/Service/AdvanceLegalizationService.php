@@ -9,7 +9,6 @@ use App\Event\AdvanceLegalizedEvent;
 use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
 use App\Service\Pipeline\Advance\AdvanceLegalizationPipelineStateRegistry;
-use App\Service\Trait\DocumentUploadTrait;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
@@ -19,13 +18,12 @@ use Throwable;
 
 class AdvanceLegalizationService
 {
-    use DocumentUploadTrait;
-
     private AdvanceLegalizationPipelineStateRegistry $stateRegistry;
 
     public function __construct(
         private readonly EventManagerInterface $events,
         private readonly AdvanceLegalizationHistoryService $historyService,
+        private readonly AdvanceLegalizationDocumentService $documentService,
         ?AdvanceLegalizationPipelineStateRegistry $stateRegistry = null,
     ) {
         $this->stateRegistry = $stateRegistry ?? new AdvanceLegalizationPipelineStateRegistry();
@@ -406,15 +404,11 @@ class AdvanceLegalizationService
             : date('Y-m-d H:i:s');
 
         if (!empty($data['receipt_file']) && $data['receipt_file'] instanceof UploadedFile) {
-            $info = $this->validateAndMoveUpload(
-                $data['receipt_file'],
-                'advances/' . $leg->id,
-                'shortage_',
-            );
-            if (is_string($info)) {
-                return ServiceResult::fail($info);
+            $upload = $this->documentService->attachShortageReceipt($leg, $data['receipt_file']);
+            if (!$upload->success) {
+                return $upload;
             }
-            $leg->shortage_receipt_path = $info['file_path'];
+            $leg->shortage_receipt_path = $upload->data;
         }
 
         $leg->legalized_at = date('Y-m-d H:i:s');

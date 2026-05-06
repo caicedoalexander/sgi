@@ -97,6 +97,26 @@ class AdvanceLegalizationDocumentService
     }
 
     /**
+     * Sube el comprobante de consignación del faltante.
+     *
+     * Devuelve `ServiceResult::ok($filePath)` con la ruta relativa del archivo
+     * subido, o `ServiceResult::fail($error)` si la validación falla.
+     */
+    public function attachShortageReceipt(AdvanceLegalization $leg, UploadedFile $file): ServiceResult
+    {
+        $info = $this->validateAndMoveUpload(
+            $file,
+            'advances/' . $leg->id,
+            'shortage_',
+        );
+        if (is_string($info)) {
+            return ServiceResult::fail($info);
+        }
+
+        return ServiceResult::ok($info['file_path']);
+    }
+
+    /**
      * @param array<string, mixed> $errors Errores de CakePHP entity->getErrors().
      */
     private function _firstErrorMessage(array $errors): string

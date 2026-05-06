@@ -221,6 +221,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ->addArguments([
                 EventManagerInterface::class,
                 AdvanceLegalizationHistoryService::class,
+                AdvanceLegalizationDocumentService::class,
             ]);
         $container->addShared(AdvanceLegalizationActionPolicy::class);
         $container->addShared(InvoicePipelineService::class)

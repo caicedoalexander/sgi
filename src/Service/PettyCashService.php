@@ -8,10 +8,13 @@ use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\PettyCashRecord;
+use App\Service\Dto\BulkPaymentView;
 use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry;
+use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
+use DateTimeInterface;
 use InvalidArgumentException;
 
 class PettyCashService
@@ -874,5 +877,56 @@ class PettyCashService
         }
 
         return ServiceResult::ok(['previousStatus' => $previousStatus]);
+    }
+
+    /**
+     * Construye una representación uniforme del pago bulk del registro para
+     * que la vista pueda reusar el element compartido `payment_section`.
+     *
+     * Caja Menor guarda un único pago como columnas en la tabla `petty_cash_records`
+     * (no tiene tabla de pagos propia); este método materializa esas columnas en
+     * la forma que espera el element.
+     *
+     * @return array<int, \App\Service\Dto\BulkPaymentView> 0 o 1 elementos.
+     */
+    public function buildSyntheticPayments(PettyCashRecord $record): array
+    {
+        if (empty($record->banking_entity_id)) {
+            return [];
+        }
+
+        $isAuthorized = $record->isPagado();
+
+        return [
+            new BulkPaymentView(
+                id: $record->id,
+                banking_entity: $record->banking_entity ?? null,
+                amount: $record->payment_amount,
+                payment_date: self::_normalizeDate($record->payment_date),
+                status: $isAuthorized
+                    ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED
+                    : InvoiceConstants::PAYMENT_RECORD_PENDING,
+                authorized: $isAuthorized,
+                authorized_by_user: $record->payment_authorized_by_user ?? null,
+                authorized_date: self::_normalizeDate($record->payment_authorized_date),
+                created_by_user: $record->payment_created_by_user ?? null,
+                rejection_reason: null,
+            ),
+        ];
+    }
+
+    /**
+     * Normaliza un valor de fecha a un DateTimeInterface o null.
+     */
+    private static function _normalizeDate(mixed $value): ?DateTimeInterface
+    {
+        if ($value instanceof DateTimeInterface) {
+            return $value;
+        }
+        if (is_string($value) && $value !== '') {
+            return new Date($value);
+        }
+
+        return null;
     }
 }

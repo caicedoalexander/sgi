@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
@@ -14,10 +13,8 @@ use App\Service\PettyCashService;
 use App\Service\PipelineAuthorizationService;
 use App\ViewModel\PettyCashAddViewModel;
 use App\ViewModel\PettyCashEditViewModel;
-use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
 use Cake\Routing\Router;
-use DateTimeInterface;
 
 class PettyCashRecordsController extends AppController
 {
@@ -336,7 +333,7 @@ class PettyCashRecordsController extends AppController
             previousStatus: $this->pettyCashService->getPreviousStatus($record->status),
             regressLockMessage: $this->pettyCashService->getRegressionLockMessage($record),
             pipelineLabels: PettyCashConstants::STATUS_LABELS,
-            syntheticPayments: $this->_buildSyntheticPayments($record),
+            syntheticPayments: $this->pettyCashService->buildSyntheticPayments($record),
             availableInvoices: $this->pettyCashService
                 ->getAvailableInvoices($this->request->getQueryParams())->all(),
             operationCenters: $this->fetchTable('OperationCenters')->find('codeList')->all(),
@@ -344,48 +341,6 @@ class PettyCashRecordsController extends AppController
             bankingEntities: $this->fetchTable('BankingEntities')->find('list')->toArray(),
             groupFilters: $this->request->getQueryParams(),
         );
-    }
-
-    /**
-     * Adapt the bulk-payment columns of a Caja Menor record into the shape
-     * expected by the shared `payment_section` element (which iterates over
-     * a list of payment-like objects). Returns an empty array when no payment
-     * has been registered yet.
-     *
-     * TODO: migrar a App\Service\Dto\BulkPaymentView (Service/Dto/) en próxima sesión.
-     *       El cast (object)[...] perdió tipado estático cuando Refunds adoptó BulkPaymentView.
-     *       Ver auditoría 2026-05-06 sección 9.
-     *
-     * @return array<int, object>
-     */
-    private function _buildSyntheticPayments(PettyCashRecord $record): array
-    {
-        if (empty($record->banking_entity_id)) {
-            return [];
-        }
-
-        $isAuthorized = $record->isPagado();
-
-        return [(object)[
-            'id' => $record->id,
-            'banking_entity' => $record->banking_entity,
-            'amount' => $record->payment_amount,
-            'payment_date' => $record->payment_date instanceof DateTimeInterface
-                ? $record->payment_date
-                : (is_string($record->payment_date) && $record->payment_date !== ''
-                    ? new Date($record->payment_date)
-                    : null),
-            'status' => $isAuthorized
-                ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED
-                : InvoiceConstants::PAYMENT_RECORD_PENDING,
-            'authorized' => $isAuthorized,
-            'authorized_by_user' => $record->payment_authorized_by_user ?? null,
-            'authorized_date' => $record->payment_authorized_date instanceof DateTimeInterface
-                ? $record->payment_authorized_date
-                : null,
-            'created_by_user' => $record->payment_created_by_user ?? null,
-            'rejection_reason' => null,
-        ]];
     }
 
     public function advanceStatus($id = null)
