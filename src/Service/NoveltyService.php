@@ -7,10 +7,11 @@ use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Model\Entity\EmployeeNovelty;
+use App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry;
 use Cake\ORM\TableRegistry;
 use DateTime;
 
-class NoveltyPipelineService
+class NoveltyService
 {
     // Which statuses each role can see/work with in "Mis Novedades"
     private const ROLE_VISIBLE_STATUSES = [
@@ -89,13 +90,33 @@ class NoveltyPipelineService
     ];
 
     private PipelineAuthorizationService $pipelineAuth;
+    private NoveltyPipelineStateRegistry $stateRegistry;
 
-    /**
-     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth
-     */
-    public function __construct(?PipelineAuthorizationService $pipelineAuth = null)
-    {
+    public function __construct(
+        ?PipelineAuthorizationService $pipelineAuth = null,
+        ?NoveltyPipelineStateRegistry $stateRegistry = null,
+    ) {
         $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+        $this->stateRegistry = $stateRegistry ?? new NoveltyPipelineStateRegistry();
+    }
+
+    private function resolveNextStatus(object $novelty, ?object $type): ?string
+    {
+        $current = $novelty->pipeline_status;
+        if (in_array($current, [NoveltyConstants::STATUS_RECHAZADA, NoveltyConstants::STATUS_PAGADA], true)) {
+            return null;
+        }
+
+        $next = $this->stateRegistry->get($current)->getNext();
+
+        if ($next === NoveltyConstants::STATUS_APROBACION && $type && !$type->requires_boss_approval) {
+            $next = $this->stateRegistry->get($next)->getNext();
+        }
+        if ($next === NoveltyConstants::STATUS_GDP && $type && !$type->requires_employee_signature_review) {
+            $next = $this->stateRegistry->get($next)->getNext();
+        }
+
+        return $next;
     }
 
     /**
@@ -104,15 +125,6 @@ class NoveltyPipelineService
      */
     public function getNextStatus(object $novelty, ?object $noveltyType = null): ?string
     {
-        $currentStatus = $novelty->pipeline_status;
-
-        if (
-            $currentStatus === NoveltyConstants::STATUS_RECHAZADA
-            || $currentStatus === NoveltyConstants::STATUS_PAGADA
-        ) {
-            return null;
-        }
-
         if (!$noveltyType && !empty($novelty->novelty_type)) {
             $noveltyType = $novelty->novelty_type;
         }
@@ -121,19 +133,7 @@ class NoveltyPipelineService
                 ->get($novelty->novelty_type_id);
         }
 
-        $nextStatus = NoveltyConstants::TRANSITIONS[$currentStatus] ?? null;
-
-        // Skip aprobacion if type doesn't require boss approval
-        if ($nextStatus === NoveltyConstants::STATUS_APROBACION && $noveltyType && !$noveltyType->requires_boss_approval) {
-            $nextStatus = NoveltyConstants::TRANSITIONS[$nextStatus] ?? null;
-        }
-
-        // Skip GDP if type doesn't require employee signature review
-        if ($nextStatus === NoveltyConstants::STATUS_GDP && $noveltyType && !$noveltyType->requires_employee_signature_review) {
-            $nextStatus = NoveltyConstants::TRANSITIONS[$nextStatus] ?? null;
-        }
-
-        return $nextStatus;
+        return $this->resolveNextStatus($novelty, $noveltyType);
     }
 
     /**
@@ -301,32 +301,7 @@ class NoveltyPipelineService
             return ['La novedad fue rechazada. El flujo ha terminado.'];
         }
 
-        $errors = [];
-
-        switch ($fromStatus) {
-            case NoveltyConstants::STATUS_APROBACION:
-                if (empty($novelty->approver_id)) {
-                    $errors[] = 'Debe asignar un aprobador.';
-                }
-                if (!empty($novelty->area_approval) && $novelty->area_approval === NoveltyConstants::APPROVAL_REJECTED) {
-                    $errors[] = 'La novedad fue rechazada por el aprobador. Edite y reenvíe para aprobación.';
-                }
-                break;
-
-            case NoveltyConstants::STATUS_RRHH:
-                if ($novelty->passes_payroll === null) {
-                    $errors[] = 'Debe indicar si "Pasa a Nómina".';
-                }
-                break;
-
-            case NoveltyConstants::STATUS_CONTABILIDAD:
-                if (empty($novelty->liquidation_doc_id)) {
-                    $errors[] = 'La novedad debe estar asignada a un documento de liquidación.';
-                }
-                break;
-        }
-
-        return $errors;
+        return $this->stateRegistry->get($fromStatus)->validateAdvanceIndividual($novelty);
     }
 
     /**
@@ -334,85 +309,7 @@ class NoveltyPipelineService
      */
     public function validateGroupTransition(object $liquidationDoc): array
     {
-        $errors = [];
-        $currentStatus = $liquidationDoc->pipeline_status;
-
-        switch ($currentStatus) {
-            case NoveltyConstants::STATUS_CONTABILIDAD:
-                $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
-                $hasLiqDoc = $documentsTable->find()
-                    ->where([
-                        'liquidation_doc_id' => $liquidationDoc->id,
-                        'document_type' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
-                    ])
-                    ->count();
-
-                if ($hasLiqDoc === 0) {
-                    $errors[] = 'Debe subir el documento de liquidación antes de avanzar.';
-                }
-                break;
-
-            case NoveltyConstants::STATUS_REVISION_FIRMAS:
-                $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
-
-                // Only validate non-worker signatures in revision_firmas
-                $totalSlots = $signaturesTable->find()
-                    ->where([
-                        'liquidation_doc_id' => $liquidationDoc->id,
-                        'signer_type !=' => NoveltyConstants::SIGNER_TRABAJADOR,
-                    ])
-                    ->count();
-
-                $signedCount = $signaturesTable->find()
-                    ->where([
-                        'liquidation_doc_id' => $liquidationDoc->id,
-                        'signer_type !=' => NoveltyConstants::SIGNER_TRABAJADOR,
-                        'signature_path IS NOT' => null,
-                    ])
-                    ->count();
-
-                if ($signedCount < $totalSlots) {
-                    $errors[] = 'Todas las firmas requeridas (Contador y Coordinador) deben estar presentes para avanzar.';
-                }
-
-                // If GDP will be skipped, validate passes_for_payment here
-                $firstMember = $this->_getFirstGroupMember($liquidationDoc);
-                if ($firstMember && $firstMember->novelty_type && !$firstMember->novelty_type->requires_employee_signature_review) {
-                    if ($liquidationDoc->passes_for_payment === null) {
-                        $errors[] = 'Debe indicar si "Pasa para Pago".';
-                    }
-                }
-                break;
-
-            case NoveltyConstants::STATUS_GDP:
-                if ($liquidationDoc->passes_for_payment === null) {
-                    $errors[] = 'Debe indicar si "Pasa para Pago".';
-                }
-
-                // Validate worker signature
-                $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
-                $workerSlot = $signaturesTable->find()
-                    ->where([
-                        'liquidation_doc_id' => $liquidationDoc->id,
-                        'signer_type' => NoveltyConstants::SIGNER_TRABAJADOR,
-                    ])
-                    ->first();
-
-                if ($workerSlot && empty($workerSlot->signature_path)) {
-                    $errors[] = 'La firma del trabajador es requerida para avanzar.';
-                }
-                break;
-
-            case NoveltyConstants::STATUS_TESORERIA:
-                $errors[] = 'Debe registrar un pago para avanzar desde Tesorería.';
-                break;
-
-            case NoveltyConstants::STATUS_AUT_PAGO:
-                $errors[] = 'La autorización de pago se gestiona desde la sección de pagos.';
-                break;
-        }
-
-        return $errors;
+        return $this->stateRegistry->get($liquidationDoc->pipeline_status)->validateAdvanceGroup($liquidationDoc);
     }
 
     /**
@@ -604,17 +501,5 @@ class NoveltyPipelineService
         $allowed = $this->getEditableFields($roleId, $roleName, $status);
 
         return array_intersect_key($data, array_flip($allowed));
-    }
-
-    /**
-     * Get the first novelty member of a liquidation document group with its type.
-     */
-    private function _getFirstGroupMember(object $liquidationDoc): ?object
-    {
-        return TableRegistry::getTableLocator()->get('EmployeeNovelties')
-            ->find()
-            ->contain(['NoveltyTypes'])
-            ->where(['liquidation_doc_id' => $liquidationDoc->id])
-            ->first();
     }
 }

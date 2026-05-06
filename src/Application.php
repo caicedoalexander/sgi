@@ -46,7 +46,7 @@ use App\Service\NotificationService;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
-use App\Service\NoveltyPipelineService;
+use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
 use App\Service\PaymentRegistryService;
 use App\Service\PaymentSchedulingDocumentService;
@@ -299,7 +299,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(NoveltyObservationService::class);
         $container->addShared(NoveltyDocumentService::class);
         $container->addShared(NoveltySignatureService::class);
-        $container->addShared(NoveltyPipelineService::class)
+        $container->addShared(NoveltyService::class)
             ->addArgument(PipelineAuthorizationService::class);
         $container->addShared(LeaveDocumentService::class);
         $container->addShared(LeaveSignatureService::class);
@@ -354,7 +354,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(SidebarCounterService::class)
             ->addArguments([
                 InvoicePipelineService::class,
-                NoveltyPipelineService::class,
+                NoveltyService::class,
                 PettyCashService::class,
                 RefundService::class,
             ]);

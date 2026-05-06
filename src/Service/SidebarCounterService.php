@@ -18,13 +18,13 @@ class SidebarCounterService
 
     /**
      * @param \App\Service\InvoicePipelineService $invoicePipeline Invoice pipeline.
-     * @param \App\Service\NoveltyPipelineService $noveltyPipeline Novelty pipeline.
+     * @param \App\Service\NoveltyService $noveltyPipeline Novelty pipeline.
      * @param \App\Service\PettyCashService $pettyCashService Petty cash service.
      * @param \App\Service\RefundService $refundService Refund service.
      */
     public function __construct(
         private readonly InvoicePipelineService $invoicePipeline,
-        private readonly NoveltyPipelineService $noveltyPipeline,
+        private readonly NoveltyService $noveltyPipeline,
         private readonly PettyCashService $pettyCashService,
         private readonly RefundService $refundService,
     ) {

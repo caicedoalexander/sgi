@@ -11,7 +11,7 @@ use App\Controller\Trait\ObservationControllerTrait;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
-use App\Service\NoveltyPipelineService;
+use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
 use App\Service\PipelineAuthorizationService;
 use Cake\Routing\Router;
@@ -24,7 +24,7 @@ class NoveltyLiquidationDocsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
-    private NoveltyPipelineService $pipelineService;
+    private NoveltyService $pipelineService;
 
     private NoveltyDocumentService $documentService;
 
@@ -41,7 +41,7 @@ class NoveltyLiquidationDocsController extends AppController
     {
         parent::initialize();
         $container = $this->getContainer();
-        $this->pipelineService = $container->get(NoveltyPipelineService::class);
+        $this->pipelineService = $container->get(NoveltyService::class);
         $this->documentService = $container->get(NoveltyDocumentService::class);
         $this->observationService = $container->get(NoveltyObservationService::class);
         $this->signatureService = $container->get(NoveltySignatureService::class);
