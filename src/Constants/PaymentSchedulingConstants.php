@@ -44,6 +44,17 @@ final class PaymentSchedulingConstants
         self::STATUS_PAGADA => null,
     ];
 
+    // Forward transitions (extracted from PaymentSchedulingPipelineService::TRANSITIONS).
+    public const FORWARD_TRANSITIONS = [
+        self::STATUS_BORRADOR => self::STATUS_TESORERIA,
+        self::STATUS_TESORERIA => self::STATUS_AUT_PAGO,
+        self::STATUS_AUT_PAGO => self::STATUS_PAGADA,
+        self::STATUS_PAGADA => null,
+    ];
+
+    // Target status when Contador rejects from aut_pago.
+    public const REJECTION_TARGET = self::STATUS_TESORERIA;
+
     // Tipos de observación
     public const OBSERVATION_TYPE_GENERAL = 'general';
     public const OBSERVATION_TYPE_REGRESSION = 'regression';
