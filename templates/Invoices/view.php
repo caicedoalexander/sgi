@@ -19,7 +19,7 @@ $pipelineBadgeMap = [
     InvoiceConstants::STATUS_APROBACION        => ['Aprobación',    'bg-info text-dark'],
     InvoiceConstants::STATUS_CONTABILIDAD      => ['Contabilidad',  'bg-primary'],
     InvoiceConstants::STATUS_TESORERIA         => ['Tesorería',     'bg-warning text-dark'],
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => ['Aut. Pago',     'bg-info'],
+    InvoiceConstants::STATUS_AUTORIZACION_PAGO => ['Autorización de pago', 'bg-info'],
     InvoiceConstants::STATUS_PAGADA            => ['Pagada',        'bg-success'],
 ];
 $ps = $pipelineBadgeMap[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];

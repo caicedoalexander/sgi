@@ -21,7 +21,7 @@ final class PaymentSchedulingConstants
     public const STATUS_LABELS = [
         self::STATUS_BORRADOR => 'Borrador',
         self::STATUS_TESORERIA => 'Tesorería',
-        self::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
+        self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
         self::STATUS_PAGADA => 'Pagada',
     ];
 

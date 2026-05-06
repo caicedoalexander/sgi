@@ -23,7 +23,7 @@ $legBadgeMap = [
     AdvanceConstants::STATUS_REVISION_FIRMAS   => ['Revisión y Firmas', 'bg-primary'],
     AdvanceConstants::STATUS_CONTABILIDAD      => ['Contabilidad', 'bg-warning text-dark'],
     AdvanceConstants::STATUS_TESORERIA         => ['Tesorería', 'bg-warning text-dark'],
-    AdvanceConstants::STATUS_AUTORIZACION_PAGO => ['Aut. Pago', 'bg-warning text-dark'],
+    AdvanceConstants::STATUS_AUTORIZACION_PAGO => ['Autorización de pago', 'bg-warning text-dark'],
     AdvanceConstants::STATUS_LEGALIZADA        => ['Legalizada', 'bg-success'],
 ];
 $legPipelineLabels = AdvanceConstants::STATUS_LABELS;

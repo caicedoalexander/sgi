@@ -27,7 +27,7 @@ final class AdvanceConstants
         self::STATUS_REVISION_FIRMAS   => 'Revisión y Firmas',
         self::STATUS_CONTABILIDAD      => 'Contabilidad',
         self::STATUS_TESORERIA         => 'Tesorería',
-        self::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
+        self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
         self::STATUS_LEGALIZADA        => 'Legalizada',
     ];
 

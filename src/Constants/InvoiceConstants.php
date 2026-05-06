@@ -90,7 +90,7 @@ final class InvoiceConstants
         self::STATUS_APROBACION        => 'Aprobación',
         self::STATUS_CONTABILIDAD      => 'Contabilidad',
         self::STATUS_TESORERIA         => 'Tesorería',
-        self::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
+        self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
         self::STATUS_PAGADA            => 'Pagada',
         self::STATUS_LEGALIZADA        => 'Legalizada',
     ];

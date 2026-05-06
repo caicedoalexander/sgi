@@ -13,7 +13,7 @@ $this->assign('title', 'Programación ' . h($record->code));
 $statusBadge = [
     PaymentSchedulingConstants::STATUS_BORRADOR => ['Borrador', 'bg-secondary'],
     PaymentSchedulingConstants::STATUS_TESORERIA => ['Tesorería', 'bg-warning text-dark'],
-    PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => ['Aut. Pago', 'bg-info text-dark'],
+    PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => ['Autorización de pago', 'bg-info text-dark'],
     PaymentSchedulingConstants::STATUS_PAGADA => ['Pagada', 'bg-success'],
 ];
 $ps = $statusBadge[$record->pipeline_status] ?? ['Desconocido', 'bg-dark'];

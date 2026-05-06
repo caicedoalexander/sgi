@@ -21,7 +21,7 @@ $pipelineLabels = [
     InvoiceConstants::STATUS_APROBACION        => 'Aprobación',
     InvoiceConstants::STATUS_CONTABILIDAD      => 'Contabilidad',
     InvoiceConstants::STATUS_TESORERIA         => 'Tesorería',
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
+    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
     InvoiceConstants::STATUS_PAGADA            => 'Pagada',
 ];
 

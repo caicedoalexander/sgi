@@ -66,7 +66,7 @@ final class NoveltyConstants
         self::STATUS_REVISION_FIRMAS => 'Revisión y Firmas de documentos',
         self::STATUS_GDP => 'GDP',
         self::STATUS_TESORERIA => 'Tesorería',
-        self::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
+        self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
         self::STATUS_PAGADA => 'Pagada',
         self::STATUS_RECHAZADA => 'Rechazada',
     ];

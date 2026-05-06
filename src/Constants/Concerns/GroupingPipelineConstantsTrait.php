@@ -33,7 +33,7 @@ trait GroupingPipelineConstantsTrait
         self::STATUS_AGRUPACION => 'Agrupación',
         self::STATUS_CONTABILIDAD => 'Contabilidad',
         self::STATUS_TESORERIA => 'Tesorería',
-        self::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
+        self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
         self::STATUS_PAGADA => 'Pagada',
     ];
 
