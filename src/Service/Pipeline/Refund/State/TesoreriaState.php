@@ -22,7 +22,7 @@ final class TesoreriaState implements RefundPipelineState
      */
     public function getNext(): ?string
     {
-        return RefundConstants::STATUS_AUT_PAGO;
+        return RefundConstants::STATUS_AUTORIZACION_PAGO;
     }
 
     /**

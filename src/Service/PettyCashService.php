@@ -24,7 +24,7 @@ class PettyCashService
         PettyCashConstants::STATUS_AGRUPACION,
         PettyCashConstants::STATUS_CONTABILIDAD,
         PettyCashConstants::STATUS_TESORERIA,
-        PettyCashConstants::STATUS_AUT_PAGO,
+        PettyCashConstants::STATUS_AUTORIZACION_PAGO,
     ];
 
     // Which petty-cash statuses each role sees in "Mis Registros".
@@ -34,9 +34,9 @@ class PettyCashService
         // Tesorería registra el pago (tesoreria) y monitorea la autorización (aut_pago) antes de pagado.
         RoleConstants::TESORERIA          => [
             PettyCashConstants::STATUS_TESORERIA,
-            PettyCashConstants::STATUS_AUT_PAGO,
+            PettyCashConstants::STATUS_AUTORIZACION_PAGO,
         ],
-        RoleConstants::CONTADOR           => [PettyCashConstants::STATUS_AUT_PAGO],
+        RoleConstants::CONTADOR           => [PettyCashConstants::STATUS_AUTORIZACION_PAGO],
         RoleConstants::AUXILIAR_PERSONAL  => self::ACTIVE_STATUSES,
         RoleConstants::ASISTENTE_PERSONAL => self::ACTIVE_STATUSES,
         RoleConstants::COORDINADOR_ADMIN  => self::ACTIVE_STATUSES,
@@ -218,7 +218,7 @@ class PettyCashService
         $advanced = false;
         $nextStatus = null;
         $advanceWarning = null;
-        if (!$record->isPagado() && $this->canAdvance($roleId, $roleName, $record->status)) {
+        if (!$record->isPagada() && $this->canAdvance($roleId, $roleName, $record->status)) {
             $advanceResult = $this->advanceStatus($record, $roleId, $roleName, $userId);
             if ($advanceResult->success) {
                 $advanced = true;
@@ -295,11 +295,11 @@ class PettyCashService
             return ServiceResult::fail('No tiene permisos para avanzar este registro.');
         }
 
-        if ($nextStatus === PettyCashConstants::STATUS_AUT_PAGO) {
+        if ($nextStatus === PettyCashConstants::STATUS_AUTORIZACION_PAGO) {
             return ServiceResult::fail('Debe registrar un pago para avanzar desde Tesorería.');
         }
 
-        if ($currentStatus === PettyCashConstants::STATUS_AUT_PAGO) {
+        if ($currentStatus === PettyCashConstants::STATUS_AUTORIZACION_PAGO) {
             return ServiceResult::fail('La autorización de pago se gestiona desde la sección de pagos.');
         }
 
@@ -519,7 +519,7 @@ class PettyCashService
             'payment_date' => $data['payment_date'] ?? null,
             'payment_created_by' => $createdBy,
             'payment_rejection_reason' => null,
-            'status' => PettyCashConstants::STATUS_AUT_PAGO,
+            'status' => PettyCashConstants::STATUS_AUTORIZACION_PAGO,
         ]);
 
         if (!$recordsTable->save($record)) {
@@ -564,7 +564,7 @@ class PettyCashService
                 $roleId,
                 $roleName,
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
-                PettyCashConstants::STATUS_AUT_PAGO,
+                PettyCashConstants::STATUS_AUTORIZACION_PAGO,
             )
         ) {
             return ServiceResult::fail('No tiene permisos para autorizar pagos de este registro.');
@@ -576,7 +576,7 @@ class PettyCashService
 
         $record = $recordsTable->get($recordId);
 
-        if ($record->status !== PettyCashConstants::STATUS_AUT_PAGO) {
+        if ($record->status !== PettyCashConstants::STATUS_AUTORIZACION_PAGO) {
             return ServiceResult::fail('El registro no está en estado Autorización de Pago.');
         }
 
@@ -630,7 +630,7 @@ class PettyCashService
             }
 
             $previousStatus = $record->status;
-            $record->status = PettyCashConstants::STATUS_PAGADO;
+            $record->status = PettyCashConstants::STATUS_PAGADA;
             $record->payment_status = InvoiceConstants::PAYMENT_FULL;
             $record->payment_authorized_by = $authorizedBy;
             $record->payment_authorized_date = date('Y-m-d');
@@ -679,7 +679,7 @@ class PettyCashService
                 $roleId,
                 $roleName,
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
-                PettyCashConstants::STATUS_AUT_PAGO,
+                PettyCashConstants::STATUS_AUTORIZACION_PAGO,
             )
         ) {
             return ServiceResult::fail('No tiene permisos para rechazar pagos de este registro.');
@@ -688,7 +688,7 @@ class PettyCashService
         $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
         $record = $recordsTable->get($recordId);
 
-        if ($record->status !== PettyCashConstants::STATUS_AUT_PAGO) {
+        if ($record->status !== PettyCashConstants::STATUS_AUTORIZACION_PAGO) {
             return ServiceResult::fail('Solo se pueden rechazar pagos en estado Autorización de Pago.');
         }
 
@@ -895,7 +895,7 @@ class PettyCashService
             return [];
         }
 
-        $isAuthorized = $record->isPagado();
+        $isAuthorized = $record->isPagada();
 
         return [
             new BulkPaymentView(

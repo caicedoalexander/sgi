@@ -60,11 +60,11 @@ class LiquidationDocPaymentService
         }
 
         // Advance doc and novelties to aut_pago
-        $doc->pipeline_status = NoveltyConstants::STATUS_AUT_PAGO;
+        $doc->pipeline_status = NoveltyConstants::STATUS_AUTORIZACION_PAGO;
         $docsTable->save($doc);
 
         $noveltiesTable->updateAll(
-            ['pipeline_status' => NoveltyConstants::STATUS_AUT_PAGO],
+            ['pipeline_status' => NoveltyConstants::STATUS_AUTORIZACION_PAGO],
             ['liquidation_doc_id' => $docId],
         );
 

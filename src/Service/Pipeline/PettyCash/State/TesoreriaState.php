@@ -16,7 +16,7 @@ final class TesoreriaState implements PettyCashPipelineState
 
     public function getNext(): ?string
     {
-        return PettyCashConstants::STATUS_AUT_PAGO;
+        return PettyCashConstants::STATUS_AUTORIZACION_PAGO;
     }
 
     public function getPrevious(): ?string

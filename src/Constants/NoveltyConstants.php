@@ -13,7 +13,7 @@ final class NoveltyConstants
     public const STATUS_REVISION_FIRMAS = 'revision_firmas';
     public const STATUS_GDP = 'gdp';
     public const STATUS_TESORERIA = 'tesoreria';
-    public const STATUS_AUT_PAGO = 'aut_pago';
+    public const STATUS_AUTORIZACION_PAGO = 'autorizacion_pago';
     public const STATUS_PAGADA = 'pagada';
     public const STATUS_RECHAZADA = 'rechazada';
 
@@ -24,7 +24,7 @@ final class NoveltyConstants
         self::STATUS_REVISION_FIRMAS,
         self::STATUS_GDP,
         self::STATUS_TESORERIA,
-        self::STATUS_AUT_PAGO,
+        self::STATUS_AUTORIZACION_PAGO,
         self::STATUS_PAGADA,
     ];
 
@@ -53,7 +53,7 @@ final class NoveltyConstants
         self::STATUS_REVISION_FIRMAS,
         self::STATUS_GDP,
         self::STATUS_TESORERIA,
-        self::STATUS_AUT_PAGO,
+        self::STATUS_AUTORIZACION_PAGO,
         self::STATUS_PAGADA,
         self::STATUS_RECHAZADA,
     ];
@@ -66,7 +66,7 @@ final class NoveltyConstants
         self::STATUS_REVISION_FIRMAS => 'Revisión y Firmas de documentos',
         self::STATUS_GDP => 'GDP',
         self::STATUS_TESORERIA => 'Tesorería',
-        self::STATUS_AUT_PAGO => 'Aut. Pago',
+        self::STATUS_AUTORIZACION_PAGO => 'Aut. Pago',
         self::STATUS_PAGADA => 'Pagada',
         self::STATUS_RECHAZADA => 'Rechazada',
     ];
@@ -79,7 +79,7 @@ final class NoveltyConstants
         self::STATUS_REVISION_FIRMAS => 'bi-pen',
         self::STATUS_GDP => 'bi-clipboard-check',
         self::STATUS_TESORERIA => 'bi-bank',
-        self::STATUS_AUT_PAGO => 'bi-shield-check',
+        self::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
         self::STATUS_PAGADA => 'bi-cash-coin',
     ];
 
@@ -90,8 +90,8 @@ final class NoveltyConstants
         self::STATUS_CONTABILIDAD => self::STATUS_REVISION_FIRMAS,
         self::STATUS_REVISION_FIRMAS => self::STATUS_GDP,
         self::STATUS_GDP => self::STATUS_TESORERIA,
-        self::STATUS_TESORERIA => self::STATUS_AUT_PAGO,
-        self::STATUS_AUT_PAGO => self::STATUS_PAGADA,
+        self::STATUS_TESORERIA => self::STATUS_AUTORIZACION_PAGO,
+        self::STATUS_AUTORIZACION_PAGO => self::STATUS_PAGADA,
         self::STATUS_PAGADA => null,
     ];
 

@@ -16,7 +16,7 @@ final class TesoreriaState implements PaymentSchedulingPipelineState
 
     public function getNext(): ?string
     {
-        return PaymentSchedulingConstants::STATUS_AUT_PAGO;
+        return PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO;
     }
 
     public function getPrevious(): ?string

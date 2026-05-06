@@ -30,12 +30,12 @@ class NoveltyService
         RoleConstants::CONTABILIDAD => [NoveltyConstants::STATUS_CONTABILIDAD],
         RoleConstants::CONTADOR => [
             NoveltyConstants::STATUS_REVISION_FIRMAS,
-            NoveltyConstants::STATUS_AUT_PAGO,
+            NoveltyConstants::STATUS_AUTORIZACION_PAGO,
         ],
         RoleConstants::COORDINADOR_ADMIN => [NoveltyConstants::STATUS_REVISION_FIRMAS],
         RoleConstants::TESORERIA => [
             NoveltyConstants::STATUS_TESORERIA,
-            NoveltyConstants::STATUS_AUT_PAGO,
+            NoveltyConstants::STATUS_AUTORIZACION_PAGO,
         ],
         RoleConstants::ADMIN => NoveltyConstants::PIPELINE_STATUSES,
     ];
@@ -46,7 +46,7 @@ class NoveltyService
         NoveltyConstants::STATUS_REVISION_FIRMAS,
         NoveltyConstants::STATUS_GDP,
         NoveltyConstants::STATUS_TESORERIA,
-        NoveltyConstants::STATUS_AUT_PAGO,
+        NoveltyConstants::STATUS_AUTORIZACION_PAGO,
     ];
 
     // Which liquidation-doc statuses each role sees in "Mis D. de Liquidación".
@@ -54,9 +54,9 @@ class NoveltyService
         RoleConstants::CONTABILIDAD => [NoveltyConstants::STATUS_CONTABILIDAD],
         RoleConstants::TESORERIA => [
             NoveltyConstants::STATUS_TESORERIA,
-            NoveltyConstants::STATUS_AUT_PAGO,
+            NoveltyConstants::STATUS_AUTORIZACION_PAGO,
         ],
-        RoleConstants::CONTADOR => [NoveltyConstants::STATUS_AUT_PAGO],
+        RoleConstants::CONTADOR => [NoveltyConstants::STATUS_AUTORIZACION_PAGO],
         RoleConstants::REGISTRO_REVISION => [
             NoveltyConstants::STATUS_REVISION_FIRMAS,
             NoveltyConstants::STATUS_GDP,
@@ -86,7 +86,7 @@ class NoveltyService
         NoveltyConstants::STATUS_REVISION_FIRMAS => ['informacion', 'fechas', 'firmas'],
         NoveltyConstants::STATUS_GDP => ['informacion', 'fechas', 'firmas'],
         NoveltyConstants::STATUS_TESORERIA => ['informacion'],
-        NoveltyConstants::STATUS_AUT_PAGO => ['informacion'],
+        NoveltyConstants::STATUS_AUTORIZACION_PAGO => ['informacion'],
     ];
 
     private PipelineAuthorizationService $pipelineAuth;

@@ -36,7 +36,7 @@ $docIconColor = fn(?string $mime): string => match(true) {
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
-        <?php if (!empty($userPermissions['petty_cash']['can_edit']) && !$record->isPagado()): ?>
+        <?php if (!empty($userPermissions['petty_cash']['can_edit']) && !$record->isPagada()): ?>
         <?= $this->Html->link(
             '<i class="bi bi-pencil me-1"></i>Editar',
             ['action' => 'edit', $record->id],
@@ -113,7 +113,7 @@ $docIconColor = fn(?string $mime): string => match(true) {
     </div>
 </div>
 
-<?php if ($record->isAutPago() || $record->isPagado()): ?>
+<?php if ($record->isAutorizacionPago() || $record->isPagada()): ?>
 <!-- Datos de pago -->
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-2">
@@ -145,7 +145,7 @@ $docIconColor = fn(?string $mime): string => match(true) {
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Estado</span>
                 <span class="sgi-data-value">
-                    <?php if ($record->isPagado()): ?>
+                    <?php if ($record->isPagada()): ?>
                         <span class="badge bg-success">Autorizado</span>
                     <?php elseif (!empty($record->payment_rejection_reason)): ?>
                         <span class="badge bg-danger">Rechazado</span>

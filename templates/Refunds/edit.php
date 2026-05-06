@@ -32,8 +32,8 @@ $statusBadge = [
     'agrupacion' => 'bg-info text-dark',
     'contabilidad' => 'bg-primary',
     'tesoreria' => 'bg-warning text-dark',
-    'aut_pago' => 'bg-secondary',
-    'pagado' => 'bg-success',
+    'autorizacion_pago' => 'bg-secondary',
+    'pagada' => 'bg-success',
 ];
 $statusLabels = RefundConstants::STATUS_LABELS;
 
@@ -415,7 +415,7 @@ $invoiceCount = count($record->invoices ?? []);
             'rejectUrlFn'        => fn($_) => ['action' => 'rejectPayment', $record->id],
             'canRegisterPayment' => ($record->status === RefundConstants::STATUS_TESORERIA)
                 && ($canRegisterPayment ?? false),
-            'canAuthorize'       => ($record->status === RefundConstants::STATUS_AUT_PAGO)
+            'canAuthorize'       => ($record->status === RefundConstants::STATUS_AUTORIZACION_PAGO)
                 && ($canAuthorizePayment ?? false),
             'canDelete'          => false,
             'paymentStatus'      => null,
@@ -501,7 +501,7 @@ $invoiceCount = count($record->invoices ?? []);
             <span style="font-size:.85rem;font-weight:600;">Soportes</span>
             <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
         </span>
-        <?php if (!$record->isPagado()): ?>
+        <?php if (!$record->isPagada()): ?>
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadRefundDocModal">
             <i class="bi bi-upload me-1"></i>Subir
         </button>
@@ -516,7 +516,7 @@ $invoiceCount = count($record->invoices ?? []);
         <?php foreach ($docs as $doc): ?>
             <?= $this->element('document_row', [
                 'doc'       => $doc,
-                'canDelete' => !$record->isPagado(),
+                'canDelete' => !$record->isPagada(),
                 'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
                 'showBadge' => false,
             ]) ?>
@@ -564,7 +564,7 @@ $invoiceCount = count($record->invoices ?? []);
 
 </div><!-- /layout dos columnas -->
 
-<?php if (!$record->isPagado()): ?>
+<?php if (!$record->isPagada()): ?>
 <!-- Modal: Subir Soporte -->
 <div class="modal fade" id="uploadRefundDocModal" tabindex="-1">
     <div class="modal-dialog">

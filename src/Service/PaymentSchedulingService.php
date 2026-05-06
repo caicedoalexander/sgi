@@ -17,11 +17,11 @@ class PaymentSchedulingService
         RoleConstants::TESORERIA => [
             PaymentSchedulingConstants::STATUS_BORRADOR,
             PaymentSchedulingConstants::STATUS_TESORERIA,
-            PaymentSchedulingConstants::STATUS_AUT_PAGO,
+            PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO,
             PaymentSchedulingConstants::STATUS_PAGADA,
         ],
         RoleConstants::CONTADOR => [
-            PaymentSchedulingConstants::STATUS_AUT_PAGO,
+            PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO,
             PaymentSchedulingConstants::STATUS_PAGADA,
         ],
         RoleConstants::ADMIN => PaymentSchedulingConstants::PIPELINE_STATUSES,
@@ -70,7 +70,7 @@ class PaymentSchedulingService
 
     public function canReject(int $roleId, string $roleName, string $currentStatus): bool
     {
-        if ($currentStatus !== PaymentSchedulingConstants::STATUS_AUT_PAGO) {
+        if ($currentStatus !== PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO) {
             return false;
         }
 

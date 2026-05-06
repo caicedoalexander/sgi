@@ -58,27 +58,27 @@ class Refund extends Entity
         return $this->status === RefundConstants::STATUS_TESORERIA;
     }
 
-    public function isPagado(): bool
+    public function isPagada(): bool
     {
-        return $this->status === RefundConstants::STATUS_PAGADO;
+        return $this->status === RefundConstants::STATUS_PAGADA;
     }
 
     /**
      * True si el reintegro está en estado Autorización de Pago.
      */
-    public function isAutPago(): bool
+    public function isAutorizacionPago(): bool
     {
-        return $this->status === RefundConstants::STATUS_AUT_PAGO;
+        return $this->status === RefundConstants::STATUS_AUTORIZACION_PAGO;
     }
 
     /**
      * True si el reintegro está en alguna fase posterior a Tesorería donde ya
      * se manipulan datos de pago. Útil para gates de UI/serv. que deben
-     * comportarse igual en `aut_pago` y `pagado`.
+     * comportarse igual en `autorizacion_pago` y `pagada`.
      */
     public function isInPaymentPhase(): bool
     {
-        return $this->isTesoreria() || $this->isAutPago() || $this->isPagado();
+        return $this->isTesoreria() || $this->isAutorizacionPago() || $this->isPagada();
     }
 
     /**
@@ -93,12 +93,12 @@ class Refund extends Entity
 
     /**
      * True si existe una transición forward "automática" desde el estado
-     * actual. Excluye `pagado` (terminal) y `aut_pago` (transición controlada
-     * por register/authorize de pagos, no por el botón de avance).
+     * actual. Excluye `pagada` (terminal) y `autorizacion_pago` (transición
+     * controlada por register/authorize de pagos, no por el botón de avance).
      */
     public function canAdvancePipeline(): bool
     {
-        if ($this->isPagado() || $this->isAutPago()) {
+        if ($this->isPagada() || $this->isAutorizacionPago()) {
             return false;
         }
 

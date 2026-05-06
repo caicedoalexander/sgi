@@ -12,7 +12,7 @@ $this->assign('title', 'Programación ' . h($viewModel->record->code));
 $statusBadgeMap = [
     PaymentSchedulingConstants::STATUS_BORRADOR => ['Borrador', 'bg-secondary'],
     PaymentSchedulingConstants::STATUS_TESORERIA => ['Tesorería', 'bg-warning text-dark'],
-    PaymentSchedulingConstants::STATUS_AUT_PAGO => ['Aut. Pago', 'bg-info text-dark'],
+    PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => ['Aut. Pago', 'bg-info text-dark'],
     PaymentSchedulingConstants::STATUS_PAGADA => ['Pagada', 'bg-success'],
 ];
 $ps = $statusBadgeMap[$viewModel->currentStatus] ?? ['Desconocido', 'bg-dark'];

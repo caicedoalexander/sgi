@@ -117,7 +117,7 @@ class PettyCashRecordsController extends AppController
     {
         $query = $this->PettyCashRecords->find()
             ->contain(['CreatedByUsers', 'Invoices'])
-            ->where(['PettyCashRecords.status !=' => PettyCashConstants::STATUS_PAGADO])
+            ->where(['PettyCashRecords.status !=' => PettyCashConstants::STATUS_PAGADA])
             ->order(['PettyCashRecords.created' => 'DESC']);
 
         $this->_applyListFilters($query, skipStatus: true);
@@ -317,7 +317,7 @@ class PettyCashRecordsController extends AppController
             $roleId,
             $roleName,
             PipelineStepConstants::PIPELINE_PETTY_CASH,
-            PettyCashConstants::STATUS_AUT_PAGO,
+            PettyCashConstants::STATUS_AUTORIZACION_PAGO,
         );
 
         return new PettyCashEditViewModel(
@@ -574,7 +574,7 @@ class PettyCashRecordsController extends AppController
                 return $this->_jsonResponse(['success' => false, 'error' => $result]);
             }
 
-            $canDelete = !$record->isPagado();
+            $canDelete = !$record->isPagada();
             $deleteUrl = $canDelete
                 ? Router::url(['action' => 'deleteDocument', $id, $result->id])
                 : null;
@@ -610,7 +610,7 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post', 'delete']);
         $record = $this->PettyCashRecords->get($recordId);
 
-        if ($record->isPagado()) {
+        if ($record->isPagada()) {
             if ($this->_isJsonRequest()) {
                 return $this->_jsonResponse(['success' => false, 'error' => 'No se puede eliminar un soporte de un registro pagado.']);
             }

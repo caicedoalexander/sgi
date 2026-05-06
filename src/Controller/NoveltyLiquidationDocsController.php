@@ -239,12 +239,12 @@ class NoveltyLiquidationDocsController extends AppController
             $roleId,
             $roleName,
             PipelineStepConstants::PIPELINE_NOVELTIES,
-            NoveltyConstants::STATUS_AUT_PAGO,
+            NoveltyConstants::STATUS_AUTORIZACION_PAGO,
         );
         $isTesoreriaEdit = $canOpTesoreria
             && $doc->pipeline_status === NoveltyConstants::STATUS_TESORERIA;
         $isContadorAutPago = $canOpAutPago
-            && $doc->pipeline_status === NoveltyConstants::STATUS_AUT_PAGO;
+            && $doc->pipeline_status === NoveltyConstants::STATUS_AUTORIZACION_PAGO;
 
         return new NoveltyLiquidationDocEditViewModel(
             doc: $doc,

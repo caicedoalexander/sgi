@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace App\Service\Pipeline\Refund;
 
 use App\Service\Pipeline\Refund\State\AgrupacionState;
-use App\Service\Pipeline\Refund\State\AutPagoState;
+use App\Service\Pipeline\Refund\State\AutorizacionPagoState;
 use App\Service\Pipeline\Refund\State\ContabilidadState;
-use App\Service\Pipeline\Refund\State\PagadoState;
+use App\Service\Pipeline\Refund\State\PagadaState;
 use App\Service\Pipeline\Refund\State\TesoreriaState;
 use InvalidArgumentException;
 
@@ -25,22 +25,22 @@ final class RefundPipelineStateRegistry
      * @param \App\Service\Pipeline\Refund\State\AgrupacionState|null $agrupacion State.
      * @param \App\Service\Pipeline\Refund\State\ContabilidadState|null $contabilidad State.
      * @param \App\Service\Pipeline\Refund\State\TesoreriaState|null $tesoreria State.
-     * @param \App\Service\Pipeline\Refund\State\AutPagoState|null $autPago State.
-     * @param \App\Service\Pipeline\Refund\State\PagadoState|null $pagado State.
+     * @param \App\Service\Pipeline\Refund\State\AutorizacionPagoState|null $autorizacionPago State.
+     * @param \App\Service\Pipeline\Refund\State\PagadaState|null $pagada State.
      */
     public function __construct(
         ?AgrupacionState $agrupacion = null,
         ?ContabilidadState $contabilidad = null,
         ?TesoreriaState $tesoreria = null,
-        ?AutPagoState $autPago = null,
-        ?PagadoState $pagado = null,
+        ?AutorizacionPagoState $autorizacionPago = null,
+        ?PagadaState $pagada = null,
     ) {
         $list = [
             $agrupacion ?? new AgrupacionState(),
             $contabilidad ?? new ContabilidadState(),
             $tesoreria ?? new TesoreriaState(),
-            $autPago ?? new AutPagoState(),
-            $pagado ?? new PagadoState(),
+            $autorizacionPago ?? new AutorizacionPagoState(),
+            $pagada ?? new PagadaState(),
         ];
 
         foreach ($list as $state) {

@@ -8,11 +8,11 @@ use App\Model\Entity\EmployeeNovelty;
 use App\Model\Entity\NoveltyLiquidationDoc;
 use App\Service\Pipeline\Novelty\NoveltyPipelineState;
 
-final class AutPagoState implements NoveltyPipelineState
+final class AutorizacionPagoState implements NoveltyPipelineState
 {
     public function getName(): string
     {
-        return NoveltyConstants::STATUS_AUT_PAGO;
+        return NoveltyConstants::STATUS_AUTORIZACION_PAGO;
     }
 
     public function getNext(): ?string

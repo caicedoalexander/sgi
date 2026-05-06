@@ -23,7 +23,7 @@ class RefundService
         RefundConstants::STATUS_AGRUPACION,
         RefundConstants::STATUS_CONTABILIDAD,
         RefundConstants::STATUS_TESORERIA,
-        RefundConstants::STATUS_AUT_PAGO,
+        RefundConstants::STATUS_AUTORIZACION_PAGO,
     ];
 
     // Which refund statuses each role sees in "Mis Registros".
@@ -32,9 +32,9 @@ class RefundService
         RoleConstants::CONTABILIDAD => [RefundConstants::STATUS_CONTABILIDAD],
         RoleConstants::TESORERIA => [
             RefundConstants::STATUS_TESORERIA,
-            RefundConstants::STATUS_AUT_PAGO,
+            RefundConstants::STATUS_AUTORIZACION_PAGO,
         ],
-        RoleConstants::CONTADOR => [RefundConstants::STATUS_AUT_PAGO],
+        RoleConstants::CONTADOR => [RefundConstants::STATUS_AUTORIZACION_PAGO],
         RoleConstants::AUXILIAR_PERSONAL => self::ACTIVE_STATUSES,
         RoleConstants::ASISTENTE_PERSONAL => self::ACTIVE_STATUSES,
         RoleConstants::COORDINADOR_ADMIN => self::ACTIVE_STATUSES,
@@ -140,11 +140,11 @@ class RefundService
             return ['success' => false, 'error' => 'Este registro ya está en su estado final.'];
         }
 
-        if ($nextStatus === RefundConstants::STATUS_AUT_PAGO) {
+        if ($nextStatus === RefundConstants::STATUS_AUTORIZACION_PAGO) {
             return ['success' => false, 'error' => 'Debe registrar un pago para avanzar desde Tesorería.'];
         }
 
-        if ($currentStatus === RefundConstants::STATUS_AUT_PAGO) {
+        if ($currentStatus === RefundConstants::STATUS_AUTORIZACION_PAGO) {
             return ['success' => false, 'error' => 'La autorización de pago se gestiona desde la sección de pagos.'];
         }
 
@@ -291,7 +291,7 @@ class RefundService
             return [];
         }
 
-        $isAuthorized = $record->isPagado();
+        $isAuthorized = $record->isPagada();
 
         return [
             new BulkPaymentView(

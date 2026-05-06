@@ -76,12 +76,12 @@ class SidebarCounterService
             'overdueInvoicesCount' => $this->getOverdueInvoicesCount(),
             'pettyCashCount' => $this->getCount(
                 'PettyCashRecords',
-                ['status !=' => PettyCashConstants::STATUS_PAGADO],
+                ['status !=' => PettyCashConstants::STATUS_PAGADA],
             ),
             'pettyCashMineCount' => $this->getPettyCashMineCount($roleName),
             'refundsCount' => $this->getCount(
                 'Refunds',
-                ['status !=' => RefundConstants::STATUS_PAGADO],
+                ['status !=' => RefundConstants::STATUS_PAGADA],
             ),
             'refundsMineCount' => $this->getRefundsMineCount($roleName),
             'advancesMineCount' => $this->getAdvancesMineCount($roleName),

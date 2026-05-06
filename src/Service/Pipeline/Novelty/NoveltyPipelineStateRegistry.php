@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Service\Pipeline\Novelty;
 
 use App\Service\Pipeline\Novelty\State\AprobacionState;
-use App\Service\Pipeline\Novelty\State\AutPagoState;
+use App\Service\Pipeline\Novelty\State\AutorizacionPagoState;
 use App\Service\Pipeline\Novelty\State\ContabilidadState;
 use App\Service\Pipeline\Novelty\State\GdpState;
 use App\Service\Pipeline\Novelty\State\PagadaState;
@@ -31,7 +31,7 @@ final class NoveltyPipelineStateRegistry
         ?RevisionFirmasState $revisionFirmas = null,
         ?GdpState $gdp = null,
         ?TesoreriaState $tesoreria = null,
-        ?AutPagoState $autPago = null,
+        ?AutorizacionPagoState $autorizacionPago = null,
         ?PagadaState $pagada = null,
     ) {
         $list = [
@@ -41,7 +41,7 @@ final class NoveltyPipelineStateRegistry
             $revisionFirmas ?? new RevisionFirmasState(),
             $gdp ?? new GdpState(),
             $tesoreria ?? new TesoreriaState(),
-            $autPago ?? new AutPagoState(),
+            $autorizacionPago ?? new AutorizacionPagoState(),
             $pagada ?? new PagadaState(),
         ];
 

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\PaymentScheduling;
 
-use App\Service\Pipeline\PaymentScheduling\State\AutPagoState;
+use App\Service\Pipeline\PaymentScheduling\State\AutorizacionPagoState;
 use App\Service\Pipeline\PaymentScheduling\State\BorradorState;
 use App\Service\Pipeline\PaymentScheduling\State\PagadaState;
 use App\Service\Pipeline\PaymentScheduling\State\TesoreriaState;
@@ -23,13 +23,13 @@ final class PaymentSchedulingPipelineStateRegistry
     public function __construct(
         ?BorradorState $borrador = null,
         ?TesoreriaState $tesoreria = null,
-        ?AutPagoState $autPago = null,
+        ?AutorizacionPagoState $autorizacionPago = null,
         ?PagadaState $pagada = null,
     ) {
         $list = [
             $borrador ?? new BorradorState(),
             $tesoreria ?? new TesoreriaState(),
-            $autPago ?? new AutPagoState(),
+            $autorizacionPago ?? new AutorizacionPagoState(),
             $pagada ?? new PagadaState(),
         ];
 

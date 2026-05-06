@@ -26,7 +26,7 @@ $liquidationApplicableStatuses = [
     NoveltyConstants::STATUS_REVISION_FIRMAS,
     NoveltyConstants::STATUS_GDP,
     NoveltyConstants::STATUS_TESORERIA,
-    NoveltyConstants::STATUS_AUT_PAGO,
+    NoveltyConstants::STATUS_AUTORIZACION_PAGO,
     NoveltyConstants::STATUS_PAGADA,
     NoveltyConstants::STATUS_RECHAZADA,
 ];

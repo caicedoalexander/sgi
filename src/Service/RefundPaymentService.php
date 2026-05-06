@@ -144,7 +144,7 @@ class RefundPaymentService
             $record->payment_date = $paymentDate;
             $record->payment_created_by = $createdBy;
             $record->payment_rejection_reason = null;
-            $record->status = RefundConstants::STATUS_AUT_PAGO;
+            $record->status = RefundConstants::STATUS_AUTORIZACION_PAGO;
 
             if (!$recordsTable->save($record)) {
                 $serviceResult = ServiceResult::fail(self::_buildSaveErrorMessage(
@@ -158,7 +158,7 @@ class RefundPaymentService
             $this->refundHistory->recordStatusChange(
                 $record->id,
                 RefundConstants::STATUS_TESORERIA,
-                RefundConstants::STATUS_AUT_PAGO,
+                RefundConstants::STATUS_AUTORIZACION_PAGO,
                 $createdBy,
             );
 
@@ -189,7 +189,7 @@ class RefundPaymentService
                 $roleId,
                 '',
                 PipelineStepConstants::PIPELINE_REFUNDS,
-                RefundConstants::STATUS_AUT_PAGO,
+                RefundConstants::STATUS_AUTORIZACION_PAGO,
             )
         ) {
             return ServiceResult::fail('No tiene permisos para autorizar pagos en este registro.');
@@ -225,7 +225,7 @@ class RefundPaymentService
                 return false;
             }
 
-            if ($record->status !== RefundConstants::STATUS_AUT_PAGO) {
+            if ($record->status !== RefundConstants::STATUS_AUTORIZACION_PAGO) {
                 $serviceResult = ServiceResult::fail('El registro no está en estado Autorización de Pago.');
 
                 return false;
@@ -315,7 +315,7 @@ class RefundPaymentService
                 }
             }
 
-            $record->status = RefundConstants::STATUS_PAGADO;
+            $record->status = RefundConstants::STATUS_PAGADA;
             $record->payment_status = InvoiceConstants::PAYMENT_FULL;
             $record->payment_authorized_by = $authorizedBy;
             $record->payment_authorized_date = $today;
@@ -331,8 +331,8 @@ class RefundPaymentService
 
             $this->refundHistory->recordStatusChange(
                 $record->id,
-                RefundConstants::STATUS_AUT_PAGO,
-                RefundConstants::STATUS_PAGADO,
+                RefundConstants::STATUS_AUTORIZACION_PAGO,
+                RefundConstants::STATUS_PAGADA,
                 $authorizedBy,
             );
 
@@ -365,7 +365,7 @@ class RefundPaymentService
                 $roleId,
                 '',
                 PipelineStepConstants::PIPELINE_REFUNDS,
-                RefundConstants::STATUS_AUT_PAGO,
+                RefundConstants::STATUS_AUTORIZACION_PAGO,
             )
         ) {
             return ServiceResult::fail('No tiene permisos para rechazar pagos en este registro.');
@@ -388,7 +388,7 @@ class RefundPaymentService
                 return false;
             }
 
-            if ($record->status !== RefundConstants::STATUS_AUT_PAGO) {
+            if ($record->status !== RefundConstants::STATUS_AUTORIZACION_PAGO) {
                 $serviceResult = ServiceResult::fail('Solo se pueden rechazar pagos en estado Autorización de Pago.');
 
                 return false;
@@ -417,7 +417,7 @@ class RefundPaymentService
 
             $this->refundHistory->recordStatusChange(
                 $record->id,
-                RefundConstants::STATUS_AUT_PAGO,
+                RefundConstants::STATUS_AUTORIZACION_PAGO,
                 RefundConstants::STATUS_TESORERIA,
                 $rejectedBy,
             );

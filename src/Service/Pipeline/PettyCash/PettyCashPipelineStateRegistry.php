@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace App\Service\Pipeline\PettyCash;
 
 use App\Service\Pipeline\PettyCash\State\AgrupacionState;
-use App\Service\Pipeline\PettyCash\State\AutPagoState;
+use App\Service\Pipeline\PettyCash\State\AutorizacionPagoState;
 use App\Service\Pipeline\PettyCash\State\ContabilidadState;
-use App\Service\Pipeline\PettyCash\State\PagadoState;
+use App\Service\Pipeline\PettyCash\State\PagadaState;
 use App\Service\Pipeline\PettyCash\State\TesoreriaState;
 use InvalidArgumentException;
 
@@ -26,15 +26,15 @@ final class PettyCashPipelineStateRegistry
         ?AgrupacionState $agrupacion = null,
         ?ContabilidadState $contabilidad = null,
         ?TesoreriaState $tesoreria = null,
-        ?AutPagoState $autPago = null,
-        ?PagadoState $pagado = null,
+        ?AutorizacionPagoState $autorizacionPago = null,
+        ?PagadaState $pagada = null,
     ) {
         $list = [
             $agrupacion ?? new AgrupacionState(),
             $contabilidad ?? new ContabilidadState(),
             $tesoreria ?? new TesoreriaState(),
-            $autPago ?? new AutPagoState(),
-            $pagado ?? new PagadoState(),
+            $autorizacionPago ?? new AutorizacionPagoState(),
+            $pagada ?? new PagadaState(),
         ];
 
         foreach ($list as $state) {

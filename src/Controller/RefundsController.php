@@ -72,7 +72,7 @@ class RefundsController extends AppController
      */
     private function _documentGate(Refund $record, string $blockedActionLabel): ?Response
     {
-        if ($record->isPagado()) {
+        if ($record->isPagada()) {
             return $this->_documentGateError(
                 sprintf('No se puede %s un soporte de un reintegro pagado.', $blockedActionLabel),
                 $record->id,
@@ -155,7 +155,7 @@ class RefundsController extends AppController
     {
         $query = $this->Refunds->find()
             ->contain(['CreatedByUsers', 'BeneficiaryEmployees', 'BeneficiaryProviders', 'Invoices'])
-            ->where(['Refunds.status !=' => RefundConstants::STATUS_PAGADO])
+            ->where(['Refunds.status !=' => RefundConstants::STATUS_PAGADA])
             ->order(['Refunds.created' => 'DESC']);
 
         $this->_applyListFilters($query, skipStatus: true);
@@ -463,7 +463,7 @@ class RefundsController extends AppController
                 $roleId,
                 $roleName,
                 PipelineStepConstants::PIPELINE_REFUNDS,
-                RefundConstants::STATUS_AUT_PAGO,
+                RefundConstants::STATUS_AUTORIZACION_PAGO,
             ),
             syntheticPayments: $this->refundService->buildSyntheticPayments($record),
             roleName: $roleName,
@@ -735,7 +735,7 @@ class RefundsController extends AppController
                 return $this->_jsonResponse(['success' => false, 'error' => $result], 400);
             }
 
-            $canDelete = !$record->isPagado();
+            $canDelete = !$record->isPagada();
             $deleteUrl = $canDelete
                 ? Router::url(['action' => 'deleteDocument', $id, $result->id])
                 : null;

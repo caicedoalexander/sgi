@@ -9,8 +9,8 @@ $statusBadge = [
     'agrupacion' => 'bg-info text-dark',
     'contabilidad' => 'bg-primary',
     'tesoreria' => 'bg-warning text-dark',
-    'aut_pago' => 'bg-secondary',
-    'pagado' => 'bg-success',
+    'autorizacion_pago' => 'bg-secondary',
+    'pagada' => 'bg-success',
 ];
 $statusLabels = \App\Constants\RefundConstants::STATUS_LABELS;
 

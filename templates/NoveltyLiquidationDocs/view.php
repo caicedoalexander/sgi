@@ -31,7 +31,7 @@ $statusBadgeMap = [
     'revision_firmas' => 'bg-warning text-dark',
     'gdp' => 'bg-dark',
     'tesoreria' => 'bg-info',
-    'aut_pago' => 'bg-info',
+    'autorizacion_pago' => 'bg-info',
     'pagada' => 'bg-success',
     'rechazada' => 'bg-danger',
 ];

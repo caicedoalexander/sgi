@@ -39,7 +39,7 @@ $statusBadgeMap = [
     'revision_firmas'  => 'bg-warning text-dark',
     'gdp'              => 'bg-dark',
     'tesoreria'        => 'bg-info',
-    'aut_pago'         => 'bg-info',
+    'autorizacion_pago' => 'bg-info',
     'pagada'           => 'bg-success',
     'rechazada'        => 'bg-danger',
 ];
@@ -359,7 +359,7 @@ $noveltyCount = count($doc->employee_novelties);
     <?php
     $showPayments = in_array($currentStatus, [
         NoveltyConstants::STATUS_TESORERIA,
-        NoveltyConstants::STATUS_AUT_PAGO,
+        NoveltyConstants::STATUS_AUTORIZACION_PAGO,
         NoveltyConstants::STATUS_PAGADA,
     ]);
     ?>

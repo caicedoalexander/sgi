@@ -7,14 +7,14 @@ use App\Constants\RefundConstants;
 use App\Model\Entity\Refund;
 use App\Service\Pipeline\Refund\RefundPipelineState;
 
-final class AutPagoState implements RefundPipelineState
+final class PagadaState implements RefundPipelineState
 {
     /**
      * @inheritDoc
      */
     public function getName(): string
     {
-        return RefundConstants::STATUS_AUT_PAGO;
+        return RefundConstants::STATUS_PAGADA;
     }
 
     /**
@@ -22,18 +22,15 @@ final class AutPagoState implements RefundPipelineState
      */
     public function getNext(): ?string
     {
-        return RefundConstants::STATUS_PAGADO;
+        return null;
     }
 
     /**
-     * BACKWARD_TRANSITIONS mapea aut_pago -> tesoreria, pero la regresión
-     * real está bloqueada de fábrica (canRegress() retorna false porque
-     * el avance aut_pago->pagado tampoco pasa por el coordinator). Aquí
-     * declaramos previous = tesoreria por consistencia con BACKWARD_TRANSITIONS.
+     * @inheritDoc
      */
     public function getPrevious(): ?string
     {
-        return RefundConstants::STATUS_TESORERIA;
+        return null;
     }
 
     /**
@@ -41,7 +38,7 @@ final class AutPagoState implements RefundPipelineState
      */
     public function validateAdvance(Refund $record): array
     {
-        return ['La autorización de pago se gestiona desde la sección de pagos.'];
+        return ['Este registro ya está en su estado final.'];
     }
 
     /**

@@ -7,11 +7,11 @@ use App\Constants\PaymentSchedulingConstants;
 use App\Model\Entity\PaymentScheduling;
 use App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineState;
 
-final class AutPagoState implements PaymentSchedulingPipelineState
+final class AutorizacionPagoState implements PaymentSchedulingPipelineState
 {
     public function getName(): string
     {
-        return PaymentSchedulingConstants::STATUS_AUT_PAGO;
+        return PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO;
     }
 
     public function getNext(): ?string

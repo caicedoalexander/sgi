@@ -11,7 +11,7 @@ use App\Constants\PaymentSchedulingConstants;
 $statusBadge = [
     PaymentSchedulingConstants::STATUS_BORRADOR => 'bg-secondary',
     PaymentSchedulingConstants::STATUS_TESORERIA => 'bg-warning text-dark',
-    PaymentSchedulingConstants::STATUS_AUT_PAGO => 'bg-info text-dark',
+    PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => 'bg-info text-dark',
     PaymentSchedulingConstants::STATUS_PAGADA => 'bg-success',
 ];
 $statusLabels = PaymentSchedulingConstants::STATUS_LABELS;

@@ -17,7 +17,7 @@ final class TesoreriaState implements NoveltyPipelineState
 
     public function getNext(): ?string
     {
-        return NoveltyConstants::STATUS_AUT_PAGO;
+        return NoveltyConstants::STATUS_AUTORIZACION_PAGO;
     }
 
     public function getPrevious(): ?string

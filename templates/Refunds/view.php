@@ -11,8 +11,8 @@ $statusBadge = [
     'agrupacion' => 'bg-info text-dark',
     'contabilidad' => 'bg-primary',
     'tesoreria' => 'bg-warning text-dark',
-    'aut_pago' => 'bg-secondary',
-    'pagado' => 'bg-success',
+    'autorizacion_pago' => 'bg-secondary',
+    'pagada' => 'bg-success',
 ];
 $statusLabels = RefundConstants::STATUS_LABELS;
 
@@ -26,7 +26,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
-        <?php if (!empty($userPermissions['refunds']['can_edit']) && !$record->isPagado()): ?>
+        <?php if (!empty($userPermissions['refunds']['can_edit']) && !$record->isPagada()): ?>
         <?= $this->Html->link(
             '<i class="bi bi-pencil me-1"></i>Editar',
             ['action' => 'edit', $record->id],

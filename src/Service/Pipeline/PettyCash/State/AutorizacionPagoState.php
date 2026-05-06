@@ -7,27 +7,27 @@ use App\Constants\PettyCashConstants;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\Pipeline\PettyCash\PettyCashPipelineState;
 
-final class PagadoState implements PettyCashPipelineState
+final class AutorizacionPagoState implements PettyCashPipelineState
 {
     public function getName(): string
     {
-        return PettyCashConstants::STATUS_PAGADO;
+        return PettyCashConstants::STATUS_AUTORIZACION_PAGO;
     }
 
     public function getNext(): ?string
     {
-        return null;
+        return PettyCashConstants::STATUS_PAGADA;
     }
 
     public function getPrevious(): ?string
     {
-        // Pagado es terminal: regresar implicaría revertir invoice_payments
-        // ya materializados, fuera del alcance del flujo estándar.
-        return null;
+        return PettyCashConstants::STATUS_TESORERIA;
     }
 
     public function validateAdvance(PettyCashRecord $record): array
     {
+        // El avance desde Aut. Pago se gestiona vía authorizePayment, no
+        // por advanceStatus. Sin requirements de campos a este nivel.
         return [];
     }
 }

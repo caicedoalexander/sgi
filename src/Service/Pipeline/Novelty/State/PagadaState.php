@@ -22,7 +22,7 @@ final class PagadaState implements NoveltyPipelineState
 
     public function getPrevious(): ?string
     {
-        return NoveltyConstants::STATUS_AUT_PAGO;
+        return NoveltyConstants::STATUS_AUTORIZACION_PAGO;
     }
 
     public function validateAdvanceIndividual(EmployeeNovelty $novelty): array

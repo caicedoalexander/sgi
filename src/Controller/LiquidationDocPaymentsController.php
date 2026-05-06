@@ -104,7 +104,7 @@ class LiquidationDocPaymentsController extends AppController
                 $this->_getRoleId(),
                 $roleName,
                 PipelineStepConstants::PIPELINE_NOVELTIES,
-                NoveltyConstants::STATUS_AUT_PAGO,
+                NoveltyConstants::STATUS_AUTORIZACION_PAGO,
             )
         ) {
             $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
@@ -140,7 +140,7 @@ class LiquidationDocPaymentsController extends AppController
                 $this->_getRoleId(),
                 $roleName,
                 PipelineStepConstants::PIPELINE_NOVELTIES,
-                NoveltyConstants::STATUS_AUT_PAGO,
+                NoveltyConstants::STATUS_AUTORIZACION_PAGO,
             )
         ) {
             $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
