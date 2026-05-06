@@ -264,8 +264,8 @@ class AdvancesController extends AppController
         }
 
         $roleName = $this->_getCurrentUser()->role->name ?? '';
-        $viewModel = new AdvanceLegalizationViewModel($invoice, $leg, $roleName);
-        $this->set($viewModel->build());
+        $vm = new AdvanceLegalizationViewModel($invoice, $leg, $roleName);
+        $this->set($vm->build());
         $this->set('actionPolicy', $this->actionPolicy);
 
         return null;
