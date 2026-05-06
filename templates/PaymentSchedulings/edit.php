@@ -1,25 +1,13 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\PaymentScheduling $record
- * @var string $roleName
- * @var string $currentStatus
- * @var bool $canAdvance
- * @var bool $canReject
- * @var float $total
- * @var array $advanceErrors
- * @var array $pipelineLabels
- * @var string|null $nextStatus
- * @var iterable $bankingEntities
+ * @var \App\ViewModel\PaymentSchedulingEditViewModel $viewModel
  * @var \App\Model\Entity\User|null $currentUser
- * @var string|null $previousStatus
- * @var string|null $regressLockMessage
- * @var bool $canRegress
  */
 use App\Constants\PaymentSchedulingConstants;
 use App\Constants\RoleConstants;
 
-$this->assign('title', 'Programación ' . h($record->code));
+$this->assign('title', 'Programación ' . h($viewModel->record->code));
 
 $statusBadgeMap = [
     PaymentSchedulingConstants::STATUS_BORRADOR => ['Borrador', 'bg-secondary'],
@@ -27,12 +15,12 @@ $statusBadgeMap = [
     PaymentSchedulingConstants::STATUS_AUT_PAGO => ['Aut. Pago', 'bg-info text-dark'],
     PaymentSchedulingConstants::STATUS_PAGADA => ['Pagada', 'bg-success'],
 ];
-$ps = $statusBadgeMap[$currentStatus] ?? ['Desconocido', 'bg-dark'];
+$ps = $statusBadgeMap[$viewModel->currentStatus] ?? ['Desconocido', 'bg-dark'];
 
-$isBorrador = $currentStatus === PaymentSchedulingConstants::STATUS_BORRADOR;
-$isTesoreria = $currentStatus === PaymentSchedulingConstants::STATUS_TESORERIA;
-$isPagada = $currentStatus === PaymentSchedulingConstants::STATUS_PAGADA;
-$itemCount = count($record->payment_scheduling_items ?? []);
+$isBorrador = $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_BORRADOR;
+$isTesoreria = $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_TESORERIA;
+$isPagada = $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_PAGADA;
+$itemCount = count($viewModel->record->payment_scheduling_items ?? []);
 ?>
 
 <!-- Encabezado de página -->
@@ -46,21 +34,21 @@ $itemCount = count($record->payment_scheduling_items ?? []);
         ) ?>
         <?= $this->Html->link(
             '<i class="bi bi-eye me-1"></i>Ver',
-            ['action' => 'view', $record->id],
+            ['action' => 'view', $viewModel->record->id],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
     </div>
 </div>
 
 <!-- Alerta de avance pendiente -->
-<?php if ($canAdvance && !empty($advanceErrors)): ?>
+<?php if ($viewModel->canAdvance && !empty($viewModel->advanceErrors)): ?>
 <div class="alert alert-warning mb-4">
     <div class="d-flex align-items-start gap-2">
         <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
         <div>
             <strong>Para avanzar al siguiente estado complete:</strong>
             <ul class="mb-0 mt-1 ps-3">
-                <?php foreach ($advanceErrors as $err): ?>
+                <?php foreach ($viewModel->advanceErrors as $err): ?>
                     <li><?= h($err) ?></li>
                 <?php endforeach; ?>
             </ul>
@@ -85,10 +73,10 @@ $itemCount = count($record->payment_scheduling_items ?? []);
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
-                    <?= h($record->code) ?>
+                    <?= h($viewModel->record->code) ?>
                 </div>
                 <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
-                    Rol: <strong style="color:#777;"><?= h($roleName) ?></strong>
+                    Rol: <strong style="color:#777;"><?= h($viewModel->roleName) ?></strong>
                 </div>
             </div>
         </div>
@@ -100,9 +88,9 @@ $itemCount = count($record->payment_scheduling_items ?? []);
         <div class="d-flex align-items-center justify-content-between">
             <?php foreach (PaymentSchedulingConstants::PIPELINE_STATUSES as $i => $status): ?>
             <?php
-                $currentIdx = array_search($currentStatus, PaymentSchedulingConstants::PIPELINE_STATUSES);
+                $currentIdx = array_search($viewModel->currentStatus, PaymentSchedulingConstants::PIPELINE_STATUSES);
                 $thisIdx = array_search($status, PaymentSchedulingConstants::PIPELINE_STATUSES);
-                $isCurrent = $status === $currentStatus;
+                $isCurrent = $status === $viewModel->currentStatus;
                 $isPast = $thisIdx < $currentIdx;
                 $icon = PaymentSchedulingConstants::STATUS_ICONS[$status] ?? 'bi-circle';
             ?>
@@ -116,7 +104,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
                     <?php endif; ?>
                 </div>
                 <span style="font-size:.75rem;font-weight:<?= $isCurrent ? '700' : '500' ?>;color:<?= $isCurrent ? '#111' : ($isPast ? 'var(--primary-color)' : '#aaa') ?>;">
-                    <?= $pipelineLabels[$status] ?? $status ?>
+                    <?= $viewModel->pipelineLabels[$status] ?? $status ?>
                 </span>
                 <?php if ($isCurrent): ?>
                 <i class="bi bi-caret-left-fill" style="font-size:.6rem;color:var(--primary-color);"></i>
@@ -134,7 +122,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
         <div class="sgi-ledger">
             <div class="sgi-ledger-item" style="grid-column:span 2;">
                 <div class="sgi-ledger-label">Título</div>
-                <div class="sgi-ledger-value"><?= h($record->title) ?: '—' ?></div>
+                <div class="sgi-ledger-value"><?= h($viewModel->record->title) ?: '—' ?></div>
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Facturas</div>
@@ -143,8 +131,8 @@ $itemCount = count($record->payment_scheduling_items ?? []);
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Monto Total</div>
                 <div class="sgi-ledger-value --amount">
-                    <?php if ($total > 0): ?>
-                        $ <?= number_format($total, 0, ',', '.') ?>
+                    <?php if ($viewModel->total > 0): ?>
+                        $ <?= number_format($viewModel->total, 0, ',', '.') ?>
                     <?php else: ?>
                         <span class="--muted">—</span>
                     <?php endif; ?>
@@ -152,11 +140,11 @@ $itemCount = count($record->payment_scheduling_items ?? []);
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Creado por</div>
-                <div class="sgi-ledger-value"><?= h($record->created_by_user->full_name ?? '—') ?></div>
+                <div class="sgi-ledger-value"><?= h($viewModel->record->created_by_user->full_name ?? '—') ?></div>
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Fecha Creación</div>
-                <div class="sgi-ledger-value"><?= $record->created?->format('d/m/Y H:i') ?? '—' ?></div>
+                <div class="sgi-ledger-value"><?= $viewModel->record->created?->format('d/m/Y H:i') ?? '—' ?></div>
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Estado</div>
@@ -164,7 +152,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Última Modificación</div>
-                <div class="sgi-ledger-value"><?= $record->modified?->format('d/m/Y H:i') ?? '—' ?></div>
+                <div class="sgi-ledger-value"><?= $viewModel->record->modified?->format('d/m/Y H:i') ?? '—' ?></div>
             </div>
         </div>
     </div>
@@ -196,7 +184,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
             <!-- Formulario agregar item manual -->
             <div class="collapse mb-3" id="add-item-form">
                 <div class="card card-body" style="border-top:2px solid var(--primary-color);">
-                    <?= $this->Form->create(null, ['url' => ['action' => 'addItem', $record->id]]) ?>
+                    <?= $this->Form->create(null, ['url' => ['action' => 'addItem', $viewModel->record->id]]) ?>
                     <div class="row g-2 align-items-end">
                         <div class="col-md-4">
                             <label class="form-label mb-1" style="font-size:.75rem;">Factura (ID)</label>
@@ -206,7 +194,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
                             <label class="form-label mb-1" style="font-size:.75rem;">Banco</label>
                             <select name="banking_entity_id" class="form-select form-select-sm" required>
                                 <option value="">-- Seleccione --</option>
-                                <?php foreach ($bankingEntities as $beId => $beName): ?>
+                                <?php foreach ($viewModel->bankingEntities as $beId => $beName): ?>
                                 <option value="<?= $beId ?>"><?= h($beName) ?></option>
                                 <?php endforeach; ?>
                             </select>
@@ -224,7 +212,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
             </div>
             <?php endif; ?>
 
-            <?php if (!empty($record->payment_scheduling_items)): ?>
+            <?php if (!empty($viewModel->record->payment_scheduling_items)): ?>
             <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
                 <table class="table table-sm mb-0">
                     <thead class="table-light">
@@ -237,7 +225,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($record->payment_scheduling_items as $item): ?>
+                        <?php foreach ($viewModel->record->payment_scheduling_items as $item): ?>
                         <tr>
                             <td style="font-family:monospace;">
                                 <?= $this->Html->link(
@@ -253,7 +241,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
                             <td class="text-end">
                                 <?= $this->Form->postLink(
                                     '<i class="bi bi-trash"></i>',
-                                    ['action' => 'removeItem', $record->id, $item->id],
+                                    ['action' => 'removeItem', $viewModel->record->id, $item->id],
                                     ['confirm' => '¿Desvincular esta factura?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false]
                                 ) ?>
                             </td>
@@ -264,7 +252,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
                     <tfoot class="table-light">
                         <tr>
                             <th colspan="3">Total</th>
-                            <th class="text-end">$ <?= number_format($total, 0, ',', '.') ?></th>
+                            <th class="text-end">$ <?= number_format($viewModel->total, 0, ',', '.') ?></th>
                             <?php if ($isBorrador): ?><th></th><?php endif; ?>
                         </tr>
                     </tfoot>
@@ -278,36 +266,36 @@ $itemCount = count($record->payment_scheduling_items ?? []);
         </div>
 
         <!-- Acciones pipeline -->
-        <?php if ($canAdvance || $canReject || !empty($canRegress)): ?>
+        <?php if ($viewModel->canAdvance || $viewModel->canReject || !empty($viewModel->canRegress)): ?>
         <div class="sgi-sticky-actions">
-            <?php if ($canAdvance && empty($advanceErrors) && $nextStatus): ?>
+            <?php if ($viewModel->canAdvance && empty($viewModel->advanceErrors) && $viewModel->nextStatus): ?>
             <?= $this->Form->postLink(
-                '<i class="bi bi-arrow-right-circle me-1"></i>Avanzar a ' . h($pipelineLabels[$nextStatus] ?? ''),
-                ['action' => 'advance', $record->id],
+                '<i class="bi bi-arrow-right-circle me-1"></i>Avanzar a ' . h($viewModel->pipelineLabels[$viewModel->nextStatus] ?? ''),
+                ['action' => 'advance', $viewModel->record->id],
                 [
                     'confirm' => '¿Avanzar la programación?',
                     'class' => 'btn btn-primary',
                     'escape' => false,
-                    'data' => ['expected_status' => $record->pipeline_status],
+                    'data' => ['expected_status' => $viewModel->record->pipeline_status],
                 ]
             ) ?>
             <?php endif; ?>
 
-            <?php if ($canReject): ?>
+            <?php if ($viewModel->canReject): ?>
             <?= $this->Form->postLink(
                 '<i class="bi bi-arrow-counterclockwise me-1"></i>Devolver a Tesorería',
-                ['action' => 'reject', $record->id],
+                ['action' => 'reject', $viewModel->record->id],
                 ['confirm' => '¿Devolver la programación a Tesorería?', 'class' => 'btn btn-outline-warning', 'escape' => false]
             ) ?>
             <?php endif; ?>
 
-            <?php if (!empty($canRegress)):
-                $prevLabel = $pipelineLabels[$previousStatus] ?? $previousStatus;
-                $isLocked = !empty($regressLockMessage);
+            <?php if (!empty($viewModel->canRegress)):
+                $prevLabel = $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus;
+                $isLocked = !empty($viewModel->regressLockMessage);
             ?>
                 <?php if ($isLocked): ?>
                     <button type="button" class="btn btn-outline-secondary"
-                            disabled title="<?= h($regressLockMessage) ?>">
+                            disabled title="<?= h($viewModel->regressLockMessage) ?>">
                         <i class="bi bi-arrow-counterclockwise me-1"></i>Regresar al paso anterior
                     </button>
                 <?php else: ?>
@@ -328,7 +316,7 @@ $itemCount = count($record->payment_scheduling_items ?? []);
 <div class="sgi-invoice-sidebar">
 
 <?php
-$documents = $record->payment_scheduling_documents ?? [];
+$documents = $viewModel->record->payment_scheduling_documents ?? [];
 $totalDocs = count($documents);
 ?>
 
@@ -356,7 +344,7 @@ $totalDocs = count($documents);
             <?= $this->element('document_row', [
                 'doc'       => $att,
                 'canDelete' => !$isPagada,
-                'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $att->id]),
+                'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $viewModel->record->id, $att->id]),
                 'showBadge' => false,
             ]) ?>
         <?php endforeach; ?>
@@ -364,7 +352,7 @@ $totalDocs = count($documents);
 </div>
 
 <!-- Observaciones: chat -->
-<?php $obsCount = count($record->payment_scheduling_observations ?? []); ?>
+<?php $obsCount = count($viewModel->record->payment_scheduling_observations ?? []); ?>
 <div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
     <div class="card-header d-flex align-items-center gap-2">
         <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);"></i>
@@ -373,7 +361,7 @@ $totalDocs = count($documents);
     </div>
 
     <div id="obs-chat-scroll" class="sgi-obs-list">
-        <?php foreach ($record->payment_scheduling_observations ?? [] as $obs): ?>
+        <?php foreach ($viewModel->record->payment_scheduling_observations ?? [] as $obs): ?>
             <?= $this->element('observation_bubble', [
                 'observation' => $obs,
                 'isMine' => $currentUser && $obs->user_id === $currentUser->id,
@@ -387,7 +375,7 @@ $totalDocs = count($documents);
     </div>
 
     <div class="sgi-obs-input-bar">
-        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $record->id], 'id' => 'obs-form']) ?>
+        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $viewModel->record->id], 'id' => 'obs-form']) ?>
         <div class="sgi-obs-compose">
             <textarea id="obs-message" name="message" class="auto-resize" rows="1"
                       placeholder="Escriba una observación..."></textarea>
@@ -408,7 +396,7 @@ $totalDocs = count($documents);
 <div class="modal fade" id="importExcelModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <?= $this->Form->create(null, ['url' => ['action' => 'importExcel', $record->id], 'type' => 'file']) ?>
+            <?= $this->Form->create(null, ['url' => ['action' => 'importExcel', $viewModel->record->id], 'type' => 'file']) ?>
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-file-earmark-excel me-2"></i>Importar Excel</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -443,7 +431,7 @@ $totalDocs = count($documents);
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="upload-doc-form"
-                  data-url="<?= $this->Url->build(['action' => 'uploadDocument', $record->id]) ?>"
+                  data-url="<?= $this->Url->build(['action' => 'uploadDocument', $viewModel->record->id]) ?>"
                   enctype="multipart/form-data">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
@@ -471,15 +459,15 @@ $totalDocs = count($documents);
 <?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
 <?= $this->element('observation_chat_init') ?>
 
-<?php if (!empty($canRegress) && empty($regressLockMessage)):
-    $prevLabel = $pipelineLabels[$previousStatus] ?? $previousStatus;
-    $currLabel = $pipelineLabels[$currentStatus] ?? $currentStatus;
+<?php if (!empty($viewModel->canRegress) && empty($viewModel->regressLockMessage)):
+    $prevLabel = $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus;
+    $currLabel = $viewModel->pipelineLabels[$viewModel->currentStatus] ?? $viewModel->currentStatus;
 ?>
 <!-- Modal: Regresar al paso anterior -->
 <div class="modal fade" id="regressStatusModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form method="post"
-              action="<?= $this->Url->build(['action' => 'regressStatus', $record->id]) ?>"
+              action="<?= $this->Url->build(['action' => 'regressStatus', $viewModel->record->id]) ?>"
               id="regressStatusForm">
             <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
             <div class="modal-content">

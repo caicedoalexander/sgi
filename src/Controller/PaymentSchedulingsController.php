@@ -11,6 +11,7 @@ use App\Service\PaymentSchedulingDocumentService;
 use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
 use App\ViewModel\PaymentSchedulingAddViewModel;
+use App\ViewModel\PaymentSchedulingEditViewModel;
 use Cake\Routing\Router;
 
 class PaymentSchedulingsController extends AppController
@@ -149,39 +150,39 @@ class PaymentSchedulingsController extends AppController
 
         $roleName = $this->_getRoleName();
         $roleId = (int)$this->_getCurrentUser()->role_id;
+
+        $this->set('viewModel', $this->_buildEditViewModel($record, $roleId, $roleName));
+    }
+
+    private function _buildEditViewModel(
+        PaymentScheduling $record,
+        int $roleId,
+        string $roleName,
+    ): PaymentSchedulingEditViewModel {
         $currentStatus = $record->pipeline_status;
         $canAdvance = $this->schedulingService->canAdvance($roleId, $roleName, $currentStatus);
         $canReject = $this->schedulingService->canReject($roleId, $roleName, $currentStatus);
-        $total = $this->schedulingService->calculateTotal($record->id);
-
-        $advanceErrors = [];
-        if ($canAdvance) {
-            $advanceErrors = $this->schedulingService->validateTransitionRequirements($record, $currentStatus);
-        }
-
-        $pipelineLabels = PaymentSchedulingConstants::STATUS_LABELS;
-        $nextStatus = $this->schedulingService->getNextStatus($currentStatus);
-        $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->all();
-
         $canRegress = $this->schedulingService->canRegress($roleId, $roleName, $currentStatus);
-        $previousStatus = $this->schedulingService->getPreviousStatus($currentStatus);
-        $regressLockMessage = $this->schedulingService->getRegressionLockMessage($record);
 
-        $this->set(compact(
-            'record',
-            'roleName',
-            'currentStatus',
-            'canAdvance',
-            'canReject',
-            'total',
-            'advanceErrors',
-            'pipelineLabels',
-            'nextStatus',
-            'bankingEntities',
-            'canRegress',
-            'previousStatus',
-            'regressLockMessage',
-        ));
+        $advanceErrors = $canAdvance
+            ? $this->schedulingService->validateTransitionRequirements($record, $currentStatus)
+            : [];
+
+        return new PaymentSchedulingEditViewModel(
+            record: $record,
+            roleName: $roleName,
+            currentStatus: $currentStatus,
+            canAdvance: $canAdvance,
+            canReject: $canReject,
+            canRegress: $canRegress,
+            nextStatus: $this->schedulingService->getNextStatus($currentStatus),
+            previousStatus: $this->schedulingService->getPreviousStatus($currentStatus),
+            regressLockMessage: $this->schedulingService->getRegressionLockMessage($record),
+            advanceErrors: $advanceErrors,
+            total: $this->schedulingService->calculateTotal($record->id),
+            pipelineLabels: PaymentSchedulingConstants::STATUS_LABELS,
+            bankingEntities: $this->fetchTable('BankingEntities')->find('list')->all(),
+        );
     }
 
     public function advance($id = null)
