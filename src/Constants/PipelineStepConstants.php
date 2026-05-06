@@ -17,6 +17,7 @@ final class PipelineStepConstants
     public const PIPELINE_PAYMENT_SCHEDULINGS = 'payment_schedulings';
     public const PIPELINE_REFUNDS = 'refunds';
     public const PIPELINE_PETTY_CASH = 'petty_cash';
+    public const PIPELINE_LEGALIZATIONS = 'legalizations';
 
     public const PIPELINE_LABELS = [
         self::PIPELINE_INVOICES => 'Facturas',
@@ -24,6 +25,7 @@ final class PipelineStepConstants
         self::PIPELINE_PAYMENT_SCHEDULINGS => 'Programación de pagos',
         self::PIPELINE_REFUNDS => 'Reintegros',
         self::PIPELINE_PETTY_CASH => 'Caja menor',
+        self::PIPELINE_LEGALIZATIONS => 'Legalizaciones',
     ];
 
     /**
@@ -65,6 +67,13 @@ final class PipelineStepConstants
             PettyCashConstants::STATUS_TESORERIA,
             PettyCashConstants::STATUS_AUT_PAGO,
         ],
+        self::PIPELINE_LEGALIZATIONS => [
+            AdvanceConstants::STATUS_VALIDACION,
+            AdvanceConstants::STATUS_REVISION_FIRMAS,
+            AdvanceConstants::STATUS_CONTABILIDAD,
+            AdvanceConstants::STATUS_TESORERIA,
+            AdvanceConstants::STATUS_AUTORIZACION_PAGO,
+        ],
     ];
 
     /**
@@ -102,6 +111,13 @@ final class PipelineStepConstants
             PettyCashConstants::STATUS_CONTABILIDAD => 'Contabilidad',
             PettyCashConstants::STATUS_TESORERIA => 'Tesorería',
             PettyCashConstants::STATUS_AUT_PAGO => 'Autorización de pago',
+        ],
+        self::PIPELINE_LEGALIZATIONS => [
+            AdvanceConstants::STATUS_VALIDACION => 'Validación',
+            AdvanceConstants::STATUS_REVISION_FIRMAS => 'Revisión y Firmas',
+            AdvanceConstants::STATUS_CONTABILIDAD => 'Contabilidad',
+            AdvanceConstants::STATUS_TESORERIA => 'Tesorería',
+            AdvanceConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
         ],
     ];
 
