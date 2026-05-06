@@ -15,6 +15,7 @@ use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
+use App\ViewModel\EmployeeNoveltyAddViewModel;
 use App\ViewModel\EmployeeNoveltyEditViewModel;
 use Cake\Http\Response;
 use Cake\I18n\Date;
@@ -690,7 +691,8 @@ class EmployeeNoveltiesController extends AppController
 
         $noveltyTypes = $this->_getNoveltyTypesGrouped();
 
-        $preselectedEmployee = $this->request->getQuery('employee_id');
+        $preselectedEmployeeRaw = $this->request->getQuery('employee_id');
+        $preselectedEmployee = $preselectedEmployeeRaw !== null ? (int)$preselectedEmployeeRaw : null;
 
         $approvers = TableRegistry::getTableLocator()->get('Approvers')
             ->find()
@@ -705,7 +707,13 @@ class EmployeeNoveltiesController extends AppController
             }
         }
 
-        $this->set(compact('novelty', 'employees', 'noveltyTypes', 'preselectedEmployee', 'approversList'));
+        $this->set('viewModel', new EmployeeNoveltyAddViewModel(
+            novelty: $novelty,
+            employees: $employees,
+            noveltyTypes: $noveltyTypes,
+            approversList: $approversList,
+            preselectedEmployee: $preselectedEmployee,
+        ));
     }
 
     /**

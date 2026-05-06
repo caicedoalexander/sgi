@@ -1,13 +1,15 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\EmployeeNovelty $novelty
- * @var array $employees
- * @var array $noveltyTypes
- * @var string|null $preselectedEmployee
- * @var array $approversList
+ * @var \App\ViewModel\EmployeeNoveltyAddViewModel $viewModel
  */
 use App\Constants\NoveltyConstants;
+
+$novelty = $viewModel->novelty;
+$employees = $viewModel->employees;
+$noveltyTypes = $viewModel->noveltyTypes;
+$preselectedEmployee = $viewModel->preselectedEmployee;
+$approversList = $viewModel->approversList;
 
 $this->assign('title', 'Nueva Novedad');
 ?>
