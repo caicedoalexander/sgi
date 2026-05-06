@@ -8,6 +8,7 @@ use App\Constants\InvoiceConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
+use App\Service\AdvanceLegalizationDocumentService;
 use App\Service\AdvanceLegalizationService;
 use App\Service\InvoicePipelineService;
 use App\Service\Pipeline\Policy\AdvanceLegalizationActionPolicy;
@@ -22,6 +23,8 @@ class AdvancesController extends AppController
 
     private AdvanceLegalizationService $legalizationService;
 
+    private AdvanceLegalizationDocumentService $documentService;
+
     private InvoicePipelineService $pipelineService;
 
     private AdvanceLegalizationActionPolicy $actionPolicy;
@@ -30,6 +33,7 @@ class AdvancesController extends AppController
     {
         parent::initialize();
         $this->legalizationService = $this->getContainer()->get(AdvanceLegalizationService::class);
+        $this->documentService = $this->getContainer()->get(AdvanceLegalizationDocumentService::class);
         $this->pipelineService = $this->getContainer()->get(InvoicePipelineService::class);
         $this->actionPolicy = $this->getContainer()->get(AdvanceLegalizationActionPolicy::class);
         $this->fetchTable('Invoices');
@@ -522,7 +526,7 @@ class AdvancesController extends AppController
             return $this->redirect(['action' => 'view', $id]);
         }
 
-        $result = $this->legalizationService->attachRelationDocument($leg, $file, (int)$this->_getCurrentUser()->id);
+        $result = $this->documentService->attachRelationDocument($leg, $file, (int)$this->_getCurrentUser()->id);
 
         if ($this->_isJsonRequest()) {
             if (!$result->success) {

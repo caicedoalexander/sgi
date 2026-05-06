@@ -8,6 +8,7 @@ use App\Middleware\CorrelationIdMiddleware;
 use App\Middleware\HostHeaderMiddleware;
 use App\Service\Adapter\CakeMailerAdapter;
 use App\Service\Adapter\PhpSpreadsheetAdapter;
+use App\Service\AdvanceLegalizationDocumentService;
 use App\Service\AdvanceLegalizationHistoryService;
 use App\Service\AdvanceLegalizationService;
 use App\Service\ApprovalTokenService;
@@ -215,6 +216,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 EventManagerInterface::class,
             ]);
         $container->addShared(AdvanceLegalizationHistoryService::class);
+        $container->addShared(AdvanceLegalizationDocumentService::class);
         $container->addShared(AdvanceLegalizationService::class)
             ->addArguments([
                 EventManagerInterface::class,
