@@ -1,20 +1,27 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\EmployeeNovelty $novelty
- * @var array $effectiveStatuses
- * @var string|null $nextStatus
- * @var array $transitionErrors
- * @var bool $canAdvance
- * @var bool $isApprovalRejected
- * @var array $approversList
- * @var array $documentsByStatus
- * @var array $liquidationDocs
+ * @var \App\ViewModel\EmployeeNoveltyEditViewModel $viewModel
  * @var \App\Model\Entity\User|null $currentUser
  * @var string $currentStatus
  */
 use App\Constants\NoveltyConstants;
 use App\Constants\StatusColorConstants;
+
+$novelty = $viewModel->novelty;
+$roleName = $viewModel->roleName;
+$editableFields = $viewModel->editableFields;
+$visibleSections = $viewModel->visibleSections;
+$effectiveStatuses = $viewModel->effectiveStatuses;
+$noveltyStatuses = $viewModel->noveltyStatuses;
+$nextStatus = $viewModel->nextStatus;
+$transitionErrors = $viewModel->transitionErrors;
+$canAdvance = $viewModel->canAdvance;
+$isApprovalRejected = $viewModel->isApprovalRejected;
+$approversList = $viewModel->approversList;
+$documentsByStatus = $viewModel->documentsByStatus;
+$liquidationDocs = $viewModel->liquidationDocs;
+$emailLogs = $viewModel->emailLogs;
 
 $this->assign('title', 'Editar Novedad #' . $novelty->id);
 

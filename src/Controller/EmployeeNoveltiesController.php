@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
 use App\Controller\Trait\ObservationControllerTrait;
+use App\Model\Entity\EmployeeNovelty;
 use App\Service\ApprovalTokenService;
 use App\Service\EmailLogService;
 use App\Service\LeaveDocumentService;
@@ -14,6 +15,7 @@ use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
+use App\ViewModel\EmployeeNoveltyEditViewModel;
 use Cake\Http\Response;
 use Cake\I18n\Date;
 use Cake\ORM\TableRegistry;
@@ -400,12 +402,19 @@ class EmployeeNoveltiesController extends AppController
 
         $user = $this->Authentication->getIdentity()->getOriginalData();
         $roleName = $this->_getUserRoleName($user);
-        $editableFields = $this->pipelineService->getEditableFields((int)$user->role_id, $roleName, $novelty->pipeline_status);
-        $visibleSections = $this->pipelineService->getVisibleSections((int)$user->role_id, $roleName, $novelty->pipeline_status);
 
-        // Mark observations as read
         $this->observationService->markAsRead($user->id, noveltyId: $novelty->id);
 
+        $this->set('viewModel', $this->_buildEditViewModel($novelty, (int)$user->role_id, $roleName));
+    }
+
+    private function _buildEditViewModel(
+        EmployeeNovelty $novelty,
+        int $roleId,
+        string $roleName,
+    ): EmployeeNoveltyEditViewModel {
+        $editableFields = $this->pipelineService->getEditableFields($roleId, $roleName, $novelty->pipeline_status);
+        $visibleSections = $this->pipelineService->getVisibleSections($roleId, $roleName, $novelty->pipeline_status);
         $effectiveStatuses = $this->pipelineService->getEffectiveStatuses($novelty->novelty_type);
         $noveltyStatuses = $this->pipelineService->getNoveltyStatuses($novelty->novelty_type);
         $nextStatus = $this->pipelineService->getNextStatus($novelty);
@@ -434,7 +443,6 @@ class EmployeeNoveltiesController extends AppController
 
         $documentsByStatus = $this->documentService->getDocumentsByStatus($novelty->id);
 
-        // Existing liquidation docs for assignment dropdown
         $liquidationDocs = [];
         if (
             $novelty->pipeline_status === NoveltyConstants::STATUS_CONTABILIDAD
@@ -447,25 +455,25 @@ class EmployeeNoveltiesController extends AppController
             ])->where(['pipeline_status' => NoveltyConstants::STATUS_CONTABILIDAD])->toArray();
         }
 
-        // Email logs para el panel inline (Plan 2 — W8)
         $emailLogService = $this->getContainer()->get(EmailLogService::class);
-        $this->set('emailLogs', $emailLogService->forEntity('employee_novelty', (int)$novelty->id));
+        $emailLogs = $emailLogService->forEntity('employee_novelty', (int)$novelty->id);
 
-        $this->set(compact(
-            'novelty',
-            'effectiveStatuses',
-            'noveltyStatuses',
-            'nextStatus',
-            'transitionErrors',
-            'canAdvance',
-            'isApprovalRejected',
-            'approversList',
-            'documentsByStatus',
-            'liquidationDocs',
-            'roleName',
-            'editableFields',
-            'visibleSections',
-        ));
+        return new EmployeeNoveltyEditViewModel(
+            novelty: $novelty,
+            roleName: $roleName,
+            editableFields: $editableFields,
+            visibleSections: $visibleSections,
+            effectiveStatuses: $effectiveStatuses,
+            noveltyStatuses: $noveltyStatuses,
+            nextStatus: $nextStatus,
+            transitionErrors: $transitionErrors,
+            canAdvance: $canAdvance,
+            isApprovalRejected: $isApprovalRejected,
+            approversList: $approversList,
+            documentsByStatus: $documentsByStatus,
+            liquidationDocs: $liquidationDocs,
+            emailLogs: $emailLogs,
+        );
     }
 
     /**
