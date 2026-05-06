@@ -3,110 +3,88 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Policy;
 
-use App\Constants\RoleConstants;
+use App\Constants\PipelineStepConstants;
 use App\Model\Entity\AdvanceLegalization;
+use App\Service\PipelineAuthorizationService;
 
 /**
  * Decide whether a given role is allowed to execute a mutating action on an
  * advance legalization in its current pipeline state.
  *
- * Authorization matrix (from advances audit 2026-05-05, finding CR-003):
- *
- * - Contabilidad/Admin: linkInvoices, unlinkInvoice, uploadRelationDocument,
- *   moveToRevision, markSigned, returnToValidacion, markExact,
- *   registerShortage, registerSurplus.
- * - Tesorería/Admin: confirmShortage, registerRefund.
- *
  * Audit MA-010 — la regla de **estado** vive en los predicates `canXxx()` de
- * `AdvanceLegalization`. Este policy compone solo la dimensión de **rol**:
- * delega el chequeo de estado a la entidad, evitando duplicación de la
- * matriz de transiciones.
+ * `AdvanceLegalization`. Este policy compone solo la dimensión de **rol×paso**,
+ * delegando esa decisión a `PipelineAuthorizationService` (matriz configurable
+ * desde /roles/edit). El chequeo de estado sigue delegado a la entidad.
  */
 final class AdvanceLegalizationActionPolicy
 {
-    /** Contabilidad/Admin puede vincular facturas (estado-only delegado a la entidad). */
-    public function canLinkInvoices(AdvanceLegalization $leg, string $roleName): bool
-    {
-        return $this->_isAccountingOrAdmin($roleName) && $leg->canLinkInvoices();
+    public function __construct(
+        private PipelineAuthorizationService $pipelineAuth,
+    ) {
     }
 
-    /** Contabilidad/Admin puede desvincular una factura. */
-    public function canUnlinkInvoice(AdvanceLegalization $leg, string $roleName): bool
+    public function canLinkInvoices(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName) && $leg->canUnlinkInvoice();
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canLinkInvoices();
     }
 
-    /** Contabilidad/Admin puede (re)subir la relación de facturas en Validación o Revisión. */
-    public function canUploadRelationDocument(AdvanceLegalization $leg, string $roleName): bool
+    public function canUnlinkInvoice(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName) && $leg->canUploadRelationDocument();
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canUnlinkInvoice();
     }
 
-    /** Contabilidad/Admin puede avanzar a Revisión y Firmas. */
-    public function canMoveToRevision(AdvanceLegalization $leg, string $roleName): bool
+    public function canUploadRelationDocument(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName) && $leg->canMoveToRevision();
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canUploadRelationDocument();
     }
 
-    /** Contabilidad/Admin puede marcar la firma como completa. */
-    public function canMarkSigned(AdvanceLegalization $leg, string $roleName): bool
+    public function canMoveToRevision(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName) && $leg->canMarkSigned();
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canMoveToRevision();
     }
 
-    /** Contabilidad/Admin puede devolver a Validación con motivo. */
-    public function canReturnToValidacion(AdvanceLegalization $leg, string $roleName): bool
+    public function canMarkSigned(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName) && $leg->canReturnToValidacion();
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canMarkSigned();
     }
 
-    /** Contabilidad/Admin puede declarar caso exacto. */
-    public function canMarkExact(AdvanceLegalization $leg, string $roleName): bool
+    public function canReturnToValidacion(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName) && $leg->canMarkExact();
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canReturnToValidacion();
     }
 
-    /** Contabilidad/Admin puede declarar faltante. */
-    public function canRegisterShortage(AdvanceLegalization $leg, string $roleName): bool
+    public function canMarkExact(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName) && $leg->canRegisterShortage();
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canMarkExact();
     }
 
-    /** Contabilidad/Admin puede declarar sobrante. */
-    public function canRegisterSurplus(AdvanceLegalization $leg, string $roleName): bool
+    public function canRegisterShortage(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return $this->_isAccountingOrAdmin($roleName) && $leg->canRegisterSurplus();
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canRegisterShortage();
     }
 
-    /** Tesorería/Admin puede confirmar consignación de faltante. */
-    public function canConfirmShortage(AdvanceLegalization $leg, string $roleName): bool
+    public function canRegisterSurplus(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return $this->_isTreasuryOrAdmin($roleName) && $leg->canConfirmShortage();
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canRegisterSurplus();
     }
 
-    /** Tesorería/Admin puede registrar el pago de reintegro al beneficiario. */
-    public function canRegisterRefund(AdvanceLegalization $leg, string $roleName): bool
+    public function canConfirmShortage(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return $this->_isTreasuryOrAdmin($roleName) && $leg->canRegisterRefund();
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canConfirmShortage();
     }
 
-    /** @return bool true si el rol es Contabilidad o Administrador. */
-    private function _isAccountingOrAdmin(string $roleName): bool
+    public function canRegisterRefund(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
-        return in_array(
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canRegisterRefund();
+    }
+
+    private function _canOperate(int $roleId, string $roleName, string $step): bool
+    {
+        return $this->pipelineAuth->canOperate(
+            $roleId,
             $roleName,
-            [RoleConstants::CONTABILIDAD, RoleConstants::ADMIN],
-            true,
-        );
-    }
-
-    /** @return bool true si el rol es Tesorería o Administrador. */
-    private function _isTreasuryOrAdmin(string $roleName): bool
-    {
-        return in_array(
-            $roleName,
-            [RoleConstants::TESORERIA, RoleConstants::ADMIN],
-            true,
+            PipelineStepConstants::PIPELINE_LEGALIZATIONS,
+            $step,
         );
     }
 }

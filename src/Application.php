@@ -223,7 +223,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 AdvanceLegalizationHistoryService::class,
                 AdvanceLegalizationDocumentService::class,
             ]);
-        $container->addShared(AdvanceLegalizationActionPolicy::class);
+        $container->addShared(AdvanceLegalizationActionPolicy::class)
+            ->addArgument(PipelineAuthorizationService::class);
         $container->addShared(InvoicePipelineService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
