@@ -19,7 +19,9 @@ use InvalidArgumentException;
  */
 final class NoveltyPipelineStateRegistry
 {
-    /** @var array<string, \App\Service\Pipeline\Novelty\NoveltyPipelineState> */
+    /**
+     * @var array<string, \App\Service\Pipeline\Novelty\NoveltyPipelineState>
+     */
     private array $states;
 
     public function __construct(
