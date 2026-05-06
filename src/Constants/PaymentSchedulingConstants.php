@@ -55,12 +55,9 @@ final class PaymentSchedulingConstants
     // Target status when Contador rejects from autorizacion_pago.
     public const REJECTION_TARGET = self::STATUS_TESORERIA;
 
-    // Tipos de observación
-    public const OBSERVATION_TYPE_GENERAL = 'general';
-    public const OBSERVATION_TYPE_REGRESSION = 'regression';
+    // Tipos de observación — definidos en ObservationConstants.
+    public const OBSERVATION_TYPE_GENERAL = ObservationConstants::TYPE_GENERAL;
+    public const OBSERVATION_TYPE_REGRESSION = ObservationConstants::TYPE_REGRESSION;
 
-    public const OBSERVATION_TYPES = [
-        self::OBSERVATION_TYPE_GENERAL,
-        self::OBSERVATION_TYPE_REGRESSION,
-    ];
+    public const OBSERVATION_TYPES = ObservationConstants::TYPES;
 }

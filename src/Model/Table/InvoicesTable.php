@@ -6,7 +6,6 @@ namespace App\Model\Table;
 use App\Constants\InvoiceConstants;
 use App\Model\Excel\ExcelExportableInterface;
 use App\Model\Excel\ExcelExportableTrait;
-use App\Service\InvoicePipelineService;
 use ArrayObject;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\EventInterface;
@@ -211,7 +210,7 @@ class InvoicesTable extends Table implements ExcelExportableInterface
 
         $validator
             ->scalar('pipeline_status')
-            ->inList('pipeline_status', InvoicePipelineService::ALL_STATUSES);
+            ->inList('pipeline_status', InvoiceConstants::ALL_STATUSES);
 
         $validator
             ->scalar('ready_for_payment')

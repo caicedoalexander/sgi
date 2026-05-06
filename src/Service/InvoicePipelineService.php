@@ -37,15 +37,6 @@ class InvoicePipelineService
 
     public const STATUSES = InvoiceConstants::PIPELINE_STATUSES;
 
-    public const ALL_STATUSES = [
-        InvoiceConstants::STATUS_APROBACION,
-        InvoiceConstants::STATUS_CONTABILIDAD,
-        InvoiceConstants::STATUS_TESORERIA,
-        InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-        InvoiceConstants::STATUS_PAGADA,
-        InvoiceConstants::STATUS_LEGALIZADA,
-    ];
-
     public const STATUS_ICONS = [
         InvoiceConstants::STATUS_APROBACION        => 'bi-check-circle',
         InvoiceConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
@@ -53,15 +44,6 @@ class InvoicePipelineService
         InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
         InvoiceConstants::STATUS_PAGADA            => 'bi-cash-coin',
         InvoiceConstants::STATUS_LEGALIZADA        => 'bi-cash-coin',
-    ];
-
-    public const TRANSITIONS = [
-        InvoiceConstants::STATUS_APROBACION        => InvoiceConstants::STATUS_CONTABILIDAD,
-        InvoiceConstants::STATUS_CONTABILIDAD      => InvoiceConstants::STATUS_TESORERIA,
-        InvoiceConstants::STATUS_TESORERIA         => InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-        InvoiceConstants::STATUS_AUTORIZACION_PAGO => InvoiceConstants::STATUS_PAGADA,
-        InvoiceConstants::STATUS_PAGADA            => null,
-        InvoiceConstants::STATUS_LEGALIZADA        => null,
     ];
 
     public function getVisibleStatuses(string $roleName): array

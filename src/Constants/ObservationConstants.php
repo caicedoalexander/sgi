@@ -15,4 +15,13 @@ final class ObservationConstants
     public const MSG_ADDED = 'Observación agregada.';
 
     public const DATE_FORMAT = 'd/m/Y H:i';
+
+    // Tipos de observación compartidos por todos los pipelines que usan el chat de observaciones.
+    public const TYPE_GENERAL = 'general';
+    public const TYPE_REGRESSION = 'regression';
+
+    public const TYPES = [
+        self::TYPE_GENERAL,
+        self::TYPE_REGRESSION,
+    ];
 }

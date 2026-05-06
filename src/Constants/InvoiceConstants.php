@@ -48,7 +48,7 @@ final class InvoiceConstants
     public const STATUS_AUTORIZACION_PAGO = 'autorizacion_pago';
     public const STATUS_PAGADA = 'pagada';
     // Estado terminal exclusivo para document_type = Legalización.
-    // No participa en PIPELINE_STATUSES (flujo normal). Ver InvoicePipelineService::ALL_STATUSES.
+    // No participa en PIPELINE_STATUSES (flujo normal). Ver self::ALL_STATUSES.
     public const STATUS_LEGALIZADA = 'legalizada';
 
     public const PIPELINE_STATUSES = [
@@ -57,6 +57,26 @@ final class InvoiceConstants
         self::STATUS_TESORERIA,
         self::STATUS_AUTORIZACION_PAGO,
         self::STATUS_PAGADA,
+    ];
+
+    // Conjunto completo de estados válidos para invoices.pipeline_status (incluye STATUS_LEGALIZADA,
+    // estado terminal de las legalizaciones que no aparece en PIPELINE_STATUSES).
+    public const ALL_STATUSES = [
+        self::STATUS_APROBACION,
+        self::STATUS_CONTABILIDAD,
+        self::STATUS_TESORERIA,
+        self::STATUS_AUTORIZACION_PAGO,
+        self::STATUS_PAGADA,
+        self::STATUS_LEGALIZADA,
+    ];
+
+    public const TRANSITIONS = [
+        self::STATUS_APROBACION => self::STATUS_CONTABILIDAD,
+        self::STATUS_CONTABILIDAD => self::STATUS_TESORERIA,
+        self::STATUS_TESORERIA => self::STATUS_AUTORIZACION_PAGO,
+        self::STATUS_AUTORIZACION_PAGO => self::STATUS_PAGADA,
+        self::STATUS_PAGADA => null,
+        self::STATUS_LEGALIZADA => null,
     ];
 
     // Pipeline visual exclusivo de Legalizaciones: 3 pasos.
@@ -110,12 +130,9 @@ final class InvoiceConstants
     public const HOLDER_TYPE_MANUAL = 'manual';
     public const HOLDER_TYPES = [self::HOLDER_TYPE_PROVIDER, self::HOLDER_TYPE_EMPLOYEE, self::HOLDER_TYPE_MANUAL];
 
-    // Tipos de observación (invoice_observations.type)
-    public const OBSERVATION_TYPE_GENERAL = 'general';
-    public const OBSERVATION_TYPE_REGRESSION = 'regression';
+    // Tipos de observación (invoice_observations.type) — definidos en ObservationConstants.
+    public const OBSERVATION_TYPE_GENERAL = ObservationConstants::TYPE_GENERAL;
+    public const OBSERVATION_TYPE_REGRESSION = ObservationConstants::TYPE_REGRESSION;
 
-    public const OBSERVATION_TYPES = [
-        self::OBSERVATION_TYPE_GENERAL,
-        self::OBSERVATION_TYPE_REGRESSION,
-    ];
+    public const OBSERVATION_TYPES = ObservationConstants::TYPES;
 }

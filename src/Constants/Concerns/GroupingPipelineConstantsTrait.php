@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Constants\Concerns;
 
+use App\Constants\ObservationConstants;
+
 /**
  * Constantes comunes de pipelines de "agrupación de pagos" (PettyCash, Refund).
  *
@@ -59,11 +61,8 @@ trait GroupingPipelineConstantsTrait
         self::STATUS_PAGADA => null,
     ];
 
-    public const OBSERVATION_TYPE_GENERAL = 'general';
-    public const OBSERVATION_TYPE_REGRESSION = 'regression';
+    public const OBSERVATION_TYPE_GENERAL = ObservationConstants::TYPE_GENERAL;
+    public const OBSERVATION_TYPE_REGRESSION = ObservationConstants::TYPE_REGRESSION;
 
-    public const OBSERVATION_TYPES = [
-        self::OBSERVATION_TYPE_GENERAL,
-        self::OBSERVATION_TYPE_REGRESSION,
-    ];
+    public const OBSERVATION_TYPES = ObservationConstants::TYPES;
 }
