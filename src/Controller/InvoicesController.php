@@ -7,6 +7,7 @@ use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\StatusColorConstants;
 use App\Model\Entity\Invoice;
+use App\ViewModel\InvoiceAddViewModel;
 use App\ViewModel\InvoiceEditViewModel;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ExcelWizardTrait;
@@ -193,29 +194,27 @@ class InvoicesController extends AppController
 
     public function add()
     {
-        $invoice = $this->Invoices->newEmptyEntity();
         if ($this->request->is('post')) {
-            $user = $this->_getCurrentUser();
-            $data = $this->request->getData();
-            $data['registered_by'] = $user->id;
-            $data['pipeline_status'] = InvoiceConstants::STATUS_APROBACION;
-            $data['registration_date'] = date('Y-m-d');
-            // Documentos sin vencimiento real (Legalización, Anticipo, etc.) usan
-            // la fecha de emisión como vencimiento para satisfacer el NOT NULL.
-            if (empty($data['due_date']) && !empty($data['issue_date'])) {
-                $data['due_date'] = $data['issue_date'];
-            }
+            $vm = InvoiceAddViewModel::fromRequest(
+                $this->Invoices,
+                $this->request->getData(),
+                (int)$this->_getCurrentUser()->id,
+            );
 
-            $invoice = $this->Invoices->patchEntity($invoice, $data);
-            if ($this->Invoices->save($invoice)) {
+            if ($this->Invoices->save($vm->invoice)) {
                 $this->Flash->success(__('La factura ha sido guardada.'));
 
-                return $this->_redirectForInvoice($invoice, 'index');
+                return $this->_redirectForInvoice($vm->invoice, 'index');
             }
             $this->Flash->error(__('No se pudo guardar la factura. Intente de nuevo.'));
+            $this->set('invoice', $vm->invoice);
+            $this->set($this->_getFormDropdowns());
+
+            return;
         }
 
-        $this->set(compact('invoice'));
+        $vm = InvoiceAddViewModel::forForm($this->Invoices);
+        $this->set('invoice', $vm->invoice);
         $this->set($this->_getFormDropdowns());
     }
 

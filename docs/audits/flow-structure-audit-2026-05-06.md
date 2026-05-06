@@ -98,7 +98,7 @@ src/
 | 🔴 Alta | **Novelties** | Renombrar `NoveltyPipelineService` → `NoveltyService`. Extraer `Pipeline/Novelty/State/*`. Crear Add/Edit ViewModels. Adelgazar controller (922 → ~600). | **Pendiente — Plan B** |
 | 🟠 Media | **Refunds** | Reemplazar `Trait/RefundPipelineHelpersTrait` por `Pipeline/Refund/State/*`. Crear Add/Edit ViewModels. Evaluar si `Dto/RefundSyntheticPayment` y `Subscriber/RefundOutcomeSubscriber` se generalizan o se quedan como caso particular justificado. | **Completado — Plan C** |
 | 🟡 Media | **Advances** | Crear `AdvanceLegalizationDocumentService` propio. Convertir `_buildLegalizationViewModel` privado en `AdvanceLegalizationViewModel`. Crear `AdvanceAddViewModel`. | **Completado — Plan D** |
-| 🟢 Baja | **Invoices** | Crear `InvoiceAddViewModel` para simetría. Resto se mantiene — sus servicios extra están justificados. | Backlog (no entra en opción 2) |
+| 🟢 Baja | **Invoices** | Crear `InvoiceAddViewModel` para simetría. Resto se mantiene — sus servicios extra están justificados. | **Completado — 2026-05-06** |
 | 🟢 Baja | **PettyCash** | Ya cumple. Ningún cambio. | ✅ OK |
 
 ---
@@ -123,6 +123,7 @@ Solo se ejecutan **Plan A (PaymentSchedulings)** y **Plan B (Novelties)**.
 | Plan B | Novelties | 🟢 Completado | 2026-05-06 |
 | Plan C | Refunds | 🟢 Completado | 2026-05-06 |
 | Plan D | Advances | 🟢 Completado | 2026-05-06 |
+| Invoices | Add VM | 🟢 Completado | 2026-05-06 |
 
 ---
 
@@ -139,3 +140,4 @@ Solo se ejecutan **Plan A (PaymentSchedulings)** y **Plan B (Novelties)**.
 - **2026-05-06** — Desviación Plan D: ViewModels nombrados `AdvanceAddViewModel` + `AdvanceLegalizationViewModel` (no `AdvanceEditViewModel`). Razón: un Anticipo es internamente una `Invoice` con `document_type=ANTICIPO`; `AdvancesController::edit()` solo redirige a `InvoicesController::edit()`. La simetría real del flujo es Add (crear anticipo) + Legalization (proceso post-pago), no Add/Edit clásico.
 - **2026-05-06** — Hallazgo Plan D: el item original "Advances reusa `InvoiceDocumentService`" estaba **desactualizado** — la realidad era que `AdvanceLegalizationService` usaba `DocumentUploadTrait` directamente (no había service de documentos en absoluto). El nuevo `AdvanceLegalizationDocumentService` cierra la deuda real.
 - **2026-05-06** — Desviación Plan D: el método `addLegalizationItem` referenciado en el plan no existe en el código actual (probablemente quedó del diseño preliminar). Solo se migró `attachRelationDocument` al document service. `confirmShortageReceipt` sigue usando `validateAndMoveUpload` directo del trait — se anota como deuda menor; no estaba en alcance del audit.
+- **2026-05-06** — Invoices `Add VM`: se promueve desde Backlog (item de baja prioridad) y se ejecuta sin plan dedicado (cambio trivial — defaults + patchEntity). `InvoiceAddViewModel` crea simetría con `InvoiceEditViewModel`. Cierra el último item explícito del audit.
