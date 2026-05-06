@@ -406,7 +406,8 @@ class EmployeeNoveltiesController extends AppController
 
         $this->observationService->markAsRead($user->id, noveltyId: $novelty->id);
 
-        $this->set('viewModel', $this->_buildEditViewModel($novelty, (int)$user->role_id, $roleName));
+        $vm = $this->_buildEditViewModel($novelty, (int)$user->role_id, $roleName);
+        $this->set('viewModel', $vm);
     }
 
     /**
@@ -710,13 +711,14 @@ class EmployeeNoveltiesController extends AppController
             }
         }
 
-        $this->set('viewModel', new EmployeeNoveltyAddViewModel(
+        $vm = new EmployeeNoveltyAddViewModel(
             novelty: $novelty,
             employees: $employees,
             noveltyTypes: $noveltyTypes,
             approversList: $approversList,
             preselectedEmployee: $preselectedEmployee,
-        ));
+        );
+        $this->set('viewModel', $vm);
     }
 
     /**

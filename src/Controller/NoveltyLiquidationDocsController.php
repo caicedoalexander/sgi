@@ -207,7 +207,8 @@ class NoveltyLiquidationDocsController extends AppController
         $this->observationService->markAsRead($user->id, liquidationDocId: $doc->id);
 
         $roleName = $this->_getUserRoleName($user);
-        $this->set('viewModel', $this->_buildLiquidationEditViewModel($doc, $user, $roleName));
+        $vm = $this->_buildLiquidationEditViewModel($doc, $user, $roleName);
+        $this->set('viewModel', $vm);
     }
 
     /**

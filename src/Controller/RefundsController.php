@@ -268,12 +268,13 @@ class RefundsController extends AppController
         }
 
         [$employees, $providers] = $this->_loadBeneficiaryLists();
-        $this->set('viewModel', new RefundAddViewModel(
+        $vm = new RefundAddViewModel(
             record: $record,
             employees: $employees,
             providers: $providers,
             operationCenters: $this->fetchTable('OperationCenters')->find('codeList')->all(),
-        ));
+        );
+        $this->set('viewModel', $vm);
     }
 
     private function _loadBeneficiaryLists(): array
@@ -416,7 +417,8 @@ class RefundsController extends AppController
         }
 
         $user = $this->_getCurrentUser();
-        $this->set('viewModel', $this->_buildEditViewModel($record, $user));
+        $vm = $this->_buildEditViewModel($record, $user);
+        $this->set('viewModel', $vm);
     }
 
     /**

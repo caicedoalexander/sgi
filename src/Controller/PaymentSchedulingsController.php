@@ -117,7 +117,8 @@ class PaymentSchedulingsController extends AppController
             $this->Flash->error('No se pudo crear la programación.');
         }
 
-        $this->set('viewModel', $this->_buildAddViewModel($record));
+        $vm = $this->_buildAddViewModel($record);
+        $this->set('viewModel', $vm);
     }
 
     private function _buildAddViewModel(PaymentScheduling $record): PaymentSchedulingAddViewModel
@@ -151,7 +152,8 @@ class PaymentSchedulingsController extends AppController
         $roleName = $this->_getRoleName();
         $roleId = (int)$this->_getCurrentUser()->role_id;
 
-        $this->set('viewModel', $this->_buildEditViewModel($record, $roleId, $roleName));
+        $vm = $this->_buildEditViewModel($record, $roleId, $roleName);
+        $this->set('viewModel', $vm);
     }
 
     private function _buildEditViewModel(

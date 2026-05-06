@@ -302,7 +302,8 @@ class InvoicesController extends AppController
             $this->Flash->error($result->firstError() ?? 'No se pudo guardar la factura. Verifique los datos e intente de nuevo.');
         }
 
-        $this->set('viewModel', $this->_buildEditViewModel($invoice, $roleId, $roleName));
+        $vm = $this->_buildEditViewModel($invoice, $roleId, $roleName);
+        $this->set('viewModel', $vm);
     }
 
     private function _buildEditViewModel(Invoice $invoice, int $roleId, string $roleName): InvoiceEditViewModel
