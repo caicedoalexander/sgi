@@ -7,11 +7,12 @@ use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Model\Entity\AdvanceLegalization;
-use App\Model\Entity\Invoice;
 use App\Service\AdvanceLegalizationDocumentService;
 use App\Service\AdvanceLegalizationService;
 use App\Service\InvoicePipelineService;
 use App\Service\Pipeline\Policy\AdvanceLegalizationActionPolicy;
+use App\ViewModel\AdvanceAddViewModel;
+use App\ViewModel\AdvanceLegalizationViewModel;
 use Cake\Http\Response;
 use Cake\ORM\TableRegistry;
 
@@ -154,56 +155,42 @@ class AdvancesController extends AppController
 
     public function add(): ?Response
     {
+        /** @var \App\Model\Table\InvoicesTable $invoicesTable */
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $invoice = $invoicesTable->newEmptyEntity();
+        $dropdowns = $this->_dropdowns();
 
         if ($this->request->is('post')) {
-            $user = $this->_getCurrentUser();
-            $data = $this->request->getData();
-            $data['document_type'] = InvoiceConstants::DOCTYPE_ANTICIPO;
-            $data['registered_by'] = $user->id;
-            $data['pipeline_status'] = InvoiceConstants::STATUS_APROBACION;
-            $data['registration_date'] = date('Y-m-d');
-            // Anticipos no tienen fecha de vencimiento; usamos la de emisión.
-            if (empty($data['due_date']) && !empty($data['issue_date'])) {
-                $data['due_date'] = $data['issue_date'];
+            $vm = AdvanceAddViewModel::fromRequest(
+                $invoicesTable,
+                $this->request->getData(),
+                (int)$this->_getCurrentUser()->id,
+                $dropdowns,
+            );
+
+            if (!empty($vm->errors)) {
+                $this->Flash->error($vm->errors[0]);
+                $this->set('invoice', $vm->invoice);
+                $this->set($vm->dropdowns);
+
+                return null;
             }
 
-            // beneficiary required: provider_id OR employee_id
-            if (empty($data['provider_id']) && empty($data['employee_id'])) {
-                $this->Flash->error('Debe seleccionar un proveedor o un empleado como beneficiario.');
-            } else {
-                // Lista blanca explícita de campos aceptados desde el formulario.
-                // Bloquea mass-assignment de approver_id, area_approval, payment_status,
-                // confirmed_by, accrued, advance_id (audit CR-001).
-                $allowedFields = [
-                    'provider_id', 'employee_id', 'operation_center_id',
-                    'expense_type_id', 'cost_center_id', 'amount', 'detail',
-                    'issue_date', 'due_date', 'document_type', 'registered_by',
-                    'pipeline_status', 'registration_date',
-                ];
-                $accessibleFields = array_fill_keys($allowedFields, true) + [
-                    'approver_id' => false,
-                    'area_approval' => false,
-                    'payment_status' => false,
-                    'confirmed_by' => false,
-                    'accrued' => false,
-                    'advance_id' => false,
-                ];
-                $invoice = $invoicesTable->patchEntity($invoice, $data, [
-                    'accessibleFields' => $accessibleFields,
-                ]);
-                if ($invoicesTable->save($invoice)) {
-                    $this->Flash->success('Anticipo creado.');
+            if ($invoicesTable->save($vm->invoice)) {
+                $this->Flash->success('Anticipo creado.');
 
-                    return $this->redirect(['action' => 'view', $invoice->id]);
-                }
-                $this->Flash->error('No se pudo guardar el anticipo.');
+                return $this->redirect(['action' => 'view', $vm->invoice->id]);
             }
+
+            $this->Flash->error('No se pudo guardar el anticipo.');
+            $this->set('invoice', $vm->invoice);
+            $this->set($vm->dropdowns);
+
+            return null;
         }
 
-        $this->set(compact('invoice'));
-        $this->set($this->_dropdowns());
+        $vm = AdvanceAddViewModel::forForm($invoicesTable, $dropdowns);
+        $this->set('invoice', $vm->invoice);
+        $this->set($vm->dropdowns);
 
         return null;
     }
@@ -276,87 +263,12 @@ class AdvancesController extends AppController
             return $this->redirect(['action' => 'view', $invoice->id]);
         }
 
-        $viewModel = $this->_buildLegalizationViewModel($invoice, $leg);
-        $this->set($viewModel);
+        $roleName = $this->_getCurrentUser()->role->name ?? '';
+        $viewModel = new AdvanceLegalizationViewModel($invoice, $leg, $roleName);
+        $this->set($viewModel->build());
         $this->set('actionPolicy', $this->actionPolicy);
 
         return null;
-    }
-
-    /**
-     * Build the data set passed to templates/Advances/legalization.ctp.
-     *
-     * Centraliza la carga de linked invoices, separación signature actual vs
-     * historial, totales, diff, banking entities y surplus payment para
-     * mantener la action delgada (audit MI-005).
-     *
-     * @return array<string, mixed>
-     */
-    private function _buildLegalizationViewModel(
-        Invoice $invoice,
-        AdvanceLegalization $leg,
-    ): array {
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-
-        $linkedInvoices = $invoicesTable->find()
-            ->where([
-                'Invoices.document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
-                'Invoices.advance_id' => $invoice->id,
-            ])
-            ->contain(['Providers', 'Employees'])
-            ->order(['Invoices.issue_date' => 'ASC'])
-            ->all();
-
-        $linkedTotal = 0.0;
-        foreach ($linkedInvoices as $li) {
-            $linkedTotal += (float)$li->amount;
-        }
-        $advanceTotal = (float)$invoice->amount;
-        $diff = $advanceTotal - $linkedTotal;
-
-        // Separar signature activa (pendiente o firmada más reciente) del historial.
-        $relationDocument = null;
-        $signatureHistory = [];
-        if ($leg->advance_legalization_signatures) {
-            $sigs = $leg->advance_legalization_signatures;
-            usort($sigs, fn($a, $b) => $b->id <=> $a->id);
-            foreach ($sigs as $sig) {
-                if ($relationDocument === null && ($sig->isPending() || $sig->isSigned())) {
-                    $relationDocument = $sig;
-                } else {
-                    $signatureHistory[] = $sig;
-                }
-            }
-        }
-
-        $bankingEntities = TableRegistry::getTableLocator()->get('BankingEntities')
-            ->find('list')
-            ->all()
-            ->toArray();
-
-        $surplusPayment = null;
-        if ($leg->surplus_payment_id) {
-            $surplusPayment = TableRegistry::getTableLocator()->get('InvoicePayments')->get(
-                $leg->surplus_payment_id,
-                contain: ['BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'],
-            );
-        }
-
-        $roleName = $this->_getCurrentUser()->role->name ?? '';
-
-        return compact(
-            'invoice',
-            'leg',
-            'linkedInvoices',
-            'linkedTotal',
-            'advanceTotal',
-            'diff',
-            'relationDocument',
-            'signatureHistory',
-            'bankingEntities',
-            'surplusPayment',
-            'roleName',
-        );
     }
 
     /**
