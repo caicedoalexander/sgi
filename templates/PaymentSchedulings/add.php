@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\PaymentScheduling $record
+ * @var \App\ViewModel\PaymentSchedulingAddViewModel $viewModel
  */
 $this->assign('title', 'Nueva Programación');
 ?>
@@ -17,7 +17,7 @@ $this->assign('title', 'Nueva Programación');
 
 <div class="card card-primary">
     <div class="card-body">
-        <?= $this->Form->create($record) ?>
+        <?= $this->Form->create($viewModel->record) ?>
         <div class="row g-3">
             <div class="col-md-8">
                 <label class="form-label">Título <span class="text-danger">*</span></label>

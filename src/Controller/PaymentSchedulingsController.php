@@ -6,9 +6,11 @@ namespace App\Controller;
 use App\Constants\PaymentSchedulingConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
+use App\Model\Entity\PaymentScheduling;
 use App\Service\PaymentSchedulingDocumentService;
 use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
+use App\ViewModel\PaymentSchedulingAddViewModel;
 use Cake\Routing\Router;
 
 class PaymentSchedulingsController extends AppController
@@ -114,8 +116,17 @@ class PaymentSchedulingsController extends AppController
             $this->Flash->error('No se pudo crear la programación.');
         }
 
+        $this->set('viewModel', $this->_buildAddViewModel($record));
+    }
+
+    private function _buildAddViewModel(PaymentScheduling $record): PaymentSchedulingAddViewModel
+    {
         $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
-        $this->set(compact('record', 'operationCenters'));
+
+        return new PaymentSchedulingAddViewModel(
+            record: $record,
+            operationCenters: $operationCenters,
+        );
     }
 
     public function edit($id = null)
