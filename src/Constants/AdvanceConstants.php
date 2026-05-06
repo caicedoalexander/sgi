@@ -37,7 +37,9 @@ final class AdvanceConstants
     public const CASE_SOBRANTE = 'sobrante';
     public const CASE_TYPES = [self::CASE_EXACTO, self::CASE_FALTANTE, self::CASE_SOBRANTE];
 
-    // Signature lifecycle (advance_legalization_signatures.signature_status)
+    // Signature lifecycle (advance_legalization_signatures.signature_status).
+    // Slugs en inglés por convención de estados técnicos internos (ver CLAUDE.md
+    // "Slug language convention"). El pipeline visible al usuario usa español.
     public const SIGNATURE_PENDING = 'pending';
     public const SIGNATURE_SIGNED = 'signed';
     public const SIGNATURE_REJECTED = 'rejected';

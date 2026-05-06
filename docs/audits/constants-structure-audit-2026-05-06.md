@@ -24,7 +24,8 @@
 | Menores **m4** (`READY_FOR_PAYMENT_OPTIONS` magic strings) | ✅ Resuelto | Quick wins PR (2026-05-06) — 3 constantes simbólicas + referencias en `READY_FOR_PAYMENT_BADGES` y templates |
 | Menores **m5** (`NoveltyConstants::ACTIVE_STATUSES` semántica ambigua) | ✅ Resuelto | Quick wins PR (2026-05-06) — PHPDoc explicando exclusiones |
 | Menores **m7** (`PipelineStepConstants::isValid()` estático) | 📌 Descartado | Decisión 2026-05-06: dejar donde está; mover sería over-engineering por purismo |
-| Menores restantes (m1) y sugerencias (S1–S3) | ⏳ Pendientes | Postergados — ver `docs/plans/2026-05-06-constants-audit-plan-a-design.md` §4 |
+| Menores **m1** (mezcla idiomas inglés/español) | ✅ Resuelto | Convención documentada en CLAUDE.md (2026-05-06) — ver Notas m1 |
+| Sugerencias **S1–S3** | ⏳ Pendientes | Postergados — ver `docs/plans/2026-05-06-constants-audit-plan-a-design.md` §4 |
 
 ### Notas C1 (2026-05-06)
 
@@ -72,6 +73,24 @@ Una `interface PipelineDefinition` común tendría que aceptar todos estos campo
 **Cuándo reabrir C3:**
 
 Si llega un séptimo pipeline con shape muy similar a uno existente, o si los 6 actuales convergen orgánicamente al mismo shape (hoy divergen). Hasta entonces, la estructura actual refleja diferencias reales de dominio y debe mantenerse.
+
+### Notas m1 (2026-05-06)
+
+Tras inspeccionar los call-sites se concluye que la "inconsistencia" es un patrón implícito coherente, no aleatorio. Hay tres formatos en uso:
+
+| Formato | Uso | Ejemplos |
+|---|---|---|
+| Slug español lowercase | Estados de pipeline visibles al usuario | `aprobacion`, `tesoreria`, `pagada`, `agrupacion`, `legalizada`, `borrador`, `revision_firmas`, `gdp`, `validacion` |
+| Capitalizado español | Approval/DIAN status (slug = label de UI) | `'Pendiente'`, `'Aprobada'`, `'Rechazada'`, `'Aprobado'` |
+| Slug inglés lowercase | Estados técnicos internos no visibles directamente | `email_logs.status` (`pending`/`sent`/`failed`), `invoice_payments.status` (`pending`/`authorized`/`rejected`), `signature_status` (`pending`/`signed`/`rejected`) |
+
+**Decisión:** documentar la convención en lugar de migrar. Costo de migración (3 columnas × ~5 archivos cada una + UPDATE en BD existente) no se justifica porque los slugs en inglés no se ven directamente al usuario. Migrarlos a español **introduciría** inconsistencia con el ecosistema PHP/Cake (donde `pending`/`authorized` son convención).
+
+**Acciones tomadas:**
+- Sección "Slug language convention" agregada a `CLAUDE.md` (después de "Routes" en `## Key Conventions`).
+- PHPDoc/comentarios añadidos en `EmailLogConstants` (clase), `AdvanceConstants::SIGNATURE_*` y `InvoiceConstants::PAYMENT_RECORD_*` referenciando la convención.
+
+**Cuándo reabrir m1:** si llega una nueva columna de estado técnico que rompa el patrón (p.ej. `'pendiente'` en una columna nueva tipo log/payment), o si la convención se viola sin documentar la excepción.
 
 ### Notas M1+M2 (2026-05-06)
 

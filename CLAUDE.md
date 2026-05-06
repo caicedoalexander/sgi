@@ -132,6 +132,7 @@ States: `aprobacion` → `contabilidad` → `tesoreria` → `autorizacion_pago` 
 - **CSS load order:** Bootstrap → Bootstrap Icons → Flatpickr → `styles.css` (always this order).
 - **JS auto-init classes:** `.flatpickr-date` (datepicker), `.currency-input` (AutoNumeric COP), `.select2` (searchable dropdown), `.clickable-row` (row click via `data-href`).
 - **Routes:** Custom routes go before `$builder->fallbacks()` in `config/routes.php`.
+- **Slug language convention:** Slugs visibles al usuario (estados de pipeline: `aprobacion`, `tesoreria`, `pagada`, `agrupacion`, `legalizada`, etc.) en **español** sin acentos. Slugs técnicos internos no visibles directamente al usuario (estados de logs de email, registros de pago, firmas de legalización: `pending`, `sent`, `failed`, `authorized`, `rejected`, `signed`) en **inglés**. Estados con label visible (approval/DIAN: `'Pendiente'`, `'Aprobada'`, `'Rechazada'`) en **español capitalizado** porque coinciden con el label de UI. La convivencia es deliberada — no homogeneizar sin migración explícita.
 
 ## Testing Policy
 

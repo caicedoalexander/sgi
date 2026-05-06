@@ -111,7 +111,9 @@ final class InvoiceConstants
     public const PAYMENT_PARTIAL = 'Pago Parcial';
     public const PAYMENT_STATUSES = [self::PAYMENT_FULL, self::PAYMENT_PARTIAL];
 
-    // Estado de cada registro de pago (invoice_payments.status)
+    // Estado de cada registro de pago (invoice_payments.status).
+    // Slugs en inglés por convención de estados técnicos internos (ver CLAUDE.md
+    // "Slug language convention"). Los estados del pipeline de la factura usan español.
     public const PAYMENT_RECORD_PENDING = 'pending';
     public const PAYMENT_RECORD_AUTHORIZED = 'authorized';
     public const PAYMENT_RECORD_REJECTED = 'rejected';

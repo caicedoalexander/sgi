@@ -3,6 +3,13 @@ declare(strict_types=1);
 
 namespace App\Constants;
 
+/**
+ * Constantes del log de envío de correos.
+ *
+ * Slugs en inglés por convención de estados técnicos internos
+ * (ver "Slug language convention" en CLAUDE.md). Los `STATUS_LABELS`
+ * traducen al español para presentación en `/email-logs`.
+ */
 final class EmailLogConstants
 {
     public const STATUS_PENDING = 'pending';
