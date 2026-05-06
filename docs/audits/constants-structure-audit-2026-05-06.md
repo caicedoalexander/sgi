@@ -11,7 +11,7 @@
 |---|---|---|
 | **C1** Inconsistencia léxica `aut_pago`/`pagado` vs `autorizacion_pago`/`pagada` | ✅ Resuelto | Migración `20260506180000_UnifyCanonicalPipelineStatuses` (2026-05-06) |
 | **C2** Duplicación PettyCashConstants ≈ RefundConstants | ✅ Resuelto | Trait `GroupingPipelineConstantsTrait` (2026-05-06) |
-| **C3** Esquema repetido en 6 *PipelineConstants sin contrato común | ⏳ Pendiente | — |
+| **C3** Esquema repetido en 6 *PipelineConstants sin contrato común | ⚠️ No procede | Re-evaluado 2026-05-06 — ver Notas C3 |
 | **M1** Mezcla dominio/presentación en StatusColorConstants | ⏳ Pendiente | — |
 | **M2** God-array `PIPELINE_STATUS_BADGES` cross-domain | 🟡 Parcial | Aliases `'aut_pago'` y `'pagado'` eliminados al resolver C1 |
 | **M3** Drift `Aut. Pago` vs `Autorización de pago` en STATUS_LABELS | ⏳ Pendiente | — |
@@ -35,6 +35,37 @@
 - `PettyCashConstants` (74 → 19 LoC) y `RefundConstants` (77 → 28 LoC) hacen `use GroupingPipelineConstantsTrait;` y solo conservan lo específico (`CODE_PREFIX`, `STATUS_BADGES` en PettyCash, `BENEFICIARY_TYPE_*` en Refund).
 - API pública sin cambios: 209 referencias en 37 archivos siguen resolviendo idéntico (verificado en runtime).
 - Decisión: trait sobre abstract class para evitar deuda transicional si C3 evoluciona a `PipelineDefinition` value object.
+
+### Notas C3 (re-evaluación 2026-05-06)
+
+Tras inspeccionar los 6 archivos `*PipelineConstants` se concluye que **C3 no procede como refactor crítico**. El hallazgo del auditor sobreestima la duplicación: lo que comparten es la *forma* (estados + labels + transiciones), no el *contenido*, y la forma diverge por razones legítimas de dominio.
+
+**Evidencia contra el refactor C3:**
+
+| Pipeline | Particularidad de dominio que rompe la "forma común" |
+|---|---|
+| `InvoiceConstants` | `STATUS_LEGALIZADA` es estado terminal *fuera* de `PIPELINE_STATUSES` — solo aplica a `document_type=Legalización`. Es bifurcación real del flujo. |
+| `NoveltyConstants` | 10 estados, `STATUS_RECHAZADA` terminal, `ACTIVE_STATUSES` (subset semántico), `NOVELTY_STATUSES` (sub-pipeline antes del liquidation doc) |
+| `PaymentSchedulingConstants` | `REJECTION_TARGET` (estado al que regresa cuando Contador rechaza) — lógica única |
+| `AdvanceConstants` | `CASE_TYPES = exacto/faltante/sobrante` — concepto exclusivo de legalizaciones |
+| `PettyCash` / `Refund` | Ya unificados vía trait (C2) |
+
+Una `interface PipelineDefinition` común tendría que aceptar todos estos campos como opcionales o casos especiales — es la sobreingeniería que el principio "no flexibility that wasn't requested" prohíbe.
+
+**Argumentos del auditor reevaluados:**
+
+- *"Agregar un campo cuesta 6 archivos"* — engañoso. Cuando agregas `STATUS_DESCRIPTIONS` cada pipeline tiene contenido propio; un `PipelineDefinition` central no elimina el trabajo, solo reubica las 6 entradas. El costo lineal es inherente al dominio, no al diseño.
+- *"No hay forma de iterar pipelines"* — `PipelineStepConstants::STEPS_BY_PIPELINE` ya enumera los 6 con `isValid()`. Un `PipelineRegistry` añadiría elegancia pero no resuelve un dolor productivo concreto.
+- *"Riesgo de typo al copiar"* — válido pero mitigable con cs-check + revisión de PR. C2 ya resolvió el caso real de copy-paste (PettyCash↔Refund).
+
+**Lo que sí permanece como deuda real (no parte de C3):**
+
+- **M3** (drift `Aut. Pago` vs `Autorización de pago` entre `*Constants::STATUS_LABELS` y `PipelineStepConstants::STEP_LABELS`) — bug presente, atender por separado.
+- **M6** (`InvoicePipelineService::ALL_STATUSES`/`TRANSITIONS` deberían vivir en `InvoiceConstants`) — duplicación accidental real, atender por separado.
+
+**Cuándo reabrir C3:**
+
+Si llega un séptimo pipeline con shape muy similar a uno existente, o si los 6 actuales convergen orgánicamente al mismo shape (hoy divergen). Hasta entonces, la estructura actual refleja diferencias reales de dominio y debe mantenerse.
 
 ---
 
