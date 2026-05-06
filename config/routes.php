@@ -467,14 +467,14 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'itemId' => '\d+', 'pass' => ['id', 'itemId']],
         );
         $builder->connect(
-            '/payment-schedulings/upload-attachment/{id}',
-            ['controller' => 'PaymentSchedulings', 'action' => 'uploadAttachment'],
+            '/payment-schedulings/upload-document/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'uploadDocument'],
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
-            '/payment-schedulings/delete-attachment/{id}/{attachmentId}',
-            ['controller' => 'PaymentSchedulings', 'action' => 'deleteAttachment'],
-            ['id' => '\d+', 'attachmentId' => '\d+', 'pass' => ['id', 'attachmentId']],
+            '/payment-schedulings/delete-document/{id}/{documentId}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'deleteDocument'],
+            ['id' => '\d+', 'documentId' => '\d+', 'pass' => ['id', 'documentId']],
         );
         $builder->connect(
             '/payment-schedulings/add-observation/{id}',

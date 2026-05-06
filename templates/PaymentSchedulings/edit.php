@@ -328,8 +328,8 @@ $itemCount = count($record->payment_scheduling_items ?? []);
 <div class="sgi-invoice-sidebar">
 
 <?php
-$attachments = $record->payment_scheduling_attachments ?? [];
-$totalDocs = count($attachments);
+$documents = $record->payment_scheduling_documents ?? [];
+$totalDocs = count($documents);
 ?>
 
 <!-- Soportes -->
@@ -341,22 +341,22 @@ $totalDocs = count($attachments);
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
         <?php if (!$isPagada): ?>
-        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadAttachmentModal">
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
             <i class="bi bi-upload me-1"></i>Subir
         </button>
         <?php endif; ?>
     </div>
 
-    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($attachments) ? 'display:none;' : '' ?>">
+    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documents) ? 'display:none;' : '' ?>">
         <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
     <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-        <?php foreach ($attachments as $att): ?>
+        <?php foreach ($documents as $att): ?>
             <?= $this->element('document_row', [
                 'doc'       => $att,
                 'canDelete' => !$isPagada,
-                'deleteUrl' => $this->Url->build(['action' => 'deleteAttachment', $record->id, $att->id]),
+                'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $att->id]),
                 'showBadge' => false,
             ]) ?>
         <?php endforeach; ?>
@@ -439,11 +439,11 @@ $totalDocs = count($attachments);
 
 <?php if (!$isPagada): ?>
 <!-- Modal: Subir Soporte -->
-<div class="modal fade" id="uploadAttachmentModal" tabindex="-1">
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="upload-doc-form"
-                  data-url="<?= $this->Url->build(['action' => 'uploadAttachment', $record->id]) ?>"
+                  data-url="<?= $this->Url->build(['action' => 'uploadDocument', $record->id]) ?>"
                   enctype="multipart/form-data">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
@@ -537,7 +537,7 @@ $totalDocs = count($attachments);
         listSelector:        '#docs-list',
         emptySelector:       '#docs-empty-state',
         rowTemplateSelector: '#doc-row-template',
-        modalSelector:       '#uploadAttachmentModal',
+        modalSelector:       '#uploadDocumentModal',
         csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
     });
 })();

@@ -6,21 +6,21 @@ namespace App\Service;
 use App\Service\Trait\DocumentUploadTrait;
 use Laminas\Diactoros\UploadedFile;
 
-class PaymentSchedulingAttachmentService
+class PaymentSchedulingDocumentService
 {
     use DocumentUploadTrait;
 
-    private const TABLE = 'PaymentSchedulingAttachments';
+    private const TABLE = 'PaymentSchedulingDocuments';
 
     /**
-     * Upload an attachment for a payment scheduling.
+     * Upload a document for a payment scheduling.
      *
      * @param int $schedulingId Payment scheduling ID.
      * @param \Laminas\Diactoros\UploadedFile $file Uploaded file.
      * @param int|null $uploadedBy User ID.
      * @return object|string Entity on success, error message on failure.
      */
-    public function uploadAttachment(
+    public function uploadDocument(
         int $schedulingId,
         UploadedFile $file,
         ?int $uploadedBy,
@@ -38,13 +38,13 @@ class PaymentSchedulingAttachmentService
     }
 
     /**
-     * Delete a payment scheduling attachment.
+     * Delete a payment scheduling document.
      *
-     * @param int $attachmentId Attachment ID.
+     * @param int $documentId Document ID.
      * @return bool
      */
-    public function deleteAttachment(int $attachmentId): bool
+    public function deleteDocument(int $documentId): bool
     {
-        return $this->deleteDocumentRecord(self::TABLE, $attachmentId);
+        return $this->deleteDocumentRecord(self::TABLE, $documentId);
     }
 }

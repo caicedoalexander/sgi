@@ -6,7 +6,7 @@ namespace App\Controller;
 use App\Constants\PaymentSchedulingConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
-use App\Service\PaymentSchedulingAttachmentService;
+use App\Service\PaymentSchedulingDocumentService;
 use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PaymentSchedulingService;
 use Cake\Routing\Router;
@@ -22,7 +22,7 @@ class PaymentSchedulingsController extends AppController
 
     private PaymentSchedulingService $schedulingService;
 
-    private PaymentSchedulingAttachmentService $attachmentService;
+    private PaymentSchedulingDocumentService $documentService;
 
     public function initialize(): void
     {
@@ -30,7 +30,7 @@ class PaymentSchedulingsController extends AppController
         $container = $this->getContainer();
         $this->pipeline = $container->get(PaymentSchedulingPipelineService::class);
         $this->schedulingService = $container->get(PaymentSchedulingService::class);
-        $this->attachmentService = $container->get(PaymentSchedulingAttachmentService::class);
+        $this->documentService = $container->get(PaymentSchedulingDocumentService::class);
     }
 
     private function _getCurrentUser(): object
@@ -77,9 +77,9 @@ class PaymentSchedulingsController extends AppController
                 'Invoices' => ['Providers'],
                 'BankingEntities',
             ],
-            'PaymentSchedulingAttachments' => [
+            'PaymentSchedulingDocuments' => [
                 'UploadedByUsers',
-                'sort' => ['PaymentSchedulingAttachments.created' => 'DESC'],
+                'sort' => ['PaymentSchedulingDocuments.created' => 'DESC'],
             ],
             'PaymentSchedulingObservations' => [
                 'Users',
@@ -126,9 +126,9 @@ class PaymentSchedulingsController extends AppController
                 'Invoices' => ['Providers'],
                 'BankingEntities',
             ],
-            'PaymentSchedulingAttachments' => [
+            'PaymentSchedulingDocuments' => [
                 'UploadedByUsers',
-                'sort' => ['PaymentSchedulingAttachments.created' => 'DESC'],
+                'sort' => ['PaymentSchedulingDocuments.created' => 'DESC'],
             ],
             'PaymentSchedulingObservations' => [
                 'Users',
@@ -405,7 +405,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
-    public function uploadAttachment($id = null)
+    public function uploadDocument($id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
@@ -420,7 +420,7 @@ class PaymentSchedulingsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $result = $this->attachmentService->uploadAttachment(
+        $result = $this->documentService->uploadDocument(
             (int)$id,
             $file,
             (int)$this->_getCurrentUser()->id,
@@ -434,7 +434,7 @@ class PaymentSchedulingsController extends AppController
             $isPagada = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PAGADA;
             $canDelete = !$isPagada;
             $deleteUrl = $canDelete
-                ? Router::url(['action' => 'deleteAttachment', $id, $result->id])
+                ? Router::url(['action' => 'deleteDocument', $id, $result->id])
                 : null;
 
             return $this->_jsonResponse([
@@ -452,7 +452,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
-    public function deleteAttachment($id = null, $attachmentId = null)
+    public function deleteDocument($id = null, $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
 
@@ -466,12 +466,12 @@ class PaymentSchedulingsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $attachmentsTable = $this->fetchTable('PaymentSchedulingAttachments');
-        $attachment = $attachmentsTable->find()
-            ->where(['id' => $attachmentId, 'payment_scheduling_id' => $id])
+        $documentsTable = $this->fetchTable('PaymentSchedulingDocuments');
+        $document = $documentsTable->find()
+            ->where(['id' => $documentId, 'payment_scheduling_id' => $id])
             ->first();
 
-        if (!$attachment) {
+        if (!$document) {
             if ($this->_isJsonRequest()) {
                 return $this->_jsonResponse(['success' => false, 'error' => 'Soporte no encontrado.']);
             }
@@ -480,7 +480,7 @@ class PaymentSchedulingsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $deleted = $this->attachmentService->deleteAttachment((int)$attachmentId);
+        $deleted = $this->documentService->deleteDocument((int)$documentId);
 
         if ($this->_isJsonRequest()) {
             return $this->_jsonResponse(

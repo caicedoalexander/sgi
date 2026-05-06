@@ -207,8 +207,8 @@ $ps = $statusBadge[$record->pipeline_status] ?? ['Desconocido', 'bg-dark'];
 
 <!-- Soportes -->
 <?php
-$attachments = $record->payment_scheduling_attachments ?? [];
-$totalDocs = count($attachments);
+$documents = $record->payment_scheduling_documents ?? [];
+$totalDocs = count($documents);
 $docIcon = fn(?string $name): string => match(true) {
     str_contains($name ?? '', '.pdf') => 'bi-file-earmark-pdf',
     (bool)preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $name ?? '') => 'bi-file-earmark-image',
@@ -233,14 +233,14 @@ $docIconColor = fn(?string $name): string => match(true) {
         </span>
     </div>
 
-    <?php if (empty($attachments)): ?>
+    <?php if (empty($documents)): ?>
         <div class="p-3 text-center text-muted" style="font-size:.875rem">
             <i class="bi bi-file-earmark-x me-1"></i>Sin soportes adjuntos
         </div>
     <?php else: ?>
         <div class="p-3">
             <div class="row row-cols-1 row-cols-md-3 g-3">
-                <?php foreach ($attachments as $att): ?>
+                <?php foreach ($documents as $att): ?>
                 <div class="col">
                     <div style="border:1px solid var(--border-color);height:100%;display:flex;flex-direction:column;">
                         <!-- Card header: icono + nombre -->
