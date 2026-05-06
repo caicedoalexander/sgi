@@ -409,6 +409,9 @@ class EmployeeNoveltiesController extends AppController
         $this->set('viewModel', $this->_buildEditViewModel($novelty, (int)$user->role_id, $roleName));
     }
 
+    /**
+     * Build the view model for the edit action.
+     */
     private function _buildEditViewModel(
         EmployeeNovelty $novelty,
         int $roleId,

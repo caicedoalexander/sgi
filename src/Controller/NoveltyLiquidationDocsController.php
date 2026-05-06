@@ -210,6 +210,9 @@ class NoveltyLiquidationDocsController extends AppController
         $this->set('viewModel', $this->_buildLiquidationEditViewModel($doc, $user, $roleName));
     }
 
+    /**
+     * Build the view model for the edit action.
+     */
     private function _buildLiquidationEditViewModel(
         NoveltyLiquidationDoc $doc,
         User $user,

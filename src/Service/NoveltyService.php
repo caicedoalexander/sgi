@@ -92,6 +92,10 @@ class NoveltyService
     private PipelineAuthorizationService $pipelineAuth;
     private NoveltyPipelineStateRegistry $stateRegistry;
 
+    /**
+     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth Pipeline auth service.
+     * @param \App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry|null $stateRegistry State registry.
+     */
     public function __construct(
         ?PipelineAuthorizationService $pipelineAuth = null,
         ?NoveltyPipelineStateRegistry $stateRegistry = null,
@@ -100,6 +104,9 @@ class NoveltyService
         $this->stateRegistry = $stateRegistry ?? new NoveltyPipelineStateRegistry();
     }
 
+    /**
+     * Resolve next status applying conditional skips for the novelty type.
+     */
     private function resolveNextStatus(object $novelty, ?object $type): ?string
     {
         $current = $novelty->pipeline_status;
