@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
-use App\Constants\StatusColorConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Service\NoveltyDocumentService;
+use App\View\Presentation\NoveltyPresentation;
 use Cake\Routing\Router;
 
 class NoveltyDocumentsController extends AppController
@@ -114,6 +114,6 @@ class NoveltyDocumentsController extends AppController
      */
     private function _noveltyDocumentLabels(): array
     {
-        return [StatusColorConstants::PIPELINE_STATUS_BADGES, NoveltyConstants::STATUS_LABELS];
+        return [NoveltyPresentation::STATUS_BADGES, NoveltyConstants::STATUS_LABELS];
     }
 }

@@ -6,7 +6,7 @@
  */
 
 use App\Constants\InvoiceConstants;
-use App\Constants\StatusColorConstants;
+use App\View\Presentation\InvoicePresentation;
 
 $isAdvance = ($viewModel->invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO;
 
@@ -142,7 +142,7 @@ if (!empty($viewModel->invoice->invoice_documents)) {
     }
 }
 $statusLabels = ['aprobacion' => 'Aprobación', 'contabilidad' => 'Contabilidad', 'tesoreria' => 'Tesorería', 'autorizacion_pago' => 'Autorización de pago', 'pagada' => 'Pagada'];
-$badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
+$badgeColors = InvoicePresentation::STATUS_BADGES;
 $docIcon = fn(?string $mime): string => match(true) {
     str_contains($mime ?? '', 'pdf')                                                                  => 'bi-file-earmark-pdf',
     str_contains($mime ?? '', 'image')                                                                => 'bi-file-earmark-image',

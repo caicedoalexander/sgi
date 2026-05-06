@@ -5,7 +5,7 @@
  */
 $this->assign('title', 'Caja Menor');
 
-$statusBadge = \App\Constants\PettyCashConstants::STATUS_BADGES;
+$statusBadge = \App\View\Presentation\PettyCashPresentation::STATUS_BADGES;
 $statusLabels = \App\Constants\PettyCashConstants::STATUS_LABELS;
 
 $params = $this->request->getQueryParams();

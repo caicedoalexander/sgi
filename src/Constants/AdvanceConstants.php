@@ -31,15 +31,6 @@ final class AdvanceConstants
         self::STATUS_LEGALIZADA        => 'Legalizada',
     ];
 
-    public const STATUS_ICONS = [
-        self::STATUS_VALIDACION        => 'bi-clipboard-check',
-        self::STATUS_REVISION_FIRMAS   => 'bi-pen',
-        self::STATUS_CONTABILIDAD      => 'bi-calculator',
-        self::STATUS_TESORERIA         => 'bi-bank',
-        self::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
-        self::STATUS_LEGALIZADA        => 'bi-cash-coin',
-    ];
-
     // Case types resolved by Contabilidad
     public const CASE_EXACTO = 'exacto';
     public const CASE_FALTANTE = 'faltante';

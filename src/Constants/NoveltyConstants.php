@@ -84,18 +84,6 @@ final class NoveltyConstants
         self::STATUS_RECHAZADA => 'Rechazada',
     ];
 
-    public const STATUS_ICONS = [
-        self::STATUS_REGISTRO => 'bi-pencil-square',
-        self::STATUS_APROBACION => 'bi-person-check',
-        self::STATUS_RRHH => 'bi-people',
-        self::STATUS_CONTABILIDAD => 'bi-calculator',
-        self::STATUS_REVISION_FIRMAS => 'bi-pen',
-        self::STATUS_GDP => 'bi-clipboard-check',
-        self::STATUS_TESORERIA => 'bi-bank',
-        self::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
-        self::STATUS_PAGADA => 'bi-cash-coin',
-    ];
-
     // Linear transitions
     public const TRANSITIONS = [
         self::STATUS_APROBACION => self::STATUS_RRHH,
@@ -170,17 +158,4 @@ final class NoveltyConstants
     public const APPROVAL_APPROVED = 'Aprobada';
     public const APPROVAL_REJECTED = 'Rechazada';
 
-    // Calendar event colors by novelty type ID (cycles for IDs > count)
-    public const CALENDAR_COLORS = [
-        '#469D61', // green
-        '#CD6A15', // orange
-        '#3B82F6', // blue
-        '#8B5CF6', // purple
-        '#EF4444', // red
-        '#F59E0B', // amber
-        '#06B6D4', // cyan
-        '#EC4899', // pink
-        '#10B981', // emerald
-        '#6366F1', // indigo
-    ];
 }

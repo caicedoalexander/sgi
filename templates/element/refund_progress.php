@@ -5,10 +5,11 @@
  * @var bool $isRejected (optional)
  */
 use App\Constants\RefundConstants;
+use App\View\Presentation\RefundPresentation;
 
 $statuses = RefundConstants::STATUSES;
 $labels = RefundConstants::STATUS_LABELS;
-$icons = RefundConstants::STATUS_ICONS;
+$icons = RefundPresentation::STATUS_ICONS;
 $isRejected = $isRejected ?? false;
 
 $currentIndex = array_search($status, $statuses);

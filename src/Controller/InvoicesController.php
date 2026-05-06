@@ -5,7 +5,7 @@ namespace App\Controller;
 
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
-use App\Constants\StatusColorConstants;
+use App\View\Presentation\InvoicePresentation;
 use App\Model\Entity\Invoice;
 use App\ViewModel\InvoiceAddViewModel;
 use App\ViewModel\InvoiceEditViewModel;
@@ -590,7 +590,7 @@ class InvoicesController extends AppController
 
             $canDelete = $this->_checkPermission('invoices', 'delete')
                 && $this->documentService->canDeleteDocument($result, $invoice->pipeline_status);
-            $badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
+            $badgeColors = InvoicePresentation::STATUS_BADGES;
             $statusLabels = InvoiceConstants::STATUS_LABELS;
             $deleteUrl = $canDelete
                 ? Router::url(['action' => 'deleteDocument', $invoice->id, $result->id])

@@ -6,6 +6,7 @@
  */
 use App\Constants\PaymentSchedulingConstants;
 use App\Constants\RoleConstants;
+use App\View\Presentation\PaymentSchedulingPresentation;
 
 $this->assign('title', 'Programación ' . h($viewModel->record->code));
 
@@ -92,7 +93,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                 $thisIdx = array_search($status, PaymentSchedulingConstants::PIPELINE_STATUSES);
                 $isCurrent = $status === $viewModel->currentStatus;
                 $isPast = $thisIdx < $currentIdx;
-                $icon = PaymentSchedulingConstants::STATUS_ICONS[$status] ?? 'bi-circle';
+                $icon = PaymentSchedulingPresentation::STATUS_ICONS[$status] ?? 'bi-circle';
             ?>
             <div class="d-flex align-items-center gap-2" style="<?= !$isCurrent && !$isPast ? 'opacity:.4;' : '' ?>">
                 <div class="d-flex align-items-center justify-content-center flex-shrink-0"

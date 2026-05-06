@@ -25,13 +25,6 @@ final class PaymentSchedulingConstants
         self::STATUS_PAGADA => 'Pagada',
     ];
 
-    public const STATUS_ICONS = [
-        self::STATUS_BORRADOR => 'bi-pencil',
-        self::STATUS_TESORERIA => 'bi-bank',
-        self::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
-        self::STATUS_PAGADA => 'bi-cash-coin',
-    ];
-
     // Code prefix
     public const CODE_PREFIX = 'PRO';
 

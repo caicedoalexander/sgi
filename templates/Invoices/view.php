@@ -10,8 +10,8 @@
  */
 
 use App\Constants\InvoiceConstants;
-use App\Constants\StatusColorConstants;
 use App\Service\InvoicePipelineService;
+use App\View\Presentation\InvoicePresentation;
 
 $this->assign('title', 'Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
@@ -495,7 +495,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                             <!-- Card body: badge estado + usuario + fecha + tamaño -->
                             <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
                                 <div>
-                                    <span class="badge <?= StatusColorConstants::PIPELINE_STATUS_BADGES[$status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
+                                    <span class="badge <?= InvoicePresentation::STATUS_BADGES[$status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
                                         <?= $statusLabels[$status] ?? $status ?>
                                     </span>
                                 </div>

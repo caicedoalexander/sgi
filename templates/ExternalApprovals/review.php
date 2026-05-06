@@ -6,10 +6,14 @@
  * @var object $entity
  * @var object $currentUser
  */
-use App\Constants\StatusColorConstants;
+use App\View\Presentation\InvoicePresentation;
+use App\View\Presentation\NoveltyPresentation;
 $this->assign('title', 'Revisión de Aprobación');
 
 $entityType = $tokenRecord->entity_type;
+$badgeMap = $entityType === 'employee_novelties'
+    ? NoveltyPresentation::STATUS_BADGES
+    : InvoicePresentation::STATUS_BADGES;
 ?>
 
 <div class="alert alert-info d-flex align-items-center gap-2 mb-3" style="font-size:.875rem">
@@ -139,7 +143,7 @@ $entityType = $tokenRecord->entity_type;
                         <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
                             <?php if (!empty($doc->pipeline_status)): ?>
                             <div>
-                                <span class="badge <?= StatusColorConstants::PIPELINE_STATUS_BADGES[$doc->pipeline_status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
+                                <span class="badge <?= $badgeMap[$doc->pipeline_status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
                                     <?= $statusLabels[$doc->pipeline_status] ?? $doc->pipeline_status ?>
                                 </span>
                             </div>

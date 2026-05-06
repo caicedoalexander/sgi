@@ -9,12 +9,12 @@
  * @var string $currentStatus
  */
 use App\Constants\NoveltyConstants;
-use App\Constants\StatusColorConstants;
+use App\View\Presentation\NoveltyPresentation;
 
 $this->assign('title', 'Novedad #' . $novelty->id);
 
 $statusLabels = NoveltyConstants::STATUS_LABELS;
-$statusIcons = NoveltyConstants::STATUS_ICONS;
+$statusIcons = NoveltyPresentation::STATUS_ICONS;
 $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
 $isRejected = $novelty->isRejected();
 $currentStatus = $novelty->pipeline_status;
@@ -46,7 +46,7 @@ $docIconColor = fn(?string $mime): string => match(true) {
     default => '#aaa',
 };
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
-$badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
+$badgeColors = NoveltyPresentation::STATUS_BADGES;
 ?>
 
 <!-- Page header -->

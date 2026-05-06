@@ -5,10 +5,11 @@
  * @var bool $isRejected (optional)
  */
 use App\Constants\PettyCashConstants;
+use App\View\Presentation\PettyCashPresentation;
 
 $statuses = PettyCashConstants::STATUSES;
 $labels = PettyCashConstants::STATUS_LABELS;
-$icons = PettyCashConstants::STATUS_ICONS;
+$icons = PettyCashPresentation::STATUS_ICONS;
 $isRejected = $isRejected ?? false;
 
 $currentIndex = array_search($status, $statuses);

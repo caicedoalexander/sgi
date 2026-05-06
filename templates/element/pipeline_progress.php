@@ -10,12 +10,12 @@
  */
 
 use App\Constants\InvoiceConstants;
-use App\Service\InvoicePipelineService;
+use App\View\Presentation\InvoicePresentation;
 $isRejected    = $isRejected ?? false;
 $isApproved    = $isApproved ?? false;
 $paymentStatus = $paymentStatus ?? null;
 
-$statusIcons  = $statusIcons ?? InvoicePipelineService::STATUS_ICONS;
+$statusIcons  = $statusIcons ?? InvoicePresentation::STATUS_ICONS;
 $currentIndex = array_search($currentStatus, $pipelineStatuses);
 $isPartialPayment = ($currentStatus === InvoiceConstants::STATUS_TESORERIA && $paymentStatus === InvoiceConstants::PAYMENT_PARTIAL);
 ?>

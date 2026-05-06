@@ -7,7 +7,7 @@
  */
 $statuses = \App\Constants\AdvanceConstants::PIPELINE_STATUSES;
 $labels = \App\Constants\AdvanceConstants::STATUS_LABELS;
-$icons = \App\Constants\AdvanceConstants::STATUS_ICONS;
+$icons = \App\View\Presentation\AdvancePresentation::STATUS_ICONS;
 $currentIndex = array_search($currentStatus, $statuses, true);
 if ($currentIndex === false) {
     $currentIndex = 0;

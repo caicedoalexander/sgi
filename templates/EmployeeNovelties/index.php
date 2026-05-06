@@ -8,7 +8,7 @@
  * @var array $visibleStatuses
  */
 use App\Constants\NoveltyConstants;
-use App\Constants\StatusColorConstants;
+use App\View\Presentation\NoveltyPresentation;
 
 $action = $this->request->getParam('action');
 
@@ -23,7 +23,7 @@ $linkAction = ($action === 'index') ? 'edit' : 'view';
 
 $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
 $statusLabels = NoveltyConstants::STATUS_LABELS;
-$calendarColors = NoveltyConstants::CALENDAR_COLORS;
+$calendarColors = NoveltyPresentation::CALENDAR_COLORS;
 $calendarColorCount = count($calendarColors);
 ?>
 
@@ -121,7 +121,7 @@ $calendarColorCount = count($calendarColors);
                                 <span class="badge bg-secondary">No</span>
                             <?php endif; ?>
                         </td>
-                        <td><span class="badge <?= StatusColorConstants::PIPELINE_STATUS_BADGES[$novelty->pipeline_status] ?? 'bg-secondary' ?>"><?= $statusLabels[$novelty->pipeline_status] ?? ucfirst(h($novelty->pipeline_status)) ?></span></td>
+                        <td><span class="badge <?= NoveltyPresentation::STATUS_BADGES[$novelty->pipeline_status] ?? 'bg-secondary' ?>"><?= $statusLabels[$novelty->pipeline_status] ?? ucfirst(h($novelty->pipeline_status)) ?></span></td>
                         <td style="font-size:.8125rem;color:#888"><?= h($novelty->registered_by_user->full_name ?? '—') ?></td>
                     </tr>
                     <?php endforeach; ?>

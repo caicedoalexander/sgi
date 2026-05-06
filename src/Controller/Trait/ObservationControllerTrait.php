@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller\Trait;
 
 use App\Constants\ObservationConstants;
+use App\View\Presentation\SharedPresentation;
 use Cake\Http\Response;
 
 /**
@@ -62,7 +63,7 @@ trait ObservationControllerTrait
                     'id' => $observation->id,
                     'message' => $observation->message,
                     'user_name' => $user->full_name,
-                    'created' => $observation->created->format(ObservationConstants::DATE_FORMAT),
+                    'created' => $observation->created->format(SharedPresentation::DATE_FORMAT),
                 ],
             ]);
         }

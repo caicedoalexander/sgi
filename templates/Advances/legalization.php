@@ -15,6 +15,7 @@
 
 use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
+use App\View\Presentation\AdvancePresentation;
 
 $this->assign('title', 'Legalización ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
@@ -118,7 +119,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
             'pipelineStatuses' => AdvanceConstants::PIPELINE_STATUSES,
             'pipelineLabels' => $legPipelineLabels,
             'isRejected' => false,
-            'statusIcons' => AdvanceConstants::STATUS_ICONS,
+            'statusIcons' => AdvancePresentation::STATUS_ICONS,
         ]) ?>
     </div>
 

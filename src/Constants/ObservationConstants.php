@@ -14,8 +14,6 @@ final class ObservationConstants
     public const ERR_SAVE_FAILED = 'No se pudo agregar la observación.';
     public const MSG_ADDED = 'Observación agregada.';
 
-    public const DATE_FORMAT = 'd/m/Y H:i';
-
     // Tipos de observación compartidos por todos los pipelines que usan el chat de observaciones.
     public const TYPE_GENERAL = 'general';
     public const TYPE_REGRESSION = 'regression';

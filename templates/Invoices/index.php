@@ -10,8 +10,9 @@
  */
 
 use App\Constants\InvoiceConstants;
-use App\Constants\StatusColorConstants;
 use App\Service\InvoicePipelineService;
+use App\View\Presentation\InvoicePresentation;
+use App\View\Presentation\SharedPresentation;
 $isAllView      = $this->request->getParam('action') === 'all';
 $isRejectedView = $this->request->getParam('action') === 'rejected';
 $pageTitle = $isRejectedView ? 'Facturas Rechazadas'
@@ -158,7 +159,7 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                 <?php foreach ($invoices as $invoice):
                     $ps = [
                         InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? 'Desconocido',
-                        StatusColorConstants::PIPELINE_STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-dark',
+                        InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-dark',
                     ];
                     $isRejected     = ($invoice->area_approval === InvoiceConstants::APPROVAL_REJECTED);
                     $isApproved     = ($invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED);
@@ -243,7 +244,7 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                                     <span class="badge bg-warning text-dark">Pago Parcial</span>
                                 <?php endif; ?>
                                 <?php if ($readyForPay): ?>
-                                    <span class="badge <?= StatusColorConstants::READY_FOR_PAYMENT_BADGES[$invoice->ready_for_payment] ?? 'bg-secondary' ?>"><?= h($invoice->ready_for_payment) ?></span>
+                                    <span class="badge <?= SharedPresentation::READY_FOR_PAYMENT_BADGES[$invoice->ready_for_payment] ?? 'bg-secondary' ?>"><?= h($invoice->ready_for_payment) ?></span>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>

@@ -15,6 +15,7 @@ use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
+use App\View\Presentation\NoveltyPresentation;
 use App\ViewModel\EmployeeNoveltyAddViewModel;
 use App\ViewModel\EmployeeNoveltyEditViewModel;
 use Cake\Http\Response;
@@ -252,7 +253,7 @@ class EmployeeNoveltiesController extends AppController
             ->where($conditions)
             ->all();
 
-        $colors = NoveltyConstants::CALENDAR_COLORS;
+        $colors = NoveltyPresentation::CALENDAR_COLORS;
         $colorCount = count($colors);
 
         $events = [];
@@ -340,7 +341,7 @@ class EmployeeNoveltiesController extends AppController
             ->where($conditions)
             ->all();
 
-        $colors = NoveltyConstants::CALENDAR_COLORS;
+        $colors = NoveltyPresentation::CALENDAR_COLORS;
         $colorCount = count($colors);
         $statusLabels = NoveltyConstants::STATUS_LABELS;
 

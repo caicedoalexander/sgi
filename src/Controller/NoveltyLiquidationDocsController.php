@@ -5,7 +5,6 @@ namespace App\Controller;
 
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
-use App\Constants\StatusColorConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\NoveltyLiquidationDoc;
@@ -16,6 +15,7 @@ use App\Service\NoveltyObservationService;
 use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
 use App\Service\PipelineAuthorizationService;
+use App\View\Presentation\NoveltyPresentation;
 use App\ViewModel\NoveltyLiquidationDocEditViewModel;
 use Cake\Routing\Router;
 use DateTime;
@@ -535,7 +535,7 @@ class NoveltyLiquidationDocsController extends AppController
      */
     private function _liquidationDocumentLabels(): array
     {
-        return [StatusColorConstants::PIPELINE_STATUS_BADGES, NoveltyConstants::STATUS_LABELS];
+        return [NoveltyPresentation::STATUS_BADGES, NoveltyConstants::STATUS_LABELS];
     }
 
     /**

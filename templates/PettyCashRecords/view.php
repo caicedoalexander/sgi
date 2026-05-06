@@ -5,11 +5,12 @@
  */
 use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
-use App\Constants\StatusColorConstants;
+use App\View\Presentation\InvoicePresentation;
+use App\View\Presentation\PettyCashPresentation;
 
 $this->assign('title', 'Caja Menor ' . $record->code);
 
-$statusBadge = PettyCashConstants::STATUS_BADGES;
+$statusBadge = PettyCashPresentation::STATUS_BADGES;
 $statusLabels = PettyCashConstants::STATUS_LABELS;
 
 $docIcon = fn(?string $mime): string => match(true) {
@@ -208,7 +209,7 @@ $docIconColor = fn(?string $mime): string => match(true) {
                     <td class="text-end">$ <?= $this->Number->format($inv->amount, ['places' => 2]) ?></td>
                     <td><?= $inv->issue_date?->format('d/m/Y') ?? '—' ?></td>
                     <td>
-                        <?php $pBadge = StatusColorConstants::PIPELINE_STATUS_BADGES[$inv->pipeline_status] ?? 'bg-dark'; ?>
+                        <?php $pBadge = InvoicePresentation::STATUS_BADGES[$inv->pipeline_status] ?? 'bg-dark'; ?>
                         <span class="badge <?= $pBadge ?>"><?= InvoiceConstants::STATUS_LABELS[$inv->pipeline_status] ?? h($inv->pipeline_status) ?></span>
                     </td>
                 </tr>

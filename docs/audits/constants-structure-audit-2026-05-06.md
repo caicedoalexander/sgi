@@ -12,8 +12,8 @@
 | **C1** Inconsistencia léxica `aut_pago`/`pagado` vs `autorizacion_pago`/`pagada` | ✅ Resuelto | Migración `20260506180000_UnifyCanonicalPipelineStatuses` (2026-05-06) |
 | **C2** Duplicación PettyCashConstants ≈ RefundConstants | ✅ Resuelto | Trait `GroupingPipelineConstantsTrait` (2026-05-06) |
 | **C3** Esquema repetido en 6 *PipelineConstants sin contrato común | ⚠️ No procede | Re-evaluado 2026-05-06 — ver Notas C3 |
-| **M1** Mezcla dominio/presentación en StatusColorConstants | ⏳ Pendiente | — |
-| **M2** God-array `PIPELINE_STATUS_BADGES` cross-domain | 🟡 Parcial | Aliases `'aut_pago'` y `'pagado'` eliminados al resolver C1 |
+| **M1** Mezcla dominio/presentación en StatusColorConstants | ✅ Resuelto | PR Presentation extraction (2026-05-06) — ver Notas M1+M2 |
+| **M2** God-array `PIPELINE_STATUS_BADGES` cross-domain | ✅ Resuelto | PR Presentation extraction (2026-05-06) — ver Notas M1+M2 |
 | **M3** Drift `Aut. Pago` vs `Autorización de pago` en STATUS_LABELS | ✅ Resuelto | PR `91f78dd` — canonicalización a forma larga (2026-05-06) |
 | **M4** `EmployeeStatusConstants` acopla código a IDs de seed | ✅ Resuelto | Migración `20260506213953_ReplaceEmployeeStatusesTableWithStatusColumn` + PR `1c53032` (2026-05-06) |
 | **M5** Inconsistencia estilo `self::*` vs literal en PettyCash/Refund | ✅ Resuelto | Reescritura de constants al resolver C1 |
@@ -72,6 +72,20 @@ Una `interface PipelineDefinition` común tendría que aceptar todos estos campo
 **Cuándo reabrir C3:**
 
 Si llega un séptimo pipeline con shape muy similar a uno existente, o si los 6 actuales convergen orgánicamente al mismo shape (hoy divergen). Hasta entonces, la estructura actual refleja diferencias reales de dominio y debe mantenerse.
+
+### Notas M1+M2 (2026-05-06)
+
+Diseño completo en [`docs/plans/2026-05-06-m1-m2-presentation-extraction-design.md`](../plans/2026-05-06-m1-m2-presentation-extraction-design.md). Refactor en un único PR.
+
+- Nueva carpeta `src/View/Presentation/` con 7 clases finales: `InvoicePresentation`, `NoveltyPresentation`, `AdvancePresentation`, `PaymentSchedulingPresentation`, `PettyCashPresentation`, `RefundPresentation`, `SharedPresentation`. `Constants/` queda como vocabulario de dominio puro.
+- `StatusColorConstants` eliminado. El god-array `PIPELINE_STATUS_BADGES` se descompone: cada pipeline tiene su `STATUS_BADGES` con los estados que le aplican. Los 4 controllers + 11 templates importan solo el mapa del pipeline que renderizan.
+- `STATUS_ICONS` migrados desde `AdvanceConstants`, `NoveltyConstants`, `PaymentSchedulingConstants`, `GroupingPipelineConstantsTrait` y `InvoicePipelineService`. Cada uno vive ahora en su `*Presentation`. Aceptamos duplicación de 5 entradas idénticas entre `PettyCashPresentation` y `RefundPresentation` (YAGNI: divergencia futura plausible).
+- `PettyCashConstants::STATUS_BADGES` (que existía localmente con valores divergentes del god-array) absorbido en `PettyCashPresentation::STATUS_BADGES` con sus colores reales (`bg-info text-dark` para agrupación, `bg-warning text-dark` para tesorería).
+- `NoveltyConstants::CALENDAR_COLORS` movido a `NoveltyPresentation::CALENDAR_COLORS` (paleta hex del calendario de novedades).
+- `ObservationConstants::DATE_FORMAT` movido a `SharedPresentation::DATE_FORMAT` (formato global de UI). `ObservationConstants` queda con tipos de observación + mensajes de error.
+- `templates/ExternalApprovals/review.php` ahora resuelve `$badgeMap` desde `$tokenRecord->entity_type` (`'invoices'` → `InvoicePresentation`, `'employee_novelties'` → `NoveltyPresentation`).
+- `templates/PettyCashRecords/view.php:211` muestra el `pipeline_status` de la **factura** asociada — usa `InvoicePresentation::STATUS_BADGES`, no el badge de la propia caja menor.
+- Sin migración de BD; sin cambio de comportamiento; sin lógica nueva.
 
 ### Notas M3, M4, M6, m6 (2026-05-06)
 

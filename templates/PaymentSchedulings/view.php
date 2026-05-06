@@ -7,6 +7,7 @@
  * @var array $pipelineLabels
  */
 use App\Constants\PaymentSchedulingConstants;
+use App\View\Presentation\PaymentSchedulingPresentation;
 
 $this->assign('title', 'Programación ' . h($record->code));
 
@@ -79,7 +80,7 @@ $ps = $statusBadge[$record->pipeline_status] ?? ['Desconocido', 'bg-dark'];
                 $thisIdx = array_search($status, PaymentSchedulingConstants::PIPELINE_STATUSES);
                 $isCurrent = $status === $record->pipeline_status;
                 $isPast = $thisIdx < $currentIdx;
-                $icon = PaymentSchedulingConstants::STATUS_ICONS[$status] ?? 'bi-circle';
+                $icon = PaymentSchedulingPresentation::STATUS_ICONS[$status] ?? 'bi-circle';
             ?>
             <div class="d-flex align-items-center gap-2" style="<?= !$isCurrent && !$isPast ? 'opacity:.4;' : '' ?>">
                 <div class="d-flex align-items-center justify-content-center flex-shrink-0"

@@ -37,14 +37,6 @@ trait GroupingPipelineConstantsTrait
         self::STATUS_PAGADA => 'Pagada',
     ];
 
-    public const STATUS_ICONS = [
-        self::STATUS_AGRUPACION => 'bi-collection',
-        self::STATUS_CONTABILIDAD => 'bi-calculator',
-        self::STATUS_TESORERIA => 'bi-bank',
-        self::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
-        self::STATUS_PAGADA => 'bi-cash-coin',
-    ];
-
     public const TRANSITIONS = [
         self::STATUS_AGRUPACION => self::STATUS_CONTABILIDAD,
         self::STATUS_CONTABILIDAD => self::STATUS_TESORERIA,

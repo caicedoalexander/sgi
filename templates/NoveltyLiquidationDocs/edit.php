@@ -5,7 +5,7 @@
  * @var string $currentStatus
  */
 use App\Constants\NoveltyConstants;
-use App\Constants\StatusColorConstants;
+use App\View\Presentation\NoveltyPresentation;
 
 $doc = $viewModel->doc;
 $roleName = $viewModel->roleName;
@@ -22,7 +22,7 @@ $isContadorAutPago = $viewModel->isContadorAutPago;
 $this->assign('title', 'Editar Liquidación: ' . h($doc->liquidation_number));
 
 $statusLabels = NoveltyConstants::STATUS_LABELS;
-$statusIcons = NoveltyConstants::STATUS_ICONS;
+$statusIcons = NoveltyPresentation::STATUS_ICONS;
 $periodLabels = NoveltyConstants::PERIOD_LABELS;
 $signerLabels = NoveltyConstants::SIGNER_LABELS;
 $paymentLabels = NoveltyConstants::PAYMENT_LABELS;
@@ -62,7 +62,7 @@ $docIconColor = fn(?string $mime): string => match(true) {
     default => '#aaa',
 };
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
-$badgeColors = StatusColorConstants::PIPELINE_STATUS_BADGES;
+$badgeColors = NoveltyPresentation::STATUS_BADGES;
 $noveltyCount = count($doc->employee_novelties);
 ?>
 
