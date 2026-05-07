@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Novelty;
 
+use App\Constants\Domain\Novelty\PipelineStatus;
 use App\Model\Entity\EmployeeNovelty;
 use App\Model\Entity\NoveltyLiquidationDoc;
 
@@ -18,14 +19,14 @@ use App\Model\Entity\NoveltyLiquidationDoc;
  */
 interface NoveltyPipelineState
 {
-    /** Canonical name (e.g. 'aprobacion'). */
-    public function getName(): string;
+    /** Estado canónico tipado. */
+    public function getStatus(): PipelineStatus;
 
-    /** Base next state's name (sin saltos condicionales); null if terminal. */
-    public function getNext(): ?string;
+    /** Estado siguiente base (sin saltos condicionales); null si terminal. */
+    public function getNextStatus(): ?PipelineStatus;
 
-    /** Previous state's name; null if first state. */
-    public function getPrevious(): ?string;
+    /** Estado anterior; null si es el primero. */
+    public function getPreviousStatus(): ?PipelineStatus;
 
     /**
      * Errores que impiden avanzar como novedad individual.

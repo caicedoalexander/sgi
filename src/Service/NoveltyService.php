@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\Domain\Novelty\PipelineStatus as NoveltyPipelineStatus;
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
@@ -109,21 +110,21 @@ class NoveltyService
      */
     private function resolveNextStatus(object $novelty, ?object $type): ?string
     {
-        $current = $novelty->pipeline_status;
-        if (in_array($current, [NoveltyConstants::STATUS_RECHAZADA, NoveltyConstants::STATUS_PAGADA], true)) {
+        $currentEnum = NoveltyPipelineStatus::tryFrom((string)$novelty->pipeline_status);
+        if ($currentEnum === null || $currentEnum->isTerminal()) {
             return null;
         }
 
-        $next = $this->stateRegistry->get($current)->getNext();
+        $nextEnum = $this->stateRegistry->get($currentEnum)->getNextStatus();
 
-        if ($next === NoveltyConstants::STATUS_APROBACION && $type && !$type->requires_boss_approval) {
-            $next = $this->stateRegistry->get($next)->getNext();
+        if ($nextEnum === NoveltyPipelineStatus::APROBACION && $type && !$type->requires_boss_approval) {
+            $nextEnum = $this->stateRegistry->get($nextEnum)->getNextStatus();
         }
-        if ($next === NoveltyConstants::STATUS_GDP && $type && !$type->requires_employee_signature_review) {
-            $next = $this->stateRegistry->get($next)->getNext();
+        if ($nextEnum === NoveltyPipelineStatus::GDP && $type && !$type->requires_employee_signature_review) {
+            $nextEnum = $this->stateRegistry->get($nextEnum)->getNextStatus();
         }
 
-        return $next;
+        return $nextEnum?->value;
     }
 
     /**
@@ -308,7 +309,12 @@ class NoveltyService
             return ['La novedad fue rechazada. El flujo ha terminado.'];
         }
 
-        return $this->stateRegistry->get($fromStatus)->validateAdvanceIndividual($novelty);
+        $fromEnum = NoveltyPipelineStatus::tryFrom($fromStatus);
+        if ($fromEnum === null) {
+            return ["Estado inválido: {$fromStatus}"];
+        }
+
+        return $this->stateRegistry->get($fromEnum)->validateAdvanceIndividual($novelty);
     }
 
     /**
@@ -316,7 +322,12 @@ class NoveltyService
      */
     public function validateGroupTransition(object $liquidationDoc): array
     {
-        return $this->stateRegistry->get($liquidationDoc->pipeline_status)->validateAdvanceGroup($liquidationDoc);
+        $statusEnum = NoveltyPipelineStatus::tryFrom((string)$liquidationDoc->pipeline_status);
+        if ($statusEnum === null) {
+            return ["Estado inválido: {$liquidationDoc->pipeline_status}"];
+        }
+
+        return $this->stateRegistry->get($statusEnum)->validateAdvanceGroup($liquidationDoc);
     }
 
     /**

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Novelty\State;
 
+use App\Constants\Domain\Novelty\PipelineStatus;
 use App\Constants\NoveltyConstants;
 use App\Model\Entity\EmployeeNovelty;
 use App\Model\Entity\NoveltyLiquidationDoc;
@@ -11,19 +12,19 @@ use Cake\ORM\TableRegistry;
 
 final class RevisionFirmasState implements NoveltyPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return NoveltyConstants::STATUS_REVISION_FIRMAS;
+        return PipelineStatus::REVISION_FIRMAS;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
-        return NoveltyConstants::STATUS_GDP;
+        return PipelineStatus::GDP;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
-        return NoveltyConstants::STATUS_CONTABILIDAD;
+        return PipelineStatus::CONTABILIDAD;
     }
 
     public function validateAdvanceIndividual(EmployeeNovelty $novelty): array
