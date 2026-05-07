@@ -6,6 +6,9 @@
 /tmp/*
 /vendor/*
 /webroot/uploads/*
+!/webroot/uploads/employees/
+/webroot/uploads/employees/*
+!/webroot/uploads/employees/.htaccess
 .env
 AGENTS.md
 

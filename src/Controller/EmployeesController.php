@@ -9,7 +9,12 @@ use App\Controller\Trait\ObservationControllerTrait;
 use App\Service\EmployeeDocumentService;
 use App\Service\EmployeeFilterService;
 use App\Service\EmployeeHistoryService;
+use Cake\Datasource\Exception\RecordNotFoundException;
+use Cake\Http\Exception\NotFoundException;
+use Cake\Http\Response;
 use Cake\ORM\TableRegistry;
+use RuntimeException;
+use Throwable;
 
 class EmployeesController extends AppController
 {
@@ -112,19 +117,14 @@ class EmployeesController extends AppController
         $employee = $this->Employees->newEmptyEntity();
         if ($this->request->is('post')) {
             $employee = $this->Employees->patchEntity($employee, $this->request->getData());
-            if ($this->Employees->save($employee)) {
-                $warning = $this->documentService->handleProfileImage(
-                    $employee,
-                    $this->request->getUploadedFile('profile_image_file'),
-                );
-                if ($warning) {
-                    $this->Flash->warning(__($warning));
-                }
-                $this->documentService->createDefaultFolders($employee->id);
+            $profileFile = $this->request->getUploadedFile('profile_image_file');
+
+            if ($this->_persistEmployee($employee, $profileFile, isNew: true)) {
                 $this->Flash->success(__('El empleado ha sido guardado.'));
 
                 return $this->redirect(['action' => 'view', $employee->id]);
             }
+
             $this->Flash->error(__('No se pudo guardar el empleado. Intente de nuevo.'));
         }
 
@@ -138,21 +138,14 @@ class EmployeesController extends AppController
         if ($this->request->is(['patch', 'post', 'put'])) {
             $original = clone $employee;
             $employee = $this->Employees->patchEntity($employee, $this->request->getData());
-            if ($this->Employees->save($employee)) {
-                $userId = (int)$this->Authentication->getIdentity()->getIdentifier();
-                $this->historyService->recordChanges($original, $employee, $userId);
+            $profileFile = $this->request->getUploadedFile('profile_image_file');
 
-                $warning = $this->documentService->handleProfileImage(
-                    $employee,
-                    $this->request->getUploadedFile('profile_image_file'),
-                );
-                if ($warning) {
-                    $this->Flash->warning(__($warning));
-                }
+            if ($this->_persistEmployee($employee, $profileFile, isNew: false, original: $original)) {
                 $this->Flash->success(__('El empleado ha sido actualizado.'));
 
                 return $this->redirect(['action' => 'view', $employee->id]);
             }
+
             $this->Flash->error(__('No se pudo actualizar el empleado. Intente de nuevo.'));
         }
 
@@ -164,8 +157,11 @@ class EmployeesController extends AppController
     {
         $this->request->allowMethod(['post', 'delete']);
         $employee = $this->Employees->get($id);
-        $this->documentService->deleteEmployeeFiles($employee->id);
+        $employeeId = $employee->id;
+
         if ($this->Employees->delete($employee)) {
+            // Solo limpiar archivos físicos si la fila se borró efectivamente
+            $this->documentService->deleteEmployeeFiles($employeeId);
             $this->Flash->success(__('El empleado ha sido eliminado.'));
         } else {
             $this->Flash->error(__('No se pudo eliminar el empleado. Intente de nuevo.'));
@@ -193,11 +189,24 @@ class EmployeesController extends AppController
         $this->request->allowMethod(['post']);
         $employee = $this->Employees->get($employeeId);
 
+        $parentId = $this->request->getData('parent_id') ?: null;
+
+        // Verificar que la carpeta padre (si existe) pertenezca al mismo empleado.
+        if ($parentId !== null) {
+            try {
+                $this->documentService->assertFolderOwnership((int)$employee->id, (int)$parentId);
+            } catch (RecordNotFoundException) {
+                $this->Flash->error(__('La carpeta padre no es válida.'));
+
+                return $this->redirect(['action' => 'view', $employeeId]);
+            }
+        }
+
         $foldersTable = TableRegistry::getTableLocator()->get('EmployeeFolders');
         $folder = $foldersTable->newEntity([
             'employee_id' => $employee->id,
             'name' => $this->request->getData('name'),
-            'parent_id' => $this->request->getData('parent_id') ?: null,
+            'parent_id' => $parentId,
         ]);
 
         if ($foldersTable->save($folder)) {
@@ -229,8 +238,8 @@ class EmployeesController extends AppController
             $identity ? (int)$identity->getIdentifier() : null,
         );
 
-        if (is_string($result)) {
-            $this->Flash->error(__($result));
+        if (!$result->success) {
+            $this->Flash->error(__($result->firstError() ?? 'No se pudo subir el documento.'));
         } else {
             $this->Flash->success(__('El documento ha sido subido.'));
         }
@@ -243,13 +252,106 @@ class EmployeesController extends AppController
         $this->request->allowMethod(['post', 'delete']);
         $this->Employees->get($employeeId);
 
-        if ($this->documentService->deleteDocument((int)$documentId)) {
-            $this->Flash->success(__('El documento ha sido eliminado.'));
+        $result = $this->documentService->deleteDocument((int)$employeeId, (int)$documentId);
+        if (!$result->success) {
+            $this->Flash->error(__($result->firstError() ?? 'No se pudo eliminar el documento.'));
         } else {
-            $this->Flash->error(__('No se pudo eliminar el documento.'));
+            $this->Flash->success(__('El documento ha sido eliminado.'));
         }
 
         return $this->redirect(['action' => 'view', $employeeId]);
+    }
+
+    /**
+     * Descargar un documento validando ownership y devolviendo el archivo
+     * con headers de Content-Disposition. Documentos nuevos viven fuera de
+     * webroot; documentos legacy aún pueden estar bajo webroot/uploads/.
+     */
+    public function downloadDocument($employeeId = null, $documentId = null): Response
+    {
+        $this->Employees->get($employeeId);
+
+        try {
+            $document = $this->documentService->assertDocumentOwnership(
+                (int)$employeeId,
+                (int)$documentId,
+            );
+        } catch (RecordNotFoundException) {
+            throw new NotFoundException(__('El documento no existe.'));
+        }
+
+        $absolutePath = $this->documentService->resolveStoragePath($document->file_path);
+
+        if (!is_file($absolutePath)) {
+            throw new NotFoundException(__('El archivo no se encuentra en el servidor.'));
+        }
+
+        return $this->response->withFile($absolutePath, [
+            'name' => $document->name,
+            'download' => false,
+        ]);
+    }
+
+    /**
+     * Persistir empleado (add o edit) en una transacción que incluye:
+     * - save de la entidad
+     * - createDefaultFolders (solo en add)
+     * - handleProfileImage + re-save si hay imagen
+     * - history (solo en edit)
+     *
+     * Si algo falla, BD revierte y los archivos de imagen ya movidos se limpian.
+     */
+    private function _persistEmployee(
+        object $employee,
+        ?object $profileFile,
+        bool $isNew,
+        ?object $original = null,
+    ): bool {
+        $movedProfilePath = null;
+
+        try {
+            return (bool)$this->Employees->getConnection()->transactional(
+                function () use ($employee, $profileFile, $isNew, $original, &$movedProfilePath) {
+                    if (!$this->Employees->save($employee)) {
+                        return false;
+                    }
+
+                    if ($isNew) {
+                        $foldersResult = $this->documentService->createDefaultFolders($employee->id);
+                        if (!$foldersResult->success) {
+                            throw new RuntimeException($foldersResult->firstError() ?? 'Folders failed');
+                        }
+                    }
+
+                    if ($profileFile && $profileFile->getError() === UPLOAD_ERR_OK) {
+                        $imageResult = $this->documentService->handleProfileImage($employee, $profileFile);
+                        if (!$imageResult->success) {
+                            throw new RuntimeException($imageResult->firstError() ?? 'Image failed');
+                        }
+                        $movedProfilePath = $employee->profile_image;
+
+                        // Re-save para persistir el path de la imagen
+                        if (!$this->Employees->save($employee)) {
+                            throw new RuntimeException('No se pudo persistir la imagen de perfil.');
+                        }
+                    }
+
+                    if (!$isNew && $original !== null) {
+                        $userId = (int)$this->Authentication->getIdentity()->getIdentifier();
+                        $this->historyService->recordChanges($original, $employee, $userId);
+                    }
+
+                    return true;
+                },
+            );
+        } catch (Throwable $e) {
+            // Limpiar imagen ya movida a disco si la transacción falló
+            if ($movedProfilePath !== null) {
+                $this->documentService->cleanupProfileImage($movedProfilePath);
+            }
+
+            return false;
+        }
     }
 
     protected function _setFormDropdowns(): void

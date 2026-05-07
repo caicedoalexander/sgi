@@ -1,0 +1,6 @@
+# Defense in depth: deny execution of script files in employee uploads directory.
+# Documents uploaded after CR-001 hardening go to ROOT/storage/employees/ (outside webroot).
+# This directory now holds only profile images (publicly addressable) and legacy uploads.
+<FilesMatch "\.(php|phtml|phar|cgi|pl|py|sh|jsp|asp|aspx)$">
+    Require all denied
+</FilesMatch>

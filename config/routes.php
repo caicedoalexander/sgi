@@ -274,6 +274,11 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'Employees', 'action' => 'deleteDocument'],
             ['employeeId' => '\d+', 'documentId' => '\d+', 'pass' => ['employeeId', 'documentId']],
         );
+        $builder->connect(
+            '/employees/download-document/{employeeId}/{documentId}',
+            ['controller' => 'Employees', 'action' => 'downloadDocument'],
+            ['employeeId' => '\d+', 'documentId' => '\d+', 'pass' => ['employeeId', 'documentId']],
+        );
 
         // Employee Excel import/export AJAX
         $builder->connect(

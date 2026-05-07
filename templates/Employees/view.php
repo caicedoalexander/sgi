@@ -423,7 +423,7 @@ $novedades = $employee->employee_novelties ?? [];
                                         <td>
                                             <i class="bi <?= $docIcon($doc->mime_type) ?> me-1"
                                                style="color:<?= $docIconColor($doc->mime_type) ?>;font-size:1rem;vertical-align:middle"></i>
-                                            <?= $this->Html->link(h($doc->name), '/' . $doc->file_path, ['target' => '_blank', 'class' => 'text-decoration-none']) ?>
+                                            <?= $this->Html->link(h($doc->name), ['action' => 'downloadDocument', $employee->id, $doc->id], ['target' => '_blank', 'class' => 'text-decoration-none']) ?>
                                         </td>
                                         <td><span class="badge <?= $docBadgeClass($type) ?>"><?= $type ?></span></td>
                                         <td style="color:#888;font-size:.8rem"><?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?></td>
@@ -434,7 +434,7 @@ $novedades = $employee->employee_novelties ?? [];
                                         </td>
                                         <td class="text-end">
                                             <div class="d-flex gap-1 justify-content-end">
-                                                <?= $this->Html->link('<i class="bi bi-box-arrow-up-right"></i>', '/' . $doc->file_path, ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']) ?>
+                                                <?= $this->Html->link('<i class="bi bi-box-arrow-up-right"></i>', ['action' => 'downloadDocument', $employee->id, $doc->id], ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']) ?>
                                                 <?php if (!empty($userPermissions['employees']['can_delete'])): ?>
                                                 <?= $this->Form->postLink('<i class="bi bi-trash"></i>', ['action' => 'deleteDocument', $employee->id, $doc->id], ['confirm' => '¿Eliminar este documento?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
                                                 <?php endif; ?>
@@ -469,7 +469,7 @@ $novedades = $employee->employee_novelties ?? [];
                                                 <td>
                                                     <i class="bi <?= $docIcon($doc->mime_type) ?> me-1"
                                                        style="color:<?= $docIconColor($doc->mime_type) ?>;font-size:1rem;vertical-align:middle"></i>
-                                                    <?= $this->Html->link(h($doc->name), '/' . $doc->file_path, ['target' => '_blank', 'class' => 'text-decoration-none']) ?>
+                                                    <?= $this->Html->link(h($doc->name), ['action' => 'downloadDocument', $employee->id, $doc->id], ['target' => '_blank', 'class' => 'text-decoration-none']) ?>
                                                 </td>
                                                 <td><span class="badge <?= $docBadgeClass($type) ?>"><?= $type ?></span></td>
                                                 <td style="color:#888;font-size:.8rem"><?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?></td>
@@ -477,7 +477,7 @@ $novedades = $employee->employee_novelties ?? [];
                                                 <td style="color:#888;font-size:.8rem"><?= $doc->created?->format('d/m/Y') ?></td>
                                                 <td class="text-end">
                                                     <div class="d-flex gap-1 justify-content-end">
-                                                        <?= $this->Html->link('<i class="bi bi-box-arrow-up-right"></i>', '/' . $doc->file_path, ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']) ?>
+                                                        <?= $this->Html->link('<i class="bi bi-box-arrow-up-right"></i>', ['action' => 'downloadDocument', $employee->id, $doc->id], ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']) ?>
                                                         <?php if (!empty($userPermissions['employees']['can_delete'])): ?>
                                                         <?= $this->Form->postLink('<i class="bi bi-trash"></i>', ['action' => 'deleteDocument', $employee->id, $doc->id], ['confirm' => '¿Eliminar este documento?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
                                                         <?php endif; ?>

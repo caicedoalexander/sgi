@@ -3,13 +3,29 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Model\Entity\EmployeeDocument;
+use App\Model\Entity\EmployeeFolder;
+use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\ORM\TableRegistry;
 use Laminas\Diactoros\UploadedFile;
+use RuntimeException;
+use Throwable;
 
 class EmployeeDocumentService
 {
     private const MAX_DOC_SIZE = 20 * 1024 * 1024; // 20 MB
     private const MAX_PROFILE_SIZE = 2 * 1024 * 1024; // 2 MB
+
+    /**
+     * Whitelist de extensiones permitidas para documentos.
+     * Se valida case-insensitive contra la extensión real del archivo subido.
+     */
+    private const ALLOWED_DOC_EXTENSIONS = [
+        'pdf', 'jpg', 'jpeg', 'png', 'gif',
+        'doc', 'docx', 'xls', 'xlsx', 'txt',
+    ];
+
+    private const ALLOWED_PROFILE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
     private const ALLOWED_DOC_MIMES = [
         'application/pdf',
@@ -26,159 +42,317 @@ class EmployeeDocumentService
     ];
 
     /**
-     * Validate and store an uploaded document, returning the saved entity or an error string.
-     *
-     * @return \App\Model\Entity\EmployeeDocument|string Entity on success, error message on failure.
+     * Resolver el directorio raíz de almacenamiento de documentos sensibles
+     * (fuera de webroot, sin acceso directo por URL).
+     */
+    public static function storageRoot(): string
+    {
+        return ROOT . DS . 'storage' . DS . 'employees';
+    }
+
+    /**
+     * Verifica que la carpeta pertenezca al empleado indicado.
+     * Lanza RecordNotFoundException si no coincide o no existe.
+     */
+    public function assertFolderOwnership(int $employeeId, int $folderId): EmployeeFolder
+    {
+        $foldersTable = TableRegistry::getTableLocator()->get('EmployeeFolders');
+
+        return $foldersTable->find()
+            ->where(['EmployeeFolders.id' => $folderId, 'EmployeeFolders.employee_id' => $employeeId])
+            ->firstOrFail();
+    }
+
+    /**
+     * Verifica que el documento pertenezca al empleado indicado (vía join con la carpeta).
+     * Lanza RecordNotFoundException si no coincide o no existe.
+     */
+    public function assertDocumentOwnership(int $employeeId, int $documentId): EmployeeDocument
+    {
+        $documentsTable = TableRegistry::getTableLocator()->get('EmployeeDocuments');
+
+        return $documentsTable->find()
+            ->contain(['EmployeeFolders'])
+            ->where([
+                'EmployeeDocuments.id' => $documentId,
+                'EmployeeFolders.employee_id' => $employeeId,
+            ])
+            ->firstOrFail();
+    }
+
+    /**
+     * Resolver path absoluto en disco a partir del file_path almacenado.
+     * Backwards-compat: paths viejos (uploads/employees/...) viven en webroot;
+     * paths nuevos se guardan relativos al storage root fuera de webroot.
+     */
+    public function resolveStoragePath(string $relativePath): string
+    {
+        if (str_starts_with($relativePath, 'uploads/')) {
+            return WWW_ROOT . $relativePath;
+        }
+
+        return self::storageRoot() . DS . str_replace('/', DS, $relativePath);
+    }
+
+    /**
+     * Subir un documento validando ownership de la carpeta, tamaño,
+     * extensión (whitelist) y MIME real (finfo) del archivo.
      */
     public function uploadDocument(
         int $employeeId,
         int $folderId,
         UploadedFile $file,
         ?int $uploadedBy,
-    ): object|string {
+    ): ServiceResult {
+        try {
+            $this->assertFolderOwnership($employeeId, $folderId);
+        } catch (RecordNotFoundException) {
+            return ServiceResult::fail('La carpeta seleccionada no existe o no pertenece al empleado.');
+        }
+
         if ($file->getError() !== UPLOAD_ERR_OK) {
-            return 'No se recibió ningún archivo válido.';
+            return ServiceResult::fail('No se recibió ningún archivo válido.');
         }
 
         if ($file->getSize() > self::MAX_DOC_SIZE) {
-            return 'El archivo excede el tamaño máximo de 20 MB.';
+            return ServiceResult::fail('El archivo excede el tamaño máximo de 20 MB.');
         }
 
-        $mimeType = $file->getClientMediaType();
-        if (!in_array($mimeType, self::ALLOWED_DOC_MIMES)) {
-            return 'Tipo de archivo no permitido.';
+        $originalName = $file->getClientFilename() ?? '';
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+        if (!in_array($extension, self::ALLOWED_DOC_EXTENSIONS, true)) {
+            return ServiceResult::fail('Tipo de archivo no permitido.');
         }
 
-        $uploadDir = WWW_ROOT . 'uploads' . DS . 'employees' . DS . $employeeId;
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
+        $uploadDir = self::storageRoot() . DS . $employeeId;
+        $this->ensureDir($uploadDir);
 
-        $originalName = $file->getClientFilename();
-        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
         $uniqueName = uniqid('doc_') . '.' . $extension;
-        $filePath = $uploadDir . DS . $uniqueName;
+        $absolutePath = $uploadDir . DS . $uniqueName;
 
-        $file->moveTo($filePath);
+        try {
+            $file->moveTo($absolutePath);
+        } catch (Throwable $e) {
+            return ServiceResult::fail('No se pudo guardar el archivo en disco.');
+        }
+
+        // Validar MIME real luego de mover (finfo opera sobre el archivo final)
+        $realMime = $this->detectRealMime($absolutePath);
+        if (!in_array($realMime, self::ALLOWED_DOC_MIMES, true)) {
+            @unlink($absolutePath);
+
+            return ServiceResult::fail('El contenido del archivo no coincide con su extensión.');
+        }
 
         $documentsTable = TableRegistry::getTableLocator()->get('EmployeeDocuments');
         $document = $documentsTable->newEntity([
             'employee_folder_id' => $folderId,
             'name' => $originalName,
-            'file_path' => 'uploads/employees/' . $employeeId . '/' . $uniqueName,
+            'file_path' => $employeeId . '/' . $uniqueName,
             'file_size' => $file->getSize(),
-            'mime_type' => $mimeType,
+            'mime_type' => $realMime,
             'uploaded_by' => $uploadedBy,
         ]);
 
         if (!$documentsTable->save($document)) {
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
+            @unlink($absolutePath);
 
-            return 'No se pudo guardar el documento.';
+            return ServiceResult::fail('No se pudo guardar el documento.');
         }
 
-        return $document;
+        return ServiceResult::ok($document);
     }
 
     /**
-     * Delete a document record and its physical file.
+     * Eliminar documento validando ownership y limpiando el archivo físico
+     * sólo si la fila se borra correctamente.
      */
-    public function deleteDocument(int $documentId): bool
+    public function deleteDocument(int $employeeId, int $documentId): ServiceResult
     {
-        $documentsTable = TableRegistry::getTableLocator()->get('EmployeeDocuments');
-        $document = $documentsTable->get($documentId);
-
-        $filePath = WWW_ROOT . $document->file_path;
-        if (file_exists($filePath)) {
-            unlink($filePath);
+        try {
+            $document = $this->assertDocumentOwnership($employeeId, $documentId);
+        } catch (RecordNotFoundException) {
+            return ServiceResult::fail('El documento no existe o no pertenece al empleado.');
         }
 
-        return $documentsTable->delete($document);
+        $absolutePath = $this->resolveStoragePath($document->file_path);
+
+        $documentsTable = TableRegistry::getTableLocator()->get('EmployeeDocuments');
+        if (!$documentsTable->delete($document)) {
+            return ServiceResult::fail('No se pudo eliminar el documento.');
+        }
+
+        if (is_file($absolutePath)) {
+            @unlink($absolutePath);
+        }
+
+        return ServiceResult::ok();
     }
 
     /**
-     * Handle profile image upload. Returns null on success or an error/warning message.
+     * Validar y mover la imagen de perfil. Mutar `profile_image` en la entidad
+     * pero NO persistir — el caller hace el save dentro de su transacción.
+     * La imagen de perfil queda en webroot porque es pública por naturaleza.
      */
-    public function handleProfileImage(object $employee, ?UploadedFile $file): ?string
+    public function handleProfileImage(object $employee, ?UploadedFile $file): ServiceResult
     {
         if (!$file || $file->getError() !== UPLOAD_ERR_OK) {
-            return null; // No file uploaded — nothing to do
+            return ServiceResult::ok(['skipped' => true]);
         }
 
         if ($file->getSize() > self::MAX_PROFILE_SIZE) {
-            return 'La imagen de perfil excede el tamaño máximo de 2MB.';
+            return ServiceResult::fail('La imagen de perfil excede el tamaño máximo de 2 MB.');
         }
 
-        $mimeType = $file->getClientMediaType();
-        if (!in_array($mimeType, self::ALLOWED_PROFILE_MIMES)) {
-            return 'Tipo de imagen no permitido. Use JPEG, PNG, GIF o WebP.';
+        $originalName = $file->getClientFilename() ?? '';
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+        if (!in_array($extension, self::ALLOWED_PROFILE_EXTENSIONS, true)) {
+            return ServiceResult::fail('Tipo de imagen no permitido. Use JPG, PNG, GIF o WebP.');
         }
 
         $uploadDir = WWW_ROOT . 'uploads' . DS . 'employees' . DS . $employee->id;
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
+        $this->ensureDir($uploadDir);
 
-        $extension = pathinfo($file->getClientFilename(), PATHINFO_EXTENSION);
         $fileName = 'profile.' . $extension;
-        $filePath = $uploadDir . DS . $fileName;
+        $absolutePath = $uploadDir . DS . $fileName;
 
-        // Remove old profile image
-        if ($employee->profile_image) {
-            $oldPath = WWW_ROOT . $employee->profile_image;
-            if (file_exists($oldPath)) {
-                unlink($oldPath);
+        // Borrar imagen previa (puede tener distinta extensión)
+        if (!empty($employee->profile_image)) {
+            $oldAbsolute = WWW_ROOT . $employee->profile_image;
+            if (is_file($oldAbsolute) && $oldAbsolute !== $absolutePath) {
+                @unlink($oldAbsolute);
             }
         }
 
-        $file->moveTo($filePath);
+        try {
+            $file->moveTo($absolutePath);
+        } catch (Throwable $e) {
+            return ServiceResult::fail('No se pudo guardar la imagen de perfil.');
+        }
+
+        $realMime = $this->detectRealMime($absolutePath);
+        if (!in_array($realMime, self::ALLOWED_PROFILE_MIMES, true)) {
+            @unlink($absolutePath);
+
+            return ServiceResult::fail('El contenido de la imagen no coincide con su extensión.');
+        }
 
         $employee->profile_image = 'uploads/employees/' . $employee->id . '/' . $fileName;
-        TableRegistry::getTableLocator()->get('Employees')->save($employee);
+        $employee->setDirty('profile_image', true);
 
-        return null;
+        return ServiceResult::ok(['path' => $employee->profile_image]);
     }
 
     /**
-     * Create the default folder structure for a new employee.
+     * Borrar la imagen de perfil que ya quedó en disco (compensación si el
+     * save de la entity falla luego de moveTo).
      */
-    public function createDefaultFolders(int $employeeId): void
+    public function cleanupProfileImage(?string $relativePath): void
+    {
+        if (!$relativePath) {
+            return;
+        }
+
+        $absolutePath = WWW_ROOT . $relativePath;
+        if (is_file($absolutePath)) {
+            @unlink($absolutePath);
+        }
+    }
+
+    /**
+     * Crear las carpetas por defecto para un empleado nuevo.
+     * Usa saveMany para hacerlo en una sola transacción y reportar errores.
+     */
+    public function createDefaultFolders(int $employeeId): ServiceResult
     {
         $defaultFoldersTable = TableRegistry::getTableLocator()->get('DefaultFolders');
         $foldersTable = TableRegistry::getTableLocator()->get('EmployeeFolders');
 
         $defaults = $defaultFoldersTable->find()
             ->order(['sort_order' => 'ASC'])
-            ->all();
+            ->all()
+            ->toList();
 
-        foreach ($defaults as $default) {
-            $folder = $foldersTable->newEntity([
+        if (empty($defaults)) {
+            return ServiceResult::ok(['count' => 0]);
+        }
+
+        $entities = array_map(
+            fn($default) => $foldersTable->newEntity([
                 'employee_id' => $employeeId,
                 'name' => $default->name,
                 'parent_id' => null,
-            ]);
-            $foldersTable->save($folder);
+            ]),
+            $defaults,
+        );
+
+        $saved = $foldersTable->saveMany($entities, ['atomic' => true]);
+        if ($saved === false) {
+            return ServiceResult::fail('No se pudieron crear las carpetas por defecto.');
+        }
+
+        return ServiceResult::ok(['count' => count($entities)]);
+    }
+
+    /**
+     * Eliminar todos los archivos físicos del empleado (storage + webroot).
+     * Llamado desde delete() del controller después de borrar la fila.
+     */
+    public function deleteEmployeeFiles(int $employeeId): void
+    {
+        $this->purgeDir(self::storageRoot() . DS . $employeeId);
+        $this->purgeDir(WWW_ROOT . 'uploads' . DS . 'employees' . DS . $employeeId);
+    }
+
+    /**
+     * Detectar MIME real del archivo en disco usando finfo.
+     * Devuelve cadena vacía si no se puede determinar.
+     */
+    private function detectRealMime(string $absolutePath): string
+    {
+        if (!is_file($absolutePath)) {
+            return '';
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            return '';
+        }
+
+        // finfo_close is deprecated as of PHP 8.4; the resource is closed when $finfo goes out of scope.
+        $mime = finfo_file($finfo, $absolutePath);
+
+        return $mime !== false ? $mime : '';
+    }
+
+    /**
+     * Crear directorio con manejo de race condition (otro proceso pudo haberlo creado).
+     */
+    private function ensureDir(string $path): void
+    {
+        if (!is_dir($path) && !mkdir($path, 0755, true) && !is_dir($path)) {
+            throw new RuntimeException(sprintf('No se pudo crear el directorio %s.', $path));
         }
     }
 
     /**
-     * Delete all physical files for an employee (used before deleting the employee record).
+     * Borrar contenido + directorio si existe.
      */
-    public function deleteEmployeeFiles(int $employeeId): void
+    private function purgeDir(string $dir): void
     {
-        $uploadDir = WWW_ROOT . 'uploads' . DS . 'employees' . DS . $employeeId;
-        if (!is_dir($uploadDir)) {
+        if (!is_dir($dir)) {
             return;
         }
 
-        $files = glob($uploadDir . DS . '*');
+        $files = glob($dir . DS . '*') ?: [];
         foreach ($files as $file) {
             if (is_file($file)) {
-                unlink($file);
+                @unlink($file);
             }
         }
-        rmdir($uploadDir);
+
+        @rmdir($dir);
     }
 }
