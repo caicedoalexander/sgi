@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\Domain\Refund\PipelineStatus as RefundPipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
@@ -159,7 +160,11 @@ class RefundService
             return ['success' => false, 'error' => 'No tiene permisos para avanzar este registro.'];
         }
 
-        $validationErrors = $this->stateRegistry->get($currentStatus)->validateAdvance($record);
+        $currentEnum = RefundPipelineStatus::tryFrom($currentStatus);
+        if ($currentEnum === null) {
+            return ['success' => false, 'error' => "Estado inválido: {$currentStatus}"];
+        }
+        $validationErrors = $this->stateRegistry->get($currentEnum)->validateAdvance($record);
         if (!empty($validationErrors)) {
             return [
                 'success' => false,
@@ -345,7 +350,12 @@ class RefundService
             return ['El registro debe tener al menos una factura agrupada.'];
         }
 
-        return $this->stateRegistry->get($record->status)->validateAdvance($record);
+        $statusEnum = RefundPipelineStatus::tryFrom((string)$record->status);
+        if ($statusEnum === null) {
+            return ["Estado inválido: {$record->status}"];
+        }
+
+        return $this->stateRegistry->get($statusEnum)->validateAdvance($record);
     }
 
     /**
@@ -354,7 +364,12 @@ class RefundService
      */
     public function getPreviousStatus(string $currentStatus): ?string
     {
-        return $this->stateRegistry->get($currentStatus)->getPrevious();
+        $currentEnum = RefundPipelineStatus::tryFrom($currentStatus);
+        if ($currentEnum === null) {
+            return null;
+        }
+
+        return $this->stateRegistry->get($currentEnum)->getPreviousStatus()?->value;
     }
 
     /**
@@ -379,7 +394,12 @@ class RefundService
      */
     public function getRegressionLockMessage(Refund $record): ?string
     {
-        return $this->stateRegistry->get($record->status)->getRegressionLockMessage($record);
+        $statusEnum = RefundPipelineStatus::tryFrom((string)$record->status);
+        if ($statusEnum === null) {
+            return null;
+        }
+
+        return $this->stateRegistry->get($statusEnum)->getRegressionLockMessage($record);
     }
 
     /**
