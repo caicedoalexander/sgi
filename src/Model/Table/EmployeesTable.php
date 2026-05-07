@@ -20,6 +20,28 @@ class EmployeesTable extends Table implements ExcelExportableInterface
 {
     use ExcelExportableTrait;
 
+    private ?EmployeeDocumentService $documentService = null;
+
+    private ?EmployeeHistoryService $historyService = null;
+
+    /**
+     * @param \App\Service\EmployeeDocumentService $service
+     * @return void
+     */
+    public function setDocumentService(EmployeeDocumentService $service): void
+    {
+        $this->documentService = $service;
+    }
+
+    /**
+     * @param \App\Service\EmployeeHistoryService $service
+     * @return void
+     */
+    public function setHistoryService(EmployeeHistoryService $service): void
+    {
+        $this->historyService = $service;
+    }
+
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -364,7 +386,8 @@ class EmployeesTable extends Table implements ExcelExportableInterface
      */
     public function onExcelImportCreated(EntityInterface $entity, int $userId): void
     {
-        (new EmployeeDocumentService())->createDefaultFolders((int)$entity->id);
+        ($this->documentService ?? new EmployeeDocumentService())
+            ->createDefaultFolders((int)$entity->id);
     }
 
     /**
@@ -375,6 +398,7 @@ class EmployeesTable extends Table implements ExcelExportableInterface
      */
     public function onExcelImportUpdated(EntityInterface $original, EntityInterface $entity, int $userId): void
     {
-        (new EmployeeHistoryService())->recordChanges($original, $entity, $userId);
+        ($this->historyService ?? new EmployeeHistoryService())
+            ->recordChanges($original, $entity, $userId);
     }
 }

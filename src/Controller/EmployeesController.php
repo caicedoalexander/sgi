@@ -35,6 +35,10 @@ class EmployeesController extends AppController
         $this->filterService = $container->get(EmployeeFilterService::class);
         $this->documentService = $container->get(EmployeeDocumentService::class);
         $this->historyService = $container->get(EmployeeHistoryService::class);
+
+        $employeesTable = $this->fetchTable('Employees');
+        $employeesTable->setDocumentService($this->documentService);
+        $employeesTable->setHistoryService($this->historyService);
     }
 
     public function index()

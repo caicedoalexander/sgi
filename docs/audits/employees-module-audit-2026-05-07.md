@@ -24,14 +24,14 @@
 | CR-008 | 🟠 Major | Doble `save()` en `add()` por imagen de perfil; archivo en disco si segundo save falla | ✅ Resuelto | Lote 1 (2026-05-07) — `handleProfileImage` ya no hace save; mutación in-memory + re-save dentro de transacción + cleanup en catch |
 | CR-009 | 🟠 Major | `_getCurrentNovelty` acoplado al orden del finder | ✅ Resuelto | Lote 2 (2026-05-07) — _getCurrentNovelty filtra en memoria, desacoplado del orden del finder |
 | CR-010 | 🟠 Major | `EmployeeDocumentService` retorna tipos heterogéneos — viola convención `ServiceResult` | ✅ Resuelto | Lote 1 (2026-05-07) — todos los métodos públicos retornan `ServiceResult`; controller usa `->success` / `firstError()` |
-| CR-011 | 🟠 Major | `EmployeesTable` instancia services con `new` dentro de callbacks de import | ⏳ Pendiente | — |
+| CR-011 | 🟠 Major | `EmployeesTable` instancia services con `new` dentro de callbacks de import | ✅ Resuelto | Lote 3 (2026-05-07) — setters DI en EmployeesTable + inyección en EmployeesController::initialize, fallback a `new` para compat |
 | CR-012 | 🟡 Minor | Magic strings de tipo doc, género, contrato en templates | ⏳ Pendiente | — |
 | CR-013 | 🟡 Minor | Lógica duplicada de `currentNovelty` (controller vs finder) | ⏳ Pendiente | — |
 | CR-014 | 🟡 Minor | `createDefaultFolders` hace inserts uno-a-uno | ⏳ Pendiente | — |
 | CR-015 | 🟡 Minor | N×M de queries en chart de tipos de contrato | ⏳ Pendiente | — |
 | CR-016 | 🟡 Minor | `iterator_to_array` innecesario en `index.php` | ⏳ Pendiente | — |
 | CR-017 | 🟡 Minor | Entity `Employee` anémica (lógica de negocio fuera de la entity) | ⏳ Pendiente | — |
-| CR-018 | 🟡 Minor | `EmployeeDocumentService` viola SRP (4 responsabilidades) | ⏳ Pendiente | — |
+| CR-018 | 🟢 Aceptado | `EmployeeDocumentService` viola SRP (4 responsabilidades) | ✅ Aceptado | Lote 3 (2026-05-07) — service cohesionado en torno a gestión de archivos del empleado (~360 LOC). Re-evaluar si supera 500 LOC o aparece 5ta responsabilidad |
 | CR-019 | 🟡 Minor | 5 closures de iconografía de archivos en `view.php` | ⏳ Pendiente | — |
 | CR-020 | 🟡 Minor | `add.php` y `edit.php` ~95% duplicados | ⏳ Pendiente | — |
 | CR-021 | 🟡 Minor | JS de toggle inline duplicado entre `add.php` y `edit.php` | ⏳ Pendiente | — |
