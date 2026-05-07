@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\EmployeeStatusConstants;
 use Cake\ORM\Query\SelectQuery;
 
 class EmployeeFilterService
@@ -19,7 +20,7 @@ class EmployeeFilterService
         $this->applySearch($query, $params['search'] ?? null);
         $this->applyExact($query, 'Employees.position_id', $params['position_id'] ?? null);
         $this->applyExact($query, 'Employees.operation_center_id', $params['operation_center_id'] ?? null);
-        $this->applyExact($query, 'Employees.status', $params['status'] ?? null);
+        $this->applyEmployeeStatus($query, $params['status'] ?? null);
 
         return $query;
     }
@@ -49,5 +50,25 @@ class EmployeeFilterService
         }
 
         $query->where([$field => $value]);
+    }
+
+    /**
+     * Aplica filtro de status con default 'activo' (CR-007).
+     *
+     * - Sin parametro o vacio  -> filtra por 'activo'
+     * - 'all'                  -> sin filtro (bypass explicito)
+     * - cualquier otro         -> filtra literal (ej: 'retirado')
+     */
+    private function applyEmployeeStatus(SelectQuery $query, mixed $status): void
+    {
+        if ($status === 'all') {
+            return;
+        }
+
+        $effective = (is_string($status) && $status !== '')
+            ? $status
+            : EmployeeStatusConstants::ACTIVO;
+
+        $query->where(['Employees.status' => $effective]);
     }
 }
