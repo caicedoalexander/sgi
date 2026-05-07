@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Policy;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Service\Pipeline\DocumentTypePolicy;
 use App\Service\Pipeline\InvoicePipelineState;
@@ -33,7 +34,7 @@ final class StandardDocumentTypePolicy implements DocumentTypePolicy
         return $sections;
     }
 
-    public function triggersAutoLegalization(string $newStatus): bool
+    public function triggersAutoLegalization(PipelineStatus $newStatus): bool
     {
         return false;
     }

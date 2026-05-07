@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Policy;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Service\AdvanceLegalizationService;
 use App\Service\Pipeline\DocumentTypePolicy;
@@ -44,9 +45,9 @@ final class AnticipoDocumentTypePolicy implements DocumentTypePolicy
         ));
     }
 
-    public function triggersAutoLegalization(string $newStatus): bool
+    public function triggersAutoLegalization(PipelineStatus $newStatus): bool
     {
-        return $newStatus === InvoiceConstants::STATUS_PAGADA;
+        return $newStatus === PipelineStatus::PAGADA;
     }
 
     public function getRegressionLockReason(object $invoice): ?string

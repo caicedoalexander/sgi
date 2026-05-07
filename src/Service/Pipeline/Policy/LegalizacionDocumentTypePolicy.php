@@ -43,7 +43,7 @@ final class LegalizacionDocumentTypePolicy implements DocumentTypePolicy
         ));
     }
 
-    public function triggersAutoLegalization(string $newStatus): bool
+    public function triggersAutoLegalization(PipelineStatus $newStatus): bool
     {
         return false;
     }

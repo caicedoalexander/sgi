@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Subscriber;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Event\InvoicePaidEvent;
 use App\Event\ListenerFailedException;
 use App\Service\AdvanceLegalizationService;
@@ -43,7 +44,8 @@ final class LegalizationInitializerSubscriber implements EventListenerInterface
         $invoice = $payload->invoice;
         $policy = $this->documentTypePolicies->for($invoice->document_type ?? null);
 
-        if (!$policy->triggersAutoLegalization($invoice->pipeline_status)) {
+        $statusEnum = PipelineStatus::tryFrom((string)$invoice->pipeline_status);
+        if ($statusEnum === null || !$policy->triggersAutoLegalization($statusEnum)) {
             return;
         }
 
