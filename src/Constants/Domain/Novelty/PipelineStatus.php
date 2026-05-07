@@ -16,6 +16,9 @@ enum PipelineStatus: string
     case PAGADA = 'pagada';
     case RECHAZADA = 'rechazada';
 
+    /**
+     * Etiqueta legible del estado para mostrar al usuario.
+     */
     public function label(): string
     {
         return match ($this) {
@@ -32,6 +35,9 @@ enum PipelineStatus: string
         };
     }
 
+    /**
+     * Siguiente estado en el avance lineal del pipeline; null si el estado es terminal.
+     */
     public function next(): ?self
     {
         return match ($this) {
@@ -47,6 +53,9 @@ enum PipelineStatus: string
         };
     }
 
+    /**
+     * Estado anterior en el flujo (regresión); null si no admite retroceso.
+     */
     public function previous(): ?self
     {
         return match ($this) {
@@ -61,6 +70,9 @@ enum PipelineStatus: string
         };
     }
 
+    /**
+     * True si el estado es terminal (no admite avance).
+     */
     public function isTerminal(): bool
     {
         return $this === self::PAGADA || $this === self::RECHAZADA;
