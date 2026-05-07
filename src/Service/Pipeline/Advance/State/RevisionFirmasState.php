@@ -3,25 +3,25 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Advance\State;
 
-use App\Constants\AdvanceConstants;
+use App\Constants\Domain\Advance\PipelineStatus;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\Pipeline\Advance\AdvanceLegalizationPipelineState;
 
 final class RevisionFirmasState implements AdvanceLegalizationPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return AdvanceConstants::STATUS_REVISION_FIRMAS;
+        return PipelineStatus::REVISION_FIRMAS;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
-        return AdvanceConstants::STATUS_CONTABILIDAD;
+        return PipelineStatus::CONTABILIDAD;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
-        return AdvanceConstants::STATUS_VALIDACION;
+        return PipelineStatus::VALIDACION;
     }
 
     public function validateAdvance(AdvanceLegalization $leg): array

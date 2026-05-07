@@ -3,27 +3,27 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Advance\State;
 
-use App\Constants\AdvanceConstants;
+use App\Constants\Domain\Advance\PipelineStatus;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\Pipeline\Advance\AdvanceLegalizationPipelineState;
 
 final class AutorizacionPagoState implements AdvanceLegalizationPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return AdvanceConstants::STATUS_AUTORIZACION_PAGO;
+        return PipelineStatus::AUTORIZACION_PAGO;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
-        return AdvanceConstants::STATUS_LEGALIZADA;
+        return PipelineStatus::LEGALIZADA;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
         // Si el pago de reintegro es rechazado, vuelve a Tesorería para
         // registrar uno nuevo.
-        return AdvanceConstants::STATUS_TESORERIA;
+        return PipelineStatus::TESORERIA;
     }
 
     public function validateAdvance(AdvanceLegalization $leg): array

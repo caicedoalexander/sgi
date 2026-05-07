@@ -3,15 +3,17 @@ declare(strict_types=1);
 
 namespace App\Constants;
 
+use App\Constants\Domain\Advance\PipelineStatus;
+
 final class AdvanceConstants
 {
-    // Phase 2 pipeline statuses (advance_legalizations.status)
-    public const STATUS_VALIDACION = 'validacion';
-    public const STATUS_REVISION_FIRMAS = 'revision_firmas';
-    public const STATUS_CONTABILIDAD = 'contabilidad';
-    public const STATUS_TESORERIA = 'tesoreria';
-    public const STATUS_AUTORIZACION_PAGO = 'autorizacion_pago';
-    public const STATUS_LEGALIZADA = 'legalizada';
+    // Phase 2 pipeline statuses — fuente única en App\Constants\Domain\Advance\PipelineStatus.
+    public const STATUS_VALIDACION = PipelineStatus::VALIDACION->value;
+    public const STATUS_REVISION_FIRMAS = PipelineStatus::REVISION_FIRMAS->value;
+    public const STATUS_CONTABILIDAD = PipelineStatus::CONTABILIDAD->value;
+    public const STATUS_TESORERIA = PipelineStatus::TESORERIA->value;
+    public const STATUS_AUTORIZACION_PAGO = PipelineStatus::AUTORIZACION_PAGO->value;
+    public const STATUS_LEGALIZADA = PipelineStatus::LEGALIZADA->value;
 
     public const PIPELINE_STATUSES = [
         self::STATUS_VALIDACION,
