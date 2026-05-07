@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\Domain\PettyCash\PipelineStatus as PettyCashPipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
@@ -246,13 +247,13 @@ class PettyCashService
      */
     public function canAdvance(int $roleId, string $roleName, string $currentStatus): bool
     {
-        try {
-            $state = $this->stateRegistry->get($currentStatus);
-        } catch (InvalidArgumentException) {
+        $currentEnum = PettyCashPipelineStatus::tryFrom($currentStatus);
+        if ($currentEnum === null) {
             return false;
         }
 
-        if ($state->getNext() === null) {
+        $state = $this->stateRegistry->get($currentEnum);
+        if ($state->getNextStatus() === null) {
             return false;
         }
 
@@ -279,13 +280,12 @@ class PettyCashService
     ): ServiceResult {
         $currentStatus = $record->status;
 
-        try {
-            $state = $this->stateRegistry->get($currentStatus);
-        } catch (InvalidArgumentException $e) {
-            return ServiceResult::fail($e->getMessage());
+        $currentEnum = PettyCashPipelineStatus::tryFrom($currentStatus);
+        if ($currentEnum === null) {
+            return ServiceResult::fail("Estado inválido: {$currentStatus}");
         }
-
-        $nextStatus = $state->getNext();
+        $state = $this->stateRegistry->get($currentEnum);
+        $nextStatus = $state->getNextStatus()?->value;
 
         if ($nextStatus === null) {
             return ServiceResult::fail('Este registro ya está en su estado final.');
@@ -417,7 +417,12 @@ class PettyCashService
      */
     private function _validateTransition(string $fromStatus, PettyCashRecord $record): array
     {
-        return $this->stateRegistry->get($fromStatus)->validateAdvance($record);
+        $fromEnum = PettyCashPipelineStatus::tryFrom($fromStatus);
+        if ($fromEnum === null) {
+            return ["Estado inválido: {$fromStatus}"];
+        }
+
+        return $this->stateRegistry->get($fromEnum)->validateAdvance($record);
     }
 
     /**
@@ -719,11 +724,12 @@ class PettyCashService
      */
     public function getPreviousStatus(string $currentStatus): ?string
     {
-        try {
-            return $this->stateRegistry->get($currentStatus)->getPrevious();
-        } catch (InvalidArgumentException) {
+        $currentEnum = PettyCashPipelineStatus::tryFrom($currentStatus);
+        if ($currentEnum === null) {
             return null;
         }
+
+        return $this->stateRegistry->get($currentEnum)->getPreviousStatus()?->value;
     }
 
     /**

@@ -25,7 +25,9 @@
 | Menores **m5** (`NoveltyConstants::ACTIVE_STATUSES` semántica ambigua) | ✅ Resuelto | Quick wins PR (2026-05-06) — PHPDoc explicando exclusiones |
 | Menores **m7** (`PipelineStepConstants::isValid()` estático) | 📌 Descartado | Decisión 2026-05-06: dejar donde está; mover sería over-engineering por purismo |
 | Menores **m1** (mezcla idiomas inglés/español) | ✅ Resuelto | Convención documentada en CLAUDE.md (2026-05-06) — ver Notas m1 |
-| Sugerencias **S1–S3** | ⏳ Pendientes | Postergados — ver `docs/plans/2026-05-06-constants-audit-plan-a-design.md` §4 |
+| Sugerencias **S1** (enum migration) | ✅ Resuelto | Pilot Invoice + replicación a los 6 pipelines (2026-05-07) — ver Notas S1+S3 |
+| Sugerencias **S2** (`PipelineDefinition` value object) | 📌 Descartado | Re-evaluado como C3 (no procede) |
+| Sugerencias **S3** (subdirectorios `Domain/`/`Presentation/`) | ✅ Resuelto | `src/View/Presentation/` (M1+M2) + `src/Constants/Domain/{Module}/` (S1) |
 
 ### Notas C1 (2026-05-06)
 
@@ -105,6 +107,66 @@ Diseño completo en [`docs/plans/2026-05-06-m1-m2-presentation-extraction-design
 - `templates/ExternalApprovals/review.php` ahora resuelve `$badgeMap` desde `$tokenRecord->entity_type` (`'invoices'` → `InvoicePresentation`, `'employee_novelties'` → `NoveltyPresentation`).
 - `templates/PettyCashRecords/view.php:211` muestra el `pipeline_status` de la **factura** asociada — usa `InvoicePresentation::STATUS_BADGES`, no el badge de la propia caja menor.
 - Sin migración de BD; sin cambio de comportamiento; sin lógica nueva.
+
+### Notas S1+S3 (2026-05-07)
+
+Diseño del pilot en [`docs/plans/2026-05-07-s1-invoice-pipeline-status-enum-design.md`](../plans/2026-05-07-s1-invoice-pipeline-status-enum-design.md).
+Branch `refactor/invoice-pipeline-status-enum`. Replicado a los 6 pipelines del sistema en commits separados.
+
+**Estructura final establecida:**
+
+```
+src/Constants/Domain/
+├── Invoice/PipelineStatus.php           (6 cases)
+├── PaymentScheduling/PipelineStatus.php (4 cases)
+├── Refund/PipelineStatus.php            (5 cases)
+├── PettyCash/PipelineStatus.php         (5 cases)
+├── Advance/PipelineStatus.php           (6 cases)
+└── Novelty/PipelineStatus.php           (10 cases)
+```
+
+Cada enum es **un tipo distinto**: `Refund\PipelineStatus::AGRUPACION !== PettyCash\PipelineStatus::AGRUPACION` (mismo slug, distinto tipo). Esto previene el bug clase de "usar status de un pipeline donde toca el otro" — imposible por type system.
+
+**Métodos del enum (uniformes):** `label()`, `next()`, `previous()`, `isTerminal()`. Casos especiales: `Invoice::pipelineCases()`/`legalizationCases()` (terminal alterno LEGALIZADA), `PaymentScheduling::rejectionTarget()` (regla de Contador rechaza → vuelve a tesoreria).
+
+**Estrategia de migración (preserva 100% backward compat):**
+
+- `*Constants::STATUS_*` siguen existiendo y delegan al enum vía `Enum::CASE->value` (PHP 8.1+).
+- `*PipelineState` interface migrada: `getStatus()`, `getNextStatus()`, `getPreviousStatus()` retornan enum.
+- `*PipelineStateRegistry::get()` acepta enum en lugar de string.
+- 6 State classes por pipeline (8 en Novelty) retornan enum.
+- Services (`InvoicePipelineService`, `PaymentSchedulingService`, `RefundService`, `PettyCashService`, `AdvanceLegalizationService`, `NoveltyService`) preservan API pública string; convierten a enum vía `tryFrom()` en los call-sites de `stateRegistry->get()`.
+- `InvoiceFieldAccessPolicy` agrega `tryFrom()` guard como safety net.
+- `InvoiceTransitionValidator` agrega guard de estado inválido.
+
+**Document Type Policies (solo Invoice):**
+
+- `LegalizacionDocumentTypePolicy::blocksAdvance` compara `$state->getStatus() === PipelineStatus::CONTABILIDAD` (enum vs enum).
+- `DocumentTypePolicy::triggersAutoLegalization(PipelineStatus $newStatus)` migrado a enum. `AnticipoDocumentTypePolicy` compara contra `PipelineStatus::PAGADA`.
+- `LegalizationInitializerSubscriber` convierte `$invoice->pipeline_status` (string) a enum antes de invocar el policy.
+
+**Commits del branch:**
+
+| Commit | Pipeline | Cases | Archivos |
+|---|---|---|---|
+| `4e37386` | docs(plans): design pilot | — | 1 |
+| `9f9590b` | refactor(invoices) | 6 | 14 |
+| `b3cb8d2` | refactor(payment-schedulings) | 4 | 9 |
+| `4e4e71c` | refactor(refunds) | 5 | 9 |
+| `049a1fc` | refactor(petty-cash) | 5 | 9 |
+| `d4c38a0` | refactor(advances) | 6 | 11 |
+| `057fbec` | refactor(novelties) | 10 | 13 |
+| `2b6657b` | refactor(invoices) policies | — | 5 |
+
+**Total:** 7 enums nuevos en `src/Constants/Domain/{Module}/`, 70 archivos modificados, 0 call-sites externos rotos, 0 nuevas violaciones de cs-check (verificado pre/post counts idénticos).
+
+**Lo que NO se migra (out of scope, decisión consciente):**
+
+- Templates, controllers, ViewModels, payment/approval/history services siguen pasando strings vía `*Constants::STATUS_*`. La migración de firmas en esas capas amplificaría el diff sin beneficio claro (los strings vienen de columnas DB y request inputs, validados al cruzar service boundary).
+- Columnas DB (`invoices.pipeline_status`, etc.) siguen siendo VARCHAR. El enum es solo capa de código.
+- Otros constants no-pipeline (DOCTYPE_*, APPROVAL_*, DIAN_*, PAYMENT_*, READY_FOR_PAYMENT_*, HOLDER_*, OBSERVATION_*, ROLE, EMAIL_LOG, EMPLOYEE_STATUS, CONTRACT_TYPE) siguen como `final class` con const strings — sin enum porque su uso no se beneficia del type safety del state machine.
+
+**Validación pendiente:** smoke tests funcionales manuales en navegador para los 6 pipelines (transiciones, regresiones, terminales alternos). Sin tests automatizados (proyecto sin tests por política).
 
 ### Notas M3, M4, M6, m6 (2026-05-06)
 

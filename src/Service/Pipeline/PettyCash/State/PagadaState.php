@@ -3,23 +3,23 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\PettyCash\State;
 
-use App\Constants\PettyCashConstants;
+use App\Constants\Domain\PettyCash\PipelineStatus;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\Pipeline\PettyCash\PettyCashPipelineState;
 
 final class PagadaState implements PettyCashPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return PettyCashConstants::STATUS_PAGADA;
+        return PipelineStatus::PAGADA;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
         return null;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
         // Pagada es terminal: regresar implicaría revertir invoice_payments
         // ya materializados, fuera del alcance del flujo estándar.

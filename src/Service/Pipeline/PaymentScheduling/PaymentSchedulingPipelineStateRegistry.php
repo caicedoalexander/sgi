@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\PaymentScheduling;
 
+use App\Constants\Domain\PaymentScheduling\PipelineStatus;
 use App\Service\Pipeline\PaymentScheduling\State\AutorizacionPagoState;
 use App\Service\Pipeline\PaymentScheduling\State\BorradorState;
 use App\Service\Pipeline\PaymentScheduling\State\PagadaState;
 use App\Service\Pipeline\PaymentScheduling\State\TesoreriaState;
-use InvalidArgumentException;
 
 /**
- * Resolves `payment_schedulings.pipeline_status` (string) to a concrete State.
+ * Resolves `payment_schedulings.pipeline_status` (enum) to a concrete State.
  * Sole dependency the coordinator (PaymentSchedulingService) needs to access states.
  */
 final class PaymentSchedulingPipelineStateRegistry
@@ -34,17 +34,13 @@ final class PaymentSchedulingPipelineStateRegistry
         ];
 
         foreach ($list as $state) {
-            $this->states[$state->getName()] = $state;
+            $this->states[$state->getStatus()->value] = $state;
         }
     }
 
-    public function get(string $name): PaymentSchedulingPipelineState
+    public function get(PipelineStatus $status): PaymentSchedulingPipelineState
     {
-        if (!isset($this->states[$name])) {
-            throw new InvalidArgumentException("Unknown payment scheduling pipeline state: {$name}");
-        }
-
-        return $this->states[$name];
+        return $this->states[$status->value];
     }
 
     /** @return array<string, \App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineState> */

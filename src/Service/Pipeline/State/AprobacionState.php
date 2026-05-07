@@ -3,23 +3,24 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\State;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Service\Pipeline\InvoicePipelineState;
 
 final class AprobacionState implements InvoicePipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return InvoiceConstants::STATUS_APROBACION;
+        return PipelineStatus::APROBACION;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
-        return InvoiceConstants::STATUS_CONTABILIDAD;
+        return PipelineStatus::CONTABILIDAD;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
         return null;
     }

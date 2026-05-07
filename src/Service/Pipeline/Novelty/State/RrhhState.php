@@ -3,26 +3,26 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Novelty\State;
 
-use App\Constants\NoveltyConstants;
+use App\Constants\Domain\Novelty\PipelineStatus;
 use App\Model\Entity\EmployeeNovelty;
 use App\Model\Entity\NoveltyLiquidationDoc;
 use App\Service\Pipeline\Novelty\NoveltyPipelineState;
 
 final class RrhhState implements NoveltyPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return NoveltyConstants::STATUS_RRHH;
+        return PipelineStatus::RRHH;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
-        return NoveltyConstants::STATUS_CONTABILIDAD;
+        return PipelineStatus::CONTABILIDAD;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
-        return NoveltyConstants::STATUS_APROBACION;
+        return PipelineStatus::APROBACION;
     }
 
     public function validateAdvanceIndividual(EmployeeNovelty $novelty): array

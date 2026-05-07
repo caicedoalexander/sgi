@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Policy;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Service\Pipeline\DocumentTypePolicy;
 use App\Service\Pipeline\InvoicePipelineState;
@@ -22,7 +23,7 @@ final class LegalizacionDocumentTypePolicy implements DocumentTypePolicy
 
     public function blocksAdvance(InvoicePipelineState $state, object $invoice): ?string
     {
-        if ($state->getName() === InvoiceConstants::STATUS_CONTABILIDAD) {
+        if ($state->getStatus() === PipelineStatus::CONTABILIDAD) {
             return 'La legalización avanzará automáticamente cuando el Anticipo padre se legalice.';
         }
 
@@ -42,7 +43,7 @@ final class LegalizacionDocumentTypePolicy implements DocumentTypePolicy
         ));
     }
 
-    public function triggersAutoLegalization(string $newStatus): bool
+    public function triggersAutoLegalization(PipelineStatus $newStatus): bool
     {
         return false;
     }

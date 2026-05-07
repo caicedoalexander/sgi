@@ -3,32 +3,24 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Refund\State;
 
+use App\Constants\Domain\Refund\PipelineStatus;
 use App\Constants\RefundConstants;
 use App\Model\Entity\Refund;
 use App\Service\Pipeline\Refund\RefundPipelineState;
 
 final class AgrupacionState implements RefundPipelineState
 {
-    /**
-     * @inheritDoc
-     */
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return RefundConstants::STATUS_AGRUPACION;
+        return PipelineStatus::AGRUPACION;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
-        return RefundConstants::STATUS_CONTABILIDAD;
+        return PipelineStatus::CONTABILIDAD;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
         return null;
     }

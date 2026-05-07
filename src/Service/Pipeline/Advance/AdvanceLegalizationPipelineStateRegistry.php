@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Advance;
 
+use App\Constants\Domain\Advance\PipelineStatus;
 use App\Service\Pipeline\Advance\State\AutorizacionPagoState;
 use App\Service\Pipeline\Advance\State\ContabilidadState;
 use App\Service\Pipeline\Advance\State\LegalizadaState;
 use App\Service\Pipeline\Advance\State\RevisionFirmasState;
 use App\Service\Pipeline\Advance\State\TesoreriaState;
 use App\Service\Pipeline\Advance\State\ValidacionState;
-use InvalidArgumentException;
 
 /**
- * Resuelve `advance_legalizations.status` (string) → instancia concreta
+ * Resuelve `advance_legalizations.status` (enum) → instancia concreta
  * de AdvanceLegalizationPipelineState. Es la única dependencia que
  * necesita el coordinador (AdvanceLegalizationService) para acceder a
  * los estados.
@@ -40,17 +40,13 @@ final class AdvanceLegalizationPipelineStateRegistry
         ];
 
         foreach ($list as $state) {
-            $this->states[$state->getName()] = $state;
+            $this->states[$state->getStatus()->value] = $state;
         }
     }
 
-    public function get(string $name): AdvanceLegalizationPipelineState
+    public function get(PipelineStatus $status): AdvanceLegalizationPipelineState
     {
-        if (!isset($this->states[$name])) {
-            throw new InvalidArgumentException("Unknown advance pipeline state: {$name}");
-        }
-
-        return $this->states[$name];
+        return $this->states[$status->value];
     }
 
     /** @return array<string, \App\Service\Pipeline\Advance\AdvanceLegalizationPipelineState> */

@@ -3,13 +3,15 @@ declare(strict_types=1);
 
 namespace App\Constants;
 
+use App\Constants\Domain\PaymentScheduling\PipelineStatus;
+
 final class PaymentSchedulingConstants
 {
-    // Pipeline statuses
-    public const STATUS_BORRADOR = 'borrador';
-    public const STATUS_TESORERIA = 'tesoreria';
-    public const STATUS_AUTORIZACION_PAGO = 'autorizacion_pago';
-    public const STATUS_PAGADA = 'pagada';
+    // Pipeline statuses — fuente única en App\Constants\Domain\PaymentScheduling\PipelineStatus.
+    public const STATUS_BORRADOR = PipelineStatus::BORRADOR->value;
+    public const STATUS_TESORERIA = PipelineStatus::TESORERIA->value;
+    public const STATUS_AUTORIZACION_PAGO = PipelineStatus::AUTORIZACION_PAGO->value;
+    public const STATUS_PAGADA = PipelineStatus::PAGADA->value;
 
     public const PIPELINE_STATUSES = [
         self::STATUS_BORRADOR,

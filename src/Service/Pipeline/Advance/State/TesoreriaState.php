@@ -3,18 +3,18 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Advance\State;
 
-use App\Constants\AdvanceConstants;
+use App\Constants\Domain\Advance\PipelineStatus;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\Pipeline\Advance\AdvanceLegalizationPipelineState;
 
 final class TesoreriaState implements AdvanceLegalizationPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return AdvanceConstants::STATUS_TESORERIA;
+        return PipelineStatus::TESORERIA;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
         // Bifurca por case_type:
         //   - faltante → confirmShortageReceipt → legalizada (salta aut_pago)
@@ -23,9 +23,9 @@ final class TesoreriaState implements AdvanceLegalizationPipelineState
         return null;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
-        return AdvanceConstants::STATUS_CONTABILIDAD;
+        return PipelineStatus::CONTABILIDAD;
     }
 
     public function validateAdvance(AdvanceLegalization $leg): array

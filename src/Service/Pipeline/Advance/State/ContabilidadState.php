@@ -3,27 +3,27 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Advance\State;
 
-use App\Constants\AdvanceConstants;
+use App\Constants\Domain\Advance\PipelineStatus;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\Pipeline\Advance\AdvanceLegalizationPipelineState;
 
 final class ContabilidadState implements AdvanceLegalizationPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return AdvanceConstants::STATUS_CONTABILIDAD;
+        return PipelineStatus::CONTABILIDAD;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
         // Contabilidad bifurca por acción discreta (markExact / registerShortage
         // / registerSurplus). No hay un "next" lineal.
         return null;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
-        return AdvanceConstants::STATUS_REVISION_FIRMAS;
+        return PipelineStatus::REVISION_FIRMAS;
     }
 
     public function validateAdvance(AdvanceLegalization $leg): array

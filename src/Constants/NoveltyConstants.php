@@ -3,19 +3,21 @@ declare(strict_types=1);
 
 namespace App\Constants;
 
+use App\Constants\Domain\Novelty\PipelineStatus;
+
 final class NoveltyConstants
 {
-    // Pipeline statuses (ordered)
-    public const STATUS_REGISTRO = 'registro';
-    public const STATUS_APROBACION = 'aprobacion';
-    public const STATUS_RRHH = 'rrhh';
-    public const STATUS_CONTABILIDAD = 'contabilidad';
-    public const STATUS_REVISION_FIRMAS = 'revision_firmas';
-    public const STATUS_GDP = 'gdp';
-    public const STATUS_TESORERIA = 'tesoreria';
-    public const STATUS_AUTORIZACION_PAGO = 'autorizacion_pago';
-    public const STATUS_PAGADA = 'pagada';
-    public const STATUS_RECHAZADA = 'rechazada';
+    // Pipeline statuses (ordered) — fuente única en App\Constants\Domain\Novelty\PipelineStatus.
+    public const STATUS_REGISTRO = PipelineStatus::REGISTRO->value;
+    public const STATUS_APROBACION = PipelineStatus::APROBACION->value;
+    public const STATUS_RRHH = PipelineStatus::RRHH->value;
+    public const STATUS_CONTABILIDAD = PipelineStatus::CONTABILIDAD->value;
+    public const STATUS_REVISION_FIRMAS = PipelineStatus::REVISION_FIRMAS->value;
+    public const STATUS_GDP = PipelineStatus::GDP->value;
+    public const STATUS_TESORERIA = PipelineStatus::TESORERIA->value;
+    public const STATUS_AUTORIZACION_PAGO = PipelineStatus::AUTORIZACION_PAGO->value;
+    public const STATUS_PAGADA = PipelineStatus::PAGADA->value;
+    public const STATUS_RECHAZADA = PipelineStatus::RECHAZADA->value;
 
     public const PIPELINE_STATUSES = [
         self::STATUS_APROBACION,

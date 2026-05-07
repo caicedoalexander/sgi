@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
+
 /**
  * Encapsula las reglas que diferencian a un document_type del flujo normal.
  *
@@ -37,8 +39,8 @@ interface DocumentTypePolicy
      */
     public function filterVisibleSections(array $sections): array;
 
-    /** ¿Avanzar a $newStatus dispara auto-init de la legalización? Sólo Anticipo cuando newStatus = pagada. */
-    public function triggersAutoLegalization(string $newStatus): bool;
+    /** ¿Avanzar a $newStatus dispara auto-init de la legalización? Sólo Anticipo cuando newStatus = PAGADA. */
+    public function triggersAutoLegalization(PipelineStatus $newStatus): bool;
 
     /** Mensaje si el doctype bloquea regresión por su propio estado; null = no. */
     public function getRegressionLockReason(object $invoice): ?string;

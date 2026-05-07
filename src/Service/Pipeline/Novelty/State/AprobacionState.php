@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Novelty\State;
 
+use App\Constants\Domain\Novelty\PipelineStatus;
 use App\Constants\NoveltyConstants;
 use App\Model\Entity\EmployeeNovelty;
 use App\Model\Entity\NoveltyLiquidationDoc;
@@ -10,17 +11,17 @@ use App\Service\Pipeline\Novelty\NoveltyPipelineState;
 
 final class AprobacionState implements NoveltyPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return NoveltyConstants::STATUS_APROBACION;
+        return PipelineStatus::APROBACION;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
-        return NoveltyConstants::STATUS_RRHH;
+        return PipelineStatus::RRHH;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
         return null;
     }

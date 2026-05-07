@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Event\InvoicePaidEvent;
@@ -152,7 +153,12 @@ class InvoicePipelineService
 
     public function getNextStatus(string $currentStatus, ?string $documentType = null): ?string
     {
-        $state = $this->states->get($currentStatus);
+        $currentEnum = PipelineStatus::tryFrom($currentStatus);
+        if ($currentEnum === null) {
+            return null;
+        }
+
+        $state = $this->states->get($currentEnum);
         $policy = $this->docTypePolicies->for($documentType);
 
         // Cuando la policy bloquea el avance del estado, el next efectivo es null.
@@ -162,7 +168,7 @@ class InvoicePipelineService
             return null;
         }
 
-        return $state->getNext();
+        return $state->getNextStatus()?->value;
     }
 
     public function filterEntityData(array $data, int $roleId, string $roleName, string $status): array
@@ -179,7 +185,12 @@ class InvoicePipelineService
 
     public function getPreviousStatus(string $currentStatus): ?string
     {
-        return $this->states->get($currentStatus)->getPrevious();
+        $currentEnum = PipelineStatus::tryFrom($currentStatus);
+        if ($currentEnum === null) {
+            return null;
+        }
+
+        return $this->states->get($currentEnum)->getPreviousStatus()?->value;
     }
 
     public function canRegress(int $roleId, string $roleName, string $currentStatus): bool

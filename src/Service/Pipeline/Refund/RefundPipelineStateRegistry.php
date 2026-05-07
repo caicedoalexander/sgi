@@ -3,15 +3,15 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Refund;
 
+use App\Constants\Domain\Refund\PipelineStatus;
 use App\Service\Pipeline\Refund\State\AgrupacionState;
 use App\Service\Pipeline\Refund\State\AutorizacionPagoState;
 use App\Service\Pipeline\Refund\State\ContabilidadState;
 use App\Service\Pipeline\Refund\State\PagadaState;
 use App\Service\Pipeline\Refund\State\TesoreriaState;
-use InvalidArgumentException;
 
 /**
- * Resolves `refunds.status` (string) to a concrete State.
+ * Resolves `refunds.status` (enum) to a concrete State.
  * Sole dependency the coordinator (RefundService) needs to access states.
  */
 final class RefundPipelineStateRegistry
@@ -44,20 +44,13 @@ final class RefundPipelineStateRegistry
         ];
 
         foreach ($list as $state) {
-            $this->states[$state->getName()] = $state;
+            $this->states[$state->getStatus()->value] = $state;
         }
     }
 
-    /**
-     * @param string $name State name.
-     */
-    public function get(string $name): RefundPipelineState
+    public function get(PipelineStatus $status): RefundPipelineState
     {
-        if (!isset($this->states[$name])) {
-            throw new InvalidArgumentException("Unknown refund pipeline state: {$name}");
-        }
-
-        return $this->states[$name];
+        return $this->states[$status->value];
     }
 
     /** @return array<string, \App\Service\Pipeline\Refund\RefundPipelineState> */

@@ -3,23 +3,23 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Advance\State;
 
-use App\Constants\AdvanceConstants;
+use App\Constants\Domain\Advance\PipelineStatus;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\Pipeline\Advance\AdvanceLegalizationPipelineState;
 
 final class LegalizadaState implements AdvanceLegalizationPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return AdvanceConstants::STATUS_LEGALIZADA;
+        return PipelineStatus::LEGALIZADA;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
         return null;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
         return null;
     }

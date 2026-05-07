@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\State;
 
-use App\Constants\InvoiceConstants;
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\RoleConstants;
 use App\Service\InvoicePaymentService;
 use App\Service\Pipeline\InvoicePipelineState;
@@ -15,19 +15,19 @@ final class AutorizacionPagoState implements InvoicePipelineState
     ) {
     }
 
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return InvoiceConstants::STATUS_AUTORIZACION_PAGO;
+        return PipelineStatus::AUTORIZACION_PAGO;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
-        return InvoiceConstants::STATUS_PAGADA;
+        return PipelineStatus::PAGADA;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
-        return InvoiceConstants::STATUS_TESORERIA;
+        return PipelineStatus::TESORERIA;
     }
 
     public function getRoleVisibility(): array

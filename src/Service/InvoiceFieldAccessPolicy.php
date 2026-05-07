@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 
@@ -63,6 +64,10 @@ class InvoiceFieldAccessPolicy
      */
     public function getEditableFields(int $roleId, string $roleName, string $status): array
     {
+        if (PipelineStatus::tryFrom($status) === null) {
+            return [];
+        }
+
         $allowedSteps = $this->pipelineAuth->getOperableSteps(
             $roleId,
             $roleName,
@@ -85,6 +90,10 @@ class InvoiceFieldAccessPolicy
     public function getVisibleSections(int $roleId, string $roleName, string $status): array
     {
         $sections = ['ledger'];
+
+        if (PipelineStatus::tryFrom($status) === null) {
+            return $sections;
+        }
 
         $operableSteps = $this->pipelineAuth->getOperableSteps(
             $roleId,

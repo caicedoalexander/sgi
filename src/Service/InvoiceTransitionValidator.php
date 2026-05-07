@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
 use App\Service\Pipeline\InvoicePipelineStateRegistry;
@@ -55,7 +56,12 @@ final class InvoiceTransitionValidator
             return ['La factura fue rechazada. El flujo ha terminado.'];
         }
 
-        $state = $this->states->get($fromStatus);
+        $fromEnum = PipelineStatus::tryFrom($fromStatus);
+        if ($fromEnum === null) {
+            return ["Estado de origen inválido: {$fromStatus}"];
+        }
+
+        $state = $this->states->get($fromEnum);
         $policy = $this->policies->for($subject->document_type ?? null);
 
         $blockMsg = $policy->blocksAdvance($state, $subject);
@@ -71,7 +77,12 @@ final class InvoiceTransitionValidator
      */
     public function getTransitionRules(string $fromStatus): array
     {
-        return $this->states->get($fromStatus)->getTransitionRules();
+        $fromEnum = PipelineStatus::tryFrom($fromStatus);
+        if ($fromEnum === null) {
+            return [];
+        }
+
+        return $this->states->get($fromEnum)->getTransitionRules();
     }
 
     /**
@@ -82,7 +93,9 @@ final class InvoiceTransitionValidator
     public function filterErrorsForRole(array $errors, array $rules, int $roleId, string $roleName, string $status): array
     {
         $editable = $this->fieldPolicy->getEditableFields($roleId, $roleName, $status);
-        $statusVisible = in_array($roleName, $this->states->get($status)->getRoleVisibility(), true);
+        $statusEnum = PipelineStatus::tryFrom($status);
+        $statusVisible = $statusEnum !== null
+            && in_array($roleName, $this->states->get($statusEnum)->getRoleVisibility(), true);
 
         $filtered = [];
         foreach ($rules as $i => $rule) {

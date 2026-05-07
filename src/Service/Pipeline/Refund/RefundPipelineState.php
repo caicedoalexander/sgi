@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Refund;
 
+use App\Constants\Domain\Refund\PipelineStatus;
 use App\Model\Entity\Refund;
 
 /**
@@ -18,14 +19,14 @@ use App\Model\Entity\Refund;
  */
 interface RefundPipelineState
 {
-    /** Canonical name (e.g. 'agrupacion'). */
-    public function getName(): string;
+    /** Estado canónico tipado. */
+    public function getStatus(): PipelineStatus;
 
-    /** Base next state's name; null if terminal. */
-    public function getNext(): ?string;
+    /** Estado siguiente; null si terminal. */
+    public function getNextStatus(): ?PipelineStatus;
 
-    /** Previous state's name; null if first state or regression intrínsecamente bloqueada. */
-    public function getPrevious(): ?string;
+    /** Estado anterior; null si es el primero o regresión intrínsecamente bloqueada. */
+    public function getPreviousStatus(): ?PipelineStatus;
 
     /**
      * Errores que impiden avanzar al siguiente estado.

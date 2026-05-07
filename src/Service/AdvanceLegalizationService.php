@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\AdvanceConstants;
+use App\Constants\Domain\Advance\PipelineStatus as AdvancePipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Event\AdvanceLegalizedEvent;
 use App\Model\Entity\AdvanceLegalization;
@@ -186,7 +187,11 @@ class AdvanceLegalizationService
 
         // Los requirements (≥1 factura vinculada, todas en CONTABILIDAD, doc PDF)
         // viven en ValidacionState::validateAdvance — audit MA-010 / SU-001.
-        $errors = $this->stateRegistry->get($leg->status)->validateAdvance($leg);
+        $statusEnum = AdvancePipelineStatus::tryFrom((string)$leg->status);
+        if ($statusEnum === null) {
+            return ServiceResult::fail("Estado inválido: {$leg->status}");
+        }
+        $errors = $this->stateRegistry->get($statusEnum)->validateAdvance($leg);
         if (!empty($errors)) {
             return ServiceResult::fail($errors[0]);
         }

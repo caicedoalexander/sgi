@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Advance;
 
+use App\Constants\Domain\Advance\PipelineStatus;
 use App\Model\Entity\AdvanceLegalization;
 
 /**
@@ -18,14 +19,14 @@ use App\Model\Entity\AdvanceLegalization;
  */
 interface AdvanceLegalizationPipelineState
 {
-    /** Nombre canónico del estado (e.g. 'validacion'). */
-    public function getName(): string;
+    /** Estado canónico tipado. */
+    public function getStatus(): PipelineStatus;
 
     /** Estado siguiente "natural" en el avance lineal; null si terminal o bifurcante. */
-    public function getNext(): ?string;
+    public function getNextStatus(): ?PipelineStatus;
 
     /** Estado anterior; null si es el primero o si la regresión está bloqueada. */
-    public function getPrevious(): ?string;
+    public function getPreviousStatus(): ?PipelineStatus;
 
     /**
      * Errores de requirement de este estado para avanzar al siguiente.
