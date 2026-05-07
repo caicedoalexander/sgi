@@ -65,7 +65,7 @@ foreach ($folders as $folder) {
             <?php endif; ?>
             <div class="mt-2 d-flex gap-1 flex-wrap">
                 <?php if (!empty($employee->status)): ?>
-                    <span class="badge <?= $employee->status === \App\Constants\EmployeeStatusConstants::RETIRADO ? 'bg-danger' : 'bg-info' ?>">
+                    <span class="badge <?= $employee->isRetired() ? 'bg-danger' : 'bg-info' ?>">
                         <?= h(\App\Constants\EmployeeStatusConstants::STATUS_LABELS[$employee->status] ?? $employee->status) ?>
                     </span>
                 <?php endif; ?>

@@ -144,7 +144,7 @@ $genderOptions = ['' => '-- Seleccione --'] + GenderConstants::LABELS;
                     'id' => 'contract-type',
                 ]) ?>
             </div>
-            <div class="col-md-3 mb-3" id="org-temporal-wrapper" style="<?= ($employee->contract_type ?? '') !== ContractTypeConstants::OBRA_LABOR ? 'display:none' : '' ?>">
+            <div class="col-md-3 mb-3" id="org-temporal-wrapper" style="<?= !$employee->requiresTemporaryOrg() ? 'display:none' : '' ?>">
                 <?= $this->Form->control('temporary_organization_id', ['class' => 'form-select', 'label' => ['text' => 'Organización Temporal', 'class' => 'form-label'], 'empty' => '-- Seleccione --', 'options' => $temporaryOrganizations]) ?>
             </div>
             <div class="col-md-3 mb-3">

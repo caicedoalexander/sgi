@@ -30,7 +30,7 @@
 | CR-014 | 🟡 Minor | `createDefaultFolders` hace inserts uno-a-uno | ✅ Resuelto | Lote 1 (2026-05-07) — saveMany(['atomic' => true]) ya implementado en CR-006 |
 | CR-015 | 🟡 Minor | N×M de queries en chart de tipos de contrato | ✅ Resuelto | Lote 5 (2026-05-07) — single query con GROUP BY contract_type, fill con 0 para tipos faltantes |
 | CR-016 | 🟡 Minor | `iterator_to_array` innecesario en `index.php` | ✅ Resuelto | Lote 5 (2026-05-07) — reemplazado por `->toArray()` |
-| CR-017 | 🟡 Minor | Entity `Employee` anémica (lógica de negocio fuera de la entity) | ⏳ Pendiente | — |
+| CR-017 | 🟡 Minor | Entity `Employee` anémica (lógica de negocio fuera de la entity) | ✅ Resuelto | Lote 6 (2026-05-07) — métodos isActive/isRetired/requiresTemporaryOrg/hasActiveNoveltyToday; aplicados en templates index, view y form element |
 | CR-018 | 🟢 Aceptado | `EmployeeDocumentService` viola SRP (4 responsabilidades) | ✅ Aceptado | Lote 3 (2026-05-07) — service cohesionado en torno a gestión de archivos del empleado (~360 LOC). Re-evaluar si supera 500 LOC o aparece 5ta responsabilidad |
 | CR-019 | 🟡 Minor | 5 closures de iconografía de archivos en `view.php` | ✅ Resuelto | Lote 4 (2026-05-07) — DocumentIconHelper creado y cargado en AppView |
 | CR-020 | 🟡 Minor | `add.php` y `edit.php` ~95% duplicados | ✅ Resuelto | Lote 4 (2026-05-07) — extraído a templates/element/Employees/form.php con $mode |

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Model\Entity;
 
+use App\Constants\ContractTypeConstants;
+use App\Constants\EmployeeStatusConstants;
 use App\Constants\NoveltyConstants;
 use Cake\Chronos\Chronos;
 use Cake\Chronos\ChronosDate;
@@ -45,6 +47,38 @@ class Employee extends Entity
     protected function _getFullName(): string
     {
         return trim(($this->first_name ?? '') . ' ' . ($this->last_name1 ?? '') . ' ' . ($this->last_name2 ?? ''));
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->status === EmployeeStatusConstants::ACTIVO;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRetired(): bool
+    {
+        return $this->status === EmployeeStatusConstants::RETIRADO;
+    }
+
+    /**
+     * @return bool
+     */
+    public function requiresTemporaryOrg(): bool
+    {
+        return $this->contract_type === ContractTypeConstants::OBRA_LABOR;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasActiveNoveltyToday(): bool
+    {
+        return $this->_getCurrentNovelty() !== null;
     }
 
     /**
