@@ -3,16 +3,16 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Service\Pipeline\State\AprobacionState;
 use App\Service\Pipeline\State\AutorizacionPagoState;
 use App\Service\Pipeline\State\ContabilidadState;
 use App\Service\Pipeline\State\LegalizadaState;
 use App\Service\Pipeline\State\PagadaState;
 use App\Service\Pipeline\State\TesoreriaState;
-use InvalidArgumentException;
 
 /**
- * Resuelve `pipeline_status` (string) → instancia concreta de InvoicePipelineState.
+ * Resuelve `pipeline_status` (enum) → instancia concreta de InvoicePipelineState.
  * Es la única dependencia que necesita el coordinador para acceder a los estados.
  */
 final class InvoicePipelineStateRegistry
@@ -31,17 +31,13 @@ final class InvoicePipelineStateRegistry
         LegalizadaState $legalizada,
     ) {
         foreach ([$aprobacion, $contabilidad, $tesoreria, $autorizacionPago, $pagada, $legalizada] as $state) {
-            $this->states[$state->getName()] = $state;
+            $this->states[$state->getStatus()->value] = $state;
         }
     }
 
-    public function get(string $name): InvoicePipelineState
+    public function get(PipelineStatus $status): InvoicePipelineState
     {
-        if (!isset($this->states[$name])) {
-            throw new InvalidArgumentException("Unknown pipeline state: {$name}");
-        }
-
-        return $this->states[$name];
+        return $this->states[$status->value];
     }
 
     /** @return array<string, \App\Service\Pipeline\InvoicePipelineState> */

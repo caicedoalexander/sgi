@@ -3,23 +3,23 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\State;
 
-use App\Constants\InvoiceConstants;
+use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\RoleConstants;
 use App\Service\Pipeline\InvoicePipelineState;
 
 final class LegalizadaState implements InvoicePipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return InvoiceConstants::STATUS_LEGALIZADA;
+        return PipelineStatus::LEGALIZADA;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
         return null;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
         return null;
     }

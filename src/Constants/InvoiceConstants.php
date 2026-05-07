@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Constants;
 
+use App\Constants\Domain\Invoice\PipelineStatus;
+
 final class InvoiceConstants
 {
     // Document types
@@ -52,15 +54,17 @@ final class InvoiceConstants
     public const DIAN_REJECTED = 'Rechazado';
     public const DIAN_STATUSES = [self::DIAN_PENDING, self::DIAN_APPROVED, self::DIAN_REJECTED];
 
-    // Pipeline statuses
-    public const STATUS_APROBACION = 'aprobacion';
-    public const STATUS_CONTABILIDAD = 'contabilidad';
-    public const STATUS_TESORERIA = 'tesoreria';
-    public const STATUS_AUTORIZACION_PAGO = 'autorizacion_pago';
-    public const STATUS_PAGADA = 'pagada';
+    // Pipeline statuses — fuente única en App\Constants\Domain\Invoice\PipelineStatus.
+    // Estas constantes delegan al enum y se preservan para retrocompatibilidad
+    // con call-sites que aún consumen strings.
+    public const STATUS_APROBACION = PipelineStatus::APROBACION->value;
+    public const STATUS_CONTABILIDAD = PipelineStatus::CONTABILIDAD->value;
+    public const STATUS_TESORERIA = PipelineStatus::TESORERIA->value;
+    public const STATUS_AUTORIZACION_PAGO = PipelineStatus::AUTORIZACION_PAGO->value;
+    public const STATUS_PAGADA = PipelineStatus::PAGADA->value;
     // Estado terminal exclusivo para document_type = Legalización.
     // No participa en PIPELINE_STATUSES (flujo normal). Ver self::ALL_STATUSES.
-    public const STATUS_LEGALIZADA = 'legalizada';
+    public const STATUS_LEGALIZADA = PipelineStatus::LEGALIZADA->value;
 
     public const PIPELINE_STATUSES = [
         self::STATUS_APROBACION,
