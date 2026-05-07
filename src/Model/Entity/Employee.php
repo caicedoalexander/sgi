@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Entity;
 
+use App\Constants\NoveltyConstants;
 use Cake\Chronos\Chronos;
 use Cake\Chronos\ChronosDate;
 use Cake\ORM\Entity;
@@ -47,13 +48,53 @@ class Employee extends Entity
     }
 
     /**
-     * Get the first active novelty for today (loaded via conditional contain).
+     * Get the first active novelty for today, filtering in memory.
+     *
+     * Independiente del orden y filtrado del finder. Funciona tanto si
+     * employee_novelties fue cargado por findWithCurrentNovelty (1 fila ya
+     * filtrada) como por contain plano (historial completo).
      */
     protected function _getCurrentNovelty(): ?EmployeeNovelty
     {
         $novelties = $this->employee_novelties ?? [];
+        if ($novelties === []) {
+            return null;
+        }
 
-        return !empty($novelties) ? $novelties[0] : null;
+        $today = date('Y-m-d');
+
+        foreach ($novelties as $novelty) {
+            if (!$this->_isNoveltyActiveOn($novelty, $today)) {
+                continue;
+            }
+
+            return $novelty;
+        }
+
+        return null;
+    }
+
+    private function _isNoveltyActiveOn(EmployeeNovelty $novelty, string $today): bool
+    {
+        if ($novelty->pipeline_status === NoveltyConstants::STATUS_RECHAZADA) {
+            return false;
+        }
+
+        $start = $novelty->start_date !== null ? (string)$novelty->start_date : null;
+        $end = $novelty->end_date !== null ? (string)$novelty->end_date : null;
+        $permission = $novelty->permission_date !== null ? (string)$novelty->permission_date : null;
+
+        // Single-day permission: permission_date == today AND no range
+        if ($start === null && $permission === $today) {
+            return true;
+        }
+
+        // Multi-day range: today within [start_date, end_date]
+        if ($start !== null && $end !== null && $start <= $today && $today <= $end) {
+            return true;
+        }
+
+        return false;
     }
 
     protected function _getAge(): ?int
