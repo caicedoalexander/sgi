@@ -80,6 +80,9 @@ class EmployeesController extends AppController
                     'UploadedByUsers',
                 ],
             ],
+            // Observations ASC: chat de lectura cronológica natural.
+            // Histories DESC: cambios recientes primero (timeline de auditoría).
+            // La divergencia es intencional (CR-023).
             'EmployeeObservations' => [
                 'sort' => ['EmployeeObservations.created' => 'ASC'],
                 'Users',

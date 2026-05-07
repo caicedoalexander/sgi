@@ -13,39 +13,7 @@ $initials = mb_strtoupper(
     mb_substr($employee->last_name1  ?? '', 0, 1)
 );
 
-// Helpers para tipo de documento
-$docIcon = fn(?string $mime): string => match(true) {
-    str_contains($mime ?? '', 'pdf') => 'bi-file-earmark-pdf',
-    str_contains($mime ?? '', 'image') => 'bi-file-earmark-image',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => 'bi-file-earmark-word',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'bi-file-earmark-excel',
-    str_contains($mime ?? '', 'text/plain') => 'bi-file-earmark-text',
-    default => 'bi-file-earmark',
-};
-$docIconColor = fn(?string $mime): string => match(true) {
-    str_contains($mime ?? '', 'pdf') => '#dc3545',
-    str_contains($mime ?? '', 'image') => '#0dcaf0',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => '#0d6efd',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'var(--primary-color)',
-    default => '#aaa',
-};
-$docType = fn(?string $mime): string => match(true) {
-    str_contains($mime ?? '', 'pdf') => 'PDF',
-    str_contains($mime ?? '', 'image/jpeg') || str_contains($mime ?? '', 'image/jpg') => 'JPG',
-    str_contains($mime ?? '', 'image/png') => 'PNG',
-    str_contains($mime ?? '', 'image') => 'IMG',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => 'WORD',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'EXCEL',
-    str_contains($mime ?? '', 'text/plain') => 'TXT',
-    default => 'ARCH.',
-};
-$docBadgeClass = fn(string $type): string => match($type) {
-    'PDF' => 'badge-outline-danger',
-    'JPG', 'PNG', 'IMG' => 'badge-outline-info',
-    'WORD' => 'badge-outline-dark',
-    'EXCEL' => 'badge-outline-success',
-    default => 'badge-outline-dark',
-};
+// Iconografía de documentos: ver $this->DocumentIcon (CR-019)
 
 // Contar documentos totales
 $totalDocs = 0;
@@ -417,15 +385,15 @@ $novedades = $employee->employee_novelties ?? [];
                                 </thead>
                                 <tbody>
                                     <?php foreach ($folder->employee_documents as $doc):
-                                        $type = $docType($doc->mime_type);
+                                        $type = $this->DocumentIcon->typeLabel($doc->mime_type);
                                     ?>
                                     <tr>
                                         <td>
-                                            <i class="bi <?= $docIcon($doc->mime_type) ?> me-1"
-                                               style="color:<?= $docIconColor($doc->mime_type) ?>;font-size:1rem;vertical-align:middle"></i>
+                                            <i class="bi <?= $this->DocumentIcon->iconClass($doc->mime_type) ?> me-1"
+                                               style="color:<?= $this->DocumentIcon->iconColor($doc->mime_type) ?>;font-size:1rem;vertical-align:middle"></i>
                                             <?= $this->Html->link(h($doc->name), ['action' => 'downloadDocument', $employee->id, $doc->id], ['target' => '_blank', 'class' => 'text-decoration-none']) ?>
                                         </td>
-                                        <td><span class="badge <?= $docBadgeClass($type) ?>"><?= $type ?></span></td>
+                                        <td><span class="badge <?= $this->DocumentIcon->badgeClass($type) ?>"><?= $type ?></span></td>
                                         <td style="color:#888;font-size:.8rem"><?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?></td>
                                         <td style="color:#888;font-size:.8rem"><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></td>
                                         <td style="color:#888;font-size:.8rem">
@@ -463,15 +431,15 @@ $novedades = $employee->employee_novelties ?? [];
                                     <table class="table table-sm table-hover mb-0">
                                         <tbody>
                                             <?php foreach ($subfolder->employee_documents as $doc):
-                                                $type = $docType($doc->mime_type);
+                                                $type = $this->DocumentIcon->typeLabel($doc->mime_type);
                                             ?>
                                             <tr>
                                                 <td>
-                                                    <i class="bi <?= $docIcon($doc->mime_type) ?> me-1"
-                                                       style="color:<?= $docIconColor($doc->mime_type) ?>;font-size:1rem;vertical-align:middle"></i>
+                                                    <i class="bi <?= $this->DocumentIcon->iconClass($doc->mime_type) ?> me-1"
+                                                       style="color:<?= $this->DocumentIcon->iconColor($doc->mime_type) ?>;font-size:1rem;vertical-align:middle"></i>
                                                     <?= $this->Html->link(h($doc->name), ['action' => 'downloadDocument', $employee->id, $doc->id], ['target' => '_blank', 'class' => 'text-decoration-none']) ?>
                                                 </td>
-                                                <td><span class="badge <?= $docBadgeClass($type) ?>"><?= $type ?></span></td>
+                                                <td><span class="badge <?= $this->DocumentIcon->badgeClass($type) ?>"><?= $type ?></span></td>
                                                 <td style="color:#888;font-size:.8rem"><?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?></td>
                                                 <td style="color:#888;font-size:.8rem"><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></td>
                                                 <td style="color:#888;font-size:.8rem"><?= $doc->created?->format('d/m/Y') ?></td>

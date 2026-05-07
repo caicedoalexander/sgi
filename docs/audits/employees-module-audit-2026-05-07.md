@@ -25,18 +25,18 @@
 | CR-009 | 🟠 Major | `_getCurrentNovelty` acoplado al orden del finder | ✅ Resuelto | Lote 2 (2026-05-07) — _getCurrentNovelty filtra en memoria, desacoplado del orden del finder |
 | CR-010 | 🟠 Major | `EmployeeDocumentService` retorna tipos heterogéneos — viola convención `ServiceResult` | ✅ Resuelto | Lote 1 (2026-05-07) — todos los métodos públicos retornan `ServiceResult`; controller usa `->success` / `firstError()` |
 | CR-011 | 🟠 Major | `EmployeesTable` instancia services con `new` dentro de callbacks de import | ✅ Resuelto | Lote 3 (2026-05-07) — setters DI en EmployeesTable + inyección en EmployeesController::initialize, fallback a `new` para compat |
-| CR-012 | 🟡 Minor | Magic strings de tipo doc, género, contrato en templates | ⏳ Pendiente | — |
-| CR-013 | 🟡 Minor | Lógica duplicada de `currentNovelty` (controller vs finder) | ⏳ Pendiente | — |
+| CR-012 | 🟡 Minor | Magic strings de tipo doc, género, contrato en templates | ✅ Resuelto | Lote 4 (2026-05-07) — DocumentTypeConstants, GenderConstants creados; ContractTypeConstants reusado en _form |
+| CR-013 | 🟡 Minor | Lógica duplicada de `currentNovelty` (controller vs finder) | ✅ Resuelto | Lote 2 (2026-05-07) — query duplicada del controller eliminada en CR-007; view() usa $employee->current_novelty |
 | CR-014 | 🟡 Minor | `createDefaultFolders` hace inserts uno-a-uno | ⏳ Pendiente | — |
 | CR-015 | 🟡 Minor | N×M de queries en chart de tipos de contrato | ⏳ Pendiente | — |
 | CR-016 | 🟡 Minor | `iterator_to_array` innecesario en `index.php` | ⏳ Pendiente | — |
 | CR-017 | 🟡 Minor | Entity `Employee` anémica (lógica de negocio fuera de la entity) | ⏳ Pendiente | — |
 | CR-018 | 🟢 Aceptado | `EmployeeDocumentService` viola SRP (4 responsabilidades) | ✅ Aceptado | Lote 3 (2026-05-07) — service cohesionado en torno a gestión de archivos del empleado (~360 LOC). Re-evaluar si supera 500 LOC o aparece 5ta responsabilidad |
-| CR-019 | 🟡 Minor | 5 closures de iconografía de archivos en `view.php` | ⏳ Pendiente | — |
-| CR-020 | 🟡 Minor | `add.php` y `edit.php` ~95% duplicados | ⏳ Pendiente | — |
-| CR-021 | 🟡 Minor | JS de toggle inline duplicado entre `add.php` y `edit.php` | ⏳ Pendiente | — |
+| CR-019 | 🟡 Minor | 5 closures de iconografía de archivos en `view.php` | ✅ Resuelto | Lote 4 (2026-05-07) — DocumentIconHelper creado y cargado en AppView |
+| CR-020 | 🟡 Minor | `add.php` y `edit.php` ~95% duplicados | ✅ Resuelto | Lote 4 (2026-05-07) — extraído a templates/element/Employees/form.php con $mode |
+| CR-021 | 🟡 Minor | JS de toggle inline duplicado entre `add.php` y `edit.php` | ✅ Resuelto | Lote 4 (2026-05-07) — extraído a webroot/js/employees-form.js |
 | CR-022 | 🟡 Minor | `_setFormDropdowns` carga 7 catálogos sin caché | ⏳ Pendiente | — |
-| CR-023 | 🟡 Minor | Inconsistencia de orden en contains (histories DESC vs observations ASC) | ⏳ Pendiente | — |
+| CR-023 | 🟡 Minor | Inconsistencia de orden en contains (histories DESC vs observations ASC) | ✅ Resuelto | Lote 4 (2026-05-07) — divergencia intencional documentada con comentario en EmployeesController::view() |
 | CR-024 | 🟢 Sugerencia | VO `SocialSecurityInfo` (eps + pension_fund + arl + severance_fund) | ⏳ Pendiente | — |
 | CR-025 | 🟢 Sugerencia | VO `Identification` (document_type + document_number) | ⏳ Pendiente | — |
 | CR-026 | 🟢 Sugerencia | Extraer `BaseFilterService` reusable | ⏳ Pendiente | — |
