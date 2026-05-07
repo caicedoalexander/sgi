@@ -20,9 +20,9 @@
 | CR-004 | 🟠 Major | `add()` y `delete()` no son atómicos; `delete()` borra archivos antes que la fila | ✅ Resuelto | Lote 1 (2026-05-07) — `_persistEmployee` envuelve add/edit en `transactional` con cleanup de archivos en catch; `delete()` invierte orden BD→FS |
 | CR-005 | 🟠 Major | Resource leaks y `mkdir` sin verificar resultado | ✅ Resuelto | Lote 1 (2026-05-07) — `ensureDir` con patrón is_dir+mkdir+is_dir; try/catch en `moveTo` |
 | CR-006 | 🟠 Major | `createDefaultFolders` ignora resultado de `save()` | ✅ Resuelto | Lote 1 (2026-05-07) — `saveMany(['atomic' => true])` retorna ServiceResult |
-| CR-007 | 🟠 Major | Query duplicada en `view()`; falta filtro `status='activo'` en `index()`; índices probables faltantes | ⏳ Pendiente | — |
+| CR-007 | 🟠 Major | Query duplicada en `view()`; falta filtro `status='activo'` en `index()`; índices probables faltantes | ✅ Resuelto | Lote 2 (2026-05-07) — getter en memoria + query duplicada eliminada en view + default activo en index + migración de índices |
 | CR-008 | 🟠 Major | Doble `save()` en `add()` por imagen de perfil; archivo en disco si segundo save falla | ✅ Resuelto | Lote 1 (2026-05-07) — `handleProfileImage` ya no hace save; mutación in-memory + re-save dentro de transacción + cleanup en catch |
-| CR-009 | 🟠 Major | `_getCurrentNovelty` acoplado al orden del finder | ⏳ Pendiente | — |
+| CR-009 | 🟠 Major | `_getCurrentNovelty` acoplado al orden del finder | ✅ Resuelto | Lote 2 (2026-05-07) — _getCurrentNovelty filtra en memoria, desacoplado del orden del finder |
 | CR-010 | 🟠 Major | `EmployeeDocumentService` retorna tipos heterogéneos — viola convención `ServiceResult` | ✅ Resuelto | Lote 1 (2026-05-07) — todos los métodos públicos retornan `ServiceResult`; controller usa `->success` / `firstError()` |
 | CR-011 | 🟠 Major | `EmployeesTable` instancia services con `new` dentro de callbacks de import | ⏳ Pendiente | — |
 | CR-012 | 🟡 Minor | Magic strings de tipo doc, género, contrato en templates | ⏳ Pendiente | — |
