@@ -169,14 +169,22 @@ class EmployeeStatisticsService
         try {
             $empTable = TableRegistry::getTableLocator()->get('Employees');
 
-            $contractTypes = [];
-            foreach (ContractTypeConstants::ALL as $type) {
-                $contractTypes[$type] = $empTable->find()
-                    ->where([
-                        'status' => EmployeeStatusConstants::ACTIVO,
-                        'contract_type' => $type,
-                    ])
-                    ->count();
+            $contractQuery = $empTable->find();
+            $rows = $contractQuery
+                ->select([
+                    'contract_type',
+                    'count' => $contractQuery->func()->count('*'),
+                ])
+                ->where(['status' => EmployeeStatusConstants::ACTIVO])
+                ->groupBy('contract_type')
+                ->disableHydration()
+                ->toArray();
+
+            $contractTypes = array_fill_keys(ContractTypeConstants::ALL, 0);
+            foreach ($rows as $row) {
+                if (isset($contractTypes[$row['contract_type']])) {
+                    $contractTypes[$row['contract_type']] = (int)$row['count'];
+                }
             }
 
             $monthlyNovelties = TableRegistry::getTableLocator()->get('EmployeeNovelties')

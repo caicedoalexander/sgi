@@ -91,7 +91,7 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
     <?= $this->Form->end() ?>
 </div>
 
-<?php $employeeList = iterator_to_array($employees); ?>
+<?php $employeeList = $employees->toArray(); ?>
 
 <?php if (empty($employeeList)): ?>
 <div class="card">
