@@ -3,24 +3,24 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\PaymentScheduling\State;
 
-use App\Constants\PaymentSchedulingConstants;
+use App\Constants\Domain\PaymentScheduling\PipelineStatus;
 use App\Model\Entity\PaymentScheduling;
 use App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineState;
 use Cake\ORM\TableRegistry;
 
 final class BorradorState implements PaymentSchedulingPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return PaymentSchedulingConstants::STATUS_BORRADOR;
+        return PipelineStatus::BORRADOR;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
-        return PaymentSchedulingConstants::STATUS_TESORERIA;
+        return PipelineStatus::TESORERIA;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
         return null;
     }

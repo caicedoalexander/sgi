@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\PaymentScheduling;
 
+use App\Constants\Domain\PaymentScheduling\PipelineStatus;
 use App\Model\Entity\PaymentScheduling;
 
 /**
@@ -14,14 +15,14 @@ use App\Model\Entity\PaymentScheduling;
  */
 interface PaymentSchedulingPipelineState
 {
-    /** Canonical name (e.g. 'borrador'). */
-    public function getName(): string;
+    /** Estado canónico tipado. */
+    public function getStatus(): PipelineStatus;
 
-    /** Next state's name; null if terminal. */
-    public function getNext(): ?string;
+    /** Estado siguiente; null si terminal. */
+    public function getNextStatus(): ?PipelineStatus;
 
-    /** Previous state's name; null if first or regression blocked. */
-    public function getPrevious(): ?string;
+    /** Estado anterior; null si es el primero o regresión bloqueada. */
+    public function getPreviousStatus(): ?PipelineStatus;
 
     /**
      * Errors preventing advance from this state. Does not include cross-cutting

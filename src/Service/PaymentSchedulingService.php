@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\Domain\PaymentScheduling\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PaymentSchedulingConstants;
 use App\Constants\PipelineStepConstants;
@@ -98,7 +99,12 @@ class PaymentSchedulingService
 
     public function validateTransitionRequirements(PaymentScheduling $scheduling, string $fromStatus): array
     {
-        return $this->stateRegistry->get($fromStatus)->validateAdvance($scheduling);
+        $fromEnum = PipelineStatus::tryFrom($fromStatus);
+        if ($fromEnum === null) {
+            return ["Estado de origen inválido: {$fromStatus}"];
+        }
+
+        return $this->stateRegistry->get($fromEnum)->validateAdvance($scheduling);
     }
 
     public function getRegressionLockMessage(PaymentScheduling $scheduling): ?string
