@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Constants\NoveltyConstants;
 use App\Controller\Trait\ExcelWizardTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Service\EmployeeDocumentService;
@@ -93,20 +92,9 @@ class EmployeesController extends AppController
             ->order(['EmployeeFolders.name' => 'ASC'])
             ->all();
 
-        // Current active novelty for today
-        $today = date('Y-m-d');
-        $currentNovelty = $this->Employees->EmployeeNovelties->find()
-            ->where([
-                'EmployeeNovelties.employee_id' => $id,
-                'EmployeeNovelties.pipeline_status !=' => NoveltyConstants::STATUS_RECHAZADA,
-                'OR' => [
-                    ['EmployeeNovelties.permission_date' => $today, 'EmployeeNovelties.start_date IS' => null],
-                    ['EmployeeNovelties.start_date <=' => $today, 'EmployeeNovelties.end_date >=' => $today],
-                ],
-            ])
-            ->contain(['NoveltyTypes'])
-            ->order(['EmployeeNovelties.created' => 'DESC'])
-            ->first();
+        // Novedad activa hoy: el getter virtual current_novelty filtra en memoria
+        // sobre employee_novelties (CR-007 / CR-009).
+        $currentNovelty = $employee->current_novelty;
 
         $this->set(compact('employee', 'folders', 'currentNovelty'));
         $this->set('fieldLabels', EmployeeHistoryService::FIELD_LABELS);
