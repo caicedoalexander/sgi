@@ -3,25 +3,25 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\PettyCash\State;
 
-use App\Constants\PettyCashConstants;
+use App\Constants\Domain\PettyCash\PipelineStatus;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\Pipeline\PettyCash\PettyCashPipelineState;
 
 final class AutorizacionPagoState implements PettyCashPipelineState
 {
-    public function getName(): string
+    public function getStatus(): PipelineStatus
     {
-        return PettyCashConstants::STATUS_AUTORIZACION_PAGO;
+        return PipelineStatus::AUTORIZACION_PAGO;
     }
 
-    public function getNext(): ?string
+    public function getNextStatus(): ?PipelineStatus
     {
-        return PettyCashConstants::STATUS_PAGADA;
+        return PipelineStatus::PAGADA;
     }
 
-    public function getPrevious(): ?string
+    public function getPreviousStatus(): ?PipelineStatus
     {
-        return PettyCashConstants::STATUS_TESORERIA;
+        return PipelineStatus::TESORERIA;
     }
 
     public function validateAdvance(PettyCashRecord $record): array

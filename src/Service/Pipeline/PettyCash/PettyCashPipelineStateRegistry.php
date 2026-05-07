@@ -3,15 +3,15 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\PettyCash;
 
+use App\Constants\Domain\PettyCash\PipelineStatus;
 use App\Service\Pipeline\PettyCash\State\AgrupacionState;
 use App\Service\Pipeline\PettyCash\State\AutorizacionPagoState;
 use App\Service\Pipeline\PettyCash\State\ContabilidadState;
 use App\Service\Pipeline\PettyCash\State\PagadaState;
 use App\Service\Pipeline\PettyCash\State\TesoreriaState;
-use InvalidArgumentException;
 
 /**
- * Resuelve `petty_cash_records.status` (string) → instancia concreta de
+ * Resuelve `petty_cash_records.status` (enum) → instancia concreta de
  * PettyCashPipelineState. Es la única dependencia que necesita el
  * coordinador (PettyCashService) para acceder a los estados.
  */
@@ -38,17 +38,13 @@ final class PettyCashPipelineStateRegistry
         ];
 
         foreach ($list as $state) {
-            $this->states[$state->getName()] = $state;
+            $this->states[$state->getStatus()->value] = $state;
         }
     }
 
-    public function get(string $name): PettyCashPipelineState
+    public function get(PipelineStatus $status): PettyCashPipelineState
     {
-        if (!isset($this->states[$name])) {
-            throw new InvalidArgumentException("Unknown petty cash pipeline state: {$name}");
-        }
-
-        return $this->states[$name];
+        return $this->states[$status->value];
     }
 
     /** @return array<string, \App\Service\Pipeline\PettyCash\PettyCashPipelineState> */
