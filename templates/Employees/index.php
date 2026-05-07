@@ -76,10 +76,13 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
                 </div>
                 <div class="col-md-4">
                     <label class="sgi-filter-label">Estado</label>
-                    <?= $this->Form->select('status', $employeeStatuses, [
-                        'empty' => 'Todos',
+                    <?= $this->Form->select('status', [
+                        \App\Constants\EmployeeStatusConstants::ACTIVO   => 'Activo',
+                        \App\Constants\EmployeeStatusConstants::RETIRADO => 'Retirado',
+                        'all'                                            => 'Todos',
+                    ], [
                         'class' => 'form-select form-select-sm',
-                        'value' => $this->request->getQuery('status', ''),
+                        'value' => $this->request->getQuery('status') ?: \App\Constants\EmployeeStatusConstants::ACTIVO,
                     ]) ?>
                 </div>
             </div>
