@@ -65,7 +65,7 @@ class EmployeeFilterService
             return;
         }
 
-        $effective = (is_string($status) && $status !== '')
+        $effective = is_string($status) && $status !== ''
             ? $status
             : EmployeeStatusConstants::ACTIVO;
 

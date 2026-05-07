@@ -40,6 +40,9 @@ class AddIndexesToEmployeeNovelties extends BaseMigration
         }
     }
 
+    /**
+     * Reverse the migration: drop both indexes if present.
+     */
     public function down(): void
     {
         $table = $this->table('employee_novelties');
