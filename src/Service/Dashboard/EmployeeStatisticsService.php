@@ -17,9 +17,12 @@ class EmployeeStatisticsService
 {
     private StructuredLogger $logger;
 
-    public function __construct()
+    /**
+     * @param \App\Service\StructuredLogger|null $logger
+     */
+    public function __construct(?StructuredLogger $logger = null)
     {
-        $this->logger = new StructuredLogger('Dashboard.EmployeeStats');
+        $this->logger = $logger ?? new StructuredLogger('Dashboard.EmployeeStats');
     }
 
     /**
@@ -111,17 +114,14 @@ class EmployeeStatisticsService
         try {
             $empTable = TableRegistry::getTableLocator()->get('Employees');
 
-            $avgAge = $empTable->getConnection()->execute(
-                "SELECT AVG(TIMESTAMPDIFF(YEAR, birth_date, CURDATE())) as avg_age
+            $averages = $empTable->getConnection()->execute(
+                "SELECT
+                    AVG(CASE WHEN birth_date IS NOT NULL
+                             THEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) END) AS avg_age,
+                    AVG(CASE WHEN hire_date IS NOT NULL
+                             THEN TIMESTAMPDIFF(YEAR, hire_date, CURDATE()) END) AS avg_tenure
                  FROM employees
-                 WHERE status = ? AND birth_date IS NOT NULL",
-                [EmployeeStatusConstants::ACTIVO],
-            )->fetch('assoc');
-
-            $avgTenure = $empTable->getConnection()->execute(
-                "SELECT AVG(TIMESTAMPDIFF(YEAR, hire_date, CURDATE())) as avg_tenure
-                 FROM employees
-                 WHERE status = ? AND hire_date IS NOT NULL",
+                 WHERE status = ?",
                 [EmployeeStatusConstants::ACTIVO],
             )->fetch('assoc');
 
@@ -141,8 +141,8 @@ class EmployeeStatisticsService
                 ->count();
 
             return [
-                'avg_age' => round((float)($avgAge['avg_age'] ?? 0), 1),
-                'avg_tenure' => round((float)($avgTenure['avg_tenure'] ?? 0), 1),
+                'avg_age' => round((float)($averages['avg_age'] ?? 0), 1),
+                'avg_tenure' => round((float)($averages['avg_tenure'] ?? 0), 1),
                 'new_hires' => $newHires,
                 'terminations' => $terminations,
             ];

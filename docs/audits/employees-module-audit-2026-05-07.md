@@ -40,9 +40,9 @@
 | CR-024 | 🟢 Sugerencia | VO `SocialSecurityInfo` (eps + pension_fund + arl + severance_fund) | ⏳ Pendiente | — |
 | CR-025 | 🟢 Sugerencia | VO `Identification` (document_type + document_number) | ⏳ Pendiente | — |
 | CR-026 | 🟢 Sugerencia | Extraer `BaseFilterService` reusable | ⏳ Pendiente | — |
-| CR-027 | 🟢 Sugerencia | Combinar dos AVG en una sola query | ⏳ Pendiente | — |
+| CR-027 | 🟢 Sugerencia | Combinar dos AVG en una sola query | ✅ Resuelto | Lote 7 (2026-05-07) — single query con CASE WHEN para avg_age y avg_tenure simultáneos |
 | CR-028 | 🟢 Sugerencia | Defense-in-depth en uploads (rate limit, AV, rename por finfo) | ⏳ Pendiente | — |
-| CR-029 | 🟢 Sugerencia | Inyectar `StructuredLogger` por DI | ⏳ Pendiente | — |
+| CR-029 | 🟢 Sugerencia | Inyectar `StructuredLogger` por DI | ✅ Resuelto | Lote 7 (2026-05-07) — constructor con parámetro opcional ?? new StructuredLogger() |
 | CR-030 | 🟢 Sugerencia | Conteo de documentos vía `hasManyCount` finder | ⏳ Pendiente | — |
 
 ---
