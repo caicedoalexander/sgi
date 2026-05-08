@@ -66,39 +66,49 @@
         return '/' + trimmed;
     }
 
-    // ─── Bootstrap UI helpers (CR-011) ───────────────────────────────────────
-    function ensureToastContainer() {
-        var c = document.getElementById('sgi-toast-container');
+    // ─── Flash notification (alineado con el sistema Flash de SGI) ──────────
+    // Reutiliza #sgi-flash-container del layout para que los mensajes AJAX
+    // tengan el mismo estilo, posición y animación que los Flash de servidor
+    // (templates/element/flash/*.php + #sgi-flash-container en styles.css).
+    var FLASH_ICONS = {
+        success: 'bi-check-circle',
+        danger:  'bi-exclamation-triangle',
+        warning: 'bi-exclamation-circle',
+        info:    'bi-info-circle',
+    };
+
+    function ensureFlashContainer() {
+        var c = document.getElementById('sgi-flash-container');
         if (c) return c;
+        // Fallback: el layout no incluyó el container (no debería pasar en SGI).
         c = document.createElement('div');
-        c.id = 'sgi-toast-container';
-        c.className = 'toast-container position-fixed top-0 end-0 p-3';
-        c.style.zIndex = '1090';
+        c.id = 'sgi-flash-container';
         document.body.appendChild(c);
         return c;
     }
 
     function showToast(message, variant) {
-        if (!global.bootstrap || !global.bootstrap.Toast) {
-            // Fallback solo si Bootstrap no cargó (no debería ocurrir en SGI).
-            global.alert(message);
-            return;
-        }
         variant = variant || 'danger';
-        var container = ensureToastContainer();
-        var toastEl = document.createElement('div');
-        toastEl.className = 'toast align-items-center text-bg-' + variant + ' border-0';
-        toastEl.setAttribute('role', 'alert');
-        toastEl.innerHTML =
-            '<div class="d-flex">' +
-              '<div class="toast-body"></div>' +
-              '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>' +
-            '</div>';
-        toastEl.querySelector('.toast-body').textContent = message;
-        container.appendChild(toastEl);
-        var t = new global.bootstrap.Toast(toastEl, { delay: 4500 });
-        toastEl.addEventListener('hidden.bs.toast', function () { toastEl.remove(); });
-        t.show();
+        var icon = FLASH_ICONS[variant] || FLASH_ICONS.info;
+        var container = ensureFlashContainer();
+        var alertEl = document.createElement('div');
+        alertEl.className = 'alert alert-' + variant + ' alert-dismissible fade show';
+        alertEl.setAttribute('role', 'alert');
+        alertEl.innerHTML =
+            '<i class="bi ' + icon + ' me-2"></i>' +
+            '<span data-slot="msg"></span>' +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>';
+        alertEl.querySelector('[data-slot="msg"]').textContent = message;
+        container.appendChild(alertEl);
+        // Coincide con la animación sgi-flash-timer (4s) en styles.css.
+        setTimeout(function () {
+            if (!alertEl.parentNode) return;
+            if (global.bootstrap && global.bootstrap.Alert) {
+                global.bootstrap.Alert.getOrCreateInstance(alertEl).close();
+            } else {
+                alertEl.remove();
+            }
+        }, 4000);
     }
 
     function ensureConfirmModal() {
@@ -193,7 +203,11 @@
         var badgeEl = clone.querySelector('[data-slot="badge"]');
         if (badgeEl) {
             if (doc.pipeline_status && doc.badge_class && doc.badge_label) {
-                badgeEl.classList.add(doc.badge_class);
+                // badge_class puede traer varias clases ("bg-warning text-dark");
+                // classList.add() rechaza strings con espacios → split previo.
+                doc.badge_class.split(/\s+/).filter(Boolean).forEach(function (c) {
+                    badgeEl.classList.add(c);
+                });
                 badgeEl.textContent = doc.badge_label;
                 badgeEl.style.display = '';
             } else {
@@ -285,21 +299,7 @@
                     body: new FormData(form),
                     redirect: 'follow'
                 })
-                .then(function (r) {
-                    // [INSTRUMENTACIÓN TEMPORAL] capturar status, content-type, body crudo
-                    console.log('[upload-debug] status:', r.status, 'redirected:', r.redirected, 'url:', r.url);
-                    console.log('[upload-debug] content-type:', r.headers.get('content-type'));
-                    return r.text().then(function (txt) {
-                        console.log('[upload-debug] body length:', txt.length);
-                        console.log('[upload-debug] body (first 800):', txt.slice(0, 800));
-                        try {
-                            return JSON.parse(txt);
-                        } catch (e) {
-                            console.error('[upload-debug] JSON.parse falló:', e.message);
-                            throw new Error('JSON inválido. Body: ' + txt.slice(0, 200));
-                        }
-                    });
-                })
+                .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data.success) {
                         if (emptyState) emptyState.style.display = 'none';
@@ -314,12 +314,7 @@
                         showToast(data.error || 'Error al subir el archivo.', 'danger');
                     }
                 })
-                .catch(function (err) {
-                    // [INSTRUMENTACIÓN TEMPORAL] revelar el error real
-                    console.error('[upload-debug] catch — name:', err && err.name, 'message:', err && err.message);
-                    console.error('[upload-debug] error completo:', err);
-                    showToast('Error: ' + (err && err.message ? err.message.slice(0, 120) : 'desconocido'), 'danger');
-                })
+                .catch(function () { showToast('Error de conexión. Intente nuevamente.', 'danger'); })
                 .finally(function () {
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; }
                 });
