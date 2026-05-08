@@ -34,6 +34,9 @@ class InvoiceFieldAccessPolicy
         ],
         InvoiceConstants::STATUS_TESORERIA => [],
         InvoiceConstants::STATUS_AUTORIZACION_PAGO => [],
+        // Verificación de pago es read-only: la transición a Pagada se hace
+        // exclusivamente vía InvoicePaymentService::confirmPayment.
+        InvoiceConstants::STATUS_VERIFICACION_PAGO => [],
     ];
 
     /**

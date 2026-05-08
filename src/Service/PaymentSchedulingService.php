@@ -318,7 +318,7 @@ class PaymentSchedulingService
      * recalcula payment_status, registra historial y dispara InvoicePaidEvent por
      * cada hija. Todo en una sola transacción.
      */
-    public function confirmExecution(int $schedulingId, int $confirmedBy): ServiceResult
+    public function confirmPayment(int $schedulingId, int $confirmedBy): ServiceResult
     {
         $schedulingsTable = TableRegistry::getTableLocator()->get('PaymentSchedulings');
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');

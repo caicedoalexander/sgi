@@ -44,7 +44,7 @@ final class VerificacionPagoState implements InvoicePipelineState
      * usado solo para que el `TransitionValidator` siempre rechace el avance
      * automático desde este estado. La transición real
      * `verificacion_pago → pagada` se hace exclusivamente vía
-     * `InvoicePaymentService::confirmPaymentExecuted()`, invocado por la acción
+     * `InvoicePaymentService::confirmPayment()`, invocado por la acción
      * `InvoicePaymentsController::confirmPayment` (botón "Pasar a Pagada").
      */
     public function getTransitionRules(): array

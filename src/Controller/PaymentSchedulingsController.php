@@ -337,7 +337,7 @@ class PaymentSchedulingsController extends AppController
             return $this->redirect(['action' => 'view', $id]);
         }
 
-        $result = $this->schedulingService->confirmExecution(
+        $result = $this->schedulingService->confirmPayment(
             (int)$id,
             (int)$this->_getCurrentUser()->id,
         );

@@ -467,7 +467,7 @@ class InvoicePaymentService
      * registra historial y dispara InvoicePaidEvent (que activa
      * LegalizationInitializerSubscriber para anticipos).
      */
-    public function confirmPaymentExecuted(int $invoiceId, int $confirmedBy): ServiceResult
+    public function confirmPayment(int $invoiceId, int $confirmedBy): ServiceResult
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $invoice = $invoicesTable->get($invoiceId);

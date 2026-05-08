@@ -435,7 +435,7 @@ return function (RouteBuilder $routes): void {
         $builder->connect(
             '/invoices/confirm-payment/{invoiceId}',
             ['controller' => 'InvoicePayments', 'action' => 'confirmPayment'],
-            ['pass' => ['invoiceId'], 'invoiceId' => '\d+'],
+            ['invoiceId' => '\d+', 'pass' => ['invoiceId']],
         );
 
         $builder->connect(

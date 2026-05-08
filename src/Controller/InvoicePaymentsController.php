@@ -200,15 +200,15 @@ class InvoicePaymentsController extends AppController
             return $this->_redirectForInvoice((int)$invoiceId, 'view', $invoiceId);
         }
 
-        $result = $this->paymentService->confirmPaymentExecuted(
+        $result = $this->paymentService->confirmPayment(
             (int)$invoiceId,
             (int)$this->_getCurrentUser()->id,
         );
 
         if ($result->success) {
-            $this->Flash->success($result->data);
+            $this->Flash->success($result->data ?? 'Pago confirmado.');
         } else {
-            $this->Flash->error(implode(' ', (array)$result->errors));
+            $this->Flash->error($result->firstError() ?? 'No se pudo confirmar el pago.');
         }
 
         return $this->_redirectForInvoice((int)$invoiceId, 'view', $invoiceId);

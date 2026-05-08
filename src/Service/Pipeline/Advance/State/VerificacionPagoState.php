@@ -33,7 +33,10 @@ final class VerificacionPagoState implements AdvanceLegalizationPipelineState
     public function validateAdvance(AdvanceLegalization $leg): array
     {
         // El cierre lo dispara AdvanceLegalizationService::confirmRefundExecuted
-        // (Tesorería con permiso sobre el step `verificacion_pago`).
-        return [];
+        // (Tesorería con permiso sobre el step `verificacion_pago`). Igual que
+        // los otros 5 módulos del feature, retornamos mensaje explicativo en
+        // vez de array vacío para que cualquier intento de avance genérico
+        // muestre feedback consistente.
+        return ['La confirmación del reintegro se gestiona desde la sección de pago.'];
     }
 }
