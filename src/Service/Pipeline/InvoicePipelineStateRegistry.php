@@ -10,6 +10,7 @@ use App\Service\Pipeline\State\ContabilidadState;
 use App\Service\Pipeline\State\LegalizadaState;
 use App\Service\Pipeline\State\PagadaState;
 use App\Service\Pipeline\State\TesoreriaState;
+use App\Service\Pipeline\State\VerificacionPagoState;
 
 /**
  * Resuelve `pipeline_status` (enum) → instancia concreta de InvoicePipelineState.
@@ -27,10 +28,11 @@ final class InvoicePipelineStateRegistry
         ContabilidadState $contabilidad,
         TesoreriaState $tesoreria,
         AutorizacionPagoState $autorizacionPago,
+        VerificacionPagoState $verificacionPago,
         PagadaState $pagada,
         LegalizadaState $legalizada,
     ) {
-        foreach ([$aprobacion, $contabilidad, $tesoreria, $autorizacionPago, $pagada, $legalizada] as $state) {
+        foreach ([$aprobacion, $contabilidad, $tesoreria, $autorizacionPago, $verificacionPago, $pagada, $legalizada] as $state) {
             $this->states[$state->getStatus()->value] = $state;
         }
     }

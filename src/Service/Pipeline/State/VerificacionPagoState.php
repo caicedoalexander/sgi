@@ -7,45 +7,42 @@ use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\RoleConstants;
 use App\Service\Pipeline\InvoicePipelineState;
 
-final class PagadaState implements InvoicePipelineState
+final class VerificacionPagoState implements InvoicePipelineState
 {
     public function getStatus(): PipelineStatus
-    {
-        return PipelineStatus::PAGADA;
-    }
-
-    public function getNextStatus(): ?PipelineStatus
-    {
-        return null;
-    }
-
-    public function getPreviousStatus(): ?PipelineStatus
     {
         return PipelineStatus::VERIFICACION_PAGO;
     }
 
+    public function getNextStatus(): ?PipelineStatus
+    {
+        return PipelineStatus::PAGADA;
+    }
+
+    public function getPreviousStatus(): ?PipelineStatus
+    {
+        return PipelineStatus::AUTORIZACION_PAGO;
+    }
+
     public function getRoleVisibility(): array
     {
-        return [RoleConstants::ADMIN];
+        return [RoleConstants::TESORERIA, RoleConstants::ADMIN];
     }
 
     public function getAdvanceRoleVisibility(): array
     {
-        return [
-            RoleConstants::AUXILIAR_PERSONAL,
-            RoleConstants::ASISTENTE_PERSONAL,
-            RoleConstants::COORDINADOR_ADMIN,
-            RoleConstants::ADMIN,
-        ];
+        return [RoleConstants::TESORERIA, RoleConstants::ADMIN];
     }
 
     public function validateAdvance(object $invoice): array
     {
-        return [];
+        return ['La confirmación de pago se gestiona desde la sección de pagos.'];
     }
 
     public function getTransitionRules(): array
     {
-        return [];
+        return [
+            ['field' => '_payment_executed', 'label' => 'Tesorería debe confirmar que el pago se ejecutó'],
+        ];
     }
 }
