@@ -416,6 +416,38 @@ class InvoicePipelineService
                     $userId,
                 );
 
+                // verificacion_pago → autorizacion_pago: revertir pagos
+                // autorizados a pendiente para que el Contador re-revise. El
+                // avance volverá a dispararse automáticamente desde
+                // InvoicePaymentService::authorizePayment cuando todos los
+                // pagos queden authorized de nuevo.
+                if (
+                    $currentStatus === InvoiceConstants::STATUS_VERIFICACION_PAGO
+                    && $previousStatus === InvoiceConstants::STATUS_AUTORIZACION_PAGO
+                ) {
+                    $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+                    $authorizedPayments = $paymentsTable->find()
+                        ->where([
+                            'invoice_id' => $invoice->id,
+                            'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
+                        ])
+                        ->all();
+
+                    foreach ($authorizedPayments as $payment) {
+                        $payment->authorized = false;
+                        $payment->status = InvoiceConstants::PAYMENT_RECORD_PENDING;
+                        $payment->authorized_by = null;
+                        $payment->authorized_date = null;
+                        if (!$paymentsTable->save($payment)) {
+                            return false;
+                        }
+                    }
+
+                    if (!$this->paymentService->recalculatePaymentStatus((int)$invoice->id)) {
+                        return false;
+                    }
+                }
+
                 $observation = $observationsTable->newEntity([
                     'invoice_id' => $invoice->id,
                     'user_id' => $userId,

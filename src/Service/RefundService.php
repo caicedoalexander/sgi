@@ -511,6 +511,42 @@ class RefundService
                 $record->status = $previousStatus;
                 $this->refundHistory->recordStatusChange($record->id, $currentStatus, $previousStatus, $userId);
 
+                // verificacion_pago → autorizacion_pago: deshacer la materialización
+                // que hizo RefundPaymentService::authorizePayment para que el Contador
+                // pueda re-revisar y re-autorizar.
+                if (
+                    $currentStatus === RefundConstants::STATUS_VERIFICACION_PAGO
+                    && $previousStatus === RefundConstants::STATUS_AUTORIZACION_PAGO
+                ) {
+                    $invoicePaymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+                    $invoicePaymentsTable->deleteAll(['refund_id' => $record->id]);
+
+                    $invoicesTable->updateAll(
+                        [
+                            'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
+                            'payment_status' => null,
+                            'full_payment_date' => null,
+                        ],
+                        [$fkField => $record->id],
+                    );
+
+                    $locked->payment_status = null;
+                    $locked->payment_authorized_by = null;
+                    $locked->payment_authorized_date = null;
+                    if (!$recordsTable->save($locked)) {
+                        $finalResult = [
+                            'success' => false,
+                            'error' => self::_buildSaveErrorMessage(
+                                'No se pudo revertir la autorización del pago.',
+                                $locked->getErrors(),
+                            ),
+                            'previousStatus' => null,
+                        ];
+
+                        return false;
+                    }
+                }
+
                 if (isset($childPipelineMap[$previousStatus])) {
                     $newPipelineStatus = $childPipelineMap[$previousStatus];
                     $invoicesBefore = $invoicesTable->find()

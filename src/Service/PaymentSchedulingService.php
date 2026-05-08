@@ -176,6 +176,36 @@ class PaymentSchedulingService
                     return false;
                 }
 
+                // verificacion_pago → aut_pago: deshacer applyPayments para que el
+                // siguiente avance vuelva a generar invoice_payments y mover hijas.
+                if (
+                    $currentStatus === PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO
+                    && $previousStatus === PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO
+                ) {
+                    $invoicePaymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+                    $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+                    $itemsTable = TableRegistry::getTableLocator()->get('PaymentSchedulingItems');
+
+                    $childInvoiceIds = $itemsTable->find()
+                        ->where(['payment_scheduling_id' => $scheduling->id])
+                        ->all()
+                        ->extract('invoice_id')
+                        ->toList();
+
+                    $invoicePaymentsTable->deleteAll(['payment_scheduling_id' => $scheduling->id]);
+
+                    if (!empty($childInvoiceIds)) {
+                        foreach (array_unique($childInvoiceIds) as $invoiceId) {
+                            $this->paymentService->recalculatePaymentStatus((int)$invoiceId);
+                            $invoice = $invoicesTable->get($invoiceId);
+                            $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
+                            if (!$invoicesTable->save($invoice)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
                 $observation = $observationsTable->newEntity([
                     'payment_scheduling_id' => $scheduling->id,
                     'user_id' => $userId,

@@ -850,6 +850,32 @@ class PettyCashService
                     return false;
                 }
 
+                // verificacion_pago → autorizacion_pago: deshacer la materialización
+                // que hizo authorizePayment para que el Contador pueda re-autorizar.
+                if (
+                    $currentStatus === PettyCashConstants::STATUS_VERIFICACION_PAGO
+                    && $previousStatus === PettyCashConstants::STATUS_AUTORIZACION_PAGO
+                ) {
+                    $invoicePaymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+                    $invoicePaymentsTable->deleteAll(['petty_cash_record_id' => $record->id]);
+
+                    $invoicesTable->updateAll(
+                        [
+                            'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
+                            'payment_status' => null,
+                            'full_payment_date' => null,
+                        ],
+                        [$fkField => $record->id],
+                    );
+
+                    $record->payment_status = null;
+                    $record->payment_authorized_by = null;
+                    $record->payment_authorized_date = null;
+                    if (!$recordsTable->save($record)) {
+                        return false;
+                    }
+                }
+
                 if (isset($childPipelineMap[$previousStatus])) {
                     $newPipelineStatus = $childPipelineMap[$previousStatus];
                     $invoicesBefore = $invoicesTable->find()
