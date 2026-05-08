@@ -4,7 +4,7 @@
 **Alcance:** 19 archivos · Controller + 5 Entities + 5 Tables + 4 Services + 1 Constants + 4 Templates
 **Modo:** Auditoría arquitectónica del módulo (PATH, sin diff de rama)
 **Nivel:** HIGH (PSR + Encapsulation + Code Smells + Bug + Readability + SOLID + Security + Performance + DDD + Architecture)
-**Verdicto global:** ❌ **REQUEST CHANGES** — funcionalmente completo y alineado con varias convenciones del SGI, pero con 3 vulnerabilidades de seguridad críticas y 8 issues mayores que bloquean aprobación.
+**Verdicto global:** ✅ **APPROVED** — auditoría 100% cerrada al 2026-05-08 (22 resueltos en Lotes 1-7, 2 aceptados sin acción, 1 resuelto parcial con backlog documentado, 2 marcados No Aplica con justificación). Ningún hallazgo abierto.
 
 > **Nota:** los planes describen *cómo llegar* a la solución (pasos, archivos a tocar, criterios de validación). El código concreto se decide al ejecutar cada plan.
 
@@ -37,13 +37,13 @@
 | CR-021 | 🟡 Minor | JS de toggle inline duplicado entre `add.php` y `edit.php` | ✅ Resuelto | Lote 4 (2026-05-07) — extraído a webroot/js/employees-form.js |
 | CR-022 | 🟢 Aceptado | `_setFormDropdowns` carga 7 catálogos sin caché | ✅ Aceptado | Lote 5 (2026-05-07) — catálogos pequeños cargados solo en add/edit (no hot path). El costo de invalidación en 7 tables supera el beneficio. Re-evaluar si algún catálogo crece >1000 filas |
 | CR-023 | 🟡 Minor | Inconsistencia de orden en contains (histories DESC vs observations ASC) | ✅ Resuelto | Lote 4 (2026-05-07) — divergencia intencional documentada con comentario en EmployeesController::view() |
-| CR-024 | 🟢 Sugerencia | VO `SocialSecurityInfo` (eps + pension_fund + arl + severance_fund) | ⏳ Pendiente | — |
-| CR-025 | 🟢 Sugerencia | VO `Identification` (document_type + document_number) | ⏳ Pendiente | — |
-| CR-026 | 🟢 Sugerencia | Extraer `BaseFilterService` reusable | ⏳ Pendiente | — |
+| CR-024 | 🟢 Sugerencia | VO `SocialSecurityInfo` (eps + pension_fund + arl + severance_fund) | ❌ No Aplica | Cierre (2026-05-08) — campos `eps`, `pension_fund`, `arl`, `severance_fund` no exhibidos en UI/exports actuales. VO sin caller real. Reabrir si aparece UI/Excel/PDF que los muestre como bloque |
+| CR-025 | 🟢 Sugerencia | VO `Identification` (document_type + document_number) | ✅ Resuelto | Lote 8 (2026-05-08) — `App\Model\ValueObject\Identification` + virtual getter `_getIdentification` en Employee + uso en `view.php:57` |
+| CR-026 | 🟢 Sugerencia | Extraer `BaseFilterService` reusable | ✅ Resuelto | Lote 10 (2026-05-08) — `App\Service\Filter\BaseFilterService` con `applySearch`/`applyExact`/`applyDateRange`; `EmployeeFilterService` e `InvoiceFilterService` extienden |
 | CR-027 | 🟢 Sugerencia | Combinar dos AVG en una sola query | ✅ Resuelto | Lote 7 (2026-05-07) — single query con CASE WHEN para avg_age y avg_tenure simultáneos |
-| CR-028 | 🟢 Sugerencia | Defense-in-depth en uploads (rate limit, AV, rename por finfo) | ⏳ Pendiente | — |
+| CR-028 | 🟢 Sugerencia | Defense-in-depth en uploads (rate limit, AV, rename por finfo) | ⚠️ Resuelto parcial | Lote 9 (2026-05-08) — rate limit (30 req/h por IP+path) en `/employees/upload-document/*` + rename canónico por MIME real en uploadDocument y handleProfileImage. AV scanning (ClamAV) no aplica por falta de infra (easypanel sin daemon AV); queda como backlog si el ambiente cambia |
 | CR-029 | 🟢 Sugerencia | Inyectar `StructuredLogger` por DI | ✅ Resuelto | Lote 7 (2026-05-07) — constructor con parámetro opcional ?? new StructuredLogger() |
-| CR-030 | 🟢 Sugerencia | Conteo de documentos vía `hasManyCount` finder | ⏳ Pendiente | — |
+| CR-030 | 🟢 Sugerencia | Conteo de documentos vía `hasManyCount` finder | ❌ No Aplica | Cierre (2026-05-08) — el código actual NO genera N+1: `view()` carga `EmployeeFolders → EmployeeDocuments` en un solo `contain` y la suma se ejecuta sobre arrays ya en memoria. Cambiar a `hasManyCount` agregaría una query sin reemplazar la iteración (el template necesita los documentos completos). Falso positivo |
 
 ---
 
