@@ -8,6 +8,7 @@ use App\Service\Pipeline\PaymentScheduling\State\AutorizacionPagoState;
 use App\Service\Pipeline\PaymentScheduling\State\BorradorState;
 use App\Service\Pipeline\PaymentScheduling\State\PagadaState;
 use App\Service\Pipeline\PaymentScheduling\State\TesoreriaState;
+use App\Service\Pipeline\PaymentScheduling\State\VerificacionPagoState;
 
 /**
  * Resolves `payment_schedulings.pipeline_status` (enum) to a concrete State.
@@ -24,12 +25,14 @@ final class PaymentSchedulingPipelineStateRegistry
         ?BorradorState $borrador = null,
         ?TesoreriaState $tesoreria = null,
         ?AutorizacionPagoState $autorizacionPago = null,
+        ?VerificacionPagoState $verificacionPago = null,
         ?PagadaState $pagada = null,
     ) {
         $list = [
             $borrador ?? new BorradorState(),
             $tesoreria ?? new TesoreriaState(),
             $autorizacionPago ?? new AutorizacionPagoState(),
+            $verificacionPago ?? new VerificacionPagoState(),
             $pagada ?? new PagadaState(),
         ];
 

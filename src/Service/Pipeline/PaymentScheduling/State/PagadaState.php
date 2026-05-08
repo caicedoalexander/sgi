@@ -21,7 +21,7 @@ final class PagadaState implements PaymentSchedulingPipelineState
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return null;
+        return PipelineStatus::VERIFICACION_PAGO;
     }
 
     public function validateAdvance(PaymentScheduling $scheduling): array
