@@ -94,17 +94,17 @@ class LiquidationDocPaymentService
         }
 
         $doc = $docsTable->get($payment->liquidation_doc_id);
-        $doc->pipeline_status = NoveltyConstants::STATUS_PAGADA;
+        $doc->pipeline_status = NoveltyConstants::STATUS_VERIFICACION_PAGO;
         $doc->payment_status = NoveltyConstants::PAYMENT_PAGADO;
         $doc->payment_date = $payment->payment_date;
         $docsTable->save($doc);
 
         $noveltiesTable->updateAll(
-            ['pipeline_status' => NoveltyConstants::STATUS_PAGADA],
+            ['pipeline_status' => NoveltyConstants::STATUS_VERIFICACION_PAGO],
             ['liquidation_doc_id' => $payment->liquidation_doc_id],
         );
 
-        return ['success' => true, 'newPipelineStatus' => NoveltyConstants::STATUS_PAGADA];
+        return ['success' => true, 'newPipelineStatus' => NoveltyConstants::STATUS_VERIFICACION_PAGO];
     }
 
     /**
@@ -142,5 +142,44 @@ class LiquidationDocPaymentService
         );
 
         return ServiceResult::ok('Pago rechazado. Documento devuelto a Tesorería.');
+    }
+
+    /**
+     * Tesorería confirma que el pago del documento de liquidación ya se ejecutó.
+     * Avanza doc y novedades hijas de verificacion_pago → pagada.
+     */
+    public function confirmPayment(int $docId, int $confirmedBy): ServiceResult
+    {
+        $docsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
+        $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+
+        $doc = $docsTable->get($docId);
+        if ($doc->pipeline_status !== NoveltyConstants::STATUS_VERIFICACION_PAGO) {
+            return ServiceResult::fail('El documento no está en verificación de pago.');
+        }
+
+        $connection = $docsTable->getConnection();
+        $ok = $connection->transactional(function () use ($docsTable, $noveltiesTable, $doc) {
+            $doc->pipeline_status = NoveltyConstants::STATUS_PAGADA;
+            if (!$docsTable->save($doc)) {
+                return false;
+            }
+
+            $noveltiesTable->updateAll(
+                ['pipeline_status' => NoveltyConstants::STATUS_PAGADA],
+                [
+                    'liquidation_doc_id' => $doc->id,
+                    'pipeline_status' => NoveltyConstants::STATUS_VERIFICACION_PAGO,
+                ],
+            );
+
+            return true;
+        });
+
+        if ($ok === false) {
+            return ServiceResult::fail('No se pudo confirmar el pago del documento.');
+        }
+
+        return ServiceResult::ok('Pago confirmado. El documento y sus novedades quedaron como pagados.');
     }
 }
