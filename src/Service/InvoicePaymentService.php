@@ -147,7 +147,7 @@ class InvoicePaymentService
             $previousStatus = $invoice->pipeline_status;
 
             $newPipelineStatus = $invoice->payment_status === InvoiceConstants::PAYMENT_FULL
-                ? InvoiceConstants::STATUS_PAGADA
+                ? InvoiceConstants::STATUS_VERIFICACION_PAGO
                 : InvoiceConstants::STATUS_TESORERIA;
 
             $invoice->pipeline_status = $newPipelineStatus;
@@ -167,14 +167,6 @@ class InvoicePaymentService
                     'Invoice.refundAuthorized',
                     null,
                     ['payload' => new InvoiceRefundAuthorizedEvent($payment, $authorizedBy)],
-                ));
-            }
-
-            if ($invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA) {
-                $this->events->dispatch(new Event(
-                    'Invoice.paid',
-                    null,
-                    ['payload' => new InvoicePaidEvent($invoice, $authorizedBy)],
                 ));
             }
 
@@ -454,5 +446,60 @@ class InvoicePaymentService
 
             return ServiceResult::ok('Pago actualizado.');
         });
+    }
+
+    /**
+     * Confirma que el pago efectivamente fue ejecutado por Tesorería.
+     * Avanza la factura de verificacion_pago → pagada en una sola transacción,
+     * registra historial y dispara InvoicePaidEvent (que activa
+     * LegalizationInitializerSubscriber para anticipos).
+     */
+    public function confirmPaymentExecuted(int $invoiceId, int $confirmedBy): ServiceResult
+    {
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $invoice = $invoicesTable->get($invoiceId);
+
+        if ($invoice->pipeline_status !== InvoiceConstants::STATUS_VERIFICACION_PAGO) {
+            return ServiceResult::fail('La factura no está en verificación de pago.');
+        }
+
+        $connection = $invoicesTable->getConnection();
+        $ok = $connection->transactional(function () use ($invoicesTable, $invoiceId, $confirmedBy) {
+            if (!$this->recalculatePaymentStatus($invoiceId)) {
+                return false;
+            }
+
+            $refreshed = $invoicesTable->get($invoiceId);
+            if ($refreshed->payment_status !== InvoiceConstants::PAYMENT_FULL) {
+                return false;
+            }
+
+            $previousStatus = $refreshed->pipeline_status;
+            $refreshed->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+            if (!$invoicesTable->save($refreshed)) {
+                return false;
+            }
+
+            $this->historyService->recordStatusChange(
+                $refreshed->id,
+                $previousStatus,
+                InvoiceConstants::STATUS_PAGADA,
+                $confirmedBy,
+            );
+
+            $this->events->dispatch(new Event(
+                'Invoice.paid',
+                null,
+                ['payload' => new InvoicePaidEvent($refreshed, $confirmedBy)],
+            ));
+
+            return true;
+        });
+
+        if ($ok === false) {
+            return ServiceResult::fail('No se pudo confirmar el pago.');
+        }
+
+        return ServiceResult::ok('Pago confirmado. La factura quedó marcada como pagada.');
     }
 }
