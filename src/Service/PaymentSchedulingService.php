@@ -8,8 +8,11 @@ use App\Constants\InvoiceConstants;
 use App\Constants\PaymentSchedulingConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
+use App\Event\InvoicePaidEvent;
 use App\Model\Entity\PaymentScheduling;
 use App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineStateRegistry;
+use Cake\Event\Event;
+use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
 
 class PaymentSchedulingService
@@ -19,10 +22,12 @@ class PaymentSchedulingService
             PaymentSchedulingConstants::STATUS_BORRADOR,
             PaymentSchedulingConstants::STATUS_TESORERIA,
             PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO,
+            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
             PaymentSchedulingConstants::STATUS_PAGADA,
         ],
         RoleConstants::CONTADOR => [
             PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO,
+            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
             PaymentSchedulingConstants::STATUS_PAGADA,
         ],
         RoleConstants::ADMIN => PaymentSchedulingConstants::PIPELINE_STATUSES,
@@ -30,14 +35,20 @@ class PaymentSchedulingService
 
     private PipelineAuthorizationService $pipelineAuth;
     private PaymentSchedulingPipelineStateRegistry $stateRegistry;
+    private InvoiceHistoryService $historyService;
+    private ?EventManagerInterface $events;
 
     public function __construct(
         private readonly InvoicePaymentService $paymentService,
         ?PipelineAuthorizationService $pipelineAuth = null,
         ?PaymentSchedulingPipelineStateRegistry $stateRegistry = null,
+        ?InvoiceHistoryService $historyService = null,
+        ?EventManagerInterface $events = null,
     ) {
         $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
         $this->stateRegistry = $stateRegistry ?? new PaymentSchedulingPipelineStateRegistry();
+        $this->historyService = $historyService ?? new InvoiceHistoryService();
+        $this->events = $events;
     }
 
     public function getVisibleStatuses(string $roleName): array
@@ -271,7 +282,7 @@ class PaymentSchedulingService
 
                 $invoice = $invoicesTable->get($invoiceId);
                 if ($invoice->payment_status === InvoiceConstants::PAYMENT_FULL) {
-                    $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+                    $invoice->pipeline_status = InvoiceConstants::STATUS_VERIFICACION_PAGO;
                     $invoicesTable->save($invoice);
                     $advanced[] = $invoiceId;
                 } else {
@@ -299,5 +310,82 @@ class PaymentSchedulingService
             ->where(['payment_scheduling_id' => $schedulingId])
             ->all()
             ->sumOf('amount');
+    }
+
+    /**
+     * Confirma que los pagos de la programación efectivamente se ejecutaron.
+     * Avanza el scheduling y todas sus facturas hijas de verificacion_pago → pagada,
+     * recalcula payment_status, registra historial y dispara InvoicePaidEvent por
+     * cada hija. Todo en una sola transacción.
+     */
+    public function confirmExecution(int $schedulingId, int $confirmedBy): ServiceResult
+    {
+        $schedulingsTable = TableRegistry::getTableLocator()->get('PaymentSchedulings');
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
+
+        $scheduling = $schedulingsTable->get($schedulingId);
+        if ($scheduling->pipeline_status !== PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO) {
+            return ServiceResult::fail('La programación no está en verificación de pago.');
+        }
+
+        $connection = $schedulingsTable->getConnection();
+        $ok = $connection->transactional(function () use (
+            $schedulingsTable,
+            $invoicesTable,
+            $paymentsTable,
+            $scheduling,
+            $schedulingId,
+            $confirmedBy,
+        ) {
+            $scheduling->pipeline_status = PaymentSchedulingConstants::STATUS_PAGADA;
+            if (!$schedulingsTable->save($scheduling)) {
+                return false;
+            }
+
+            $childIds = $paymentsTable->find()
+                ->select(['invoice_id'])
+                ->where(['payment_scheduling_id' => $schedulingId])
+                ->distinct(['invoice_id'])
+                ->all()
+                ->extract('invoice_id')
+                ->toList();
+
+            foreach ($childIds as $invoiceId) {
+                if (!$this->paymentService->recalculatePaymentStatus((int)$invoiceId)) {
+                    return false;
+                }
+                $refreshed = $invoicesTable->get($invoiceId);
+                if ($refreshed->pipeline_status !== InvoiceConstants::STATUS_VERIFICACION_PAGO) {
+                    continue;
+                }
+                $previousStatus = $refreshed->pipeline_status;
+                $refreshed->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+                if (!$invoicesTable->save($refreshed)) {
+                    return false;
+                }
+                $this->historyService->recordStatusChange(
+                    $refreshed->id,
+                    $previousStatus,
+                    InvoiceConstants::STATUS_PAGADA,
+                    $confirmedBy,
+                );
+                if ($this->events !== null) {
+                    $this->events->dispatch(new Event(
+                        'Invoice.paid',
+                        null,
+                        ['payload' => new InvoicePaidEvent($refreshed, $confirmedBy)],
+                    ));
+                }
+            }
+
+            return true;
+        });
+
+        if ($ok === false) {
+            return ServiceResult::fail('No se pudo confirmar la programación.');
+        }
+
+        return ServiceResult::ok('Programación confirmada. Las facturas quedaron como pagadas.');
     }
 }

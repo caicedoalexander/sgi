@@ -216,8 +216,9 @@ class PaymentSchedulingsController extends AppController
 
         $nextStatus = $this->schedulingService->getNextStatus($record->pipeline_status);
 
-        // Si avanza a pagada (desde aut_pago), aplicar pagos
-        if ($nextStatus === PaymentSchedulingConstants::STATUS_PAGADA) {
+        // Si avanza a verificacion_pago (desde aut_pago — Contador autoriza),
+        // crear los pagos y dejar las facturas hijas en verificacion_pago.
+        if ($nextStatus === PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO) {
             $result = $this->schedulingService->applyPayments($record->id, (int)$user->id);
             if (!$result['success']) {
                 foreach ($result['errors'] as $err) {
@@ -230,7 +231,7 @@ class PaymentSchedulingsController extends AppController
             $advancedCount = count($result['advanced_to_pagada']);
             $partialCount = count($result['partial_payment']);
             if ($advancedCount > 0) {
-                $this->Flash->success("{$advancedCount} factura(s) marcadas como Pagadas.");
+                $this->Flash->success("{$advancedCount} factura(s) en Verificación de pago.");
             }
             if ($partialCount > 0) {
                 $this->Flash->warning("{$partialCount} factura(s) con Pago Parcial, permanecen en Tesorería.");
