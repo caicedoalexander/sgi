@@ -8,6 +8,13 @@ use Cake\ORM\TableRegistry;
 
 class LiquidationDocPaymentService
 {
+    private NoveltyHistoryService $noveltyHistory;
+
+    public function __construct(?NoveltyHistoryService $noveltyHistory = null)
+    {
+        $this->noveltyHistory = $noveltyHistory ?? new NoveltyHistoryService();
+    }
+
     /**
      * Register a payment for a liquidation document.
      *
@@ -159,19 +166,36 @@ class LiquidationDocPaymentService
         }
 
         $connection = $docsTable->getConnection();
-        $ok = $connection->transactional(function () use ($docsTable, $noveltiesTable, $doc) {
+        $ok = $connection->transactional(function () use ($docsTable, $noveltiesTable, $doc, $confirmedBy) {
             $doc->pipeline_status = NoveltyConstants::STATUS_PAGADA;
             if (!$docsTable->save($doc)) {
                 return false;
             }
 
-            $noveltiesTable->updateAll(
-                ['pipeline_status' => NoveltyConstants::STATUS_PAGADA],
-                [
+            // Iterar para registrar histórico por novedad. updateAll bypassa
+            // callbacks; no preserva trazabilidad por hijo, que es lo que el
+            // resto de módulos del feature ya garantiza (Invoices, PettyCash,
+            // Refund vía recordStatusChange por hija).
+            $children = $noveltiesTable->find()
+                ->where([
                     'liquidation_doc_id' => $doc->id,
                     'pipeline_status' => NoveltyConstants::STATUS_VERIFICACION_PAGO,
-                ],
-            );
+                ])
+                ->all();
+
+            foreach ($children as $novelty) {
+                $previousStatus = $novelty->pipeline_status;
+                $novelty->pipeline_status = NoveltyConstants::STATUS_PAGADA;
+                if (!$noveltiesTable->save($novelty)) {
+                    return false;
+                }
+                $this->noveltyHistory->recordStatusChange(
+                    $novelty->id,
+                    $previousStatus,
+                    NoveltyConstants::STATUS_PAGADA,
+                    $confirmedBy,
+                );
+            }
 
             return true;
         });
