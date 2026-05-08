@@ -12,6 +12,7 @@ use App\Service\Pipeline\Novelty\State\PagadaState;
 use App\Service\Pipeline\Novelty\State\RevisionFirmasState;
 use App\Service\Pipeline\Novelty\State\RrhhState;
 use App\Service\Pipeline\Novelty\State\TesoreriaState;
+use App\Service\Pipeline\Novelty\State\VerificacionPagoState;
 use InvalidArgumentException;
 
 /**
@@ -37,6 +38,7 @@ final class NoveltyPipelineStateRegistry
         ?GdpState $gdp = null,
         ?TesoreriaState $tesoreria = null,
         ?AutorizacionPagoState $autorizacionPago = null,
+        ?VerificacionPagoState $verificacionPago = null,
         ?PagadaState $pagada = null,
     ) {
         $list = [
@@ -47,6 +49,7 @@ final class NoveltyPipelineStateRegistry
             $gdp ?? new GdpState(),
             $tesoreria ?? new TesoreriaState(),
             $autorizacionPago ?? new AutorizacionPagoState(),
+            $verificacionPago ?? new VerificacionPagoState(),
             $pagada ?? new PagadaState(),
         ];
 

@@ -8,30 +8,30 @@ use App\Model\Entity\EmployeeNovelty;
 use App\Model\Entity\NoveltyLiquidationDoc;
 use App\Service\Pipeline\Novelty\NoveltyPipelineState;
 
-final class AutorizacionPagoState implements NoveltyPipelineState
+final class VerificacionPagoState implements NoveltyPipelineState
 {
     public function getStatus(): PipelineStatus
-    {
-        return PipelineStatus::AUTORIZACION_PAGO;
-    }
-
-    public function getNextStatus(): ?PipelineStatus
     {
         return PipelineStatus::VERIFICACION_PAGO;
     }
 
+    public function getNextStatus(): ?PipelineStatus
+    {
+        return PipelineStatus::PAGADA;
+    }
+
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::TESORERIA;
+        return PipelineStatus::AUTORIZACION_PAGO;
     }
 
     public function validateAdvanceIndividual(EmployeeNovelty $novelty): array
     {
-        return ['Esta etapa solo avanza desde el documento de liquidación grupal.'];
+        return ['La confirmación de pago se gestiona desde el documento de liquidación.'];
     }
 
     public function validateAdvanceGroup(NoveltyLiquidationDoc $doc): array
     {
-        return ['La autorización de pago se gestiona desde la sección de pagos.'];
+        return ['La confirmación de pago se gestiona desde la sección de pagos.'];
     }
 }
