@@ -13,6 +13,7 @@ enum PipelineStatus: string
     case GDP = 'gdp';
     case TESORERIA = 'tesoreria';
     case AUTORIZACION_PAGO = 'autorizacion_pago';
+    case VERIFICACION_PAGO = 'verificacion_pago';
     case PAGADA = 'pagada';
     case RECHAZADA = 'rechazada';
 
@@ -30,6 +31,7 @@ enum PipelineStatus: string
             self::GDP => 'GDP',
             self::TESORERIA => 'Tesorería',
             self::AUTORIZACION_PAGO => 'Autorización de pago',
+            self::VERIFICACION_PAGO => 'Verificación de pago',
             self::PAGADA => 'Pagada',
             self::RECHAZADA => 'Rechazada',
         };
@@ -48,7 +50,8 @@ enum PipelineStatus: string
             self::REVISION_FIRMAS => self::GDP,
             self::GDP => self::TESORERIA,
             self::TESORERIA => self::AUTORIZACION_PAGO,
-            self::AUTORIZACION_PAGO => self::PAGADA,
+            self::AUTORIZACION_PAGO => self::VERIFICACION_PAGO,
+            self::VERIFICACION_PAGO => self::PAGADA,
             self::PAGADA, self::RECHAZADA => null,
         };
     }
@@ -67,6 +70,7 @@ enum PipelineStatus: string
             self::GDP => self::REVISION_FIRMAS,
             self::TESORERIA => self::GDP,
             self::AUTORIZACION_PAGO => self::TESORERIA,
+            self::VERIFICACION_PAGO => self::AUTORIZACION_PAGO,
         };
     }
 

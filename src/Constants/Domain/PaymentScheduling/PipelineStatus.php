@@ -8,6 +8,7 @@ enum PipelineStatus: string
     case BORRADOR = 'borrador';
     case TESORERIA = 'tesoreria';
     case AUTORIZACION_PAGO = 'autorizacion_pago';
+    case VERIFICACION_PAGO = 'verificacion_pago';
     case PAGADA = 'pagada';
 
     /**
@@ -19,6 +20,7 @@ enum PipelineStatus: string
             self::BORRADOR => 'Borrador',
             self::TESORERIA => 'Tesorería',
             self::AUTORIZACION_PAGO => 'Autorización de pago',
+            self::VERIFICACION_PAGO => 'Verificación de pago',
             self::PAGADA => 'Pagada',
         };
     }
@@ -31,7 +33,8 @@ enum PipelineStatus: string
         return match ($this) {
             self::BORRADOR => self::TESORERIA,
             self::TESORERIA => self::AUTORIZACION_PAGO,
-            self::AUTORIZACION_PAGO => self::PAGADA,
+            self::AUTORIZACION_PAGO => self::VERIFICACION_PAGO,
+            self::VERIFICACION_PAGO => self::PAGADA,
             self::PAGADA => null,
         };
     }
@@ -45,6 +48,7 @@ enum PipelineStatus: string
             self::BORRADOR => null,
             self::TESORERIA => self::BORRADOR,
             self::AUTORIZACION_PAGO => self::TESORERIA,
+            self::VERIFICACION_PAGO => self::AUTORIZACION_PAGO,
             self::PAGADA => null,
         };
     }

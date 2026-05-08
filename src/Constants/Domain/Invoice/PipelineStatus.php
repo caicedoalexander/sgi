@@ -9,6 +9,7 @@ enum PipelineStatus: string
     case CONTABILIDAD = 'contabilidad';
     case TESORERIA = 'tesoreria';
     case AUTORIZACION_PAGO = 'autorizacion_pago';
+    case VERIFICACION_PAGO = 'verificacion_pago';
     case PAGADA = 'pagada';
     case LEGALIZADA = 'legalizada';
 
@@ -22,6 +23,7 @@ enum PipelineStatus: string
             self::CONTABILIDAD => 'Contabilidad',
             self::TESORERIA => 'Tesorería',
             self::AUTORIZACION_PAGO => 'Autorización de pago',
+            self::VERIFICACION_PAGO => 'Verificación de pago',
             self::PAGADA => 'Pagada',
             self::LEGALIZADA => 'Legalizada',
         };
@@ -36,7 +38,8 @@ enum PipelineStatus: string
             self::APROBACION => self::CONTABILIDAD,
             self::CONTABILIDAD => self::TESORERIA,
             self::TESORERIA => self::AUTORIZACION_PAGO,
-            self::AUTORIZACION_PAGO => self::PAGADA,
+            self::AUTORIZACION_PAGO => self::VERIFICACION_PAGO,
+            self::VERIFICACION_PAGO => self::PAGADA,
             self::PAGADA, self::LEGALIZADA => null,
         };
     }
@@ -62,6 +65,7 @@ enum PipelineStatus: string
             self::CONTABILIDAD,
             self::TESORERIA,
             self::AUTORIZACION_PAGO,
+            self::VERIFICACION_PAGO,
             self::PAGADA,
         ];
     }
