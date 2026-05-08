@@ -312,7 +312,7 @@ class PaymentSchedulingsController extends AppController
         $this->request->allowMethod(['post']);
         $roleName = $this->_getRoleName();
 
-        if (!in_array($roleName, [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN], true)) {
+        if (!$this->_canConfirmPayment($roleName)) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->redirect(['action' => 'view', $id]);

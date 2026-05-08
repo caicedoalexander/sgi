@@ -413,32 +413,15 @@ $dianClass = match($invoice->dian_validation ?? '') {
         </div>
         <?php endif; ?>
 
-        <?php
-        $currentRoleForConfirm = $roleName ?? null;
-        $canConfirmPayment = in_array(
-            $currentRoleForConfirm,
-            [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN],
-            true,
-        );
-        ?>
-        <?php if ($invoice->pipeline_status === InvoiceConstants::STATUS_VERIFICACION_PAGO && $canConfirmPayment): ?>
-        <div class="card mt-3" style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);border-radius:0;">
-            <div class="card-body">
-                <p class="mb-2" style="font-size:.9rem;">
-                    El pago fue autorizado por el Contador. Confirme cuando el dinero haya salido del banco.
-                </p>
-                <?= $this->Form->postLink(
-                    '<i class="bi bi-cash-coin me-1"></i>Pasar a Pagada',
-                    ['controller' => 'InvoicePayments', 'action' => 'confirmPayment', $invoice->id],
-                    [
-                        'class' => 'sgi-btn-primary',
-                        'escape' => false,
-                        'confirm' => '¿Confirmar que el pago ya se ejecutó?',
-                    ],
-                ) ?>
-            </div>
-        </div>
-        <?php endif; ?>
+        <?= $this->element('confirm_payment_card', [
+            'isVerificacionPago' => $invoice->pipeline_status === InvoiceConstants::STATUS_VERIFICACION_PAGO,
+            'canConfirm' => in_array(
+                $roleName ?? null,
+                [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN],
+                true,
+            ),
+            'confirmUrl' => ['controller' => 'InvoicePayments', 'action' => 'confirmPayment', $invoice->id],
+        ]) ?>
     </div>
 
     <!-- Barra de registro -->

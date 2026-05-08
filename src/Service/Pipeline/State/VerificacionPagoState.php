@@ -39,6 +39,14 @@ final class VerificacionPagoState implements InvoicePipelineState
         return ['La confirmación de pago se gestiona desde la sección de pagos.'];
     }
 
+    /**
+     * `_payment_executed` es un pseudo-field (no existe en la entidad Invoice),
+     * usado solo para que el `TransitionValidator` siempre rechace el avance
+     * automático desde este estado. La transición real
+     * `verificacion_pago → pagada` se hace exclusivamente vía
+     * `InvoicePaymentService::confirmPaymentExecuted()`, invocado por la acción
+     * `InvoicePaymentsController::confirmPayment` (botón "Pasar a Pagada").
+     */
     public function getTransitionRules(): array
     {
         return [
