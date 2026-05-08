@@ -16,6 +16,7 @@ final class NoveltyConstants
     public const STATUS_GDP = PipelineStatus::GDP->value;
     public const STATUS_TESORERIA = PipelineStatus::TESORERIA->value;
     public const STATUS_AUTORIZACION_PAGO = PipelineStatus::AUTORIZACION_PAGO->value;
+    public const STATUS_VERIFICACION_PAGO = PipelineStatus::VERIFICACION_PAGO->value;
     public const STATUS_PAGADA = PipelineStatus::PAGADA->value;
     public const STATUS_RECHAZADA = PipelineStatus::RECHAZADA->value;
 
@@ -27,6 +28,7 @@ final class NoveltyConstants
         self::STATUS_GDP,
         self::STATUS_TESORERIA,
         self::STATUS_AUTORIZACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO,
         self::STATUS_PAGADA,
     ];
 
@@ -45,6 +47,8 @@ final class NoveltyConstants
      *  - STATUS_REGISTRO, STATUS_APROBACION: la novedad aún no fue procesada por RRHH.
      *  - STATUS_AUTORIZACION_PAGO: estado transitorio de autorización del Contador;
      *    se considera "en flujo de pago", no "activa" en el sentido operativo.
+     *  - STATUS_VERIFICACION_PAGO: estado transitorio de confirmación por Tesorería;
+     *    también "en flujo de pago", se mantiene fuera de ACTIVE_STATUSES por coherencia.
      *  - STATUS_RECHAZADA: terminal, no cuenta como activa.
      *
      * Si la semántica de "activa" cambia (p.ej. incluir AUTORIZACION_PAGO),
@@ -69,6 +73,7 @@ final class NoveltyConstants
         self::STATUS_GDP,
         self::STATUS_TESORERIA,
         self::STATUS_AUTORIZACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO,
         self::STATUS_PAGADA,
         self::STATUS_RECHAZADA,
     ];
@@ -82,6 +87,7 @@ final class NoveltyConstants
         self::STATUS_GDP => 'GDP',
         self::STATUS_TESORERIA => 'Tesorería',
         self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+        self::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         self::STATUS_PAGADA => 'Pagada',
         self::STATUS_RECHAZADA => 'Rechazada',
     ];
@@ -94,7 +100,8 @@ final class NoveltyConstants
         self::STATUS_REVISION_FIRMAS => self::STATUS_GDP,
         self::STATUS_GDP => self::STATUS_TESORERIA,
         self::STATUS_TESORERIA => self::STATUS_AUTORIZACION_PAGO,
-        self::STATUS_AUTORIZACION_PAGO => self::STATUS_PAGADA,
+        self::STATUS_AUTORIZACION_PAGO => self::STATUS_VERIFICACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO => self::STATUS_PAGADA,
         self::STATUS_PAGADA => null,
     ];
 

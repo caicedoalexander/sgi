@@ -61,6 +61,7 @@ final class InvoiceConstants
     public const STATUS_CONTABILIDAD = PipelineStatus::CONTABILIDAD->value;
     public const STATUS_TESORERIA = PipelineStatus::TESORERIA->value;
     public const STATUS_AUTORIZACION_PAGO = PipelineStatus::AUTORIZACION_PAGO->value;
+    public const STATUS_VERIFICACION_PAGO = PipelineStatus::VERIFICACION_PAGO->value;
     public const STATUS_PAGADA = PipelineStatus::PAGADA->value;
     // Estado terminal exclusivo para document_type = Legalización.
     // No participa en PIPELINE_STATUSES (flujo normal). Ver self::ALL_STATUSES.
@@ -71,6 +72,7 @@ final class InvoiceConstants
         self::STATUS_CONTABILIDAD,
         self::STATUS_TESORERIA,
         self::STATUS_AUTORIZACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO,
         self::STATUS_PAGADA,
     ];
 
@@ -81,6 +83,7 @@ final class InvoiceConstants
         self::STATUS_CONTABILIDAD,
         self::STATUS_TESORERIA,
         self::STATUS_AUTORIZACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO,
         self::STATUS_PAGADA,
         self::STATUS_LEGALIZADA,
     ];
@@ -89,7 +92,8 @@ final class InvoiceConstants
         self::STATUS_APROBACION => self::STATUS_CONTABILIDAD,
         self::STATUS_CONTABILIDAD => self::STATUS_TESORERIA,
         self::STATUS_TESORERIA => self::STATUS_AUTORIZACION_PAGO,
-        self::STATUS_AUTORIZACION_PAGO => self::STATUS_PAGADA,
+        self::STATUS_AUTORIZACION_PAGO => self::STATUS_VERIFICACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO => self::STATUS_PAGADA,
         self::STATUS_PAGADA => null,
         self::STATUS_LEGALIZADA => null,
     ];
@@ -106,6 +110,7 @@ final class InvoiceConstants
         self::STATUS_CONTABILIDAD      => 'Contabilidad',
         self::STATUS_TESORERIA         => 'Tesorería',
         self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+        self::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         self::STATUS_PAGADA            => 'Pagada',
         self::STATUS_LEGALIZADA        => 'Legalizada',
     ];

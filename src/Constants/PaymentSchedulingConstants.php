@@ -11,12 +11,14 @@ final class PaymentSchedulingConstants
     public const STATUS_BORRADOR = PipelineStatus::BORRADOR->value;
     public const STATUS_TESORERIA = PipelineStatus::TESORERIA->value;
     public const STATUS_AUTORIZACION_PAGO = PipelineStatus::AUTORIZACION_PAGO->value;
+    public const STATUS_VERIFICACION_PAGO = PipelineStatus::VERIFICACION_PAGO->value;
     public const STATUS_PAGADA = PipelineStatus::PAGADA->value;
 
     public const PIPELINE_STATUSES = [
         self::STATUS_BORRADOR,
         self::STATUS_TESORERIA,
         self::STATUS_AUTORIZACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO,
         self::STATUS_PAGADA,
     ];
 
@@ -24,6 +26,7 @@ final class PaymentSchedulingConstants
         self::STATUS_BORRADOR => 'Borrador',
         self::STATUS_TESORERIA => 'Tesorería',
         self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+        self::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         self::STATUS_PAGADA => 'Pagada',
     ];
 
@@ -36,6 +39,7 @@ final class PaymentSchedulingConstants
         self::STATUS_BORRADOR => null,
         self::STATUS_TESORERIA => self::STATUS_BORRADOR,
         self::STATUS_AUTORIZACION_PAGO => self::STATUS_TESORERIA,
+        self::STATUS_VERIFICACION_PAGO => self::STATUS_AUTORIZACION_PAGO,
         self::STATUS_PAGADA => null,
     ];
 
@@ -43,7 +47,8 @@ final class PaymentSchedulingConstants
     public const FORWARD_TRANSITIONS = [
         self::STATUS_BORRADOR => self::STATUS_TESORERIA,
         self::STATUS_TESORERIA => self::STATUS_AUTORIZACION_PAGO,
-        self::STATUS_AUTORIZACION_PAGO => self::STATUS_PAGADA,
+        self::STATUS_AUTORIZACION_PAGO => self::STATUS_VERIFICACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO => self::STATUS_PAGADA,
         self::STATUS_PAGADA => null,
     ];
 

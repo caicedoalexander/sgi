@@ -8,7 +8,7 @@ use App\Constants\ObservationConstants;
 /**
  * Constantes comunes de pipelines de "agrupación de pagos" (PettyCash, Refund).
  *
- * Flujo: agrupacion → contabilidad → tesoreria → autorizacion_pago → pagada.
+ * Flujo: agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada.
  * `pagada` es terminal; la regresión hacia atrás se permite hasta `tesoreria`
  * (no desde `pagada`, porque la autorización ya materializó pagos en las
  * facturas hijas).
@@ -19,6 +19,7 @@ trait GroupingPipelineConstantsTrait
     public const STATUS_CONTABILIDAD = 'contabilidad';
     public const STATUS_TESORERIA = 'tesoreria';
     public const STATUS_AUTORIZACION_PAGO = 'autorizacion_pago';
+    public const STATUS_VERIFICACION_PAGO = 'verificacion_pago';
     public const STATUS_PAGADA = 'pagada';
 
     public const STATUSES = [
@@ -26,6 +27,7 @@ trait GroupingPipelineConstantsTrait
         self::STATUS_CONTABILIDAD,
         self::STATUS_TESORERIA,
         self::STATUS_AUTORIZACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO,
         self::STATUS_PAGADA,
     ];
 
@@ -34,6 +36,7 @@ trait GroupingPipelineConstantsTrait
         self::STATUS_CONTABILIDAD => 'Contabilidad',
         self::STATUS_TESORERIA => 'Tesorería',
         self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+        self::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         self::STATUS_PAGADA => 'Pagada',
     ];
 
@@ -41,7 +44,8 @@ trait GroupingPipelineConstantsTrait
         self::STATUS_AGRUPACION => self::STATUS_CONTABILIDAD,
         self::STATUS_CONTABILIDAD => self::STATUS_TESORERIA,
         self::STATUS_TESORERIA => self::STATUS_AUTORIZACION_PAGO,
-        self::STATUS_AUTORIZACION_PAGO => self::STATUS_PAGADA,
+        self::STATUS_AUTORIZACION_PAGO => self::STATUS_VERIFICACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO => self::STATUS_PAGADA,
         self::STATUS_PAGADA => null,
     ];
 
@@ -50,6 +54,7 @@ trait GroupingPipelineConstantsTrait
         self::STATUS_CONTABILIDAD => self::STATUS_AGRUPACION,
         self::STATUS_TESORERIA => self::STATUS_CONTABILIDAD,
         self::STATUS_AUTORIZACION_PAGO => self::STATUS_TESORERIA,
+        self::STATUS_VERIFICACION_PAGO => self::STATUS_AUTORIZACION_PAGO,
         self::STATUS_PAGADA => null,
     ];
 
