@@ -42,6 +42,30 @@ class EmployeeDocumentService
     ];
 
     /**
+     * Mapeo MIME real → extensión canónica para documentos.
+     * Usado por canonicalize() para renombrar el archivo en disco si la
+     * extensión del cliente no coincide con la canónica del MIME real (CR-028).
+     */
+    private const MIME_TO_EXT = [
+        'application/pdf' => 'pdf',
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/gif' => 'gif',
+        'application/msword' => 'doc',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+        'application/vnd.ms-excel' => 'xls',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+        'text/plain' => 'txt',
+    ];
+
+    private const MIME_TO_EXT_PROFILE = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/gif' => 'gif',
+        'image/webp' => 'webp',
+    ];
+
+    /**
      * Resolver el directorio raíz de almacenamiento de documentos sensibles
      * (fuera de webroot, sin acceso directo por URL).
      */
@@ -354,5 +378,44 @@ class EmployeeDocumentService
         }
 
         @rmdir($dir);
+    }
+
+    /**
+     * Renombra el archivo en disco para que su extensión coincida con la
+     * canónica del MIME real detectado por finfo (CR-028).
+     *
+     * Si el rename falla (permisos, etc.), se conserva el path original sin
+     * lanzar excepción — la validación de MIME ya pasó, esto es defense-in-depth.
+     *
+     * @param string $absolutePath Path absoluto actual.
+     * @param string $relativePath Path relativo actual.
+     * @param string $realMime MIME real detectado.
+     * @param array<string,string> $mimeToExt Mapeo MIME → extensión canónica.
+     * @return array{0:string, 1:string} [absolutePath, relativePath] resultantes.
+     */
+    private function canonicalize(
+        string $absolutePath,
+        string $relativePath,
+        string $realMime,
+        array $mimeToExt,
+    ): array {
+        $canonicalExt = $mimeToExt[$realMime] ?? null;
+        if ($canonicalExt === null) {
+            return [$absolutePath, $relativePath];
+        }
+
+        $currentExt = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION));
+        if ($currentExt === $canonicalExt) {
+            return [$absolutePath, $relativePath];
+        }
+
+        $newAbsolute = preg_replace('/\.[^.]+$/', '.' . $canonicalExt, $absolutePath) ?? $absolutePath;
+        $newRelative = preg_replace('/\.[^.]+$/', '.' . $canonicalExt, $relativePath) ?? $relativePath;
+
+        if (!@rename($absolutePath, $newAbsolute)) {
+            return [$absolutePath, $relativePath];
+        }
+
+        return [$newAbsolute, $newRelative];
     }
 }
