@@ -162,8 +162,8 @@ class InvoicePaymentsController extends AppController
         $result = $this->paymentService->authorizePayment((int)$paymentId, (int)$this->_getCurrentUser()->id);
 
         if ($result['success']) {
-            if ($result['newPipelineStatus'] === InvoiceConstants::STATUS_PAGADA) {
-                $this->Flash->success('Pago autorizado. Factura marcada como Pagada.');
+            if ($result['newPipelineStatus'] === InvoiceConstants::STATUS_VERIFICACION_PAGO) {
+                $this->Flash->success('Pago autorizado. Factura en verificación de pago — Tesorería debe confirmar la ejecución.');
             } else {
                 $this->Flash->success('Pago autorizado. Factura devuelta a Tesorería (Pago Parcial).');
             }
@@ -172,6 +172,38 @@ class InvoicePaymentsController extends AppController
         }
 
         return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
+    }
+
+    /**
+     * Confirma que el pago de una factura ya fue ejecutado por Tesorería.
+     * Avanza de verificacion_pago → pagada.
+     *
+     * @param string|int|null $invoiceId
+     * @return \Cake\Http\Response|null
+     */
+    public function confirmPayment($invoiceId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $roleName = $this->_getRoleName();
+
+        if (!in_array($roleName, [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN], true)) {
+            $this->Flash->error('No tiene permisos para confirmar este pago.');
+
+            return $this->_redirectForInvoice((int)$invoiceId, 'view', $invoiceId);
+        }
+
+        $result = $this->paymentService->confirmPaymentExecuted(
+            (int)$invoiceId,
+            (int)$this->_getCurrentUser()->id,
+        );
+
+        if ($result->success) {
+            $this->Flash->success($result->data);
+        } else {
+            $this->Flash->error(implode(' ', (array)$result->errors));
+        }
+
+        return $this->_redirectForInvoice((int)$invoiceId, 'view', $invoiceId);
     }
 
     /**

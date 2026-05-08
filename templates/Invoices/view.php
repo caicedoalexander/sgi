@@ -20,6 +20,7 @@ $pipelineBadgeMap = [
     InvoiceConstants::STATUS_CONTABILIDAD      => ['Contabilidad',  'bg-primary'],
     InvoiceConstants::STATUS_TESORERIA         => ['Tesorería',     'bg-warning text-dark'],
     InvoiceConstants::STATUS_AUTORIZACION_PAGO => ['Autorización de pago', 'bg-info'],
+    InvoiceConstants::STATUS_VERIFICACION_PAGO => ['Verificación de pago', 'bg-warning text-dark'],
     InvoiceConstants::STATUS_PAGADA            => ['Pagada',        'bg-success'],
 ];
 $ps = $pipelineBadgeMap[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
@@ -408,6 +409,33 @@ $dianClass = match($invoice->dian_validation ?? '') {
                         </tr>
                     </tfoot>
                 </table>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php
+        $currentRoleForConfirm = $roleName ?? null;
+        $canConfirmPayment = in_array(
+            $currentRoleForConfirm,
+            [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN],
+            true,
+        );
+        ?>
+        <?php if ($invoice->pipeline_status === InvoiceConstants::STATUS_VERIFICACION_PAGO && $canConfirmPayment): ?>
+        <div class="card mt-3" style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);border-radius:0;">
+            <div class="card-body">
+                <p class="mb-2" style="font-size:.9rem;">
+                    El pago fue autorizado por el Contador. Confirme cuando el dinero haya salido del banco.
+                </p>
+                <?= $this->Form->postLink(
+                    '<i class="bi bi-cash-coin me-1"></i>Pasar a Pagada',
+                    ['controller' => 'InvoicePayments', 'action' => 'confirmPayment', $invoice->id],
+                    [
+                        'class' => 'sgi-btn-primary',
+                        'escape' => false,
+                        'confirm' => '¿Confirmar que el pago ya se ejecutó?',
+                    ],
+                ) ?>
             </div>
         </div>
         <?php endif; ?>

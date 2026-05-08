@@ -417,6 +417,11 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'InvoicePayments', 'action' => 'authorizePayment'],
             ['pass' => ['invoiceId', 'paymentId']],
         );
+        $builder->connect(
+            '/invoices/confirm-payment/{invoiceId}',
+            ['controller' => 'InvoicePayments', 'action' => 'confirmPayment'],
+            ['pass' => ['invoiceId'], 'invoiceId' => '\d+'],
+        );
 
         $builder->connect(
             '/invoices/reject-payment/{invoiceId}/{paymentId}',
