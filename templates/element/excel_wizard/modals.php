@@ -58,6 +58,7 @@ $importable = $importable ?? true;
                         <i class="bi bi-info-circle me-1"></i>Tip: Exporte primero para obtener la plantilla con las columnas correctas.
                     </p>
                     <input type="file" id="importFileInput" class="form-control" accept=".xlsx">
+                    <div id="importStep1Error" class="alert alert-danger py-2 px-3 mt-2" style="display:none;font-size:.825rem"></div>
                 </div>
 
                 <div id="importStep2" style="display:none">

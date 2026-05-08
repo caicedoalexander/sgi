@@ -11,6 +11,12 @@ document.addEventListener('DOMContentLoaded', function () {
         return div.innerHTML;
     }
 
+    // CamelCase → kebab-case para coincidir con DashedRoute de CakePHP.
+    // Ej: CostCenters → cost-centers, OperationCenters → operation-centers.
+    function toKebab(s) {
+        return s.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+    }
+
     // ─── EXPORT MODAL ───
     const exportModal = document.getElementById('exportExcelModal');
     if (exportModal) {
@@ -25,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (exportFieldList.children.length > 0) return; // Already loaded
             exportLoading.style.display = 'block';
 
-            fetch(`/${module.toLowerCase()}/export-config`, {
+            fetch(`/${toKebab(module)}/export-config`, {
                 headers: { 'Accept': 'application/json' }
             })
             .then(r => r.json())
@@ -97,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 exportBtn.disabled = true;
                 exportBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Exportando...';
 
-                fetch(`/${module.toLowerCase()}/export`, {
+                fetch(`/${toKebab(module)}/export`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -150,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const importFileInput = document.getElementById('importFileInput');
         const importMappingBody = document.getElementById('importMappingBody');
         const importMappingError = document.getElementById('importMappingError');
+        const importStep1Error = document.getElementById('importStep1Error');
 
         let currentTempName = null;
         let currentHeaders = [];
@@ -162,6 +169,14 @@ document.addEventListener('DOMContentLoaded', function () {
             currentTempName = null;
             currentHeaders = [];
             importMappingBody.innerHTML = '';
+            if (importStep1Error) {
+                importStep1Error.textContent = '';
+                importStep1Error.style.display = 'none';
+            }
+            if (importMappingError) {
+                importMappingError.textContent = '';
+                importMappingError.style.display = 'none';
+            }
         });
 
         function showStep(step) {
@@ -180,7 +195,16 @@ document.addEventListener('DOMContentLoaded', function () {
             importUploadBtn.addEventListener('click', function () {
                 const file = importFileInput?.files[0];
                 if (!file) {
+                    if (importStep1Error) {
+                        importStep1Error.textContent = 'Seleccione un archivo .xlsx antes de continuar.';
+                        importStep1Error.style.display = 'block';
+                    }
                     return;
+                }
+
+                if (importStep1Error) {
+                    importStep1Error.textContent = '';
+                    importStep1Error.style.display = 'none';
                 }
 
                 const formData = new FormData();
@@ -189,18 +213,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 importUploadBtn.disabled = true;
                 importUploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Analizando...';
 
-                fetch(`/${module.toLowerCase()}/import-upload`, {
+                fetch(`/${toKebab(module)}/import-upload`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-Token': csrfToken,
                     },
                     body: formData,
                 })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.error) {
-                        throw new Error(data.error);
+                .then(async r => {
+                    // Si la respuesta no es JSON (404, 500, redirect HTML), construir un
+                    // error informativo en lugar de fallar silenciosamente.
+                    const contentType = r.headers.get('content-type') || '';
+                    if (!contentType.includes('application/json')) {
+                        throw new Error(`Error del servidor (HTTP ${r.status}). La ruta /${toKebab(module)}/import-upload no respondió JSON.`);
                     }
+                    const data = await r.json();
+                    if (!r.ok || data.error) {
+                        throw new Error(data.error || `Error HTTP ${r.status}`);
+                    }
+                    return data;
+                })
+                .then(data => {
                     currentTempName = data.tempName;
                     currentHeaders = data.headers;
                     systemFields = data.systemFields;
@@ -208,9 +241,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     showStep(2);
                 })
                 .catch(err => {
-                    if (importMappingError) {
-                        importMappingError.textContent = err.message || 'Error al procesar el archivo.';
-                        importMappingError.style.display = 'block';
+                    if (importStep1Error) {
+                        importStep1Error.textContent = err.message || 'Error al procesar el archivo.';
+                        importStep1Error.style.display = 'block';
                     }
                 })
                 .finally(() => {
@@ -338,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 importProcessBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importando...';
                 importMappingError.style.display = 'none';
 
-                fetch(`/${module.toLowerCase()}/import-process`, {
+                fetch(`/${toKebab(module)}/import-process`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
