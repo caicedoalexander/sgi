@@ -59,6 +59,10 @@ return function (RouteBuilder $routes): void {
             'rateLimitLogin',
             new RateLimitMiddleware(5, 300),
         );
+        $builder->registerMiddleware(
+            'rateLimitUpload',
+            new RateLimitMiddleware(30, 3600),
+        );
 
         $builder->connect('/', ['controller' => 'Dashboard', 'action' => 'index']);
         $builder->scope('/login', function (RouteBuilder $loginBuilder): void {
@@ -264,11 +268,17 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'Employees', 'action' => 'addFolder'],
             ['employeeId' => '\d+', 'pass' => ['employeeId']],
         );
-        $builder->connect(
-            '/employees/upload-document/{employeeId}',
-            ['controller' => 'Employees', 'action' => 'uploadDocument'],
-            ['employeeId' => '\d+', 'pass' => ['employeeId']],
-        );
+        $builder->scope('/employees', function (RouteBuilder $employeeUploadBuilder): void {
+            // Rate limit hardening (CR-028): 30 uploads/hora por IP+path.
+            // El middleware existente limita por IP, no por usuario; oficinas con
+            // NAT comparten cuota — ajustar el límite si genera falsos positivos.
+            $employeeUploadBuilder->applyMiddleware('rateLimitUpload');
+            $employeeUploadBuilder->connect(
+                '/upload-document/{employeeId}',
+                ['controller' => 'Employees', 'action' => 'uploadDocument'],
+                ['employeeId' => '\d+', 'pass' => ['employeeId']],
+            );
+        });
         $builder->connect(
             '/employees/delete-document/{employeeId}/{documentId}',
             ['controller' => 'Employees', 'action' => 'deleteDocument'],
