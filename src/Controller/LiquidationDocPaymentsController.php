@@ -115,12 +115,41 @@ class LiquidationDocPaymentsController extends AppController
         $result = $this->paymentService->authorizePayment((int)$paymentId, (int)$this->_getCurrentUser()->id);
 
         if ($result['success']) {
-            $this->Flash->success('Pago autorizado. Documento marcado como Pagado.');
+            $this->Flash->success('Pago autorizado. Documento en verificación de pago — Tesorería debe confirmar la ejecución.');
         } else {
             $this->Flash->error('No se pudo autorizar el pago.');
         }
 
         return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'edit', $docId]);
+    }
+
+    /**
+     * Tesorería confirma que el pago del documento de liquidación ya se ejecutó.
+     * Avanza doc y novedades hijas de verificacion_pago → pagada.
+     *
+     * @param string|null $docId Document ID.
+     * @return \Cake\Http\Response|null
+     */
+    public function confirmPayment(?string $docId = null): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        $roleName = $this->_getRoleName();
+
+        if (!in_array($roleName, [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN], true)) {
+            $this->Flash->error('No tiene permisos para confirmar este pago.');
+
+            return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'view', $docId]);
+        }
+
+        $result = $this->paymentService->confirmPayment((int)$docId, (int)$this->_getCurrentUser()->id);
+
+        if ($result->success) {
+            $this->Flash->success($result->data ?? 'Pago confirmado.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'No se pudo confirmar el pago.');
+        }
+
+        return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'view', $docId]);
     }
 
     /**

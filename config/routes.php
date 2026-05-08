@@ -248,6 +248,11 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'updateLiquidationDocument'],
             ['id' => '\d+', 'pass' => ['id']],
         );
+        $builder->connect(
+            '/liquidation-doc-payments/confirm-payment/{docId}',
+            ['controller' => 'LiquidationDocPayments', 'action' => 'confirmPayment'],
+            ['docId' => '\d+', 'pass' => ['docId']],
+        );
 
         // Novelty Types AJAX flags
         $builder->connect(

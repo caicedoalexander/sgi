@@ -216,6 +216,31 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     </div>
     <?php endif; ?>
 
+    <?php
+    $currentRoleN = $this->getRequest()->getAttribute('identity')->role->name ?? null;
+    $canConfirmN = in_array(
+        $currentRoleN,
+        [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN],
+        true,
+    );
+    ?>
+    <?php if ($doc->pipeline_status === NoveltyConstants::STATUS_VERIFICACION_PAGO && $canConfirmN): ?>
+    <div style="border-bottom:1px solid var(--border-color);padding:.875rem 1.25rem;">
+        <p class="mb-2" style="font-size:.9rem;">
+            El pago fue autorizado por el Contador. Confirme cuando el dinero haya salido del banco.
+        </p>
+        <?= $this->Form->postLink(
+            '<i class="bi bi-cash-coin me-1"></i>Pasar a Pagada',
+            ['controller' => 'LiquidationDocPayments', 'action' => 'confirmPayment', $doc->id],
+            [
+                'class' => 'sgi-btn-primary',
+                'escape' => false,
+                'confirm' => '¿Confirmar que el pago ya se ejecutó?',
+            ],
+        ) ?>
+    </div>
+    <?php endif; ?>
+
     <!-- Payments (read-only) -->
     <?php if (!empty($doc->liquidation_doc_payments)): ?>
     <div style="border-bottom:1px solid var(--border-color);">
