@@ -394,6 +394,11 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
+            '/refunds/confirm-payment/{id}',
+            ['controller' => 'Refunds', 'action' => 'confirmPayment'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
             '/refunds/reject-payment/{id}',
             ['controller' => 'Refunds', 'action' => 'rejectPayment'],
             ['id' => '\d+', 'pass' => ['id']],

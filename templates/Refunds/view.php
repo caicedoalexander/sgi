@@ -108,6 +108,33 @@ $statusLabels = RefundConstants::STATUS_LABELS;
     </div>
 </div>
 
+<?php
+$currentRoleR = $this->getRequest()->getAttribute('identity')->role->name ?? null;
+$canConfirmR = in_array(
+    $currentRoleR,
+    [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN],
+    true,
+);
+?>
+<?php if ($record->isVerificacionPago() && $canConfirmR): ?>
+<div class="card mb-4" style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);border-radius:0;">
+    <div class="card-body">
+        <p class="mb-2" style="font-size:.9rem;">
+            El pago fue autorizado por el Contador. Confirme cuando el dinero haya salido del banco.
+        </p>
+        <?= $this->Form->postLink(
+            '<i class="bi bi-cash-coin me-1"></i>Pasar a Pagada',
+            ['action' => 'confirmPayment', $record->id],
+            [
+                'class' => 'sgi-btn-primary',
+                'escape' => false,
+                'confirm' => '¿Confirmar que el pago ya se ejecutó?',
+            ],
+        ) ?>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Facturas agrupadas -->
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-2">

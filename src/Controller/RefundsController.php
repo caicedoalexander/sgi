@@ -580,6 +580,33 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * Tesorería confirma que el pago del reintegro se ejecutó.
+     * Avanza reintegro y facturas hijas de verificacion_pago → pagada.
+     */
+    public function confirmPayment($id = null)
+    {
+        $this->request->allowMethod(['post']);
+
+        $user = $this->_getCurrentUser();
+        $roleName = $this->_getUserRoleName($user);
+        if (!in_array($roleName, [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN], true)) {
+            $this->Flash->error('No tiene permisos para confirmar este pago.');
+
+            return $this->redirect(['action' => 'view', $id]);
+        }
+
+        $result = $this->paymentService->confirmPayment((int)$id, (int)$user->id);
+
+        if ($result->success) {
+            $this->Flash->success($result->data ?? 'Pago confirmado.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'No se pudo confirmar el pago.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
     public function rejectPayment($id = null)
     {
         $this->request->allowMethod(['post']);

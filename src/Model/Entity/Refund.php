@@ -71,6 +71,11 @@ class Refund extends Entity
         return $this->status === RefundConstants::STATUS_AUTORIZACION_PAGO;
     }
 
+    public function isVerificacionPago(): bool
+    {
+        return $this->status === RefundConstants::STATUS_VERIFICACION_PAGO;
+    }
+
     /**
      * True si el reintegro está en alguna fase posterior a Tesorería donde ya
      * se manipulan datos de pago. Útil para gates de UI/serv. que deben
@@ -78,7 +83,7 @@ class Refund extends Entity
      */
     public function isInPaymentPhase(): bool
     {
-        return $this->isTesoreria() || $this->isAutorizacionPago() || $this->isPagada();
+        return $this->isTesoreria() || $this->isAutorizacionPago() || $this->isVerificacionPago() || $this->isPagada();
     }
 
     /**
@@ -98,7 +103,7 @@ class Refund extends Entity
      */
     public function canAdvancePipeline(): bool
     {
-        if ($this->isPagada() || $this->isAutorizacionPago()) {
+        if ($this->isPagada() || $this->isAutorizacionPago() || $this->isVerificacionPago()) {
             return false;
         }
 
