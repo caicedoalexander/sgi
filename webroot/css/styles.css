@@ -29,6 +29,31 @@ body {
 }
 
 /* =============================================
+   Componentes — Action Card
+   ============================================= */
+.sgi-action-card {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-top: 2px solid var(--primary-color);
+    margin: 1rem 0 1.5rem;
+    padding: 1rem 1.25rem;
+}
+.sgi-action-card-label {
+    font-size: .58rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: #aaa;
+    margin-bottom: .5rem;
+}
+.sgi-action-card-message {
+    font-size: .9rem;
+    color: #444;
+    line-height: 1.45;
+    margin-bottom: .9rem;
+}
+
+/* =============================================
    Componentes — Stat Cards
    ============================================= */
 .sgi-stat-card {
