@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service\Pipeline\Policy;
+namespace App\Service\Pipeline\Advance\Policy;
 
 use App\Constants\PipelineStepConstants;
 use App\Model\Entity\AdvanceLegalization;

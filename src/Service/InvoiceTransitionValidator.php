@@ -5,8 +5,8 @@ namespace App\Service;
 
 use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
-use App\Service\Pipeline\DocumentTypePolicyFactory;
-use App\Service\Pipeline\InvoicePipelineStateRegistry;
+use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
+use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
 
 /**
  * Orquesta la validación de avance del pipeline:

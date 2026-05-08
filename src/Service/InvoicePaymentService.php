@@ -7,7 +7,7 @@ use App\Constants\InvoiceConstants;
 use App\Event\InvoicePaidEvent;
 use App\Event\InvoiceRefundAuthorizedEvent;
 use App\Event\InvoiceRefundRejectedEvent;
-use App\Service\Pipeline\DocumentTypePolicyFactory;
+use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;

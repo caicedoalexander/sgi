@@ -10,7 +10,7 @@ use App\Model\Entity\AdvanceLegalization;
 use App\Service\AdvanceLegalizationDocumentService;
 use App\Service\AdvanceLegalizationService;
 use App\Service\InvoicePipelineService;
-use App\Service\Pipeline\Policy\AdvanceLegalizationActionPolicy;
+use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\ViewModel\AdvanceAddViewModel;
 use App\ViewModel\AdvanceLegalizationViewModel;
 use Cake\Http\Response;

@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service\Pipeline\State;
+namespace App\Service\Pipeline\Invoice\State;
 
 use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
-use App\Service\Pipeline\InvoicePipelineState;
+use App\Service\Pipeline\Invoice\InvoicePipelineState;
 
 final class AprobacionState implements InvoicePipelineState
 {

@@ -7,7 +7,7 @@ use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Event\InvoicePaidEvent;
 use App\Event\ListenerFailedException;
 use App\Service\AdvanceLegalizationService;
-use App\Service\Pipeline\DocumentTypePolicyFactory;
+use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use Cake\Event\EventInterface;
 use Cake\Event\EventListenerInterface;
 

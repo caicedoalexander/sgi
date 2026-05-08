@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service\Pipeline\Policy;
+namespace App\Service\Pipeline\Invoice\Policy;
 
 use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
-use App\Service\Pipeline\DocumentTypePolicy;
-use App\Service\Pipeline\InvoicePipelineState;
+use App\Service\Pipeline\Invoice\DocumentTypePolicy;
+use App\Service\Pipeline\Invoice\InvoicePipelineState;
 
 /**
  * Reglas específicas de las Legalizaciones:

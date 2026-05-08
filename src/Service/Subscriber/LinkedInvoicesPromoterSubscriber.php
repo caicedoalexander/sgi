@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Service\Subscriber;
 
 use App\Event\AdvanceLegalizedEvent;
-use App\Service\Pipeline\LinkedInvoiceLegalizer;
+use App\Service\Pipeline\Invoice\LinkedInvoiceLegalizer;
 use Cake\Event\EventInterface;
 use Cake\Event\EventListenerInterface;
 

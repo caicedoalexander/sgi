@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service\Pipeline;
+namespace App\Service\Pipeline\Invoice;
 
 use App\Constants\InvoiceConstants;
-use App\Service\Pipeline\Policy\AnticipoDocumentTypePolicy;
-use App\Service\Pipeline\Policy\LegalizacionDocumentTypePolicy;
-use App\Service\Pipeline\Policy\StandardDocumentTypePolicy;
+use App\Service\Pipeline\Invoice\Policy\AnticipoDocumentTypePolicy;
+use App\Service\Pipeline\Invoice\Policy\LegalizacionDocumentTypePolicy;
+use App\Service\Pipeline\Invoice\Policy\StandardDocumentTypePolicy;
 
 /**
  * Mapea document_type → DocumentTypePolicy concreta.
@@ -16,7 +16,7 @@ use App\Service\Pipeline\Policy\StandardDocumentTypePolicy;
 final class DocumentTypePolicyFactory
 {
     /**
-     * @var array<string, \App\Service\Pipeline\DocumentTypePolicy>
+     * @var array<string, \App\Service\Pipeline\Invoice\DocumentTypePolicy>
      */
     private array $byType;
 

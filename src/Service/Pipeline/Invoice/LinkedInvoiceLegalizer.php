@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service\Pipeline;
+namespace App\Service\Pipeline\Invoice;
 
 use App\Constants\InvoiceConstants;
 use App\Service\InvoiceHistoryService;
