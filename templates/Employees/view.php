@@ -54,7 +54,7 @@ foreach ($folders as $folder) {
         <?php endif; ?>
         <div style="min-width:0">
             <div class="sgi-profile-name"><?= h($employee->full_name) ?></div>
-            <div class="sgi-profile-doc"><?= h($employee->document_type) ?> · <?= h($employee->document_number) ?></div>
+            <div class="sgi-profile-doc"><?= h($employee->identification?->formatted() ?? '') ?></div>
             <?php
             $sub = array_filter([
                 $employee->has('position') ? h($employee->position->name) : null,
