@@ -6,6 +6,10 @@ namespace App\Service;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
+use App\Event\InvoicePaidEvent;
+use App\Service\Interface\HistoryServiceInterface;
+use Cake\Event\Event;
+use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -20,17 +24,19 @@ class RefundPaymentService
 {
     private RefundHistoryService $refundHistory;
     private PipelineAuthorizationService $pipelineAuth;
+    private HistoryServiceInterface $invoiceHistory;
+    private ?EventManagerInterface $events;
 
-    /**
-     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth Pipeline authorization service.
-     * @param \App\Service\RefundHistoryService|null $refundHistory Refund-specific audit trail.
-     */
     public function __construct(
         ?PipelineAuthorizationService $pipelineAuth = null,
         ?RefundHistoryService $refundHistory = null,
+        ?HistoryServiceInterface $invoiceHistory = null,
+        ?EventManagerInterface $events = null,
     ) {
         $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
         $this->refundHistory = $refundHistory ?? new RefundHistoryService();
+        $this->invoiceHistory = $invoiceHistory ?? new InvoiceHistoryService();
+        $this->events = $events;
     }
 
     /**
@@ -298,14 +304,14 @@ class RefundPaymentService
                     return false;
                 }
 
-                $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+                $invoice->pipeline_status = InvoiceConstants::STATUS_VERIFICACION_PAGO;
                 $invoice->payment_status = InvoiceConstants::PAYMENT_FULL;
                 $invoice->full_payment_date = $record->payment_date;
 
                 if (!$invoicesTable->save($invoice)) {
                     $serviceResult = ServiceResult::fail(self::_buildSaveErrorMessage(
                         sprintf(
-                            'No se pudo actualizar la factura %s a Pagada.',
+                            'No se pudo actualizar la factura %s a Verificación de pago.',
                             $invoice->invoice_number ?? '#' . $invoice->id,
                         ),
                         $invoice->getErrors(),
@@ -315,14 +321,14 @@ class RefundPaymentService
                 }
             }
 
-            $record->status = RefundConstants::STATUS_PAGADA;
+            $record->status = RefundConstants::STATUS_VERIFICACION_PAGO;
             $record->payment_status = InvoiceConstants::PAYMENT_FULL;
             $record->payment_authorized_by = $authorizedBy;
             $record->payment_authorized_date = $today;
 
             if (!$recordsTable->save($record)) {
                 $serviceResult = ServiceResult::fail(self::_buildSaveErrorMessage(
-                    'No se pudo actualizar el reintegro a Pagado.',
+                    'No se pudo actualizar el reintegro a Verificación de pago.',
                     $record->getErrors(),
                 ));
 
@@ -332,11 +338,11 @@ class RefundPaymentService
             $this->refundHistory->recordStatusChange(
                 $record->id,
                 RefundConstants::STATUS_AUTORIZACION_PAGO,
-                RefundConstants::STATUS_PAGADA,
+                RefundConstants::STATUS_VERIFICACION_PAGO,
                 $authorizedBy,
             );
 
-            $serviceResult = ServiceResult::ok('Pago autorizado. Registro marcado como Pagado.');
+            $serviceResult = ServiceResult::ok('Pago autorizado. El reintegro pasó a Verificación de pago.');
 
             return true;
         });
@@ -455,5 +461,73 @@ class RefundPaymentService
         }
 
         return empty($details) ? $base : ($base . ' ' . implode(', ', $details));
+    }
+
+    /**
+     * Tesorería confirma que el pago del reintegro ya se ejecutó.
+     * Avanza reintegro y facturas hijas de verificacion_pago → pagada,
+     * registra historial y dispara InvoicePaidEvent por cada hija.
+     */
+    public function confirmPayment(int $refundId, int $confirmedBy): ServiceResult
+    {
+        $refundsTable = TableRegistry::getTableLocator()->get('Refunds');
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+
+        $record = $refundsTable->get($refundId);
+        if ($record->status !== RefundConstants::STATUS_VERIFICACION_PAGO) {
+            return ServiceResult::fail('El reintegro no está en verificación de pago.');
+        }
+
+        $connection = $refundsTable->getConnection();
+        $ok = $connection->transactional(function () use ($refundsTable, $invoicesTable, $record, $confirmedBy) {
+            $previousStatus = $record->status;
+            $record->status = RefundConstants::STATUS_PAGADA;
+            if (!$refundsTable->save($record)) {
+                return false;
+            }
+
+            $this->refundHistory->recordStatusChange(
+                $record->id,
+                $previousStatus,
+                $record->status,
+                $confirmedBy,
+            );
+
+            $childInvoices = $invoicesTable->find()
+                ->where([
+                    'refund_id' => $record->id,
+                    'pipeline_status' => InvoiceConstants::STATUS_VERIFICACION_PAGO,
+                ])
+                ->all();
+
+            foreach ($childInvoices as $invoice) {
+                $invoicePreviousStatus = $invoice->pipeline_status;
+                $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+                if (!$invoicesTable->save($invoice)) {
+                    return false;
+                }
+                $this->invoiceHistory->recordStatusChange(
+                    $invoice->id,
+                    $invoicePreviousStatus,
+                    InvoiceConstants::STATUS_PAGADA,
+                    $confirmedBy,
+                );
+                if ($this->events !== null) {
+                    $this->events->dispatch(new Event(
+                        'Invoice.paid',
+                        null,
+                        ['payload' => new InvoicePaidEvent($invoice, $confirmedBy)],
+                    ));
+                }
+            }
+
+            return true;
+        });
+
+        if ($ok === false) {
+            return ServiceResult::fail('No se pudo confirmar el reintegro.');
+        }
+
+        return ServiceResult::ok('Pago confirmado. El reintegro y sus facturas quedaron como pagados.');
     }
 }
