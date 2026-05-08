@@ -106,6 +106,12 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'SystemSettings', 'action' => 'testSmtp'],
         );
 
+        // System settings — regenerar API key de notificaciones
+        $builder->connect(
+            '/system-settings/regenerate-api-key',
+            ['controller' => 'SystemSettings', 'action' => 'regenerateApiKey'],
+        );
+
         // Invoice observation
         $builder->connect(
             '/invoices/add-observation/{id}',
@@ -565,6 +571,14 @@ return function (RouteBuilder $routes): void {
         );
 
         $builder->fallbacks();
+    });
+
+    // API externa (consumida por n8n). Autenticada por header X-Api-Key.
+    $routes->prefix('Api', function (RouteBuilder $apiBuilder): void {
+        $apiBuilder->connect(
+            '/notifications/pending',
+            ['controller' => 'Notifications', 'action' => 'pending'],
+        );
     });
 
     /*

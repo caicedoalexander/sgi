@@ -53,6 +53,7 @@ use App\Service\PaymentRegistryService;
 use App\Service\PaymentSchedulingDocumentService;
 use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
+use App\Service\PendingNotificationsService;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
 use App\Service\Pipeline\DocumentTypePolicyFactory;
@@ -365,6 +366,11 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 NoveltyService::class,
                 PettyCashService::class,
                 RefundService::class,
+            ]);
+        $container->addShared(PendingNotificationsService::class)
+            ->addArguments([
+                SidebarCounterService::class,
+                PaymentSchedulingService::class,
             ]);
 
         // === Plan 6: Health checks ===

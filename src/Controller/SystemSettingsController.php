@@ -24,6 +24,7 @@ class SystemSettingsController extends AppController
     {
         $smtpSettings = $this->settingsService->getGroup('smtp');
         $n8nSettings = $this->settingsService->getGroup('n8n');
+        $apiSettings = $this->settingsService->getGroup('api');
 
         if ($this->request->is(['post', 'put'])) {
             $data = $this->request->getData();
@@ -62,7 +63,19 @@ class SystemSettingsController extends AppController
             return $this->redirect(['action' => 'index']);
         }
 
-        $this->set(compact('smtpSettings', 'n8nSettings'));
+        $this->set(compact('smtpSettings', 'n8nSettings', 'apiSettings'));
+    }
+
+    public function regenerateApiKey()
+    {
+        $this->request->allowMethod(['post']);
+
+        $key = bin2hex(random_bytes(32));
+        $this->settingsService->set('notifications_api_key', $key, 'api');
+
+        $this->Flash->success('API key regenerada. Recordá actualizar la credencial en n8n.');
+
+        return $this->redirect(['action' => 'index']);
     }
 
     public function testSmtp()

@@ -3,6 +3,7 @@
  * @var \App\View\AppView $this
  * @var array $smtpSettings
  * @var array $n8nSettings
+ * @var array $apiSettings
  */
 $this->assign('title', 'Configuración del Sistema');
 ?>
@@ -130,5 +131,73 @@ $this->assign('title', 'Configuración del Sistema');
         </div>
 
         <?= $this->Form->end() ?>
+    </div>
+</div>
+
+<?php $apiKey = $apiSettings['notifications_api_key'] ?? ''; ?>
+<div class="card card-primary mb-4">
+    <div class="card-header d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:36px;height:36px;background:var(--bg-dark);color:#fff;font-size:.9rem;">
+            <i class="bi bi-key"></i>
+        </div>
+        <div>
+            <div style="font-size:.95rem;font-weight:700;color:#111;">API Key de Notificaciones</div>
+            <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+                Token usado por n8n para consultar <code>/api/notifications/pending</code> (header <code>X-Api-Key</code>)
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <?php if ($apiKey === ''): ?>
+            <p class="text-muted mb-3">Aún no hay API key generada. Generá una para activar el workflow de notificaciones en n8n.</p>
+            <?= $this->Form->create(null, ['url' => ['action' => 'regenerateApiKey']]) ?>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-magic me-1"></i>Generar API Key
+            </button>
+            <?= $this->Form->end() ?>
+        <?php else: ?>
+            <label class="form-label">API Key actual</label>
+            <div class="sgi-input-group d-flex">
+                <input type="text" id="api-key-value" class="form-control border-0 shadow-none"
+                       value="<?= h($apiKey) ?>" readonly
+                       style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem;">
+                <button type="button" class="btn btn-light border-0" id="btn-copy-api-key"
+                        title="Copiar al portapapeles">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+            </div>
+            <small class="text-muted d-block mt-2">
+                Regenerar invalida la actual. Tras regenerar, actualizá la credencial en n8n.
+            </small>
+
+            <div class="d-flex gap-2 pt-3 mt-3" style="border-top:1px solid var(--border-color);">
+                <?= $this->Form->create(null, ['url' => ['action' => 'regenerateApiKey']]) ?>
+                <button type="submit" class="btn btn-outline-secondary"
+                        onclick="return confirm('¿Regenerar la API key? Tendrás que actualizar la credencial en n8n.');">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Regenerar
+                </button>
+                <?= $this->Form->end() ?>
+            </div>
+
+            <script>
+            (function() {
+                var btn = document.getElementById('btn-copy-api-key');
+                var input = document.getElementById('api-key-value');
+                if (!btn || !input) return;
+                btn.addEventListener('click', function() {
+                    navigator.clipboard.writeText(input.value).then(function() {
+                        var icon = btn.querySelector('i');
+                        icon.classList.remove('bi-clipboard');
+                        icon.classList.add('bi-check2');
+                        setTimeout(function() {
+                            icon.classList.remove('bi-check2');
+                            icon.classList.add('bi-clipboard');
+                        }, 1500);
+                    });
+                });
+            })();
+            </script>
+        <?php endif; ?>
     </div>
 </div>
