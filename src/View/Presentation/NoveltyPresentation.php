@@ -20,6 +20,7 @@ final class NoveltyPresentation
         NoveltyConstants::STATUS_GDP              => 'bg-dark',
         NoveltyConstants::STATUS_TESORERIA        => 'bg-info',
         NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
+        NoveltyConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
         NoveltyConstants::STATUS_PAGADA           => 'bg-success',
         NoveltyConstants::STATUS_RECHAZADA        => 'bg-danger',
     ];
@@ -33,6 +34,7 @@ final class NoveltyPresentation
         NoveltyConstants::STATUS_GDP               => 'bi-clipboard-check',
         NoveltyConstants::STATUS_TESORERIA         => 'bi-bank',
         NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
+        NoveltyConstants::STATUS_VERIFICACION_PAGO => 'bi-hourglass-split',
         NoveltyConstants::STATUS_PAGADA            => 'bi-cash-coin',
     ];
 

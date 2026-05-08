@@ -16,6 +16,7 @@ final class PettyCashPresentation
         PettyCashConstants::STATUS_CONTABILIDAD      => 'bg-primary',
         PettyCashConstants::STATUS_TESORERIA         => 'bg-warning text-dark',
         PettyCashConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
+        PettyCashConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
         PettyCashConstants::STATUS_PAGADA            => 'bg-success',
     ];
 
@@ -24,6 +25,7 @@ final class PettyCashPresentation
         PettyCashConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
         PettyCashConstants::STATUS_TESORERIA         => 'bi-bank',
         PettyCashConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
+        PettyCashConstants::STATUS_VERIFICACION_PAGO => 'bi-hourglass-split',
         PettyCashConstants::STATUS_PAGADA            => 'bi-cash-coin',
     ];
 }

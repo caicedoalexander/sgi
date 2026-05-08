@@ -15,6 +15,7 @@ final class PaymentSchedulingPresentation
         PaymentSchedulingConstants::STATUS_BORRADOR          => 'bg-secondary',
         PaymentSchedulingConstants::STATUS_TESORERIA         => 'bg-info',
         PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
+        PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
         PaymentSchedulingConstants::STATUS_PAGADA            => 'bg-success',
     ];
 
@@ -22,6 +23,7 @@ final class PaymentSchedulingPresentation
         PaymentSchedulingConstants::STATUS_BORRADOR          => 'bi-pencil',
         PaymentSchedulingConstants::STATUS_TESORERIA         => 'bi-bank',
         PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
+        PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => 'bi-hourglass-split',
         PaymentSchedulingConstants::STATUS_PAGADA            => 'bi-cash-coin',
     ];
 }

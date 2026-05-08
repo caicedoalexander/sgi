@@ -16,6 +16,7 @@ final class InvoicePresentation
         InvoiceConstants::STATUS_CONTABILIDAD      => 'bg-primary',
         InvoiceConstants::STATUS_TESORERIA         => 'bg-info',
         InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
+        InvoiceConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
         InvoiceConstants::STATUS_PAGADA            => 'bg-success',
         InvoiceConstants::STATUS_LEGALIZADA        => 'bg-success',
     ];
@@ -25,6 +26,7 @@ final class InvoicePresentation
         InvoiceConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
         InvoiceConstants::STATUS_TESORERIA         => 'bi-bank',
         InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
+        InvoiceConstants::STATUS_VERIFICACION_PAGO => 'bi-hourglass-split',
         InvoiceConstants::STATUS_PAGADA            => 'bi-cash-coin',
         InvoiceConstants::STATUS_LEGALIZADA        => 'bi-cash-coin',
     ];

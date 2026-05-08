@@ -16,6 +16,7 @@ final class RefundPresentation
         RefundConstants::STATUS_CONTABILIDAD      => 'bg-primary',
         RefundConstants::STATUS_TESORERIA         => 'bg-info',
         RefundConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
+        RefundConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
         RefundConstants::STATUS_PAGADA            => 'bg-success',
     ];
 
@@ -24,6 +25,7 @@ final class RefundPresentation
         RefundConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
         RefundConstants::STATUS_TESORERIA         => 'bi-bank',
         RefundConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
+        RefundConstants::STATUS_VERIFICACION_PAGO => 'bi-hourglass-split',
         RefundConstants::STATUS_PAGADA            => 'bi-cash-coin',
     ];
 }
