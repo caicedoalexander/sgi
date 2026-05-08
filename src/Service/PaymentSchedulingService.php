@@ -329,6 +329,7 @@ class PaymentSchedulingService
             return ServiceResult::fail('La programación no está en verificación de pago.');
         }
 
+        $skipped = [];
         $connection = $schedulingsTable->getConnection();
         $ok = $connection->transactional(function () use (
             $schedulingsTable,
@@ -337,6 +338,7 @@ class PaymentSchedulingService
             $scheduling,
             $schedulingId,
             $confirmedBy,
+            &$skipped,
         ) {
             $scheduling->pipeline_status = PaymentSchedulingConstants::STATUS_PAGADA;
             if (!$schedulingsTable->save($scheduling)) {
@@ -357,6 +359,10 @@ class PaymentSchedulingService
                 }
                 $refreshed = $invoicesTable->get($invoiceId);
                 if ($refreshed->pipeline_status !== InvoiceConstants::STATUS_VERIFICACION_PAGO) {
+                    // Inconsistencia: la hija no está donde la dejó applyPayments.
+                    // Posibles causas: pago rechazado entre tanto, o intervención
+                    // manual. Preservamos el estado actual y reportamos al caller.
+                    $skipped[] = (int)$invoiceId;
                     continue;
                 }
                 $previousStatus = $refreshed->pipeline_status;
@@ -384,6 +390,16 @@ class PaymentSchedulingService
 
         if ($ok === false) {
             return ServiceResult::fail('No se pudo confirmar la programación.');
+        }
+
+        if (!empty($skipped)) {
+            $list = implode(', ', array_map(static fn(int $id): string => '#' . $id, $skipped));
+
+            return ServiceResult::ok(sprintf(
+                'Programación confirmada. Atención: %d factura(s) (%s) no estaban en verificación de pago y se conservaron en su estado actual.',
+                count($skipped),
+                $list,
+            ));
         }
 
         return ServiceResult::ok('Programación confirmada. Las facturas quedaron como pagadas.');
