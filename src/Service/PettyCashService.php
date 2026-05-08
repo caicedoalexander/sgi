@@ -8,10 +8,13 @@ use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
+use App\Event\InvoicePaidEvent;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\Dto\BulkPaymentView;
 use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry;
+use Cake\Event\Event;
+use Cake\Event\EventManagerInterface;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
@@ -48,6 +51,8 @@ class PettyCashService
     private PipelineAuthorizationService $pipelineAuth;
     private PettyCashHistoryService $history;
     private PettyCashPipelineStateRegistry $stateRegistry;
+    private HistoryServiceInterface $invoiceHistory;
+    private ?EventManagerInterface $events;
 
     /**
      * @param \App\Service\Interface\HistoryServiceInterface $historyService History service for child invoices.
@@ -60,6 +65,7 @@ class PettyCashService
         ?PipelineAuthorizationService $pipelineAuth = null,
         ?PettyCashHistoryService $history = null,
         ?PettyCashPipelineStateRegistry $stateRegistry = null,
+        ?EventManagerInterface $events = null,
     ) {
         $this->grouped = new GroupedInvoiceService(
             documentType: InvoiceConstants::DOCTYPE_CAJA_MENOR,
@@ -68,9 +74,11 @@ class PettyCashService
             fkLabel: 'Caja Menor',
             historyService: $historyService,
         );
+        $this->invoiceHistory = $historyService;
         $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
         $this->history = $history ?? new PettyCashHistoryService();
         $this->stateRegistry = $stateRegistry ?? new PettyCashPipelineStateRegistry();
+        $this->events = $events;
     }
 
     /**
@@ -625,7 +633,7 @@ class PettyCashService
                     }
                 }
 
-                $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+                $invoice->pipeline_status = InvoiceConstants::STATUS_VERIFICACION_PAGO;
                 $invoice->payment_status = InvoiceConstants::PAYMENT_FULL;
                 $invoice->full_payment_date = $record->payment_date;
 
@@ -635,7 +643,7 @@ class PettyCashService
             }
 
             $previousStatus = $record->status;
-            $record->status = PettyCashConstants::STATUS_PAGADA;
+            $record->status = PettyCashConstants::STATUS_VERIFICACION_PAGO;
             $record->payment_status = InvoiceConstants::PAYMENT_FULL;
             $record->payment_authorized_by = $authorizedBy;
             $record->payment_authorized_date = date('Y-m-d');
@@ -934,5 +942,73 @@ class PettyCashService
         }
 
         return null;
+    }
+
+    /**
+     * Tesorería confirma que el pago del record de caja menor ya se ejecutó.
+     * Avanza record y todas sus facturas hijas de verificacion_pago → pagada,
+     * registra historial y dispara InvoicePaidEvent por cada hija.
+     */
+    public function confirmPayment(int $recordId, int $confirmedBy): ServiceResult
+    {
+        $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+
+        $record = $recordsTable->get($recordId);
+        if ($record->status !== PettyCashConstants::STATUS_VERIFICACION_PAGO) {
+            return ServiceResult::fail('El registro no está en verificación de pago.');
+        }
+
+        $connection = $recordsTable->getConnection();
+        $ok = $connection->transactional(function () use ($recordsTable, $invoicesTable, $record, $confirmedBy) {
+            $previousStatus = $record->status;
+            $record->status = PettyCashConstants::STATUS_PAGADA;
+            if (!$recordsTable->save($record)) {
+                return false;
+            }
+
+            $this->history->recordStatusChange(
+                $record->id,
+                $previousStatus,
+                $record->status,
+                $confirmedBy,
+            );
+
+            $childInvoices = $invoicesTable->find()
+                ->where([
+                    'petty_cash_record_id' => $record->id,
+                    'pipeline_status' => InvoiceConstants::STATUS_VERIFICACION_PAGO,
+                ])
+                ->all();
+
+            foreach ($childInvoices as $invoice) {
+                $invoicePreviousStatus = $invoice->pipeline_status;
+                $invoice->pipeline_status = InvoiceConstants::STATUS_PAGADA;
+                if (!$invoicesTable->save($invoice)) {
+                    return false;
+                }
+                $this->invoiceHistory->recordStatusChange(
+                    $invoice->id,
+                    $invoicePreviousStatus,
+                    InvoiceConstants::STATUS_PAGADA,
+                    $confirmedBy,
+                );
+                if ($this->events !== null) {
+                    $this->events->dispatch(new Event(
+                        'Invoice.paid',
+                        null,
+                        ['payload' => new InvoicePaidEvent($invoice, $confirmedBy)],
+                    ));
+                }
+            }
+
+            return true;
+        });
+
+        if ($ok === false) {
+            return ServiceResult::fail('No se pudo confirmar el pago.');
+        }
+
+        return ServiceResult::ok('Pago confirmado. El registro y sus facturas quedaron como pagados.');
     }
 }
