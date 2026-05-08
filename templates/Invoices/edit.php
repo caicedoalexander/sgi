@@ -50,6 +50,7 @@ $pipelineBadgeMap = [
     'contabilidad'      => ['Contabilidad',  'bg-primary'],
     'tesoreria'         => ['Tesorería',     'bg-warning text-dark'],
     'autorizacion_pago' => ['Autorización de pago', 'bg-info'],
+    'verificacion_pago' => ['Verificación de pago', 'bg-warning text-dark'],
     'pagada'            => ['Pagada',        'bg-success'],
 ];
 $ps = $pipelineBadgeMap[$viewModel->currentStatus] ?? ['Desconocido', 'bg-dark'];
@@ -141,7 +142,7 @@ if (!empty($viewModel->invoice->invoice_documents)) {
         $documentsByStatus[$doc->pipeline_status][] = $doc;
     }
 }
-$statusLabels = ['aprobacion' => 'Aprobación', 'contabilidad' => 'Contabilidad', 'tesoreria' => 'Tesorería', 'autorizacion_pago' => 'Autorización de pago', 'pagada' => 'Pagada'];
+$statusLabels = \App\Constants\InvoiceConstants::STATUS_LABELS;
 $badgeColors = InvoicePresentation::STATUS_BADGES;
 $docIcon = fn(?string $mime): string => match(true) {
     str_contains($mime ?? '', 'pdf')                                                                  => 'bi-file-earmark-pdf',
@@ -848,11 +849,6 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             'canDelete'          => false,
             'mode'               => $paymentMode,
         ]) ?>
-        <?= $this->element('confirm_payment_card', [
-            'isVerificacionPago' => $viewModel->currentStatus === \App\Constants\InvoiceConstants::STATUS_VERIFICACION_PAGO,
-            'canConfirm' => $viewModel->canConfirmPayment,
-            'confirmUrl' => ['controller' => 'InvoicePayments', 'action' => 'confirmPayment', $viewModel->invoice->id],
-        ]) ?>
         <?php endif; ?>
 
         <?php if ($sectionCollapsible): ?>
@@ -904,6 +900,12 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         <?php endif; ?>
 
         <?= $this->Form->end() ?>
+
+        <?= $this->element('confirm_payment_card', [
+            'isVerificacionPago' => $viewModel->currentStatus === \App\Constants\InvoiceConstants::STATUS_VERIFICACION_PAGO,
+            'canConfirm' => $viewModel->canConfirmPayment,
+            'confirmUrl' => ['controller' => 'InvoicePayments', 'action' => 'confirmPayment', $viewModel->invoice->id],
+        ]) ?>
 
         <?php if (!empty($viewModel->canRegress) && empty($viewModel->regressLockMessage)):
             $prevLabel = $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus;

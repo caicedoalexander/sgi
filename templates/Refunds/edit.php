@@ -430,11 +430,6 @@ $invoiceCount = count($record->invoices ?? []);
             'forceFullAmount'    => true,
             'singlePaymentOnly'  => true,
         ]) ?>
-        <?= $this->element('confirm_payment_card', [
-            'isVerificacionPago' => $record->status === RefundConstants::STATUS_VERIFICACION_PAGO,
-            'canConfirm' => $canConfirmPayment,
-            'confirmUrl' => ['action' => 'confirmPayment', $record->id],
-        ]) ?>
         <?php endif; ?>
 
         <?php endforeach; ?>
@@ -482,6 +477,12 @@ $invoiceCount = count($record->invoices ?? []);
         <?php endif; ?>
 
         <?= $this->Form->end() ?>
+
+        <?= $this->element('confirm_payment_card', [
+            'isVerificacionPago' => $record->status === RefundConstants::STATUS_VERIFICACION_PAGO,
+            'canConfirm' => $canConfirmPayment,
+            'confirmUrl' => ['action' => 'confirmPayment', $record->id],
+        ]) ?>
 
         <?php if ($record->isAgrupacion()): ?>
         <?= $this->element('link_invoices_modal', [
