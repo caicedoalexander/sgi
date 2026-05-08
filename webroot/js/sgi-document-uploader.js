@@ -285,7 +285,21 @@
                     body: new FormData(form),
                     redirect: 'follow'
                 })
-                .then(function (r) { return r.json(); })
+                .then(function (r) {
+                    // [INSTRUMENTACIÓN TEMPORAL] capturar status, content-type, body crudo
+                    console.log('[upload-debug] status:', r.status, 'redirected:', r.redirected, 'url:', r.url);
+                    console.log('[upload-debug] content-type:', r.headers.get('content-type'));
+                    return r.text().then(function (txt) {
+                        console.log('[upload-debug] body length:', txt.length);
+                        console.log('[upload-debug] body (first 800):', txt.slice(0, 800));
+                        try {
+                            return JSON.parse(txt);
+                        } catch (e) {
+                            console.error('[upload-debug] JSON.parse falló:', e.message);
+                            throw new Error('JSON inválido. Body: ' + txt.slice(0, 200));
+                        }
+                    });
+                })
                 .then(function (data) {
                     if (data.success) {
                         if (emptyState) emptyState.style.display = 'none';
@@ -300,7 +314,12 @@
                         showToast(data.error || 'Error al subir el archivo.', 'danger');
                     }
                 })
-                .catch(function () { showToast('Error de conexión. Intente nuevamente.', 'danger'); })
+                .catch(function (err) {
+                    // [INSTRUMENTACIÓN TEMPORAL] revelar el error real
+                    console.error('[upload-debug] catch — name:', err && err.name, 'message:', err && err.message);
+                    console.error('[upload-debug] error completo:', err);
+                    showToast('Error: ' + (err && err.message ? err.message.slice(0, 120) : 'desconocido'), 'danger');
+                })
                 .finally(function () {
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; }
                 });
