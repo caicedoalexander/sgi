@@ -352,6 +352,11 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
+            '/petty-cash-records/confirm-payment/{id}',
+            ['controller' => 'PettyCashRecords', 'action' => 'confirmPayment'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
             '/petty-cash-records/reject-payment/{id}',
             ['controller' => 'PettyCashRecords', 'action' => 'rejectPayment'],
             ['id' => '\d+', 'pass' => ['id']],
