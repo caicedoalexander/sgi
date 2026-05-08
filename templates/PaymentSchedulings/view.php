@@ -15,6 +15,7 @@ $statusBadge = [
     PaymentSchedulingConstants::STATUS_BORRADOR => ['Borrador', 'bg-secondary'],
     PaymentSchedulingConstants::STATUS_TESORERIA => ['Tesorería', 'bg-warning text-dark'],
     PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => ['Autorización de pago', 'bg-info text-dark'],
+    PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => ['Verificación de pago', 'bg-warning text-dark'],
     PaymentSchedulingConstants::STATUS_PAGADA => ['Pagada', 'bg-success'],
 ];
 $ps = $statusBadge[$record->pipeline_status] ?? ['Desconocido', 'bg-dark'];
@@ -178,6 +179,32 @@ $ps = $statusBadge[$record->pipeline_status] ?? ['Desconocido', 'bg-dark'];
                     </tr>
                 </tfoot>
             </table>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php
+    $canConfirmPS = in_array(
+        $roleName ?? null,
+        [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN],
+        true,
+    );
+    ?>
+    <?php if ($record->pipeline_status === PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO && $canConfirmPS): ?>
+    <div class="card mt-3" style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);border-radius:0;">
+        <div class="card-body">
+            <p class="mb-2" style="font-size:.9rem;">
+                Los pagos fueron autorizados por el Contador. Confirme cuando el dinero haya salido del banco.
+            </p>
+            <?= $this->Form->postLink(
+                '<i class="bi bi-cash-coin me-1"></i>Pasar a Pagada',
+                ['action' => 'confirmPayment', $record->id],
+                [
+                    'class' => 'sgi-btn-primary',
+                    'escape' => false,
+                    'confirm' => '¿Confirmar que los pagos ya se ejecutaron?',
+                ],
+            ) ?>
         </div>
     </div>
     <?php endif; ?>

@@ -303,6 +303,35 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * Tesorería confirma que los pagos de la programación ya se ejecutaron.
+     * Avanza scheduling y facturas hijas de verificacion_pago → pagada.
+     */
+    public function confirmPayment($id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $roleName = $this->_getRoleName();
+
+        if (!in_array($roleName, [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN], true)) {
+            $this->Flash->error('No tiene permisos para confirmar este pago.');
+
+            return $this->redirect(['action' => 'view', $id]);
+        }
+
+        $result = $this->schedulingService->confirmExecution(
+            (int)$id,
+            (int)$this->_getCurrentUser()->id,
+        );
+
+        if ($result->success) {
+            $this->Flash->success($result->data ?? 'Programación confirmada.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'No se pudo confirmar la programación.');
+        }
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
     public function importExcel($id = null)
     {
         $this->request->allowMethod(['post']);

@@ -468,6 +468,11 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
+            '/payment-schedulings/confirm-payment/{id}',
+            ['controller' => 'PaymentSchedulings', 'action' => 'confirmPayment'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
             '/payment-schedulings/import-excel/{id}',
             ['controller' => 'PaymentSchedulings', 'action' => 'importExcel'],
             ['id' => '\d+', 'pass' => ['id']],
