@@ -415,11 +415,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
 
         <?= $this->element('confirm_payment_card', [
             'isVerificacionPago' => $invoice->pipeline_status === InvoiceConstants::STATUS_VERIFICACION_PAGO,
-            'canConfirm' => in_array(
-                $roleName ?? null,
-                [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN],
-                true,
-            ),
+            'canConfirm' => $canConfirmPayment ?? false,
             'confirmUrl' => ['controller' => 'InvoicePayments', 'action' => 'confirmPayment', $invoice->id],
         ]) ?>
     </div>

@@ -178,11 +178,7 @@ $docIconColor = fn(?string $mime): string => match(true) {
 </div>
 <?= $this->element('confirm_payment_card', [
     'isVerificacionPago' => $record->isVerificacionPago(),
-    'canConfirm' => in_array(
-        $this->getRequest()->getAttribute('identity')?->role?->name ?? null,
-        [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN],
-        true,
-    ),
+    'canConfirm' => $canConfirmPayment ?? false,
     'confirmUrl' => ['action' => 'confirmPayment', $record->id],
 ]) ?>
 <?php endif; ?>

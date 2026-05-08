@@ -168,6 +168,13 @@ class NoveltyLiquidationDocsController extends AppController
                 ->toArray();
         }
 
+        $canConfirmPayment = $this->pipelineAuth->canOperate(
+            (int)$user->role_id,
+            $this->_getUserRoleName($user),
+            PipelineStepConstants::PIPELINE_NOVELTIES,
+            NoveltyConstants::STATUS_VERIFICACION_PAGO,
+        );
+
         $this->set(compact(
             'doc',
             'groupErrors',
@@ -176,6 +183,7 @@ class NoveltyLiquidationDocsController extends AppController
             'liquidationDocument',
             'groupHistories',
             'fieldLabels',
+            'canConfirmPayment',
         ));
     }
 

@@ -171,7 +171,16 @@ class PettyCashRecordsController extends AppController
             ],
         ]);
 
-        $this->set(compact('record'));
+        $user = $this->_getCurrentUser();
+        $roleName = $this->_getUserRoleName($user);
+        $canConfirmPayment = $this->pipelineAuth->canOperate(
+            (int)$user->role_id,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PETTY_CASH,
+            PettyCashConstants::STATUS_VERIFICACION_PAGO,
+        );
+
+        $this->set(compact('record', 'canConfirmPayment'));
     }
 
     public function add()
@@ -466,7 +475,14 @@ class PettyCashRecordsController extends AppController
 
         $user = $this->_getCurrentUser();
         $roleName = $this->_getUserRoleName($user);
-        if (!$this->_canConfirmPayment($roleName)) {
+        if (
+            !$this->pipelineAuth->canOperate(
+                (int)$user->role_id,
+                $roleName,
+                PipelineStepConstants::PIPELINE_PETTY_CASH,
+                PettyCashConstants::STATUS_VERIFICACION_PAGO,
+            )
+        ) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->redirect(['action' => 'view', $id]);

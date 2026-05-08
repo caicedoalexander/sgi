@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
+use App\Constants\PipelineStepConstants;
 use App\View\Presentation\InvoicePresentation;
 use App\Model\Entity\Invoice;
 use App\ViewModel\InvoiceAddViewModel;
@@ -19,6 +20,7 @@ use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
+use App\Service\PipelineAuthorizationService;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
@@ -41,6 +43,8 @@ class InvoicesController extends AppController
 
     private InvoicePaymentService $paymentService;
 
+    private PipelineAuthorizationService $pipelineAuth;
+
     public function initialize(): void
     {
         parent::initialize();
@@ -50,6 +54,7 @@ class InvoicesController extends AppController
         $this->documentService = $container->get(InvoiceDocumentService::class);
         $this->approvalService = $container->get(InvoiceApprovalService::class);
         $this->paymentService = $container->get(InvoicePaymentService::class);
+        $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
     }
 
     private function _getCurrentUser(): object
@@ -189,7 +194,13 @@ class InvoicesController extends AppController
         }
 
         $fieldLabels = InvoiceHistoryService::FIELD_LABELS;
-        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
+        $canConfirmPayment = $this->pipelineAuth->canOperate(
+            (int)$this->_getCurrentUser()->role_id,
+            $roleName,
+            PipelineStepConstants::PIPELINE_INVOICES,
+            InvoiceConstants::STATUS_VERIFICACION_PAGO,
+        );
+        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels', 'canConfirmPayment'));
     }
 
     public function add()

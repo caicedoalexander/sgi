@@ -40,6 +40,7 @@ final class PipelineStepConstants
             InvoiceConstants::STATUS_CONTABILIDAD,
             InvoiceConstants::STATUS_TESORERIA,
             InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+            InvoiceConstants::STATUS_VERIFICACION_PAGO,
         ],
         self::PIPELINE_NOVELTIES => [
             NoveltyConstants::STATUS_APROBACION,
@@ -49,23 +50,27 @@ final class PipelineStepConstants
             NoveltyConstants::STATUS_GDP,
             NoveltyConstants::STATUS_TESORERIA,
             NoveltyConstants::STATUS_AUTORIZACION_PAGO,
+            NoveltyConstants::STATUS_VERIFICACION_PAGO,
         ],
         self::PIPELINE_PAYMENT_SCHEDULINGS => [
             PaymentSchedulingConstants::STATUS_BORRADOR,
             PaymentSchedulingConstants::STATUS_TESORERIA,
             PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO,
+            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
         ],
         self::PIPELINE_REFUNDS => [
             RefundConstants::STATUS_AGRUPACION,
             RefundConstants::STATUS_CONTABILIDAD,
             RefundConstants::STATUS_TESORERIA,
             RefundConstants::STATUS_AUTORIZACION_PAGO,
+            RefundConstants::STATUS_VERIFICACION_PAGO,
         ],
         self::PIPELINE_PETTY_CASH => [
             PettyCashConstants::STATUS_AGRUPACION,
             PettyCashConstants::STATUS_CONTABILIDAD,
             PettyCashConstants::STATUS_TESORERIA,
             PettyCashConstants::STATUS_AUTORIZACION_PAGO,
+            PettyCashConstants::STATUS_VERIFICACION_PAGO,
         ],
         self::PIPELINE_LEGALIZATIONS => [
             AdvanceConstants::STATUS_VALIDACION,
@@ -85,6 +90,7 @@ final class PipelineStepConstants
             InvoiceConstants::STATUS_CONTABILIDAD => 'Contabilidad',
             InvoiceConstants::STATUS_TESORERIA => 'Tesorería',
             InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+            InvoiceConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         ],
         self::PIPELINE_NOVELTIES => [
             NoveltyConstants::STATUS_APROBACION => 'Aprobación',
@@ -94,23 +100,27 @@ final class PipelineStepConstants
             NoveltyConstants::STATUS_GDP => 'GDP',
             NoveltyConstants::STATUS_TESORERIA => 'Tesorería',
             NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+            NoveltyConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         ],
         self::PIPELINE_PAYMENT_SCHEDULINGS => [
             PaymentSchedulingConstants::STATUS_BORRADOR => 'Borrador',
             PaymentSchedulingConstants::STATUS_TESORERIA => 'Tesorería',
             PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         ],
         self::PIPELINE_REFUNDS => [
             RefundConstants::STATUS_AGRUPACION => 'Agrupación',
             RefundConstants::STATUS_CONTABILIDAD => 'Contabilidad',
             RefundConstants::STATUS_TESORERIA => 'Tesorería',
             RefundConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+            RefundConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         ],
         self::PIPELINE_PETTY_CASH => [
             PettyCashConstants::STATUS_AGRUPACION => 'Agrupación',
             PettyCashConstants::STATUS_CONTABILIDAD => 'Contabilidad',
             PettyCashConstants::STATUS_TESORERIA => 'Tesorería',
             PettyCashConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+            PettyCashConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         ],
         self::PIPELINE_LEGALIZATIONS => [
             AdvanceConstants::STATUS_VALIDACION => 'Validación',

@@ -224,7 +224,16 @@ class RefundsController extends AppController
             'RefundDocuments' => ['UploadedByUsers'],
         ]);
 
-        $this->set(compact('record'));
+        $user = $this->_getCurrentUser();
+        $roleName = $this->_getUserRoleName($user);
+        $canConfirmPayment = $this->pipelineAuth->canOperate(
+            (int)$user->role_id,
+            $roleName,
+            PipelineStepConstants::PIPELINE_REFUNDS,
+            RefundConstants::STATUS_VERIFICACION_PAGO,
+        );
+
+        $this->set(compact('record', 'canConfirmPayment'));
     }
 
     public function add()
@@ -590,7 +599,14 @@ class RefundsController extends AppController
 
         $user = $this->_getCurrentUser();
         $roleName = $this->_getUserRoleName($user);
-        if (!$this->_canConfirmPayment($roleName)) {
+        if (
+            !$this->pipelineAuth->canOperate(
+                (int)$user->role_id,
+                $roleName,
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                RefundConstants::STATUS_VERIFICACION_PAGO,
+            )
+        ) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->redirect(['action' => 'view', $id]);

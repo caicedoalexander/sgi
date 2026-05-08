@@ -135,7 +135,14 @@ class LiquidationDocPaymentsController extends AppController
         $this->request->allowMethod(['post']);
         $roleName = $this->_getRoleName();
 
-        if (!$this->_canConfirmPayment($roleName)) {
+        if (
+            !$this->pipelineAuth->canOperate(
+                $this->_getRoleId(),
+                $roleName,
+                PipelineStepConstants::PIPELINE_NOVELTIES,
+                NoveltyConstants::STATUS_VERIFICACION_PAGO,
+            )
+        ) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'view', $docId]);

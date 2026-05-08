@@ -185,11 +185,7 @@ $ps = $statusBadge[$record->pipeline_status] ?? ['Desconocido', 'bg-dark'];
 
     <?= $this->element('confirm_payment_card', [
         'isVerificacionPago' => $record->pipeline_status === PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
-        'canConfirm' => in_array(
-            $roleName ?? null,
-            [\App\Constants\RoleConstants::TESORERIA, \App\Constants\RoleConstants::ADMIN],
-            true,
-        ),
+        'canConfirm' => $canConfirmPayment ?? false,
         'confirmUrl' => ['action' => 'confirmPayment', $record->id],
         'message' => 'Los pagos fueron autorizados por el Contador. Confirme cuando el dinero haya salido del banco.',
     ]) ?>

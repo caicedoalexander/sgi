@@ -185,8 +185,16 @@ class InvoicePaymentsController extends AppController
     {
         $this->request->allowMethod(['post']);
         $roleName = $this->_getRoleName();
+        $roleId = $this->_getRoleId();
 
-        if (!$this->_canConfirmPayment($roleName)) {
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_INVOICES,
+                InvoiceConstants::STATUS_VERIFICACION_PAGO,
+            )
+        ) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->_redirectForInvoice((int)$invoiceId, 'view', $invoiceId);

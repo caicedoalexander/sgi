@@ -4,12 +4,14 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\PaymentSchedulingConstants;
+use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\PaymentScheduling;
 use App\Service\PaymentSchedulingDocumentService;
 use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
+use App\Service\PipelineAuthorizationService;
 use App\ViewModel\PaymentSchedulingAddViewModel;
 use App\ViewModel\PaymentSchedulingEditViewModel;
 use Cake\Routing\Router;
@@ -27,6 +29,8 @@ class PaymentSchedulingsController extends AppController
 
     private PaymentSchedulingImportService $importService;
 
+    private PipelineAuthorizationService $pipelineAuth;
+
     public function initialize(): void
     {
         parent::initialize();
@@ -34,6 +38,7 @@ class PaymentSchedulingsController extends AppController
         $this->schedulingService = $container->get(PaymentSchedulingService::class);
         $this->documentService = $container->get(PaymentSchedulingDocumentService::class);
         $this->importService = $container->get(PaymentSchedulingImportService::class);
+        $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
     }
 
     private function _getCurrentUser(): object
@@ -93,8 +98,14 @@ class PaymentSchedulingsController extends AppController
         $roleName = $this->_getRoleName();
         $total = $this->schedulingService->calculateTotal($record->id);
         $pipelineLabels = PaymentSchedulingConstants::STATUS_LABELS;
+        $canConfirmPayment = $this->pipelineAuth->canOperate(
+            (int)$this->_getCurrentUser()->role_id,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
+        );
 
-        $this->set(compact('record', 'roleName', 'total', 'pipelineLabels'));
+        $this->set(compact('record', 'roleName', 'total', 'pipelineLabels', 'canConfirmPayment'));
     }
 
     public function add()
@@ -312,7 +323,14 @@ class PaymentSchedulingsController extends AppController
         $this->request->allowMethod(['post']);
         $roleName = $this->_getRoleName();
 
-        if (!$this->_canConfirmPayment($roleName)) {
+        if (
+            !$this->pipelineAuth->canOperate(
+                (int)$this->_getCurrentUser()->role_id,
+                $roleName,
+                PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+                PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
+            )
+        ) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->redirect(['action' => 'view', $id]);

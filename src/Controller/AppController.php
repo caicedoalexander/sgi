@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Constants\InvoiceConstants;
-use App\Constants\RoleConstants;
 use App\Model\Entity\Invoice;
 use App\Service\AuthorizationService;
 use App\Service\SidebarCounterService;
@@ -191,21 +190,6 @@ class AppController extends Controller
     protected function _getUserRoleName(object $user): string
     {
         return $user?->role?->name ?? '';
-    }
-
-    /**
-     * Gate de confirmación de pago (estado `verificacion_pago` → `pagada`).
-     * Solo Tesorería y Admin pueden cerrar el flujo cuando el dinero ya salió
-     * del banco. Compartido por las 5 acciones `confirmPayment` del feature
-     * "Verificación de pago".
-     */
-    protected function _canConfirmPayment(string $roleName): bool
-    {
-        return in_array(
-            $roleName,
-            [RoleConstants::TESORERIA, RoleConstants::ADMIN],
-            true,
-        );
     }
 
     protected function _setSidebarCounters(object $user): void
