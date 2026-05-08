@@ -6,6 +6,7 @@ namespace App\Model\Entity;
 use App\Constants\ContractTypeConstants;
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\NoveltyConstants;
+use App\Model\ValueObject\Identification;
 use Cake\Chronos\Chronos;
 use Cake\Chronos\ChronosDate;
 use Cake\ORM\Entity;
@@ -47,6 +48,19 @@ class Employee extends Entity
     protected function _getFullName(): string
     {
         return trim(($this->first_name ?? '') . ' ' . ($this->last_name1 ?? '') . ' ' . ($this->last_name2 ?? ''));
+    }
+
+    /**
+     * Virtual property: $employee->identification.
+     * Retorna VO inmutable o null si falta tipo o número de documento (CR-025).
+     */
+    protected function _getIdentification(): ?Identification
+    {
+        if (empty($this->document_type) || empty($this->document_number)) {
+            return null;
+        }
+
+        return new Identification($this->document_type, $this->document_number);
     }
 
     /**
