@@ -9,6 +9,7 @@ use App\Service\Pipeline\Refund\State\AutorizacionPagoState;
 use App\Service\Pipeline\Refund\State\ContabilidadState;
 use App\Service\Pipeline\Refund\State\PagadaState;
 use App\Service\Pipeline\Refund\State\TesoreriaState;
+use App\Service\Pipeline\Refund\State\VerificacionPagoState;
 
 /**
  * Resolves `refunds.status` (enum) to a concrete State.
@@ -33,6 +34,7 @@ final class RefundPipelineStateRegistry
         ?ContabilidadState $contabilidad = null,
         ?TesoreriaState $tesoreria = null,
         ?AutorizacionPagoState $autorizacionPago = null,
+        ?VerificacionPagoState $verificacionPago = null,
         ?PagadaState $pagada = null,
     ) {
         $list = [
@@ -40,6 +42,7 @@ final class RefundPipelineStateRegistry
             $contabilidad ?? new ContabilidadState(),
             $tesoreria ?? new TesoreriaState(),
             $autorizacionPago ?? new AutorizacionPagoState(),
+            $verificacionPago ?? new VerificacionPagoState(),
             $pagada ?? new PagadaState(),
         ];
 

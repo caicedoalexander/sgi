@@ -16,7 +16,7 @@ final class AutorizacionPagoState implements RefundPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::PAGADA;
+        return PipelineStatus::VERIFICACION_PAGO;
     }
 
     /**

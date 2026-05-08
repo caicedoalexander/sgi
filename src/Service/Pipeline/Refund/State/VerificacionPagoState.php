@@ -7,34 +7,28 @@ use App\Constants\Domain\Refund\PipelineStatus;
 use App\Model\Entity\Refund;
 use App\Service\Pipeline\Refund\RefundPipelineState;
 
-final class PagadaState implements RefundPipelineState
+final class VerificacionPagoState implements RefundPipelineState
 {
     public function getStatus(): PipelineStatus
-    {
-        return PipelineStatus::PAGADA;
-    }
-
-    public function getNextStatus(): ?PipelineStatus
-    {
-        return null;
-    }
-
-    public function getPreviousStatus(): ?PipelineStatus
     {
         return PipelineStatus::VERIFICACION_PAGO;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function validateAdvance(Refund $record): array
+    public function getNextStatus(): ?PipelineStatus
     {
-        return ['Este registro ya está en su estado final.'];
+        return PipelineStatus::PAGADA;
     }
 
-    /**
-     * @inheritDoc
-     */
+    public function getPreviousStatus(): ?PipelineStatus
+    {
+        return PipelineStatus::AUTORIZACION_PAGO;
+    }
+
+    public function validateAdvance(Refund $record): array
+    {
+        return ['La confirmación de pago se gestiona desde la sección de pagos.'];
+    }
+
     public function getRegressionLockMessage(Refund $record): ?string
     {
         return null;
