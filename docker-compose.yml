@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    container_name: sgrh-app
+    container_name: sgi-app
     restart: unless-stopped
     env_file: .env
     ports:
