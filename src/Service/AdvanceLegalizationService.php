@@ -211,7 +211,7 @@ class AdvanceLegalizationService
         $sigTable = TableRegistry::getTableLocator()->get('AdvanceLegalizationSignatures');
         $pending = $sigTable->find()
             ->where(['legalization_id' => $leg->id, 'signature_status' => AdvanceConstants::SIGNATURE_PENDING])
-            ->order(['id' => 'DESC'])
+            ->orderBy(['id' => 'DESC'])
             ->first();
 
         if (!$pending) {
@@ -270,7 +270,7 @@ class AdvanceLegalizationService
                         'legalization_id' => $leg->id,
                         'signature_status' => AdvanceConstants::SIGNATURE_PENDING,
                     ])
-                    ->order(['id' => 'DESC'])
+                    ->orderBy(['id' => 'DESC'])
                     ->first();
                 if ($pending) {
                     $pending->signature_status = AdvanceConstants::SIGNATURE_REJECTED;

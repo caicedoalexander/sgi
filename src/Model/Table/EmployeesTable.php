@@ -228,7 +228,7 @@ class EmployeesTable extends Table implements ExcelExportableInterface
                         ],
                     ])
                     ->contain(['NoveltyTypes'])
-                    ->order(['EmployeeNovelties.created' => 'DESC'])
+                    ->orderBy(['EmployeeNovelties.created' => 'DESC'])
                     ->limit(1);
             },
         ]);

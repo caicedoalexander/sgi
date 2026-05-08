@@ -48,7 +48,7 @@ class BankingEntitiesTable extends Table
     {
         return $query
             ->where(['BankingEntities.active' => true])
-            ->order(['BankingEntities.name' => 'ASC'])
+            ->orderBy(['BankingEntities.name' => 'ASC'])
             ->formatResults(function ($results) {
                 return $results->combine('id', function ($row) {
                     return $row->code . ' - ' . $row->name;

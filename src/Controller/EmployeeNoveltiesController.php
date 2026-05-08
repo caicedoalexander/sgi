@@ -88,7 +88,7 @@ class EmployeeNoveltiesController extends AppController
                     'EmployeeNovelties.liquidation_doc_id IS' => null,
                 ]);
             })
-            ->order(['EmployeeNovelties.created' => 'DESC']);
+            ->orderBy(['EmployeeNovelties.created' => 'DESC']);
 
         $statusFilter = $this->request->getQuery('pipeline_status');
         if ($statusFilter) {
@@ -103,7 +103,7 @@ class EmployeeNoveltiesController extends AppController
         $novelties = $this->paginate($query);
 
         $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list')
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->toArray();
 
         $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes', 'visibleStatuses'));
@@ -118,7 +118,7 @@ class EmployeeNoveltiesController extends AppController
     {
         $query = $this->EmployeeNovelties->find()
             ->contain(['Employees', 'NoveltyTypes', 'RegisteredByUsers'])
-            ->order(['EmployeeNovelties.created' => 'DESC']);
+            ->orderBy(['EmployeeNovelties.created' => 'DESC']);
 
         $statusFilter = $this->request->getQuery('pipeline_status');
         if ($statusFilter) {
@@ -133,13 +133,13 @@ class EmployeeNoveltiesController extends AppController
         $novelties = $this->paginate($query);
 
         $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list')
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->toArray();
 
         $employees = $this->EmployeeNovelties->Employees->find('list', [
             'keyField' => 'id',
             'valueField' => 'full_name',
-        ])->order(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
+        ])->orderBy(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
 
         $visibleStatuses = [];
 
@@ -157,7 +157,7 @@ class EmployeeNoveltiesController extends AppController
         $query = $this->EmployeeNovelties->find()
             ->contain(['Employees', 'NoveltyTypes', 'RegisteredByUsers'])
             ->where(['EmployeeNovelties.pipeline_status' => NoveltyConstants::STATUS_RECHAZADA])
-            ->order(['EmployeeNovelties.created' => 'DESC']);
+            ->orderBy(['EmployeeNovelties.created' => 'DESC']);
 
         $typeFilter = $this->request->getQuery('novelty_type_id');
         if ($typeFilter) {
@@ -167,7 +167,7 @@ class EmployeeNoveltiesController extends AppController
         $novelties = $this->paginate($query);
 
         $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list')
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->toArray();
 
         $statusFilter = null;
@@ -192,7 +192,7 @@ class EmployeeNoveltiesController extends AppController
         $employees = $this->EmployeeNovelties->Employees->find('list', [
             'keyField' => 'id',
             'valueField' => 'full_name',
-        ])->order(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
+        ])->orderBy(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
 
         $this->set(compact('noveltyTypes', 'employees'));
     }
@@ -923,7 +923,7 @@ class EmployeeNoveltiesController extends AppController
         $types = $this->EmployeeNovelties->NoveltyTypes->find()
             ->contain(['ChildNoveltyTypes' => ['sort' => ['ChildNoveltyTypes.name' => 'ASC']]])
             ->where(['NoveltyTypes.parent_id IS' => null])
-            ->order(['NoveltyTypes.name' => 'ASC'])
+            ->orderBy(['NoveltyTypes.name' => 'ASC'])
             ->all();
 
         $grouped = [];

@@ -119,7 +119,7 @@ class RefundsController extends AppController
 
         $query = $this->Refunds->find()
             ->contain(['CreatedByUsers', 'BeneficiaryEmployees', 'BeneficiaryProviders', 'Invoices'])
-            ->order(['Refunds.created' => 'DESC']);
+            ->orderBy(['Refunds.created' => 'DESC']);
 
         if (!empty($visibleStatuses)) {
             $query->where(['Refunds.status IN' => $visibleStatuses]);
@@ -138,7 +138,7 @@ class RefundsController extends AppController
     {
         $query = $this->Refunds->find()
             ->contain(['CreatedByUsers', 'BeneficiaryEmployees', 'BeneficiaryProviders', 'Invoices'])
-            ->order(['Refunds.created' => 'DESC']);
+            ->orderBy(['Refunds.created' => 'DESC']);
 
         $this->_applyListFilters($query);
 
@@ -156,7 +156,7 @@ class RefundsController extends AppController
         $query = $this->Refunds->find()
             ->contain(['CreatedByUsers', 'BeneficiaryEmployees', 'BeneficiaryProviders', 'Invoices'])
             ->where(['Refunds.status !=' => RefundConstants::STATUS_PAGADA])
-            ->order(['Refunds.created' => 'DESC']);
+            ->orderBy(['Refunds.created' => 'DESC']);
 
         $this->_applyListFilters($query, skipStatus: true);
 
@@ -284,7 +284,7 @@ class RefundsController extends AppController
 
         $employees = $employeesTable->find()
             ->select(['id', 'first_name', 'last_name1', 'last_name2'])
-            ->order(['first_name' => 'ASC'])
+            ->orderBy(['first_name' => 'ASC'])
             ->all()
             ->combine(
                 'id',
@@ -297,7 +297,7 @@ class RefundsController extends AppController
             ->toArray();
 
         $providers = $providersTable->find('list', keyField: 'id', valueField: 'name')
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->toArray();
 
         return [$employees, $providers];

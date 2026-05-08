@@ -514,7 +514,7 @@ class InvoicesController extends AppController
 
         $this->filterService->apply($query, $this->request->getQueryParams());
 
-        $query->order(['Invoices.created' => 'DESC']);
+        $query->orderBy(['Invoices.created' => 'DESC']);
 
         return $query;
     }
@@ -548,7 +548,7 @@ class InvoicesController extends AppController
             ->where(['active' => true]);
 
         return [
-            'providers' => $this->Invoices->Providers->find('list')->order(['Providers.name' => 'ASC'])->all(),
+            'providers' => $this->Invoices->Providers->find('list')->orderBy(['Providers.name' => 'ASC'])->all(),
             'operationCenters' => $this->Invoices->OperationCenters->find('codeList')->all(),
             'expenseTypes' => $this->Invoices->ExpenseTypes->find('list', limit: 200)->all(),
             'costCenters' => $this->Invoices->CostCenters->find('codeList')->all(),
@@ -559,7 +559,7 @@ class InvoicesController extends AppController
             'employees' => $this->fetchTable('Employees')
                 ->find()
                 ->where(['Employees.status' => EmployeeStatusConstants::ACTIVO])
-                ->order(['Employees.first_name' => 'ASC', 'Employees.last_name1' => 'ASC'])
+                ->orderBy(['Employees.first_name' => 'ASC', 'Employees.last_name1' => 'ASC'])
                 ->all()
                 ->combine('id', function ($employee) {
                     $doc = $employee->document_number ? ' - ' . $employee->document_number : '';

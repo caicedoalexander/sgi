@@ -26,7 +26,7 @@ class DianCrosschecksController extends AppController
     {
         $query = $this->DianCrosschecks->find()
             ->contain(['UploadedByUsers'])
-            ->order(['DianCrosschecks.created' => 'DESC']);
+            ->orderBy(['DianCrosschecks.created' => 'DESC']);
 
         $statusFilter = $this->request->getQuery('status');
         if ($statusFilter) {

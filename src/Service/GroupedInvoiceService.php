@@ -191,7 +191,7 @@ class GroupedInvoiceService
                 'Invoices.pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
                 "Invoices.{$this->fkField} IS" => null,
             ])
-            ->order(['Invoices.issue_date' => 'ASC']);
+            ->orderBy(['Invoices.issue_date' => 'ASC']);
 
         if (!empty($filters['date_from'])) {
             $query->where(['Invoices.issue_date >=' => $filters['date_from']]);

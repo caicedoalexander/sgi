@@ -21,7 +21,7 @@ class LeaveDocumentTemplatesController extends AppController
     {
         $query = $this->LeaveDocumentTemplates->find()
             ->contain(['LeaveTemplateFields'])
-            ->order(['LeaveDocumentTemplates.created' => 'DESC']);
+            ->orderBy(['LeaveDocumentTemplates.created' => 'DESC']);
 
         $templates = $this->paginate($query);
 

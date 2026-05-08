@@ -81,7 +81,7 @@ class PettyCashRecordsController extends AppController
 
         $query = $this->PettyCashRecords->find()
             ->contain(['CreatedByUsers', 'Invoices'])
-            ->order(['PettyCashRecords.created' => 'DESC']);
+            ->orderBy(['PettyCashRecords.created' => 'DESC']);
 
         if (!empty($visibleStatuses)) {
             $query->where(['PettyCashRecords.status IN' => $visibleStatuses]);
@@ -100,7 +100,7 @@ class PettyCashRecordsController extends AppController
     {
         $query = $this->PettyCashRecords->find()
             ->contain(['CreatedByUsers', 'Invoices'])
-            ->order(['PettyCashRecords.created' => 'DESC']);
+            ->orderBy(['PettyCashRecords.created' => 'DESC']);
 
         $this->_applyListFilters($query);
 
@@ -118,7 +118,7 @@ class PettyCashRecordsController extends AppController
         $query = $this->PettyCashRecords->find()
             ->contain(['CreatedByUsers', 'Invoices'])
             ->where(['PettyCashRecords.status !=' => PettyCashConstants::STATUS_PAGADA])
-            ->order(['PettyCashRecords.created' => 'DESC']);
+            ->orderBy(['PettyCashRecords.created' => 'DESC']);
 
         $this->_applyListFilters($query, skipStatus: true);
 

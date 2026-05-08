@@ -75,7 +75,7 @@ class PaymentRegistryService
         $table = TableRegistry::getTableLocator()->get('InvoicePayments');
         $query = $table->find()
             ->contain(['Invoices', 'BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers', 'PaymentSchedulings', 'PettyCashRecords'])
-            ->order(['InvoicePayments.created' => 'DESC']);
+            ->orderBy(['InvoicePayments.created' => 'DESC']);
 
         $this->_applyCommonFilters($query, $filters, 'InvoicePayments');
         $this->_applyInvoiceTypeFilter($query, $requestedType);
@@ -188,7 +188,7 @@ class PaymentRegistryService
         $table = TableRegistry::getTableLocator()->get('LiquidationDocPayments');
         $query = $table->find()
             ->contain(['NoveltyLiquidationDocs', 'BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'])
-            ->order(['LiquidationDocPayments.created' => 'DESC']);
+            ->orderBy(['LiquidationDocPayments.created' => 'DESC']);
 
         $this->_applyCommonFilters($query, $filters, 'LiquidationDocPayments');
 

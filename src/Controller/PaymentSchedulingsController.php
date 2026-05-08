@@ -58,7 +58,7 @@ class PaymentSchedulingsController extends AppController
 
         $query = $this->PaymentSchedulings->find()
             ->contain(['CreatedByUsers', 'PaymentSchedulingItems'])
-            ->order(['PaymentSchedulings.created' => 'DESC']);
+            ->orderBy(['PaymentSchedulings.created' => 'DESC']);
 
         if (!empty($visibleStatuses)) {
             $query->where(['PaymentSchedulings.pipeline_status IN' => $visibleStatuses]);

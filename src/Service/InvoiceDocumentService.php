@@ -71,7 +71,7 @@ class InvoiceDocumentService
         $documents = $documentsTable->find()
             ->where(['invoice_id' => $invoiceId])
             ->contain(['UploadedByUsers'])
-            ->order(['InvoiceDocuments.created' => 'DESC'])
+            ->orderBy(['InvoiceDocuments.created' => 'DESC'])
             ->all();
 
         $grouped = [];

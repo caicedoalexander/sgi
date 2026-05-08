@@ -85,7 +85,7 @@ class AdvancesController extends AppController
                 'OperationCenters',
                 'AdvanceLegalization',
             ])
-            ->order(['Invoices.created' => 'DESC']);
+            ->orderBy(['Invoices.created' => 'DESC']);
 
         if (!empty($visibleStatuses)) {
             $query->where(['Invoices.pipeline_status IN' => $visibleStatuses]);
@@ -111,7 +111,7 @@ class AdvancesController extends AppController
                 'OperationCenters',
                 'AdvanceLegalization',
             ])
-            ->order(['Invoices.created' => 'DESC']);
+            ->orderBy(['Invoices.created' => 'DESC']);
 
         $advances = $this->paginate($query);
         $visibleStatuses = [];
@@ -145,7 +145,7 @@ class AdvancesController extends AppController
                 'OperationCenters',
                 'AdvanceLegalization',
             ])
-            ->order(['Invoices.created' => 'DESC']);
+            ->orderBy(['Invoices.created' => 'DESC']);
 
         $advances = $this->paginate($query);
         $visibleStatuses = [];
@@ -341,18 +341,18 @@ class AdvancesController extends AppController
         $candidates = $invoicesTable->find()
             ->where($conditions)
             ->contain(['Providers', 'Employees', 'OperationCenters'])
-            ->order(['Invoices.issue_date' => 'DESC'])
+            ->orderBy(['Invoices.issue_date' => 'DESC'])
             ->limit(200)
             ->all();
 
         $providers = TableRegistry::getTableLocator()->get('Providers')
             ->find('list', keyField: 'id', valueField: 'name')
             ->where(['active' => true])
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->toArray();
         $operationCenters = TableRegistry::getTableLocator()->get('OperationCenters')
             ->find('list', keyField: 'id', valueField: 'name')
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->toArray();
 
         $this->set(compact('leg', 'candidates', 'filters', 'providers', 'operationCenters'));
@@ -758,13 +758,13 @@ class AdvancesController extends AppController
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
 
         return [
-            'providers' => $invoicesTable->Providers->find('list')->order(['Providers.name' => 'ASC'])->all(),
+            'providers' => $invoicesTable->Providers->find('list')->orderBy(['Providers.name' => 'ASC'])->all(),
             'operationCenters' => $invoicesTable->OperationCenters->find('codeList')->all(),
             'expenseTypes' => $invoicesTable->ExpenseTypes->find('list')->all(),
             'costCenters' => $invoicesTable->CostCenters->find('codeList')->all(),
             'employees' => $this->fetchTable('Employees')
                 ->find('list', keyField: 'id', valueField: 'full_name')
-                ->order(['Employees.first_name' => 'ASC', 'Employees.last_name1' => 'ASC'])
+                ->orderBy(['Employees.first_name' => 'ASC', 'Employees.last_name1' => 'ASC'])
                 ->toArray(),
         ];
     }

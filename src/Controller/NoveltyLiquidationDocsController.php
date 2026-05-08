@@ -65,7 +65,7 @@ class NoveltyLiquidationDocsController extends AppController
 
         $query = $this->NoveltyLiquidationDocs->find()
             ->contain(['PerformedByUsers', 'EmployeeNovelties'])
-            ->order(['NoveltyLiquidationDocs.created' => 'DESC']);
+            ->orderBy(['NoveltyLiquidationDocs.created' => 'DESC']);
 
         if (!empty($visibleStatuses)) {
             $query->where(['NoveltyLiquidationDocs.pipeline_status IN' => $visibleStatuses]);
@@ -89,7 +89,7 @@ class NoveltyLiquidationDocsController extends AppController
     {
         $query = $this->NoveltyLiquidationDocs->find()
             ->contain(['PerformedByUsers', 'EmployeeNovelties'])
-            ->order(['NoveltyLiquidationDocs.created' => 'DESC']);
+            ->orderBy(['NoveltyLiquidationDocs.created' => 'DESC']);
 
         $statusFilter = $this->request->getQuery('pipeline_status');
         if ($statusFilter) {
@@ -112,7 +112,7 @@ class NoveltyLiquidationDocsController extends AppController
         $query = $this->NoveltyLiquidationDocs->find()
             ->contain(['PerformedByUsers', 'EmployeeNovelties'])
             ->where(['NoveltyLiquidationDocs.pipeline_status' => NoveltyConstants::STATUS_RECHAZADA])
-            ->order(['NoveltyLiquidationDocs.created' => 'DESC']);
+            ->orderBy(['NoveltyLiquidationDocs.created' => 'DESC']);
 
         $liquidationDocs = $this->paginate($query);
         $statusFilter = NoveltyConstants::STATUS_RECHAZADA;
@@ -163,7 +163,7 @@ class NoveltyLiquidationDocsController extends AppController
             $groupHistories = $historiesTable->find()
                 ->contain(['Users', 'EmployeeNovelties'])
                 ->where(['NoveltyHistories.novelty_id IN' => $noveltyIds])
-                ->order(['NoveltyHistories.created' => 'DESC'])
+                ->orderBy(['NoveltyHistories.created' => 'DESC'])
                 ->all()
                 ->toArray();
         }

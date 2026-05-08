@@ -96,7 +96,7 @@ class NoveltyDocumentService
         $documents = $documentsTable->find()
             ->where(['novelty_id' => $noveltyId])
             ->contain(['UploadedByUsers'])
-            ->order(['NoveltyDocuments.created' => 'DESC'])
+            ->orderBy(['NoveltyDocuments.created' => 'DESC'])
             ->all();
 
         $grouped = [];
@@ -120,7 +120,7 @@ class NoveltyDocumentService
                 'document_type !=' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
             ])
             ->contain(['UploadedByUsers'])
-            ->order(['NoveltyDocuments.created' => 'DESC'])
+            ->orderBy(['NoveltyDocuments.created' => 'DESC'])
             ->all();
 
         $grouped = [];

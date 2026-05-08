@@ -343,7 +343,7 @@ class EmployeeDocumentService
         $foldersTable = TableRegistry::getTableLocator()->get('EmployeeFolders');
 
         $defaults = $defaultFoldersTable->find()
-            ->order(['sort_order' => 'ASC'])
+            ->orderBy(['sort_order' => 'ASC'])
             ->all()
             ->toList();
 

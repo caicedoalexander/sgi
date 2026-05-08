@@ -19,7 +19,7 @@ class NoveltyTypesController extends AppController
                 'NoveltyTypeContractTemplates.LeaveDocumentTemplates',
             ])
             ->where(['NoveltyTypes.parent_id IS' => null])
-            ->order(['NoveltyTypes.name' => 'ASC']);
+            ->orderBy(['NoveltyTypes.name' => 'ASC']);
 
         $noveltyTypes = $this->paginate($query);
         $this->set(compact('noveltyTypes'));
@@ -45,7 +45,7 @@ class NoveltyTypesController extends AppController
 
         $parentTypes = $this->NoveltyTypes->find('list')
             ->where(['parent_id IS' => null])
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->toArray();
 
         $this->_setFormData();
@@ -72,7 +72,7 @@ class NoveltyTypesController extends AppController
 
         $parentTypes = $this->NoveltyTypes->find('list')
             ->where(['parent_id IS' => null, 'id !=' => $id])
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->toArray();
 
         $this->_setFormData();
@@ -130,12 +130,12 @@ class NoveltyTypesController extends AppController
         $documentTemplates = TableRegistry::getTableLocator()->get('LeaveDocumentTemplates')
             ->find('list', valueField: 'name')
             ->where(['is_active' => true])
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->toArray();
 
         $temporaryOrganizations = TableRegistry::getTableLocator()->get('TemporaryOrganizations')
             ->find('list', valueField: 'name')
-            ->order(['name' => 'ASC'])
+            ->orderBy(['name' => 'ASC'])
             ->toArray();
 
         $contractTypes = ContractTypeConstants::LABELS;

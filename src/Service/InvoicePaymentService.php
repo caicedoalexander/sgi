@@ -42,7 +42,7 @@ class InvoicePaymentService
                 'invoice_id' => $invoiceId,
                 'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
             ])
-            ->order(['payment_date' => 'ASC'])
+            ->orderBy(['payment_date' => 'ASC'])
             ->all();
 
         $totalPaid = 0.0;

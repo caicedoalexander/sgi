@@ -48,7 +48,7 @@ final readonly class AdvanceLegalizationViewModel
                 'Invoices.advance_id' => $this->invoice->id,
             ])
             ->contain(['Providers', 'Employees'])
-            ->order(['Invoices.issue_date' => 'ASC'])
+            ->orderBy(['Invoices.issue_date' => 'ASC'])
             ->all();
 
         $linkedTotal = 0.0;

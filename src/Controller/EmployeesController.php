@@ -44,7 +44,7 @@ class EmployeesController extends AppController
     {
         $query = $this->Employees->find('withCurrentNovelty')
             ->contain(['Positions', 'OperationCenters'])
-            ->order(['Employees.last_name1' => 'ASC', 'Employees.last_name2' => 'ASC']);
+            ->orderBy(['Employees.last_name1' => 'ASC', 'Employees.last_name2' => 'ASC']);
 
         $this->filterService->apply($query, $this->request->getQueryParams());
 
@@ -95,7 +95,7 @@ class EmployeesController extends AppController
         $folders = $this->Employees->EmployeeFolders->find()
             ->where(['employee_id' => $id, 'parent_id IS' => null])
             ->contain(['EmployeeDocuments' => ['UploadedByUsers'], 'ChildFolders' => ['EmployeeDocuments' => ['UploadedByUsers']]])
-            ->order(['EmployeeFolders.name' => 'ASC'])
+            ->orderBy(['EmployeeFolders.name' => 'ASC'])
             ->all();
 
         // Novedad activa hoy: el getter virtual current_novelty filtra en memoria
