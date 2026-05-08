@@ -413,11 +413,6 @@ $dianClass = match($invoice->dian_validation ?? '') {
         </div>
         <?php endif; ?>
 
-        <?= $this->element('confirm_payment_card', [
-            'isVerificacionPago' => $invoice->pipeline_status === InvoiceConstants::STATUS_VERIFICACION_PAGO,
-            'canConfirm' => $canConfirmPayment ?? false,
-            'confirmUrl' => ['controller' => 'InvoicePayments', 'action' => 'confirmPayment', $invoice->id],
-        ]) ?>
     </div>
 
     <!-- Barra de registro -->

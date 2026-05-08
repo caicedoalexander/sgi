@@ -20,6 +20,7 @@ $currentStatus = $viewModel->currentStatus;
 $advanceErrors = $viewModel->advanceErrors;
 $canRegisterPayment = $viewModel->canRegisterPayment;
 $canAuthorizePayment = $viewModel->canAuthorizePayment;
+$canConfirmPayment = $viewModel->canConfirmPayment;
 $canRegress = $viewModel->canRegress;
 $syntheticPayments = $viewModel->syntheticPayments;
 $pipelineLabels = $viewModel->pipelineLabels;
@@ -428,6 +429,11 @@ $invoiceCount = count($record->invoices ?? []);
             'sectionIcon'        => 'bi-bank',
             'forceFullAmount'    => true,
             'singlePaymentOnly'  => true,
+        ]) ?>
+        <?= $this->element('confirm_payment_card', [
+            'isVerificacionPago' => $record->status === RefundConstants::STATUS_VERIFICACION_PAGO,
+            'canConfirm' => $canConfirmPayment,
+            'confirmUrl' => ['action' => 'confirmPayment', $record->id],
         ]) ?>
         <?php endif; ?>
 

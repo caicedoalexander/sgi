@@ -216,11 +216,6 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     </div>
     <?php endif; ?>
 
-    <?= $this->element('confirm_payment_card', [
-        'isVerificacionPago' => $doc->pipeline_status === NoveltyConstants::STATUS_VERIFICACION_PAGO,
-        'canConfirm' => $canConfirmPayment ?? false,
-        'confirmUrl' => ['controller' => 'LiquidationDocPayments', 'action' => 'confirmPayment', $doc->id],
-    ]) ?>
 
     <!-- Payments (read-only) -->
     <?php if (!empty($doc->liquidation_doc_payments)): ?>

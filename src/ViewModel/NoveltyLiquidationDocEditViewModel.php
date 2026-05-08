@@ -29,6 +29,7 @@ final class NoveltyLiquidationDocEditViewModel
         public readonly array $bankingEntities,
         public readonly bool $isTesoreriaEdit,
         public readonly bool $isContadorAutPago,
+        public readonly bool $canConfirmPayment,
     ) {
     }
 }

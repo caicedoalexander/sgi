@@ -21,6 +21,7 @@ final class PaymentSchedulingEditViewModel
         public readonly bool $canAdvance,
         public readonly bool $canReject,
         public readonly bool $canRegress,
+        public readonly bool $canConfirmPayment,
         public readonly ?string $nextStatus,
         public readonly ?string $previousStatus,
         public readonly ?string $regressLockMessage,

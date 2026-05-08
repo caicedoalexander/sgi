@@ -18,6 +18,7 @@ $skipsGdp = $viewModel->skipsGdp;
 $bankingEntities = $viewModel->bankingEntities;
 $isTesoreriaEdit = $viewModel->isTesoreriaEdit;
 $isContadorAutPago = $viewModel->isContadorAutPago;
+$canConfirmPayment = $viewModel->canConfirmPayment;
 
 $this->assign('title', 'Editar Liquidación: ' . h($doc->liquidation_number));
 
@@ -360,6 +361,7 @@ $noveltyCount = count($doc->employee_novelties);
     $showPayments = in_array($currentStatus, [
         NoveltyConstants::STATUS_TESORERIA,
         NoveltyConstants::STATUS_AUTORIZACION_PAGO,
+        NoveltyConstants::STATUS_VERIFICACION_PAGO,
         NoveltyConstants::STATUS_PAGADA,
     ]);
     ?>
@@ -375,6 +377,11 @@ $noveltyCount = count($doc->employee_novelties);
             'canAuthorize'       => $isContadorAutPago ?? false,
             'canDelete'          => false,
             'rejectMessage'      => '¿Rechazar este pago? El documento volverá a Tesorería.',
+        ]) ?>
+        <?= $this->element('confirm_payment_card', [
+            'isVerificacionPago' => $currentStatus === \App\Constants\NoveltyConstants::STATUS_VERIFICACION_PAGO,
+            'canConfirm' => $canConfirmPayment ?? false,
+            'confirmUrl' => ['controller' => 'LiquidationDocPayments', 'action' => 'confirmPayment', $doc->id],
         ]) ?>
     </div>
     <?php endif; ?>

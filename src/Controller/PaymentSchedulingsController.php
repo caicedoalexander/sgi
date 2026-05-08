@@ -98,14 +98,8 @@ class PaymentSchedulingsController extends AppController
         $roleName = $this->_getRoleName();
         $total = $this->schedulingService->calculateTotal($record->id);
         $pipelineLabels = PaymentSchedulingConstants::STATUS_LABELS;
-        $canConfirmPayment = $this->pipelineAuth->canOperate(
-            (int)$this->_getCurrentUser()->role_id,
-            $roleName,
-            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
-            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
-        );
 
-        $this->set(compact('record', 'roleName', 'total', 'pipelineLabels', 'canConfirmPayment'));
+        $this->set(compact('record', 'roleName', 'total', 'pipelineLabels'));
     }
 
     public function add()
@@ -176,6 +170,12 @@ class PaymentSchedulingsController extends AppController
         $canAdvance = $this->schedulingService->canAdvance($roleId, $roleName, $currentStatus);
         $canReject = $this->schedulingService->canReject($roleId, $roleName, $currentStatus);
         $canRegress = $this->schedulingService->canRegress($roleId, $roleName, $currentStatus);
+        $canConfirmPayment = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
+        );
 
         $advanceErrors = $canAdvance
             ? $this->schedulingService->validateTransitionRequirements($record, $currentStatus)
@@ -188,6 +188,7 @@ class PaymentSchedulingsController extends AppController
             canAdvance: $canAdvance,
             canReject: $canReject,
             canRegress: $canRegress,
+            canConfirmPayment: $canConfirmPayment,
             nextStatus: $this->schedulingService->getNextStatus($currentStatus),
             previousStatus: $this->schedulingService->getPreviousStatus($currentStatus),
             regressLockMessage: $this->schedulingService->getRegressionLockMessage($record),

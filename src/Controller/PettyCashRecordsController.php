@@ -171,16 +171,7 @@ class PettyCashRecordsController extends AppController
             ],
         ]);
 
-        $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
-        $canConfirmPayment = $this->pipelineAuth->canOperate(
-            (int)$user->role_id,
-            $roleName,
-            PipelineStepConstants::PIPELINE_PETTY_CASH,
-            PettyCashConstants::STATUS_VERIFICACION_PAGO,
-        );
-
-        $this->set(compact('record', 'canConfirmPayment'));
+        $this->set(compact('record'));
     }
 
     public function add()
@@ -328,6 +319,12 @@ class PettyCashRecordsController extends AppController
             PipelineStepConstants::PIPELINE_PETTY_CASH,
             PettyCashConstants::STATUS_AUTORIZACION_PAGO,
         );
+        $canConfirmPayment = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_PETTY_CASH,
+            PettyCashConstants::STATUS_VERIFICACION_PAGO,
+        );
 
         return new PettyCashEditViewModel(
             record: $record,
@@ -336,6 +333,7 @@ class PettyCashRecordsController extends AppController
             canDeleteDocuments: $this->_checkPermission('petty_cash', 'delete'),
             canRegisterPayment: $canRegisterPayment,
             canAuthorizePayment: $canAuthorizePayment,
+            canConfirmPayment: $canConfirmPayment,
             canRegress: $this->pettyCashService->canRegress($roleId, $roleName, $record->status),
             advanceErrors: $advanceErrors,
             nextStatus: $nextStatus,

@@ -168,13 +168,6 @@ class NoveltyLiquidationDocsController extends AppController
                 ->toArray();
         }
 
-        $canConfirmPayment = $this->pipelineAuth->canOperate(
-            (int)$user->role_id,
-            $this->_getUserRoleName($user),
-            PipelineStepConstants::PIPELINE_NOVELTIES,
-            NoveltyConstants::STATUS_VERIFICACION_PAGO,
-        );
-
         $this->set(compact(
             'doc',
             'groupErrors',
@@ -183,7 +176,6 @@ class NoveltyLiquidationDocsController extends AppController
             'liquidationDocument',
             'groupHistories',
             'fieldLabels',
-            'canConfirmPayment',
         ));
     }
 
@@ -249,6 +241,12 @@ class NoveltyLiquidationDocsController extends AppController
             PipelineStepConstants::PIPELINE_NOVELTIES,
             NoveltyConstants::STATUS_AUTORIZACION_PAGO,
         );
+        $canConfirmPayment = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_NOVELTIES,
+            NoveltyConstants::STATUS_VERIFICACION_PAGO,
+        );
         $isTesoreriaEdit = $canOpTesoreria
             && $doc->pipeline_status === NoveltyConstants::STATUS_TESORERIA;
         $isContadorAutPago = $canOpAutPago
@@ -266,6 +264,7 @@ class NoveltyLiquidationDocsController extends AppController
             bankingEntities: $bankingEntities,
             isTesoreriaEdit: $isTesoreriaEdit,
             isContadorAutPago: $isContadorAutPago,
+            canConfirmPayment: $canConfirmPayment,
         );
     }
 

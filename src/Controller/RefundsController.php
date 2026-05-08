@@ -224,16 +224,7 @@ class RefundsController extends AppController
             'RefundDocuments' => ['UploadedByUsers'],
         ]);
 
-        $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
-        $canConfirmPayment = $this->pipelineAuth->canOperate(
-            (int)$user->role_id,
-            $roleName,
-            PipelineStepConstants::PIPELINE_REFUNDS,
-            RefundConstants::STATUS_VERIFICACION_PAGO,
-        );
-
-        $this->set(compact('record', 'canConfirmPayment'));
+        $this->set(compact('record'));
     }
 
     public function add()
@@ -473,6 +464,12 @@ class RefundsController extends AppController
                 $roleName,
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_AUTORIZACION_PAGO,
+            ),
+            canConfirmPayment: $this->pipelineAuth->canOperate(
+                $roleId,
+                $roleName,
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                RefundConstants::STATUS_VERIFICACION_PAGO,
             ),
             syntheticPayments: $this->refundService->buildSyntheticPayments($record),
             roleName: $roleName,

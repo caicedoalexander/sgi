@@ -266,6 +266,13 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
             <?php endif; ?>
         </div>
 
+        <?= $this->element('confirm_payment_card', [
+            'isVerificacionPago' => $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
+            'canConfirm' => $viewModel->canConfirmPayment,
+            'confirmUrl' => ['action' => 'confirmPayment', $viewModel->record->id],
+            'message' => 'Los pagos fueron autorizados por el Contador. Confirme cuando el dinero haya salido del banco.',
+        ]) ?>
+
         <!-- Acciones pipeline -->
         <?php if ($viewModel->canAdvance || $viewModel->canReject || !empty($viewModel->canRegress)): ?>
         <div class="sgi-sticky-actions">

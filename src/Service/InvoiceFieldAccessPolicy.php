@@ -44,6 +44,9 @@ class InvoiceFieldAccessPolicy
         InvoiceConstants::STATUS_CONTABILIDAD => 'accounting',
         InvoiceConstants::STATUS_TESORERIA => 'treasury',
         InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'payment_authorization',
+        // Verificación de pago reusa la sección de autorización (read-only),
+        // donde aparece el botón "Pasar a Pagada".
+        InvoiceConstants::STATUS_VERIFICACION_PAGO => 'payment_authorization',
     ];
 
     private PipelineAuthorizationService $pipelineAuth;

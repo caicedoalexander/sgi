@@ -47,6 +47,7 @@ final readonly class RefundEditViewModel
         public ?string $regressLockMessage,
         public bool $canRegisterPayment,
         public bool $canAuthorizePayment,
+        public bool $canConfirmPayment,
         public array $syntheticPayments,
         public string $roleName,
         public array $pipelineLabels,

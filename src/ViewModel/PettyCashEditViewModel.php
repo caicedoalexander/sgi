@@ -20,6 +20,7 @@ final class PettyCashEditViewModel
         public readonly bool $canDeleteDocuments,
         public readonly bool $canRegisterPayment,
         public readonly bool $canAuthorizePayment,
+        public readonly bool $canConfirmPayment,
         public readonly bool $canRegress,
         // Avance / retroceso
         public readonly array $advanceErrors,

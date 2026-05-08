@@ -194,13 +194,7 @@ class InvoicesController extends AppController
         }
 
         $fieldLabels = InvoiceHistoryService::FIELD_LABELS;
-        $canConfirmPayment = $this->pipelineAuth->canOperate(
-            (int)$this->_getCurrentUser()->role_id,
-            $roleName,
-            PipelineStepConstants::PIPELINE_INVOICES,
-            InvoiceConstants::STATUS_VERIFICACION_PAGO,
-        );
-        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels', 'canConfirmPayment'));
+        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
     }
 
     public function add()
@@ -336,6 +330,12 @@ class InvoicesController extends AppController
         }
 
         $canRegress = $this->pipeline->canRegress($roleId, $roleName, $currentStatus);
+        $canConfirmPayment = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_INVOICES,
+            InvoiceConstants::STATUS_VERIFICACION_PAGO,
+        );
         $hasAnyActiveApprovals = $this->approvalService->hasAnyActiveApprovals($invoice->id);
         $isApprovalEditableState = $currentStatus === InvoiceConstants::STATUS_APROBACION && !empty($editableFields);
         $dropdowns = $this->_getFormDropdowns();
@@ -349,6 +349,7 @@ class InvoicesController extends AppController
             canAdvance: $canAdvance,
             canDeleteDocuments: $this->_checkPermission('invoices', 'delete'),
             canRegress: $canRegress,
+            canConfirmPayment: $canConfirmPayment,
             isRejected: $isRejected,
             isApproved: $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION
                 && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED,

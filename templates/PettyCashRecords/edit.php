@@ -391,6 +391,11 @@ $invoiceCount = count($record->invoices ?? []);
             'forceFullAmount'    => true,
             'singlePaymentOnly'  => true,
         ]) ?>
+        <?= $this->element('confirm_payment_card', [
+            'isVerificacionPago' => $record->status === PettyCashConstants::STATUS_VERIFICACION_PAGO,
+            'canConfirm' => $canConfirmPayment ?? false,
+            'confirmUrl' => ['action' => 'confirmPayment', $record->id],
+        ]) ?>
         <?php endif; ?>
 
         <?php endforeach; ?>

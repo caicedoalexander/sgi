@@ -108,11 +108,6 @@ $statusLabels = RefundConstants::STATUS_LABELS;
     </div>
 </div>
 
-<?= $this->element('confirm_payment_card', [
-    'isVerificacionPago' => $record->isVerificacionPago(),
-    'canConfirm' => $canConfirmPayment ?? false,
-    'confirmUrl' => ['action' => 'confirmPayment', $record->id],
-]) ?>
 
 <!-- Facturas agrupadas -->
 <div class="card card-primary mb-4">

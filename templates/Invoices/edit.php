@@ -833,6 +833,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         <?php if ($sectionName === 'payment_authorization' && in_array('payment_authorization', $viewModel->visibleSections)
                   && in_array($viewModel->currentStatus, [
                       \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+                      \App\Constants\InvoiceConstants::STATUS_VERIFICACION_PAGO,
                       \App\Constants\InvoiceConstants::STATUS_PAGADA,
                   ], true)): ?>
         <?php
@@ -847,6 +848,11 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             'mode'               => $paymentMode,
             'sectionTitle'       => 'Autorización de Pago',
             'sectionIcon'        => 'bi-shield-check',
+        ]) ?>
+        <?= $this->element('confirm_payment_card', [
+            'isVerificacionPago' => $viewModel->currentStatus === \App\Constants\InvoiceConstants::STATUS_VERIFICACION_PAGO,
+            'canConfirm' => $viewModel->canConfirmPayment,
+            'confirmUrl' => ['controller' => 'InvoicePayments', 'action' => 'confirmPayment', $viewModel->invoice->id],
         ]) ?>
         <?php endif; ?>
 

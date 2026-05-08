@@ -22,6 +22,7 @@ final class InvoiceEditViewModel
         public readonly bool $canAdvance,
         public readonly bool $canDeleteDocuments,
         public readonly bool $canRegress,
+        public readonly bool $canConfirmPayment,
         public readonly bool $isRejected,
         public readonly bool $isApproved,
 

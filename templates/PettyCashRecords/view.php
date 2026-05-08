@@ -176,11 +176,6 @@ $docIconColor = fn(?string $mime): string => match(true) {
         </div>
     </div>
 </div>
-<?= $this->element('confirm_payment_card', [
-    'isVerificacionPago' => $record->isVerificacionPago(),
-    'canConfirm' => $canConfirmPayment ?? false,
-    'confirmUrl' => ['action' => 'confirmPayment', $record->id],
-]) ?>
 <?php endif; ?>
 
 <!-- Facturas agrupadas -->
