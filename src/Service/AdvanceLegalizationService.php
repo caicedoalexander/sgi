@@ -531,7 +531,12 @@ class AdvanceLegalizationService
 
     /**
      * Called from InvoicePaymentService::authorizePayment when a refund payment is authorized.
-     * Cierra la legalización (caso sobrante) cuando estaba esperando autorización de pago.
+     * Mueve la legalización (caso sobrante) de `autorizacion_pago` → `verificacion_pago`,
+     * dejándola pendiente de que Tesorería confirme la ejecución efectiva del reintegro
+     * vía confirmRefundExecuted().
+     *
+     * (Antes esta operación cerraba directamente a `legalizada`; el feature
+     * "Verificación de pago" inserta el paso intermedio de confirmación.)
      */
     public function closeOnRefundAuthorized(int $paymentId, int $userId): ServiceResult
     {
@@ -540,11 +545,31 @@ class AdvanceLegalizationService
         if (!$leg) {
             return ServiceResult::fail('No hay legalización vinculada al pago.');
         }
-        if ($leg->status === AdvanceConstants::STATUS_LEGALIZADA) {
+        if (in_array($leg->status, [
+            AdvanceConstants::STATUS_VERIFICACION_PAGO,
+            AdvanceConstants::STATUS_LEGALIZADA,
+        ], true)) {
             return ServiceResult::ok($leg);
         }
         if ($leg->status !== AdvanceConstants::STATUS_AUTORIZACION_PAGO) {
             return ServiceResult::fail('La legalización no está esperando autorización de pago.');
+        }
+
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_VERIFICACION_PAGO, $userId);
+    }
+
+    /**
+     * Tesorería confirma que el reintegro al beneficiario ya se ejecutó.
+     * Cierra la legalización (caso sobrante) moviéndola de `verificacion_pago` → `legalizada`.
+     * El dispatch de AdvanceLegalizedEvent ocurre dentro de _setStatus().
+     */
+    public function confirmRefundExecuted(AdvanceLegalization $leg, int $userId): ServiceResult
+    {
+        if ($leg->status === AdvanceConstants::STATUS_LEGALIZADA) {
+            return ServiceResult::ok($leg);
+        }
+        if ($leg->status !== AdvanceConstants::STATUS_VERIFICACION_PAGO) {
+            return ServiceResult::fail('La legalización no está en verificación de pago.');
         }
 
         $leg->legalized_at = date('Y-m-d H:i:s');

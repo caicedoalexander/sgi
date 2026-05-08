@@ -13,6 +13,7 @@ final class AdvanceConstants
     public const STATUS_CONTABILIDAD = PipelineStatus::CONTABILIDAD->value;
     public const STATUS_TESORERIA = PipelineStatus::TESORERIA->value;
     public const STATUS_AUTORIZACION_PAGO = PipelineStatus::AUTORIZACION_PAGO->value;
+    public const STATUS_VERIFICACION_PAGO = PipelineStatus::VERIFICACION_PAGO->value;
     public const STATUS_LEGALIZADA = PipelineStatus::LEGALIZADA->value;
 
     public const PIPELINE_STATUSES = [
@@ -21,6 +22,7 @@ final class AdvanceConstants
         self::STATUS_CONTABILIDAD,
         self::STATUS_TESORERIA,
         self::STATUS_AUTORIZACION_PAGO,
+        self::STATUS_VERIFICACION_PAGO,
         self::STATUS_LEGALIZADA,
     ];
 
@@ -30,6 +32,7 @@ final class AdvanceConstants
         self::STATUS_CONTABILIDAD      => 'Contabilidad',
         self::STATUS_TESORERIA         => 'Tesorería',
         self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+        self::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         self::STATUS_LEGALIZADA        => 'Legalizada',
     ];
 

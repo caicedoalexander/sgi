@@ -594,6 +594,11 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'Advances', 'action' => 'registerRefund'],
             ['id' => '\d+', 'pass' => ['id']],
         );
+        $builder->connect(
+            '/advances/confirm-refund-payment/{id}',
+            ['controller' => 'Advances', 'action' => 'confirmRefundPayment'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
 
         $builder->fallbacks();
     });

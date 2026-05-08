@@ -263,8 +263,15 @@ class AdvancesController extends AppController
             return $this->redirect(['action' => 'view', $invoice->id]);
         }
 
-        $roleName = $this->_getCurrentUser()->role->name ?? '';
-        $vm = new AdvanceLegalizationViewModel($invoice, $leg, $roleName);
+        $user = $this->_getCurrentUser();
+        $roleName = $user->role->name ?? '';
+        $vm = new AdvanceLegalizationViewModel(
+            $invoice,
+            $leg,
+            $roleName,
+            (int)$user->id,
+            $this->actionPolicy,
+        );
         $this->set($vm->build());
         $this->set('actionPolicy', $this->actionPolicy);
 
@@ -683,6 +690,32 @@ class AdvancesController extends AppController
         }
 
         return $this->redirect(['action' => 'view', $id]);
+    }
+
+    /**
+     * Tesorería confirma que el reintegro al beneficiario ya se ejecutó.
+     * Cierra la legalización (caso sobrante) de `verificacion_pago` → `legalizada`.
+     */
+    public function confirmRefundPayment(?int $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $leg = $this->_loadLegalization((int)$id);
+        if (!$leg) {
+            return $this->_redirectMissing();
+        }
+        $user = $this->_getCurrentUser();
+        $roleName = $this->_getUserRoleName($user);
+        if (!$this->actionPolicy->canConfirmRefundPayment($leg, (int)$user->id, $roleName)) {
+            return $this->_denyAction((int)$id);
+        }
+        $result = $this->legalizationService->confirmRefundExecuted($leg, (int)$user->id);
+        if ($result->success) {
+            $this->Flash->success('Reintegro confirmado. La legalización quedó cerrada.');
+        } else {
+            $this->Flash->error($result->firstError() ?? 'Error al confirmar el reintegro.');
+        }
+
+        return $this->redirect(['action' => 'legalization', $id]);
     }
 
     /**

@@ -25,6 +25,7 @@ $legBadgeMap = [
     AdvanceConstants::STATUS_CONTABILIDAD      => ['Contabilidad', 'bg-warning text-dark'],
     AdvanceConstants::STATUS_TESORERIA         => ['Tesorería', 'bg-warning text-dark'],
     AdvanceConstants::STATUS_AUTORIZACION_PAGO => ['Autorización de pago', 'bg-warning text-dark'],
+    AdvanceConstants::STATUS_VERIFICACION_PAGO => ['Verificación de pago', 'bg-warning text-dark'],
     AdvanceConstants::STATUS_LEGALIZADA        => ['Legalizada', 'bg-success'],
 ];
 $legPipelineLabels = AdvanceConstants::STATUS_LABELS;
@@ -424,6 +425,26 @@ $docIconColor = fn(?string $mime): string => match (true) {
             'rejectMessage' => '¿Rechazar el reintegro? La legalización volverá a Tesorería para nuevo registro.',
             'sectionTitle' => 'Autorización de Reintegro',
             'sectionIcon' => 'bi-shield-check',
+        ]) ?>
+        <?php elseif ($leg->status === AdvanceConstants::STATUS_VERIFICACION_PAGO && $leg->case_type === AdvanceConstants::CASE_SOBRANTE): ?>
+        <?= $this->element('payment_section', [
+            'payments' => $surplusPayment ? [$surplusPayment] : [],
+            'bankingEntities' => $bankingEntities,
+            'addPaymentUrl' => ['controller' => 'Advances', 'action' => 'registerRefund', $leg->advance_invoice_id],
+            'paymentStatus' => null,
+            'totalAmount' => (float)$leg->surplus_amount,
+            'mode' => 'view',
+            'canRegisterPayment' => false,
+            'canAuthorize' => false,
+            'canDelete' => false,
+            'sectionTitle' => 'Reintegro autorizado',
+            'sectionIcon' => 'bi-shield-check',
+        ]) ?>
+        <?= $this->element('confirm_payment_card', [
+            'isVerificacionPago' => true,
+            'canConfirm' => $canConfirmRefundPayment ?? false,
+            'confirmUrl' => ['controller' => 'Advances', 'action' => 'confirmRefundPayment', $leg->advance_invoice_id],
+            'message' => 'El reintegro fue autorizado por el Contador. Confirme cuando el dinero haya salido del banco para cerrar la legalización.',
         ]) ?>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_LEGALIZADA): ?>
         <div class="alert alert-success d-flex align-items-center gap-2 mb-0">

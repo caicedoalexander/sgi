@@ -16,7 +16,7 @@ final class AutorizacionPagoState implements AdvanceLegalizationPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::LEGALIZADA;
+        return PipelineStatus::VERIFICACION_PAGO;
     }
 
     public function getPreviousStatus(): ?PipelineStatus

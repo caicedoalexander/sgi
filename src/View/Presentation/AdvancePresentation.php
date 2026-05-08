@@ -18,6 +18,7 @@ final class AdvancePresentation
         AdvanceConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
         AdvanceConstants::STATUS_TESORERIA         => 'bi-bank',
         AdvanceConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
+        AdvanceConstants::STATUS_VERIFICACION_PAGO => 'bi-hourglass-split',
         AdvanceConstants::STATUS_LEGALIZADA        => 'bi-cash-coin',
     ];
 }

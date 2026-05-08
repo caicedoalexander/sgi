@@ -139,30 +139,43 @@ class InvoicePaymentService
                 return false; // → rollback
             }
 
-            if (!$this->recalculatePaymentStatus($payment->invoice_id)) {
-                return false;
-            }
+            $isRefund = (bool)($payment->is_refund ?? false);
 
+            // Para pagos no-refund, recalculamos el estado de pago de la factura
+            // y, si quedó en PAYMENT_FULL, la movemos a verificacion_pago.
+            // Los pagos refund (devoluciones de Anticipos) NO tocan el pipeline
+            // de la factura — la factura ya está en `pagada` y el cambio de
+            // pipeline real ocurre en la AdvanceLegalization vinculada vía
+            // RefundOutcomeSubscriber → closeOnRefundAuthorized.
             $invoice = $invoicesTable->get($payment->invoice_id);
             $previousStatus = $invoice->pipeline_status;
+            $newPipelineStatus = $previousStatus;
 
-            $newPipelineStatus = $invoice->payment_status === InvoiceConstants::PAYMENT_FULL
-                ? InvoiceConstants::STATUS_VERIFICACION_PAGO
-                : InvoiceConstants::STATUS_TESORERIA;
+            if (!$isRefund) {
+                if (!$this->recalculatePaymentStatus($payment->invoice_id)) {
+                    return false;
+                }
 
-            $invoice->pipeline_status = $newPipelineStatus;
-            if (!$invoicesTable->save($invoice)) {
-                return false;
+                $invoice = $invoicesTable->get($payment->invoice_id);
+
+                $newPipelineStatus = $invoice->payment_status === InvoiceConstants::PAYMENT_FULL
+                    ? InvoiceConstants::STATUS_VERIFICACION_PAGO
+                    : InvoiceConstants::STATUS_TESORERIA;
+
+                $invoice->pipeline_status = $newPipelineStatus;
+                if (!$invoicesTable->save($invoice)) {
+                    return false;
+                }
+
+                $this->historyService->recordStatusChange(
+                    $invoice->id,
+                    $previousStatus,
+                    $newPipelineStatus,
+                    $authorizedBy,
+                );
             }
 
-            $this->historyService->recordStatusChange(
-                $invoice->id,
-                $previousStatus,
-                $newPipelineStatus,
-                $authorizedBy,
-            );
-
-            if ((bool)($payment->is_refund ?? false)) {
+            if ($isRefund) {
                 $this->events->dispatch(new Event(
                     'Invoice.refundAuthorized',
                     null,

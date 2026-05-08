@@ -135,4 +135,19 @@ class AdvanceLegalization extends Entity
             && $this->case_type === AdvanceConstants::CASE_SOBRANTE
             && empty($this->surplus_payment_id);
     }
+
+    public function isVerificacionPago(): bool
+    {
+        return ($this->status ?? '') === AdvanceConstants::STATUS_VERIFICACION_PAGO;
+    }
+
+    /**
+     * @return bool true cuando Tesorería puede confirmar la ejecución efectiva
+     *              del reintegro autorizado (`verificacion_pago` → `legalizada`).
+     */
+    public function canConfirmRefundPayment(): bool
+    {
+        return $this->status === AdvanceConstants::STATUS_VERIFICACION_PAGO
+            && $this->case_type === AdvanceConstants::CASE_SOBRANTE;
+    }
 }

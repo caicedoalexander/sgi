@@ -6,6 +6,7 @@ namespace App\ViewModel;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
+use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -27,6 +28,8 @@ final readonly class AdvanceLegalizationViewModel
         public Invoice $invoice,
         public AdvanceLegalization $leg,
         public string $roleName,
+        public int $userId = 0,
+        public ?AdvanceLegalizationActionPolicy $actionPolicy = null,
     ) {
     }
 
@@ -82,6 +85,10 @@ final readonly class AdvanceLegalizationViewModel
             );
         }
 
+        $canConfirmRefundPayment = $this->actionPolicy !== null && $this->userId > 0
+            ? $this->actionPolicy->canConfirmRefundPayment($this->leg, $this->userId, $this->roleName)
+            : false;
+
         return [
             'invoice' => $this->invoice,
             'leg' => $this->leg,
@@ -94,6 +101,7 @@ final readonly class AdvanceLegalizationViewModel
             'bankingEntities' => $bankingEntities,
             'surplusPayment' => $surplusPayment,
             'roleName' => $this->roleName,
+            'canConfirmRefundPayment' => $canConfirmRefundPayment,
         ];
     }
 }

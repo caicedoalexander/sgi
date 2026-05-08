@@ -10,6 +10,7 @@ use App\Service\Pipeline\Advance\State\LegalizadaState;
 use App\Service\Pipeline\Advance\State\RevisionFirmasState;
 use App\Service\Pipeline\Advance\State\TesoreriaState;
 use App\Service\Pipeline\Advance\State\ValidacionState;
+use App\Service\Pipeline\Advance\State\VerificacionPagoState;
 
 /**
  * Resuelve `advance_legalizations.status` (enum) → instancia concreta
@@ -28,6 +29,7 @@ final class AdvanceLegalizationPipelineStateRegistry
         ?ContabilidadState $contabilidad = null,
         ?TesoreriaState $tesoreria = null,
         ?AutorizacionPagoState $autPago = null,
+        ?VerificacionPagoState $verificacionPago = null,
         ?LegalizadaState $legalizada = null,
     ) {
         $list = [
@@ -36,6 +38,7 @@ final class AdvanceLegalizationPipelineStateRegistry
             $contabilidad ?? new ContabilidadState(),
             $tesoreria ?? new TesoreriaState(),
             $autPago ?? new AutorizacionPagoState(),
+            $verificacionPago ?? new VerificacionPagoState(),
             $legalizada ?? new LegalizadaState(),
         ];
 

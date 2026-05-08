@@ -78,6 +78,7 @@ final class PipelineStepConstants
             AdvanceConstants::STATUS_CONTABILIDAD,
             AdvanceConstants::STATUS_TESORERIA,
             AdvanceConstants::STATUS_AUTORIZACION_PAGO,
+            AdvanceConstants::STATUS_VERIFICACION_PAGO,
         ],
     ];
 
@@ -128,6 +129,7 @@ final class PipelineStepConstants
             AdvanceConstants::STATUS_CONTABILIDAD => 'Contabilidad',
             AdvanceConstants::STATUS_TESORERIA => 'Tesorería',
             AdvanceConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+            AdvanceConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         ],
     ];
 
