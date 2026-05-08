@@ -25,6 +25,7 @@ class RefundService
         RefundConstants::STATUS_CONTABILIDAD,
         RefundConstants::STATUS_TESORERIA,
         RefundConstants::STATUS_AUTORIZACION_PAGO,
+        RefundConstants::STATUS_VERIFICACION_PAGO,
     ];
 
     // Which refund statuses each role sees in "Mis Registros".
@@ -34,8 +35,12 @@ class RefundService
         RoleConstants::TESORERIA => [
             RefundConstants::STATUS_TESORERIA,
             RefundConstants::STATUS_AUTORIZACION_PAGO,
+            RefundConstants::STATUS_VERIFICACION_PAGO,
         ],
-        RoleConstants::CONTADOR => [RefundConstants::STATUS_AUTORIZACION_PAGO],
+        RoleConstants::CONTADOR => [
+            RefundConstants::STATUS_AUTORIZACION_PAGO,
+            RefundConstants::STATUS_VERIFICACION_PAGO,
+        ],
         RoleConstants::AUXILIAR_PERSONAL => self::ACTIVE_STATUSES,
         RoleConstants::ASISTENTE_PERSONAL => self::ACTIVE_STATUSES,
         RoleConstants::COORDINADOR_ADMIN => self::ACTIVE_STATUSES,

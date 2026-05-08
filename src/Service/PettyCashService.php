@@ -29,18 +29,24 @@ class PettyCashService
         PettyCashConstants::STATUS_CONTABILIDAD,
         PettyCashConstants::STATUS_TESORERIA,
         PettyCashConstants::STATUS_AUTORIZACION_PAGO,
+        PettyCashConstants::STATUS_VERIFICACION_PAGO,
     ];
 
     // Which petty-cash statuses each role sees in "Mis Registros".
     private const ROLE_VISIBLE_STATUSES = [
         RoleConstants::REGISTRO_REVISION  => [PettyCashConstants::STATUS_AGRUPACION],
         RoleConstants::CONTABILIDAD       => [PettyCashConstants::STATUS_CONTABILIDAD],
-        // Tesorería registra el pago (tesoreria) y monitorea la autorización (aut_pago) antes de pagado.
+        // Tesorería registra el pago (tesoreria), monitorea la autorización (aut_pago)
+        // y confirma la ejecución (verificacion_pago) antes de pagado.
         RoleConstants::TESORERIA          => [
             PettyCashConstants::STATUS_TESORERIA,
             PettyCashConstants::STATUS_AUTORIZACION_PAGO,
+            PettyCashConstants::STATUS_VERIFICACION_PAGO,
         ],
-        RoleConstants::CONTADOR           => [PettyCashConstants::STATUS_AUTORIZACION_PAGO],
+        RoleConstants::CONTADOR           => [
+            PettyCashConstants::STATUS_AUTORIZACION_PAGO,
+            PettyCashConstants::STATUS_VERIFICACION_PAGO,
+        ],
         RoleConstants::AUXILIAR_PERSONAL  => self::ACTIVE_STATUSES,
         RoleConstants::ASISTENTE_PERSONAL => self::ACTIVE_STATUSES,
         RoleConstants::COORDINADOR_ADMIN  => self::ACTIVE_STATUSES,

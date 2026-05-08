@@ -32,11 +32,13 @@ class NoveltyService
         RoleConstants::CONTADOR => [
             NoveltyConstants::STATUS_REVISION_FIRMAS,
             NoveltyConstants::STATUS_AUTORIZACION_PAGO,
+            NoveltyConstants::STATUS_VERIFICACION_PAGO,
         ],
         RoleConstants::COORDINADOR_ADMIN => [NoveltyConstants::STATUS_REVISION_FIRMAS],
         RoleConstants::TESORERIA => [
             NoveltyConstants::STATUS_TESORERIA,
             NoveltyConstants::STATUS_AUTORIZACION_PAGO,
+            NoveltyConstants::STATUS_VERIFICACION_PAGO,
         ],
         RoleConstants::ADMIN => NoveltyConstants::PIPELINE_STATUSES,
     ];
@@ -48,6 +50,7 @@ class NoveltyService
         NoveltyConstants::STATUS_GDP,
         NoveltyConstants::STATUS_TESORERIA,
         NoveltyConstants::STATUS_AUTORIZACION_PAGO,
+        NoveltyConstants::STATUS_VERIFICACION_PAGO,
     ];
 
     // Which liquidation-doc statuses each role sees in "Mis D. de Liquidación".
@@ -56,8 +59,9 @@ class NoveltyService
         RoleConstants::TESORERIA => [
             NoveltyConstants::STATUS_TESORERIA,
             NoveltyConstants::STATUS_AUTORIZACION_PAGO,
+            NoveltyConstants::STATUS_VERIFICACION_PAGO,
         ],
-        RoleConstants::CONTADOR => [NoveltyConstants::STATUS_AUTORIZACION_PAGO],
+        RoleConstants::CONTADOR => [NoveltyConstants::STATUS_AUTORIZACION_PAGO, NoveltyConstants::STATUS_VERIFICACION_PAGO],
         RoleConstants::REGISTRO_REVISION => [
             NoveltyConstants::STATUS_REVISION_FIRMAS,
             NoveltyConstants::STATUS_GDP,
