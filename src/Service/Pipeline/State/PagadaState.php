@@ -21,7 +21,9 @@ final class PagadaState implements InvoicePipelineState
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::VERIFICACION_PAGO;
+        // Pagada es terminal: revertir implicaría deshacer pagos ya
+        // materializados y, en anticipos, una legalización ya iniciada.
+        return null;
     }
 
     public function getRoleVisibility(): array

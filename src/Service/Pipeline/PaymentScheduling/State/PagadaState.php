@@ -21,7 +21,9 @@ final class PagadaState implements PaymentSchedulingPipelineState
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::VERIFICACION_PAGO;
+        // Pagada es terminal: revertir implicaría deshacer InvoicePayments
+        // ya materializados sobre las facturas hijas.
+        return null;
     }
 
     public function validateAdvance(PaymentScheduling $scheduling): array

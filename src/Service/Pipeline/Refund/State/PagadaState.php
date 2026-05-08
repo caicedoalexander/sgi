@@ -21,7 +21,9 @@ final class PagadaState implements RefundPipelineState
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::VERIFICACION_PAGO;
+        // Pagada es terminal en este módulo: revertir implica deshacer pagos
+        // materializados. Mantener `null` por seguridad.
+        return null;
     }
 
     /**
