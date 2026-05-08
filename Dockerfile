@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libexif-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
+    && docker-php-ext-install \
         pdo_mysql \
         intl \
         mbstring \
