@@ -145,19 +145,23 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             PasswordIdentifier::CREDENTIAL_PASSWORD => 'password',
         ];
 
-        $service->loadAuthenticator('Authentication.Session');
-        $service->loadAuthenticator('Authentication.Form', [
-            'fields' => $fields,
-            'loginUrl' => '/login',
-        ]);
-
-        $service->loadIdentifier('Authentication.Password', [
+        // En cakephp/authentication 4.x el identifier se pasa dentro del config
+        // del autenticador (clave 'identifier'). loadIdentifier() fue removido.
+        $identifierConfig = [
+            'className' => 'Authentication.Password',
             'fields' => $fields,
             'resolver' => [
                 'className' => 'Authentication.Orm',
                 'userModel' => 'Users',
                 'finder' => 'auth',
             ],
+        ];
+
+        $service->loadAuthenticator('Authentication.Session');
+        $service->loadAuthenticator('Authentication.Form', [
+            'fields' => $fields,
+            'loginUrl' => '/login',
+            'identifier' => $identifierConfig,
         ]);
 
         return $service;
