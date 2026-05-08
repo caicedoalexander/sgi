@@ -26,7 +26,7 @@ if (!($canConfirm ?? false) || !($isVerificacionPago ?? false)) {
         '<i class="bi bi-check2-circle me-1"></i>Cerrar flujo',
         $confirmUrl,
         [
-            'class' => 'sgi-btn-primary',
+            'class' => 'btn sgi-btn-primary',
             'escape' => false,
             'confirm' => '¿Confirmar que los soportes están completos y desea cerrar el flujo?',
         ],
