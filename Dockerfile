@@ -1,35 +1,27 @@
-FROM php:8.5-fpm
+FROM php:8.4-fpm
 
-# Base image: php:8.5-fpm = Debian 13 (Trixie). Package names alineados a Trixie.
-
-# 1) Runtime + build dependencies (libs *-dev quedan instaladas porque las
-#    extensiones compartidas las enlazan dinámicamente en runtime).
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        nginx \
-        unzip \
-        git \
-        ca-certificates \
-        libicu-dev \
-        libfreetype-dev \
-        libjpeg-dev \
-        libpng-dev \
-        libzip-dev \
-        libonig-dev \
-        libexif-dev \
+# Install system dependencies and PHP extensions
+RUN apt-get update && apt-get install -y \
+    nginx \
+    unzip \
+    git \
+    libicu-dev \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    libzip-dev \
+    libonig-dev \
+    libexif-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_mysql \
+        intl \
+        mbstring \
+        opcache \
+        gd \
+        zip \
+        exif \
     && rm -rf /var/lib/apt/lists/*
-
-# 2) Configurar gd (freetype + jpeg) y compilar extensiones de forma secuencial.
-#    Sin -j$(nproc): la build paralela tiene un race condition documentado en
-#    PHP 8.5 (cp: cannot stat 'modules/*': No such file or directory).
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql \
-    && docker-php-ext-install intl \
-    && docker-php-ext-install mbstring \
-    && docker-php-ext-install opcache \
-    && docker-php-ext-install gd \
-    && docker-php-ext-install zip \
-    && docker-php-ext-install exif
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
