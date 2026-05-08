@@ -68,6 +68,7 @@ use App\Service\Pipeline\State\AutorizacionPagoState;
 use App\Service\Pipeline\State\ContabilidadState;
 use App\Service\Pipeline\State\LegalizadaState;
 use App\Service\Pipeline\State\PagadaState;
+use App\Service\Pipeline\State\VerificacionPagoState;
 use App\Service\Pipeline\State\TesoreriaState;
 use App\Service\PipelineAuthorizationService;
 use App\Service\RefundService;
@@ -252,6 +253,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ->addArgument(InvoicePaymentService::class);
         $container->addShared(AutorizacionPagoState::class)
             ->addArgument(InvoicePaymentService::class);
+        $container->addShared(VerificacionPagoState::class);
         $container->addShared(PagadaState::class);
         $container->addShared(LegalizadaState::class);
         $container->addShared(InvoicePipelineStateRegistry::class)
@@ -260,6 +262,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 ContabilidadState::class,
                 TesoreriaState::class,
                 AutorizacionPagoState::class,
+                VerificacionPagoState::class,
                 PagadaState::class,
                 LegalizadaState::class,
             ]);
