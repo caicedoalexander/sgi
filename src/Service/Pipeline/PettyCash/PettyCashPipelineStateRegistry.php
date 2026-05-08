@@ -9,6 +9,7 @@ use App\Service\Pipeline\PettyCash\State\AutorizacionPagoState;
 use App\Service\Pipeline\PettyCash\State\ContabilidadState;
 use App\Service\Pipeline\PettyCash\State\PagadaState;
 use App\Service\Pipeline\PettyCash\State\TesoreriaState;
+use App\Service\Pipeline\PettyCash\State\VerificacionPagoState;
 
 /**
  * Resuelve `petty_cash_records.status` (enum) → instancia concreta de
@@ -27,6 +28,7 @@ final class PettyCashPipelineStateRegistry
         ?ContabilidadState $contabilidad = null,
         ?TesoreriaState $tesoreria = null,
         ?AutorizacionPagoState $autorizacionPago = null,
+        ?VerificacionPagoState $verificacionPago = null,
         ?PagadaState $pagada = null,
     ) {
         $list = [
@@ -34,6 +36,7 @@ final class PettyCashPipelineStateRegistry
             $contabilidad ?? new ContabilidadState(),
             $tesoreria ?? new TesoreriaState(),
             $autorizacionPago ?? new AutorizacionPagoState(),
+            $verificacionPago ?? new VerificacionPagoState(),
             $pagada ?? new PagadaState(),
         ];
 

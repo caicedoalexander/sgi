@@ -16,7 +16,7 @@ final class AutorizacionPagoState implements PettyCashPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::PAGADA;
+        return PipelineStatus::VERIFICACION_PAGO;
     }
 
     public function getPreviousStatus(): ?PipelineStatus

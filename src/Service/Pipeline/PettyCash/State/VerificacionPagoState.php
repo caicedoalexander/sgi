@@ -7,25 +7,25 @@ use App\Constants\Domain\PettyCash\PipelineStatus;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\Pipeline\PettyCash\PettyCashPipelineState;
 
-final class PagadaState implements PettyCashPipelineState
+final class VerificacionPagoState implements PettyCashPipelineState
 {
     public function getStatus(): PipelineStatus
-    {
-        return PipelineStatus::PAGADA;
-    }
-
-    public function getNextStatus(): ?PipelineStatus
-    {
-        return null;
-    }
-
-    public function getPreviousStatus(): ?PipelineStatus
     {
         return PipelineStatus::VERIFICACION_PAGO;
     }
 
+    public function getNextStatus(): ?PipelineStatus
+    {
+        return PipelineStatus::PAGADA;
+    }
+
+    public function getPreviousStatus(): ?PipelineStatus
+    {
+        return PipelineStatus::AUTORIZACION_PAGO;
+    }
+
     public function validateAdvance(PettyCashRecord $record): array
     {
-        return [];
+        return ['La confirmación de pago se gestiona desde la sección de pagos.'];
     }
 }
