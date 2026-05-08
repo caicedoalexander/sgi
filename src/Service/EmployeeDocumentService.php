@@ -197,6 +197,38 @@ class EmployeeDocumentService
     }
 
     /**
+     * Crear una carpeta para el empleado validando ownership del padre (si aplica).
+     */
+    public function createFolder(int $employeeId, ?string $name, ?int $parentId): ServiceResult
+    {
+        $name = is_string($name) ? trim($name) : '';
+        if ($name === '') {
+            return ServiceResult::fail('El nombre de la carpeta es requerido.');
+        }
+
+        if ($parentId !== null) {
+            try {
+                $this->assertFolderOwnership($employeeId, $parentId);
+            } catch (RecordNotFoundException) {
+                return ServiceResult::fail('La carpeta padre no es válida.');
+            }
+        }
+
+        $foldersTable = TableRegistry::getTableLocator()->get('EmployeeFolders');
+        $folder = $foldersTable->newEntity([
+            'employee_id' => $employeeId,
+            'name' => $name,
+            'parent_id' => $parentId,
+        ]);
+
+        if (!$foldersTable->save($folder)) {
+            return ServiceResult::fail('No se pudo crear la carpeta.');
+        }
+
+        return ServiceResult::ok($folder);
+    }
+
+    /**
      * Eliminar documento validando ownership y limpiando el archivo físico
      * sólo si la fila se borra correctamente.
      */

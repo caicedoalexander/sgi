@@ -11,7 +11,6 @@ use App\Service\EmployeeHistoryService;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Http\Exception\NotFoundException;
 use Cake\Http\Response;
-use Cake\ORM\TableRegistry;
 use RuntimeException;
 use Throwable;
 
@@ -185,29 +184,16 @@ class EmployeesController extends AppController
         $employee = $this->Employees->get($employeeId);
 
         $parentId = $this->request->getData('parent_id') ?: null;
+        $result = $this->documentService->createFolder(
+            (int)$employee->id,
+            $this->request->getData('name'),
+            $parentId !== null ? (int)$parentId : null,
+        );
 
-        // Verificar que la carpeta padre (si existe) pertenezca al mismo empleado.
-        if ($parentId !== null) {
-            try {
-                $this->documentService->assertFolderOwnership((int)$employee->id, (int)$parentId);
-            } catch (RecordNotFoundException) {
-                $this->Flash->error(__('La carpeta padre no es válida.'));
-
-                return $this->redirect(['action' => 'view', $employeeId]);
-            }
-        }
-
-        $foldersTable = TableRegistry::getTableLocator()->get('EmployeeFolders');
-        $folder = $foldersTable->newEntity([
-            'employee_id' => $employee->id,
-            'name' => $this->request->getData('name'),
-            'parent_id' => $parentId,
-        ]);
-
-        if ($foldersTable->save($folder)) {
-            $this->Flash->success(__('La carpeta ha sido creada.'));
+        if (!$result->success) {
+            $this->Flash->error(__($result->firstError() ?? 'No se pudo crear la carpeta.'));
         } else {
-            $this->Flash->error(__('No se pudo crear la carpeta.'));
+            $this->Flash->success(__('La carpeta ha sido creada.'));
         }
 
         return $this->redirect(['action' => 'view', $employeeId]);
