@@ -169,11 +169,19 @@ class EmployeeDocumentService
             return ServiceResult::fail('El contenido del archivo no coincide con su extensión.');
         }
 
+        // Canonicalizar extensión a partir del MIME real (CR-028).
+        [$absolutePath, $relativeFilePath] = $this->canonicalize(
+            $absolutePath,
+            $employeeId . '/' . $uniqueName,
+            $realMime,
+            self::MIME_TO_EXT,
+        );
+
         $documentsTable = TableRegistry::getTableLocator()->get('EmployeeDocuments');
         $document = $documentsTable->newEntity([
             'employee_folder_id' => $folderId,
             'name' => $originalName,
-            'file_path' => $employeeId . '/' . $uniqueName,
+            'file_path' => $relativeFilePath,
             'file_size' => $file->getSize(),
             'mime_type' => $realMime,
             'uploaded_by' => $uploadedBy,
@@ -263,7 +271,15 @@ class EmployeeDocumentService
             return ServiceResult::fail('El contenido de la imagen no coincide con su extensión.');
         }
 
-        $employee->profile_image = 'uploads/employees/' . $employee->id . '/' . $fileName;
+        // Canonicalizar extensión a partir del MIME real (CR-028).
+        [$absolutePath, $relativePath] = $this->canonicalize(
+            $absolutePath,
+            'uploads/employees/' . $employee->id . '/' . $fileName,
+            $realMime,
+            self::MIME_TO_EXT_PROFILE,
+        );
+
+        $employee->profile_image = $relativePath;
         $employee->setDirty('profile_image', true);
 
         return ServiceResult::ok(['path' => $employee->profile_image]);
