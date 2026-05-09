@@ -10,20 +10,30 @@
     if (typeof ApexCharts === 'undefined') return;
 
     /* ── Color palettes ──────────────────────────────────────── */
+    /* Colores alineados con App\View\Presentation\InvoicePresentation::STATUS_BADGES
+       (warning #ffc107, primary #0d6efd, info #0dcaf0, danger #dc3545).
+       Pagada/Legalizada usan el verde corporativo SGI (var(--primary-color) #469D61)
+       para consistencia visual con el resto del dashboard. */
     var STATUS_COLORS = {
-        aprobacion:   '#ffc107',
-        contabilidad: '#0dcaf0',
-        tesoreria:    '#0d6efd',
-        pagada:       '#469D61',
-        rechazada:    '#dc3545'
+        aprobacion:        '#ffc107',
+        contabilidad:      '#0d6efd',
+        tesoreria:         '#0dcaf0',
+        autorizacion_pago: '#0dcaf0',
+        verificacion_pago: '#ffc107',
+        pagada:            '#469D61',
+        legalizada:        '#469D61',
+        rechazada:         '#dc3545'
     };
 
     var STATUS_LABELS = {
-        aprobacion:   'Aprobación',
-        contabilidad: 'Contabilidad',
-        tesoreria:    'Tesorería',
-        pagada:       'Pagada',
-        rechazada:    'Rechazada'
+        aprobacion:        'Aprobación',
+        contabilidad:      'Contabilidad',
+        tesoreria:         'Tesorería',
+        autorizacion_pago: 'Autorización de pago',
+        verificacion_pago: 'Verificación de pago',
+        pagada:            'Pagada',
+        legalizada:        'Legalizada',
+        rechazada:         'Rechazada'
     };
 
     var CONTRACT_COLORS = ['#469D61', '#CD6A15', '#83542B', '#3B82F6', '#8B5CF6'];
