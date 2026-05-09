@@ -29,7 +29,7 @@ class SystemSettingsService
 
     public function get(string $key): ?string
     {
-        if (isset($this->cache[$key])) {
+        if (array_key_exists($key, $this->cache)) {
             return $this->cache[$key];
         }
 
@@ -39,6 +39,11 @@ class SystemSettingsService
             ->first();
 
         $value = $setting?->setting_value;
+
+        if ($value !== null && $value !== '' && in_array($key, self::ENCRYPTED_KEYS, true)) {
+            $value = $this->_decrypt($value, $key);
+        }
+
         $this->cache[$key] = $value;
 
         return $value;
@@ -85,8 +90,14 @@ class SystemSettingsService
 
         $result = [];
         foreach ($settings as $setting) {
-            $result[$setting->setting_key] = $setting->setting_value;
-            $this->cache[$setting->setting_key] = $setting->setting_value;
+            $value = $setting->setting_value;
+
+            if ($value !== null && $value !== '' && in_array($setting->setting_key, self::ENCRYPTED_KEYS, true)) {
+                $value = $this->_decrypt($value, $setting->setting_key);
+            }
+
+            $result[$setting->setting_key] = $value;
+            $this->cache[$setting->setting_key] = $value;
         }
 
         return $result;
