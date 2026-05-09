@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service\Strategy;
 
 use App\Constants\NoveltyConstants;
+use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\StructuredLogger;
 use Cake\Datasource\Exception\RecordNotFoundException;
@@ -14,13 +15,18 @@ class NoveltyApprovalStrategy implements ApprovalStrategyInterface
 {
     private StructuredLogger $logger;
 
+    private NoveltyHistoryService $historyService;
+
     /**
      * @param \App\Service\NoveltyObservationService $observationService Observation service.
+     * @param \App\Service\NoveltyHistoryService|null $historyService History service (optional, defaults to a new instance).
      */
     public function __construct(
         private readonly NoveltyObservationService $observationService,
+        ?NoveltyHistoryService $historyService = null,
     ) {
         $this->logger = new StructuredLogger('Strategy.NoveltyApproval');
+        $this->historyService = $historyService ?? new NoveltyHistoryService();
     }
 
     /**
@@ -43,13 +49,36 @@ class NoveltyApprovalStrategy implements ApprovalStrategyInterface
             $novelty->approved_at = new DateTime();
         } elseif ($action === 'reject') {
             $novelty->area_approval = NoveltyConstants::APPROVAL_REJECTED;
+            $novelty->approved_by = $novelty->approver_id;
+            $novelty->approved_at = new DateTime();
         }
 
         $saved = (bool)$table->save($novelty);
 
-        if ($saved && !empty($observations)) {
-            $userId = $createdBy ?? $novelty->approver_id ?? 0;
-            $this->observationService->addToNovelty($entityId, $userId, $observations);
+        if ($saved) {
+            $actorUserId = (int)($novelty->approver_id ?? $createdBy ?? 0);
+            if ($action === 'approve') {
+                $this->historyService->recordFieldChange(
+                    $entityId,
+                    'approver_response',
+                    null,
+                    NoveltyConstants::APPROVAL_APPROVED,
+                    $actorUserId,
+                );
+            } elseif ($action === 'reject') {
+                $this->historyService->recordFieldChange(
+                    $entityId,
+                    'approver_response',
+                    null,
+                    NoveltyConstants::APPROVAL_REJECTED,
+                    $actorUserId,
+                );
+            }
+
+            if (!empty($observations)) {
+                $userId = $createdBy ?? $novelty->approver_id ?? 0;
+                $this->observationService->addToNovelty($entityId, $userId, $observations);
+            }
         }
 
         return $saved;

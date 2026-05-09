@@ -177,6 +177,10 @@ class InvoicesController extends AppController
                 'PettyCashRecords',
                 'sort' => ['InvoicePayments.payment_date' => 'ASC'],
             ],
+            'InvoiceApprovals' => [
+                'Users',
+                'sort' => ['InvoiceApprovals.created' => 'ASC'],
+            ],
         ]);
 
         $roleName = $this->_getRoleName();
@@ -672,7 +676,7 @@ class InvoicesController extends AppController
     public function sendApprovalLinks($id = null)
     {
         $this->request->allowMethod(['post']);
-        $invoice = $this->Invoices->get($id);
+        $invoice = $this->Invoices->get($id, contain: ['Providers']);
         $user = $this->_getCurrentUser();
         $approverIds = (array)$this->request->getData('approver_ids');
 
@@ -701,7 +705,7 @@ class InvoicesController extends AppController
     public function modifyApprovers($id = null)
     {
         $this->request->allowMethod(['post']);
-        $invoice = $this->Invoices->get($id);
+        $invoice = $this->Invoices->get($id, contain: ['Providers']);
         $user = $this->_getCurrentUser();
         $reason = trim((string)$this->request->getData('reason'));
         $approverIds = (array)$this->request->getData('approver_ids');

@@ -32,6 +32,8 @@ class NoveltyHistoryService implements HistoryServiceInterface
         'employee_id' => 'Empleado',
         'novelty_type_id' => 'Tipo de Novedad',
         'liquidation_doc_id' => 'Documento de Liquidación',
+        'area_approval' => 'Aprobación de Área',
+        'approver_response' => 'Respuesta de Aprobador',
     ];
 
     /**
@@ -87,6 +89,19 @@ class NoveltyHistoryService implements HistoryServiceInterface
             'field_changed' => 'pipeline_status',
             'old_value' => NoveltyConstants::STATUS_LABELS[$fromStatus] ?? $fromStatus,
             'new_value' => NoveltyConstants::STATUS_LABELS[$toStatus] ?? $toStatus,
+        ]);
+        $table->save($entry);
+    }
+
+    public function recordFieldChange(int $noveltyId, string $field, ?string $oldValue, ?string $newValue, int $userId): void
+    {
+        $table = TableRegistry::getTableLocator()->get('NoveltyHistories');
+        $entry = $table->newEntity([
+            'novelty_id' => $noveltyId,
+            'user_id' => $userId,
+            'field_changed' => $field,
+            'old_value' => $oldValue,
+            'new_value' => $newValue,
         ]);
         $table->save($entry);
     }

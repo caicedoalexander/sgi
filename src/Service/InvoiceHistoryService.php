@@ -38,6 +38,7 @@ class InvoiceHistoryService implements HistoryServiceInterface
         'full_payment_date'           => 'Fecha Pago Total',
         'pipeline_status'             => 'Estado del Pipeline',
         'approvers_modified'          => 'Aprobadores',
+        'approver_response'           => 'Respuesta de Aprobador',
     ];
 
     public function recordChanges(Invoice $original, Invoice $modified, int $userId): void

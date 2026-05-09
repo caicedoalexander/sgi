@@ -234,6 +234,18 @@ class InvoiceApprovalService
 
             $invoiceId = $approval->invoice_id;
 
+            // Registrar respuesta individual en el historial (una entrada por aprobador)
+            $responseLabel = $action === 'approve'
+                ? InvoiceConstants::APPROVER_STATUS_APPROVED
+                : InvoiceConstants::APPROVER_STATUS_REJECTED;
+            $this->historyService->recordFieldChange(
+                $invoiceId,
+                'approver_response',
+                null,
+                $responseLabel,
+                (int)$approval->user_id,
+            );
+
             if ($action === 'reject') {
                 $this->_invalidatePendingTokens($invoiceId, $approval->id);
 

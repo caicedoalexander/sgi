@@ -296,6 +296,20 @@ $dianClass = match($invoice->dian_validation ?? '') {
                     <?= $invoice->hasValue('approver_user') ? h($invoice->approver_user->full_name) : '—' ?>
                 </span>
             </div>
+            <?php
+            $approvedNames = [];
+            foreach ($invoice->invoice_approvals ?? [] as $a) {
+                if ($a->status === InvoiceConstants::APPROVER_STATUS_APPROVED && $a->hasValue('user')) {
+                    $approvedNames[] = $a->user->full_name ?? $a->user->username ?? ('Usuario #' . $a->user_id);
+                }
+            }
+            ?>
+            <?php if (!empty($approvedNames)): ?>
+            <div class="sgi-data-row">
+                <span class="sgi-data-label">Aprobado Por</span>
+                <span class="sgi-data-value"><?= h(implode(', ', $approvedNames)) ?></span>
+            </div>
+            <?php endif; ?>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Aprobación Área</span>
                 <span class="sgi-data-value">

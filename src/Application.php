@@ -304,7 +304,10 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoicePipelineService::class,
             ]);
         $container->addShared(NoveltyApprovalStrategy::class)
-            ->addArgument(NoveltyObservationService::class);
+            ->addArguments([
+                NoveltyObservationService::class,
+                NoveltyHistoryService::class,
+            ]);
 
         // === Novelty domain ===
         $container->addShared(NoveltyHistoryService::class);
