@@ -51,19 +51,29 @@ class SystemSettingsService
             ->where(['setting_key' => $key])
             ->first();
 
+        $persistedValue = $value;
+        if ($value !== null && $value !== '' && in_array($key, self::ENCRYPTED_KEYS, true)) {
+            $persistedValue = $this->_encrypt($value);
+        }
+
         if ($setting) {
-            $setting->setting_value = $value;
+            $setting->setting_value = $persistedValue;
         } else {
             $setting = $table->newEntity([
                 'setting_key' => $key,
-                'setting_value' => $value,
+                'setting_value' => $persistedValue,
                 'setting_group' => $group,
             ]);
         }
 
-        unset($this->cache[$key]);
+        $saved = (bool)$table->save($setting);
+        if ($saved) {
+            $this->cache[$key] = $value;
+        } else {
+            unset($this->cache[$key]);
+        }
 
-        return (bool)$table->save($setting);
+        return $saved;
     }
 
     public function getGroup(string $group): array
