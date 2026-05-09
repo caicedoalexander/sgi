@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SGI (Sistema de Gestión Interna) — internal management system built with CakePHP 5.3 on PHP 8.2+. Manages invoices (5-state pipeline), employees, petty cash, legalizations, novelties, payment schedulings, and catalog modules. MySQL/MariaDB backend. Spanish-language UI.
+SGI (Sistema de Gestión Interna) — internal management system built with CakePHP 5.3 on PHP 8.4+ (`composer.json` requires `>=8.4`). Manages invoices (6-state pipeline + estado terminal `legalizada`), employees, petty cash, legalizations, novelties, payment schedulings, refunds, advances, and catalog modules. MySQL/MariaDB backend. Spanish-language UI.
 
 ## Commands
 
@@ -52,28 +52,43 @@ Sistema de diseño: ver `.claude/rules/design.md`.
 - **Service** (`src/Service/`) → Business logic, state transitions, DB transactions. Retornan `ServiceResult`.
 - **Table/Entity** (`src/Model/`) → ORM associations, validation rules, custom finders.
 - **Constants** (`src/Constants/`) → Domain values (states, roles, types). Never hardcode strings like `'Rechazada'` — use constants.
-- **Templates** (`templates/`) → PHP views. Layouts: `default.php` (authenticated), `login.php` (split-panel), `external.php` (approval tokens).
+- **Templates** (`templates/`) → PHP views. Layouts: `default.php` (authenticated), `login.php` (split-panel), `external.php` (approval tokens), `ajax.php` (respuestas AJAX sin chrome), `error.php` (páginas de error).
+- **Constants/Domain/** (`src/Constants/Domain/{Modulo}/PipelineStatus.php`) → Enums fuente única de los estados de pipeline por módulo (Invoice, Novelty, Advance, PettyCash, Refund, PaymentScheduling). Las constantes string en `*Constants` delegan a estos enums por retrocompatibilidad.
+- **Events** (`src/Event/`) → `InvoicePaidEvent`, `AdvanceLegalizedEvent`, `InvoiceRefundAuthorizedEvent`, `InvoiceRefundRejectedEvent`. Disparados desde States del pipeline; suscriptores en `Service/Subscriber/`.
 
 ### Key Services
 
 | Service | Purpose |
 |---------|---------|
-| `InvoicePipelineService` | 5-state workflow: aprobacion → contabilidad → tesoreria → autorizacion_pago → pagada |
+| `InvoicePipelineService` | Coordinador delgado del pipeline de facturas (6 estados). Delega a `InvoicePipelineStateRegistry`, `DocumentTypePolicyFactory`, `InvoiceLockPolicy`, `InvoiceTransitionValidator` y `PipelineAuthorizationService`. API pública preservada. |
 | `InvoiceFieldAccessPolicy` | Editable fields and visible sections per role/state (extracted from pipeline service) |
+| `InvoiceLockPolicy` | Determina qué campos quedan bloqueados según estado/documento |
+| `InvoiceTransitionValidator` | Valida requisitos de avance entre estados del pipeline de facturas |
 | `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation. `registerPayment()` siempre avanza la factura a `autorizacion_pago`. `editPayment()` requiere motivo. `rejectPayment()` persiste `rejection_reason` (no elimina) |
 | `InvoiceApprovalService` | Invoice approval operations. `sendApprovalLinks()`, `modifyApprovers()` (con motivo obligatorio), `resetFlow()` cuando `area_approval='Rechazada'` |
+| `InvoiceFilterService` / `EmployeeFilterService` | Filtros de listados (extends `Filter/BaseFilterService`) |
 | `GroupedInvoiceService` | Grouped invoice batch operations |
-| `NoveltyPipelineService` | Novelty state workflow (similar pattern to invoices) |
-| `PaymentSchedulingPipelineService` | Payment scheduling pipeline: borrador → tesoreria → aut_pago → pagada |
-| `PaymentSchedulingService` | Payment scheduling records management |
-| `AuthorizationService` | RBAC via `permissions` table. Admin bypasses all. |
-| `InvoiceHistoryService` | Field-by-field audit trail in `invoice_histories` |
+| `NoveltyService` | Workflow del pipeline de novedades (delega a `NoveltyPipelineStateRegistry`) |
+| `PaymentSchedulingService` | Payment scheduling pipeline (5 estados: borrador → tesoreria → autorizacion_pago → verificacion_pago → pagada) y management de registros |
+| `AdvanceLegalizationService` | Pipeline de legalizaciones de anticipos (validacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → revision_firmas → legalizada) |
+| `RefundService` | Pipeline de reintegros (agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada) y outcomes |
+| `RefundPaymentService` | Registro/edición/rechazo de pagos individuales del módulo de reintegros |
+| `PettyCashService` | Pipeline de caja menor (agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada) |
+| `LiquidationDocPaymentService` | Pagos de documentos de liquidación de novedades |
+| `PaymentRegistryService` | Vista consolidada del registro de pagos cross-módulo |
+| `AuthorizationService` | RBAC via `permissions` table. Admin **solo** bypassa los módulos en `ADMIN_BYPASS_MODULES = ['users', 'roles']`; en los demás módulos el rol Administrador pasa por el lookup normal en la tabla `permissions`. |
+| `PipelineAuthorizationService` | Autoriza si un rol puede operar (avanzar/regresar/editar) un paso de un pipeline (`pipeline_permissions`). Espejo del `AuthorizationService` para steps de pipeline. |
+| `InvoiceHistoryService` / `EmployeeHistoryService` / `PettyCashHistoryService` / `RefundHistoryService` / `AdvanceLegalizationHistoryService` / `NoveltyHistoryService` | Audit trail field-by-field por dominio |
+| `*DocumentService` (`InvoiceDocumentService`, `EmployeeDocumentService`, `PettyCashDocumentService`, `RefundDocumentService`, `AdvanceLegalizationDocumentService`, `PaymentSchedulingDocumentService`, `NoveltyDocumentService`, `LeaveDocumentService`) | Gestión de uploads/eliminación de documentos por dominio (usan `Trait/DocumentUploadTrait`) |
+| `LeaveSignatureService` / `NoveltySignatureService` | Firmas de documentos de licencias y novedades |
+| `NoveltyObservationService` | Observaciones del pipeline de novedades |
 | `ApprovalTokenService` | External approval via SHA256 tokens (48h TTL) |
-| `NotificationService` | Email para links de aprobación (facturas y novedades) y prueba SMTP |
-| `AdvanceLegalizationService` | Advance legalization workflow |
-| `RefundService` | Refund records and outcomes |
-| `PettyCashService` | Petty cash records management |
+| `NotificationService` | Email para links de aprobación, notificaciones del pipeline y prueba SMTP. Usa `CircuitBreaker`. |
+| `PendingNotificationsService` | Cálculo de notificaciones pendientes para el sidebar/badges |
+| `EmailLogService` | Persistencia y consulta del log de correos enviados (`email_logs`) |
 | `DianCrosscheckService` | DIAN crosscheck validation |
+| `CodeGeneratorService` | Generación de códigos secuenciales por dominio |
+| `ExcelService` / `ExcelImportService` / `ExcelMappingService` / `PaymentSchedulingImportService` | Lectura/escritura/import de hojas Excel (usan `Adapter/PhpSpreadsheetAdapter`) |
 | `N8nService` | n8n workflow integration |
 | `WebhookService` | Outbound webhook dispatch (circuit breaker enabled) |
 | `SystemSettingsService` | Application-wide configuration |
@@ -86,11 +101,15 @@ Sistema de diseño: ver `.claude/rules/design.md`.
 
 - `Service/Interface/` — `HistoryServiceInterface`, `MailerInterface`, `SpreadsheetReaderInterface`
 - `Service/Adapter/` — `CakeMailerAdapter`, `PhpSpreadsheetAdapter` (adapter pattern for external libs)
-- `Service/Strategy/` — `InvoiceApprovalStrategy`, `NoveltyApprovalStrategy` (strategy pattern for approval logic)
+- `Service/Strategy/` — `ApprovalStrategyInterface`, `InvoiceApprovalStrategy`, `NoveltyApprovalStrategy` (strategy pattern para lógica de aprobación externa)
 - `Service/Trait/` — `DocumentUploadTrait`, `HistoryNormalizationTrait`
+- `Service/Filter/` — `BaseFilterService` (clase base para filtros de listados)
+- `Service/Dto/` — `BulkPaymentView` (DTOs ligeros)
 - `Service/Dashboard/` — `EmployeeStatisticsService`, `InvoiceStatisticsService`
-- `Service/Pipeline/` — State pattern del pipeline de facturas (`InvoicePipelineState`, `InvoicePipelineStateRegistry`, `Policy/`, `State/`, `LinkedInvoiceLegalizer`)
-- `Service/HealthCheck/` — `HealthCheckInterface` + implementaciones (`Database`, `Cache`, `EmailLog`, `CircuitBreaker`)
+- `Service/Pipeline/` — State pattern por módulo. Cada submódulo expone `{Modulo}PipelineState` (interfaz/abstracta), `{Modulo}PipelineStateRegistry` (resuelve enum → State) y `State/` con un archivo por estado:
+  - `Pipeline/Invoice/` — `InvoicePipelineState`, `InvoicePipelineStateRegistry`, `State/` (Aprobacion, Contabilidad, Tesoreria, AutorizacionPago, VerificacionPago, Pagada, Legalizada), `DocumentTypePolicy` + `DocumentTypePolicyFactory`, `Policy/` (`StandardDocumentTypePolicy`, `AnticipoDocumentTypePolicy`, `LegalizacionDocumentTypePolicy`), `LinkedInvoiceLegalizer`
+  - `Pipeline/Novelty/`, `Pipeline/Advance/`, `Pipeline/PettyCash/`, `Pipeline/Refund/`, `Pipeline/PaymentScheduling/` — misma estructura (Registry + States), con `Policy/` propio cuando aplica (p. ej. `Advance/Policy/AdvanceLegalizationActionPolicy`)
+- `Service/HealthCheck/` — `HealthCheckInterface`, `HealthCheckResult`, `HealthStatus` + implementaciones (`Database`, `Cache`, `EmailLog`, `CircuitBreaker`)
 - `Service/Resilience/` — `Retryer`, `RetryPolicy` (retry con backoff)
 - `Service/Subscriber/` — Event subscribers (`LegalizationInitializerSubscriber`, `LinkedInvoicesPromoterSubscriber`, `RefundOutcomeSubscriber`)
 
@@ -103,22 +122,29 @@ Located in `src/Middleware/`:
 
 ### Auth & Permissions
 
-- Plugin: `cakephp/authentication ^3.0`. Custom finder `UsersTable::findAuth()` (active=true, contain Roles).
+- Plugin: `cakephp/authentication ^4.1.0`. Custom finder `UsersTable::findAuth()` (active=true, contain Roles).
 - RBAC enforced in `AppController::beforeFilter()` via `_enforcePermission()`.
 - `$controllerModuleMap` maps controller → module. Actions map to can_view/can_create/can_edit/can_delete.
 - Roles (ver `RoleConstants.php`): Administrador, Contabilidad, Tesorería, Registro/Revisión, Contador, Auxiliar de Personal, Asistente de Personal, Coordinador Administrativo y Financiero.
-- **Contador** ve y autoriza pagos en estado `autorizacion_pago` del pipeline de facturas.
+- **Admin bypass acotado**: `AuthorizationService::ADMIN_BYPASS_MODULES = ['users', 'roles']`. Para cualquier otro módulo el rol Administrador pasa por el lookup normal en la tabla `permissions` (cleanup post pipeline-permissions, 2026-05-02).
+- **Pipeline permissions**: `PipelineAuthorizationService` resuelve permisos por (rol, pipeline, step) contra la tabla `pipeline_permissions`. Espejo del flujo CRUD pero por paso de pipeline.
+- **Contador** ve y autoriza pagos en estado `autorizacion_pago` del pipeline de facturas; en `verificacion_pago` se valida la ejecución del pago antes de pasar a `pagada`.
 
 ### Invoice Pipeline
 
-States: `aprobacion` → `contabilidad` → `tesoreria` → `autorizacion_pago` → `pagada` (5 estados).
+States (fuente única: `App\Constants\Domain\Invoice\PipelineStatus` enum, espejado en `InvoiceConstants::PIPELINE_STATUSES`):
+`aprobacion` → `contabilidad` → `tesoreria` → `autorizacion_pago` → `verificacion_pago` → `pagada` (6 estados).
+
+- Existe además un estado terminal `legalizada`, exclusivo de `document_type = 'Legalización'`. **No** participa en `PIPELINE_STATUSES`; vive en `ALL_STATUSES`. Pipeline visual reducido (`PIPELINE_STATUSES_LEGALIZACION`): `aprobacion` → `contabilidad` → `legalizada` (3 pasos).
 - Tesorería registra pagos → avanza a `autorizacion_pago` (requiere ≥1 pago pendiente vía `InvoicePaymentService`)
-- Contador autoriza en `autorizacion_pago` → avanza a `pagada`
+- Contador autoriza en `autorizacion_pago` → avanza a `verificacion_pago`
+- En `verificacion_pago` se valida la ejecución/conciliación del pago → avanza a `pagada`
 - Pago parcial tras autorización → **regresa automáticamente** a `tesoreria`
 - Facturas rechazadas (`area_approval='Rechazada'`) bloquean todo avance; Registro puede `resetFlow` para reiniciar
-- En `autorizacion_pago` el Contador autoriza/rechaza cada pago; al quedar todos autorizados, la factura puede avanzar a `pagada`. Los soportes de pago se cargan como documentos normales del pipeline en `tesoreria` (`InvoiceDocuments`)
+- En `autorizacion_pago` el Contador autoriza/rechaza cada pago; al quedar todos autorizados, la factura puede avanzar. Los soportes de pago se cargan como documentos normales del pipeline en `tesoreria` (`InvoiceDocuments`)
 - Facturas en `pagada` redireccionan a `view` para no-admins
-- Secciones del formulario: `general`, `dates`, `classification`, `revision`, `accounting`, `treasury`, `payment_authorization`
+- Secciones del formulario controladas por `InvoiceFieldAccessPolicy::SECTION_BY_STEP`: `ledger` (siempre visible), `revision` (aprobacion), `accounting` (contabilidad), `treasury` (tesoreria), `payment_authorization` (autorizacion_pago **y** verificacion_pago — esta última reusa la misma sección read-only). Las plantillas además exponen secciones estructurales `general`, `dates`, `classification`.
+- Estados de un pago individual (`invoice_payments.status`, slugs en inglés por convención): `pending`, `authorized`, `rejected`
 
 ## Key Conventions
 
@@ -153,7 +179,7 @@ La validación se hace de forma manual: levantar `php bin/cake server` y ejercit
 - Colors: dark (#212529), green (#469D61), orange (#CD6A15).
 - JS common: `webroot/js/sgi-common.js` auto-initializes Flatpickr, AutoNumeric, Select2.
 - PDF: TCPDF + FPDI. Excel: PhpSpreadsheet.
-- Pipeline elements: `pipeline_progress.php` (facturas), `legalization_progress.php`, `petty_cash_progress.php`. Todos aceptan `isRejected` (bool).
+- Pipeline elements: `pipeline_progress.php` (facturas), `advance_legalization_progress.php` (legalizaciones de anticipo), `petty_cash_progress.php`, `refund_progress.php`. Todos aceptan `isRejected` (bool).
 
 ## New Module Checklist
 
