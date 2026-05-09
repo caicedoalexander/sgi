@@ -12,6 +12,7 @@
 use App\Constants\InvoiceConstants;
 use App\Service\InvoicePipelineService;
 use App\View\Presentation\InvoicePresentation;
+use App\View\Presentation\SharedPresentation;
 
 $this->assign('title', 'Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
@@ -339,7 +340,13 @@ $dianClass = match($invoice->dian_validation ?? '') {
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Lista para Pago</span>
-                <span class="sgi-data-value"><?= h($invoice->ready_for_payment) ?: '—' ?></span>
+                <span class="sgi-data-value">
+                    <?php if (!empty($invoice->ready_for_payment)): ?>
+                        <span class="badge <?= SharedPresentation::READY_FOR_PAYMENT_BADGES[$invoice->ready_for_payment] ?? 'bg-secondary' ?>"><?= h($invoice->ready_for_payment) ?></span>
+                    <?php else: ?>
+                        —
+                    <?php endif; ?>
+                </span>
             </div>
         </div>
         <!-- Tesorería -->
