@@ -150,6 +150,7 @@ final class InvoiceConstants
     // Tipos de observación (invoice_observations.type) — definidos en ObservationConstants.
     public const OBSERVATION_TYPE_GENERAL = ObservationConstants::TYPE_GENERAL;
     public const OBSERVATION_TYPE_REGRESSION = ObservationConstants::TYPE_REGRESSION;
+    public const OBSERVATION_TYPE_EXTERNAL_APPROVAL = ObservationConstants::TYPE_EXTERNAL_APPROVAL;
 
     public const OBSERVATION_TYPES = ObservationConstants::TYPES;
 }

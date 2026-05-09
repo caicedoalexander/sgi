@@ -146,11 +146,11 @@ class ExternalApprovalsController extends AppController
 
             // Save observation to invoice_observations chat if not empty
             if (!empty($observations)) {
-                $actionLabel = $action === 'approve' ? 'Aprobado' : 'Rechazado';
                 $this->_saveExternalObservation(
                     $approval->invoice_id,
                     $currentUser->id,
-                    "[Aprobación externa - {$actionLabel}] {$observations}",
+                    $observations,
+                    $action,
                 );
             }
 
@@ -222,11 +222,11 @@ class ExternalApprovalsController extends AppController
 
         // Save observation to invoice_observations chat if not empty
         if ($success && !empty($observations) && $tokenRecord->entity_type === 'invoices') {
-            $actionLabel = $action === 'approve' ? 'Aprobado' : 'Rechazado';
             $this->_saveExternalObservation(
                 $tokenRecord->entity_id,
                 $currentUser->id,
-                "[Aprobación externa - {$actionLabel}] {$observations}",
+                $observations,
+                $action,
             );
         }
 
@@ -235,13 +235,15 @@ class ExternalApprovalsController extends AppController
         return $this->render('confirmed');
     }
 
-    private function _saveExternalObservation(int $invoiceId, int $userId, string $message): void
+    private function _saveExternalObservation(int $invoiceId, int $userId, string $message, string $action): void
     {
         $observationsTable = $this->fetchTable('InvoiceObservations');
         $observation = $observationsTable->newEntity([
             'invoice_id' => $invoiceId,
             'user_id' => $userId,
+            'type' => InvoiceConstants::OBSERVATION_TYPE_EXTERNAL_APPROVAL,
             'message' => $message,
+            'metadata' => ['action' => $action],
         ]);
         $observationsTable->save($observation);
     }

@@ -225,7 +225,9 @@ $dianClass = match($invoice->dian_validation ?? '') {
         <div style="padding:.5rem 1.25rem .875rem;max-height:400px;overflow-y:auto;">
             <?php foreach ($invoice->invoice_observations as $obs): ?>
             <?php
-                $isRegression = ($obs->type ?? null) === \App\Constants\InvoiceConstants::OBSERVATION_TYPE_REGRESSION;
+                $obsType = $obs->type ?? null;
+                $isRegression = $obsType === \App\Constants\InvoiceConstants::OBSERVATION_TYPE_REGRESSION;
+                $isExternalApproval = $obsType === \App\Constants\InvoiceConstants::OBSERVATION_TYPE_EXTERNAL_APPROVAL;
                 $meta = $obs->metadata ?? [];
                 if (is_string($meta)) {
                     $decoded = json_decode($meta, true);
@@ -233,10 +235,19 @@ $dianClass = match($invoice->dian_validation ?? '') {
                 }
                 $fromLbl = $statusLabels[$meta['from_status'] ?? ''] ?? null;
                 $toLbl = $statusLabels[$meta['to_status'] ?? ''] ?? null;
+                $extAction = $meta['action'] ?? null;
+                $extActionLabel = $extAction === 'approve' ? 'Aprobada' : ($extAction === 'reject' ? 'Rechazada' : null);
+                if ($isExternalApproval) {
+                    $avatarBg = $extAction === 'reject' ? '#dc3545' : '#469D61';
+                } elseif ($isRegression) {
+                    $avatarBg = '#CD6A15';
+                } else {
+                    $avatarBg = 'var(--primary-color)';
+                }
             ?>
             <div class="d-flex align-items-start gap-2 mb-3">
                 <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:32px;height:32px;background:<?= $isRegression ? '#CD6A15' : 'var(--primary-color)' ?>;color:#fff;font-size:.7rem;font-weight:700;">
+                     style="width:32px;height:32px;background:<?= $avatarBg ?>;color:#fff;font-size:.7rem;font-weight:700;">
                     <?php
                     $names = explode(' ', $obs->user->full_name ?? '');
                     echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
@@ -249,6 +260,10 @@ $dianClass = match($invoice->dian_validation ?? '') {
                         </span>
                         <?php if ($isRegression): ?>
                             <span class="badge bg-warning text-dark" style="font-size:.65rem;">Regresión</span>
+                        <?php elseif ($isExternalApproval): ?>
+                            <span class="badge <?= $extAction === 'reject' ? 'bg-danger' : 'bg-success' ?>" style="font-size:.65rem;">
+                                Aprobación Externa<?= $extActionLabel ? ': ' . h($extActionLabel) : '' ?>
+                            </span>
                         <?php endif; ?>
                         <span style="font-size:.7rem;color:#aaa;">
                             <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>

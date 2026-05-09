@@ -17,9 +17,11 @@ final class ObservationConstants
     // Tipos de observación compartidos por todos los pipelines que usan el chat de observaciones.
     public const TYPE_GENERAL = 'general';
     public const TYPE_REGRESSION = 'regression';
+    public const TYPE_EXTERNAL_APPROVAL = 'external_approval';
 
     public const TYPES = [
         self::TYPE_GENERAL,
         self::TYPE_REGRESSION,
+        self::TYPE_EXTERNAL_APPROVAL,
     ];
 }
