@@ -43,6 +43,7 @@ Cifrar **en reposo** las credenciales sensibles dentro de `system_settings`, man
 | Migración de datos existentes | Ninguna — valores se reingresan por la UI tras el deploy | Comando CLI de reencriptado |
 | Algoritmo | `Cake\Utility\Security::encrypt()` (AES-256-CBC + HMAC-SHA256) | OpenSSL directo, libsodium |
 | Marcador de cifrado | Prefijo `enc:v1:<base64>` | Columna booleana, sufijo, sin marcador |
+| Compatibilidad con valores legacy en texto plano | **No** — proyecto en dev, no hay datos productivos que proteger | Fallback silencioso a texto plano (descartado: oculta inconsistencias) |
 
 ---
 
@@ -63,9 +64,9 @@ SystemSettingsService::set()
         │
         ▼
 SystemSettingsService::get() / getGroup()
-        │  ¿clave en ENCRYPTED_KEYS y valor empieza con 'enc:v1:'?
-        ├── sí → _decrypt() → texto plano → consumer
-        ├── sin prefijo (legacy) → valor tal cual → consumer
+        │  ¿clave en ENCRYPTED_KEYS?
+        ├── sí + valor con prefijo válido → _decrypt() → texto plano → consumer
+        ├── sí + valor sin prefijo o cipher inválido → log error → null → consumer
         └── no es ENCRYPTED_KEY → valor tal cual → consumer
 ```
 
@@ -89,7 +90,7 @@ Cambios:
   ```
 - **Métodos privados nuevos:**
   - `_encrypt(string $plain): string` — Aplica `Security::encrypt($plain, Security::getSalt())`, retorna `self::CIPHER_PREFIX . base64_encode($cipher)`.
-  - `_decrypt(string $stored): ?string` — Si no empieza con `CIPHER_PREFIX`, retorna `$stored` tal cual (legacy). Si empieza con el prefijo, hace `base64_decode` + `Security::decrypt()`. Si `Security::decrypt()` retorna `false`, loguea el error con `\Cake\Log\Log::error()` (sin loguear el cipher) y retorna `null`.
+  - `_decrypt(string $stored, string $key): ?string` — Si el valor no empieza con `CIPHER_PREFIX`, loguea con `\Cake\Log\Log::error()` y retorna `null` (no hay fallback a texto plano: cualquier valor sin prefijo en una `ENCRYPTED_KEY` es una inconsistencia que debemos hacer ruidosa). Si empieza con el prefijo, hace `base64_decode` estricto + `Security::decrypt()`; si cualquiera falla, loguea (sin filtrar el cipher) y retorna `null`.
 - **`set()` modificado:** si `in_array($key, self::ENCRYPTED_KEYS, true)` y `$value !== null && $value !== ''`, usa `_encrypt($value)` antes de persistir.
 - **`get()` modificado:** si `in_array($key, self::ENCRYPTED_KEYS, true)` y el valor leído no es `null`/`''`, usa `_decrypt($value)`. Cache (`$this->cache`) almacena el valor **en claro**.
 - **`getGroup()` modificado:** mismo tratamiento por cada setting del grupo cuyo `setting_key` esté en `ENCRYPTED_KEYS`.
@@ -134,9 +135,10 @@ CakeMailerAdapter::send()
   → SystemSettingsService::getGroup('smtp')
       → Table::find()->where(['setting_group' => 'smtp'])->all()
       → para cada setting:
-          → si setting_key in ENCRYPTED_KEYS y empieza con 'enc:v1:':
+          → si setting_key in ENCRYPTED_KEYS y valor no es null/'':
               → _decrypt('enc:v1:eyJ...') → 'MiPass123'
-          → cache[key] = valor_en_claro
+              → (si el valor no tiene prefijo o el cipher falla → null + log error)
+          → cache[key] = valor_en_claro_o_null
       → retorna ['smtp_host' => '...', 'smtp_password' => 'MiPass123', ...]
   → mailer arma transport con la pass en claro y envía
 ```
@@ -149,28 +151,26 @@ Vive solo en memoria de la request. Se reinicia en cada request. Almacena valore
 
 ## Manejo de errores y casos límite
 
-### Caso 1 — Valor sin prefijo `enc:v1:` para clave en `ENCRYPTED_KEYS`
+### Caso 1 — Descifrado falla (sin prefijo, base64 inválido, cipher corrupto, salt rotada)
 
-Significa "valor legacy en texto plano" (estado transitorio durante el deploy o edición manual de la columna). `_decrypt()` retorna el valor tal cual. La app no se rompe; la próxima escritura desde la UI cifrará el valor.
-
-### Caso 2 — `Security::decrypt()` retorna `false`
-
-Cipher corrupto, salt rotada, valor truncado. `_decrypt()` retorna `null` y escribe en log con `\Cake\Log\Log::error('SystemSettings decryption failed for key: ' . $key)` (sin incluir el cipher). El consumidor recibe `null`, equivalente a "credencial no configurada":
+Cualquier valor de una clave `ENCRYPTED_KEY` que no se pueda descifrar correctamente se trata como una **inconsistencia ruidosa**: `_decrypt()` retorna `null` y escribe en log con `\Cake\Log\Log::error()` indicando la subcausa (`base64`, `security` o `unprefixed`), **sin filtrar el cipher**. El consumidor recibe `null`, equivalente a "credencial no configurada":
 
 - `CakeMailerAdapter` enviará con password vacía y SMTP fallará con mensaje claro.
 - `N8nService::isConfigured()` retornará `false`.
 
-### Caso 3 — Valor `null` o cadena vacía
+**Nota explícita:** no existe fallback a texto plano. En desarrollo no hay datos productivos heredados; cualquier valor sin prefijo se considera corrupto y se reescribe desde la UI.
+
+### Caso 2 — Valor `null` o cadena vacía
 
 `set()` con `null`/`''` no cifra (guarda tal cual). `get()` retorna `null`/`''` sin pasar por `_decrypt()`. Comportamiento idéntico al actual.
 
-### Caso 4 — `SECURITY_SALT` con menos de 32 bytes
+### Caso 3 — `SECURITY_SALT` con menos de 32 bytes
 
 `Security::encrypt()` lanza `\Cake\Core\Exception\CakeException`. No se captura: si la app está mal configurada, falla ruidosamente al primer `set()`. La validación efectiva la hace CakePHP en boot.
 
 ### Riesgo aceptado — Rotación de `SECURITY_SALT`
 
-Rotar el salt invalida todos los valores cifrados (caen al Caso 2). Se resuelve reingresando los secretos por la UI. Es **out of scope** de este diseño y queda documentado como riesgo conocido.
+Rotar el salt invalida todos los valores cifrados (caen al Caso 1). Se resuelve reingresando los secretos por la UI. Es **out of scope** de este diseño y queda documentado como riesgo conocido.
 
 ---
 
@@ -207,11 +207,17 @@ Sin tests automatizados (per `CLAUDE.md`). Pasos a ejecutar tras el merge:
 - `SELECT setting_key, setting_value FROM system_settings WHERE setting_group = 'smtp' AND setting_key != 'smtp_password';`
 - `smtp_host`, `smtp_port`, `smtp_from_email`, etc. deben estar legibles en texto plano.
 
-### 6. Defensa contra valores legacy (Caso 1)
+### 6. Defensa contra cipher corrupto (Caso 1)
 
-- `UPDATE system_settings SET setting_value = 'PlaintextLegacy' WHERE setting_key = 'smtp_password';`
-- Recargar la página de configuración. La app NO debe crashear; el form muestra el campo password vacío (por seguridad de la UI) y los logs no deben tener errores de descifrado.
-- Reescribir la pass desde la UI y verificar que en BD vuelve a tener prefijo `enc:v1:`.
+- `UPDATE system_settings SET setting_value = 'enc:v1:notbase64===corrupted' WHERE setting_key = 'smtp_password';`
+- Click en "Probar conexión SMTP". Debe fallar con error de auth (porque el mailer recibe `null`).
+- En `logs/error.log` debe aparecer `SystemSettings decryption failed (security|base64) for key: smtp_password`.
+- Reescribir la pass desde la UI para dejar el sistema funcional.
+
+### 7. Verificación del template (defensa contra repintado de password)
+
+- Inspeccionar `templates/SystemSettings/index.php` y confirmar que el `<input>` con `name="smtp_password"` **no** usa `value="..."` para repintar el valor actual. Esta es una propiedad del template (no del servicio) que asegura que un valor descifrado nunca se sirve de vuelta al cliente.
+- Si por algún motivo el template lo hiciera, ajustar para que el campo siempre se renderice vacío y el placeholder indique "Dejar vacío para mantener el actual".
 
 ---
 

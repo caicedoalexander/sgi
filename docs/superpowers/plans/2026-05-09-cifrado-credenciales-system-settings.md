@@ -97,20 +97,22 @@ Insertar inmediatamente después de `_encrypt()`:
 ```php
 
     /**
-     * Descifra un valor leído de BD. Si el valor no tiene el prefijo `enc:v1:`,
-     * se devuelve tal cual (compatibilidad con valores legacy en texto plano).
-     * Si el descifrado falla, se loguea el error sin filtrar el cipher y se
-     * retorna `null` para que el consumidor lo trate como "credencial no
-     * configurada".
+     * Descifra un valor leído de BD para una clave de ENCRYPTED_KEYS.
+     * Cualquier valor sin el prefijo `enc:v1:` o con cipher inválido se
+     * considera una inconsistencia: se loguea el error sin filtrar el cipher
+     * y se retorna `null` para que el consumidor lo trate como "credencial
+     * no configurada". No hay fallback a texto plano (proyecto en dev).
      *
      * @param string $stored Valor leído de la columna `setting_value`.
      * @param string $key    Nombre de la clave (solo para logging).
-     * @return string|null   Valor en claro, valor legacy tal cual, o `null` si falla.
+     * @return string|null   Valor en claro, o `null` si el descifrado falla.
      */
     private function _decrypt(string $stored, string $key): ?string
     {
         if (!str_starts_with($stored, self::CIPHER_PREFIX)) {
-            return $stored;
+            Log::error('SystemSettings decryption failed (unprefixed) for key: ' . $key);
+
+            return null;
         }
 
         $cipher = base64_decode(substr($stored, strlen(self::CIPHER_PREFIX)), true);
@@ -121,7 +123,7 @@ Insertar inmediatamente después de `_encrypt()`:
         }
 
         $plain = Security::decrypt($cipher, Security::getSalt());
-        if ($plain === null || $plain === false) {
+        if ($plain === null) {
             Log::error('SystemSettings decryption failed (security) for key: ' . $key);
 
             return null;
@@ -186,14 +188,20 @@ Reemplazar el método completo `public function set(string $key, ?string $value,
             ]);
         }
 
-        unset($this->cache[$key]);
+        $saved = (bool)$table->save($setting);
+        if ($saved) {
+            $this->cache[$key] = $value;
+        } else {
+            unset($this->cache[$key]);
+        }
 
-        return (bool)$table->save($setting);
+        return $saved;
     }
 ```
 
 **Notas:**
-- `$value` (en claro) se conserva por si necesitamos repoblar el cache; `$persistedValue` es lo que va a BD.
+- `$value` (en claro) se conserva para repoblar el cache directamente tras un `save()` exitoso, evitando un descifrado innecesario en el próximo `get()` de la misma request.
+- Si `save()` falla, se invalida el cache para evitar servir un valor que no se persistió.
 - No se cifran `null` ni `''` para mantener idempotencia con la lógica del controller (que ya hace `continue` si la pass viene vacía).
 
 - [ ] **Step 2: Validar sintaxis**
@@ -414,24 +422,9 @@ SELECT setting_key, setting_value FROM system_settings
 
 **Esperado:** `smtp_host`, `smtp_port`, `smtp_username`, `smtp_encryption`, `smtp_from_email`, `smtp_from_name` aparecen en texto plano y legibles. Ningún prefijo `enc:v1:`.
 
-- [ ] **Step 7: Verificar defensa contra valores legacy (Caso 1 del spec)**
+- [ ] **Step 7: Verificar defensa contra cipher corrupto (Caso 1 del spec)**
 
-Simular un valor en texto plano que se haya quedado en BD pre-deploy:
-
-```sql
-UPDATE system_settings SET setting_value = 'PlaintextLegacy' WHERE setting_key = 'smtp_password';
-```
-
-1. Recargar `/system-settings`.
-2. **Esperado:** la página carga sin crashear, el campo password está vacío en el form (la UI nunca repinta el password), y `logs/error.log` NO contiene ningún `SystemSettings decryption failed`.
-3. Reescribir la pass real desde la UI y guardar.
-4. En BD verificar que el valor vuelve a tener prefijo `enc:v1:`:
-
-```sql
-SELECT setting_value FROM system_settings WHERE setting_key = 'smtp_password';
-```
-
-- [ ] **Step 8: Verificar defensa contra cipher corrupto (Caso 2 del spec)**
+Inyectar un cipher inválido directamente en BD:
 
 ```sql
 UPDATE system_settings SET setting_value = 'enc:v1:notbase64===corrupted' WHERE setting_key = 'smtp_password';
@@ -450,7 +443,29 @@ UPDATE system_settings SET setting_value = 'enc:v1:notbase64===corrupted' WHERE 
    SystemSettings decryption failed (base64) for key: smtp_password
    ```
 
-3. Reescribir la pass real desde la UI para dejar el sistema en estado funcional.
+3. (Opcional) Probar también el caso "valor sin prefijo":
+
+```sql
+UPDATE system_settings SET setting_value = 'PlainTextNoPrefix' WHERE setting_key = 'smtp_password';
+```
+
+   Click en "Probar conexión SMTP" otra vez. Esperado: misma falla y en logs:
+
+   ```
+   SystemSettings decryption failed (unprefixed) for key: smtp_password
+   ```
+
+4. Reescribir la pass real desde la UI para dejar el sistema en estado funcional.
+
+- [ ] **Step 8: Verificar el template no repinta el password**
+
+Inspeccionar `templates/SystemSettings/index.php` y confirmar que el `<input>` con `name="smtp_password"` **no** tiene atributo `value="..."`. Esto garantiza que el valor descifrado nunca se sirve de vuelta al cliente.
+
+```bash
+grep -n "smtp_password" templates/SystemSettings/index.php
+```
+
+**Esperado:** el input se renderiza sin `value=` (o con `value=""`). Si aparece algo como `value="<?= h($smtpSettings['smtp_password']) ?>"`, hay que ajustar el template para que el campo siempre se muestre vacío y el placeholder indique "Dejar vacío para mantener el actual".
 
 - [ ] **Step 9: Validación final con un round trip de la API key**
 
@@ -476,16 +491,15 @@ Si todos los steps anteriores pasaron, no hay commit en esta tarea (no se modifi
 | Constante `ENCRYPTED_KEYS` | Task 1, Step 2 |
 | Constante `CIPHER_PREFIX` | Task 1, Step 2 |
 | `_encrypt()` | Task 1, Step 3 |
-| `_decrypt()` con manejo de legacy y errores | Task 1, Step 4 |
-| `set()` cifra antes de persistir | Task 2, Step 1 |
+| `_decrypt()` sin fallback legacy + log de errores | Task 1, Step 4 |
+| `set()` cifra antes de persistir + repuebla cache | Task 2, Step 1 |
 | `get()` descifra después de leer | Task 3, Step 1 |
 | `getGroup()` descifra por cada clave sensible | Task 3, Step 2 |
-| Cache con valor en claro | Task 3, Step 1 y 2 (asignan a `$this->cache` el valor desencriptado) |
-| Caso 1 — valor legacy sin prefijo | Cubierto por `_decrypt()` (Task 1, Step 4) y validado en Task 4, Step 7 |
-| Caso 2 — cipher corrupto | Cubierto por `_decrypt()` (Task 1, Step 4) y validado en Task 4, Step 8 |
-| Caso 3 — valor null/vacío | Cubierto por guardas en `set()`, `get()`, `getGroup()` (Task 2 y 3) |
-| Caso 4 — salt inválido | No requiere código (CakePHP falla en boot); documentado en spec |
-| Validación manual de los 6 casos del spec | Task 4, Steps 2-7 (más Step 8 para Caso 2 explícito y Step 9 para round trip de API key) |
+| Cache con valor en claro | Task 2, Step 1 y Task 3, Steps 1-2 |
+| Caso 1 — descifrado falla (sin prefijo, base64, cipher) | Cubierto por `_decrypt()` (Task 1, Step 4) y validado en Task 4, Step 7 (cipher corrupto + sin prefijo) |
+| Caso 2 — valor null/vacío | Cubierto por guardas en `set()`, `get()`, `getGroup()` (Task 2 y 3) |
+| Caso 3 — salt inválido | No requiere código (CakePHP falla en boot); documentado en spec |
+| Validación manual del spec — todos los pasos | Task 4, Steps 2-9 (incluye verificación de template) |
 
 ✅ Sin gaps.
 
