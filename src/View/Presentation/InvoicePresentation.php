@@ -15,8 +15,8 @@ final class InvoicePresentation
         InvoiceConstants::STATUS_APROBACION        => 'bg-warning text-dark',
         InvoiceConstants::STATUS_CONTABILIDAD      => 'bg-secondary',
         InvoiceConstants::STATUS_TESORERIA         => 'bg-info',
-        InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
-        InvoiceConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bg-warning text-dark',
+        InvoiceConstants::STATUS_VERIFICACION_PAGO => 'bg-warning',
         InvoiceConstants::STATUS_PAGADA            => 'bg-success',
         InvoiceConstants::STATUS_LEGALIZADA        => 'bg-success',
     ];
