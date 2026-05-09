@@ -17,6 +17,14 @@
  *           $showBadge (bool, default false) — show pipeline_status badge
  *           $badgeColors (array<string,string>) — required if $showBadge
  *           $statusLabels (array<string,string>) — required if $showBadge
+ *
+ * @var \App\View\AppView $this
+ * @var \Cake\Datasource\EntityInterface $doc
+ * @var bool $canDelete
+ * @var string $deleteUrl
+ * @var bool $showBadge
+ * @var array<string,string> $badgeColors
+ * @var array<string,string> $statusLabels
  */
 $canDelete    = $canDelete    ?? false;
 $showBadge    = $showBadge    ?? false;
