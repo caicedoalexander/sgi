@@ -10,18 +10,18 @@
     if (typeof ApexCharts === 'undefined') return;
 
     /* ── Color palettes ──────────────────────────────────────── */
-    /* Colores alineados con App\View\Presentation\InvoicePresentation::STATUS_BADGES
-       (warning #ffc107, primary #0d6efd, info #0dcaf0, danger #dc3545).
-       Pagada/Legalizada usan el verde corporativo SGI (var(--primary-color) #469D61)
-       para consistencia visual con el resto del dashboard. */
+    /* Hex equivalentes a las clases Bootstrap usadas en
+       App\View\Presentation\InvoicePresentation::STATUS_BADGES:
+       bg-warning #ffc107, bg-primary #0d6efd, bg-info #0dcaf0,
+       bg-success #198754, bg-danger #dc3545. */
     var STATUS_COLORS = {
         aprobacion:        '#ffc107',
         contabilidad:      '#0d6efd',
         tesoreria:         '#0dcaf0',
         autorizacion_pago: '#0dcaf0',
         verificacion_pago: '#ffc107',
-        pagada:            '#469D61',
-        legalizada:        '#469D61',
+        pagada:            '#198754',
+        legalizada:        '#198754',
         rechazada:         '#dc3545'
     };
 
