@@ -26,6 +26,33 @@ final class AdvanceConstants
         self::STATUS_LEGALIZADA,
     ];
 
+    // Pipelines visuales por caso de legalización. Cada caso recorre solo
+    // un subconjunto de PIPELINE_STATUSES; mostrar los pasos que no aplican
+    // es engañoso. Ver AdvanceLegalizationService::confirmExact (4 pasos),
+    // confirmShortageReceipt (5 pasos) y registerSurplus + flujo de pago (7).
+    public const PIPELINE_STATUSES_EXACTO = [
+        self::STATUS_VALIDACION,
+        self::STATUS_REVISION_FIRMAS,
+        self::STATUS_CONTABILIDAD,
+        self::STATUS_LEGALIZADA,
+    ];
+
+    public const PIPELINE_STATUSES_FALTANTE = [
+        self::STATUS_VALIDACION,
+        self::STATUS_REVISION_FIRMAS,
+        self::STATUS_CONTABILIDAD,
+        self::STATUS_TESORERIA,
+        self::STATUS_LEGALIZADA,
+    ];
+
+    public const PIPELINE_STATUSES_SOBRANTE = self::PIPELINE_STATUSES;
+
+    public const PIPELINE_STATUSES_BY_CASE = [
+        self::CASE_EXACTO   => self::PIPELINE_STATUSES_EXACTO,
+        self::CASE_FALTANTE => self::PIPELINE_STATUSES_FALTANTE,
+        self::CASE_SOBRANTE => self::PIPELINE_STATUSES_SOBRANTE,
+    ];
+
     public const STATUS_LABELS = [
         self::STATUS_VALIDACION        => 'Validación',
         self::STATUS_REVISION_FIRMAS   => 'Revisión y Firmas',

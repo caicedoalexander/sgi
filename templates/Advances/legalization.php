@@ -108,11 +108,18 @@ $docIconColor = fn(?string $mime): string => match (true) {
         <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
     </div>
 
-    <!-- Pipeline progress -->
+    <!-- Pipeline progress: filtrado por caso para no mostrar pasos que no aplican.
+         Mientras no se decide el caso (case_type=null), se asume el flujo más
+         corto (EXACTO); el pipeline crecerá automáticamente cuando Contabilidad
+         declare faltante o sobrante. -->
+    <?php
+    $casePipelineStatuses = AdvanceConstants::PIPELINE_STATUSES_BY_CASE[$leg->case_type ?? '']
+        ?? AdvanceConstants::PIPELINE_STATUSES_EXACTO;
+    ?>
     <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
         <?= $this->element('pipeline_progress', [
             'currentStatus' => $leg->status,
-            'pipelineStatuses' => AdvanceConstants::PIPELINE_STATUSES,
+            'pipelineStatuses' => $casePipelineStatuses,
             'pipelineLabels' => $legPipelineLabels,
             'isRejected' => false,
             'statusIcons' => AdvancePresentation::STATUS_ICONS,
