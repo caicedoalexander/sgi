@@ -73,49 +73,30 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>
 
+    <?php
+    // Colores de stat cards alineados con InvoicePresentation::STATUS_BADGES
+    // (bg-warning #ffc107, bg-primary #0d6efd, bg-info #0dcaf0, bg-success #198754, bg-danger #dc3545).
+    $invoiceStatCards = [
+        ['key' => 'total',             'label' => 'Total',         'sublabel' => 'Facturas',           'color' => null,       'valueColor' => '#212529'],
+        ['key' => 'aprobacion',        'label' => 'Aprobación',    'sublabel' => 'Pendientes',         'color' => '#ffc107', 'valueColor' => '#212529'],
+        ['key' => 'contabilidad',      'label' => 'Contabilidad',  'sublabel' => 'En proceso',         'color' => '#0d6efd', 'valueColor' => '#212529'],
+        ['key' => 'tesoreria',         'label' => 'Tesorería',     'sublabel' => 'Por pagar',          'color' => '#0dcaf0', 'valueColor' => '#212529'],
+        ['key' => 'autorizacion_pago', 'label' => 'Autorización',  'sublabel' => 'Por autorizar',      'color' => '#0dcaf0', 'valueColor' => '#212529'],
+        ['key' => 'verificacion_pago', 'label' => 'Verificación',  'sublabel' => 'Por verificar',      'color' => '#ffc107', 'valueColor' => '#212529'],
+        ['key' => 'pagada',            'label' => 'Pagadas',       'sublabel' => 'Completadas',        'color' => '#198754', 'valueColor' => '#198754'],
+        ['key' => 'rechazada',         'label' => 'Rechazadas',    'sublabel' => 'Requieren atención', 'color' => '#dc3545', 'valueColor' => '#dc3545'],
+    ];
+    ?>
     <div class="row g-3 mb-3">
-        <div class="col-6 col-sm-4 col-xl-2">
-            <div class="sgi-stat-card p-3 h-100">
-                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Total</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['total'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Facturas</div>
+        <?php foreach ($invoiceStatCards as $card): ?>
+        <div class="col-6 col-sm-4 col-xl-3">
+            <div class="sgi-stat-card p-3 h-100"<?= $card['color'] ? ' style="border-top-color:' . $card['color'] . ';"' : '' ?>>
+                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;"><?= h($card['label']) ?></div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:<?= $card['valueColor'] ?>;"><?= $this->Number->format($invoiceStats[$card['key']] ?? 0) ?></div>
+                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;"><?= h($card['sublabel']) ?></div>
             </div>
         </div>
-        <div class="col-6 col-sm-4 col-xl-2">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#ffc107;">
-                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Aprobación</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['aprobacion'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Pendientes</div>
-            </div>
-        </div>
-        <div class="col-6 col-sm-4 col-xl-2">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#0dcaf0;">
-                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Contabilidad</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['contabilidad'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En proceso</div>
-            </div>
-        </div>
-        <div class="col-6 col-sm-4 col-xl-2">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#0d6efd;">
-                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Tesorería</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['tesoreria'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Por pagar</div>
-            </div>
-        </div>
-        <div class="col-6 col-sm-4 col-xl-2">
-            <div class="sgi-stat-card p-3 h-100">
-                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Pagadas</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--primary-color);"><?= $this->Number->format($invoiceStats['pagada'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Completadas</div>
-            </div>
-        </div>
-        <div class="col-6 col-sm-4 col-xl-2">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#dc3545;">
-                <div style="font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:#6c757d;font-weight:600;">Rechazadas</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#dc3545;"><?= $this->Number->format($invoiceStats['rechazada'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Requieren atención</div>
-            </div>
-        </div>
+        <?php endforeach; ?>
     </div>
 
     <?php if (!empty($invoiceFinancialStats)): ?>

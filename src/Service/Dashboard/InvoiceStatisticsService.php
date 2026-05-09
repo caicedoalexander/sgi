@@ -35,6 +35,14 @@ class InvoiceStatisticsService
                 ['pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD],
             ),
             'tesoreria' => $this->_safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_TESORERIA]),
+            'autorizacion_pago' => $this->_safeCount(
+                'Invoices',
+                ['pipeline_status' => InvoiceConstants::STATUS_AUTORIZACION_PAGO],
+            ),
+            'verificacion_pago' => $this->_safeCount(
+                'Invoices',
+                ['pipeline_status' => InvoiceConstants::STATUS_VERIFICACION_PAGO],
+            ),
             'pagada' => $this->_safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_PAGADA]),
             'rechazada' => $this->_safeCount('Invoices', ['area_approval' => InvoiceConstants::APPROVAL_REJECTED]),
         ];
@@ -97,6 +105,8 @@ class InvoiceStatisticsService
                         InvoiceConstants::STATUS_APROBACION,
                         InvoiceConstants::STATUS_CONTABILIDAD,
                         InvoiceConstants::STATUS_TESORERIA,
+                        InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+                        InvoiceConstants::STATUS_VERIFICACION_PAGO,
                     ],
                     'OR' => [
                         'area_approval IS' => null,
