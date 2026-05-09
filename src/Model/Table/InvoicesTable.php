@@ -316,10 +316,18 @@ class InvoicesTable extends Table implements ExcelExportableInterface
         // Limpiar campos exclusivos de Recibo de Caja cuando el doc type no aplica.
         // Evita persistir datos fantasma si el cliente no respeta el contrato del JS
         // (POST sin JS, switch de tipo en edit, etc.).
-        if (($entity->document_type ?? null) !== InvoiceConstants::DOCTYPE_RECIBO_CAJA) {
+        // employee_id también se usa en Anticipos (beneficiario empleado), no solo
+        // en Recibo de Caja, así que solo se borra cuando ninguno de los dos aplica.
+        $docType = $entity->document_type ?? null;
+        if ($docType !== InvoiceConstants::DOCTYPE_RECIBO_CAJA) {
             $entity->equivalent_holder_type = null;
-            $entity->employee_id = null;
             $entity->manual_document_number = null;
+        }
+        if (
+            $docType !== InvoiceConstants::DOCTYPE_RECIBO_CAJA
+            && $docType !== InvoiceConstants::DOCTYPE_ANTICIPO
+        ) {
+            $entity->employee_id = null;
         }
     }
 
