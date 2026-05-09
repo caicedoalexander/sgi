@@ -7,31 +7,14 @@
 
 use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
+use App\View\Presentation\AdvancePresentation;
+use App\View\Presentation\InvoicePresentation;
 
 $this->assign('title', 'Anticipos');
 
-$pipelineBadge = [
-    InvoiceConstants::STATUS_APROBACION        => 'bg-info text-dark',
-    InvoiceConstants::STATUS_CONTABILIDAD      => 'bg-primary',
-    InvoiceConstants::STATUS_TESORERIA         => 'bg-warning text-dark',
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
-    InvoiceConstants::STATUS_PAGADA            => 'bg-success',
-];
-$pipelineLabels = [
-    InvoiceConstants::STATUS_APROBACION        => 'Aprobación',
-    InvoiceConstants::STATUS_CONTABILIDAD      => 'Contabilidad',
-    InvoiceConstants::STATUS_TESORERIA         => 'Tesorería',
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
-    InvoiceConstants::STATUS_PAGADA            => 'Pagada',
-];
-
-$legalizationBadge = [
-    AdvanceConstants::STATUS_VALIDACION       => 'bg-info text-dark',
-    AdvanceConstants::STATUS_REVISION_FIRMAS  => 'bg-primary',
-    AdvanceConstants::STATUS_CONTABILIDAD     => 'bg-warning text-dark',
-    AdvanceConstants::STATUS_TESORERIA        => 'bg-warning text-dark',
-    AdvanceConstants::STATUS_LEGALIZADA       => 'bg-success',
-];
+$pipelineBadge = InvoicePresentation::STATUS_BADGES;
+$pipelineLabels = InvoiceConstants::STATUS_LABELS;
+$legalizationBadge = AdvancePresentation::STATUS_BADGES;
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">

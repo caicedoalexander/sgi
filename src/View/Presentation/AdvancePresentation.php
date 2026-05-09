@@ -6,12 +6,21 @@ namespace App\View\Presentation;
 use App\Constants\AdvanceConstants;
 
 /**
- * Configuración de presentación (iconos) para el pipeline de legalizaciones
- * de anticipos. Los badges del listado se definen inline en
- * `templates/Advances/{index,view}.php` por divergencia visual deliberada.
+ * Configuración de presentación (badges Bootstrap, iconos) para el pipeline
+ * de legalizaciones de anticipos.
  */
 final class AdvancePresentation
 {
+    public const STATUS_BADGES = [
+        AdvanceConstants::STATUS_VALIDACION        => 'bg-info text-dark',
+        AdvanceConstants::STATUS_REVISION_FIRMAS   => 'bg-primary',
+        AdvanceConstants::STATUS_CONTABILIDAD      => 'bg-warning text-dark',
+        AdvanceConstants::STATUS_TESORERIA         => 'bg-warning text-dark',
+        AdvanceConstants::STATUS_AUTORIZACION_PAGO => 'bg-warning text-dark',
+        AdvanceConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
+        AdvanceConstants::STATUS_LEGALIZADA        => 'bg-success',
+    ];
+
     public const STATUS_ICONS = [
         AdvanceConstants::STATUS_VALIDACION        => 'bi-clipboard-check',
         AdvanceConstants::STATUS_REVISION_FIRMAS   => 'bi-pen',

@@ -10,13 +10,10 @@ use App\View\Presentation\PaymentSchedulingPresentation;
 
 $this->assign('title', 'Programación ' . h($viewModel->record->code));
 
-$statusBadgeMap = [
-    PaymentSchedulingConstants::STATUS_BORRADOR => ['Borrador', 'bg-secondary'],
-    PaymentSchedulingConstants::STATUS_TESORERIA => ['Tesorería', 'bg-warning text-dark'],
-    PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => ['Autorización de pago', 'bg-info text-dark'],
-    PaymentSchedulingConstants::STATUS_PAGADA => ['Pagada', 'bg-success'],
+$ps = [
+    PaymentSchedulingConstants::STATUS_LABELS[$viewModel->currentStatus] ?? 'Desconocido',
+    PaymentSchedulingPresentation::STATUS_BADGES[$viewModel->currentStatus] ?? 'bg-dark',
 ];
-$ps = $statusBadgeMap[$viewModel->currentStatus] ?? ['Desconocido', 'bg-dark'];
 
 $isBorrador = $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_BORRADOR;
 $isTesoreria = $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_TESORERIA;

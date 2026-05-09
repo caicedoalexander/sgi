@@ -7,13 +7,9 @@
 $this->assign('title', 'Programación');
 
 use App\Constants\PaymentSchedulingConstants;
+use App\View\Presentation\PaymentSchedulingPresentation;
 
-$statusBadge = [
-    PaymentSchedulingConstants::STATUS_BORRADOR => 'bg-secondary',
-    PaymentSchedulingConstants::STATUS_TESORERIA => 'bg-warning text-dark',
-    PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => 'bg-info text-dark',
-    PaymentSchedulingConstants::STATUS_PAGADA => 'bg-success',
-];
+$statusBadge = PaymentSchedulingPresentation::STATUS_BADGES;
 $statusLabels = PaymentSchedulingConstants::STATUS_LABELS;
 
 $params = $this->request->getQueryParams();

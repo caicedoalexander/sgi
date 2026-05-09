@@ -15,15 +15,10 @@ use App\View\Presentation\InvoicePresentation;
 
 $this->assign('title', 'Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
-$pipelineBadgeMap = [
-    InvoiceConstants::STATUS_APROBACION        => ['Aprobación',    'bg-info text-dark'],
-    InvoiceConstants::STATUS_CONTABILIDAD      => ['Contabilidad',  'bg-primary'],
-    InvoiceConstants::STATUS_TESORERIA         => ['Tesorería',     'bg-warning text-dark'],
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => ['Autorización de pago', 'bg-info'],
-    InvoiceConstants::STATUS_VERIFICACION_PAGO => ['Verificación de pago', 'bg-warning text-dark'],
-    InvoiceConstants::STATUS_PAGADA            => ['Pagada',        'bg-success'],
+$ps = [
+    InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? 'Desconocido',
+    InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-dark',
 ];
-$ps = $pipelineBadgeMap[$invoice->pipeline_status] ?? ['Desconocido', 'bg-dark'];
 
 $approvalClass = match($invoice->area_approval ?? '') {
     InvoiceConstants::APPROVAL_APPROVED  => 'bg-success',

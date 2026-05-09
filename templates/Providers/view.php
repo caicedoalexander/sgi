@@ -3,6 +3,10 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Provider $provider
  */
+
+use App\Constants\InvoiceConstants;
+use App\View\Presentation\InvoicePresentation;
+
 $this->assign('title', 'Proveedor: ' . $provider->name);
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
@@ -60,7 +64,7 @@ $this->assign('title', 'Proveedor: ' . $provider->name);
                     <td><?= h($invoice->document_type) ?></td>
                     <td><?= $invoice->issue_date?->format('d/m/Y') ?></td>
                     <td class="text-end">$ <?= $this->Number->format($invoice->amount, ['places' => 2]) ?></td>
-                    <td><span class="badge bg-info"><?= h($invoice->pipeline_status) ?></span></td>
+                    <td><span class="badge <?= InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-dark' ?>"><?= h(InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? $invoice->pipeline_status) ?></span></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

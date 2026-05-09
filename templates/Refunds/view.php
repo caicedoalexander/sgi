@@ -3,17 +3,14 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Refund $record
  */
+use App\Constants\InvoiceConstants;
 use App\Constants\RefundConstants;
+use App\View\Presentation\InvoicePresentation;
+use App\View\Presentation\RefundPresentation;
 
 $this->assign('title', 'Reintegro ' . $record->code);
 
-$statusBadge = [
-    'agrupacion' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'tesoreria' => 'bg-warning text-dark',
-    'autorizacion_pago' => 'bg-secondary',
-    'pagada' => 'bg-success',
-];
+$statusBadge = RefundPresentation::STATUS_BADGES;
 $statusLabels = RefundConstants::STATUS_LABELS;
 
 ?>
@@ -140,16 +137,8 @@ $statusLabels = RefundConstants::STATUS_LABELS;
                     <td class="text-end">$ <?= $this->Number->format($inv->amount, ['places' => 2]) ?></td>
                     <td><?= $inv->issue_date?->format('d/m/Y') ?? '—' ?></td>
                     <td>
-                        <?php
-                        $pBadge = match($inv->pipeline_status) {
-                            'aprobacion' => 'bg-info text-dark',
-                            'contabilidad' => 'bg-primary',
-                            'tesoreria' => 'bg-warning text-dark',
-                            'pagada' => 'bg-success',
-                            default => 'bg-dark',
-                        };
-                        ?>
-                        <span class="badge <?= $pBadge ?>"><?= h($inv->pipeline_status) ?></span>
+                        <?php $pBadge = InvoicePresentation::STATUS_BADGES[$inv->pipeline_status] ?? 'bg-dark'; ?>
+                        <span class="badge <?= $pBadge ?>"><?= h(InvoiceConstants::STATUS_LABELS[$inv->pipeline_status] ?? $inv->pipeline_status) ?></span>
                     </td>
                 </tr>
                 <?php endforeach; ?>

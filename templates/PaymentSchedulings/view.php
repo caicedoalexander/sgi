@@ -11,14 +11,10 @@ use App\View\Presentation\PaymentSchedulingPresentation;
 
 $this->assign('title', 'Programación ' . h($record->code));
 
-$statusBadge = [
-    PaymentSchedulingConstants::STATUS_BORRADOR => ['Borrador', 'bg-secondary'],
-    PaymentSchedulingConstants::STATUS_TESORERIA => ['Tesorería', 'bg-warning text-dark'],
-    PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => ['Autorización de pago', 'bg-info text-dark'],
-    PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => ['Verificación de pago', 'bg-warning text-dark'],
-    PaymentSchedulingConstants::STATUS_PAGADA => ['Pagada', 'bg-success'],
+$ps = [
+    PaymentSchedulingConstants::STATUS_LABELS[$record->pipeline_status] ?? 'Desconocido',
+    PaymentSchedulingPresentation::STATUS_BADGES[$record->pipeline_status] ?? 'bg-dark',
 ];
-$ps = $statusBadge[$record->pipeline_status] ?? ['Desconocido', 'bg-dark'];
 ?>
 
 <!-- Encabezado de página -->

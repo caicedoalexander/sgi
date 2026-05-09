@@ -16,18 +16,10 @@
 use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\View\Presentation\AdvancePresentation;
+use App\View\Presentation\InvoicePresentation;
 
 $this->assign('title', 'Legalización ' . ($invoice->invoice_number ?? '#' . $invoice->id));
 
-$legBadgeMap = [
-    AdvanceConstants::STATUS_VALIDACION        => ['Validación', 'bg-info text-dark'],
-    AdvanceConstants::STATUS_REVISION_FIRMAS   => ['Revisión y Firmas', 'bg-primary'],
-    AdvanceConstants::STATUS_CONTABILIDAD      => ['Contabilidad', 'bg-warning text-dark'],
-    AdvanceConstants::STATUS_TESORERIA         => ['Tesorería', 'bg-warning text-dark'],
-    AdvanceConstants::STATUS_AUTORIZACION_PAGO => ['Autorización de pago', 'bg-warning text-dark'],
-    AdvanceConstants::STATUS_VERIFICACION_PAGO => ['Verificación de pago', 'bg-warning text-dark'],
-    AdvanceConstants::STATUS_LEGALIZADA        => ['Legalizada', 'bg-success'],
-];
 $legPipelineLabels = AdvanceConstants::STATUS_LABELS;
 
 $beneficiary = $invoice->provider->name ?? ($invoice->employee->full_name ?? '—');
@@ -37,7 +29,10 @@ $beneficiaryDocType = $invoice->provider_id
     : ($invoice->employee_id ? ($invoice->employee->document_type ?? '') : '');
 $beneficiaryKind = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id ? 'Empleado' : '—');
 
-$ps = $legBadgeMap[$leg->status] ?? ['Desconocido', 'bg-dark'];
+$ps = [
+    AdvanceConstants::STATUS_LABELS[$leg->status] ?? 'Desconocido',
+    AdvancePresentation::STATUS_BADGES[$leg->status] ?? 'bg-dark',
+];
 
 $linkedCount = is_object($linkedInvoices) && method_exists($linkedInvoices, 'count')
     ? $linkedInvoices->count()
@@ -225,7 +220,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
                             <td><?= h($li->provider->name ?? ($li->employee->full_name ?? '—')) ?></td>
                             <td><?= $li->issue_date?->format('d/m/Y') ?? '—' ?></td>
                             <td class="text-end" style="font-weight:600;">$ <?= $this->Number->format((float)$li->amount, ['places' => 2]) ?></td>
-                            <td><span class="badge bg-secondary"><?= h($li->pipeline_status) ?></span></td>
+                            <td><span class="badge <?= InvoicePresentation::STATUS_BADGES[$li->pipeline_status] ?? 'bg-dark' ?>"><?= h(InvoiceConstants::STATUS_LABELS[$li->pipeline_status] ?? $li->pipeline_status) ?></span></td>
                             <td class="text-end">
                                 <?php if ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
                                 <?= $this->Form->postLink(

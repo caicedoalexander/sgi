@@ -18,6 +18,7 @@
  * @var string $dateTo
  */
 use App\Constants\InvoiceConstants;
+use App\View\Presentation\InvoicePresentation;
 
 $this->assign('title', 'Inicio');
 $userPermissions = $userPermissions ?? [];
@@ -43,12 +44,6 @@ $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
 $hoy   = new DateTime();
 $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(int)$hoy->format('n') - 1] . ' de ' . $hoy->format('Y');
 
-$statusBadge = [
-    InvoiceConstants::STATUS_APROBACION   => ['label' => 'Aprobación',  'class' => 'bg-warning text-dark'],
-    InvoiceConstants::STATUS_CONTABILIDAD => ['label' => 'Contabilidad', 'class' => 'bg-info text-dark'],
-    InvoiceConstants::STATUS_TESORERIA    => ['label' => 'Tesorería',    'class' => 'bg-primary'],
-    InvoiceConstants::STATUS_PAGADA       => ['label' => 'Pagada',       'class' => 'bg-success'],
-];
 ?>
 
 <!-- Encabezado de bienvenida -->
@@ -208,8 +203,9 @@ $statusBadge = [
                             <?php if (($invoice->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED): ?>
                                 <span class="badge bg-danger">Rechazada</span>
                             <?php else: ?>
-                                <?php $s = $statusBadge[$invoice->pipeline_status] ?? ['label' => $invoice->pipeline_status, 'class' => 'bg-secondary']; ?>
-                                <span class="badge <?= $s['class'] ?>"><?= h($s['label']) ?></span>
+                                <span class="badge <?= InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-secondary' ?>">
+                                    <?= h(InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? $invoice->pipeline_status) ?>
+                                </span>
                             <?php endif; ?>
                         </td>
                         <td class="px-3 py-2" style="border-color:var(--border-color);color:#6c757d;">

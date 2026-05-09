@@ -7,23 +7,12 @@
 
 use App\Constants\InvoiceConstants;
 use App\Service\InvoicePipelineService;
+use App\View\Presentation\InvoicePresentation;
 
 $this->assign('title', $invoice->invoice_number ?? '#' . $invoice->id);
 
-$pipelineBadge = [
-    InvoiceConstants::STATUS_APROBACION        => 'bg-info text-dark',
-    InvoiceConstants::STATUS_CONTABILIDAD      => 'bg-primary',
-    InvoiceConstants::STATUS_TESORERIA         => 'bg-warning text-dark',
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
-    InvoiceConstants::STATUS_PAGADA            => 'bg-success',
-];
-$pipelineLabels = [
-    InvoiceConstants::STATUS_APROBACION        => 'Aprobación',
-    InvoiceConstants::STATUS_CONTABILIDAD      => 'Contabilidad',
-    InvoiceConstants::STATUS_TESORERIA         => 'Tesorería',
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
-    InvoiceConstants::STATUS_PAGADA            => 'Pagada',
-];
+$pipelineBadge = InvoicePresentation::STATUS_BADGES;
+$pipelineLabels = InvoiceConstants::STATUS_LABELS;
 
 $beneficiary = $invoice->provider->name ?? ($invoice->employee->full_name ?? '—');
 $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id ? 'Empleado' : '—');
