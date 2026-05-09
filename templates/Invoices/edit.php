@@ -134,8 +134,7 @@ $isCollapsibleSection = fn(string $s): bool => in_array($s, $collapsible, true);
 
 <?php
 // Soportes — calcular antes del layout de dos columnas
-$uploadableStatuses = ['aprobacion', 'contabilidad', 'tesoreria'];
-$showUploadSection  = in_array($viewModel->currentStatus, $uploadableStatuses, true);
+$showUploadSection = !$viewModel->invoice->isInFinalState();
 $documentsByStatus  = [];
 if (!empty($viewModel->invoice->invoice_documents)) {
     foreach ($viewModel->invoice->invoice_documents as $doc) {
