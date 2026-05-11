@@ -517,4 +517,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `0423353` | MN-013 (progress_stepper CSS-driven con data-state; template −37 LOC, cero inline styles) |
 | `bf4c296` | MN-008 (window.SGI_OBRA_LABOR vía scriptBlock + fix bug latente del block 'scriptBottom') |
 | `e355f63` | MN-011 (aria-hidden="true" en avatares con iniciales; nombre adyacente ya anuncia) |
-| _pendiente_ | MN-015 (h() al final en 4 templates; +escape defensivo de $statusLabels) |
+| `d316440` | MN-015 (h() al final en 4 templates; +escape defensivo de $statusLabels) |
