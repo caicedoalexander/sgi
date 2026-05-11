@@ -520,4 +520,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `9acafb1` | MN-014 (meta tags sgi-max-upload-* + comments cross-file; SG-008 sigue abierto) |
 | `6ea0dd2` | MN-002/003/004 (sección "Excepciones permitidas" en design.md + comments cross-file) |
 | `40e5b1d` | MN-005 (inventario completo de 25 !important; comentarios inline a las 6 sin doc; header de flatpickr-overrides expandido) |
-| _pendiente_ | MN-010 (split de default.php 662→183 LOC en 4 elements sidebar/{financiero,rrhh,catalogos,administracion}.php) |
+| `8e35bf0` | MN-010 (split de default.php 662→183 LOC en 4 elements sidebar/{financiero,rrhh,catalogos,administracion}.php) |
