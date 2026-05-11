@@ -192,6 +192,28 @@ class AppController extends Controller
         return $user?->role?->name ?? '';
     }
 
+    /**
+     * Construye condiciones de filtro por `pipeline_status` (o columna análoga)
+     * para los listados "Mis Registros" de los módulos con pipeline.
+     *
+     * Si la lista de estados visibles está vacía (rol sin permisos sembrados),
+     * retorna una condición imposible (`1 = 0`) para garantizar 0 resultados.
+     * Centraliza el patrón usado por Invoices/Refunds/PettyCash/etc. y evita
+     * el anti-pattern de valores centinela mágicos.
+     *
+     * @param string $field Columna calificada, ej. `Invoices.pipeline_status`.
+     * @param array<int, string> $statuses Lista de estados visibles para el rol.
+     * @return array<string|int, mixed> Condiciones para aplicar en `$query->where(...)`.
+     */
+    protected function _visibleStatusConditions(string $field, array $statuses): array
+    {
+        if ($statuses === []) {
+            return ['1 = 0'];
+        }
+
+        return [$field . ' IN' => $statuses];
+    }
+
     protected function _setSidebarCounters(object $user): void
     {
         $roleName = $this->_getUserRoleName($user);
