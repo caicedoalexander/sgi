@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **9 Minores** (MN-001, MN-006, MN-007, MN-008, MN-009, MN-011, MN-012, MN-013, MN-015) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **10 Minores** (MN-001, MN-006, MN-007, MN-008, MN-009, MN-011, MN-012, MN-013, MN-015, MN-016) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -95,7 +95,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (7)
+## 🟡 Minores (6)
 
 ### ~~MN-001~~ ✅ — `box-shadow` en checkbox toggle  (RESUELTO en `fa16845`, junto a MJ-010)
 
@@ -296,17 +296,20 @@ El helper `$navLink` cierre actual está OK, solo el markup repetitivo se benefi
 
 ---
 
-### MN-016 — Inline `<script>` duplicado para `--sidebar-width`
+### ~~MN-016~~ ✅ — Inline `<script>` para `--sidebar-width`  (VERIFICADO, no es duplicado)
 
-**Ubicación:** `templates/layout/default.php:606`
+**Diagnóstico:** la premisa del backlog (que el inline script y el `ResizeObserver` en `sgi-common.js` son redundantes) resultó **incorrecta** tras inspección. Tienen distintos timings:
 
-**Problema:** el inline script para sincronizar `--sidebar-width` se ejecuta antes del DOM, y `sgi-common.js` lo hace de nuevo con `ResizeObserver`.
+- **Inline script en `default.php:617`** — corre síncrono al parsear el body, **antes** de que `.content-wrapper` se renderice. Setea `--sidebar-width` al ancho real del sidebar.
+- **`ResizeObserver` en `sgi-common.js:101-114`** — corre dentro de `DOMContentLoaded`. Su callback inicial es async (siguiente animation frame).
 
-**Resolver:** verificar que `sgi-common.js` ya maneja el caso inicial:
-```bash
-grep -n "sidebar-width\|--sidebar" webroot/js/sgi-common.js
-```
-Si lo hace, eliminar el bloque inline. Si solo reacciona a resize, mover el setup inicial al primer event del ResizeObserver (que dispara en la creación).
+**Por qué no se puede eliminar el inline:** `.sidebar { width: max-content }` significa que el ancho depende del nav-item más largo (no es 260px fijo). El fallback `--sidebar-width: 260px` del `<head>` rara vez coincide con el ancho real. Sin el inline, hay flash de `.content-wrapper` mal posicionada entre el parse del body y el primer animation frame post-DOMContentLoaded.
+
+**Aplicado:** se documentó el contrato en ambos sitios con comentarios explícitos:
+- `templates/layout/default.php` — comentario PHP arriba del inline explicando por qué es load-bearing.
+- `webroot/js/sgi-common.js` — comentario JS arriba del bloque ResizeObserver apuntando al inline.
+
+**Cierra MN-016 como falso positivo del audit.** El comportamiento es intencional y necesario.
 
 ---
 
@@ -485,15 +488,15 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟡 MN-002 a MN-005, MN-010, MN-014, MN-016 | Design system polish + code smells + a11y | 1 día |
+| 🟡 MN-002 a MN-005, MN-010, MN-014 | Design system polish + code smells + a11y | 1 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
 **Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
 
 **Próximo paso recomendado:**
-1. **MN-016** (15 min) — verificar y eliminar el inline `<script>` duplicado para `--sidebar-width` en `default.php`.
-2. **MN-014** (15 min) — comentar/exponer `SGI_MAX_UPLOAD_BYTES` y documentar el guard global.
-3. **MN-002/003/004** (30 min) — documentar excepciones de `border-radius:10px` en `.claude/rules/design.md` o reducirlas.
+1. **MN-014** (15 min) — comentar/exponer `SGI_MAX_UPLOAD_BYTES` y documentar el guard global.
+2. **MN-002/003/004** (30 min) — documentar excepciones de `border-radius:10px` en `.claude/rules/design.md` o reducirlas.
+3. **MN-005** (1-2h) — auditar los 23 `!important` (ya hecho parcialmente en MJ-010 paso 1).
 
 ## Historial de aplicación
 
@@ -518,3 +521,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `bf4c296` | MN-008 (window.SGI_OBRA_LABOR vía scriptBlock + fix bug latente del block 'scriptBottom') |
 | `e355f63` | MN-011 (aria-hidden="true" en avatares con iniciales; nombre adyacente ya anuncia) |
 | `d316440` | MN-015 (h() al final en 4 templates; +escape defensivo de $statusLabels) |
+| _pendiente_ | MN-016 (documentar contrato inline+ResizeObserver; falso positivo del audit) |

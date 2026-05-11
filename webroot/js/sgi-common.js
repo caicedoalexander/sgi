@@ -99,6 +99,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ── Sidebar: mantener --sidebar-width sincronizado con el ancho real ──────
+    // Maneja resizes runtime (fuentes que cargan, colapso/expansión de subnav, resize
+    // de ventana). El sync inicial síncrono al primer paint vive en default.php (inline
+    // script justo después de </nav>) — necesario porque ResizeObserver dispara su
+    // callback inicial async, dejando .content-wrapper con el fallback 260px hasta
+    // que pasa el primer animation frame post-DOMContentLoaded.
     (function () {
         var sidebar = document.querySelector('.sidebar');
         if (!sidebar) return;

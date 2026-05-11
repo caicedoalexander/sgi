@@ -604,6 +604,15 @@ $advancesMineCount = $advancesMineCount ?? 0;
                 <?php endif; ?>
             </div>
         </nav>
+        <?php /*
+            Sync síncrono de --sidebar-width al parsear el body, antes de que .content-wrapper
+            (línea ~616) se renderice. Necesario porque .sidebar usa width:max-content (depende del
+            nav-item más largo) y el fallback --sidebar-width:260px del <head> rara vez coincide.
+            Sin este sync hay flash de .content-wrapper mal posicionada hasta que ResizeObserver
+            dispara su callback inicial post-DOMContentLoaded (sgi-common.js). NO es duplicado de
+            sgi-common.js — distintos timings: este es para el primer paint, el ResizeObserver
+            para resizes runtime (fuentes, colapso de subnav, resize de ventana).
+        */ ?>
         <script>(function(){var s=document.querySelector('.sidebar');if(s)document.documentElement.style.setProperty('--sidebar-width',s.offsetWidth+'px');})();</script>
 
         <!-- Contenido -->
