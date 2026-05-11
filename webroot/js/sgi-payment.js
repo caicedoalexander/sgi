@@ -24,25 +24,36 @@
         section.querySelectorAll('.btn-post-action').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var msg = btn.getAttribute('data-confirm');
-                if (msg && !confirm(msg)) return;
                 var url = btn.getAttribute('data-url');
                 if (!url) return;
-                btn.disabled = true;
-                _submitDynamicForm(url, {}, findCsrfToken(section));
+                var go = msg
+                    ? window.SgiDialogs.confirm(msg)
+                    : Promise.resolve(true);
+                go.then(function (ok) {
+                    if (!ok) return;
+                    btn.disabled = true;
+                    _submitDynamicForm(url, {}, findCsrfToken(section));
+                });
             });
         });
 
         // ── Reject payment: capture reason via prompt then POST ──
         section.querySelectorAll('.btn-reject-payment').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                var reason = prompt('Motivo del rechazo (obligatorio):');
-                if (reason === null) return;
-                reason = reason.trim();
-                if (!reason) { alert('Debe indicar un motivo.'); return; }
                 var url = btn.getAttribute('data-url');
                 if (!url) return;
-                btn.disabled = true;
-                _submitDynamicForm(url, { 'reason': reason }, findCsrfToken(section));
+                window.SgiDialogs.prompt({
+                    title: 'Rechazar pago',
+                    message: 'Indique el motivo del rechazo del pago.',
+                    placeholder: 'Describa por qué se rechaza este pago...',
+                    minLength: 10,
+                    maxLength: 500,
+                    required: true,
+                }).then(function (reason) {
+                    if (!reason) return;
+                    btn.disabled = true;
+                    _submitDynamicForm(url, { 'reason': reason }, findCsrfToken(section));
+                });
             });
         });
     }
@@ -114,7 +125,7 @@
             function validate() {
                 var raw = getRawAmount();
                 if (!bankInput.value || !raw || parseFloat(raw) <= 0 || !dateInput.value) {
-                    alert('Complete todos los campos del pago (entidad, monto y fecha).');
+                    window.SgiDialogs.toast('Complete todos los campos del pago (entidad, monto y fecha).', 'warning');
                     return false;
                 }
                 return true;
@@ -139,9 +150,11 @@
             btnRegisterAdvance.addEventListener('click', function (e) {
                 e.preventDefault();
                 if (!validate()) return;
-                if (!confirm('Este pago se registrará y la factura pasará inmediatamente al estado de Autorización de Pago. ¿Continuar?')) return;
-                btnRegisterAdvance.disabled = true;
-                submitPayment();
+                window.SgiDialogs.confirm('Este pago se registrará y la factura pasará inmediatamente al estado de Autorización de Pago. ¿Continuar?').then(function (ok) {
+                    if (!ok) return;
+                    btnRegisterAdvance.disabled = true;
+                    submitPayment();
+                });
             });
 
             if (fullPayCheck && amountInput) {

@@ -371,48 +371,12 @@ $novedades = $employee->employee_novelties ?? [];
                     <div class="accordion-body">
 
                         <?php if (!empty($folder->employee_documents)): ?>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Documento</th>
-                                        <th>Tipo</th>
-                                        <th>Tamaño</th>
-                                        <th>Subido por</th>
-                                        <th>Fecha</th>
-                                        <th class="text-end">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($folder->employee_documents as $doc):
-                                        $type = $this->DocumentIcon->typeLabel($doc->mime_type);
-                                    ?>
-                                    <tr>
-                                        <td>
-                                            <i class="bi <?= $this->DocumentIcon->iconClass($doc->mime_type) ?> me-1"
-                                               style="color:<?= $this->DocumentIcon->iconColor($doc->mime_type) ?>;font-size:1rem;vertical-align:middle"></i>
-                                            <?= $this->Html->link(h($doc->name), ['action' => 'downloadDocument', $employee->id, $doc->id], ['target' => '_blank', 'class' => 'text-decoration-none']) ?>
-                                        </td>
-                                        <td><span class="badge <?= $this->DocumentIcon->badgeClass($type) ?>"><?= $type ?></span></td>
-                                        <td style="color:#888;font-size:.8rem"><?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?></td>
-                                        <td style="color:#888;font-size:.8rem"><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></td>
-                                        <td style="color:#888;font-size:.8rem">
-                                            <?= $doc->created?->format('d/m/Y') ?>
-                                            <span style="color:#bbb;font-size:.7rem;display:block"><?= $doc->created?->format('H:i') ?></span>
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="d-flex gap-1 justify-content-end">
-                                                <?= $this->Html->link('<i class="bi bi-box-arrow-up-right"></i>', ['action' => 'downloadDocument', $employee->id, $doc->id], ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']) ?>
-                                                <?php if (!empty($userPermissions['employees']['can_delete'])): ?>
-                                                <?= $this->Form->postLink('<i class="bi bi-trash"></i>', ['action' => 'deleteDocument', $employee->id, $doc->id], ['confirm' => '¿Eliminar este documento?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
-                                                <?php endif; ?>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                        <?= $this->element('employee_documents_table', [
+                            'docs'       => $folder->employee_documents,
+                            'employeeId' => $employee->id,
+                            'canDelete'  => !empty($userPermissions['employees']['can_delete']),
+                            'showHeader' => true,
+                        ]) ?>
                         <?php else: ?>
                         <div class="sgi-doc-empty-sm"><i class="bi bi-file-earmark me-1"></i>Carpeta vacía</div>
                         <?php endif; ?>
@@ -427,35 +391,12 @@ $novedades = $employee->employee_novelties ?? [];
                                     <span class="sgi-folder-count ms-1"><?= count($subfolder->employee_documents) ?></span>
                                 </div>
                                 <?php if (!empty($subfolder->employee_documents)): ?>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-hover mb-0">
-                                        <tbody>
-                                            <?php foreach ($subfolder->employee_documents as $doc):
-                                                $type = $this->DocumentIcon->typeLabel($doc->mime_type);
-                                            ?>
-                                            <tr>
-                                                <td>
-                                                    <i class="bi <?= $this->DocumentIcon->iconClass($doc->mime_type) ?> me-1"
-                                                       style="color:<?= $this->DocumentIcon->iconColor($doc->mime_type) ?>;font-size:1rem;vertical-align:middle"></i>
-                                                    <?= $this->Html->link(h($doc->name), ['action' => 'downloadDocument', $employee->id, $doc->id], ['target' => '_blank', 'class' => 'text-decoration-none']) ?>
-                                                </td>
-                                                <td><span class="badge <?= $this->DocumentIcon->badgeClass($type) ?>"><?= $type ?></span></td>
-                                                <td style="color:#888;font-size:.8rem"><?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?></td>
-                                                <td style="color:#888;font-size:.8rem"><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></td>
-                                                <td style="color:#888;font-size:.8rem"><?= $doc->created?->format('d/m/Y') ?></td>
-                                                <td class="text-end">
-                                                    <div class="d-flex gap-1 justify-content-end">
-                                                        <?= $this->Html->link('<i class="bi bi-box-arrow-up-right"></i>', ['action' => 'downloadDocument', $employee->id, $doc->id], ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']) ?>
-                                                        <?php if (!empty($userPermissions['employees']['can_delete'])): ?>
-                                                        <?= $this->Form->postLink('<i class="bi bi-trash"></i>', ['action' => 'deleteDocument', $employee->id, $doc->id], ['confirm' => '¿Eliminar este documento?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <?= $this->element('employee_documents_table', [
+                                    'docs'       => $subfolder->employee_documents,
+                                    'employeeId' => $employee->id,
+                                    'canDelete'  => !empty($userPermissions['employees']['can_delete']),
+                                    'showHeader' => false,
+                                ]) ?>
                                 <?php else: ?>
                                 <div class="sgi-doc-empty-sm"><i class="bi bi-file-earmark me-1"></i>Subcarpeta vacía</div>
                                 <?php endif; ?>

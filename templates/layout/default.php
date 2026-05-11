@@ -639,6 +639,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js" integrity="sha384-UeeDJLxU9E9sJVeeJ8aoFWAfW2uB0Hggm59b4wtvZl8A1FnbmWnAaH4DlLdlnHKD" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js" integrity="sha384-+xRXcGmExqvIzpl6UBfbrBkXyyxIDFnxQtfyoOiXSx0/ri19w6ifNhXjPLMxLwXM" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js" integrity="sha384-KNaFJ+EK516RuHsoycvreec5pD7BkTKJEkjMrVSQWu9KGTl7En4dhIDv7t1DFJ+g" crossorigin="anonymous"></script>
+    <?= $this->Html->script('sgi-dialogs', ['block' => false]) ?>
     <?= $this->Html->script('sgi-common', ['block' => false]) ?>
     <?= $this->fetch('script') ?>
 </body>

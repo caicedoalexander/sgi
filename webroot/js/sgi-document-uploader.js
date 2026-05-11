@@ -112,60 +112,13 @@
         }, 4000);
     }
 
-    function ensureConfirmModal() {
-        var existing = document.getElementById('sgi-confirm-modal');
-        if (existing) return existing;
-        var html =
-            '<div class="modal fade" id="sgi-confirm-modal" tabindex="-1" aria-hidden="true">' +
-              '<div class="modal-dialog modal-dialog-centered">' +
-                '<div class="modal-content">' +
-                  '<div class="modal-header">' +
-                    '<h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i><span data-slot="title">Confirmar</span></h5>' +
-                    '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>' +
-                  '</div>' +
-                  '<div class="modal-body" data-slot="body"></div>' +
-                  '<div class="modal-footer">' +
-                    '<button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>' +
-                    '<button type="button" class="btn btn-danger" data-slot="ok">Eliminar</button>' +
-                  '</div>' +
-                '</div>' +
-              '</div>' +
-            '</div>';
-        var wrap = document.createElement('div');
-        wrap.innerHTML = html;
-        var node = wrap.firstElementChild;
-        document.body.appendChild(node);
-        return node;
-    }
-
+    // Delegado en SgiDialogs (sgi-dialogs.js). Mantenemos un fallback local
+    // por si este script se carga sin el módulo de diálogos.
     function confirmDialog(message) {
-        if (!global.bootstrap || !global.bootstrap.Modal) {
-            return Promise.resolve(global.confirm(message));
+        if (global.SgiDialogs && global.SgiDialogs.confirm) {
+            return global.SgiDialogs.confirm(message);
         }
-        var modalEl = ensureConfirmModal();
-        modalEl.querySelector('[data-slot="body"]').textContent = message;
-        var okBtn = modalEl.querySelector('[data-slot="ok"]');
-        var modal = global.bootstrap.Modal.getOrCreateInstance(modalEl);
-
-        return new Promise(function (resolve) {
-            var resolved = false;
-            function cleanup() {
-                okBtn.removeEventListener('click', onOk);
-                modalEl.removeEventListener('hidden.bs.modal', onHide);
-            }
-            function onOk() {
-                resolved = true;
-                cleanup();
-                modal.hide();
-                resolve(true);
-            }
-            function onHide() {
-                if (!resolved) { cleanup(); resolve(false); }
-            }
-            okBtn.addEventListener('click', onOk);
-            modalEl.addEventListener('hidden.bs.modal', onHide);
-            modal.show();
-        });
+        return Promise.resolve(global.confirm(message));
     }
 
     // ─── Row builder ─────────────────────────────────────────────────────────
