@@ -53,16 +53,14 @@ class PaymentSchedulingsController extends AppController
 
     public function index()
     {
-        $roleName = $this->_getRoleName();
-        $visibleStatuses = $this->schedulingService->getVisibleStatuses($roleName);
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        $visibleStatuses = $this->schedulingService->getVisibleStatuses($roleId);
 
         $query = $this->PaymentSchedulings->find()
             ->contain(['CreatedByUsers', 'PaymentSchedulingItems'])
             ->orderBy(['PaymentSchedulings.created' => 'DESC']);
 
-        if (!empty($visibleStatuses)) {
-            $query->where(['PaymentSchedulings.pipeline_status IN' => $visibleStatuses]);
-        }
+        $query->where($this->_visibleStatusConditions('PaymentSchedulings.pipeline_status', $visibleStatuses));
 
         // Filters
         $params = $this->request->getQueryParams();
