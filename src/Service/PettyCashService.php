@@ -7,7 +7,6 @@ use App\Constants\Domain\PettyCash\PipelineStatus as PettyCashPipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
-use App\Constants\RoleConstants;
 use App\Event\InvoicePaidEvent;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\Dto\BulkPaymentView;
@@ -23,36 +22,6 @@ use InvalidArgumentException;
 
 class PettyCashService
 {
-    // Active petty-cash statuses (excludes pagado — terminal para "Mis Registros").
-    private const ACTIVE_STATUSES = [
-        PettyCashConstants::STATUS_AGRUPACION,
-        PettyCashConstants::STATUS_CONTABILIDAD,
-        PettyCashConstants::STATUS_TESORERIA,
-        PettyCashConstants::STATUS_AUTORIZACION_PAGO,
-        PettyCashConstants::STATUS_VERIFICACION_PAGO,
-    ];
-
-    // Which petty-cash statuses each role sees in "Mis Registros".
-    private const ROLE_VISIBLE_STATUSES = [
-        RoleConstants::REGISTRO_REVISION  => [PettyCashConstants::STATUS_AGRUPACION],
-        RoleConstants::CONTABILIDAD       => [PettyCashConstants::STATUS_CONTABILIDAD],
-        // Tesorería registra el pago (tesoreria), monitorea la autorización (aut_pago)
-        // y confirma la ejecución (verificacion_pago) antes de pagado.
-        RoleConstants::TESORERIA          => [
-            PettyCashConstants::STATUS_TESORERIA,
-            PettyCashConstants::STATUS_AUTORIZACION_PAGO,
-            PettyCashConstants::STATUS_VERIFICACION_PAGO,
-        ],
-        RoleConstants::CONTADOR           => [
-            PettyCashConstants::STATUS_AUTORIZACION_PAGO,
-            PettyCashConstants::STATUS_VERIFICACION_PAGO,
-        ],
-        RoleConstants::AUXILIAR_PERSONAL  => self::ACTIVE_STATUSES,
-        RoleConstants::ASISTENTE_PERSONAL => self::ACTIVE_STATUSES,
-        RoleConstants::COORDINADOR_ADMIN  => self::ACTIVE_STATUSES,
-        RoleConstants::ADMIN              => self::ACTIVE_STATUSES,
-    ];
-
     private GroupedInvoiceService $grouped;
     private PipelineAuthorizationService $pipelineAuth;
     private PettyCashHistoryService $history;
@@ -90,9 +59,13 @@ class PettyCashService
     /**
      * Get petty-cash statuses visible to a role in "Mis Registros".
      */
-    public function getVisibleStatuses(string $roleName): array
+    public function getVisibleStatuses(int $roleId): array
     {
-        return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+        return $this->pipelineAuth->getOperableSteps(
+            $roleId,
+            '',
+            PipelineStepConstants::PIPELINE_PETTY_CASH,
+        );
     }
 
     /**
