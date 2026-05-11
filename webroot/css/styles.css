@@ -2198,6 +2198,10 @@ input.currency-input:focus {
     color: #bbb;
     font-style: italic;
 }
+/* Counter pill — excepción documentada al lenguaje "radio 0-2px máx"
+   (ver .claude/rules/design.md sección "Excepciones permitidas").
+   El 10px en este elemento pequeño produce efecto pill, convención
+   estándar para badges numéricos. */
 .sgi-folder-count {
     display: inline-flex;
     align-items: center;
@@ -2323,6 +2327,10 @@ input.currency-input:focus {
     word-break: break-word;
     border: 1px solid var(--border-color);
 }
+/* Chat bubbles — excepción documentada al lenguaje "radio 0-2px máx"
+   (ver .claude/rules/design.md sección "Excepciones permitidas").
+   Radio asimétrico 10px + ancla 2px hacia el hablante es convención
+   universal en chats (WhatsApp, iMessage, Slack). */
 .sgi-obs-bubble.is-mine  .sgi-obs-bubble-body {
     background: var(--primary-color);
     color: #fff;

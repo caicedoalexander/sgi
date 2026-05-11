@@ -180,6 +180,39 @@ El borde verde que divide los dos paneles es la expresión más directa del leng
 
 ---
 
+## Excepciones permitidas
+
+Las reglas generales aplican al 99% del sistema. Las excepciones documentadas a continuación reflejan casos UX donde apartarse del lenguaje "borde sin sombra, radio 0-2px" mejora la legibilidad o sigue convenciones bien establecidas. **Antes de introducir una nueva excepción, añadirla a esta lista** con el selector exacto y la justificación.
+
+### Chat bubbles (`.sgi-obs-bubble-body`)
+
+```css
+.sgi-obs-bubble.is-mine  .sgi-obs-bubble-body { border-radius: 10px 10px 2px 10px; }
+.sgi-obs-bubble.is-other .sgi-obs-bubble-body { border-radius: 10px 10px 10px 2px; }
+```
+
+**Justificación:** los hilos de conversación con bubbles cuadrados son visualmente densos y rompen el patrón mental de "mensaje propio vs ajeno". El radio asimétrico (10px en 3 esquinas + 2px en la esquina que apunta al hablante) es convención universal en chats (WhatsApp, Slack, iMessage). Mantiene los 2px como "ancla" hacia el lenguaje del sistema.
+
+### Counter pills (`.sgi-folder-count`)
+
+```css
+.sgi-folder-count { border-radius: 10px; padding: .15em .5em; min-width: 1.5em; }
+```
+
+**Justificación:** badges numéricos pequeños usados como contadores (carpetas, notificaciones). El 10px en un elemento de ~16-20px de alto produce efecto pill — convención visual estándar para contadores. Reducir a 2px convertiría el badge en un chip rectangular, perdiendo la asociación visual con "contador" y entrando en conflicto con la convención.
+
+### Signature overlay (`webroot/js/sgi-signature.js` — card modal)
+
+```js
+// Card del modal de firma
+'background:#fff', 'border-radius:10px', 'padding:1.5rem',
+'box-shadow:0 16px 48px rgba(0,0,0,.25)',
+```
+
+**Justificación:** card modal temporal que aparece sobre el documento al firmar. **Única excepción que permite `box-shadow` en el sistema** — porque el card flota sobre un fondo desenfocado (`backdrop-filter:blur(3px)`) y necesita separación visual mediante sombra (los bordes serían insuficientes contra el blur). Es un componente efímero, no parte del flujo principal.
+
+---
+
 ## Carga de CSS (orden importante)
 
 ```html

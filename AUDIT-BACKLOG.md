@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **11 Minores** (MN-001, MN-006, MN-007, MN-008, MN-009, MN-011, MN-012, MN-013, MN-014, MN-015, MN-016) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **14 Minores** (MN-001 a MN-004, MN-006 a MN-009, MN-011 a MN-016) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -95,7 +95,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (5)
+## 🟡 Minores (2)
 
 ### ~~MN-001~~ ✅ — `box-shadow` en checkbox toggle  (RESUELTO en `fa16845`, junto a MJ-010)
 
@@ -103,33 +103,18 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-### MN-002 / MN-003 — `border-radius: 10px` en chat y otros
+### ~~MN-002 / MN-003~~ ✅ — `border-radius: 10px` en chat y counter pills  (RESUELTO)
+### ~~MN-004~~ ✅ — Signature overlay con `border-radius:10px` y `box-shadow`  (RESUELTO)
 
-**Ubicación:** `webroot/css/styles.css:2680,2685,2560`
+**Aplicado:** se documentaron las 3 categorías de excepciones en `.claude/rules/design.md` nueva sección "## Excepciones permitidas" (después de "Reglas generales"):
 
-**Problema:** excede el límite "0 o 2px máx" del design system.
+| Selector | Archivo | Excepción | Justificación |
+|---|---|---|---|
+| `.sgi-obs-bubble-body` (is-mine / is-other) | `styles.css:2335,2340` | `border-radius: 10px 10px {2px↔10px} 10px` | Chat bubbles asimétricos — convención universal (WhatsApp/iMessage/Slack). 2px hacia el hablante mantiene ancla al lenguaje del sistema |
+| `.sgi-folder-count` | `styles.css:2210` | `border-radius: 10px` | Counter pill — efecto pill estándar en badges numéricos pequeños. Reducir a 2px convertiría en chip rectangular |
+| Signature overlay card | `sgi-signature.js:59-63` | `border-radius:10px` + `box-shadow` | **Única excepción de `box-shadow`** — modal temporal sobre `backdrop-filter:blur(3px)`. Los bordes serían insuficientes contra el blur |
 
-**Resolver:** dos opciones:
-- (A) Reducir a `4px 4px 0 4px` (chat bubble más conservador).
-- (B) Documentar la excepción en `.claude/rules/design.md`:
-  ```md
-  ### Excepciones permitidas
-  - Chat bubbles (`.sgi-obs-bubble`): `border-radius: 10px 10px 2px 10px` para legibilidad de hilos largos.
-  - Overlay de firma (`.sgi-signature-overlay`): redondeo de 10px aceptado.
-  ```
-Recomiendo (B) — los chat bubbles son un caso de UX donde `border-radius` mayor ayuda a la lectura.
-
----
-
-### MN-004 — Signature overlay con `border-radius:10px` y `box-shadow`
-
-**Ubicación:** `webroot/js/sgi-signature.js:59,61`
-
-**Problema:** card overlay usa estilos prohibidos por el design system.
-
-**Resolver:**
-- Cambiar a `border: 1px solid var(--border-color)` + fondo `var(--bg-dark)` semi-transparente.
-- O documentar excepción en `design.md` (overlay temporal sobre el documento).
+**Comentarios CSS/JS agregados** en cada sitio de violación apuntando a la sección de excepciones en `design.md` para que cualquier dev que toque ese código sepa que es intencional.
 
 ---
 
@@ -480,15 +465,14 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟡 MN-002 a MN-005, MN-010 | Design system polish + code smells | 1 día |
+| 🟡 MN-005, MN-010 | Design system polish + refactor de layout | 0.5 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
 **Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
 
 **Próximo paso recomendado:**
-1. **MN-002/003/004** (30 min) — documentar excepciones de `border-radius:10px` en `.claude/rules/design.md` o reducirlas.
-2. **MN-005** (1-2h) — auditar los 23 `!important` (ya hecho parcialmente en MJ-010 paso 1).
-3. **MN-010** (1-2h) — split de `default.php` (644 LOC) en elements por sección del sidebar.
+1. **MN-005** (1-2h) — auditar los 23 `!important` (ya hecho parcialmente en MJ-010 paso 1).
+2. **MN-010** (1-2h) — split de `default.php` (644 LOC) en elements por sección del sidebar.
 
 ## Historial de aplicación
 
@@ -515,3 +499,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `d316440` | MN-015 (h() al final en 4 templates; +escape defensivo de $statusLabels) |
 | `39752d0` | MN-016 (documentar contrato inline+ResizeObserver; falso positivo del audit) |
 | `9acafb1` | MN-014 (meta tags sgi-max-upload-* + comments cross-file; SG-008 sigue abierto) |
+| _pendiente_ | MN-002/003/004 (sección "Excepciones permitidas" en design.md + comments cross-file) |

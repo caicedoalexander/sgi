@@ -53,7 +53,10 @@
             'backdrop-filter:blur(3px)', '-webkit-backdrop-filter:blur(3px)',
         ].join(';');
 
-        // Card
+        // Card — excepción documentada al lenguaje "radio 0-2px + sin box-shadow"
+        // (ver .claude/rules/design.md sección "Excepciones permitidas").
+        // Modal temporal que flota sobre fondo desenfocado (backdrop-filter:blur);
+        // los bordes serían insuficientes contra el blur — la sombra da la separación.
         var card = document.createElement('div');
         card.style.cssText = [
             'background:#fff', 'border-radius:10px', 'padding:1.5rem',
