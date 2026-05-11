@@ -38,32 +38,13 @@ class InvoicePipelineService
 
     public const STATUSES = InvoiceConstants::PIPELINE_STATUSES;
 
-    public function getVisibleStatuses(string $roleName): array
+    public function getVisibleStatuses(int $roleId): array
     {
-        $result = [];
-        foreach ($this->states->all() as $name => $state) {
-            if (in_array($roleName, $state->getRoleVisibility(), true)) {
-                $result[] = $name;
-            }
-        }
-
-        return $result;
-    }
-
-    public function getVisibleAdvanceStatuses(string $roleName): array
-    {
-        $result = [];
-        foreach ($this->states->all() as $name => $state) {
-            if ($name === InvoiceConstants::STATUS_PAGADA || $name === InvoiceConstants::STATUS_LEGALIZADA) {
-                // ADVANCE_ACTIVE_STATUSES excluye terminales para "Mis Anticipos"
-                continue;
-            }
-            if (in_array($roleName, $state->getAdvanceRoleVisibility(), true)) {
-                $result[] = $name;
-            }
-        }
-
-        return $result;
+        return $this->pipelineAuth->getOperableSteps(
+            $roleId,
+            '',
+            PipelineStepConstants::PIPELINE_INVOICES,
+        );
     }
 
     public function getPipelineStatusesFor(?string $documentType = null): array
