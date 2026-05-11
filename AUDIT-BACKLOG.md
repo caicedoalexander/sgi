@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **14 Minores** (MN-001 a MN-004, MN-006 a MN-009, MN-011 a MN-016) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **15 Minores** (MN-001 a MN-009, MN-011 a MN-016) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -95,7 +95,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (2)
+## 🟡 Minores (1)
 
 ### ~~MN-001~~ ✅ — `box-shadow` en checkbox toggle  (RESUELTO en `fa16845`, junto a MJ-010)
 
@@ -118,15 +118,33 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-### MN-005 — 23 `!important` declarations
+### ~~MN-005~~ ✅ — `!important` declarations auditadas y comentadas  (RESUELTO)
 
-**Ubicación:** `webroot/css/styles.css:97-101,2521,2623` (y más)
+**Inventario final** (post-split de MJ-010):
 
-**Problema:** specificity wars; algunos override legítimos de Bootstrap mezclados con hacks.
+| Archivo | `!important` | Estado |
+|---|---:|---|
+| `webroot/css/styles.css` | 17 | Todos legítimos, todos comentados |
+| `webroot/css/sgi-flatpickr-overrides.css` | 5 | Vendor overrides — header del archivo explica |
+| `webroot/css/sgi-fullcalendar-overrides.css` | 3 | Vendor overrides — header del archivo explica |
+| **Total** | **25** | **0 specificity wars internas** |
 
-**Resolver:** inventario completo (ver MJ-010 paso 1). Categorizar:
-- ✅ Override de Bootstrap: dejar + comentario.
-- ❌ Specificity wars: refactorizar selectores (más específicos o reorganizar cascada).
+**Detalle del audit en styles.css (17 declaraciones):**
+
+| Líneas | Sitio | Razón |
+|---|---|---|
+| 166, 170 | `.sgi-stat-card` shadows | "Nunca sombras" — override defaults de Bootstrap (ya comentadas) |
+| 438-494 | `.bg-primary/secondary/success/danger/warning/info/dark/purple/light` | Bootstrap usa `.bg-X` con cascade media-query — !important documentado en header del bloque |
+| 2155 | `.accordion-button` | Bootstrap usa `.accordion-item:first-of-type .accordion-button` (specificity 0,2,1) |
+| 2171 | `.accordion-button:not(.collapsed)` | Bootstrap define `box-shadow: inset 0 -1px 0` en mismo selector |
+| 2249 | `.sgi-obs-empty[hidden]` | El atributo HTML `[hidden]` es UA-stylesheet, cualquier regla CSS gana sin !important |
+| 2277 | `.sgi-obs-compose textarea` | Bootstrap `.form-control:focus` específica más que `textarea` descender |
+| 2682 | `.sgi-collapse-chevron` color | Chevron suele estar dentro de `.btn` de Bootstrap con color de estado |
+| 2689 | Inner section header hide | `.d-flex` de Bootstrap usa `display:flex !important` — único camino para override |
+
+**Aplicado:** comentarios inline agregados a las 6 declaraciones que no los tenían (2155, 2171, 2249, 2277, 2682, 2689). Header de `sgi-flatpickr-overrides.css` expandido para documentar el patrón de vendor overrides.
+
+**Conclusión:** las 25 declaraciones son overrides legítimos. **Cero specificity wars internas.** El `!important` es la herramienta correcta para sobrescribir CSS de terceros con specificity alta o que ellos mismos usan `!important`. Ningún refactor de selectores aplica.
 
 ---
 
@@ -465,14 +483,15 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟡 MN-005, MN-010 | Design system polish + refactor de layout | 0.5 día |
+| 🟡 MN-010 | Refactor estructural de `default.php` (644 LOC → elements) | 1-2h |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
 **Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
 
 **Próximo paso recomendado:**
-1. **MN-005** (1-2h) — auditar los 23 `!important` (ya hecho parcialmente en MJ-010 paso 1).
-2. **MN-010** (1-2h) — split de `default.php` (644 LOC) en elements por sección del sidebar.
+1. **MN-010** (1-2h) — split de `default.php` (644 LOC) en elements por sección del sidebar.
+
+Tras MN-010 todos los Minores quedan cerrados; solo quedarían las 10 Sugerencias (SG-001 a SG-010) que son discrecionales.
 
 ## Historial de aplicación
 
@@ -500,3 +519,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `39752d0` | MN-016 (documentar contrato inline+ResizeObserver; falso positivo del audit) |
 | `9acafb1` | MN-014 (meta tags sgi-max-upload-* + comments cross-file; SG-008 sigue abierto) |
 | `6ea0dd2` | MN-002/003/004 (sección "Excepciones permitidas" en design.md + comments cross-file) |
+| _pendiente_ | MN-005 (inventario completo de 25 !important; comentarios inline a las 6 sin doc; header de flatpickr-overrides expandido) |

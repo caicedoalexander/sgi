@@ -2152,6 +2152,8 @@ input.currency-input:focus {
     border-radius: 0;
 }
 .accordion-button {
+    /* !important: Bootstrap usa `.accordion-item:first-of-type .accordion-button`
+       con specificity 0,2,1 — selector simple no gana */
     border-radius: 0 !important;
     font-size: .875rem;
     font-weight: 500;
@@ -2168,6 +2170,8 @@ input.currency-input:focus {
 .accordion-button:not(.collapsed) {
     background-color: rgba(70, 157, 97, .06);
     color: var(--primary-color);
+    /* !important: Bootstrap define `box-shadow: inset 0 -1px 0 ...` en este mismo
+       selector — sin !important nuestro inset-border lateral no aplica */
     box-shadow: inset 2px 0 0 var(--primary-color) !important;
 }
 .accordion-button:focus {
@@ -2245,6 +2249,8 @@ input.currency-input:focus {
     gap: .5rem;
     background: #f9fafb;
 }
+/* !important: el atributo HTML [hidden] usa display:none vía UA-stylesheet con
+   specificity 0 — cualquier regla de display: flex en .sgi-obs-empty gana sin esto */
 .sgi-obs-empty.is-hidden,
 .sgi-obs-empty[hidden] { display: none !important; }
 .sgi-obs-input-bar {
@@ -2274,6 +2280,8 @@ input.currency-input:focus {
     font-size: .82rem;
     line-height: 1.5;
     outline: none;
+    /* !important: Bootstrap `.form-control:focus` aplica box-shadow con specificity
+       de pseudo-clase — descender (textarea) no alcanza a sobrescribir */
     box-shadow: none !important;
     min-height: 0;
     color: #212529;
@@ -2679,12 +2687,16 @@ input.currency-input:focus {
 }
 .sgi-collapsible-section[open] .sgi-collapse-chevron {
     transform: rotate(90deg);
+    /* !important: el chevron suele estar dentro de un .btn de Bootstrap que define
+       color con specificity de clase + estado :hover/:active. Override directo */
     color: var(--primary-color) !important;
 }
 .sgi-collapsible-section[open] > summary {
     margin-bottom: 0;
 }
-/* Hide the inner section header when inside a collapsible — the summary already shows the title */
+/* Hide the inner section header when inside a collapsible — the summary already shows the title.
+   !important: el utility `.d-flex` de Bootstrap define `display: flex !important` — solo se
+   anula con otro !important. Este es el caso canónico documentado en utilidades de Bootstrap. */
 .sgi-collapsible-section .mb-4 > .d-flex.align-items-center.gap-3.mb-3:first-child {
     display: none !important;
 }
