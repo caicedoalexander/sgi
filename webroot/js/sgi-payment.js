@@ -90,32 +90,21 @@
                 return;
             }
 
+            // Precondición: AutoNumeric está cargado y attached al amountInput porque:
+            // 1. payment_section.php se renderiza solo en templates que también incluyen
+            //    cdn_autonumeric.php (Invoices/edit, Advances/legalization, Refunds/edit,
+            //    PettyCashRecords/edit, NoveltyLiquidationDocs/edit).
+            // 2. El input lleva class="currency-input" que sgi-common.js inicializa
+            //    en DOMContentLoaded vía sgiInitDynamic.
+            // Si esta precondición falla, lanzar TypeError es preferible al string-parse
+            // silencioso del fallback anterior — corrupción de datos en pagos es peor
+            // que un error claro.
             function getRawAmount() {
-                try {
-                    if (typeof AutoNumeric !== 'undefined') {
-                        var an = AutoNumeric.getAutoNumericElement(amountInput);
-                        if (an) {
-                            return an.getNumericString();
-                        }
-                    }
-                } catch (e) { /* fallback below */ }
-                return String(amountInput.value || '')
-                    .replace(/\$\s?/g, '')
-                    .replace(/\./g, '')
-                    .replace(',', '.');
+                return AutoNumeric.getAutoNumericElement(amountInput).getNumericString();
             }
 
             function setAmount(val) {
-                try {
-                    if (typeof AutoNumeric !== 'undefined') {
-                        var an = AutoNumeric.getAutoNumericElement(amountInput);
-                        if (an) {
-                            an.set(val);
-                            return;
-                        }
-                    }
-                } catch (e) { /* fallback below */ }
-                amountInput.value = val;
+                AutoNumeric.getAutoNumericElement(amountInput).set(val);
             }
 
             function clearAmount() {

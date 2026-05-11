@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60% peso de fuente), **SG-006** (FullCalendar assets centralizados), **SG-007** (focus-visible a11y), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 6 Sugerencias discrecionales (SG-002 a SG-005, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60%), **SG-005** (eliminado fallback de `getRawAmount`), **SG-006** (FullCalendar assets centralizados), **SG-007** (focus-visible a11y), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 5 Sugerencias discrecionales (SG-002, SG-003, SG-004, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -381,22 +381,19 @@ $viewModel->idempotencyKey = \Cake\Utility\Text::uuid();
 
 ---
 
-### SG-005 — Documentar fallback de `getRawAmount()` en `sgi-payment.js`
+### ~~SG-005~~ ✅ — Fallback de `getRawAmount()` eliminado  (RESUELTO con opción A)
 
-**Ubicación:** `webroot/js/sgi-payment.js:82-95`
+**Decisión:** opción (A) — eliminar el fallback. **Justificación:**
 
-**Problema:** la función tiene fallback string-parsing si AutoNumeric no está cargado, pero no está claro cuándo se da ese caso.
+1. **Verificación de precondición:** `sgi-payment.js` se carga vía `payment_section.php` element. Las únicas vistas que renderizan `payment_section` son los 5 templates que también cargan `cdn_autonumeric.php`: `Invoices/edit`, `Advances/legalization`, `Refunds/edit`, `PettyCashRecords/edit`, `NoveltyLiquidationDocs/edit`. `external.php` y `ajax.php` (los layouts sospechosos del audit) NO incluyen `payment_section`.
 
-**Resolver:** dos opciones:
-- (A) Si AutoNumeric siempre está cargado (lo está en `default.php`), eliminar el fallback.
-- (B) Si hay vistas que no lo cargan (revisar `external.php`, `ajax.php`), documentar:
-  ```js
-  function getRawAmount() {
-      // Fallback intencional: external.php no carga AutoNumeric.
-      // Mantener el parsing manual en sincronía con el formato AutoNumeric COP ($ 1.234.567,89).
-      ...
-  }
-  ```
+2. **Per CLAUDE.md** global: "Don't add error handling, fallbacks, or validation for scenarios that can't happen. Trust internal code and framework guarantees."
+
+3. **El fallback regex era frágil:** asumía formato COP estricto (`$ 1.234.567,89`). Si AutoNumeric cambiara su formato (custom delimiter, otra locale, etc.) el fallback fallaría silenciosamente — corrupción de datos en montos de pagos.
+
+**Aplicado:** las 2 funciones (`getRawAmount`, `setAmount`) ahora son one-liners directos sobre `AutoNumeric.getAutoNumericElement(amountInput)`. Si la precondición falla, lanzan `TypeError` ruidoso — comportamiento preferible al string-parse silencioso. Comentario de precondición explícito agregado arriba de las funciones documentando los 5 contextos válidos.
+
+**Δ:** −22 / +11 LOC.
 
 ---
 
@@ -504,14 +501,15 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟢 SG-002 a SG-005, SG-009, SG-010 | Mejoras incrementales (SG-001, SG-006, SG-007, SG-008 cerradas) | A discreción |
+| 🟢 SG-002, SG-003, SG-004, SG-009, SG-010 | Mejoras incrementales (SG-001, SG-005, SG-006, SG-007, SG-008 cerradas) | A discreción |
 
 **Estado:** todos los Críticos (3), Mayores (12), Minores (16) y la primera Sugerencia (SG-008) están cerrados. Quedan 9 Sugerencias discrecionales.
 
-**Próximo paso recomendado:** las 6 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
-- **SG-005** — Documentar fallback de `getRawAmount()` en `sgi-payment.js` o eliminarlo (15 min).
+**Próximo paso recomendado:** las 5 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
 - **SG-003** — Generar UUID de idempotencia en controller/ViewModel en lugar del template (15 min).
-- **SG-010** — Decisión de producto sobre i18n (`es_CO` único vs preparar `__()`).
+- **SG-002** — `<template>` parsing en AJAX modal loader (defense in depth) (10 min).
+- **SG-009** — Ya cubierto por MN-006 — verificar y cerrar como duplicado.
+- **SG-010** — Decisión de producto sobre i18n.
 
 ## Historial de aplicación
 
@@ -545,3 +543,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `4d74008` | SG-006 (element/fullcalendar_assets.php; bloque de 4 líneas centralizado entre EmployeeNovelties/{index,active}) |
 | `27f3ded` | SG-001 (Inter-Variable.woff2 generado −60%; preload tag + @font-face dual format) |
 | `13cdb60` | SG-007 (:focus-visible outline en .sgi-input-group input; a11y WCAG 2.4.7) |
+| _pendiente_ | SG-005 (eliminado fallback de getRawAmount/setAmount; precondición documentada, opción A) |
