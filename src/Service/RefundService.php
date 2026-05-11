@@ -282,7 +282,7 @@ class RefundService
             new BulkPaymentView(
                 id: $record->id,
                 banking_entity: $record->banking_entity ?? null,
-                amount: $record->payment_amount,
+                amount: $record->payment_amount !== null ? (float)$record->payment_amount : null,
                 payment_date: self::_normalizeDate($record->payment_date),
                 status: $isAuthorized
                     ? InvoiceConstants::PAYMENT_RECORD_AUTHORIZED

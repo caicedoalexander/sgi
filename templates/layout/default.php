@@ -107,8 +107,16 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     ) ?>
                 </li>
 
-                <?= $this->element('sidebar/financiero', ['canView' => $canView, 'navLink' => $navLink]) ?>
-                <?= $this->element('sidebar/rrhh', ['canView' => $canView, 'navLink' => $navLink]) ?>
+                <?= $this->element('sidebar/financiero', [
+                    'canView' => $canView,
+                    'navLink' => $navLink,
+                    'currentController' => $currentController,
+                ]) ?>
+                <?= $this->element('sidebar/rrhh', [
+                    'canView' => $canView,
+                    'navLink' => $navLink,
+                    'currentController' => $currentController,
+                ]) ?>
                 <?= $this->element('sidebar/catalogos', ['canView' => $canView, 'navLink' => $navLink]) ?>
                 <?= $this->element('sidebar/administracion', ['canView' => $canView, 'navLink' => $navLink]) ?>
             </ul>
