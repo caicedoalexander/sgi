@@ -13,6 +13,7 @@ $approversList = $viewModel->approversList;
 
 $this->assign('title', 'Nueva Novedad');
 ?>
+<?= $this->element('cdn_select2') ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nueva Novedad</span>

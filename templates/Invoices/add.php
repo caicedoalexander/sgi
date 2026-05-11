@@ -10,6 +10,7 @@ $this->assign('title', 'Nueva Factura');
 $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstants::DOCUMENT_TYPES);
 ?>
 <?= $this->element('cdn_autonumeric') ?>
+<?= $this->element('cdn_select2') ?>
 
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">

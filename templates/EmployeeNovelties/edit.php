@@ -35,6 +35,7 @@ $ps                 = $viewModel->currentStatusBadge;
 $showUploadSection  = $viewModel->showUploadSection;
 $totalDocs          = $viewModel->totalDocs;
 ?>
+<?= $this->element('cdn_select2') ?>
 
 <!-- Page header -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">

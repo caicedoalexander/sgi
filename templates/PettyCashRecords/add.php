@@ -9,6 +9,7 @@
 $this->assign('title', 'Nuevo Registro de Caja Menor');
 $groupFilters = $groupFilters ?? [];
 ?>
+<?= $this->element('cdn_select2') ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nuevo Registro de Caja Menor</span>

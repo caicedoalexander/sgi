@@ -41,6 +41,7 @@ use App\View\Presentation\InvoicePresentation;
 $this->assign('title', $pageTitle);
 ?>
 <?= $this->element('cdn_autonumeric') ?>
+<?= $this->element('cdn_select2') ?>
 
 <?php
 // El layout default.php ya expone el CSRF token vía <meta name="csrfToken">.

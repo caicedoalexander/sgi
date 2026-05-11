@@ -44,6 +44,7 @@ $expenseTypesArr = is_array($viewModel->expenseTypes)
 <?php endif; ?>
 
 <?= $this->element('cdn_autonumeric') ?>
+<?= $this->element('cdn_select2') ?>
 
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">

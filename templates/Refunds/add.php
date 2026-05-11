@@ -9,6 +9,7 @@ $providers = $viewModel->providers;
 $operationCenters = $viewModel->operationCenters;
 $this->assign('title', 'Nuevo Reintegro');
 ?>
+<?= $this->element('cdn_select2') ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nuevo Reintegro</span>

@@ -6,6 +6,7 @@
  */
 $this->assign('title', 'Novedades Vigentes');
 ?>
+<?= $this->element('cdn_select2') ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Novedades Vigentes</span>
