@@ -130,9 +130,10 @@
                 if (fullPayCheck && fullPayCheck.checked) {
                     fields['full_payment'] = '1';
                 }
-                if (section.dataset.idempotencyKey) {
-                    fields['idempotency_key'] = section.dataset.idempotencyKey;
-                }
+                // Idempotency-key intencionalmente NO se envía desde cliente.
+                // InvoicePaymentService genera uno server-side cuando el payload no lo trae
+                // (ver InvoicePaymentService::addPayment); el branch client-side se eliminó
+                // como dead code en SG-003 — ningún template activaba el feature.
                 _submitDynamicForm(addUrl, fields, findCsrfToken(section));
             }
 

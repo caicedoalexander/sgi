@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60%), **SG-005** (eliminado fallback de `getRawAmount`), **SG-006** (FullCalendar assets centralizados), **SG-007** (focus-visible a11y), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 5 Sugerencias discrecionales (SG-002, SG-003, SG-004, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60%), **SG-003** (dead code de idempotency eliminado), **SG-005** (eliminado fallback de `getRawAmount`), **SG-006** (FullCalendar assets centralizados), **SG-007** (focus-visible a11y), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 4 Sugerencias discrecionales (SG-002, SG-004, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -354,20 +354,22 @@ No es vulnerability — es defensa en profundidad y un contrato más estricto.
 
 ---
 
-### SG-003 — `Text::uuid()` desde un element template
+### ~~SG-003~~ ✅ — Dead code de `Text::uuid()` en el template eliminado  (RESUELTO)
 
-**Ubicación:** `templates/element/payment_section.php:44`
+**Hallazgo durante el audit:** la feature `withIdempotencyKey` estaba plumed end-to-end (template, JS, service) pero **ningún caller la activaba** — no había template que pasara `'withIdempotencyKey' => true` al element. La línea `Text::uuid()` en el template era código muerto bajo el uso real.
 
-**Problema:** generar UUID desde el template viola separation of concerns.
+**Decisión:** opción (A) — eliminar el path completo en lugar de moverlo al controller (audit literal). Per CLAUDE.md "No abstractions for single-use code". Si en el futuro se necesita idempotency-key client-side, se implementa limpio desde el controller.
 
-**Resolver:** generar el UUID en el controller o ViewModel y pasarlo al element:
-```php
-// Controller
-$viewModel->idempotencyKey = \Cake\Utility\Text::uuid();
+**Aplicado:**
 
-// Template
-<?= $this->element('payment_section', [..., 'idempotencyKey' => $viewModel->idempotencyKey]) ?>
-```
+| Archivo | Cambio |
+|---|---|
+| `templates/element/payment_section.php` | Eliminadas líneas `$withIdempotencyKey = ... ?? false;` y `$idempotencyKey = $withIdempotencyKey ? Text::uuid() : null;` + condicional `data-idempotency-key` en el contenedor |
+| `webroot/js/sgi-payment.js` | Eliminado `if (section.dataset.idempotencyKey) fields['idempotency_key'] = ...;`. Comentario explica que el server-side `InvoicePaymentService` sigue generando su propio UUID — el plumbing client-side era opt-in y nadie lo activó |
+
+**Server-side intacto:** `InvoicePaymentService::addPayment` línea 217-219 sigue generando UUID si el payload no lo trae. La idempotencia funcional sigue 100% operativa, solo se simplificó el plumbing.
+
+**Δ:** template −3 LOC, JS −2 LOC.
 
 ---
 
@@ -501,14 +503,14 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟢 SG-002, SG-003, SG-004, SG-009, SG-010 | Mejoras incrementales (SG-001, SG-005, SG-006, SG-007, SG-008 cerradas) | A discreción |
+| 🟢 SG-002, SG-004, SG-009, SG-010 | Mejoras incrementales (SG-001, SG-003, SG-005, SG-006, SG-007, SG-008 cerradas) | A discreción |
 
 **Estado:** todos los Críticos (3), Mayores (12), Minores (16) y la primera Sugerencia (SG-008) están cerrados. Quedan 9 Sugerencias discrecionales.
 
-**Próximo paso recomendado:** las 5 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
-- **SG-003** — Generar UUID de idempotencia en controller/ViewModel en lugar del template (15 min).
+**Próximo paso recomendado:** las 4 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
 - **SG-002** — `<template>` parsing en AJAX modal loader (defense in depth) (10 min).
-- **SG-009** — Ya cubierto por MN-006 — verificar y cerrar como duplicado.
+- **SG-009** — Ya cubierto por MN-006 — cerrar como duplicado (5 min).
+- **SG-004** — Opcional, migrar a SVG icons (sin urgencia).
 - **SG-010** — Decisión de producto sobre i18n.
 
 ## Historial de aplicación
@@ -544,3 +546,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `27f3ded` | SG-001 (Inter-Variable.woff2 generado −60%; preload tag + @font-face dual format) |
 | `13cdb60` | SG-007 (:focus-visible outline en .sgi-input-group input; a11y WCAG 2.4.7) |
 | `33b9338` | SG-005 (eliminado fallback de getRawAmount/setAmount; precondición documentada, opción A) |
+| _pendiente_ | SG-003 (dead code de idempotency-key client-side eliminado; server-side intacto) |

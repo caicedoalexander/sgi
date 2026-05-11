@@ -40,8 +40,6 @@ $sectionTitle = $sectionTitle ?? 'Tesorería — Pagos';
 $sectionIcon = $sectionIcon ?? 'bi-bank';
 $forceFullAmount = $forceFullAmount ?? false;
 $singlePaymentOnly = $singlePaymentOnly ?? false;
-$withIdempotencyKey = $withIdempotencyKey ?? false;
-$idempotencyKey = $withIdempotencyKey ? \Cake\Utility\Text::uuid() : null;
 
 // If singlePaymentOnly, suppress "Agregar Pago" when there is any non-rejected payment.
 $hasActivePayment = false;
@@ -67,8 +65,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
      data-payment-section
      data-add-url="<?= h($addUrl) ?>"
      data-remaining-amount="<?= $remainingAmount ?>"
-     data-force-full-amount="<?= $forceFullAmount ? '1' : '0' ?>"
-     <?php if ($idempotencyKey): ?>data-idempotency-key="<?= h($idempotencyKey) ?>"<?php endif; ?>>
+     data-force-full-amount="<?= $forceFullAmount ? '1' : '0' ?>">
 
     <!-- Section header -->
     <div class="d-flex align-items-center gap-3 mb-3">
