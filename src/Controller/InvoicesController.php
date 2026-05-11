@@ -8,6 +8,9 @@ use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\View\Presentation\InvoicePresentation;
 use App\Model\Entity\Invoice;
+use App\ViewModel\Invoice\InvoiceApprovalState;
+use App\ViewModel\Invoice\InvoiceEditPermissions;
+use App\ViewModel\Invoice\InvoiceFormDropdowns;
 use App\ViewModel\InvoiceAddViewModel;
 use App\ViewModel\InvoiceEditViewModel;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
@@ -372,11 +375,7 @@ class InvoicesController extends AppController
         $dropdowns = $this->_getFormDropdowns();
         $emailLogService = $this->getContainer()->get(EmailLogService::class);
 
-        return new InvoiceEditViewModel(
-            invoice: $invoice,
-            currentStatus: $currentStatus,
-            roleName: $roleName,
-            editableFields: $editableFields,
+        $permissions = new InvoiceEditPermissions(
             canAdvance: $canAdvance,
             canDeleteDocuments: $this->_checkPermission('invoices', 'delete'),
             canRegress: $canRegress,
@@ -386,6 +385,30 @@ class InvoicesController extends AppController
             isRejected: $isRejected,
             isApproved: $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION
                 && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED,
+        );
+
+        $approvalState = new InvoiceApprovalState(
+            currentApprovals: $this->approvalService->getCurrentApprovals($invoice->id),
+            hasPendingApprovals: $this->approvalService->hasPendingApprovals($invoice->id),
+            canSendLinks: $isApprovalEditableState && !$hasAnyActiveApprovals,
+            canModifyApprovers: $isApprovalEditableState && $hasAnyActiveApprovals,
+        );
+
+        $formDropdowns = new InvoiceFormDropdowns(
+            providers: $dropdowns['providers'],
+            operationCenters: $dropdowns['operationCenters'],
+            expenseTypes: $dropdowns['expenseTypes'],
+            costCenters: $dropdowns['costCenters'],
+            approvers: $dropdowns['approvers'],
+            employees: $dropdowns['employees'],
+            bankingEntities: $dropdowns['bankingEntities'],
+        );
+
+        return new InvoiceEditViewModel(
+            invoice: $invoice,
+            currentStatus: $currentStatus,
+            roleName: $roleName,
+            editableFields: $editableFields,
             visibleSections: $this->pipeline->getVisibleSections($roleId, $roleName, $currentStatus, $invoice->document_type),
             collapsibleSections: $this->pipeline->getCollapsibleSections($roleId, $roleName, $currentStatus),
             advanceErrors: $advanceErrors,
@@ -394,19 +417,11 @@ class InvoicesController extends AppController
             regressLockMessage: $canRegress ? $this->pipeline->getRegressionLockMessage($invoice) : null,
             pipelineStatuses: $this->pipeline->getPipelineStatusesFor($invoice->document_type),
             pipelineLabels: InvoiceConstants::STATUS_LABELS,
-            currentApprovals: $this->approvalService->getCurrentApprovals($invoice->id),
-            hasPendingApprovals: $this->approvalService->hasPendingApprovals($invoice->id),
-            canSendLinks: $isApprovalEditableState && !$hasAnyActiveApprovals,
-            canModifyApprovers: $isApprovalEditableState && $hasAnyActiveApprovals,
             paymentsTotal: array_sum(array_map(fn($p) => (float)$p->amount, $invoice->invoice_payments ?? [])),
-            providers: $dropdowns['providers'],
-            operationCenters: $dropdowns['operationCenters'],
-            expenseTypes: $dropdowns['expenseTypes'],
-            costCenters: $dropdowns['costCenters'],
-            approvers: $dropdowns['approvers'],
-            employees: $dropdowns['employees'],
-            bankingEntities: $dropdowns['bankingEntities'],
             emailLogs: $emailLogService->forEntity('invoice', (int)$invoice->id),
+            permissions: $permissions,
+            approvalState: $approvalState,
+            dropdowns: $formDropdowns,
         );
     }
 

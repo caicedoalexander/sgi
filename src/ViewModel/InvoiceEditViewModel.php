@@ -6,6 +6,9 @@ namespace App\ViewModel;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
 use App\View\Presentation\InvoicePresentation;
+use App\ViewModel\Invoice\InvoiceApprovalState;
+use App\ViewModel\Invoice\InvoiceEditPermissions;
+use App\ViewModel\Invoice\InvoiceFormDropdowns;
 use App\ViewModel\Support\PaymentOptions;
 use App\ViewModel\Support\SubmitButton;
 
@@ -46,24 +49,38 @@ final class InvoiceEditViewModel
     public readonly string $submitButtonHtml;
     public readonly string $submitButtonClass;
 
+    // ── Propiedades desempacadas de DTOs (preservan API del template) ───
+    public readonly bool $canAdvance;
+    public readonly bool $canDeleteDocuments;
+    public readonly bool $canRegress;
+    public readonly bool $canConfirmPayment;
+    public readonly bool $canRegisterPayment;
+    public readonly bool $canAuthorizePayment;
+    public readonly bool $isRejected;
+    public readonly bool $isApproved;
+
+    /** @var array<int, mixed> */
+    public readonly array $currentApprovals;
+    public readonly bool $hasPendingApprovals;
+    public readonly bool $canSendLinks;
+    public readonly bool $canModifyApprovers;
+
+    public readonly mixed $providers;
+    public readonly mixed $operationCenters;
+    public readonly mixed $expenseTypes;
+    public readonly mixed $costCenters;
+    public readonly mixed $approvers;
+    public readonly mixed $employees;
+    public readonly mixed $bankingEntities;
+
     public function __construct(
         // Entidad principal
         public readonly Invoice $invoice,
         public readonly string $currentStatus,
         public readonly string $roleName,
 
-        // Permisos y estado del pipeline
+        // Campos editables y secciones
         public readonly array $editableFields,
-        public readonly bool $canAdvance,
-        public readonly bool $canDeleteDocuments,
-        public readonly bool $canRegress,
-        public readonly bool $canConfirmPayment,
-        public readonly bool $canRegisterPayment,
-        public readonly bool $canAuthorizePayment,
-        public readonly bool $isRejected,
-        public readonly bool $isApproved,
-
-        // Secciones visibles
         public readonly array $visibleSections,
         public readonly array $collapsibleSections,
 
@@ -77,27 +94,40 @@ final class InvoiceEditViewModel
         public readonly array $pipelineStatuses,
         public readonly array $pipelineLabels,
 
-        // Multi-aprobador
-        public readonly array $currentApprovals,
-        public readonly bool $hasPendingApprovals,
-        public readonly bool $canSendLinks,
-        public readonly bool $canModifyApprovers,
-
         // Pagos
         public readonly float $paymentsTotal,
 
-        // Dropdowns del formulario
-        public readonly mixed $providers,
-        public readonly mixed $operationCenters,
-        public readonly mixed $expenseTypes,
-        public readonly mixed $costCenters,
-        public readonly mixed $approvers,
-        public readonly mixed $employees,
-        public readonly mixed $bankingEntities,
-
         // Email logs
         public readonly array $emailLogs,
+
+        // Bundles de DTOs
+        InvoiceEditPermissions $permissions,
+        InvoiceApprovalState $approvalState,
+        InvoiceFormDropdowns $dropdowns,
     ) {
+        // ── Desempaque de DTOs a propiedades planas ──────────────────────
+        $this->canAdvance          = $permissions->canAdvance;
+        $this->canDeleteDocuments  = $permissions->canDeleteDocuments;
+        $this->canRegress          = $permissions->canRegress;
+        $this->canConfirmPayment   = $permissions->canConfirmPayment;
+        $this->canRegisterPayment  = $permissions->canRegisterPayment;
+        $this->canAuthorizePayment = $permissions->canAuthorizePayment;
+        $this->isRejected          = $permissions->isRejected;
+        $this->isApproved          = $permissions->isApproved;
+
+        $this->currentApprovals    = $approvalState->currentApprovals;
+        $this->hasPendingApprovals = $approvalState->hasPendingApprovals;
+        $this->canSendLinks        = $approvalState->canSendLinks;
+        $this->canModifyApprovers  = $approvalState->canModifyApprovers;
+
+        $this->providers        = $dropdowns->providers;
+        $this->operationCenters = $dropdowns->operationCenters;
+        $this->expenseTypes     = $dropdowns->expenseTypes;
+        $this->costCenters      = $dropdowns->costCenters;
+        $this->approvers        = $dropdowns->approvers;
+        $this->employees        = $dropdowns->employees;
+        $this->bankingEntities  = $dropdowns->bankingEntities;
+
         // ── Tipo de documento ────────────────────────────────────────────
         $this->isAdvance = ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO;
 
@@ -165,7 +195,7 @@ final class InvoiceEditViewModel
         // ── Botón de submit ──────────────────────────────────────────────
         $this->submitButtonClass = 'btn btn-primary';
         $this->submitButtonHtml = SubmitButton::decide(
-            canAdvance: !$isRejected && $canAdvance,
+            canAdvance: !$this->isRejected && $this->canAdvance,
             advanceErrors: $advanceErrors,
             nextStatusLabel: $nextStatus !== null ? ($pipelineLabels[$nextStatus] ?? $nextStatus) : null,
         );
