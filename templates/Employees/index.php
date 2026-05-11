@@ -200,11 +200,7 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
 
 <?php endif; ?>
 
-<?php $this->Html->script('https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js', [
-    'block' => true,
-    'integrity' => 'sha384-HZZ/fukV+9G8gwTNjN7zQDG0Sp7MsZy5DDN6VfY3Be7V9dvQpEpR2jF2HlyFUUjU',
-    'crossorigin' => 'anonymous',
-]) ?>
+<?php $this->Html->script($this->Url->build('/vendor/sortablejs/Sortable.min.js'), ['block' => true]) ?>
 
 <?= $this->element('excel_wizard/modals', [
     'module' => 'Employees',

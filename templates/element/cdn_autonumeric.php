@@ -1,22 +1,14 @@
 <?php
 /**
- * Carga AutoNumeric desde CDN bajo demanda (formularios con .currency-input).
+ * Carga AutoNumeric bajo demanda (formularios con .currency-input).
  *
- * Uso:
- *     <?= $this->element('cdn_autonumeric') ?>
- *
- * El script se inyecta en el bloque 'script' del layout (al final del <body>)
- * con defer + SRI. `webroot/js/sgi-common.js` lo detecta en runtime dentro de
- * DOMContentLoaded.
+ * Self-hosted desde webroot/vendor/ — see MJ-005 paso 4.
+ * El nombre del element conserva "cdn_" por compatibilidad con includes
+ * históricos pero la fuente ya es local.
  *
  * @var \App\View\AppView $this
  */
 $this->Html->script(
-    'https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js',
-    [
-        'block' => 'script',
-        'defer' => true,
-        'integrity' => 'sha384-+xRXcGmExqvIzpl6UBfbrBkXyyxIDFnxQtfyoOiXSx0/ri19w6ifNhXjPLMxLwXM',
-        'crossorigin' => 'anonymous',
-    ],
+    $this->Url->build('/vendor/autonumeric/autoNumeric.min.js'),
+    ['block' => 'script', 'defer' => true],
 );

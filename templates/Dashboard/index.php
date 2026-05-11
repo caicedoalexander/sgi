@@ -447,13 +447,8 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
 
 <?php
 $this->Html->script(
-    'https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js',
-    [
-        'block' => 'script',
-        'defer' => true,
-        'integrity' => 'sha384-KNaFJ+EK516RuHsoycvreec5pD7BkTKJEkjMrVSQWu9KGTl7En4dhIDv7t1DFJ+g',
-        'crossorigin' => 'anonymous',
-    ],
+    $this->Url->build('/vendor/apexcharts/apexcharts.min.js'),
+    ['block' => 'script', 'defer' => true],
 );
 $this->Html->script('dashboard-charts', ['block' => 'script']);
 ?>

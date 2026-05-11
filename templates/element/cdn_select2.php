@@ -1,9 +1,8 @@
 <?php
 /**
- * Carga Select2 + jQuery + locale es desde CDN bajo demanda.
+ * Carga Select2 + jQuery + locale es bajo demanda.
  *
- * Uso:
- *     <?= $this->element('cdn_select2') ?>
+ * Self-hosted desde webroot/vendor/ — see MJ-005 paso 4.
  *
  * Carga 4 recursos:
  *   - select2.min.css   (en bloque 'css' del layout, dentro del <head>)
@@ -19,37 +18,18 @@
  * @var \App\View\AppView $this
  */
 $this->Html->css(
-    'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css',
-    [
-        'block' => 'css',
-        'integrity' => 'sha384-OXVF05DQEe311p6ohU11NwlnX08FzMCsyoXzGOaL+83dKAb3qS17yZJxESl8YrJQ',
-        'crossorigin' => 'anonymous',
-    ],
+    $this->Url->build('/vendor/select2/select2.min.css'),
+    ['block' => 'css'],
 );
 $this->Html->script(
-    'https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js',
-    [
-        'block' => 'script',
-        'defer' => true,
-        'integrity' => 'sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs',
-        'crossorigin' => 'anonymous',
-    ],
+    $this->Url->build('/vendor/jquery/jquery.min.js'),
+    ['block' => 'script', 'defer' => true],
 );
 $this->Html->script(
-    'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js',
-    [
-        'block' => 'script',
-        'defer' => true,
-        'integrity' => 'sha384-d3UHjPdzJkZuk5H3qKYMLRyWLAQBJbby2yr2Q58hXXtAGF8RSNO9jpLDlKKPv5v3',
-        'crossorigin' => 'anonymous',
-    ],
+    $this->Url->build('/vendor/select2/select2.min.js'),
+    ['block' => 'script', 'defer' => true],
 );
 $this->Html->script(
-    'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js',
-    [
-        'block' => 'script',
-        'defer' => true,
-        'integrity' => 'sha384-UeeDJLxU9E9sJVeeJ8aoFWAfW2uB0Hggm59b4wtvZl8A1FnbmWnAaH4DlLdlnHKD',
-        'crossorigin' => 'anonymous',
-    ],
+    $this->Url->build('/vendor/select2/i18n/es.js'),
+    ['block' => 'script', 'defer' => true],
 );
