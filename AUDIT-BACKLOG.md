@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **10 de los 12 Mayores** (incluyendo MJ-012), **1 Mayor parcial** (MJ-005 pasos 1, 2, 3, 3b aplicados, **paso 4 pendiente**), **4 Minores** (MN-006, MN-007, MN-009, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012, ahora incluyendo MJ-005 completo), **4 Minores** (MN-006, MN-007, MN-009, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -12,41 +12,21 @@ Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templat
 
 ---
 
-## 🟠 Mayores pendientes (1 entero + MJ-005 paso 4)
+## 🟠 Mayores pendientes (1)
 
-### MJ-005 — Performance frontend de CDNs (parcial — paso 4 pendiente)
+### ~~MJ-005~~ ✅ — Performance frontend de CDNs  (RESUELTO completo)
 
-**Ubicación:** `templates/layout/default.php`, `templates/element/cdn_autonumeric.php`, `templates/element/cdn_select2.php`, `templates/Dashboard/index.php`.
+**Aplicado:**
+- **Pasos 1-2** (`e204fa6`): SRI + `preconnect`/`dns-prefetch` + `defer` en los CDNs originales.
+- **Paso 3** (`a265c93`): ApexCharts y AutoNumeric cargadas bajo demanda (solo en templates que las usan).
+- **Paso 3b** (`2de2727`): Select2 + jQuery cargadas bajo demanda en los 13 templates con `.select2-enable`/`.select2`.
+- **Paso 4** (`300af41`): self-host de todos los vendors (~2 MB) en `webroot/vendor/`. Eliminada dependencia runtime de jsDelivr. SRI + crossorigin removidos (no aplican a same-origin). Hashes SHA-384 validados antes de removerlos.
 
-**Estado actual:** los 16 CDN tienen `integrity` + `crossorigin` (commit `6b12baa`). Pasos 1-2-3-3b aplicados:
-- **Pasos 1-2** (`e204fa6`): `preconnect`/`dns-prefetch` y `defer` a los scripts CDN. `dashboard-charts.js` envuelto en guard `DOMContentLoaded`.
-- **Paso 3** (`a265c93`): ApexCharts ahora se carga solo en `Dashboard/index.php`. AutoNumeric solo en los 10 templates con `.currency-input` vía `element/cdn_autonumeric.php`.
-- **Paso 3b** (`2de2727`): Select2 CSS + jQuery + Select2 JS + i18n/es solo en los 13 templates que usan `.select2-enable` o `.select2` vía `element/cdn_select2.php`. Total ahorrado en vistas que no los necesitan: ≈260 KB por request.
-
-**Problema restante:**
-- Bootstrap (CSS+JS), Bootstrap Icons, Flatpickr (CSS+JS+locale) siguen en CDN externo en runtime. Son necesarios en todas las vistas autenticadas, pero podrían self-hostearse para eliminar dependencia de internet.
-- FullCalendar (EmployeeNovelties) y SortableJS (Employees) ya están en templates específicos, solo restaría self-host.
-
-**Cómo resolver:**
-
-1. ~~**Quick win**: `defer` a los `<script>` en `default.php`.~~ ✅ Aplicado.
-2. ~~**Preconnect**.~~ ✅ Aplicado.
-3. ~~**Cargar ApexCharts/AutoNumeric bajo demanda**.~~ ✅ Aplicado.
-3.b ~~**Select2 + jQuery bajo demanda**.~~ ✅ Aplicado.
-
-4. **Self-host** (1 día, depende del entorno) — **PENDIENTE**:
-   - Descargar a `webroot/vendor/{bootstrap,bootstrap-icons,flatpickr,select2,jquery,autonumeric,apexcharts,fullcalendar,sortablejs}/<version>/`.
-   - Reemplazar URLs en `default.php` (Bootstrap CSS+JS, BS Icons, Flatpickr CSS+JS+locale) + `element/cdn_autonumeric.php` + `element/cdn_select2.php` + `Dashboard/index.php` (ApexCharts) + 3 templates puntuales (`EmployeeNovelties/index`, `EmployeeNovelties/active`, `Employees/index`).
-   - Remover los hashes SRI (no aplican a same-origin) o mantener para detectar corrupción local.
-   - Beneficio: elimina dependencia de internet, mejor para staging/dev sin red, CSP estricto.
-
-**Validación manual del progreso actual:** abrir DevTools → Network en:
-- `/dashboard` → carga `apexcharts.min.js`, NO carga AutoNumeric ni Select2/jQuery.
-- `/invoices` (listado) → NO carga AutoNumeric, NO carga Select2 ni jQuery (gran ahorro).
-- `/invoices/edit/<id>` → carga AutoNumeric + Select2 + jQuery.
-- `/employees` (listado) → NO carga ninguno de los 3.
-
-Charts renderizan, AutoNumeric formatea montos, Select2 dropdowns funcionan con búsqueda y locale es.
+**Impacto acumulado:**
+- Vistas como `/dashboard`, `/invoices` (listado), `/employees`: descargan SOLO Bootstrap CSS+JS + Flatpickr + el icon font + sgi-common/dialogs. Antes descargaban 9 scripts CDN serializados.
+- `/invoices/edit/<id>`: descarga AutoNumeric + Select2 + jQuery además (todos same-origin con `defer`).
+- Sin internet: la app funciona completa.
+- CSP estricto: no requiere entries para `cdn.jsdelivr.net`.
 
 ---
 
@@ -577,17 +557,16 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟠 MJ-005 (paso 4) | Self-host vendors | 1 día |
 | 🟠 MJ-010 | CSS limpieza + split | 1-2 días |
-| 🟡 MN-001 a MN-006, MN-008 a MN-011, MN-013 a MN-016 | Design system polish + code smells + a11y | 1-1.5 días |
+| 🟡 MN-001 a MN-005, MN-008, MN-010, MN-011, MN-013 a MN-016 | Design system polish + code smells + a11y | 1 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
-**Total estimado:** ~2-3 días de trabajo para dejar todo cerrado, repartibles entre sprints.
+**Total estimado:** ~1.5-2 días de trabajo para dejar todo cerrado, repartibles entre sprints.
 
 **Próximo paso recomendado:**
-1. **MJ-005 paso 4** (1 día) — self-host de vendors. Mayor inversión pero elimina dependencia runtime de jsDelivr (importante para staging/dev sin red, CSP estricto).
-2. **MN-005** (1-2 horas) — auditoría de los 23 `!important` en `styles.css`. Categorizar entre override-legítimo-Bootstrap (comentar) y specificity wars (refactorizar).
-3. **MN-013** (1 hora) — refactorizar `templates/element/progress_stepper.php` a CSS-driven con `data-state="past|current|future|rejected"` en lugar de inline hex.
+1. **MN-005** (1-2 horas) — auditoría de los 23 `!important` en `styles.css`. Categorizar entre override-legítimo-Bootstrap (comentar) y specificity wars (refactorizar).
+2. **MN-013** (1 hora) — refactorizar `templates/element/progress_stepper.php` a CSS-driven con `data-state="past|current|future|rejected"` en lugar de inline hex.
+3. **MJ-010** (1-2 días) — gran cleanup de `styles.css`: usar las variables tipográficas que MN-006 dejó listas, eliminar `box-shadow` ofensores del design system, evaluar split en core/app.
 
 ## Historial de aplicación
 
@@ -606,3 +585,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `2de2727` | MJ-005 paso 3b (Select2 + jQuery lazy vía cdn_select2.php) |
 | `e85e89d` | MN-009 (split Invoices/edit en 11 elements; −686 LOC del template principal) |
 | `be8dc72` | MN-006 (6 variables CSS semánticas + 142 reemplazos de hex en css/templates) |
+| `300af41` | MJ-005 paso 4 (self-host de todos los vendors a webroot/vendor/) |
