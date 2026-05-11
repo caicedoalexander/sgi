@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **10 de los 12 Mayores** (incluyendo MJ-012), **1 Mayor parcial** (MJ-005 pasos 1, 2, 3, 3b aplicados, **paso 4 pendiente**), **3 Minores** (MN-007, MN-009, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
+**Estado:** los **3 Críticos**, **10 de los 12 Mayores** (incluyendo MJ-012), **1 Mayor parcial** (MJ-005 pasos 1, 2, 3, 3b aplicados, **paso 4 pendiente**), **4 Minores** (MN-006, MN-007, MN-009, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -151,7 +151,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (13)
+## 🟡 Minores (12)
 
 ### MN-001 — `box-shadow` en checkbox toggle
 
@@ -205,18 +205,22 @@ Recomiendo (B) — los chat bubbles son un caso de UX donde `border-radius` mayo
 
 ---
 
-### MN-006 — Hex literals en lugar de variables
+### ~~MN-006~~ ✅ — Hex literals en lugar de variables  (RESUELTO)
 
-**Ubicación:** `webroot/css/styles.css:3150-3160` (y muchas otras)
+**Aplicado:** 6 variables semánticas nuevas en `:root` y 142 reemplazos:
 
-**Problema:** `#212529`, `#CD6A15`, `#dee2e6`, `#495057` repetidos como literales en lugar de `var(--bg-dark)`, `var(--secondary-color)`, `var(--border-color)`.
+| Variable nueva | Hex | Usos en CSS | Usos en templates |
+|---------------|-----|------------:|------------------:|
+| `--primary-color-hover` | `#3a8752` | 10 | varios |
+| `--bg-subtle` | `#f8f9fa` | 13 | varios |
+| `--bg-muted` | `#fafafa` | 12 | varios |
+| `--danger-color` | `#dc3545` | 22 | varios |
+| `--warning-color` | `#ffc107` | 14 | varios |
+| `--info-color` | `#0dcaf0` | 14 | varios |
 
-**Resolver:** sed-like search & replace, validando contexto:
-```bash
-grep -n "#212529" webroot/css/styles.css   # → var(--bg-dark)
-grep -n "#CD6A15" webroot/css/styles.css   # → var(--secondary-color)
-grep -n "#dee2e6" webroot/css/styles.css   # → var(--border-color)
-```
+Además se agregaron variables para la escala de grises (`--text-strong/default/muted/faint/disabled`, `--border-faint`) **definidas pero NO reemplazadas automáticamente** — los grises requieren revisión semántica caso por caso (un `#aaa` puntual puede ser una sutileza intencional vs un patrón de "text-disabled" sistemático).
+
+**Pendiente de seguimiento (no bloqueante):** auditar manualmente los ~80 usos de `#aaa #bbb #888 #555 #444 #333 #111` en `styles.css` y reemplazar los que claramente correspondan a `--text-*` semánticos. Trabajo de polish, no bloqueante.
 
 ---
 
@@ -581,9 +585,9 @@ Quita el flag del backlog hasta que el PO lo pida.
 **Total estimado:** ~2-3 días de trabajo para dejar todo cerrado, repartibles entre sprints.
 
 **Próximo paso recomendado:**
-1. **MN-006** (1-2 horas) — promover hex literales a variables CSS (`#212529`, `#CD6A15`, `#dee2e6`, `#495057`). Ya hay base con las nuevas clases `.sgi-stat-label`/`.sgi-section-eyebrow`/`.sgi-block-title`.
-2. **MJ-005 paso 4** (1 día) — self-host de vendors. Mayor inversión pero elimina dependencia runtime de jsDelivr (importante para staging/dev sin red, CSP estricto).
-3. **MN-005** (1-2 horas) — auditoría de los 23 `!important` en `styles.css`. Categorizar entre override-legítimo-Bootstrap (comentar) y specificity wars (refactorizar).
+1. **MJ-005 paso 4** (1 día) — self-host de vendors. Mayor inversión pero elimina dependencia runtime de jsDelivr (importante para staging/dev sin red, CSP estricto).
+2. **MN-005** (1-2 horas) — auditoría de los 23 `!important` en `styles.css`. Categorizar entre override-legítimo-Bootstrap (comentar) y specificity wars (refactorizar).
+3. **MN-013** (1 hora) — refactorizar `templates/element/progress_stepper.php` a CSS-driven con `data-state="past|current|future|rejected"` en lugar de inline hex.
 
 ## Historial de aplicación
 
@@ -601,3 +605,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `a265c93` | MN-007 (micro-caps → classes), MJ-005 paso 3 (ApexCharts/AutoNumeric lazy) |
 | `2de2727` | MJ-005 paso 3b (Select2 + jQuery lazy vía cdn_select2.php) |
 | `e85e89d` | MN-009 (split Invoices/edit en 11 elements; −686 LOC del template principal) |
+| `be8dc72` | MN-006 (6 variables CSS semánticas + 142 reemplazos de hex en css/templates) |
