@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **10 de los 12 Mayores** (incluyendo MJ-012 ya cerrado), **1 Mayor parcial** (MJ-005 pasos 1-2 aplicados, 3-4 pendientes), **1 Minor** (MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → `2fbd197`. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
+**Estado:** los **3 Críticos**, **10 de los 12 Mayores** (incluyendo MJ-012), **1 Mayor parcial** (MJ-005 pasos 1-2-3 aplicados, **paso 4 pendiente**), **2 Minores** (MN-007, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → `a265c93`. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -12,36 +12,39 @@ Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templat
 
 ---
 
-## 🟠 Mayores pendientes (2 enteros + MJ-005 parcial)
+## 🟠 Mayores pendientes (1 entero + MJ-005 paso 4)
 
-### MJ-005 — Performance frontend de CDNs (parcial — pasos 3 y 4 pendientes)
+### MJ-005 — Performance frontend de CDNs (parcial — paso 4 pendiente)
 
-**Ubicación:** `templates/layout/default.php:30-33,636-643`
+**Ubicación:** `templates/layout/default.php`, `templates/element/cdn_autonumeric.php`, `templates/Dashboard/index.php`.
 
-**Estado actual:** las 16 referencias CDN tienen `integrity` + `crossorigin` (commit `6b12baa`). **Pasos 1 y 2 aplicados** en commit `e204fa6`: agregado `preconnect`/`dns-prefetch` y `defer` a los 8 scripts CDN del footer. `dashboard-charts.js` envuelto en guard `DOMContentLoaded` para soportar `defer` en ApexCharts.
+**Estado actual:** los 16 CDN tienen `integrity` + `crossorigin` (commit `6b12baa`). Pasos 1-2-3 aplicados:
+- **Pasos 1-2** (`e204fa6`): `preconnect`/`dns-prefetch` y `defer` a los scripts CDN. `dashboard-charts.js` envuelto en guard `DOMContentLoaded`.
+- **Paso 3** (`a265c93`): ApexCharts ahora se carga solo en `Dashboard/index.php`. AutoNumeric solo en los 10 templates con `.currency-input` vía nuevo element `cdn_autonumeric.php`.
 
 **Problema restante:**
-- Bootstrap, jQuery, AutoNumeric, Select2, ApexCharts se cargan en **todas** las vistas (no solo donde se usan).
-- Dependencia de CDN externo en runtime (problema para staging/dev sin red, CSP estricto).
+- Select2, jQuery, AutoNumeric (parcial) y Bootstrap siguen en CDN externo en runtime (problema para staging/dev sin red, CSP estricto).
+- **Select2 + jQuery** todavía cargan en TODAS las vistas (no movidas en el paso 3 por estar entrelazados — Select2 depende de jQuery, y se usan en 9+ templates).
 
 **Cómo resolver:**
 
-1. ~~**Quick win** (10 min): agregar `defer` a los `<script>` en `default.php`.~~ ✅ **Aplicado** en `e204fa6`.
+1. ~~**Quick win**: `defer` a los `<script>` en `default.php`.~~ ✅ Aplicado.
+2. ~~**Preconnect**.~~ ✅ Aplicado.
+3. ~~**Cargar ApexCharts/AutoNumeric bajo demanda**.~~ ✅ Aplicado.
 
-2. ~~**Preconnect** (5 min): en `<head>` de `default.php`.~~ ✅ **Aplicado** en `e204fa6`.
-
-3. **Cargar bajo demanda** (1-2 horas) — **PENDIENTE**:
-   - **ApexCharts**: solo se usa en `Dashboard/index.php` y vistas con charts. Mover a esos templates con `$this->Html->script('https://.../apexcharts.min.js', ['block' => true, 'defer' => true, 'integrity' => '...', 'crossorigin' => 'anonymous'])`.
-   - **AutoNumeric**: solo donde hay `.currency-input`. Detectar en JS y cargar dinámicamente si hace falta, o mover a templates con monto.
-   - **Select2**: ídem, donde hay `.select2`.
+3.b **Select2 + jQuery bajo demanda** (1-2 horas) — **PENDIENTE**:
+   - Crear `templates/element/cdn_select2.php` que cargue jQuery + select2 (CSS + JS + i18n/es).
+   - Incluirlo desde los 9 templates con `.select2-enable`: `Advances/add`, `EmployeeNovelties/add`, `Invoices/add+edit`, `PaymentSchedulings/edit` (verificar), `PettyCashRecords/add`, `Refunds/add+edit`, y elements `payment_section`, `invoice_edit/modify_approvers_modal`.
+   - **Atención al CSS:** `select2.min.css` también está en `<head>` de `default.php` y debe moverse al element o seguir en default (CSS no bloquea parsing si se sirve con `media="all"`).
+   - **`sgi-common.js`** ya guarda con `typeof $ !== 'undefined' && $.fn && $.fn.select2`, así que no falla en páginas sin Select2.
 
 4. **Self-host** (1 día, depende del entorno) — **PENDIENTE**:
    - Descargar a `webroot/vendor/{bootstrap,bootstrap-icons,flatpickr,select2,jquery,autonumeric,apexcharts,fullcalendar,sortablejs}/<version>/`.
-   - Reemplazar URLs en los 4 layouts + 3 templates puntuales (`EmployeeNovelties/index`, `EmployeeNovelties/active`, `Employees/index`).
+   - Reemplazar URLs en `default.php` + `element/cdn_autonumeric.php` + `element/cdn_select2.php` (cuando exista) + `Dashboard/index.php` + 3 templates puntuales (`EmployeeNovelties/index`, `EmployeeNovelties/active`, `Employees/index`).
    - Remover los hashes SRI (no aplican a same-origin) o mantener para detectar corrupción local.
    - Beneficio: elimina dependencia de internet, mejor para staging/dev sin red, CSP estricto.
 
-**Validación manual del progreso actual:** abrir DevTools → Network en `/dashboard`. Los 8 CDN scripts ahora muestran `Initiator: Parser (defer)` y se descargan en paralelo sin bloquear el parsing. Charts y formularios siguen funcionando.
+**Validación manual del progreso actual:** abrir DevTools → Network en `/dashboard` (NO debe pedir ApexCharts ya), en `/invoices` listado (NO debe pedir AutoNumeric ya), y en `/invoices/edit/<id>` (debe pedir AutoNumeric). Charts del dashboard renderizan, AutoNumeric formatea los montos.
 
 ---
 
@@ -146,7 +149,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (15)
+## 🟡 Minores (14)
 
 ### MN-001 — `box-shadow` en checkbox toggle
 
@@ -215,29 +218,16 @@ grep -n "#dee2e6" webroot/css/styles.css   # → var(--border-color)
 
 ---
 
-### MN-007 — Micro-caps inline en Dashboard
+### ~~MN-007~~ ✅ — Micro-caps inline en Dashboard  (RESUELTO en `a265c93`)
 
-**Ubicación:** `templates/Dashboard/index.php` (~30 ocurrencias del bloque `style="font-size:.63rem;letter-spacing:.12em;text-transform:uppercase;color:#999;..."`)
+**Aplicado:** se agregaron 3 clases CSS nuevas en `webroot/css/styles.css` (en lugar de reusar `.sgi-micro-caps` que tiene valores distintos):
+- `.sgi-stat-label` (`.63rem`/`.08em`/`#6c757d`) — labels de stat cards.
+- `.sgi-section-eyebrow` (`.63rem`/`.12em`/`#999`) — section/table headers.
+- `.sgi-block-title` (`.65rem`/`.12em`/`#6c757d`) — títulos de bloque (Facturación, RRHH, Catálogos, Administración).
 
-**Problema:** la clase `.sgi-micro-caps` ya existe en `webroot/css/styles.css:3244` pero el template repite la regla inline.
+Reemplazadas 40 de 41 ocurrencias inline en `Dashboard/index.php`. La restante (línea 52) es el subtítulo del welcome banner con `color: var(--primary-color)` — caso único, mantenido inline.
 
-**Resolver:**
-```bash
-# Buscar todos los inline styles
-grep -n "font-size:.6" templates/Dashboard/index.php
-```
-Reemplazar cada `<div style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;margin-bottom:.75rem;">Texto</div>` por:
-```php
-<div class="sgi-micro-caps mb-2">Texto</div>
-```
-
-Verificar que `.sgi-micro-caps` tenga las mismas propiedades; si difiere `margin-bottom` o `color`, agregar variante:
-```css
-.sgi-micro-caps        { color: #999; }
-.sgi-micro-caps--muted { color: #aaa; }
-```
-
-**Aplicar también en:** `Invoices/edit.php`, `Advances/legalization.php` headers que tengan el mismo patrón.
+**Pendiente de seguimiento (no bloqueante):** revisar `Invoices/edit.php` y `Advances/legalization.php` por patrones similares de micro-caps inline (no mencionados explícitamente en el audit original, pero el patrón puede repetirse).
 
 ---
 
@@ -573,18 +563,17 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟠 MJ-005 (pasos 3-4) | Carga bajo demanda + self-host | 1 día |
+| 🟠 MJ-005 (paso 3b + paso 4) | Select2/jQuery lazy + self-host | 1 día |
 | 🟠 MJ-010 | CSS limpieza + split | 1-2 días |
-| 🟡 MN-001 a MN-007 | Design system polish | 4-6 horas total |
-| 🟡 MN-008 a MN-011, MN-013 a MN-016 | Code smells + a11y | 1 día |
+| 🟡 MN-001 a MN-006, MN-008 a MN-011, MN-013 a MN-016 | Design system polish + code smells + a11y | 1-1.5 días |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
-**Total estimado:** ~3-4 días de trabajo para dejar todo cerrado, repartibles entre sprints.
+**Total estimado:** ~2.5-3.5 días de trabajo para dejar todo cerrado, repartibles entre sprints.
 
 **Próximo paso recomendado:**
-1. **MN-007** (30 min) — reemplazar las ~30 ocurrencias del bloque `style="font-size:.63rem;..."` por `class="sgi-micro-caps"` en `Dashboard/index.php`. Trivial pero mejora consistencia visual del design system.
-2. **MJ-005 paso 3** (1-2 horas) — cargar ApexCharts solo en templates que renderizan charts (no en todas las vistas). AutoNumeric y Select2 también pueden moverse a templates que los usan.
-3. **MN-009** (medio día) — split de `Invoices/edit.php` (1098 LOC) en elements por sección. Habilitado ahora que MJ-012 dejó la lógica en el ViewModel.
+1. **MJ-005 paso 3b** (1-2 horas) — crear `element/cdn_select2.php` y mover Select2 + jQuery fuera de `default.php`. Patrón ya validado con AutoNumeric.
+2. **MN-009** (medio día) — split de `Invoices/edit.php` (1098 LOC) en elements por sección. Habilitado ahora que MJ-012 dejó la lógica en el ViewModel.
+3. **MN-006** (1-2 horas) — promover hex literales a variables CSS (`#212529`, `#CD6A15`, `#dee2e6`, `#495057`). Ya hay base con las nuevas clases `.sgi-stat-label` etc.
 
 ## Historial de aplicación
 
@@ -599,3 +588,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `e204fa6` | MJ-005 pasos 1-2 (defer + preconnect), MN-012 (aria-hidden bulk) |
 | `39b889f` | MJ-012 (Invoices/edit pre-render → InvoiceEditViewModel) |
 | `2fbd197` | Refactor derivado: uniformación de los 5 edit templates restantes + helper `PaymentOptions` |
+| `a265c93` | MN-007 (micro-caps → classes), MJ-005 paso 3 (ApexCharts/AutoNumeric lazy) |
