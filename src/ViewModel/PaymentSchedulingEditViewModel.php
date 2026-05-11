@@ -3,13 +3,24 @@ declare(strict_types=1);
 
 namespace App\ViewModel;
 
+use App\Constants\PaymentSchedulingConstants;
 use App\Model\Entity\PaymentScheduling;
+use App\View\Presentation\PaymentSchedulingPresentation;
 
 /**
  * Datos inmutables de vista para PaymentSchedulingsController::edit().
+ * El controller construye este objeto; la vista accede via get_object_vars().
  */
 final class PaymentSchedulingEditViewModel
 {
+    // ── Propiedades derivadas (calculadas en el constructor) ────────────
+    public readonly string $pageTitle;
+    /** @var array{0:string,1:string} Pareja [label, class] para el currentStatus. */
+    public readonly array $currentStatusBadge;
+    public readonly int $itemCount;
+    public readonly bool $isBorrador;
+    public readonly bool $isPagada;
+
     /**
      * @param array<string> $advanceErrors
      * @param array<string, string> $pipelineLabels
@@ -30,5 +41,15 @@ final class PaymentSchedulingEditViewModel
         public readonly array $pipelineLabels,
         public readonly mixed $bankingEntities,
     ) {
+        $this->pageTitle = 'Programación ' . ($record->code ?? ('#' . $record->id));
+
+        $this->currentStatusBadge = [
+            $pipelineLabels[$currentStatus] ?? 'Desconocido',
+            PaymentSchedulingPresentation::STATUS_BADGES[$currentStatus] ?? 'bg-dark',
+        ];
+
+        $this->itemCount  = count($record->payment_scheduling_items ?? []);
+        $this->isBorrador = $currentStatus === PaymentSchedulingConstants::STATUS_BORRADOR;
+        $this->isPagada   = $currentStatus === PaymentSchedulingConstants::STATUS_PAGADA;
     }
 }

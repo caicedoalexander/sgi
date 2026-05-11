@@ -68,9 +68,7 @@ final class EmployeeNoveltyEditViewModel
 
         $this->isRejected    = $novelty->isRejected();
         $this->currentStatus = $novelty->pipeline_status;
-        $this->sections      = !empty($visibleSections)
-            ? $visibleSections
-            : ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'];
+        $this->sections      = $visibleSections;
 
         $this->statusBadgeMap = NoveltyPresentation::STATUS_BADGES;
         $this->currentStatusBadge = [

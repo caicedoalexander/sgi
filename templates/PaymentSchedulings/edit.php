@@ -7,17 +7,7 @@
 use App\Constants\PaymentSchedulingConstants;
 use App\View\Presentation\PaymentSchedulingPresentation;
 
-$this->assign('title', 'Programación ' . h($viewModel->record->code));
-
-$ps = [
-    PaymentSchedulingConstants::STATUS_LABELS[$viewModel->currentStatus] ?? 'Desconocido',
-    PaymentSchedulingPresentation::STATUS_BADGES[$viewModel->currentStatus] ?? 'bg-dark',
-];
-
-$isBorrador = $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_BORRADOR;
-$isTesoreria = $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_TESORERIA;
-$isPagada = $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_PAGADA;
-$itemCount = count($viewModel->record->payment_scheduling_items ?? []);
+$this->assign('title', h($viewModel->pageTitle));
 ?>
 <?= $this->element('cdn_autonumeric') ?>
 
@@ -78,7 +68,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                 </div>
             </div>
         </div>
-        <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
+        <span class="badge <?= $viewModel->currentStatusBadge[1] ?>"><?= $viewModel->currentStatusBadge[0] ?></span>
     </div>
 
     <!-- Pipeline progress -->
@@ -124,7 +114,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Facturas</div>
-                <div class="sgi-ledger-value"><?= $itemCount ?></div>
+                <div class="sgi-ledger-value"><?= $viewModel->itemCount ?></div>
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Monto Total</div>
@@ -146,7 +136,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Estado</div>
-                <div class="sgi-ledger-value"><span class="badge <?= $ps[1] ?>" style="font-size:.7rem;"><?= $ps[0] ?></span></div>
+                <div class="sgi-ledger-value"><span class="badge <?= $viewModel->currentStatusBadge[1] ?>" style="font-size:.7rem;"><?= $viewModel->currentStatusBadge[0] ?></span></div>
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Última Modificación</div>
@@ -163,10 +153,10 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
                     <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Vinculadas
-                    <span class="sgi-folder-count ms-1"><?= $itemCount ?></span>
+                    <span class="sgi-folder-count ms-1"><?= $viewModel->itemCount ?></span>
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
-                <?php if ($isBorrador): ?>
+                <?php if ($viewModel->isBorrador): ?>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#add-item-form">
                         <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Manual
@@ -178,7 +168,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                 <?php endif; ?>
             </div>
 
-            <?php if ($isBorrador): ?>
+            <?php if ($viewModel->isBorrador): ?>
             <!-- Formulario agregar item manual -->
             <div class="collapse mb-3" id="add-item-form">
                 <div class="card card-body" style="border-top:2px solid var(--primary-color);">
@@ -219,7 +209,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                             <th>Proveedor</th>
                             <th>Banco</th>
                             <th class="text-end">Monto</th>
-                            <?php if ($isBorrador): ?><th class="text-end">Acciones</th><?php endif; ?>
+                            <?php if ($viewModel->isBorrador): ?><th class="text-end">Acciones</th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -235,7 +225,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                             <td><?= h($item->invoice->provider->name ?? '—') ?></td>
                             <td><?= h($item->banking_entity->name ?? '—') ?></td>
                             <td class="text-end fw-bold">$ <?= number_format((float)$item->amount, 0, ',', '.') ?></td>
-                            <?php if ($isBorrador): ?>
+                            <?php if ($viewModel->isBorrador): ?>
                             <td class="text-end">
                                 <?= $this->Form->postLink(
                                     '<i class="bi bi-trash" aria-hidden="true"></i>',
@@ -251,7 +241,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                         <tr>
                             <th colspan="3">Total</th>
                             <th class="text-end">$ <?= number_format($viewModel->total, 0, ',', '.') ?></th>
-                            <?php if ($isBorrador): ?><th></th><?php endif; ?>
+                            <?php if ($viewModel->isBorrador): ?><th></th><?php endif; ?>
                         </tr>
                     </tfoot>
                 </table>
@@ -333,7 +323,7 @@ $totalDocs = count($documents);
             <span style="font-size:.85rem;font-weight:600;">Soportes</span>
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
-        <?php if (!$isPagada): ?>
+        <?php if (!$viewModel->isPagada): ?>
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
             <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
         </button>
@@ -348,7 +338,7 @@ $totalDocs = count($documents);
         <?php foreach ($documents as $att): ?>
             <?= $this->element('document_row', [
                 'doc'       => $att,
-                'canDelete' => !$isPagada,
+                'canDelete' => !$viewModel->isPagada,
                 'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $viewModel->record->id, $att->id]),
                 'showBadge' => false,
             ]) ?>
@@ -396,7 +386,7 @@ $totalDocs = count($documents);
 
 </div><!-- /layout dos columnas -->
 
-<?php if ($isBorrador): ?>
+<?php if ($viewModel->isBorrador): ?>
 <!-- Modal: Importar Excel -->
 <div class="modal fade" id="importExcelModal" tabindex="-1">
     <div class="modal-dialog">
@@ -430,7 +420,7 @@ $totalDocs = count($documents);
 </div>
 <?php endif; ?>
 
-<?php if (!$isPagada): ?>
+<?php if (!$viewModel->isPagada): ?>
 <!-- Modal: Subir Soporte -->
 <div class="modal fade" id="uploadDocumentModal" tabindex="-1">
     <div class="modal-dialog">
