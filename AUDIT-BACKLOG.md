@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **5 Minores** (MN-001, MN-006, MN-007, MN-009, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **6 Minores** (MN-001, MN-006, MN-007, MN-009, MN-012, MN-013) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -95,7 +95,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (11)
+## 🟡 Minores (10)
 
 ### ~~MN-001~~ ✅ — `box-shadow` en checkbox toggle  (RESUELTO en `fa16845`, junto a MJ-010)
 
@@ -263,24 +263,13 @@ El helper `$navLink` cierre actual está OK, solo el markup repetitivo se benefi
 
 ---
 
-### MN-013 — Hardcoded colors en pipeline steppers
+### ~~MN-013~~ ✅ — Hardcoded colors en pipeline steppers  (RESUELTO)
 
-**Ubicación:** `templates/element/pipeline_progress.php:33,93`, `petty_cash_progress.php`, `refund_progress.php` (ya unificados en `element/progress_stepper.php`).
+**Aplicado:** refactor CSS-driven. `templates/element/progress_stepper.php` pasa de **107 → 70 LOC**, cero `style="..."` inline. El template solo computa `data-state="past|current|future"` por step + `data-rejected="true"` en el contenedor `.sgi-stepper`. Toda la lógica de color vive ahora en `webroot/css/styles.css` sección "Componentes — Pipeline Stepper" (~50 LOC).
 
-**Estado:** parcialmente resuelto en MJ-006. Quedan los hex `#dc3545`, `#ddd`, `#bbb`, `#aaa`, `#fff`, `#e0e0e0` en `templates/element/progress_stepper.php`.
+**Variables usadas:** `--primary-color`, `--danger-color`, `--border-color`, `--border-faint`, `--text-strong`, `--text-faint`, `--text-disabled`. Único hex literal remanente: `rgba(220,53,69,.25)` para el border translúcido de steps futuros en estado rejected (variante específica que no aplica a otros componentes).
 
-**Resolver:** refactorizar a un patrón CSS-driven con `data-state="past|current|future|rejected"`:
-```php
-<div class="sgi-step" data-state="<?= h($state) ?>">
-   <i class="bi <?= h($icon) ?>"></i>
-</div>
-```
-```css
-.sgi-step[data-state="past"]     { border-color: var(--primary-color); background: var(--primary-color); color: #fff; }
-.sgi-step[data-state="current"]  { ... }
-.sgi-step[data-state="future"]   { border-color: var(--border-color); ... }
-.sgi-step[data-state="rejected"] { background: var(--danger-color); ... }
-```
+**Sin cambios en los 3 invocadores** (`pipeline_progress.php`, `petty_cash_progress.php`, `refund_progress.php`) — API del element preservada. `advance_legalization_progress.php` usa un patrón distinto (badges), no afectado.
 
 ---
 
@@ -517,15 +506,15 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟡 MN-002 a MN-005, MN-008, MN-010, MN-011, MN-013 a MN-016 | Design system polish + code smells + a11y | 1 día |
+| 🟡 MN-002 a MN-005, MN-008, MN-010, MN-011, MN-014 a MN-016 | Design system polish + code smells + a11y | 1 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
 **Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
 
 **Próximo paso recomendado:**
-1. **MN-013** (1 hora) — refactorizar `templates/element/progress_stepper.php` a CSS-driven con `data-state="past|current|future|rejected"` en lugar de inline hex.
-2. **MN-008** (15 min) — extraer constante `'OBRA O LABOR DETERMINADA'` de `employees-form.js` a una `<meta>`/`window.SGI_OBRA_LABOR` definida desde PHP.
-3. **MN-011** (30 min) — `aria-label` en avatares con iniciales sin texto accesible.
+1. **MN-008** (15 min) — extraer constante `'OBRA O LABOR DETERMINADA'` de `employees-form.js` a una `<meta>`/`window.SGI_OBRA_LABOR` definida desde PHP.
+2. **MN-011** (30 min) — `aria-label` en avatares con iniciales sin texto accesible.
+3. **MN-015** (10 min) — invertir orden `h(ucfirst(...))` en `EmployeeNovelties/index.php:124`.
 
 ## Historial de aplicación
 
@@ -546,3 +535,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `be8dc72` | MN-006 (6 variables CSS semánticas + 142 reemplazos de hex en css/templates) |
 | `300af41` | MJ-005 paso 4 (self-host de todos los vendors a webroot/vendor/) |
 | `fa16845` | MJ-010 (split de vendor-overrides; styles.css −520 LOC) + MN-001 (box-shadow toggle) |
+| _pendiente_ | MN-013 (progress_stepper CSS-driven con data-state; template −37 LOC, cero inline styles) |

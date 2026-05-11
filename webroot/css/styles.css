@@ -104,6 +104,56 @@ body {
 }
 
 /* =============================================
+   Componentes — Pipeline Stepper (progress_stepper.php)
+   ============================================= */
+.sgi-stepper { display: flex; align-items: center; justify-content: space-between; }
+.sgi-step { display: flex; align-items: center; gap: .5rem; }
+.sgi-step-circle {
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 32px; height: 32px;
+    border: 2px solid var(--border-color);
+    background: #fff;
+    color: var(--text-faint);
+    font-size: .85rem;
+    transition: all .3s ease;
+}
+.sgi-step-label {
+    font-size: .75rem; font-weight: 500;
+    color: var(--text-disabled);
+    white-space: nowrap;
+}
+.sgi-step-connector {
+    flex: 1; height: 2px;
+    margin: 0 .75rem;
+    background: var(--border-color);
+    transition: background .3s ease;
+}
+
+/* Estado: past — completados */
+.sgi-step[data-state="past"] .sgi-step-circle { border-color: var(--primary-color); background: var(--primary-color); color: #fff; }
+.sgi-step[data-state="past"] .sgi-step-label  { color: var(--primary-color); }
+.sgi-step-connector[data-state="past"]        { background: var(--primary-color); }
+
+/* Estado: current — actual */
+.sgi-step[data-state="current"] .sgi-step-circle { border-color: var(--primary-color); background: var(--primary-color); color: #fff; }
+.sgi-step[data-state="current"] .sgi-step-label  { color: var(--text-strong); font-weight: 700; }
+
+/* Estado: future — pendientes */
+.sgi-step[data-state="future"] { opacity: .4; }
+
+/* Override: rejected en el step actual */
+.sgi-stepper[data-rejected="true"] .sgi-step[data-state="current"] .sgi-step-circle { border-color: var(--danger-color); background: var(--danger-color); }
+.sgi-stepper[data-rejected="true"] .sgi-step[data-state="current"] .sgi-step-label  { color: var(--danger-color); font-weight: 700; }
+
+/* Override: rejected en steps futuros (no opacity, tono rojo translúcido) */
+.sgi-stepper[data-rejected="true"] .sgi-step[data-state="future"]              { opacity: 1; }
+.sgi-stepper[data-rejected="true"] .sgi-step[data-state="future"] .sgi-step-circle { border-color: rgba(220,53,69,.25); color: var(--border-faint); }
+.sgi-stepper[data-rejected="true"] .sgi-step[data-state="future"] .sgi-step-label  { color: var(--border-faint); }
+
+/* Override: connector rejected entre pasos pasados */
+.sgi-stepper[data-rejected="true"] .sgi-step-connector[data-state="past"] { background: var(--danger-color); }
+
+/* =============================================
    Botones — Personalización Bootstrap
    ============================================= */
 
