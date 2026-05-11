@@ -230,6 +230,11 @@
                 if (!fileInput || !fileInput.files.length) return;
 
                 var file = fileInput.files[0];
+                // SGI_MAX_UPLOAD_BYTES/LABEL los expone sgi-common.js leyendo
+                // <meta name="sgi-max-upload-{bytes,label}"> inyectado por default.php.
+                // Adicionalmente, sgi-common.js tiene un submit-listener global con
+                // capture:true que valida cualquier <form> con file inputs — esta
+                // validación local es para mostrar el toast inline antes del submit.
                 var maxBytes = global.SGI_MAX_UPLOAD_BYTES || (20 * 1024 * 1024);
                 var maxLabel = global.SGI_MAX_UPLOAD_LABEL || '20 MB';
                 if (file.size > maxBytes) {

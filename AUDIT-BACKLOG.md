@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **10 Minores** (MN-001, MN-006, MN-007, MN-008, MN-009, MN-011, MN-012, MN-013, MN-015, MN-016) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **11 Minores** (MN-001, MN-006, MN-007, MN-008, MN-009, MN-011, MN-012, MN-013, MN-014, MN-015, MN-016) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -95,7 +95,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (6)
+## 🟡 Minores (5)
 
 ### ~~MN-001~~ ✅ — `box-shadow` en checkbox toggle  (RESUELTO en `fa16845`, junto a MJ-010)
 
@@ -253,29 +253,21 @@ El helper `$navLink` cierre actual está OK, solo el markup repetitivo se benefi
 
 ---
 
-### MN-014 — Guard de tamaño de archivo global poco documentado
+### ~~MN-014~~ ✅ — Guard de tamaño de archivo global documentado  (RESUELTO)
 
-**Ubicación:** `webroot/js/sgi-common.js:11-29`, `webroot/js/sgi-document-uploader.js:279`
+**Aplicado:**
 
-**Problema:** un submit listener global con `capture:true` valida tamaño de uploads, pero los devs que tocan `sgi-document-uploader.js` no se enteran que existe.
-
-**Resolver:**
-1. En `sgi-document-uploader.js:279`, agregar comentario:
-   ```js
-   // El guard global de tamaño vive en sgi-common.js (submit listener con capture).
-   // SGI_MAX_UPLOAD_BYTES también se usa allí.
-   var maxBytes = global.SGI_MAX_UPLOAD_BYTES || (20 * 1024 * 1024);
-   ```
-
-2. Exponer el valor desde PHP en `default.php`:
+1. **`templates/layout/default.php`** — 2 meta tags nuevos en `<head>` con comentario PHP arriba que documenta el contrato (espejo del backend `DocumentUploadTrait::MAX_DOC_SIZE` / `EmployeeDocumentService::MAX_DOC_SIZE` + límite de nginx):
    ```html
-   <meta name="sgi-max-upload-bytes" content="<?= (int)(\App\Config\AppConfig::MAX_UPLOAD_BYTES ?? 20971520) ?>">
+   <meta name="sgi-max-upload-bytes" content="20971520">
+   <meta name="sgi-max-upload-label" content="20 MB">
    ```
-   Y leerlo al inicio de `sgi-common.js`:
-   ```js
-   var meta = document.querySelector('meta[name="sgi-max-upload-bytes"]');
-   window.SGI_MAX_UPLOAD_BYTES = meta ? parseInt(meta.content, 10) : 20*1024*1024;
-   ```
+
+2. **`webroot/js/sgi-common.js`** — ya no hardcodea los valores. Lee de los meta tags en una IIFE al tope del archivo, con fallback defensivo a `20*1024*1024` para layouts que no extiendan `default.php` (ajax/external). El comentario del submit listener global se expandió para explicar `capture:true`.
+
+3. **`webroot/js/sgi-document-uploader.js:233`** — comentario inline explicando que el guard global vive en `sgi-common.js` y que esta validación local es solo para el toast inline. Cierra el problema de discoverability que motivaba MN-014.
+
+**SG-008 sigue abierto:** el valor `20 * 1024 * 1024` aún vive duplicado en 2 servicios PHP (`DocumentUploadTrait`, `EmployeeDocumentService`) más 7 templates con "Máximo 20 MB" como texto. Consolidarlo en una constante PHP única (`UploadConstants::MAX_BYTES`) y referenciarla desde el meta tag cierra SG-008 — pendiente.
 
 ---
 
@@ -488,15 +480,15 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟡 MN-002 a MN-005, MN-010, MN-014 | Design system polish + code smells + a11y | 1 día |
+| 🟡 MN-002 a MN-005, MN-010 | Design system polish + code smells | 1 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
 **Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
 
 **Próximo paso recomendado:**
-1. **MN-014** (15 min) — comentar/exponer `SGI_MAX_UPLOAD_BYTES` y documentar el guard global.
-2. **MN-002/003/004** (30 min) — documentar excepciones de `border-radius:10px` en `.claude/rules/design.md` o reducirlas.
-3. **MN-005** (1-2h) — auditar los 23 `!important` (ya hecho parcialmente en MJ-010 paso 1).
+1. **MN-002/003/004** (30 min) — documentar excepciones de `border-radius:10px` en `.claude/rules/design.md` o reducirlas.
+2. **MN-005** (1-2h) — auditar los 23 `!important` (ya hecho parcialmente en MJ-010 paso 1).
+3. **MN-010** (1-2h) — split de `default.php` (644 LOC) en elements por sección del sidebar.
 
 ## Historial de aplicación
 
@@ -522,3 +514,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `e355f63` | MN-011 (aria-hidden="true" en avatares con iniciales; nombre adyacente ya anuncia) |
 | `d316440` | MN-015 (h() al final en 4 templates; +escape defensivo de $statusLabels) |
 | `39752d0` | MN-016 (documentar contrato inline+ResizeObserver; falso positivo del audit) |
+| _pendiente_ | MN-014 (meta tags sgi-max-upload-* + comments cross-file; SG-008 sigue abierto) |

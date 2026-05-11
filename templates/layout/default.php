@@ -36,6 +36,15 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <?php if ($this->request->getAttribute('csrfToken')) : ?>
     <meta name="csrfToken" content="<?= $this->request->getAttribute('csrfToken') ?>">
     <?php endif; ?>
+    <?php /*
+        Tamaño máximo de upload para validación client-side. Espejo del límite enforced
+        en backend (DocumentUploadTrait::MAX_DOC_SIZE / EmployeeDocumentService::MAX_DOC_SIZE,
+        actualmente ambos en 20 MB) y del límite de nginx (evita 413). sgi-common.js
+        consume estos meta tags en window.SGI_MAX_UPLOAD_BYTES/LABEL. Mantener sincronizado
+        con los consts PHP — SG-008 trackea la consolidación en una constante única.
+    */ ?>
+    <meta name="sgi-max-upload-bytes" content="20971520">
+    <meta name="sgi-max-upload-label" content="20 MB">
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
     <style>

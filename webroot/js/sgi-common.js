@@ -2,12 +2,20 @@
  * SGI Common JS - Flatpickr + AutoNumeric + Row click + Modal AJAX loader
  */
 
-window.SGI_MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
-window.SGI_MAX_UPLOAD_LABEL = '20 MB';
+// Tamaño máximo de upload — leído del <meta> inyectado por default.php (layout).
+// El fallback hardcoded protege contra layouts que no incluyan el meta (raro, pero
+// templates AJAX o externos podrían no extender default.php).
+(function () {
+    var metaBytes = document.querySelector('meta[name="sgi-max-upload-bytes"]');
+    var metaLabel = document.querySelector('meta[name="sgi-max-upload-label"]');
+    window.SGI_MAX_UPLOAD_BYTES = metaBytes ? parseInt(metaBytes.content, 10) : (20 * 1024 * 1024);
+    window.SGI_MAX_UPLOAD_LABEL = metaLabel ? metaLabel.content : '20 MB';
+})();
 
-// Global guard: bloquea el submit de cualquier formulario con un archivo >20 MB
-// para evitar el 413 de nginx. No interfiere con validaciones locales más estrictas
-// (DIAN 10 MB, Leaves 5 MB) porque esas se ejecutan en sus propios handlers.
+// Global guard: bloquea el submit de cualquier formulario con un archivo que supera
+// SGI_MAX_UPLOAD_BYTES para evitar el 413 de nginx. capture:true asegura que se ejecute
+// antes que cualquier listener específico de form. No interfiere con validaciones locales
+// más estrictas (DIAN 10 MB, Leaves 5 MB) porque esas se ejecutan en sus propios handlers.
 document.addEventListener('submit', function (e) {
     var form = e.target;
     if (!form || !form.querySelectorAll) return;
