@@ -463,63 +463,13 @@ $totalDocs = count($documents);
 <?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
 <?= $this->element('observation_chat_init') ?>
 
-<?php if (!empty($viewModel->canRegress) && empty($viewModel->regressLockMessage)):
-    $prevLabel = $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus;
-    $currLabel = $viewModel->pipelineLabels[$viewModel->currentStatus] ?? $viewModel->currentStatus;
-?>
-<!-- Modal: Regresar al paso anterior -->
-<div class="modal fade" id="regressStatusModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <form method="post"
-              action="<?= $this->Url->build(['action' => 'regressStatus', $viewModel->record->id]) ?>"
-              id="regressStatusForm">
-            <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>
-                        Regresar al paso anterior
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="mb-3">
-                        Esta programación volverá del paso
-                        <strong><?= h($currLabel) ?></strong>
-                        al paso
-                        <strong><?= h($prevLabel) ?></strong>.
-                    </p>
-                    <div class="mb-2">
-                        <label for="regressReason" class="form-label">
-                            Motivo de la regresión <span class="text-danger">*</span>
-                        </label>
-                        <textarea name="reason" id="regressReason"
-                                  class="form-control" rows="4"
-                                  required minlength="10" maxlength="500"
-                                  placeholder="Describa por qué está regresando esta programación..."></textarea>
-                        <div class="form-text">Mín. 10 caracteres · Máx. 500.</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" id="regressConfirmBtn" class="btn btn-warning" disabled>
-                        Confirmar regreso
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-<script>
-(function () {
-    var ta = document.getElementById('regressReason');
-    var btn = document.getElementById('regressConfirmBtn');
-    if (!ta || !btn) return;
-    ta.addEventListener('input', function () {
-        btn.disabled = ta.value.trim().length < 10;
-    });
-})();
-</script>
+<?php if (!empty($viewModel->canRegress) && empty($viewModel->regressLockMessage)): ?>
+<?= $this->element('regress_status_modal', [
+    'actionUrl'  => $this->Url->build(['action' => 'regressStatus', $viewModel->record->id]),
+    'entityNoun' => 'programación',
+    'currLabel'  => $viewModel->pipelineLabels[$viewModel->currentStatus] ?? $viewModel->currentStatus,
+    'prevLabel'  => $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus,
+]) ?>
 <?php endif; ?>
 
 <script>
