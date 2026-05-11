@@ -4,7 +4,7 @@
 
 **Goal:** Hacer que `pipeline_permissions` sea la única fuente de verdad para "qué estados ve cada rol" en los listados de los 6 módulos con pipeline, eliminando matrices hardcodeadas y dependencia de `RoleConstants` en los servicios de filtrado.
 
-**Architecture:** Cada `*Service::getVisibleStatuses` se convierte en un adaptador delgado sobre `PipelineAuthorizationService::getOperableSteps($roleId, '', $pipeline)`. Se agrega un pipeline nuevo (`liquidation_docs`) al catálogo `PipelineStepConstants`. Una migration idempotente siembra `pipeline_permissions` desde las matrices actuales antes de eliminarlas. `InvoicesController` excluye `document_type='Anticipo'` del listado `index` para que la fusión de matrices (factura + anticipo) no introduzca cambios de comportamiento.
+**Architecture:** Cada `*Service::getVisibleStatuses` se convierte en un adaptador delgado sobre `PipelineAuthorizationService::getOperableSteps($roleId, '', $pipeline)`. Se agrega un pipeline nuevo (`liquidation_docs`) al catálogo `PipelineStepConstants`. El patrón "lista vacía → 0 resultados" se centraliza en un helper de `AppController`. `InvoicesController` excluye `document_type='Anticipo'` en sus 4 endpoints (`index`/`all`/`rejected`/`overdue`) para que `/invoices` y `/advances` sean disjuntos sin importar el endpoint.
 
 **Tech Stack:** CakePHP 5.3, PHP 8.4+, MySQL/MariaDB. Migrations vía `Migrations\BaseMigration`. Sin tests automatizados (ver CLAUDE.md § Testing Policy — validación manual).
 
@@ -14,14 +14,16 @@
 
 `docs/superpowers/specs/2026-05-11-pipeline-status-filters-design.md`
 
-## Decisiones operativas heredadas del spec
+## Decisiones operativas heredadas del spec (y overrides)
 
-- **Admin pasa por la tabla** (sin bypass hardcodeado). La migration siembra Admin con `can_operate=true` en todos los pares (pipeline, step) de `STEPS_BY_PIPELINE`.
-- **Pipeline `invoices` para facturas y anticipos**: `InvoicesController::index` excluye `document_type='Anticipo'`. `AdvancesController` ya filtra por `document_type='Anticipo'`. La unión de matrices se siembra en pipeline `invoices`.
+- **Admin pasa por la tabla** (sin bypass hardcodeado).
+- **Pipeline `invoices` para facturas y anticipos**: `InvoicesController` excluye `document_type='Anticipo'` en los 4 endpoints (`index`, `all`, `rejected`, `overdue`). `AdvancesController` ya filtra por `document_type='Anticipo'`.
 - **Pipeline `liquidation_docs` nuevo**: para documentos de liquidación de novedades.
 - **Eliminar `getRoleVisibility`/`getAdvanceRoleVisibility`** de la interfaz `InvoicePipelineState` y de los 7 States en el mismo PR.
 - **Eliminar `ROLE_VISIBLE_STATUSES`** en los 4 services pertinentes en el mismo PR.
-- **Patrón de filtro vacío**: en cada controller, cambiar `!empty($visibleStatuses) ? ['IN' => $visibleStatuses] : []` a `['IN' => $visibleStatuses ?: ['__none__']]` SOLO en los endpoints que hoy filtran por visibleStatuses (los listados "Mis Registros"). Los endpoints `all/rejected/overdue` de Invoices no filtran por visibleStatuses hoy → no se tocan.
+- **Override del spec (configuración manual)**: NO se incluye migration de seed. Los permisos en `pipeline_permissions` los configurará el administrador manualmente desde `/roles/edit/{id}` tras el deploy. Consecuencia: todos los listados quedarán vacíos para cada rol HASTA que el admin haga la configuración inicial. Documentar al usuario que esa configuración es prerrequisito del deploy.
+- **Eliminar `getVisibleAdvanceStatuses`** (review M2): los cuerpos eran idénticos a `getVisibleStatuses`. La distinción factura/anticipo vive en `document_type` del controller. `AdvancesController` pasa a llamar a `getVisibleStatuses`.
+- **Centralizar el filtro de visibilidad** (review M1) en `AppController::_visibleStatusConditions()`, evitando duplicar el truco "lista vacía → resultado vacío" en 7 controllers.
 
 ## Cambios de comportamiento aceptados (documentados)
 
@@ -29,18 +31,17 @@
    - Hoy `PagadaState::getRoleVisibility() = [ADMIN]` → Admin ve facturas `pagada` en `/invoices`.
    - Después: `pagada` y `legalizada` están fuera de `STEPS_BY_PIPELINE['invoices']` → Admin las verá en `/invoices/all` pero NO en `/invoices`.
    - Lo mismo aplica a Tesorería viendo schedulings `pagada` en `/payment-schedulings`.
-   - Si el usuario quiere preservar, deberá agregarlas explícitamente a `STEPS_BY_PIPELINE` en una iteración futura.
 
-2. **Patrón "lista vacía → ver todo" eliminado**: si un rol no tiene permisos sembrados, los listados quedan vacíos en lugar de mostrar todo.
+2. **Configuración manual post-deploy obligatoria**: sin seed, los 6 listados estarán vacíos para todos los roles hasta que el admin marque los checkboxes en `/roles/edit/{id}` por cada rol y pipeline.
+
+3. **Anticipos NO aparecen en `/invoices/all`, `/invoices/rejected`, `/invoices/overdue`** tras el cambio. Si el negocio depende de ver anticipos en esos endpoints, revertir la exclusión en esos 3 controllers (manteniéndola en `index`).
 
 ## Mapa de archivos
 
-**Crear:**
-- `config/Migrations/YYYYMMDDhhmmss_SeedPipelinePermissionsFromRoleMatrices.php`
-
 **Modificar:**
 - `src/Constants/PipelineStepConstants.php` — añadir `PIPELINE_LIQUIDATION_DOCS`
-- `src/Service/InvoicePipelineService.php` — `getVisibleStatuses`, `getVisibleAdvanceStatuses`
+- `src/Controller/AppController.php` — añadir helper `_visibleStatusConditions`
+- `src/Service/InvoicePipelineService.php` — `getVisibleStatuses`, eliminar `getVisibleAdvanceStatuses`
 - `src/Service/NoveltyService.php` — `getVisibleStatuses`, `getVisibleLiquidationStatuses`, borrar matrices
 - `src/Service/PaymentSchedulingService.php` — `getVisibleStatuses`, borrar matriz
 - `src/Service/PettyCashService.php` — `getVisibleStatuses`, borrar matriz
@@ -53,15 +54,15 @@
 - `src/Service/Pipeline/Invoice/State/VerificacionPagoState.php` — borrar 2 métodos
 - `src/Service/Pipeline/Invoice/State/PagadaState.php` — borrar 2 métodos
 - `src/Service/Pipeline/Invoice/State/LegalizadaState.php` — borrar 2 métodos
-- `src/Controller/InvoicesController.php` — `index` (+exclusión anticipos), passar `roleId`
-- `src/Controller/AdvancesController.php` — `index`, pasar `roleId`
-- `src/Controller/RefundsController.php` — `index`, pasar `roleId`
-- `src/Controller/PettyCashRecordsController.php` — `index`, pasar `roleId`
-- `src/Controller/PaymentSchedulingsController.php` — `index`, pasar `roleId`
-- `src/Controller/NoveltyLiquidationDocsController.php` — `index`, pasar `roleId`
-- `src/Controller/EmployeeNoveltiesController.php` — `index`, pasar `roleId`
-- `src/Service/SidebarCounterService.php` — 5 callsites
-- `src/Service/PendingNotificationsService.php` — 1 callsite
+- `src/Controller/InvoicesController.php` — 4 endpoints (`index`, `all`, `rejected`, `overdue`) + exclusión anticipos en todos
+- `src/Controller/AdvancesController.php` — `index`, usa `getVisibleStatuses` y `roleId`
+- `src/Controller/RefundsController.php` — `index`, helper + `roleId`
+- `src/Controller/PettyCashRecordsController.php` — `index`, helper + `roleId`
+- `src/Controller/PaymentSchedulingsController.php` — `index`, helper + `roleId`
+- `src/Controller/NoveltyLiquidationDocsController.php` — `index`, helper + `roleId`
+- `src/Controller/EmployeeNoveltiesController.php` — `index`, helper + `roleId`
+- `src/Service/SidebarCounterService.php` — 5 callsites, firma a `int $roleId` exclusivo
+- `src/Service/PendingNotificationsService.php` — 1 callsite, firma a `int $roleId` exclusivo
 
 **No tocar** (verificados como dinámicos):
 - `templates/Roles/edit.php` y `templates/Roles/add.php` — iteran `$pipelineLabels` dinámicamente.
@@ -119,7 +120,7 @@ Expected: sin violaciones.
 
 - [ ] **Step 3: Verificar que la UI de Roles muestra la nueva sección**
 
-Levantar `php bin/cake server`, login como Admin, navegar a `/roles/edit/{id}`, verificar que aparece una sección "Documentos de liquidación" con los 6 checkboxes (todos desmarcados — todavía no sembrado).
+Levantar `php bin/cake server`, login como Admin, navegar a `/roles/edit/{id}`, verificar que aparece una sección "Documentos de liquidación" con los 6 checkboxes (todos desmarcados — todavía no configurado).
 
 - [ ] **Step 4: Commit**
 
@@ -130,224 +131,49 @@ git commit -m "feat(pipeline): agregar pipeline liquidation_docs al catalogo de 
 
 ---
 
-## Task 2: Migration de seed de `pipeline_permissions`
+## Task 2: Helper `_visibleStatusConditions` en `AppController`
 
 **Files:**
-- Create: `config/Migrations/YYYYMMDDhhmmss_SeedPipelinePermissionsFromRoleMatrices.php`
+- Modify: `src/Controller/AppController.php`
 
-- [ ] **Step 1: Generar el archivo de migration**
+- [ ] **Step 1: Agregar el método protegido al AppController**
 
-```bash
-php bin/cake migrations create SeedPipelinePermissionsFromRoleMatrices
-```
-
-CakePHP crea el archivo en `config/Migrations/<timestamp>_SeedPipelinePermissionsFromRoleMatrices.php` con un esqueleto basado en `BaseMigration`.
-
-- [ ] **Step 2: Reemplazar el contenido del archivo**
-
-Reemplazar todo el contenido del archivo creado por:
+Localizar la sección de métodos protegidos de `AppController` (cerca de `_getCurrentUser`, `_getUserRoleName`). Agregar:
 
 ```php
-<?php
-declare(strict_types=1);
-
-use Cake\ORM\TableRegistry;
-use Migrations\BaseMigration;
-
-/**
- * Siembra pipeline_permissions con la matriz histórica de visibilidad de
- * cada rol en cada pipeline. Reemplaza las matrices hardcodeadas
- * ROLE_VISIBLE_STATUSES (en *Service) y getRoleVisibility/
- * getAdvanceRoleVisibility (en los Invoice States) por filas de tabla.
- *
- * Idempotente: si una fila (role_id, pipeline, step) ya existe, NO la
- * sobreescribe. Esto preserva configuración manual hecha por admin
- * después del primer deploy.
- *
- * Down: no-op. Revertir borraría configuración del admin.
- */
-class SeedPipelinePermissionsFromRoleMatrices extends BaseMigration
-{
     /**
-     * Mapa rol → pipeline → steps con can_operate=true.
-     * Las claves de rol son los nombres canónicos en la tabla `roles`.
+     * Construye condiciones de filtro por `pipeline_status` (o columna análoga)
+     * para los listados "Mis Registros" de los módulos con pipeline.
+     *
+     * Si la lista de estados visibles está vacía (rol sin permisos sembrados),
+     * retorna una condición imposible (`1 = 0`) para garantizar 0 resultados.
+     * Centraliza el patrón usado por Invoices/Refunds/PettyCash/etc. y evita
+     * el anti-pattern de valores centinela mágicos.
+     *
+     * @param string $field Columna calificada, ej. `Invoices.pipeline_status`.
+     * @param array<int, string> $statuses Lista de estados visibles para el rol.
+     * @return array<string|int, mixed> Condiciones para aplicar en `$query->where(...)`.
      */
-    private const SEED = [
-        // ========== PIPELINE invoices ==========
-        // Unión de getRoleVisibility() y getAdvanceRoleVisibility() de cada InvoicePipelineState.
-        // Salen `pagada` y `legalizada` (no están en STEPS_BY_PIPELINE['invoices']).
-        'Administrador' => [
-            'invoices' => ['aprobacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'novelties' => [
-                'aprobacion', 'rrhh', 'contabilidad', 'revision_firmas', 'gdp',
-                'tesoreria', 'autorizacion_pago', 'verificacion_pago',
-            ],
-            'payment_schedulings' => ['borrador', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'refunds' => ['agrupacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'petty_cash' => ['agrupacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'legalizations' => [
-                'validacion', 'revision_firmas', 'contabilidad', 'tesoreria',
-                'autorizacion_pago', 'verificacion_pago',
-            ],
-            'liquidation_docs' => [
-                'contabilidad', 'revision_firmas', 'gdp', 'tesoreria',
-                'autorizacion_pago', 'verificacion_pago',
-            ],
-        ],
-        'Registro/Revisión' => [
-            'invoices' => ['aprobacion'],
-            'refunds' => ['agrupacion'],
-            'petty_cash' => ['agrupacion'],
-            'liquidation_docs' => ['revision_firmas', 'gdp'],
-        ],
-        'Contabilidad' => [
-            'invoices' => ['contabilidad'],
-            'novelties' => ['contabilidad'],
-            'refunds' => ['contabilidad'],
-            'petty_cash' => ['contabilidad'],
-            'liquidation_docs' => ['contabilidad'],
-        ],
-        'Tesorería' => [
-            'invoices' => ['tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'novelties' => ['tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'payment_schedulings' => ['borrador', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            // 'pagada' del scheduling se omite (no está en STEPS_BY_PIPELINE).
-            'refunds' => ['tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'petty_cash' => ['tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'liquidation_docs' => ['tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-        ],
-        'Contador' => [
-            'invoices' => ['autorizacion_pago', 'verificacion_pago'],
-            'novelties' => ['revision_firmas', 'autorizacion_pago', 'verificacion_pago'],
-            'payment_schedulings' => ['autorizacion_pago', 'verificacion_pago'],
-            'refunds' => ['autorizacion_pago', 'verificacion_pago'],
-            'petty_cash' => ['autorizacion_pago', 'verificacion_pago'],
-            'liquidation_docs' => ['autorizacion_pago', 'verificacion_pago'],
-        ],
-        // Auxiliar/Asistente/Coordinador: anticipos (todos los steps activos de invoices),
-        // novedades, reintegros activos, caja menor activa, liquidaciones activas.
-        'Auxiliar de Personal' => [
-            'invoices' => ['aprobacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'novelties' => ['aprobacion', 'rrhh', 'revision_firmas', 'gdp'],
-            'refunds' => ['agrupacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'petty_cash' => ['agrupacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'liquidation_docs' => [
-                'contabilidad', 'revision_firmas', 'gdp', 'tesoreria',
-                'autorizacion_pago', 'verificacion_pago',
-            ],
-        ],
-        'Asistente de Personal' => [
-            'invoices' => ['aprobacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'novelties' => ['aprobacion', 'rrhh', 'revision_firmas', 'gdp'],
-            'refunds' => ['agrupacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'petty_cash' => ['agrupacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'liquidation_docs' => [
-                'contabilidad', 'revision_firmas', 'gdp', 'tesoreria',
-                'autorizacion_pago', 'verificacion_pago',
-            ],
-        ],
-        'Coordinador Administrativo y Financiero' => [
-            'invoices' => ['aprobacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'novelties' => ['revision_firmas'],
-            'refunds' => ['agrupacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'petty_cash' => ['agrupacion', 'contabilidad', 'tesoreria', 'autorizacion_pago', 'verificacion_pago'],
-            'liquidation_docs' => [
-                'contabilidad', 'revision_firmas', 'gdp', 'tesoreria',
-                'autorizacion_pago', 'verificacion_pago',
-            ],
-        ],
-    ];
-
-    public function up(): void
+    protected function _visibleStatusConditions(string $field, array $statuses): array
     {
-        $roles = TableRegistry::getTableLocator()->get('Roles');
-        $perms = TableRegistry::getTableLocator()->get('PipelinePermissions');
-
-        foreach (self::SEED as $roleName => $pipelineMap) {
-            $role = $roles->find()->where(['name' => $roleName])->first();
-            if ($role === null) {
-                // Rol no existe (renombrado/borrado). No fatal: log y continúa.
-                error_log(sprintf(
-                    '[SeedPipelinePermissionsFromRoleMatrices] Rol "%s" no encontrado en tabla roles. Skipping.',
-                    $roleName,
-                ));
-                continue;
-            }
-
-            foreach ($pipelineMap as $pipeline => $steps) {
-                foreach ($steps as $step) {
-                    $existing = $perms->find()
-                        ->where([
-                            'role_id' => (int)$role->id,
-                            'pipeline' => $pipeline,
-                            'step' => $step,
-                        ])
-                        ->first();
-
-                    if ($existing !== null) {
-                        // Idempotencia: respetar la configuración existente.
-                        continue;
-                    }
-
-                    $entity = $perms->newEntity([
-                        'role_id' => (int)$role->id,
-                        'pipeline' => $pipeline,
-                        'step' => $step,
-                        'can_operate' => true,
-                    ]);
-                    $perms->save($entity);
-                }
-            }
+        if ($statuses === []) {
+            return ['1 = 0'];
         }
+
+        return [$field . ' IN' => $statuses];
     }
-
-    public function down(): void
-    {
-        // No-op. Revertir borraría configuración del admin.
-        // Para limpiar manualmente: DELETE FROM pipeline_permissions WHERE ...
-    }
-}
 ```
 
-- [ ] **Step 3: Ejecutar la migration**
+- [ ] **Step 2: Verificar code style**
 
-Run: `php bin/cake migrations migrate`
-Expected: `== <timestamp> SeedPipelinePermissionsFromRoleMatrices: migrating` seguido de `migrated`.
+Run: `composer cs-check`
+Expected: sin violaciones.
 
-- [ ] **Step 4: Verificar el seed en la BD**
-
-```sql
-SELECT r.name, pp.pipeline, COUNT(*) AS steps
-FROM pipeline_permissions pp
-JOIN roles r ON r.id = pp.role_id
-WHERE pp.can_operate = 1
-GROUP BY r.name, pp.pipeline
-ORDER BY r.name, pp.pipeline;
-```
-
-Resultado esperado: Administrador con 7 pipelines, otros roles con los pipelines/steps según la matriz.
-
-- [ ] **Step 5: Verificar idempotencia**
-
-Run: `php bin/cake migrations migrate` (segunda vez — no debería pasar nada porque ya está marcada).
-Run manualmente:
-```bash
-php -r "
-require 'vendor/autoload.php';
-require 'config/bootstrap.php';
-\$app = new App\Application(dirname(__DIR__).'/config');
-\$app->bootstrap();
-\$count = \Cake\ORM\TableRegistry::getTableLocator()->get('PipelinePermissions')->find()->count();
-echo 'Total rows: ' . \$count . PHP_EOL;
-"
-```
-O simplemente: `SELECT COUNT(*) FROM pipeline_permissions;` antes/después de un nuevo intento de seed manual (re-marcar migration como pending y volver a ejecutar). El conteo no debe cambiar.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add config/Migrations/*SeedPipelinePermissionsFromRoleMatrices.php
-git commit -m "feat(migrations): sembrar pipeline_permissions desde matrices hardcodeadas"
+git add src/Controller/AppController.php
+git commit -m "feat(app): helper _visibleStatusConditions para filtros de pipeline"
 ```
 
 ---
@@ -357,9 +183,9 @@ git commit -m "feat(migrations): sembrar pipeline_permissions desde matrices har
 **Files:**
 - Modify: `src/Service/InvoicePipelineService.php`
 
-- [ ] **Step 1: Reemplazar `getVisibleStatuses` y `getVisibleAdvanceStatuses`**
+- [ ] **Step 1: Reemplazar `getVisibleStatuses` y eliminar `getVisibleAdvanceStatuses`**
 
-Localizar el método actual:
+Localizar el bloque:
 ```php
 public function getVisibleStatuses(string $roleName): array
 {
@@ -389,7 +215,7 @@ public function getVisibleAdvanceStatuses(string $roleName): array
 }
 ```
 
-Reemplazar por:
+Reemplazar por (solo un método):
 ```php
 public function getVisibleStatuses(int $roleId): array
 {
@@ -399,18 +225,9 @@ public function getVisibleStatuses(int $roleId): array
         PipelineStepConstants::PIPELINE_INVOICES,
     );
 }
-
-public function getVisibleAdvanceStatuses(int $roleId): array
-{
-    return $this->pipelineAuth->getOperableSteps(
-        $roleId,
-        '',
-        PipelineStepConstants::PIPELINE_INVOICES,
-    );
-}
 ```
 
-(Los terminales `pagada`/`legalizada` están fuera de `STEPS_BY_PIPELINE['invoices']`, así que ya no se necesita la guarda manual.)
+`getVisibleAdvanceStatuses` se elimina por completo. `AdvancesController` (Task 9) pasará a llamar a `getVisibleStatuses` y la distinción factura/anticipo se mantiene vía `document_type` del query.
 
 - [ ] **Step 2: Verificar code style**
 
@@ -421,7 +238,7 @@ Expected: sin violaciones.
 
 ```bash
 git add src/Service/InvoicePipelineService.php
-git commit -m "refactor(invoice): delegar getVisibleStatuses a PipelineAuthorizationService"
+git commit -m "refactor(invoice): delegar getVisibleStatuses a pipeline_permissions y eliminar getVisibleAdvanceStatuses"
 ```
 
 ---
@@ -475,30 +292,27 @@ public function getVisibleLiquidationStatuses(int $roleId): array
 
 - [ ] **Step 2: Eliminar las constantes `ROLE_VISIBLE_STATUSES`, `LIQUIDATION_ACTIVE_STATUSES` y `LIQUIDATION_VISIBLE_STATUSES`**
 
-Borrar los bloques completos `private const ROLE_VISIBLE_STATUSES = [...];`, `private const LIQUIDATION_ACTIVE_STATUSES = [...];` y `private const LIQUIDATION_VISIBLE_STATUSES = [...];`.
+Borrar los 3 bloques completos.
 
-- [ ] **Step 3: Limpiar imports huérfanos**
-
-Buscar `use App\Constants\RoleConstants;` en el archivo. Si después de borrar las matrices no queda otro uso de `RoleConstants::` en el archivo, eliminar el import.
+- [ ] **Step 3: Limpiar import huérfano**
 
 Run: `grep -c "RoleConstants" src/Service/NoveltyService.php`
-- Si retorna `0`: borrar el `use App\Constants\RoleConstants;`.
-- Si retorna `>0` pero todas las referencias están comentadas: revisar y limpiar.
+- Si retorna `0`: borrar `use App\Constants\RoleConstants;`.
 
 - [ ] **Step 4: Verificar que `PipelineStepConstants` está importado**
 
-Buscar `use App\Constants\PipelineStepConstants;`. Si no está, agregarlo al bloque de imports (NoveltyService ya lo usa para `canOperate`, así que probablemente ya esté).
+Run: `grep -c "use App.Constants.PipelineStepConstants" src/Service/NoveltyService.php`
+- Si retorna `0`: agregar `use App\Constants\PipelineStepConstants;` al bloque de imports.
 
 - [ ] **Step 5: Verificar code style**
 
 Run: `composer cs-check`
-Expected: sin violaciones.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add src/Service/NoveltyService.php
-git commit -m "refactor(novelty): delegar getVisibleStatuses/getVisibleLiquidationStatuses a pipeline_permissions"
+git commit -m "refactor(novelty): delegar getVisibleStatuses y getVisibleLiquidationStatuses a pipeline_permissions"
 ```
 
 ---
@@ -532,17 +346,16 @@ public function getVisibleStatuses(int $roleId): array
 
 - [ ] **Step 2: Eliminar la constante `ROLE_VISIBLE_STATUSES`**
 
-Borrar el bloque completo `private const ROLE_VISIBLE_STATUSES = [...];`.
+Borrar el bloque completo.
 
-- [ ] **Step 3: Limpiar import de `RoleConstants` si queda huérfano**
+- [ ] **Step 3: Limpiar import huérfano**
 
 Run: `grep -c "RoleConstants" src/Service/PaymentSchedulingService.php`
-- Si retorna `0`: borrar el `use App\Constants\RoleConstants;`.
+- Si retorna `0`: borrar `use App\Constants\RoleConstants;`.
 
 - [ ] **Step 4: Verificar code style**
 
 Run: `composer cs-check`
-Expected: sin violaciones.
 
 - [ ] **Step 5: Commit**
 
@@ -582,17 +395,16 @@ public function getVisibleStatuses(int $roleId): array
 
 - [ ] **Step 2: Eliminar las constantes `ROLE_VISIBLE_STATUSES` y `ACTIVE_STATUSES`**
 
-Borrar ambos bloques de constantes.
+Borrar ambos bloques.
 
-- [ ] **Step 3: Limpiar import de `RoleConstants` si queda huérfano**
+- [ ] **Step 3: Limpiar import huérfano**
 
 Run: `grep -c "RoleConstants" src/Service/PettyCashService.php`
-- Si retorna `0`: borrar el `use App\Constants\RoleConstants;`.
+- Si retorna `0`: borrar `use App\Constants\RoleConstants;`.
 
 - [ ] **Step 4: Verificar code style**
 
 Run: `composer cs-check`
-Expected: sin violaciones.
 
 - [ ] **Step 5: Commit**
 
@@ -632,17 +444,16 @@ public function getVisibleStatuses(int $roleId): array
 
 - [ ] **Step 2: Eliminar las constantes `ROLE_VISIBLE_STATUSES` y `ACTIVE_STATUSES`**
 
-Borrar ambos bloques de constantes.
+Borrar ambos bloques.
 
-- [ ] **Step 3: Limpiar import de `RoleConstants` si queda huérfano**
+- [ ] **Step 3: Limpiar import huérfano**
 
 Run: `grep -c "RoleConstants" src/Service/RefundService.php`
-- Si retorna `0`: borrar el `use App\Constants\RoleConstants;`.
+- Si retorna `0`: borrar `use App\Constants\RoleConstants;`.
 
 - [ ] **Step 4: Verificar code style**
 
 Run: `composer cs-check`
-Expected: sin violaciones.
 
 - [ ] **Step 5: Commit**
 
@@ -653,14 +464,14 @@ git commit -m "refactor(refund): delegar getVisibleStatuses a pipeline_permissio
 
 ---
 
-## Task 8: Actualizar `InvoicesController` (con exclusión de anticipos)
+## Task 8: Actualizar `InvoicesController` (4 endpoints + exclusión de anticipos)
 
 **Files:**
 - Modify: `src/Controller/InvoicesController.php`
 
-- [ ] **Step 1: Cambiar `index()` para pasar `roleId` y excluir anticipos**
+- [ ] **Step 1: Reemplazar `index()` con el helper y exclusión de anticipos**
 
-Localizar la función `public function index()` (línea ~70). En el cuerpo actual:
+Localizar `public function index()` (línea ~70). Reemplazar el bloque:
 ```php
 $roleName = $this->_getRoleName();
 $visibleStatuses = $this->pipeline->getVisibleStatuses($roleName);
@@ -679,7 +490,7 @@ $conditions[] = [
 ];
 ```
 
-Reemplazar por:
+Por:
 ```php
 $roleName = $this->_getRoleName();
 $user = $this->_getCurrentUser();
@@ -687,10 +498,8 @@ $roleId = (int)$user->role_id;
 $userId = (int)$user->id;
 $visibleStatuses = $this->pipeline->getVisibleStatuses($roleId);
 
-$conditions = [
-    'Invoices.pipeline_status IN' => $visibleStatuses ?: ['__none__'],
-    'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
-];
+$conditions = $this->_visibleStatusConditions('Invoices.pipeline_status', $visibleStatuses);
+$conditions['Invoices.document_type !='] = InvoiceConstants::DOCTYPE_ANTICIPO;
 
 // Excluir facturas de Caja Menor que ya están en contabilidad o posterior
 $conditions[] = [
@@ -701,25 +510,63 @@ $conditions[] = [
 ];
 ```
 
-- [ ] **Step 2: Verificar que `all()`, `rejected()`, `overdue()` NO se tocan**
+- [ ] **Step 2: Aplicar exclusión de anticipos a `all()`, `rejected()`, `overdue()`**
+
+Para los 3 endpoints, agregar la condición de exclusión al array de condiciones que ya construyen. Patrón:
+
+En `all()` (donde hoy hay `_buildInvoiceQuery([], $userId)`), cambiar el primer argumento de `[]` a:
+```php
+['Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO]
+```
+
+En `rejected()` (hoy):
+```php
+$this->_buildInvoiceQuery([
+    'Invoices.area_approval' => InvoiceConstants::APPROVAL_REJECTED,
+], $userId)
+```
+Agregar la exclusión:
+```php
+$this->_buildInvoiceQuery([
+    'Invoices.area_approval' => InvoiceConstants::APPROVAL_REJECTED,
+    'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
+], $userId)
+```
+
+En `overdue()` (hoy):
+```php
+$this->_buildInvoiceQuery([
+    'Invoices.due_date <' => date('Y-m-d'),
+    'Invoices.pipeline_status NOT IN' => [...],
+], $userId)
+```
+Agregar:
+```php
+$this->_buildInvoiceQuery([
+    'Invoices.due_date <' => date('Y-m-d'),
+    'Invoices.pipeline_status NOT IN' => [...],
+    'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
+], $userId)
+```
+
+- [ ] **Step 3: Verificar que `getVisibleStatuses` solo se llama en `index()`**
 
 Run: `grep -n "getVisibleStatuses" src/Controller/InvoicesController.php`
-Expected: solo aparece en `index()`. Los otros endpoints no deben filtrar por visibleStatuses (mantienen comportamiento actual de "ver todo aplicando solo su condición específica").
+Expected: una sola ocurrencia, en `index()`.
 
-- [ ] **Step 3: Verificar code style**
+- [ ] **Step 4: Verificar code style**
 
 Run: `composer cs-check`
-Expected: sin violaciones.
 
-- [ ] **Step 4: Validación manual**
+- [ ] **Step 5: Validación manual**
 
-Levantar `php bin/cake server`, login como Contabilidad → `/invoices` debe mostrar SOLO facturas en estado `contabilidad`, NINGÚN anticipo.
+Levantar `php bin/cake server`. Login como Admin → configurar manualmente permisos para rol Contabilidad en `/roles/edit/{id}` (marcar `Facturas.Contabilidad`). Login como Contabilidad → `/invoices` debe mostrar SOLO facturas en estado `contabilidad`, ningún anticipo. `/invoices/all` tampoco muestra anticipos.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add src/Controller/InvoicesController.php
-git commit -m "refactor(invoices): filtrar /invoices por roleId via pipeline_permissions y excluir anticipos"
+git commit -m "refactor(invoices): filtrar por pipeline_permissions y excluir anticipos en los 4 endpoints"
 ```
 
 ---
@@ -729,7 +576,7 @@ git commit -m "refactor(invoices): filtrar /invoices por roleId via pipeline_per
 **Files:**
 - Modify: `src/Controller/AdvancesController.php`
 
-- [ ] **Step 1: Cambiar `index()` para pasar `roleId`**
+- [ ] **Step 1: Cambiar `index()` para usar `getVisibleStatuses` y el helper**
 
 Localizar:
 ```php
@@ -738,7 +585,12 @@ $visibleStatuses = $this->pipelineService->getVisibleAdvanceStatuses($roleName);
 
 $query = $invoicesTable->find()
     ->where(['Invoices.document_type' => InvoiceConstants::DOCTYPE_ANTICIPO])
-    ->contain([...])
+    ->contain([
+        'Providers',
+        'Employees',
+        'OperationCenters',
+        'AdvanceLegalization',
+    ])
     ->orderBy(['Invoices.created' => 'DESC']);
 
 if (!empty($visibleStatuses)) {
@@ -749,33 +601,36 @@ if (!empty($visibleStatuses)) {
 Reemplazar por:
 ```php
 $roleId = (int)$this->_getCurrentUser()->role_id;
-$visibleStatuses = $this->pipelineService->getVisibleAdvanceStatuses($roleId);
+$visibleStatuses = $this->pipelineService->getVisibleStatuses($roleId);
 
 $query = $invoicesTable->find()
-    ->where([
-        'Invoices.document_type' => InvoiceConstants::DOCTYPE_ANTICIPO,
-        'Invoices.pipeline_status IN' => $visibleStatuses ?: ['__none__'],
+    ->where(['Invoices.document_type' => InvoiceConstants::DOCTYPE_ANTICIPO])
+    ->contain([
+        'Providers',
+        'Employees',
+        'OperationCenters',
+        'AdvanceLegalization',
     ])
-    ->contain([...])
     ->orderBy(['Invoices.created' => 'DESC']);
+
+$query->where($this->_visibleStatusConditions('Invoices.pipeline_status', $visibleStatuses));
 ```
 
-(Mantener el array `contain` con los valores actuales: `'Providers', 'Employees', 'OperationCenters', 'AdvanceLegalization'`.)
+(Cambio clave: `getVisibleAdvanceStatuses` → `getVisibleStatuses`, porque tras Task 3 solo existe el segundo.)
 
 - [ ] **Step 2: Verificar code style**
 
 Run: `composer cs-check`
-Expected: sin violaciones.
 
 - [ ] **Step 3: Validación manual**
 
-Login como Auxiliar de Personal → `/advances` debe mostrar anticipos en estados activos (no `pagada` ni `legalizada`).
+Configurar permisos para rol Auxiliar de Personal en `/roles/edit/{id}` (marcar todos los steps de `Facturas`). Login como Auxiliar de Personal → `/advances` muestra anticipos en los 5 steps activos (`aprobacion`, `contabilidad`, `tesoreria`, `autorizacion_pago`, `verificacion_pago`).
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add src/Controller/AdvancesController.php
-git commit -m "refactor(advances): filtrar por roleId via pipeline_permissions"
+git commit -m "refactor(advances): usar getVisibleStatuses con roleId y helper de filtro"
 ```
 
 ---
@@ -785,17 +640,11 @@ git commit -m "refactor(advances): filtrar por roleId via pipeline_permissions"
 **Files:**
 - Modify: `src/Controller/RefundsController.php`
 
-- [ ] **Step 1: Cambiar `index()` para pasar `roleId`**
+- [ ] **Step 1: Cambiar `index()` para usar `roleId` y el helper**
 
 Localizar (alrededor línea 118):
 ```php
 $visibleStatuses = $this->refundService->getVisibleStatuses($roleName);
-```
-
-Antes de esa línea, asegurar que `$roleId` está disponible:
-```php
-$roleId = (int)$this->_getCurrentUser()->role_id;
-$visibleStatuses = $this->refundService->getVisibleStatuses($roleId);
 ```
 
 Localizar (alrededor línea 124):
@@ -805,25 +654,31 @@ if (!empty($visibleStatuses)) {
 }
 ```
 
-Reemplazar por:
+Reemplazar los dos bloques por:
 ```php
-$query->where(['Refunds.status IN' => $visibleStatuses ?: ['__none__']]);
+$roleId = (int)$this->_getCurrentUser()->role_id;
+$visibleStatuses = $this->refundService->getVisibleStatuses($roleId);
+
+// ... (el resto de la construcción del query queda igual, hasta donde estaba el if)
+
+$query->where($this->_visibleStatusConditions('Refunds.status', $visibleStatuses));
 ```
+
+Asegurar que el `$roleId` se asigna antes del bloque que llama al service, y que la línea `$query->where(...)` con el helper sustituye al `if (!empty(...))`.
 
 - [ ] **Step 2: Verificar code style**
 
 Run: `composer cs-check`
-Expected: sin violaciones.
 
 - [ ] **Step 3: Validación manual**
 
-Login como Contabilidad → `/refunds` debe mostrar solo reintegros en `contabilidad`.
+Configurar permiso `Reintegros.contabilidad` para rol Contabilidad. Login como Contabilidad → `/refunds` muestra solo reintegros en `contabilidad`.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add src/Controller/RefundsController.php
-git commit -m "refactor(refunds): filtrar por roleId via pipeline_permissions"
+git commit -m "refactor(refunds): usar pipeline_permissions con helper de filtro"
 ```
 
 ---
@@ -833,17 +688,11 @@ git commit -m "refactor(refunds): filtrar por roleId via pipeline_permissions"
 **Files:**
 - Modify: `src/Controller/PettyCashRecordsController.php`
 
-- [ ] **Step 1: Cambiar `index()` para pasar `roleId`**
+- [ ] **Step 1: Cambiar `index()` para usar `roleId` y el helper**
 
 Localizar (alrededor línea 80):
 ```php
 $visibleStatuses = $this->pettyCashService->getVisibleStatuses($roleName);
-```
-
-Asegurar que existe `$roleId`:
-```php
-$roleId = (int)$this->_getCurrentUser()->role_id;
-$visibleStatuses = $this->pettyCashService->getVisibleStatuses($roleId);
 ```
 
 Localizar (alrededor línea 86):
@@ -855,7 +704,12 @@ if (!empty($visibleStatuses)) {
 
 Reemplazar por:
 ```php
-$query->where(['PettyCashRecords.status IN' => $visibleStatuses ?: ['__none__']]);
+$roleId = (int)$this->_getCurrentUser()->role_id;
+$visibleStatuses = $this->pettyCashService->getVisibleStatuses($roleId);
+
+// ... (resto del query)
+
+$query->where($this->_visibleStatusConditions('PettyCashRecords.status', $visibleStatuses));
 ```
 
 - [ ] **Step 2: Verificar code style**
@@ -864,13 +718,13 @@ Run: `composer cs-check`
 
 - [ ] **Step 3: Validación manual**
 
-Login como Tesorería → `/petty-cash-records` muestra registros en `tesoreria`/`autorizacion_pago`/`verificacion_pago`.
+Configurar permisos `Caja menor.tesoreria/autorizacion_pago/verificacion_pago` para rol Tesorería. Login como Tesorería → `/petty-cash-records` muestra registros en esos steps.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add src/Controller/PettyCashRecordsController.php
-git commit -m "refactor(petty-cash): filtrar por roleId via pipeline_permissions"
+git commit -m "refactor(petty-cash): usar pipeline_permissions con helper de filtro"
 ```
 
 ---
@@ -880,17 +734,11 @@ git commit -m "refactor(petty-cash): filtrar por roleId via pipeline_permissions
 **Files:**
 - Modify: `src/Controller/PaymentSchedulingsController.php`
 
-- [ ] **Step 1: Cambiar `index()` para pasar `roleId`**
+- [ ] **Step 1: Cambiar `index()` para usar `roleId` y el helper**
 
 Localizar (alrededor línea 57):
 ```php
 $visibleStatuses = $this->schedulingService->getVisibleStatuses($roleName);
-```
-
-Asegurar `$roleId`:
-```php
-$roleId = (int)$this->_getCurrentUser()->role_id;
-$visibleStatuses = $this->schedulingService->getVisibleStatuses($roleId);
 ```
 
 Localizar (alrededor línea 63):
@@ -902,7 +750,12 @@ if (!empty($visibleStatuses)) {
 
 Reemplazar por:
 ```php
-$query->where(['PaymentSchedulings.pipeline_status IN' => $visibleStatuses ?: ['__none__']]);
+$roleId = (int)$this->_getCurrentUser()->role_id;
+$visibleStatuses = $this->schedulingService->getVisibleStatuses($roleId);
+
+// ... (resto del query)
+
+$query->where($this->_visibleStatusConditions('PaymentSchedulings.pipeline_status', $visibleStatuses));
 ```
 
 - [ ] **Step 2: Verificar code style**
@@ -911,13 +764,13 @@ Run: `composer cs-check`
 
 - [ ] **Step 3: Validación manual**
 
-Login como Tesorería → `/payment-schedulings` muestra schedulings en los 4 steps (sin terminales).
+Configurar permisos `Programación de pagos.borrador/tesoreria/autorizacion_pago/verificacion_pago` para rol Tesorería. Login como Tesorería → `/payment-schedulings` muestra los 4 steps activos.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add src/Controller/PaymentSchedulingsController.php
-git commit -m "refactor(scheduling): filtrar por roleId via pipeline_permissions"
+git commit -m "refactor(scheduling): usar pipeline_permissions con helper de filtro"
 ```
 
 ---
@@ -927,17 +780,11 @@ git commit -m "refactor(scheduling): filtrar por roleId via pipeline_permissions
 **Files:**
 - Modify: `src/Controller/NoveltyLiquidationDocsController.php`
 
-- [ ] **Step 1: Cambiar `index()` para pasar `roleId`**
+- [ ] **Step 1: Cambiar `index()` para usar `roleId` y el helper**
 
 Localizar (alrededor línea 64):
 ```php
 $visibleStatuses = $this->pipelineService->getVisibleLiquidationStatuses($roleName);
-```
-
-Asegurar `$roleId`:
-```php
-$roleId = (int)$this->_getCurrentUser()->role_id;
-$visibleStatuses = $this->pipelineService->getVisibleLiquidationStatuses($roleId);
 ```
 
 Localizar (alrededor línea 70):
@@ -949,7 +796,12 @@ if (!empty($visibleStatuses)) {
 
 Reemplazar por:
 ```php
-$query->where(['NoveltyLiquidationDocs.pipeline_status IN' => $visibleStatuses ?: ['__none__']]);
+$roleId = (int)$this->_getCurrentUser()->role_id;
+$visibleStatuses = $this->pipelineService->getVisibleLiquidationStatuses($roleId);
+
+// ... (resto del query)
+
+$query->where($this->_visibleStatusConditions('NoveltyLiquidationDocs.pipeline_status', $visibleStatuses));
 ```
 
 - [ ] **Step 2: Verificar code style**
@@ -958,13 +810,13 @@ Run: `composer cs-check`
 
 - [ ] **Step 3: Validación manual**
 
-Login como Tesorería → `/novelty-liquidation-docs` muestra docs en `tesoreria`/`autorizacion_pago`/`verificacion_pago`.
+Configurar permisos `Documentos de liquidación.tesoreria/autorizacion_pago/verificacion_pago` para rol Tesorería. Login como Tesorería → `/novelty-liquidation-docs` muestra docs en esos steps.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add src/Controller/NoveltyLiquidationDocsController.php
-git commit -m "refactor(liquidation-docs): filtrar por roleId via pipeline_permissions"
+git commit -m "refactor(liquidation-docs): usar pipeline_permissions con helper de filtro"
 ```
 
 ---
@@ -974,17 +826,11 @@ git commit -m "refactor(liquidation-docs): filtrar por roleId via pipeline_permi
 **Files:**
 - Modify: `src/Controller/EmployeeNoveltiesController.php`
 
-- [ ] **Step 1: Cambiar `index()` para pasar `roleId`**
+- [ ] **Step 1: Cambiar `index()` para usar `roleId` y el helper**
 
 Localizar (alrededor línea 72):
 ```php
 $visibleStatuses = $this->pipelineService->getVisibleStatuses($roleName);
-```
-
-Asegurar `$roleId`:
-```php
-$roleId = (int)$this->_getCurrentUser()->role_id;
-$visibleStatuses = $this->pipelineService->getVisibleStatuses($roleId);
 ```
 
 Localizar (alrededor línea 75):
@@ -996,8 +842,18 @@ if (!empty($visibleStatuses)) {
 
 Reemplazar por:
 ```php
-$conditions['EmployeeNovelties.pipeline_status IN'] = $visibleStatuses ?: ['__none__'];
+$roleId = (int)$this->_getCurrentUser()->role_id;
+$visibleStatuses = $this->pipelineService->getVisibleStatuses($roleId);
+
+// ... (resto de la construcción de $conditions)
+
+$conditions = array_merge(
+    $conditions,
+    $this->_visibleStatusConditions('EmployeeNovelties.pipeline_status', $visibleStatuses),
+);
 ```
+
+(Aquí el helper retorna un array de conditions; se mezcla con las que ya existen.)
 
 - [ ] **Step 2: Verificar code style**
 
@@ -1005,89 +861,96 @@ Run: `composer cs-check`
 
 - [ ] **Step 3: Validación manual**
 
-Login como rol con permisos en `novelties.contabilidad` (ej. Contabilidad) → `/employee-novelties` muestra solo novedades en ese estado.
+Configurar permiso `Novedades.contabilidad` para rol Contabilidad. Login como Contabilidad → `/employee-novelties` muestra solo novedades en `contabilidad`.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add src/Controller/EmployeeNoveltiesController.php
-git commit -m "refactor(novelties): filtrar por roleId via pipeline_permissions"
+git commit -m "refactor(novelties): usar pipeline_permissions con helper de filtro"
 ```
 
 ---
 
-## Task 15: Actualizar `SidebarCounterService`
+## Task 15: Actualizar `SidebarCounterService` (firma SOLO `roleId`)
 
 **Files:**
 - Modify: `src/Service/SidebarCounterService.php`
+- Possibly modify: el caller del sidebar (AppController o middleware del sidebar)
 
-- [ ] **Step 1: Identificar la firma actual y los métodos a actualizar**
+- [ ] **Step 1: Identificar callsites y firma actual**
 
-Run: `grep -n "getVisibleStatuses\|getVisibleAdvanceStatuses\|getVisibleLiquidationStatuses\|roleName" src/Service/SidebarCounterService.php`
-
-Para cada método que internamente llama `*->getVisibleStatuses($roleName)` (5 callsites: invoices, novelties, advances, petty_cash, refunds, liquidation_docs), cambiar la firma del método público de `SidebarCounterService` para que reciba `int $roleId` además del (o en lugar del) `string $roleName`.
-
-- [ ] **Step 2: Cambiar cada callsite**
-
-Para cada uno de los 5 lugares dentro del archivo, ejemplo (línea ~130):
-```php
-$visibleStatuses = $this->invoicePipeline->getVisibleStatuses($roleName);
-```
-Reemplazar por:
-```php
-$visibleStatuses = $this->invoicePipeline->getVisibleStatuses($roleId);
+Run:
+```bash
+grep -n "getVisibleStatuses\|getVisibleAdvanceStatuses\|getVisibleLiquidationStatuses\|function .*roleName" src/Service/SidebarCounterService.php
 ```
 
-Hacer el cambio análogo para:
-- línea ~166: `$this->noveltyPipeline->getVisibleStatuses($roleName)` → pasar `$roleId`
-- línea ~214: `$this->invoicePipeline->getVisibleAdvanceStatuses($roleName)` → `$roleId`
-- línea ~232: `$this->pettyCashService->getVisibleStatuses($roleName)` → `$roleId`
-- línea ~247: `$this->refundService->getVisibleStatuses($roleName)` → `$roleId`
-- línea ~259: `$this->noveltyPipeline->getVisibleLiquidationStatuses($roleName)` → `$roleId`
+Identificar los 5+ callsites de `getVisibleStatuses` y los métodos que los albergan.
 
-- [ ] **Step 3: Asegurar que `$roleId` está disponible donde se necesita**
+- [ ] **Step 2: Cambiar la firma de los métodos públicos del service a SOLO `int $roleId`**
 
-Examinar cada método que ahora usa `$roleId`. Si el método solo recibe `$roleName`, ajustar la firma a también recibir `$roleId` (o solo `$roleId`). Propagar el cambio al/los callers del propio `SidebarCounterService` (probablemente `AppController` o un middleware que pinta el sidebar).
+Para cada método público que hoy recibe `string $roleName`, **eliminar** el parámetro `$roleName` y agregar `int $roleId`. Si el método necesita el nombre para algo (poco probable, verificar caso a caso), resolverlo internamente vía `RolesTable->get($roleId)->name` en el punto exacto donde se use.
 
-Run: `grep -rn "SidebarCounterService" src/ --include="*.php" | grep -v "src/Service/SidebarCounterService.php"`
-
-Para cada caller, asegurar que pasa `$roleId`. El caller obvio será un controller/middleware que ya tiene acceso a `$user->role_id`.
-
-- [ ] **Step 4: Aplicar el patrón de "lista vacía → 0 resultados"**
-
-En cada bloque donde antes había:
+Ejemplo de cambio de firma:
 ```php
-if (empty($visibleStatuses)) {
-    return 0;
-}
-```
-Mantenerlo (es coherente: si no hay permisos, contar 0 sin ir a BD). No requiere el truco `__none__` porque ya retorna `0` antes de query.
+// Antes
+public function countInvoicesPending(string $roleName): int { ... }
 
-- [ ] **Step 5: Verificar code style**
+// Después
+public function countInvoicesPending(int $roleId): int { ... }
+```
+
+- [ ] **Step 3: Cambiar los callsites internos**
+
+Para cada llamada interna del archivo:
+- línea ~130: `$this->invoicePipeline->getVisibleStatuses($roleName)` → `$this->invoicePipeline->getVisibleStatuses($roleId)`
+- línea ~166: `$this->noveltyPipeline->getVisibleStatuses($roleName)` → `$this->noveltyPipeline->getVisibleStatuses($roleId)`
+- línea ~214: `$this->invoicePipeline->getVisibleAdvanceStatuses($roleName)` → `$this->invoicePipeline->getVisibleStatuses($roleId)` (tras Task 3 ya no existe `getVisibleAdvanceStatuses`)
+- línea ~232: `$this->pettyCashService->getVisibleStatuses($roleName)` → `$this->pettyCashService->getVisibleStatuses($roleId)`
+- línea ~247: `$this->refundService->getVisibleStatuses($roleName)` → `$this->refundService->getVisibleStatuses($roleId)`
+- línea ~259: `$this->noveltyPipeline->getVisibleLiquidationStatuses($roleName)` → `$this->noveltyPipeline->getVisibleLiquidationStatuses($roleId)`
+
+- [ ] **Step 4: Mantener el patrón `if (empty($visibleStatuses)) return 0;`**
+
+No requiere cambios — sigue siendo coherente (rol sin permisos → conteo 0 sin tocar BD).
+
+- [ ] **Step 5: Propagar el cambio de firma a los callers externos**
+
+Run:
+```bash
+grep -rn "SidebarCounterService" src/ --include="*.php" | grep -v "src/Service/SidebarCounterService.php"
+```
+
+Para cada caller, **eliminar** el argumento `$roleName` y pasar solo `$roleId` (disponible vía `$user->role_id`). Si el caller no tenía `$roleId` a mano, obtenerlo desde el user autenticado.
+
+- [ ] **Step 6: Verificar code style**
 
 Run: `composer cs-check`
 
-- [ ] **Step 6: Validación manual**
+- [ ] **Step 7: Validación manual**
 
-Login con varios roles, verificar que los badges del sidebar muestran los mismos números que antes del PR.
+Login con varios roles, verificar que los badges del sidebar muestran los conteos correctos (deben coincidir con los listados de los controllers).
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add src/Service/SidebarCounterService.php $(git diff --name-only -- src/Controller src/Middleware)
-git commit -m "refactor(sidebar): consumir getVisibleStatuses con roleId"
+git commit -m "refactor(sidebar): firma SOLO roleId en SidebarCounterService"
 ```
-
-(Incluir cualquier controller/middleware que se haya tocado para propagar `$roleId`.)
 
 ---
 
-## Task 16: Actualizar `PendingNotificationsService`
+## Task 16: Actualizar `PendingNotificationsService` (firma SOLO `roleId`)
 
 **Files:**
 - Modify: `src/Service/PendingNotificationsService.php`
+- Possibly modify: callers
 
-- [ ] **Step 1: Cambiar el callsite**
+- [ ] **Step 1: Cambiar la firma del método público a SOLO `int $roleId`**
+
+Localizar el método público que recibe `$roleName`. Cambiar la firma a aceptar **solo** `int $roleId` (eliminar `$roleName` por completo).
+
+- [ ] **Step 2: Cambiar el callsite interno**
 
 Localizar (alrededor línea 148):
 ```php
@@ -1105,27 +968,28 @@ if (empty($visibleStatuses)) {
 }
 ```
 
-Asegurar que `$roleId` está disponible en el método (ajustar firma si solo recibe `$roleName`).
+- [ ] **Step 3: Propagar a callers externos**
 
-- [ ] **Step 2: Propagar el cambio a los callers**
+Run:
+```bash
+grep -rn "PendingNotificationsService" src/ --include="*.php" | grep -v "src/Service/PendingNotificationsService.php"
+```
 
-Run: `grep -rn "PendingNotificationsService" src/ --include="*.php" | grep -v "src/Service/PendingNotificationsService.php"`
+Para cada caller, eliminar el `$roleName` y pasar `$roleId`.
 
-Para cada caller, pasar `$roleId` además del (o en lugar del) `$roleName`.
-
-- [ ] **Step 3: Verificar code style**
+- [ ] **Step 4: Verificar code style**
 
 Run: `composer cs-check`
 
-- [ ] **Step 4: Validación manual**
+- [ ] **Step 5: Validación manual**
 
-Login con varios roles; abrir el panel de notificaciones pendientes. Los conteos deben ser idénticos a los de antes del PR.
+Login con varios roles; abrir el panel de notificaciones pendientes. Conteos deben ser coherentes con los permisos configurados.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add src/Service/PendingNotificationsService.php $(git diff --name-only -- src/Controller)
-git commit -m "refactor(notifications): consumir getVisibleStatuses con roleId"
+git commit -m "refactor(notifications): firma SOLO roleId en PendingNotificationsService"
 ```
 
 ---
@@ -1148,32 +1012,18 @@ Run:
 ```bash
 grep -rn "getRoleVisibility\|getAdvanceRoleVisibility" src/ templates/
 ```
-Expected: SOLO las declaraciones en la interfaz y las 7 implementaciones (después del refactor de Task 3 nada más debería llamar a estos métodos). Si aparece algún caller no esperado, detenerse e investigar.
+
+Expected: SOLO las declaraciones en la interfaz y las 7 implementaciones (tras el refactor de Task 3 nadie llama estos métodos). Si aparece algún caller inesperado, detenerse e investigar antes de borrar.
 
 - [ ] **Step 2: Borrar de la interfaz**
 
-En `src/Service/Pipeline/Invoice/InvoicePipelineState.php`, localizar y borrar:
-```php
-    /**
-     * Roles que ven facturas en este estado en /invoices "Mis Facturas".
-     * @return array<int, string>
-     */
-    public function getRoleVisibility(): array;
-
-    /**
-     * Roles que ven anticipos en este estado en /advances "Mis Anticipos".
-     * @return array<int, string>
-     */
-    public function getAdvanceRoleVisibility(): array;
-```
-
-(Los textos exactos de docblocks pueden variar; borrar ambos métodos completos junto con su docblock.)
+En `src/Service/Pipeline/Invoice/InvoicePipelineState.php`, borrar las dos declaraciones (`public function getRoleVisibility(): array;` y `public function getAdvanceRoleVisibility(): array;`) junto con sus docblocks.
 
 - [ ] **Step 3: Borrar de cada implementación**
 
 Para cada uno de los 7 archivos en `src/Service/Pipeline/Invoice/State/`, borrar los métodos `getRoleVisibility()` y `getAdvanceRoleVisibility()` completos.
 
-Después de borrar, en cada archivo verificar:
+Tras borrar, en cada archivo:
 ```bash
 grep -c "RoleConstants" src/Service/Pipeline/Invoice/State/<Archivo>.php
 ```
@@ -1182,17 +1032,16 @@ grep -c "RoleConstants" src/Service/Pipeline/Invoice/State/<Archivo>.php
 - [ ] **Step 4: Verificar code style**
 
 Run: `composer cs-check`
-Expected: sin violaciones.
 
 - [ ] **Step 5: Validación manual de regresión**
 
-Login con cada rol y abrir su listado principal (`/invoices`, `/refunds`, etc.). Todos deben seguir funcionando como en el Task anterior.
+Login con cada rol con permisos configurados; abrir sus listados (`/invoices`, `/refunds`, etc.). Todo debe funcionar igual que en el task anterior.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add src/Service/Pipeline/Invoice/
-git commit -m "refactor(pipeline-state): eliminar getRoleVisibility/getAdvanceRoleVisibility de States"
+git commit -m "refactor(pipeline-state): eliminar getRoleVisibility/getAdvanceRoleVisibility de States e interfaz"
 ```
 
 ---
@@ -1206,25 +1055,26 @@ git commit -m "refactor(pipeline-state): eliminar getRoleVisibility/getAdvanceRo
 Run: `composer cs-check`
 Expected: sin violaciones.
 
-- [ ] **Step 2: Seed sembrado correctamente**
+- [ ] **Step 2: Configurar permisos manualmente para cada rol**
 
-Ejecutar en MySQL:
-```sql
-SELECT r.name, pp.pipeline, pp.step
-FROM pipeline_permissions pp
-JOIN roles r ON r.id = pp.role_id
-WHERE pp.can_operate = 1
-ORDER BY r.name, pp.pipeline, pp.step;
-```
+Levantar `php bin/cake server`. Login como Administrador. Para cada rol activo del sistema, abrir `/roles/edit/{id}` y marcar los checkboxes según la matriz operativa esperada. Como referencia inicial (basada en el comportamiento previo del sistema):
 
-Confirmar:
-- Administrador tiene filas en los 7 pipelines.
-- Contabilidad tiene `invoices.contabilidad`, `refunds.contabilidad`, etc.
-- Tesorería tiene los 3 steps tesoreros en cada pipeline relevante.
+| Rol | Pipeline `invoices` | `novelties` | `payment_schedulings` | `refunds` | `petty_cash` | `liquidation_docs` |
+|---|---|---|---|---|---|---|
+| Administrador | todos | todos | todos | todos | todos | todos |
+| Registro/Revisión | aprobacion | — | — | agrupacion | agrupacion | revision_firmas, gdp |
+| Contabilidad | contabilidad | contabilidad | — | contabilidad | contabilidad | contabilidad |
+| Tesorería | tesoreria, autorizacion_pago, verificacion_pago | tesoreria, autorizacion_pago, verificacion_pago | borrador, tesoreria, autorizacion_pago, verificacion_pago | tesoreria, autorizacion_pago, verificacion_pago | tesoreria, autorizacion_pago, verificacion_pago | tesoreria, autorizacion_pago, verificacion_pago |
+| Contador | autorizacion_pago, verificacion_pago | revision_firmas, autorizacion_pago, verificacion_pago | autorizacion_pago, verificacion_pago | autorizacion_pago, verificacion_pago | autorizacion_pago, verificacion_pago | autorizacion_pago, verificacion_pago |
+| Auxiliar de Personal | todos | aprobacion, rrhh, revision_firmas, gdp | — | todos | todos | todos |
+| Asistente de Personal | todos | aprobacion, rrhh, revision_firmas, gdp | — | todos | todos | todos |
+| Coordinador Admin y Financiero | todos | revision_firmas | — | todos | todos | todos |
+
+(Esta matriz refleja las matrices hardcodeadas previas. Es punto de partida; el negocio puede ajustar tras revisar.)
 
 - [ ] **Step 3: Listados por rol** (paridad con comportamiento previo)
 
-Levantar `php bin/cake server`. Para cada combinación, comparar el listado contra lo esperado:
+Para cada combinación, comparar el listado contra lo esperado:
 
 | Rol | URL | Esperado |
 |---|---|---|
@@ -1232,46 +1082,45 @@ Levantar `php bin/cake server`. Para cada combinación, comparar el listado cont
 | Tesorería | `/invoices` | `tesoreria`, `autorizacion_pago`, `verificacion_pago`; ningún anticipo |
 | Contador | `/invoices` | `autorizacion_pago`, `verificacion_pago`; ningún anticipo |
 | Registro/Revisión | `/invoices` | `aprobacion`; ningún anticipo |
-| Administrador | `/invoices` | Todas las activas (sin pagada/legalizada), incluye o no anticipos según comportamiento esperado — NOTA: con la nueva exclusión, Admin tampoco ve anticipos en `/invoices`. Si esto es problema, ver "Cambios de comportamiento aceptados" |
+| Administrador | `/invoices` | Activas sin `pagada`/`legalizada`/anticipos |
+| Cualquiera | `/invoices/all` | Todas las facturas excluyendo anticipos |
 | Contabilidad | `/refunds` | Solo `contabilidad` |
 | Tesorería | `/refunds` | `tesoreria`, `autorizacion_pago`, `verificacion_pago` |
 | Tesorería | `/petty-cash-records` | Steps tesoreros |
-| Tesorería | `/payment-schedulings` | Steps tesoreros (sin `pagada`) |
-| Auxiliar de Personal | `/advances` | Activos solamente |
+| Tesorería | `/payment-schedulings` | Steps tesoreros |
+| Auxiliar de Personal | `/advances` | Anticipos en steps activos |
 | Tesorería | `/novelty-liquidation-docs` | Steps tesoreros |
 | Contabilidad | `/employee-novelties` | Solo `contabilidad` |
 
 - [ ] **Step 4: Sidebar counters**
 
-Para cada rol del paso anterior, abrir el sidebar y verificar que los badges muestran los conteos correctos (deben coincidir con los listados).
+Para cada rol, abrir el sidebar y verificar que los badges muestran conteos coherentes con los listados.
 
 - [ ] **Step 5: Edición de permisos cambia visibilidad en vivo**
 
 - Login como Administrador → `/roles/edit/{id_de_Contabilidad}`.
-- Sección "Permisos de Pipeline" → bajo "Facturas", desmarcar el step `Contabilidad`.
-- Guardar.
-- Login como un usuario con rol Contabilidad → `/invoices` debe quedar vacío.
-- Volver como Administrador, re-marcar el checkbox, guardar.
-- Re-login como Contabilidad → `/invoices` vuelve a mostrar facturas en `contabilidad`.
+- Sección "Permisos de Pipeline" → bajo "Facturas", desmarcar el step `Contabilidad`. Guardar.
+- Login como un usuario con rol Contabilidad → `/invoices` queda vacío.
+- Volver como Administrador, re-marcar, guardar.
+- Re-login como Contabilidad → `/invoices` vuelve a mostrar facturas.
 
 - [ ] **Step 6: Rol nuevo sin permisos**
 
 - Login como Administrador → `/roles/add`.
-- Crear rol "Prueba SinPermisos" sin tocar la sección "Permisos de Pipeline" (todos los checkboxes desmarcados).
-- Crear un usuario con ese rol, login.
-- Verificar que `/invoices`, `/refunds`, `/petty-cash-records`, `/payment-schedulings`, `/novelty-liquidation-docs`, `/employee-novelties`, `/advances` están **todos vacíos** (lista vacía, no "ver todo").
+- Crear rol "Prueba SinPermisos" con todos los checkboxes desmarcados.
+- Crear usuario con ese rol, login.
+- Los 7 listados deben estar **todos vacíos** (lista vacía, no "ver todo").
 
 - [ ] **Step 7: Verificación visual de la UI de Roles/edit**
 
-Login como Admin, abrir `/roles/edit/{cualquier_id}`. Verificar que la sección "Permisos de Pipeline" muestra los 7 pipelines (Facturas, Novedades, Programación de pagos, Reintegros, Caja menor, Legalizaciones, Documentos de liquidación) y los checkboxes funcionan al guardar.
+Login como Admin, abrir `/roles/edit/{cualquier_id}`. La sección "Permisos de Pipeline" muestra los 7 pipelines (Facturas, Novedades, Programación de pagos, Reintegros, Caja menor, Legalizaciones, Documentos de liquidación) y los checkboxes funcionan al guardar.
 
 - [ ] **Step 8: Commit final si quedaron cambios sueltos**
 
 ```bash
 git status
 ```
-
-Si hay archivos modificados no commiteados (raro a estas alturas):
+Si hay archivos modificados no commiteados:
 ```bash
 git add -A
 git commit -m "chore: cleanup remanente de migracion de filtros de pipeline"
@@ -1289,6 +1138,7 @@ Expected: ~17 commits coherentes (uno por task), todos en español.
 
 ## Notas operativas
 
-- **Orden estricto**: Tasks 1 y 2 deben ir antes que cualquier otro Task. Task 17 (eliminar getRoleVisibility) debe ir DESPUÉS del Task 3 (que es el único que usaba esos métodos). Los demás Tasks (4-16) pueden alterarse en orden si conviene, siempre que los services se refactoricen antes que sus controllers correspondientes.
-- **Rollback**: si algo sale mal entre commits, `git revert <hash>` del último commit problemático y re-intentar. La migration de seed es idempotente, así que re-ejecutar no daña.
-- **Si un rol no aparece en la matriz del seed**: la migration loguea un warning vía `error_log` y continúa. Verificar después del seed (paso 2 del Task 18) si quedan roles sin filas: `SELECT name FROM roles WHERE id NOT IN (SELECT DISTINCT role_id FROM pipeline_permissions);`.
+- **Pre-requisito post-deploy**: el admin DEBE configurar manualmente los permisos en `/roles/edit/{id}` para cada rol antes de que los usuarios puedan ver listas. Sin configuración, todos los listados quedan vacíos. Coordinar el momento de la configuración con el deploy.
+- **Orden de tasks**: Tasks 1 y 2 (catálogo + helper) deben ir antes que los services y controllers. Task 17 (eliminar getRoleVisibility) debe ir DESPUÉS de Task 3 (único caller que se removió). El resto puede alterarse si conviene, siempre que cada service se refactorice antes que su(s) controller(s) asociado(s).
+- **Rollback**: si algo falla, `git revert <hash>` del commit problemático. Sin migration de seed no hay efecto en BD que revertir; solo código. Los datos que el admin haya configurado en `pipeline_permissions` se preservan.
+- **Cambio aceptado de scope**: tras el deploy, `/invoices/all`, `/invoices/rejected` y `/invoices/overdue` ya no muestran anticipos. Si esto resulta inaceptable para reportes existentes, revertir la exclusión en esos 3 endpoints específicos (mantenerla solo en `index`).
