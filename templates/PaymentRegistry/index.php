@@ -38,8 +38,8 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
     <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
     <div class="row g-2 align-items-end">
         <div class="col-md-2">
-            <label class="sgi-filter-label">Tipo</label>
-            <select name="type" class="form-select form-select-sm">
+            <label class="sgi-filter-label" for="filter-type">Tipo</label>
+            <select name="type" id="filter-type" class="form-select form-select-sm">
                 <option value="">Todos</option>
                 <option value="invoice"       <?= ($filters['type'] ?? '') === 'invoice'       ? 'selected' : '' ?>>Factura</option>
                 <option value="advance"       <?= ($filters['type'] ?? '') === 'advance'       ? 'selected' : '' ?>>Anticipo</option>
@@ -51,16 +51,16 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
             </select>
         </div>
         <div class="col-md-2">
-            <label class="sgi-filter-label">Estado</label>
-            <select name="authorized" class="form-select form-select-sm">
+            <label class="sgi-filter-label" for="filter-authorized">Estado</label>
+            <select name="authorized" id="filter-authorized" class="form-select form-select-sm">
                 <option value="">Todos</option>
                 <option value="yes" <?= ($filters['authorized'] ?? '') === 'yes' ? 'selected' : '' ?>>Autorizado</option>
                 <option value="no"  <?= ($filters['authorized'] ?? '') === 'no'  ? 'selected' : '' ?>>Pendiente</option>
             </select>
         </div>
         <div class="col-md-3">
-            <label class="sgi-filter-label">Entidad Bancaria</label>
-            <select name="banking_entity_id" class="form-select form-select-sm">
+            <label class="sgi-filter-label" for="filter-banking-entity">Entidad Bancaria</label>
+            <select name="banking_entity_id" id="filter-banking-entity" class="form-select form-select-sm">
                 <option value="">Todas</option>
                 <?php foreach ($bankingEntities as $beId => $beName): ?>
                 <option value="<?= $beId ?>" <?= ($filters['banking_entity_id'] ?? '') == $beId ? 'selected' : '' ?>><?= h($beName) ?></option>
@@ -68,13 +68,15 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
             </select>
         </div>
         <div class="col-md-2">
-            <label class="sgi-filter-label">Desde</label>
-            <input type="text" name="date_from" class="form-control form-control-sm flatpickr-date"
+            <label class="sgi-filter-label" for="filter-date-from">Desde</label>
+            <input type="text" name="date_from" id="filter-date-from"
+                   class="form-control form-control-sm flatpickr-date"
                    value="<?= h($filters['date_from'] ?? '') ?>">
         </div>
         <div class="col-md-2">
-            <label class="sgi-filter-label">Hasta</label>
-            <input type="text" name="date_to" class="form-control form-control-sm flatpickr-date"
+            <label class="sgi-filter-label" for="filter-date-to">Hasta</label>
+            <input type="text" name="date_to" id="filter-date-to"
+                   class="form-control form-control-sm flatpickr-date"
                    value="<?= h($filters['date_to'] ?? '') ?>">
         </div>
         <div class="col-md-1 d-flex gap-1">

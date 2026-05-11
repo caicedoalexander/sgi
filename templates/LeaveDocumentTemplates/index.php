@@ -31,12 +31,7 @@ $this->assign('title', 'Plantillas de Documento');
                 </tr>
             </thead>
             <tbody>
-                <?php if (empty($templates->toArray())): ?>
-                <tr>
-                    <td colspan="6" class="text-center text-muted py-4">No hay plantillas registradas.</td>
-                </tr>
-                <?php endif; ?>
-                <?php foreach ($templates as $template): ?>
+                <?php $rowCount = 0; foreach ($templates as $template): $rowCount++; ?>
                 <tr>
                     <td>
                         <div class="fw-medium"><?= h($template->name) ?></div>
@@ -85,6 +80,11 @@ $this->assign('title', 'Plantillas de Documento');
                     </td>
                 </tr>
                 <?php endforeach; ?>
+                <?php if ($rowCount === 0): ?>
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">No hay plantillas registradas.</td>
+                </tr>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>

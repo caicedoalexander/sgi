@@ -88,48 +88,54 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
         <div class="sgi-filters-section mt-2">
             <div class="row g-2">
                 <div class="col-md-3">
-                    <label class="sgi-filter-label">Proveedor</label>
+                    <label class="sgi-filter-label" for="filter-provider">Proveedor</label>
                     <?= $this->Form->select('provider_id', $providers, [
                         'empty' => 'Todos',
                         'class' => 'form-select form-select-sm',
                         'value' => $this->request->getQuery('provider_id', ''),
+                        'id'    => 'filter-provider',
                     ]) ?>
                 </div>
                 <div class="col-md-2">
-                    <label class="sgi-filter-label">Centro Op.</label>
+                    <label class="sgi-filter-label" for="filter-opcenter">Centro Op.</label>
                     <?= $this->Form->select('operation_center_id', $operationCenters, [
                         'empty' => 'Todos',
                         'class' => 'form-select form-select-sm',
                         'value' => $this->request->getQuery('operation_center_id', ''),
+                        'id'    => 'filter-opcenter',
                     ]) ?>
                 </div>
                 <div class="col-md-2">
-                    <label class="sgi-filter-label">Tipo Gasto</label>
+                    <label class="sgi-filter-label" for="filter-expense">Tipo Gasto</label>
                     <?= $this->Form->select('expense_type_id', $expenseTypes, [
                         'empty' => 'Todos',
                         'class' => 'form-select form-select-sm',
                         'value' => $this->request->getQuery('expense_type_id', ''),
+                        'id'    => 'filter-expense',
                     ]) ?>
                 </div>
                 <div class="col-md-2">
-                    <label class="sgi-filter-label">Estado</label>
+                    <label class="sgi-filter-label" for="filter-status">Estado</label>
                     <?= $this->Form->select('pipeline_status', $pipelineOptions, [
                         'empty' => 'Todos',
                         'class' => 'form-select form-select-sm',
                         'value' => $this->request->getQuery('pipeline_status', ''),
+                        'id'    => 'filter-status',
                     ]) ?>
                 </div>
                 <div class="col-md-3">
                     <div class="row g-2">
                         <div class="col-6">
-                            <label class="sgi-filter-label">Desde</label>
-                            <input type="text" name="date_from" class="form-control form-control-sm flatpickr-date"
+                            <label class="sgi-filter-label" for="filter-date-from">Desde</label>
+                            <input type="text" name="date_from" id="filter-date-from"
+                                   class="form-control form-control-sm flatpickr-date"
                                    value="<?= h($this->request->getQuery('date_from', '')) ?>"
                                    placeholder="Fecha desde">
                         </div>
                         <div class="col-6">
-                            <label class="sgi-filter-label">Hasta</label>
-                            <input type="text" name="date_to" class="form-control form-control-sm flatpickr-date"
+                            <label class="sgi-filter-label" for="filter-date-to">Hasta</label>
+                            <input type="text" name="date_to" id="filter-date-to"
+                                   class="form-control form-control-sm flatpickr-date"
                                    value="<?= h($this->request->getQuery('date_to', '')) ?>"
                                    placeholder="Fecha hasta">
                         </div>
@@ -156,7 +162,7 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($invoices as $invoice):
+                <?php $rowCount = 0; foreach ($invoices as $invoice): $rowCount++;
                     $ps = [
                         InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? 'Desconocido',
                         InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-dark',
@@ -265,7 +271,7 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                 </tr>
                 <?php endforeach; ?>
 
-                <?php if (empty($invoices->toArray())): ?>
+                <?php if ($rowCount === 0): ?>
                 <tr>
                     <td colspan="7">
                         <div class="sgi-doc-empty">

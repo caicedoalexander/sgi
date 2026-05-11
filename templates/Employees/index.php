@@ -59,23 +59,25 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
         <div class="sgi-filters-section mt-2">
             <div class="row g-2">
                 <div class="col-md-4">
-                    <label class="sgi-filter-label">Cargo</label>
+                    <label class="sgi-filter-label" for="filter-position">Cargo</label>
                     <?= $this->Form->select('position_id', $positions, [
                         'empty' => 'Todos',
                         'class' => 'form-select form-select-sm',
                         'value' => $this->request->getQuery('position_id', ''),
+                        'id'    => 'filter-position',
                     ]) ?>
                 </div>
                 <div class="col-md-4">
-                    <label class="sgi-filter-label">Centro de Operación</label>
+                    <label class="sgi-filter-label" for="filter-opcenter">Centro de Operación</label>
                     <?= $this->Form->select('operation_center_id', $operationCenters, [
                         'empty' => 'Todos',
                         'class' => 'form-select form-select-sm',
                         'value' => $this->request->getQuery('operation_center_id', ''),
+                        'id'    => 'filter-opcenter',
                     ]) ?>
                 </div>
                 <div class="col-md-4">
-                    <label class="sgi-filter-label">Estado</label>
+                    <label class="sgi-filter-label" for="filter-status">Estado</label>
                     <?= $this->Form->select('status', [
                         \App\Constants\EmployeeStatusConstants::ACTIVO   => 'Activo',
                         \App\Constants\EmployeeStatusConstants::RETIRADO => 'Retirado',
@@ -83,6 +85,7 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
                     ], [
                         'class' => 'form-select form-select-sm',
                         'value' => $this->request->getQuery('status') ?: \App\Constants\EmployeeStatusConstants::ACTIVO,
+                        'id'    => 'filter-status',
                     ]) ?>
                 </div>
             </div>

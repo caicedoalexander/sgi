@@ -61,31 +61,35 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
         <div class="sgi-filters-section mt-2">
             <div class="row g-2">
                 <div class="col-md-2">
-                    <label class="sgi-filter-label">Estado</label>
+                    <label class="sgi-filter-label" for="filter-status">Estado</label>
                     <?= $this->Form->select('status', $statusOptions, [
                         'empty' => 'Todos',
                         'class' => 'form-select form-select-sm',
                         'value' => $status,
+                        'id'    => 'filter-status',
                     ]) ?>
                 </div>
                 <div class="col-md-4">
-                    <label class="sgi-filter-label">Tipo de evento</label>
+                    <label class="sgi-filter-label" for="filter-event">Tipo de evento</label>
                     <?= $this->Form->select('event_type', $eventOptions, [
                         'empty' => 'Todos',
                         'class' => 'form-select form-select-sm',
                         'value' => $eventType,
+                        'id'    => 'filter-event',
                     ]) ?>
                 </div>
                 <div class="col-md-3">
                     <div class="row g-2">
                         <div class="col-6">
-                            <label class="sgi-filter-label">Desde</label>
-                            <input type="text" name="from" class="form-control form-control-sm flatpickr-date"
+                            <label class="sgi-filter-label" for="filter-from">Desde</label>
+                            <input type="text" name="from" id="filter-from"
+                                   class="form-control form-control-sm flatpickr-date"
                                    value="<?= h($from) ?>" placeholder="YYYY-MM-DD">
                         </div>
                         <div class="col-6">
-                            <label class="sgi-filter-label">Hasta</label>
-                            <input type="text" name="to" class="form-control form-control-sm flatpickr-date"
+                            <label class="sgi-filter-label" for="filter-to">Hasta</label>
+                            <input type="text" name="to" id="filter-to"
+                                   class="form-control form-control-sm flatpickr-date"
                                    value="<?= h($to) ?>" placeholder="YYYY-MM-DD">
                         </div>
                     </div>
