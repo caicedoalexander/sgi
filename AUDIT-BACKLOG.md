@@ -519,4 +519,4 @@ Tras MN-010 todos los Minores quedan cerrados; solo quedarían las 10 Sugerencia
 | `39752d0` | MN-016 (documentar contrato inline+ResizeObserver; falso positivo del audit) |
 | `9acafb1` | MN-014 (meta tags sgi-max-upload-* + comments cross-file; SG-008 sigue abierto) |
 | `6ea0dd2` | MN-002/003/004 (sección "Excepciones permitidas" en design.md + comments cross-file) |
-| _pendiente_ | MN-005 (inventario completo de 25 !important; comentarios inline a las 6 sin doc; header de flatpickr-overrides expandido) |
+| `40e5b1d` | MN-005 (inventario completo de 25 !important; comentarios inline a las 6 sin doc; header de flatpickr-overrides expandido) |
