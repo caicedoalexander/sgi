@@ -46,7 +46,6 @@
  * @var iterable $availableInvoices
  * @var iterable $operationCenters
  * @var array $bankingEntities
- * @var array $invoiceOptions
  * @var array $groupFilters
  */
 

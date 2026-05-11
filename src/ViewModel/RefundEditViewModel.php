@@ -28,8 +28,6 @@ final class RefundEditViewModel
     public readonly int $statusIndex;
     public readonly bool $showAccounting;
     public readonly bool $showTreasury;
-    /** @var array<int,string> id → label */
-    public readonly array $invoiceOptions;
     public readonly bool $canEditAccounting;
     public readonly bool $canEditTreasury;
     public readonly bool $canSave;
@@ -105,17 +103,6 @@ final class RefundEditViewModel
         $this->statusIndex   = $idx === false ? 0 : (int)$idx;
         $this->showAccounting = $this->statusIndex >= 1; // contabilidad+
         $this->showTreasury   = $this->statusIndex >= 2; // tesoreria+
-
-        // Opciones del dropdown "Agrupar factura".
-        $opts = [];
-        foreach ($availableInvoices as $inv) {
-            $opts[$inv->id] = ($inv->invoice_number ?? '#' . $inv->id)
-                . ' - ' . ($inv->provider->name ?? 'Sin proveedor')
-                . ' - ' . ($inv->operation_center->name ?? '')
-                . ' - $' . number_format((float)$inv->amount, 0, ',', '.')
-                . ' (' . ($inv->issue_date?->format('d/m/Y') ?? '') . ')';
-        }
-        $this->invoiceOptions = $opts;
 
         // Permisos de edición por estado.
         $this->canEditAccounting = $record->isContabilidad();

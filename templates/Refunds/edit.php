@@ -34,7 +34,6 @@ $readyForPaymentOptions = $viewModel->readyForPaymentOptions;
 $paymentStatusOptions   = $viewModel->paymentStatusOptions;
 $showAccounting         = $viewModel->showAccounting;
 $showTreasury           = $viewModel->showTreasury;
-$invoiceOptions         = $viewModel->invoiceOptions;
 $canEditAccounting      = $viewModel->canEditAccounting;
 $canEditTreasury        = $viewModel->canEditTreasury;
 $canSave                = $viewModel->canSave;
