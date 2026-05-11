@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **10 de los 12 Mayores** (incluyendo MJ-012), **1 Mayor parcial** (MJ-005 pasos 1-2-3 aplicados, **paso 4 pendiente**), **2 Minores** (MN-007, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → `a265c93`. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
+**Estado:** los **3 Críticos**, **10 de los 12 Mayores** (incluyendo MJ-012), **1 Mayor parcial** (MJ-005 pasos 1, 2, 3, 3b aplicados, **paso 4 pendiente**), **2 Minores** (MN-007, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → `2de2727`. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -16,35 +16,37 @@ Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templat
 
 ### MJ-005 — Performance frontend de CDNs (parcial — paso 4 pendiente)
 
-**Ubicación:** `templates/layout/default.php`, `templates/element/cdn_autonumeric.php`, `templates/Dashboard/index.php`.
+**Ubicación:** `templates/layout/default.php`, `templates/element/cdn_autonumeric.php`, `templates/element/cdn_select2.php`, `templates/Dashboard/index.php`.
 
-**Estado actual:** los 16 CDN tienen `integrity` + `crossorigin` (commit `6b12baa`). Pasos 1-2-3 aplicados:
+**Estado actual:** los 16 CDN tienen `integrity` + `crossorigin` (commit `6b12baa`). Pasos 1-2-3-3b aplicados:
 - **Pasos 1-2** (`e204fa6`): `preconnect`/`dns-prefetch` y `defer` a los scripts CDN. `dashboard-charts.js` envuelto en guard `DOMContentLoaded`.
-- **Paso 3** (`a265c93`): ApexCharts ahora se carga solo en `Dashboard/index.php`. AutoNumeric solo en los 10 templates con `.currency-input` vía nuevo element `cdn_autonumeric.php`.
+- **Paso 3** (`a265c93`): ApexCharts ahora se carga solo en `Dashboard/index.php`. AutoNumeric solo en los 10 templates con `.currency-input` vía `element/cdn_autonumeric.php`.
+- **Paso 3b** (`2de2727`): Select2 CSS + jQuery + Select2 JS + i18n/es solo en los 13 templates que usan `.select2-enable` o `.select2` vía `element/cdn_select2.php`. Total ahorrado en vistas que no los necesitan: ≈260 KB por request.
 
 **Problema restante:**
-- Select2, jQuery, AutoNumeric (parcial) y Bootstrap siguen en CDN externo en runtime (problema para staging/dev sin red, CSP estricto).
-- **Select2 + jQuery** todavía cargan en TODAS las vistas (no movidas en el paso 3 por estar entrelazados — Select2 depende de jQuery, y se usan en 9+ templates).
+- Bootstrap (CSS+JS), Bootstrap Icons, Flatpickr (CSS+JS+locale) siguen en CDN externo en runtime. Son necesarios en todas las vistas autenticadas, pero podrían self-hostearse para eliminar dependencia de internet.
+- FullCalendar (EmployeeNovelties) y SortableJS (Employees) ya están en templates específicos, solo restaría self-host.
 
 **Cómo resolver:**
 
 1. ~~**Quick win**: `defer` a los `<script>` en `default.php`.~~ ✅ Aplicado.
 2. ~~**Preconnect**.~~ ✅ Aplicado.
 3. ~~**Cargar ApexCharts/AutoNumeric bajo demanda**.~~ ✅ Aplicado.
-
-3.b **Select2 + jQuery bajo demanda** (1-2 horas) — **PENDIENTE**:
-   - Crear `templates/element/cdn_select2.php` que cargue jQuery + select2 (CSS + JS + i18n/es).
-   - Incluirlo desde los 9 templates con `.select2-enable`: `Advances/add`, `EmployeeNovelties/add`, `Invoices/add+edit`, `PaymentSchedulings/edit` (verificar), `PettyCashRecords/add`, `Refunds/add+edit`, y elements `payment_section`, `invoice_edit/modify_approvers_modal`.
-   - **Atención al CSS:** `select2.min.css` también está en `<head>` de `default.php` y debe moverse al element o seguir en default (CSS no bloquea parsing si se sirve con `media="all"`).
-   - **`sgi-common.js`** ya guarda con `typeof $ !== 'undefined' && $.fn && $.fn.select2`, así que no falla en páginas sin Select2.
+3.b ~~**Select2 + jQuery bajo demanda**.~~ ✅ Aplicado.
 
 4. **Self-host** (1 día, depende del entorno) — **PENDIENTE**:
    - Descargar a `webroot/vendor/{bootstrap,bootstrap-icons,flatpickr,select2,jquery,autonumeric,apexcharts,fullcalendar,sortablejs}/<version>/`.
-   - Reemplazar URLs en `default.php` + `element/cdn_autonumeric.php` + `element/cdn_select2.php` (cuando exista) + `Dashboard/index.php` + 3 templates puntuales (`EmployeeNovelties/index`, `EmployeeNovelties/active`, `Employees/index`).
+   - Reemplazar URLs en `default.php` (Bootstrap CSS+JS, BS Icons, Flatpickr CSS+JS+locale) + `element/cdn_autonumeric.php` + `element/cdn_select2.php` + `Dashboard/index.php` (ApexCharts) + 3 templates puntuales (`EmployeeNovelties/index`, `EmployeeNovelties/active`, `Employees/index`).
    - Remover los hashes SRI (no aplican a same-origin) o mantener para detectar corrupción local.
    - Beneficio: elimina dependencia de internet, mejor para staging/dev sin red, CSP estricto.
 
-**Validación manual del progreso actual:** abrir DevTools → Network en `/dashboard` (NO debe pedir ApexCharts ya), en `/invoices` listado (NO debe pedir AutoNumeric ya), y en `/invoices/edit/<id>` (debe pedir AutoNumeric). Charts del dashboard renderizan, AutoNumeric formatea los montos.
+**Validación manual del progreso actual:** abrir DevTools → Network en:
+- `/dashboard` → carga `apexcharts.min.js`, NO carga AutoNumeric ni Select2/jQuery.
+- `/invoices` (listado) → NO carga AutoNumeric, NO carga Select2 ni jQuery (gran ahorro).
+- `/invoices/edit/<id>` → carga AutoNumeric + Select2 + jQuery.
+- `/employees` (listado) → NO carga ninguno de los 3.
+
+Charts renderizan, AutoNumeric formatea montos, Select2 dropdowns funcionan con búsqueda y locale es.
 
 ---
 
@@ -563,17 +565,17 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟠 MJ-005 (paso 3b + paso 4) | Select2/jQuery lazy + self-host | 1 día |
+| 🟠 MJ-005 (paso 4) | Self-host vendors | 1 día |
 | 🟠 MJ-010 | CSS limpieza + split | 1-2 días |
 | 🟡 MN-001 a MN-006, MN-008 a MN-011, MN-013 a MN-016 | Design system polish + code smells + a11y | 1-1.5 días |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
-**Total estimado:** ~2.5-3.5 días de trabajo para dejar todo cerrado, repartibles entre sprints.
+**Total estimado:** ~2-3 días de trabajo para dejar todo cerrado, repartibles entre sprints.
 
 **Próximo paso recomendado:**
-1. **MJ-005 paso 3b** (1-2 horas) — crear `element/cdn_select2.php` y mover Select2 + jQuery fuera de `default.php`. Patrón ya validado con AutoNumeric.
-2. **MN-009** (medio día) — split de `Invoices/edit.php` (1098 LOC) en elements por sección. Habilitado ahora que MJ-012 dejó la lógica en el ViewModel.
-3. **MN-006** (1-2 horas) — promover hex literales a variables CSS (`#212529`, `#CD6A15`, `#dee2e6`, `#495057`). Ya hay base con las nuevas clases `.sgi-stat-label` etc.
+1. **MN-009** (medio día) — split de `Invoices/edit.php` (1098 LOC) en elements por sección. Habilitado ahora que MJ-012 dejó la lógica en el ViewModel.
+2. **MN-006** (1-2 horas) — promover hex literales a variables CSS (`#212529`, `#CD6A15`, `#dee2e6`, `#495057`). Ya hay base con las nuevas clases `.sgi-stat-label` etc.
+3. **MJ-005 paso 4** (1 día) — self-host de vendors. Mayor inversión pero elimina dependencia runtime de jsDelivr (importante para staging/dev sin red, CSP estricto).
 
 ## Historial de aplicación
 
@@ -589,3 +591,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `39b889f` | MJ-012 (Invoices/edit pre-render → InvoiceEditViewModel) |
 | `2fbd197` | Refactor derivado: uniformación de los 5 edit templates restantes + helper `PaymentOptions` |
 | `a265c93` | MN-007 (micro-caps → classes), MJ-005 paso 3 (ApexCharts/AutoNumeric lazy) |
+| `2de2727` | MJ-005 paso 3b (Select2 + jQuery lazy vía cdn_select2.php) |
