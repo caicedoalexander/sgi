@@ -30,6 +30,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <link href="<?= $this->Url->build('/vendor/bootstrap/bootstrap.min.css') ?>" rel="stylesheet">
     <link href="<?= $this->Url->build('/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>" rel="stylesheet">
     <link rel="stylesheet" href="<?= $this->Url->build('/vendor/flatpickr/flatpickr.min.css') ?>">
+    <?= $this->Html->css('sgi-flatpickr-overrides') ?>
     <!-- Select2 CSS se carga bajo demanda via element/cdn_select2.php -->
     <?= $this->Html->css('styles') ?>
     <?php if ($this->request->getAttribute('csrfToken')) : ?>

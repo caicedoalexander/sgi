@@ -21,6 +21,7 @@ $this->Html->css(
     $this->Url->build('/vendor/select2/select2.min.css'),
     ['block' => 'css'],
 );
+$this->Html->css('sgi-select2-overrides', ['block' => 'css']);
 $this->Html->script(
     $this->Url->build('/vendor/jquery/jquery.min.js'),
     ['block' => 'script', 'defer' => true],
