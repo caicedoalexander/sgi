@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 9 Sugerencias discrecionales (SG-001 a SG-007, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-006** (FullCalendar assets centralizados), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 8 Sugerencias discrecionales (SG-001 a SG-005, SG-007, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -400,24 +400,13 @@ $viewModel->idempotencyKey = \Cake\Utility\Text::uuid();
 
 ---
 
-### SG-006 — FullCalendar duplicado
+### ~~SG-006~~ ✅ — FullCalendar assets centralizados  (RESUELTO)
 
-**Ubicación:** `templates/EmployeeNovelties/index.php:176-177`, `templates/EmployeeNovelties/active.php:57-58`
+**Aplicado:** las 4 líneas de assets de FullCalendar (JS bundle + locale español + CSS overrides + sgi-calendar.js wrapper) se extrajeron a `templates/element/fullcalendar_assets.php`. Los 2 templates que las consumían (`EmployeeNovelties/index.php` y `EmployeeNovelties/active.php`) ahora hacen `<?= $this->element('fullcalendar_assets') ?>` en una sola línea.
 
-**Problema:** FullCalendar v6 cargado en 2 templates.
+**Diferencia con el snippet original del audit:** el snippet asumía CDN URLs de jsdelivr. La realidad post-MJ-005 paso 4 es que los assets están self-hosted en `/vendor/fullcalendar/` — el element los referencia desde allí. El audit `sgi-fullcalendar-overrides.css` ya no aplica (fue consolidado en `styles.css` por commit `3014cb3`).
 
-**Resolver:** extraer a un element:
-```php
-// templates/element/fullcalendar_assets.php
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js" integrity="..." crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/es.global.min.js" integrity="..." crossorigin="anonymous"></script>
-<?= $this->Html->css('sgi-calendar') ?>
-<script src="<?= $this->Url->build('/js/sgi-calendar.js') ?>"></script>
-```
-Y consumirlo:
-```php
-<?= $this->element('fullcalendar_assets') ?>
-```
+**Si en el futuro se agregan más vistas con calendario,** consumir el element ya existente en lugar de copiar las 4 líneas.
 
 ---
 
@@ -509,14 +498,14 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟢 SG-001 a SG-007, SG-009, SG-010 | Mejoras incrementales (SG-008 cerrada) | A discreción |
+| 🟢 SG-001 a SG-005, SG-007, SG-009, SG-010 | Mejoras incrementales (SG-006, SG-008 cerradas) | A discreción |
 
 **Estado:** todos los Críticos (3), Mayores (12), Minores (16) y la primera Sugerencia (SG-008) están cerrados. Quedan 9 Sugerencias discrecionales.
 
-**Próximo paso recomendado:** las 9 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
+**Próximo paso recomendado:** las 8 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
 - **SG-001** — Preload de Inter font + WOFF2 (mejora real de performance percibido).
-- **SG-006** — Extraer FullCalendar a `element/fullcalendar_assets.php` (cierra duplicación entre EmployeeNovelties/index y EmployeeNovelties/active).
 - **SG-010** — Decisión de producto sobre i18n (`es_CO` único vs preparar `__()`).
+- **SG-007** — Verificar focus-visible en `.sgi-input-group` para a11y de teclado.
 
 ## Historial de aplicación
 
@@ -547,3 +536,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `40e5b1d` | MN-005 (inventario completo de 25 !important; comentarios inline a las 6 sin doc; header de flatpickr-overrides expandido) |
 | `8e35bf0` | MN-010 (split de default.php 662→183 LOC en 4 elements sidebar/{financiero,rrhh,catalogos,administracion}.php) |
 | `00a5f62` | SG-008 (UploadConstants nuevo + consolidación en 2 services + meta + 7 templates; 0 duplicados residuales) |
+| _pendiente_ | SG-006 (element/fullcalendar_assets.php; bloque de 4 líneas centralizado entre EmployeeNovelties/{index,active}) |
