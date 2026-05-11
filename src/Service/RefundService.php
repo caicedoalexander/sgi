@@ -7,7 +7,6 @@ use App\Constants\Domain\Refund\PipelineStatus as RefundPipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
-use App\Constants\RoleConstants;
 use App\Model\Entity\Refund;
 use App\Service\Dto\BulkPaymentView;
 use App\Service\Interface\HistoryServiceInterface;
@@ -19,34 +18,6 @@ use DateTimeInterface;
 
 class RefundService
 {
-    // Active refund statuses (excludes pagado — terminal para "Mis Registros").
-    private const ACTIVE_STATUSES = [
-        RefundConstants::STATUS_AGRUPACION,
-        RefundConstants::STATUS_CONTABILIDAD,
-        RefundConstants::STATUS_TESORERIA,
-        RefundConstants::STATUS_AUTORIZACION_PAGO,
-        RefundConstants::STATUS_VERIFICACION_PAGO,
-    ];
-
-    // Which refund statuses each role sees in "Mis Registros".
-    private const ROLE_VISIBLE_STATUSES = [
-        RoleConstants::REGISTRO_REVISION => [RefundConstants::STATUS_AGRUPACION],
-        RoleConstants::CONTABILIDAD => [RefundConstants::STATUS_CONTABILIDAD],
-        RoleConstants::TESORERIA => [
-            RefundConstants::STATUS_TESORERIA,
-            RefundConstants::STATUS_AUTORIZACION_PAGO,
-            RefundConstants::STATUS_VERIFICACION_PAGO,
-        ],
-        RoleConstants::CONTADOR => [
-            RefundConstants::STATUS_AUTORIZACION_PAGO,
-            RefundConstants::STATUS_VERIFICACION_PAGO,
-        ],
-        RoleConstants::AUXILIAR_PERSONAL => self::ACTIVE_STATUSES,
-        RoleConstants::ASISTENTE_PERSONAL => self::ACTIVE_STATUSES,
-        RoleConstants::COORDINADOR_ADMIN => self::ACTIVE_STATUSES,
-        RoleConstants::ADMIN => self::ACTIVE_STATUSES,
-    ];
-
     private GroupedInvoiceService $grouped;
     private RefundHistoryService $refundHistory;
     private RefundPipelineStateRegistry $stateRegistry;
@@ -79,9 +50,13 @@ class RefundService
     /**
      * Get refund statuses visible to a role in "Mis Registros".
      */
-    public function getVisibleStatuses(string $roleName): array
+    public function getVisibleStatuses(int $roleId): array
     {
-        return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+        return $this->pipelineAuth->getOperableSteps(
+            $roleId,
+            '',
+            PipelineStepConstants::PIPELINE_REFUNDS,
+        );
     }
 
     /**
