@@ -27,8 +27,8 @@ final class NoveltyLiquidationDocEditViewModel
         public readonly User $currentUser,
         public readonly bool $skipsGdp,
         public readonly array $bankingEntities,
-        public readonly bool $isTesoreriaEdit,
-        public readonly bool $isContadorAutPago,
+        public readonly bool $canRegisterPayment,
+        public readonly bool $canAuthorizePayment,
         public readonly bool $canConfirmPayment,
     ) {
     }

@@ -16,8 +16,8 @@ $liquidationDocument = $viewModel->liquidationDocument;
 $currentUser = $viewModel->currentUser;
 $skipsGdp = $viewModel->skipsGdp;
 $bankingEntities = $viewModel->bankingEntities;
-$isTesoreriaEdit = $viewModel->isTesoreriaEdit;
-$isContadorAutPago = $viewModel->isContadorAutPago;
+$canRegisterPayment = $viewModel->canRegisterPayment;
+$canAuthorizePayment = $viewModel->canAuthorizePayment;
 $canConfirmPayment = $viewModel->canConfirmPayment;
 
 $this->assign('title', 'Editar Liquidación: ' . h($doc->liquidation_number));
@@ -373,8 +373,8 @@ $noveltyCount = count($doc->employee_novelties);
             'addPaymentUrl'      => ['controller' => 'LiquidationDocPayments', 'action' => 'addPayment', $doc->id],
             'authorizeUrlFn'     => fn($pId) => ['controller' => 'LiquidationDocPayments', 'action' => 'authorizePayment', $doc->id, $pId],
             'rejectUrlFn'        => fn($pId) => ['controller' => 'LiquidationDocPayments', 'action' => 'rejectPayment', $doc->id, $pId],
-            'canRegisterPayment' => ($isTesoreriaEdit ?? false) && $currentStatus === \App\Constants\NoveltyConstants::STATUS_TESORERIA,
-            'canAuthorize'       => $isContadorAutPago ?? false,
+            'canRegisterPayment' => ($canRegisterPayment ?? false) && $currentStatus === \App\Constants\NoveltyConstants::STATUS_TESORERIA,
+            'canAuthorize'       => $canAuthorizePayment ?? false,
             'canDelete'          => false,
             'rejectMessage'      => '¿Rechazar este pago? El documento volverá a Tesorería.',
         ]) ?>

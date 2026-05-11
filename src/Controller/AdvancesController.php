@@ -269,6 +269,7 @@ class AdvancesController extends AppController
             $roleName,
             (int)$user->id,
             $this->actionPolicy,
+            (int)$user->role_id,
         );
         $this->set($vm->build());
         $this->set('actionPolicy', $this->actionPolicy);

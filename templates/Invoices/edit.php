@@ -819,14 +819,13 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                       \App\Constants\InvoiceConstants::STATUS_PAGADA,
                   ], true)): ?>
         <?php
-            $isTesoreriaEdit = ($viewModel->roleName === \App\Constants\RoleConstants::TESORERIA || $viewModel->roleName === \App\Constants\RoleConstants::ADMIN)
-                && $viewModel->currentStatus === \App\Constants\InvoiceConstants::STATUS_TESORERIA;
-            $paymentMode = $isTesoreriaEdit ? 'tesoreria_register' : 'view';
+            $canRegisterPayment = $viewModel->canRegisterPayment;
+            $paymentMode = $canRegisterPayment ? 'tesoreria_register' : 'view';
         ?>
         <?= $this->element('payment_section', $sharedPaymentParams + [
-            'canRegisterPayment' => $isTesoreriaEdit,
+            'canRegisterPayment' => $canRegisterPayment,
             'canAuthorize'       => false,
-            'canDelete'          => $isTesoreriaEdit,
+            'canDelete'          => $canRegisterPayment,
             'mode'               => $paymentMode,
         ]) ?>
         <?php endif; ?>
@@ -838,13 +837,12 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                       \App\Constants\InvoiceConstants::STATUS_PAGADA,
                   ], true)): ?>
         <?php
-            $isContadorAutPago = ($viewModel->roleName === \App\Constants\RoleConstants::CONTADOR || $viewModel->roleName === \App\Constants\RoleConstants::ADMIN)
-                && $viewModel->currentStatus === \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO;
-            $paymentMode = $isContadorAutPago ? 'authorize' : 'view';
+            $canAuthorizePayment = $viewModel->canAuthorizePayment;
+            $paymentMode = $canAuthorizePayment ? 'authorize' : 'view';
         ?>
         <?= $this->element('payment_section', $sharedPaymentParams + [
             'canRegisterPayment' => false,
-            'canAuthorize'       => $isContadorAutPago,
+            'canAuthorize'       => $canAuthorizePayment,
             'canDelete'          => false,
             'mode'               => $paymentMode,
         ]) ?>

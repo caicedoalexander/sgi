@@ -78,6 +78,11 @@ final class AdvanceLegalizationActionPolicy
         return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canRegisterRefund();
     }
 
+    public function canAuthorizeRefundPayment(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    {
+        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canAuthorizeRefundPayment();
+    }
+
     public function canConfirmRefundPayment(AdvanceLegalization $leg, int $roleId, string $roleName): bool
     {
         return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canConfirmRefundPayment();

@@ -5,7 +5,6 @@
  * @var \App\Model\Entity\User|null $currentUser
  */
 use App\Constants\PaymentSchedulingConstants;
-use App\Constants\RoleConstants;
 use App\View\Presentation\PaymentSchedulingPresentation;
 
 $this->assign('title', 'Programación ' . h($viewModel->record->code));

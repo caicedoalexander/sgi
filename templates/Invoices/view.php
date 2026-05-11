@@ -52,11 +52,6 @@ $dianClass = match($invoice->dian_validation ?? '') {
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
-        <?php
-        $isAdmin = $roleName === \App\Constants\RoleConstants::ADMIN;
-        $canShowEdit = !empty($userPermissions['invoices']['can_edit'])
-            && ($isAdmin || empty($isLocked));
-        ?>
         <?php if ($canShowEdit): ?>
         <?= $this->Html->link(
             '<i class="bi bi-pencil me-1"></i>Editar',
@@ -67,7 +62,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
     </div>
 </div>
 
-<?php if (!empty($isLockedByPettyCash) && !$isAdmin): ?>
+<?php if (!empty($showPettyCashLock)): ?>
 <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
     <i class="bi bi-lock-fill fs-5"></i>
     <div>
@@ -82,7 +77,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
 <?php endif; ?>
 
 
-<?php if (!empty($isLockedByScheduling) && !$isAdmin): ?>
+<?php if (!empty($showSchedulingLock)): ?>
 <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
     <i class="bi bi-lock-fill fs-5"></i>
     <div>

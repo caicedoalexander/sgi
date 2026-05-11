@@ -13,6 +13,7 @@ use App\ViewModel\InvoiceEditViewModel;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 use App\Controller\Trait\ObservationControllerTrait;
+use App\Service\AuthorizationService;
 use App\Service\EmailLogService;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
@@ -198,13 +199,21 @@ class InvoicesController extends AppController
         $pipelineStatuses = $this->pipeline->getPipelineStatusesFor($invoice->document_type);
         $pipelineLabels = InvoiceConstants::STATUS_LABELS;
 
+        // Bypass de Admin sobre locks de integridad (no es un permiso de pipeline,
+        // es comportamiento legítimo del rol Administrador frente a bloqueos).
+        $isAdmin = $roleName === AuthorizationService::ROLE_ADMIN;
+        $userPermissions = $this->viewBuilder()->getVar('userPermissions') ?? [];
+        $canShowEdit = !empty($userPermissions['invoices']['can_edit']) && ($isAdmin || !$isLocked);
+        $showPettyCashLock = $isLockedByPettyCash && !$isAdmin;
+        $showSchedulingLock = $isLockedByScheduling && !$isAdmin;
+
         $documentsByStatus = [];
         foreach ($invoice->invoice_documents as $doc) {
             $documentsByStatus[$doc->pipeline_status][] = $doc;
         }
 
         $fieldLabels = InvoiceHistoryService::FIELD_LABELS;
-        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
+        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'canShowEdit', 'showPettyCashLock', 'showSchedulingLock', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
     }
 
     public function add()
@@ -346,6 +355,18 @@ class InvoicesController extends AppController
             PipelineStepConstants::PIPELINE_INVOICES,
             InvoiceConstants::STATUS_VERIFICACION_PAGO,
         );
+        $canRegisterPayment = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_INVOICES,
+            InvoiceConstants::STATUS_TESORERIA,
+        ) && $currentStatus === InvoiceConstants::STATUS_TESORERIA;
+        $canAuthorizePayment = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_INVOICES,
+            InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+        ) && $currentStatus === InvoiceConstants::STATUS_AUTORIZACION_PAGO;
         $hasAnyActiveApprovals = $this->approvalService->hasAnyActiveApprovals($invoice->id);
         $isApprovalEditableState = $currentStatus === InvoiceConstants::STATUS_APROBACION && !empty($editableFields);
         $dropdowns = $this->_getFormDropdowns();
@@ -360,6 +381,8 @@ class InvoicesController extends AppController
             canDeleteDocuments: $this->_checkPermission('invoices', 'delete'),
             canRegress: $canRegress,
             canConfirmPayment: $canConfirmPayment,
+            canRegisterPayment: $canRegisterPayment,
+            canAuthorizePayment: $canAuthorizePayment,
             isRejected: $isRejected,
             isApproved: $invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION
                 && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED,

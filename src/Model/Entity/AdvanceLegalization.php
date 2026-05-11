@@ -141,6 +141,13 @@ class AdvanceLegalization extends Entity
         return ($this->status ?? '') === AdvanceConstants::STATUS_VERIFICACION_PAGO;
     }
 
+    /** @return bool true cuando el rol con permiso puede autorizar el reintegro registrado. */
+    public function canAuthorizeRefundPayment(): bool
+    {
+        return $this->status === AdvanceConstants::STATUS_AUTORIZACION_PAGO
+            && $this->case_type === AdvanceConstants::CASE_SOBRANTE;
+    }
+
     /**
      * @return bool true cuando Tesorería puede confirmar la ejecución efectiva
      *              del reintegro autorizado (`verificacion_pago` → `legalizada`).

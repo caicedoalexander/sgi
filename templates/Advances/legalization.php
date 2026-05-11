@@ -388,10 +388,6 @@ $docIconColor = fn(?string $mime): string => match (true) {
             </form>
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_TESORERIA && $leg->case_type === AdvanceConstants::CASE_SOBRANTE): ?>
-        <?php
-        $isTesoreria = ($roleName ?? '') === \App\Constants\RoleConstants::TESORERIA
-            || ($roleName ?? '') === \App\Constants\RoleConstants::ADMIN;
-        ?>
         <?= $this->element('payment_section', [
             'payments' => [],
             'bankingEntities' => $bankingEntities,
@@ -399,7 +395,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
             'paymentStatus' => null,
             'totalAmount' => (float)$leg->surplus_amount,
             'mode' => 'tesoreria_register',
-            'canRegisterPayment' => $isTesoreria,
+            'canRegisterPayment' => $canRegisterRefund,
             'canAuthorize' => false,
             'canDelete' => false,
             'forceFullAmount' => true,
@@ -408,10 +404,6 @@ $docIconColor = fn(?string $mime): string => match (true) {
             'sectionIcon' => 'bi-arrow-up-circle',
         ]) ?>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_AUTORIZACION_PAGO && $leg->case_type === AdvanceConstants::CASE_SOBRANTE): ?>
-        <?php
-        $isContador = ($roleName ?? '') === \App\Constants\RoleConstants::CONTADOR
-            || ($roleName ?? '') === \App\Constants\RoleConstants::ADMIN;
-        ?>
         <?= $this->element('payment_section', [
             'payments' => $surplusPayment ? [$surplusPayment] : [],
             'bankingEntities' => $bankingEntities,
@@ -422,7 +414,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
             'totalAmount' => (float)$leg->surplus_amount,
             'mode' => 'authorize',
             'canRegisterPayment' => false,
-            'canAuthorize' => $isContador,
+            'canAuthorize' => $canAuthorizeRefundPayment,
             'canDelete' => false,
             'rejectMessage' => '¿Rechazar el reintegro? La legalización volverá a Tesorería para nuevo registro.',
             'sectionTitle' => 'Autorización de Reintegro',

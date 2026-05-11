@@ -245,9 +245,9 @@ class NoveltyLiquidationDocsController extends AppController
             PipelineStepConstants::PIPELINE_NOVELTIES,
             NoveltyConstants::STATUS_VERIFICACION_PAGO,
         );
-        $isTesoreriaEdit = $canOpTesoreria
+        $canRegisterPayment = $canOpTesoreria
             && $doc->pipeline_status === NoveltyConstants::STATUS_TESORERIA;
-        $isContadorAutPago = $canOpAutPago
+        $canAuthorizePayment = $canOpAutPago
             && $doc->pipeline_status === NoveltyConstants::STATUS_AUTORIZACION_PAGO;
 
         return new NoveltyLiquidationDocEditViewModel(
@@ -260,8 +260,8 @@ class NoveltyLiquidationDocsController extends AppController
             currentUser: $user,
             skipsGdp: (bool)$skipsGdp,
             bankingEntities: $bankingEntities,
-            isTesoreriaEdit: $isTesoreriaEdit,
-            isContadorAutPago: $isContadorAutPago,
+            canRegisterPayment: $canRegisterPayment,
+            canAuthorizePayment: $canAuthorizePayment,
             canConfirmPayment: $canConfirmPayment,
         );
     }

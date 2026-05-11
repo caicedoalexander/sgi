@@ -30,6 +30,7 @@ final readonly class AdvanceLegalizationViewModel
         public string $roleName,
         public int $userId = 0,
         public ?AdvanceLegalizationActionPolicy $actionPolicy = null,
+        public int $roleId = 0,
     ) {
     }
 
@@ -85,8 +86,14 @@ final readonly class AdvanceLegalizationViewModel
             );
         }
 
-        $canConfirmRefundPayment = $this->actionPolicy !== null && $this->userId > 0
-            ? $this->actionPolicy->canConfirmRefundPayment($this->leg, $this->userId, $this->roleName)
+        $canRegisterRefund = $this->actionPolicy !== null && $this->roleId > 0
+            ? $this->actionPolicy->canRegisterRefund($this->leg, $this->roleId, $this->roleName)
+            : false;
+        $canAuthorizeRefundPayment = $this->actionPolicy !== null && $this->roleId > 0
+            ? $this->actionPolicy->canAuthorizeRefundPayment($this->leg, $this->roleId, $this->roleName)
+            : false;
+        $canConfirmRefundPayment = $this->actionPolicy !== null && $this->roleId > 0
+            ? $this->actionPolicy->canConfirmRefundPayment($this->leg, $this->roleId, $this->roleName)
             : false;
 
         return [
@@ -101,6 +108,8 @@ final readonly class AdvanceLegalizationViewModel
             'bankingEntities' => $bankingEntities,
             'surplusPayment' => $surplusPayment,
             'roleName' => $this->roleName,
+            'canRegisterRefund' => $canRegisterRefund,
+            'canAuthorizeRefundPayment' => $canAuthorizeRefundPayment,
             'canConfirmRefundPayment' => $canConfirmRefundPayment,
         ];
     }
