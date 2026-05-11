@@ -70,12 +70,13 @@ class InvoicesController extends AppController
     public function index()
     {
         $roleName = $this->_getRoleName();
-        $visibleStatuses = $this->pipeline->getVisibleStatuses($roleName);
-        $userId = (int)$this->_getCurrentUser()->id;
+        $user = $this->_getCurrentUser();
+        $roleId = (int)$user->role_id;
+        $userId = (int)$user->id;
+        $visibleStatuses = $this->pipeline->getVisibleStatuses($roleId);
 
-        $conditions = !empty($visibleStatuses)
-            ? ['Invoices.pipeline_status IN' => $visibleStatuses]
-            : [];
+        $conditions = $this->_visibleStatusConditions('Invoices.pipeline_status', $visibleStatuses);
+        $conditions['Invoices.document_type !='] = InvoiceConstants::DOCTYPE_ANTICIPO;
 
         // Excluir facturas de Caja Menor que ya están en contabilidad o posterior
         $conditions[] = [
@@ -99,7 +100,10 @@ class InvoicesController extends AppController
         $userId = (int)$this->_getCurrentUser()->id;
 
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $invoices = $this->paginate($this->_buildInvoiceQuery([], $userId));
+        $invoices = $this->paginate($this->_buildInvoiceQuery(
+            ['Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO],
+            $userId,
+        ));
         $visibleStatuses = [];
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
@@ -116,6 +120,7 @@ class InvoicesController extends AppController
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
         $invoices = $this->paginate($this->_buildInvoiceQuery([
             'Invoices.area_approval' => InvoiceConstants::APPROVAL_REJECTED,
+            'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
         ], $userId));
         $visibleStatuses = [];
 
@@ -137,6 +142,7 @@ class InvoicesController extends AppController
                 InvoiceConstants::STATUS_PAGADA,
                 InvoiceConstants::STATUS_LEGALIZADA,
             ],
+            'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
         ], $userId));
         $visibleStatuses = [];
 
