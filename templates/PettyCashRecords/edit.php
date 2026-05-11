@@ -57,6 +57,7 @@ $statusBadge = $statusBadgeMap;
 $btnLabel    = $submitButtonLabel;
 $btnClass    = $submitButtonClass;
 ?>
+<?= $this->element('cdn_autonumeric') ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Editar Caja Menor</span>

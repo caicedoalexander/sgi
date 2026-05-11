@@ -3249,6 +3249,36 @@ input.currency-input:focus {
     font-weight: 600;
 }
 
+/* Label de stat-card del Dashboard (Total, Aprobación, Tesorería, etc.).
+   Variante con tracking más cerrado que .sgi-micro-caps y color algo más oscuro. */
+.sgi-stat-label {
+    font-size: .63rem;
+    letter-spacing: .08em;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Eyebrow/section-title de cards de chart, paneles y th de tablas micro.
+   Tracking medio entre .sgi-stat-label y .sgi-micro-caps. */
+.sgi-section-eyebrow {
+    font-size: .63rem;
+    letter-spacing: .12em;
+    color: #999;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Título de bloque del Dashboard (Facturación, RRHH, Catálogos,
+   Administración). Variante .65rem / color más oscuro que eyebrow. */
+.sgi-block-title {
+    font-size: .65rem;
+    letter-spacing: .12em;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
 /* Línea horizontal flexible que crece para llenar el espacio sobrante en
    un contenedor flex (ej. junto a una etiqueta de sección). */
 .sgi-flex-divider {

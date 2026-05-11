@@ -10,6 +10,7 @@
  */
 $this->assign('title', 'Nuevo Anticipo');
 ?>
+<?= $this->element('cdn_autonumeric') ?>
 
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">

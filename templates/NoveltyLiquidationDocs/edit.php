@@ -36,6 +36,7 @@ $showUploadSection = $viewModel->showUploadSection;
 $totalDocs         = $viewModel->totalDocs;
 $noveltyCount      = $viewModel->noveltyCount;
 ?>
+<?= $this->element('cdn_autonumeric') ?>
 
 <!-- Page header -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">

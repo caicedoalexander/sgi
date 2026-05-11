@@ -9,6 +9,7 @@ $this->assign('title', 'Nueva Factura');
 
 $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstants::DOCUMENT_TYPES);
 ?>
+<?= $this->element('cdn_autonumeric') ?>
 
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">

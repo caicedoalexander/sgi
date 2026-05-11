@@ -639,8 +639,8 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <script defer src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" integrity="sha384-d3UHjPdzJkZuk5H3qKYMLRyWLAQBJbby2yr2Q58hXXtAGF8RSNO9jpLDlKKPv5v3" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js" integrity="sha384-UeeDJLxU9E9sJVeeJ8aoFWAfW2uB0Hggm59b4wtvZl8A1FnbmWnAaH4DlLdlnHKD" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js" integrity="sha384-+xRXcGmExqvIzpl6UBfbrBkXyyxIDFnxQtfyoOiXSx0/ri19w6ifNhXjPLMxLwXM" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js" integrity="sha384-KNaFJ+EK516RuHsoycvreec5pD7BkTKJEkjMrVSQWu9KGTl7En4dhIDv7t1DFJ+g" crossorigin="anonymous"></script>
+    <!-- AutoNumeric y ApexCharts se cargan bajo demanda desde templates específicos
+         (ver element/cdn_autonumeric.php y templates/Dashboard/index.php). -->
     <?= $this->Html->script('sgi-dialogs', ['block' => false]) ?>
     <?= $this->Html->script('sgi-common', ['block' => false]) ?>
     <?= $this->fetch('script') ?>

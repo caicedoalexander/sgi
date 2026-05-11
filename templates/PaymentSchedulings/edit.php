@@ -19,6 +19,7 @@ $isTesoreria = $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_
 $isPagada = $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_PAGADA;
 $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
 ?>
+<?= $this->element('cdn_autonumeric') ?>
 
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">

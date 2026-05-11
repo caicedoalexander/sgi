@@ -43,6 +43,7 @@ $btnLabel               = $viewModel->submitButtonLabel;
 $btnClass               = $viewModel->submitButtonClass;
 $invoiceCount           = $viewModel->invoiceCount;
 ?>
+<?= $this->element('cdn_autonumeric') ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Editar Reintegro</span>

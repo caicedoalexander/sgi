@@ -8,6 +8,7 @@
  */
 $this->assign('title', 'Nuevo Empleado');
 ?>
+<?= $this->element('cdn_autonumeric') ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nuevo Empleado</span>
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>

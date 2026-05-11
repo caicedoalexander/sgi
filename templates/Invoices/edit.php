@@ -43,6 +43,8 @@ $expenseTypesArr = is_array($viewModel->expenseTypes)
     </div>
 <?php endif; ?>
 
+<?= $this->element('cdn_autonumeric') ?>
+
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title"><?= $isAdvance ? 'Editar Anticipo' : 'Editar Factura' ?></span>
