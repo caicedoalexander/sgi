@@ -60,16 +60,14 @@ class NoveltyLiquidationDocsController extends AppController
     public function index()
     {
         $user = $this->Authentication->getIdentity()->getOriginalData();
-        $roleName = $this->_getUserRoleName($user);
-        $visibleStatuses = $this->pipelineService->getVisibleLiquidationStatuses($roleName);
+        $roleId = (int)$user->role_id;
+        $visibleStatuses = $this->pipelineService->getVisibleLiquidationStatuses($roleId);
 
         $query = $this->NoveltyLiquidationDocs->find()
             ->contain(['PerformedByUsers', 'EmployeeNovelties'])
             ->orderBy(['NoveltyLiquidationDocs.created' => 'DESC']);
 
-        if (!empty($visibleStatuses)) {
-            $query->where(['NoveltyLiquidationDocs.pipeline_status IN' => $visibleStatuses]);
-        }
+        $query->where($this->_visibleStatusConditions('NoveltyLiquidationDocs.pipeline_status', $visibleStatuses));
 
         $statusFilter = $this->request->getQuery('pipeline_status');
         if ($statusFilter) {
