@@ -5,7 +5,9 @@ namespace App\ViewModel;
 
 use App\Constants\RefundConstants;
 use App\Model\Entity\Refund;
+use App\View\Presentation\RefundPresentation;
 use App\ViewModel\Support\PaymentOptions;
+use App\ViewModel\Support\SubmitButton;
 
 /**
  * Datos pre-calculados que el template `templates/Refunds/edit.php` necesita.
@@ -80,16 +82,9 @@ final class RefundEditViewModel
         $this->pageTitle    = 'Editar Reintegro ' . ($record->code ?? ('#' . $record->id));
         $this->statusLabels = RefundConstants::STATUS_LABELS;
 
-        // Badges específicos del header del edit (NO consolidar con
-        // RefundPresentation::STATUS_BADGES — los colores son distintos
-        // y reflejan el énfasis visual del formulario de edición).
-        $this->statusBadgeMap = [
-            'agrupacion'        => 'bg-info text-dark',
-            'contabilidad'      => 'bg-primary',
-            'tesoreria'         => 'bg-warning text-dark',
-            'autorizacion_pago' => 'bg-secondary',
-            'pagada'            => 'bg-success',
-        ];
+        // Badges del header del edit viven en RefundPresentation::EDIT_HEADER_BADGES.
+        // Distintos a STATUS_BADGES (énfasis visual del contexto edit) — audit CR-203.
+        $this->statusBadgeMap = RefundPresentation::EDIT_HEADER_BADGES;
         $this->currentStatusBadge = [
             $this->statusLabels[$currentStatus]  ?? 'Desconocido',
             $this->statusBadgeMap[$currentStatus] ?? 'bg-dark',
@@ -114,11 +109,9 @@ final class RefundEditViewModel
         $this->canAdvance        = $nextStatus !== null;
         $this->submitButtonClass = 'btn btn-primary';
         if ($this->canAdvance && empty($advanceErrors) && $nextStatus !== null) {
-            $nextLabel = $this->statusLabels[$nextStatus] ?? $nextStatus;
-            $this->submitButtonLabel = '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a: '
-                . htmlspecialchars($nextLabel, ENT_QUOTES, 'UTF-8');
+            $this->submitButtonLabel = SubmitButton::forAdvance($this->statusLabels[$nextStatus] ?? $nextStatus);
         } else {
-            $this->submitButtonLabel = '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
+            $this->submitButtonLabel = SubmitButton::forSave();
         }
     }
 }

@@ -5,7 +5,9 @@ namespace App\ViewModel;
 
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
+use App\View\Presentation\InvoicePresentation;
 use App\ViewModel\Support\PaymentOptions;
+use App\ViewModel\Support\SubmitButton;
 
 /**
  * Datos inmutables de vista para InvoicesController::edit().
@@ -28,8 +30,6 @@ final class InvoiceEditViewModel
     public readonly bool $isAdvance;
     public readonly string $pageTitle;
 
-    /** @var array<string,array{0:string,1:string}> status → [label, bootstrapBadgeClass] */
-    public readonly array $pipelineBadgeMap;
     /** @var array{0:string,1:string} Pareja [label, class] para el currentStatus. */
     public readonly array $currentStatusBadge;
 
@@ -114,19 +114,12 @@ final class InvoiceEditViewModel
         $this->paymentStatusOptions   = PaymentOptions::paymentStatus();
 
         // ── Badge del estado actual del pipeline ─────────────────────────
-        // Estos badges son específicos del header del edit (distintos a los
-        // del index — ver InvoicePresentation::STATUS_BADGES). No consolidar
-        // sin alinear con producto.
-        $this->pipelineBadgeMap = [
-            'aprobacion'        => ['Aprobación',            'bg-info text-dark'],
-            'contabilidad'      => ['Contabilidad',          'bg-primary'],
-            'tesoreria'         => ['Tesorería',             'bg-warning text-dark'],
-            'autorizacion_pago' => ['Autorización de pago',  'bg-info'],
-            'verificacion_pago' => ['Verificación de pago',  'bg-warning text-dark'],
-            'pagada'            => ['Pagada',                'bg-success'],
+        // Los badges del header del edit viven en InvoicePresentation::EDIT_HEADER_BADGES.
+        // Son distintos a STATUS_BADGES (énfasis visual del contexto edit) — audit CR-203.
+        $this->currentStatusBadge = [
+            $pipelineLabels[$currentStatus] ?? 'Desconocido',
+            InvoicePresentation::EDIT_HEADER_BADGES[$currentStatus] ?? 'bg-dark',
         ];
-        $this->currentStatusBadge = $this->pipelineBadgeMap[$currentStatus]
-            ?? ['Desconocido', 'bg-dark'];
 
         // ── Render order de las secciones del formulario ─────────────────
         $this->sectionFieldMap = [
@@ -173,11 +166,9 @@ final class InvoiceEditViewModel
         // ── Botón de submit ──────────────────────────────────────────────
         $this->submitButtonClass = 'btn btn-primary';
         if (!$isRejected && $canAdvance && empty($advanceErrors) && $nextStatus !== null) {
-            $nextLabel = $pipelineLabels[$nextStatus] ?? $nextStatus;
-            $this->submitButtonLabel = '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a: '
-                . htmlspecialchars($nextLabel, ENT_QUOTES, 'UTF-8');
+            $this->submitButtonLabel = SubmitButton::forAdvance($pipelineLabels[$nextStatus] ?? $nextStatus);
         } else {
-            $this->submitButtonLabel = '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
+            $this->submitButtonLabel = SubmitButton::forSave();
         }
     }
 

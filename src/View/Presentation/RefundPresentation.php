@@ -20,6 +20,18 @@ final class RefundPresentation
         RefundConstants::STATUS_PAGADA            => 'bg-success',
     ];
 
+    /**
+     * Badges del header del formulario de edición. Distintos a STATUS_BADGES
+     * (énfasis visual del contexto edit). NO consolidar — audit CR-203.
+     */
+    public const EDIT_HEADER_BADGES = [
+        RefundConstants::STATUS_AGRUPACION        => 'bg-info text-dark',
+        RefundConstants::STATUS_CONTABILIDAD      => 'bg-primary',
+        RefundConstants::STATUS_TESORERIA         => 'bg-warning text-dark',
+        RefundConstants::STATUS_AUTORIZACION_PAGO => 'bg-secondary',
+        RefundConstants::STATUS_PAGADA            => 'bg-success',
+    ];
+
     public const STATUS_ICONS = [
         RefundConstants::STATUS_AGRUPACION        => 'bi-collection',
         RefundConstants::STATUS_CONTABILIDAD      => 'bi-calculator',

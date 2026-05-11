@@ -5,7 +5,9 @@ namespace App\ViewModel;
 
 use App\Constants\PettyCashConstants;
 use App\Model\Entity\PettyCashRecord;
+use App\View\Presentation\PettyCashPresentation;
 use App\ViewModel\Support\PaymentOptions;
+use App\ViewModel\Support\SubmitButton;
 
 /**
  * Datos inmutables de vista para PettyCashRecordsController::edit().
@@ -66,15 +68,9 @@ final class PettyCashEditViewModel
         $this->pageTitle    = 'Editar Caja Menor ' . ($record->code ?? ('#' . $record->id));
         $this->statusLabels = PettyCashConstants::STATUS_LABELS;
 
-        // Badges específicos del header del edit (NO consolidar con
-        // PettyCashPresentation::STATUS_BADGES; ver Refunds y Invoices).
-        $this->statusBadgeMap = [
-            'agrupacion'        => 'bg-info text-dark',
-            'contabilidad'      => 'bg-primary',
-            'tesoreria'         => 'bg-warning text-dark',
-            'autorizacion_pago' => 'bg-info text-dark',
-            'pagada'            => 'bg-success',
-        ];
+        // Badges del header del edit viven en PettyCashPresentation::EDIT_HEADER_BADGES.
+        // Distintos a STATUS_BADGES (énfasis visual del contexto edit) — audit CR-203.
+        $this->statusBadgeMap = PettyCashPresentation::EDIT_HEADER_BADGES;
         $this->currentStatusBadge = [
             $this->statusLabels[$currentStatus]  ?? 'Desconocido',
             $this->statusBadgeMap[$currentStatus] ?? 'bg-dark',
@@ -99,11 +95,9 @@ final class PettyCashEditViewModel
         $this->canAdvance        = $nextStatus !== null;
         $this->submitButtonClass = 'btn btn-primary';
         if ($this->canAdvance && empty($advanceErrors) && $nextStatus !== null) {
-            $nextLabel = $this->statusLabels[$nextStatus] ?? $nextStatus;
-            $this->submitButtonLabel = '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a: '
-                . htmlspecialchars($nextLabel, ENT_QUOTES, 'UTF-8');
+            $this->submitButtonLabel = SubmitButton::forAdvance($this->statusLabels[$nextStatus] ?? $nextStatus);
         } else {
-            $this->submitButtonLabel = '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
+            $this->submitButtonLabel = SubmitButton::forSave();
         }
     }
 }

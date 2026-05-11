@@ -20,6 +20,18 @@ final class PettyCashPresentation
         PettyCashConstants::STATUS_PAGADA            => 'bg-success',
     ];
 
+    /**
+     * Badges del header del formulario de edición. Distintos a STATUS_BADGES
+     * (énfasis visual del contexto edit). NO consolidar — audit CR-203.
+     */
+    public const EDIT_HEADER_BADGES = [
+        PettyCashConstants::STATUS_AGRUPACION        => 'bg-info text-dark',
+        PettyCashConstants::STATUS_CONTABILIDAD      => 'bg-primary',
+        PettyCashConstants::STATUS_TESORERIA         => 'bg-warning text-dark',
+        PettyCashConstants::STATUS_AUTORIZACION_PAGO => 'bg-info text-dark',
+        PettyCashConstants::STATUS_PAGADA            => 'bg-success',
+    ];
+
     public const STATUS_ICONS = [
         PettyCashConstants::STATUS_AGRUPACION        => 'bi-collection',
         PettyCashConstants::STATUS_CONTABILIDAD      => 'bi-calculator',

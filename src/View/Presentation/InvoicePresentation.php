@@ -24,6 +24,21 @@ final class InvoicePresentation
         InvoiceConstants::STATUS_LEGALIZADA        => 'bg-success',
     ];
 
+    /**
+     * Badges del header del formulario de edición. Distintos a STATUS_BADGES
+     * (énfasis visual más fuerte en el contexto del edit, donde el badge es
+     * el ancla del workflow). NO consolidar con STATUS_BADGES sin alinear con
+     * producto — audit CR-203.
+     */
+    public const EDIT_HEADER_BADGES = [
+        InvoiceConstants::STATUS_APROBACION        => 'bg-info text-dark',
+        InvoiceConstants::STATUS_CONTABILIDAD      => 'bg-primary',
+        InvoiceConstants::STATUS_TESORERIA         => 'bg-warning text-dark',
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
+        InvoiceConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
+        InvoiceConstants::STATUS_PAGADA            => 'bg-success',
+    ];
+
     public const STATUS_ICONS = [
         InvoiceConstants::STATUS_APROBACION        => 'bi-check-circle',
         InvoiceConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
