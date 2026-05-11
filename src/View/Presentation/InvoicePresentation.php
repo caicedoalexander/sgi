@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace App\View\Presentation;
 
 use App\Constants\InvoiceConstants;
+use App\Model\Entity\Invoice;
+use DateTimeImmutable;
+use DateTimeInterface;
 
 /**
  * Configuración de presentación (badges Bootstrap, iconos) para el pipeline
@@ -30,4 +33,37 @@ final class InvoicePresentation
         InvoiceConstants::STATUS_PAGADA            => 'bi-cash-coin',
         InvoiceConstants::STATUS_LEGALIZADA        => 'bi-cash-coin',
     ];
+
+    /**
+     * Construye el DTO de fila para Invoices/index.
+     * Encapsula todas las derivaciones de estado que antes vivían inline en el
+     * template (MJ-003 del audit 2026-05-11).
+     */
+    public static function forRow(Invoice $invoice, ?DateTimeInterface $today = null): InvoiceRowView
+    {
+        $today        = $today ?? new DateTimeImmutable('today');
+        $status       = $invoice->pipeline_status ?? '';
+        $isRejected   = ($invoice->area_approval === InvoiceConstants::APPROVAL_REJECTED);
+        $isApproved   = ($status === InvoiceConstants::STATUS_APROBACION
+                         && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED);
+        $isPartialPay = ($status === InvoiceConstants::STATUS_TESORERIA
+                         && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL);
+        $isPaid       = ($status === InvoiceConstants::STATUS_PAGADA);
+        $readyForPay  = (!empty($invoice->ready_for_payment) && $invoice->ready_for_payment !== 'No');
+        $isOverdue    = $invoice->due_date !== null
+                        && !$isPaid
+                        && !$isRejected
+                        && $invoice->due_date < $today;
+
+        return new InvoiceRowView(
+            statusLabel:      InvoiceConstants::STATUS_LABELS[$status] ?? 'Desconocido',
+            statusBadgeClass: self::STATUS_BADGES[$status] ?? 'bg-dark',
+            isRejected:       $isRejected,
+            isApproved:       $isApproved,
+            isPartialPay:     $isPartialPay,
+            isPaid:           $isPaid,
+            isReadyForPay:    $readyForPay,
+            isOverdue:        $isOverdue,
+        );
+    }
 }

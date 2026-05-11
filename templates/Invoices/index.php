@@ -162,18 +162,10 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                 </tr>
             </thead>
             <tbody>
-                <?php $rowCount = 0; foreach ($invoices as $invoice): $rowCount++;
-                    $ps = [
-                        InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? 'Desconocido',
-                        InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-dark',
-                    ];
-                    $isRejected     = ($invoice->area_approval === InvoiceConstants::APPROVAL_REJECTED);
-                    $isApproved     = ($invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION && $invoice->area_approval === InvoiceConstants::APPROVAL_APPROVED);
-                    $isPartialPay   = ($invoice->pipeline_status === InvoiceConstants::STATUS_TESORERIA && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL);
-                    $isPaid         = ($invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA);
-                    $readyForPay    = (!empty($invoice->ready_for_payment) && $invoice->ready_for_payment !== 'No');
+                <?php $rowCount = 0; $today = new \DateTimeImmutable('today'); foreach ($invoices as $invoice): $rowCount++;
+                    $row = InvoicePresentation::forRow($invoice, $today);
                 ?>
-                <tr class="clickable-row<?= $isRejected ? ' table-danger' : '' ?>"
+                <tr class="clickable-row<?= $row->isRejected ? ' table-danger' : '' ?>"
                     data-href="<?= $this->Url->build(['action' => $isAllView ? 'view' : 'edit', $invoice->id]) ?>">
 
                     <!-- Número de factura + tipo -->
@@ -206,15 +198,10 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
 
                     <!-- Fecha de vencimiento -->
                     <td style="white-space:nowrap;">
-                        <?php
-                        $dueDate = $invoice->due_date;
-                        $today   = new \DateTime('today');
-                        $overdue = $dueDate && !$isPaid && !$isRejected && $dueDate < $today;
-                        ?>
-                        <span style="font-size:.8125rem;<?= $overdue ? 'color:#dc3545;font-weight:600;' : 'color:#555;' ?>">
-                            <?= $dueDate?->format('d/m/Y') ?: '—' ?>
+                        <span style="font-size:.8125rem;<?= $row->isOverdue ? 'color:#dc3545;font-weight:600;' : 'color:#555;' ?>">
+                            <?= $invoice->due_date?->format('d/m/Y') ?: '—' ?>
                         </span>
-                        <?php if ($overdue): ?>
+                        <?php if ($row->isOverdue): ?>
                             <i class="bi bi-exclamation-circle-fill text-danger ms-1" style="font-size:.7rem;"
                                title="Vencida"></i>
                         <?php endif; ?>
@@ -228,11 +215,11 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                     <!-- Estado pipeline + badges secundarios -->
                     <td>
                         <div class="d-flex flex-wrap align-items-center gap-1">
-                            <?php if ($isRejected): ?>
-                                <span class="badge bg-danger"><?= $ps[0] ?></span>
+                            <?php if ($row->isRejected): ?>
+                                <span class="badge bg-danger"><?= h($row->statusLabel) ?></span>
                                 <span class="badge bg-danger">Rechazada</span>
                             <?php else: ?>
-                                <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
+                                <span class="badge <?= h($row->statusBadgeClass) ?>"><?= h($row->statusLabel) ?></span>
                                 <?php if (isset($approvalSummaries[$invoice->id]) && $approvalSummaries[$invoice->id]['total'] > 0):
                                     $s = $approvalSummaries[$invoice->id];
                                 ?>
@@ -243,14 +230,14 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                                     <?php else: ?>
                                         <span class="badge bg-secondary"><?= $s['approved'] ?>/<?= $s['total'] ?> aprobados</span>
                                     <?php endif; ?>
-                                <?php elseif ($isApproved): ?>
+                                <?php elseif ($row->isApproved): ?>
                                     <span class="badge bg-success">Aprobada</span>
                                 <?php endif; ?>
-                                <?php if ($isPartialPay): ?>
+                                <?php if ($row->isPartialPay): ?>
                                     <span class="badge bg-warning text-dark">Pago Parcial</span>
                                 <?php endif; ?>
-                                <?php if ($readyForPay): ?>
-                                    <span class="badge <?= SharedPresentation::READY_FOR_PAYMENT_BADGES[$invoice->ready_for_payment] ?? 'bg-secondary' ?>"><?= h($invoice->ready_for_payment) ?></span>
+                                <?php if ($row->isReadyForPay): ?>
+                                    <span class="badge <?= h(SharedPresentation::READY_FOR_PAYMENT_BADGES[$invoice->ready_for_payment] ?? 'bg-secondary') ?>"><?= h($invoice->ready_for_payment) ?></span>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
