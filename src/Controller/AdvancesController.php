@@ -74,8 +74,8 @@ class AdvancesController extends AppController
     public function index(): void
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        $visibleStatuses = $this->pipelineService->getVisibleAdvanceStatuses($roleName);
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        $visibleStatuses = $this->pipelineService->getVisibleStatuses($roleId);
 
         $query = $invoicesTable->find()
             ->where(['Invoices.document_type' => InvoiceConstants::DOCTYPE_ANTICIPO])
@@ -87,9 +87,7 @@ class AdvancesController extends AppController
             ])
             ->orderBy(['Invoices.created' => 'DESC']);
 
-        if (!empty($visibleStatuses)) {
-            $query->where(['Invoices.pipeline_status IN' => $visibleStatuses]);
-        }
+        $query->where($this->_visibleStatusConditions('Invoices.pipeline_status', $visibleStatuses));
 
         $advances = $this->paginate($query);
 
