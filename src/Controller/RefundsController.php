@@ -25,6 +25,25 @@ class RefundsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Acciones del pipeline de reintegros autorizadas por `pipeline_permissions`
+     * (rol×paso). El gate CRUD del módulo `refunds` no aplica — cada endpoint
+     * valida internamente vía `RefundService`/`RefundPaymentService` o el
+     * helper `_documentGate`, que consulta `PipelineAuthorizationService`.
+     *
+     * @var array<int, string>
+     */
+    protected array $pipelineActions = [
+        'advanceStatus',
+        'regressStatus',
+        'registerPayment',
+        'authorizePayment',
+        'confirmPayment',
+        'rejectPayment',
+        'uploadDocument',
+        'deleteDocument',
+    ];
+
     private RefundService $refundService;
     private RefundPaymentService $paymentService;
     private PipelineAuthorizationService $pipelineAuth;

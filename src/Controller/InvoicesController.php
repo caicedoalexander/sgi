@@ -37,6 +37,19 @@ class InvoicesController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Acciones del pipeline de facturas autorizadas por `pipeline_permissions`
+     * (rol×paso). El gate CRUD del módulo `invoices` no aplica — cada endpoint
+     * valida internamente vía `InvoicePipelineService::canAdvance/canRegress`,
+     * que consulta `PipelineAuthorizationService`.
+     *
+     * @var array<int, string>
+     */
+    protected array $pipelineActions = [
+        'advanceStatus',
+        'regressStatus',
+    ];
+
     private InvoicePipelineService $pipeline;
 
     private InvoiceFilterService $filterService;

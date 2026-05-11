@@ -10,6 +10,23 @@ use App\Service\PipelineAuthorizationService;
 
 class InvoicePaymentsController extends AppController
 {
+    /**
+     * Todas las acciones de este controlador operan pasos del pipeline de
+     * facturas (Tesorería/Autorización de pago/Verificación de pago) y validan
+     * internamente vía `PipelineAuthorizationService::canOperate`. Saltan el
+     * gate CRUD del módulo `invoices`.
+     *
+     * @var array<int, string>
+     */
+    protected array $pipelineActions = [
+        'addPayment',
+        'editPayment',
+        'authorizePayment',
+        'confirmPayment',
+        'rejectPayment',
+        'deletePayment',
+    ];
+
     private InvoicePaymentService $paymentService;
     private PipelineAuthorizationService $pipelineAuth;
 

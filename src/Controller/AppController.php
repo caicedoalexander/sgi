@@ -58,6 +58,20 @@ class AppController extends Controller
     /**
      * Map controller names to module keys used in permissions table.
      */
+    /**
+     * Acciones que son operaciones de pipeline-step. Cada controlador con flujo
+     * de pipeline puede sobreescribir esta lista para indicar qué acciones se
+     * autorizan exclusivamente por `pipeline_permissions` (rol×paso) y NO por
+     * el CRUD del módulo. El control de acceso fino lo hace el `actionPolicy`
+     * del controlador; aquí solo se desacopla del chequeo CRUD obligatorio.
+     *
+     * Las acciones de entrada (view/index) y de mutación CRUD pura (add/edit/
+     * delete) siguen pasando por el chequeo del módulo.
+     *
+     * @var array<int, string>
+     */
+    protected array $pipelineActions = [];
+
     protected array $controllerModuleMap = [
         'Invoices' => 'invoices',
         'Providers' => 'providers',
@@ -171,6 +185,16 @@ class AppController extends Controller
         // o employee_novelties.can_edit según entity_type). Saltarse el check de
         // módulo aquí para no bloquear a usuarios no-admin desde el panel inline.
         if ($controllerName === 'EmailLogs' && $action === 'retry') {
+            return;
+        }
+
+        // Acciones de pipeline-step: el control fino vive en el `actionPolicy`
+        // del controlador (consulta `pipeline_permissions`). Aquí se evita el
+        // doble gate del CRUD del módulo — si el rol tiene la pipeline-permission
+        // del paso correspondiente puede operarlo aunque no tenga can_edit del
+        // módulo. Si tampoco tiene la pipeline-permission, el propio controlador
+        // responde con su Flash de denegación.
+        if (in_array($action, $this->pipelineActions, true)) {
             return;
         }
 

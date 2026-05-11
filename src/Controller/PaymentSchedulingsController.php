@@ -23,6 +23,22 @@ class PaymentSchedulingsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Acciones del pipeline de programación de pagos autorizadas por
+     * `pipeline_permissions` (rol×paso). El gate CRUD del módulo
+     * `payment_schedulings` no aplica — cada endpoint valida internamente vía
+     * `PaymentSchedulingService` o el chequeo explícito en el controlador,
+     * que consulta `PipelineAuthorizationService`.
+     *
+     * @var array<int, string>
+     */
+    protected array $pipelineActions = [
+        'advance',
+        'reject',
+        'regressStatus',
+        'confirmPayment',
+    ];
+
     private PaymentSchedulingService $schedulingService;
 
     private PaymentSchedulingDocumentService $documentService;
