@@ -36,10 +36,10 @@ if ($currentIndex === false) {
             $icon = $icons[$s] ?? 'bi-circle';
 
             if ($rejectedHere) {
-                $borderColor = '#dc3545';
-                $bgColor     = '#dc3545';
+                $borderColor = 'var(--danger-color)';
+                $bgColor     = 'var(--danger-color)';
                 $iconColor   = '#fff';
-                $labelColor  = '#dc3545';
+                $labelColor  = 'var(--danger-color)';
                 $labelWeight = '700';
             } elseif ($isPast) {
                 $borderColor = 'var(--primary-color)';
@@ -93,7 +93,7 @@ if ($currentIndex === false) {
             </div>
         </div>
         <?php if ($i < count($statuses) - 1): ?>
-        <div style="flex:1;height:2px;margin:0 .75rem;background:<?= $isPast ? ($isRejected ? '#dc3545' : 'var(--primary-color)') : '#e0e0e0' ?>;transition:background .3s ease;"></div>
+        <div style="flex:1;height:2px;margin:0 .75rem;background:<?= $isPast ? ($isRejected ? 'var(--danger-color)' : 'var(--primary-color)') : '#e0e0e0' ?>;transition:background .3s ease;"></div>
         <?php endif; ?>
         <?php endforeach; ?>
     </div>

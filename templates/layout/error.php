@@ -62,7 +62,7 @@
             transition: background-color .15s ease;
         }
         .sgi-error-action:hover {
-            background-color: #3a8752;
+            background-color: var(--primary-color-hover);
             color: #fff;
         }
         .sgi-error-footer {

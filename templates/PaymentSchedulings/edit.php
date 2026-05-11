@@ -82,7 +82,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
         <div class="d-flex align-items-center justify-content-between">
             <?php foreach (PaymentSchedulingConstants::PIPELINE_STATUSES as $i => $status): ?>
             <?php

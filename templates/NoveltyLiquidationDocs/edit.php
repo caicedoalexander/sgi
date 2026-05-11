@@ -100,7 +100,7 @@ $noveltyCount      = $viewModel->noveltyCount;
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
         <?= $this->element('pipeline_progress', [
             'pipelineStatuses' => $effectiveStatuses,
             'pipelineLabels'   => $statusLabels,
@@ -482,7 +482,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
         foreach ($documentsByStatus as $status => $docs):
         ?>
         <?php if ($multipleStatuses): ?>
-        <div style="padding:.3rem .875rem;background:#f8f9fa;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
+        <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
             <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
             <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>

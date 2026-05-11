@@ -16,7 +16,7 @@ $actionLabel = $action === 'approve' ? 'aprobada' : 'rechazada';
                 La solicitud ha sido <strong><?= $actionLabel ?></strong> exitosamente.
             </p>
         <?php else: ?>
-            <i class="bi bi-exclamation-circle" style="font-size:3rem;color:#dc3545;" aria-hidden="true"></i>
+            <i class="bi bi-exclamation-circle" style="font-size:3rem;color:var(--danger-color);" aria-hidden="true"></i>
             <h4 class="mt-3" style="font-weight:700;color:#333;">Error</h4>
             <p style="color:#777;font-size:.9rem;">
                 No se pudo procesar la acción. El enlace puede haber expirado.

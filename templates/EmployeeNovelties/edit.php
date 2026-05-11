@@ -56,7 +56,7 @@ $totalDocs          = $viewModel->totalDocs;
 
 <!-- Grouped novelty alert -->
 <?php if ($novelty->isGrouped()): ?>
-<div class="alert alert-info d-flex align-items-center gap-2 mb-4" style="border-left:3px solid #0dcaf0;">
+<div class="alert alert-info d-flex align-items-center gap-2 mb-4" style="border-left:3px solid var(--info-color);">
     <i class="bi bi-link-45deg fs-5" aria-hidden="true"></i>
     <div>
         Esta novedad pertenece al documento de liquidación
@@ -127,7 +127,7 @@ $totalDocs          = $viewModel->totalDocs;
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
         <?php
         $noveltyPipelineLabels = $statusLabels;
         $noveltyPipelineLabels[NoveltyConstants::STATUS_CONTABILIDAD] = 'Paso a Nómina';
@@ -476,7 +476,7 @@ $totalDocs          = $viewModel->totalDocs;
         foreach ($documentsByStatus as $status => $docs):
         ?>
         <?php if ($multipleStatuses): ?>
-        <div style="padding:.3rem .875rem;background:#f8f9fa;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
+        <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
             <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
             <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>

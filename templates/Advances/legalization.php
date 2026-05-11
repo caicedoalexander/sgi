@@ -97,7 +97,7 @@ $this->assign('title', $pageTitle);
     $casePipelineStatuses = AdvanceConstants::PIPELINE_STATUSES_BY_CASE[$leg->case_type ?? '']
         ?? AdvanceConstants::PIPELINE_STATUSES_EXACTO;
     ?>
-    <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
         <?= $this->element('pipeline_progress', [
             'currentStatus' => $leg->status,
             'pipelineStatuses' => $casePipelineStatuses,
@@ -222,7 +222,7 @@ $this->assign('title', $pageTitle);
                         <?php endforeach; ?>
                     </tbody>
                     <tfoot>
-                        <tr style="background:#fafafa;">
+                        <tr style="background:var(--bg-muted);">
                             <td colspan="3" class="text-end" style="font-weight:600;color:#666;">Total vinculado</td>
                             <td class="text-end" style="font-weight:700;color:var(--primary-color);">
                                 $ <?= $this->Number->format($linkedTotal, ['places' => 2]) ?>
@@ -544,7 +544,7 @@ $this->assign('title', $pageTitle);
     </div>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-pdf" style="color:#dc3545;font-size:1rem;" aria-hidden="true"></i>
+            <i class="bi bi-file-earmark-pdf" style="color:var(--danger-color);font-size:1rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
             <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;">
@@ -566,7 +566,7 @@ $this->assign('title', $pageTitle);
 
     <!-- Historial de firmas (rechazadas) -->
     <?php if (!empty($signatureHistory)): ?>
-    <div style="padding:.3rem .875rem;background:#f8f9fa;border-bottom:1px solid var(--border-color);">
+    <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);">
         <span style="font-size:.65rem;color:#888;text-transform:uppercase;letter-spacing:.1em;font-weight:600;">Historial</span>
     </div>
     <?php foreach ($signatureHistory as $sig): ?>

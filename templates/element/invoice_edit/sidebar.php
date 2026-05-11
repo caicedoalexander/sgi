@@ -35,7 +35,7 @@ $multipleStatuses = count($documentsByStatus) > 1;
     <div id="docs-list" style="max-height:420px;overflow-y:auto;">
         <?php foreach ($documentsByStatus as $status => $docs): ?>
         <?php if ($multipleStatuses): ?>
-        <div style="padding:.3rem .875rem;background:#f8f9fa;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
+        <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
             <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
             <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>

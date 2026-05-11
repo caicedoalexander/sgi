@@ -198,7 +198,7 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
 
                     <!-- Fecha de vencimiento -->
                     <td style="white-space:nowrap;">
-                        <span style="font-size:.8125rem;<?= $row->isOverdue ? 'color:#dc3545;font-weight:600;' : 'color:#555;' ?>">
+                        <span style="font-size:.8125rem;<?= $row->isOverdue ? 'color:var(--danger-color);font-weight:600;' : 'color:#555;' ?>">
                             <?= $invoice->due_date?->format('d/m/Y') ?: '—' ?>
                         </span>
                         <?php if ($row->isOverdue): ?>

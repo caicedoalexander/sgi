@@ -118,7 +118,7 @@ $btnClass    = $submitButtonClass;
     </div>
 
     <!-- Progress -->
-    <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
         <?= $this->element('petty_cash_progress', ['status' => $record->status]) ?>
     </div>
 

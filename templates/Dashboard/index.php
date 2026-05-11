@@ -82,14 +82,14 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#ffc107;">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--warning-color);">
                 <div class="sgi-stat-label">Aprobación</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['aprobacion'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Pendientes</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#0dcaf0;">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--info-color);">
                 <div class="sgi-stat-label">Contabilidad</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['contabilidad'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En proceso</div>
@@ -110,9 +110,9 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#dc3545;">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--danger-color);">
                 <div class="sgi-stat-label">Rechazadas</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#dc3545;"><?= $this->Number->format($invoiceStats['rechazada'] ?? 0) ?></div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--danger-color);"><?= $this->Number->format($invoiceStats['rechazada'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Requieren atención</div>
             </div>
         </div>
@@ -128,7 +128,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#0dcaf0;">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--info-color);">
                 <div class="sgi-stat-label">Monto en Proceso</div>
                 <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:#212529;">$<?= $this->Number->format($invoiceFinancialStats['total_in_process'] ?? 0, ['places' => 0]) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Sin pagar</div>
@@ -142,9 +142,9 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#dc3545;">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--danger-color);">
                 <div class="sgi-stat-label">Vencidas</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#dc3545;"><?= $this->Number->format($invoiceFinancialStats['overdue'] ?? 0) ?></div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--danger-color);"><?= $this->Number->format($invoiceFinancialStats['overdue'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Requieren atención</div>
             </div>
         </div>
@@ -183,7 +183,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="table-responsive">
             <table class="table table-sm mb-0" style="font-size:.82rem;">
                 <thead>
-                    <tr style="background:#fafafa;">
+                    <tr style="background:var(--bg-muted);">
                         <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Nº Factura</th>
                         <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Proveedor</th>
                         <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Estado</th>
@@ -290,9 +290,9 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#dc3545;">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--danger-color);">
                 <div class="sgi-stat-label">Retiros</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#dc3545;"><?= $this->Number->format($rrhhExtendedStats['terminations'] ?? 0) ?></div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--danger-color);"><?= $this->Number->format($rrhhExtendedStats['terminations'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En el período</div>
             </div>
         </div>
@@ -331,7 +331,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="table-responsive">
             <table class="table table-sm mb-0" style="font-size:.82rem;">
                 <thead>
-                    <tr style="background:#fafafa;">
+                    <tr style="background:var(--bg-muted);">
                         <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Empleado</th>
                         <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Tipo</th>
                         <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Fecha</th>

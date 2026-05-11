@@ -22,7 +22,7 @@
         Se le ha asignado la aprobaci&oacute;n de la siguiente novedad:
     </p>
 
-    <div style="background:#f8f9fa;border-left:3px solid #469D61;padding:15px;margin:20px 0;">
+    <div style="background:var(--bg-subtle);border-left:3px solid #469D61;padding:15px;margin:20px 0;">
         <table style="width:100%;font-size:14px;">
             <tr>
                 <td style="color:#666;padding:4px 0;">Empleado:</td>

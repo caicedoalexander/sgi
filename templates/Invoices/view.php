@@ -134,7 +134,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
         <?= $this->element('pipeline_progress', [
             'currentStatus'    => $invoice->pipeline_status,
             'pipelineStatuses' => $pipelineStatuses,
@@ -229,7 +229,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
                 $extAction = $meta['action'] ?? null;
                 $extActionLabel = $extAction === 'approve' ? 'Aprobada' : ($extAction === 'reject' ? 'Rechazada' : null);
                 if ($isExternalApproval) {
-                    $avatarBg = $extAction === 'reject' ? '#dc3545' : '#469D61';
+                    $avatarBg = $extAction === 'reject' ? 'var(--danger-color)' : '#469D61';
                 } elseif ($isRegression) {
                     $avatarBg = '#CD6A15';
                 } else {
@@ -492,7 +492,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                     <div class="col">
                         <div style="border:1px solid var(--border-color);height:100%;display:flex;flex-direction:column;">
                             <!-- Card header: icono + nombre -->
-                            <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:#fafafa;display:flex;align-items:center;gap:.5rem;min-width:0;">
+                            <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:var(--bg-muted);display:flex;align-items:center;gap:.5rem;min-width:0;">
                                 <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> flex-shrink-0"
                                    style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.1rem;"></i>
                                 <div style="min-width:0;flex:1;overflow:hidden;">

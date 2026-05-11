@@ -20,9 +20,9 @@ $errors = $result['errors'] ?? [];
 </div>
 
 <?php if (!empty($errors)): ?>
-<div class="card card-primary mb-4" style="border-top:2px solid #dc3545;">
+<div class="card card-primary mb-4" style="border-top:2px solid var(--danger-color);">
     <div class="card-header" style="background:#fff5f5;">
-        <span style="font-size:.85rem;font-weight:600;color:#dc3545;">
+        <span style="font-size:.85rem;font-weight:600;color:var(--danger-color);">
             <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>Errores (<?= count($errors) ?>)
         </span>
     </div>

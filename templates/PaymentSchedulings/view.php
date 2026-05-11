@@ -69,7 +69,7 @@ $ps = [
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
         <div class="d-flex align-items-center justify-content-between">
             <?php foreach (PaymentSchedulingConstants::PIPELINE_STATUSES as $i => $status): ?>
             <?php
@@ -229,7 +229,7 @@ $totalDocs = count($documents);
                 <div class="col">
                     <div style="border:1px solid var(--border-color);height:100%;display:flex;flex-direction:column;">
                         <!-- Card header: icono + nombre -->
-                        <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:#fafafa;display:flex;align-items:center;gap:.5rem;min-width:0;">
+                        <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:var(--bg-muted);display:flex;align-items:center;gap:.5rem;min-width:0;">
                             <i class="bi <?= h($this->DocumentIcon->iconClassByName($att->file_name)) ?> flex-shrink-0"
                                style="color:<?= h($this->DocumentIcon->iconColorByName($att->file_name)) ?>;font-size:1.1rem;"></i>
                             <div style="min-width:0;flex:1;overflow:hidden;">

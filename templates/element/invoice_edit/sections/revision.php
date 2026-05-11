@@ -30,7 +30,7 @@ if ($isRejected) {
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>
     <?php if ($isRejected): ?>
-        <div class="alert alert-warning mb-3" style="border:1px solid #ffc107;border-left:3px solid #CD6A15;border-radius:0;">
+        <div class="alert alert-warning mb-3" style="border:1px solid var(--warning-color);border-left:3px solid #CD6A15;border-radius:0;">
             <div class="d-flex align-items-start gap-2">
                 <i class="bi bi-exclamation-triangle-fill" style="color:#CD6A15;font-size:1.1rem;margin-top:1px;" aria-hidden="true"></i>
                 <div>
@@ -149,7 +149,7 @@ if ($isRejected) {
                     <?php
                     $statusIcon = match ($approval->status) {
                         InvoiceConstants::APPROVER_STATUS_APPROVED => '<i class="bi bi-check-circle-fill" style="color:#469D61;" aria-hidden="true"></i>',
-                        InvoiceConstants::APPROVER_STATUS_REJECTED => '<i class="bi bi-x-circle-fill" style="color:#dc3545;" aria-hidden="true"></i>',
+                        InvoiceConstants::APPROVER_STATUS_REJECTED => '<i class="bi bi-x-circle-fill" style="color:var(--danger-color);" aria-hidden="true"></i>',
                         default => '<i class="bi bi-clock" style="color:#888;" aria-hidden="true"></i>',
                     };
                     $borderBottom = $i < $totalApprovals - 1 ? 'border-bottom:1px solid var(--border-color);' : '';

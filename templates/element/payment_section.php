@@ -207,7 +207,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
         <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
             <table class="table table-sm mb-0">
                 <thead>
-                    <tr style="background:#fafafa;">
+                    <tr style="background:var(--bg-muted);">
                         <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#999;font-weight:600;border-bottom:1px solid var(--border-color);">Entidad Bancaria</th>
                         <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#999;font-weight:600;border-bottom:1px solid var(--border-color);">Monto</th>
                         <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#999;font-weight:600;border-bottom:1px solid var(--border-color);">Fecha</th>
@@ -228,7 +228,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                         $pStatus = $payment->status ?? ($payment->authorized ? 'authorized' : 'pending');
                         $rowAccent = match($pStatus) {
                             'authorized' => 'var(--primary-color)',
-                            'rejected'   => '#dc3545',
+                            'rejected'   => 'var(--danger-color)',
                             default      => 'var(--secondary-color)',
                         };
                     ?>
@@ -321,7 +321,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                     <?php endforeach; ?>
                 </tbody>
                 <tfoot>
-                    <tr style="background:#fafafa;border-top:2px solid var(--border-color);">
+                    <tr style="background:var(--bg-muted);border-top:2px solid var(--border-color);">
                         <th style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#666;">Total Pagado</th>
                         <th colspan="<?= ($canAuthorize || $canDelete) ? 6 : 5 ?>"
                             style="font-size:.9rem;font-weight:700;letter-spacing:-.02em;">

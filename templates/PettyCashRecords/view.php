@@ -62,7 +62,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
     </div>
 
     <!-- Progress -->
-    <div style="background:#fafafa;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
         <?= $this->element('petty_cash_progress', ['status' => $record->status]) ?>
     </div>
 
@@ -224,7 +224,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
             <?php foreach ($docs as $doc): ?>
             <div class="col">
                 <div style="border:1px solid var(--border-color);height:100%;display:flex;flex-direction:column;">
-                    <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:#fafafa;display:flex;align-items:center;gap:.5rem;min-width:0;">
+                    <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:var(--bg-muted);display:flex;align-items:center;gap:.5rem;min-width:0;">
                         <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> flex-shrink-0"
                            style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.1rem;"></i>
                         <div style="min-width:0;flex:1;overflow:hidden;">
