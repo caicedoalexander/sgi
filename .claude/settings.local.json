@@ -6,7 +6,14 @@
       "Bash(git commit *)",
       "Bash(bash bin/cake migrations migrate)",
       "Bash(grep -n 'docIcon\\\\|$docs\\\\|file_path\\\\|file_size\\\\|mime_type' templates/Refunds/edit.php)",
-      "Bash(composer cs-check *)"
+      "Bash(composer cs-check *)",
+      "Bash(awk '{print $1}')",
+      "Bash(sed -n '1916,2149p' webroot/css/styles.css)",
+      "Bash(sed -n '2150,2336p' webroot/css/styles.css)",
+      "Bash(sed -n '3159,3259p' webroot/css/styles.css)",
+      "Bash(sed -i '3159,3259d' webroot/css/styles.css)",
+      "Bash(sed -i '2150,2336d' webroot/css/styles.css)",
+      "Bash(sed -i '1916,2149d' webroot/css/styles.css)"
     ]
   }
 }
