@@ -551,5 +551,5 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `33b9338` | SG-005 (eliminado fallback de getRawAmount/setAmount; precondición documentada, opción A) |
 | `0df227c` | SG-003 (dead code de idempotency-key client-side eliminado; server-side intacto) |
 | `6f5a5f9` | SG-002 (<template> parsing en modal AJAX loader; defense in depth) |
-| (sin commit) | SG-009 (cerrado como duplicado funcional de MN-006; no agregar `--success-color` por decisión deliberada) |
+| `0adabc0` | SG-009 (cerrado como duplicado funcional de MN-006; no agregar `--success-color` por decisión deliberada) — solo doc, sin cambios de código |
 | --------  | SG-004 (Por decisión, nos quedamos con Bootstrap Icons)
