@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\ViewModel;
 
 use App\Constants\NoveltyConstants;
+use App\Model\Entity\NoveltyDocument;
 use App\Model\Entity\NoveltyLiquidationDoc;
 use App\Model\Entity\User;
 use App\View\Presentation\NoveltyPresentation;
@@ -51,7 +52,7 @@ final class NoveltyLiquidationDocEditViewModel
         public readonly array $groupErrors,
         public readonly array $effectiveStatuses,
         public readonly array $documentsByStatus,
-        public readonly mixed $liquidationDocument,
+        public readonly ?NoveltyDocument $liquidationDocument,
         public readonly User $currentUser,
         public readonly bool $skipsGdp,
         public readonly array $bankingEntities,

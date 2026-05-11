@@ -120,17 +120,17 @@ final class InvoiceEditViewModel
         ];
 
         // ── Render order de las secciones del formulario ─────────────────
+        // Las secciones funcionales (treasury, payment_authorization) tienen su
+        // propia lógica de permisos y no aparecen en este mapa — nunca caen en
+        // read-only.
         $this->sectionFieldMap = [
-            'general'               => ['invoice_number', 'document_type', 'purchase_order', 'provider_id'],
-            'dates'                 => ['issue_date', 'due_date'],
-            'classification'        => ['operation_center_id', 'expense_type_id', 'cost_center_id', 'amount', 'detail'],
-            'revision'              => ['approver_id', 'dian_validation'],
-            'accounting'            => ['accrued', 'ready_for_payment'],
-            'treasury'              => [],
-            'payment_authorization' => [],
+            'general'        => ['invoice_number', 'document_type', 'purchase_order', 'provider_id'],
+            'dates'          => ['issue_date', 'due_date'],
+            'classification' => ['operation_center_id', 'expense_type_id', 'cost_center_id', 'amount', 'detail'],
+            'revision'       => ['approver_id', 'dian_validation'],
+            'accounting'     => ['accrued', 'ready_for_payment'],
         ];
 
-        // Secciones con su propia lógica de permisos — nunca caen en read-only.
         $functionalSections = ['treasury', 'payment_authorization'];
 
         $editable = [];
