@@ -49,8 +49,12 @@ class PendingNotificationsService
             if ($roleName === '' || $roleName === RoleConstants::ADMIN) {
                 continue;
             }
+            $roleId = (int)($user->role_id ?? $user->role->id ?? 0);
+            if ($roleId === 0) {
+                continue;
+            }
 
-            $modules = $this->_buildModules($roleName);
+            $modules = $this->_buildModules($roleId);
             $total = array_sum(array_column($modules, 'count'));
             if ($total < 1) {
                 continue;
@@ -72,11 +76,11 @@ class PendingNotificationsService
     /**
      * @return array<int, array{key:string, label:string, count:int, url:string}>
      */
-    private function _buildModules(string $roleName): array
+    private function _buildModules(int $roleId): array
     {
-        $counters = $this->counterService->getCounters($roleName);
+        $counters = $this->counterService->getCounters($roleId);
         $invoicesPending = (int)array_sum($counters['sidebarCounters'] ?? []);
-        $paymentSchedulings = $this->_getPaymentSchedulingsCount($roleName);
+        $paymentSchedulings = $this->_getPaymentSchedulingsCount($roleId);
 
         $raw = [
             [
@@ -143,9 +147,9 @@ class PendingNotificationsService
     /**
      * Count payment schedulings visible to the current role.
      */
-    private function _getPaymentSchedulingsCount(string $roleName): int
+    private function _getPaymentSchedulingsCount(int $roleId): int
     {
-        $visibleStatuses = $this->paymentSchedulingService->getVisibleStatuses($roleName);
+        $visibleStatuses = $this->paymentSchedulingService->getVisibleStatuses($roleId);
         if (empty($visibleStatuses)) {
             return 0;
         }
