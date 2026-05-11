@@ -3,52 +3,37 @@
  * @var \App\View\AppView $this
  * @var \App\ViewModel\EmployeeNoveltyEditViewModel $viewModel
  * @var \App\Model\Entity\User|null $currentUser
- * @var string $currentStatus
  */
-use App\Constants\NoveltyConstants;
-use App\View\Presentation\NoveltyPresentation;
 
-$novelty = $viewModel->novelty;
-$roleName = $viewModel->roleName;
-$editableFields = $viewModel->editableFields;
-$visibleSections = $viewModel->visibleSections;
-$effectiveStatuses = $viewModel->effectiveStatuses;
-$noveltyStatuses = $viewModel->noveltyStatuses;
-$nextStatus = $viewModel->nextStatus;
-$transitionErrors = $viewModel->transitionErrors;
-$canAdvance = $viewModel->canAdvance;
+$this->assign('title', $viewModel->pageTitle);
+
+// Alias locales para mantener el markup corto.
+$novelty            = $viewModel->novelty;
+$roleName           = $viewModel->roleName;
+$editableFields     = $viewModel->editableFields;
+$visibleSections    = $viewModel->visibleSections;
+$effectiveStatuses  = $viewModel->effectiveStatuses;
+$noveltyStatuses    = $viewModel->noveltyStatuses;
+$nextStatus         = $viewModel->nextStatus;
+$transitionErrors   = $viewModel->transitionErrors;
+$canAdvance         = $viewModel->canAdvance;
 $isApprovalRejected = $viewModel->isApprovalRejected;
-$approversList = $viewModel->approversList;
-$documentsByStatus = $viewModel->documentsByStatus;
-$liquidationDocs = $viewModel->liquidationDocs;
-$emailLogs = $viewModel->emailLogs;
+$approversList      = $viewModel->approversList;
+$documentsByStatus  = $viewModel->documentsByStatus;
+$liquidationDocs    = $viewModel->liquidationDocs;
+$emailLogs          = $viewModel->emailLogs;
 
-$this->assign('title', 'Editar Novedad #' . $novelty->id);
-
-$statusLabels = NoveltyConstants::STATUS_LABELS;
-$statusIcons = NoveltyPresentation::STATUS_ICONS;
-$scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
-$isRejected = $novelty->isRejected();
-$currentStatus = $novelty->pipeline_status;
-$sections = $visibleSections ?? ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'];
-
-$statusBadgeMap = [
-    'registro' => 'bg-secondary',
-    'aprobacion' => 'bg-warning text-dark',
-    'rrhh' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'revision_firmas' => 'bg-warning text-dark',
-    'gdp' => 'bg-dark',
-    'tesoreria' => 'bg-info',
-    'pagada' => 'bg-success',
-    'rechazada' => 'bg-danger',
-];
-$ps = [$statusLabels[$currentStatus] ?? 'Desconocido', $statusBadgeMap[$currentStatus] ?? 'bg-dark'];
-
-// Documents prep
-$showUploadSection = !$isRejected && !$novelty->isPaid();
-$totalDocs = array_sum(array_map('count', $documentsByStatus));
-$badgeColors = NoveltyPresentation::STATUS_BADGES;
+$statusLabels       = $viewModel->statusLabels;
+$statusIcons        = $viewModel->statusIcons;
+$scheduleLabels     = $viewModel->scheduleLabels;
+$statusBadgeMap     = $viewModel->statusBadgeMap;
+$badgeColors        = $viewModel->badgeColors;
+$isRejected         = $viewModel->isRejected;
+$currentStatus      = $viewModel->currentStatus;
+$sections           = $viewModel->sections;
+$ps                 = $viewModel->currentStatusBadge;
+$showUploadSection  = $viewModel->showUploadSection;
+$totalDocs          = $viewModel->totalDocs;
 ?>
 
 <!-- Page header -->

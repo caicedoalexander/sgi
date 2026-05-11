@@ -2,55 +2,39 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\ViewModel\NoveltyLiquidationDocEditViewModel $viewModel
- * @var string $currentStatus
  */
-use App\Constants\NoveltyConstants;
-use App\View\Presentation\NoveltyPresentation;
 
-$doc = $viewModel->doc;
-$roleName = $viewModel->roleName;
-$groupErrors = $viewModel->groupErrors;
-$effectiveStatuses = $viewModel->effectiveStatuses;
-$documentsByStatus = $viewModel->documentsByStatus;
+$this->assign('title', $viewModel->pageTitle);
+
+// Alias locales para mantener el markup corto.
+$doc                 = $viewModel->doc;
+$roleName            = $viewModel->roleName;
+$groupErrors         = $viewModel->groupErrors;
+$effectiveStatuses   = $viewModel->effectiveStatuses;
+$documentsByStatus   = $viewModel->documentsByStatus;
 $liquidationDocument = $viewModel->liquidationDocument;
-$currentUser = $viewModel->currentUser;
-$skipsGdp = $viewModel->skipsGdp;
-$bankingEntities = $viewModel->bankingEntities;
-$canRegisterPayment = $viewModel->canRegisterPayment;
+$currentUser         = $viewModel->currentUser;
+$skipsGdp            = $viewModel->skipsGdp;
+$bankingEntities     = $viewModel->bankingEntities;
+$canRegisterPayment  = $viewModel->canRegisterPayment;
 $canAuthorizePayment = $viewModel->canAuthorizePayment;
-$canConfirmPayment = $viewModel->canConfirmPayment;
+$canConfirmPayment   = $viewModel->canConfirmPayment;
 
-$this->assign('title', 'Editar Liquidación: ' . h($doc->liquidation_number));
-
-$statusLabels = NoveltyConstants::STATUS_LABELS;
-$statusIcons = NoveltyPresentation::STATUS_ICONS;
-$periodLabels = NoveltyConstants::PERIOD_LABELS;
-$signerLabels = NoveltyConstants::SIGNER_LABELS;
-$paymentLabels = NoveltyConstants::PAYMENT_LABELS;
-$isRejected = $doc->pipeline_status === NoveltyConstants::STATUS_RECHAZADA;
-$isPaid = $doc->pipeline_status === NoveltyConstants::STATUS_PAGADA;
-$isFinal = $isRejected || $isPaid;
-$currentStatus = $doc->pipeline_status;
-$skipsGdp = $skipsGdp ?? false;
-
-$statusBadgeMap = [
-    'rrhh'             => 'bg-secondary',
-    'contabilidad'     => 'bg-primary',
-    'aprobacion'       => 'bg-warning text-dark',
-    'revision_firmas'  => 'bg-warning text-dark',
-    'gdp'              => 'bg-dark',
-    'tesoreria'        => 'bg-info',
-    'autorizacion_pago' => 'bg-info',
-    'pagada'           => 'bg-success',
-    'rechazada'        => 'bg-danger',
-];
-$ps = [$statusLabels[$currentStatus] ?? 'Desconocido', $statusBadgeMap[$currentStatus] ?? 'bg-dark'];
-
-// Documents prep
-$showUploadSection = !$isFinal;
-$totalDocs = array_sum(array_map('count', $documentsByStatus));
-$badgeColors = NoveltyPresentation::STATUS_BADGES;
-$noveltyCount = count($doc->employee_novelties);
+$statusLabels      = $viewModel->statusLabels;
+$statusIcons       = $viewModel->statusIcons;
+$periodLabels      = $viewModel->periodLabels;
+$signerLabels      = $viewModel->signerLabels;
+$paymentLabels     = $viewModel->paymentLabels;
+$statusBadgeMap    = $viewModel->statusBadgeMap;
+$badgeColors       = $viewModel->badgeColors;
+$isRejected        = $viewModel->isRejected;
+$isPaid            = $viewModel->isPaid;
+$isFinal           = $viewModel->isFinal;
+$currentStatus     = $viewModel->currentStatus;
+$ps                = $viewModel->currentStatusBadge;
+$showUploadSection = $viewModel->showUploadSection;
+$totalDocs         = $viewModel->totalDocs;
+$noveltyCount      = $viewModel->noveltyCount;
 ?>
 
 <!-- Page header -->

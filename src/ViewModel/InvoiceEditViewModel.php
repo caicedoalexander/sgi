@@ -5,6 +5,7 @@ namespace App\ViewModel;
 
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
+use App\ViewModel\Support\PaymentOptions;
 
 /**
  * Datos inmutables de vista para InvoicesController::edit().
@@ -109,23 +110,8 @@ final class InvoiceEditViewModel
         $this->approvalOptions = array_combine(InvoiceConstants::APPROVAL_STATUSES, InvoiceConstants::APPROVAL_STATUSES);
         $this->dianOptions     = array_combine(InvoiceConstants::DIAN_STATUSES, InvoiceConstants::DIAN_STATUSES);
 
-        $readyLabels = [
-            InvoiceConstants::READY_FOR_PAYMENT_SI          => 'Sí',
-            InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'Pago Prioritario',
-        ];
-        $this->readyForPaymentOptions = ['' => '-- Seleccione --'] + array_combine(
-            InvoiceConstants::READY_FOR_PAYMENT_OPTIONS,
-            array_map(
-                fn($v) => $readyLabels[$v] ?? $v,
-                InvoiceConstants::READY_FOR_PAYMENT_OPTIONS,
-            ),
-        );
-
-        $this->paymentStatusOptions = [
-            ''                                 => '-- Seleccione --',
-            InvoiceConstants::PAYMENT_FULL     => 'Pago total',
-            InvoiceConstants::PAYMENT_PARTIAL  => 'Pago Parcial',
-        ];
+        $this->readyForPaymentOptions = PaymentOptions::readyForPayment();
+        $this->paymentStatusOptions   = PaymentOptions::paymentStatus();
 
         // ── Badge del estado actual del pipeline ─────────────────────────
         // Estos badges son específicos del header del edit (distintos a los

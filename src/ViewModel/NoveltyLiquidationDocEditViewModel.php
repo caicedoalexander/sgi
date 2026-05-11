@@ -3,14 +3,42 @@ declare(strict_types=1);
 
 namespace App\ViewModel;
 
+use App\Constants\NoveltyConstants;
 use App\Model\Entity\NoveltyLiquidationDoc;
 use App\Model\Entity\User;
+use App\View\Presentation\NoveltyPresentation;
 
 /**
  * Datos inmutables de vista para NoveltyLiquidationDocsController::edit().
  */
 final class NoveltyLiquidationDocEditViewModel
 {
+    // ── Propiedades derivadas (calculadas en el constructor) ────────────
+    public readonly string $pageTitle;
+    /** @var array<string,string> */
+    public readonly array $statusLabels;
+    /** @var array<string,string> */
+    public readonly array $statusIcons;
+    /** @var array<string,string> */
+    public readonly array $periodLabels;
+    /** @var array<string,string> */
+    public readonly array $signerLabels;
+    /** @var array<string,string> */
+    public readonly array $paymentLabels;
+    /** @var array<string,string> */
+    public readonly array $statusBadgeMap;
+    /** @var array{0:string,1:string} */
+    public readonly array $currentStatusBadge;
+    /** @var array<string,string> */
+    public readonly array $badgeColors;
+    public readonly bool $isRejected;
+    public readonly bool $isPaid;
+    public readonly bool $isFinal;
+    public readonly string $currentStatus;
+    public readonly bool $showUploadSection;
+    public readonly int $totalDocs;
+    public readonly int $noveltyCount;
+
     /**
      * @param array<string> $groupErrors
      * @param array<string> $effectiveStatuses
@@ -31,5 +59,39 @@ final class NoveltyLiquidationDocEditViewModel
         public readonly bool $canAuthorizePayment,
         public readonly bool $canConfirmPayment,
     ) {
+        $this->pageTitle    = 'Editar Liquidación: ' . ($doc->liquidation_number ?? ('#' . $doc->id));
+        $this->statusLabels = NoveltyConstants::STATUS_LABELS;
+        $this->statusIcons  = NoveltyPresentation::STATUS_ICONS;
+        $this->periodLabels  = NoveltyConstants::PERIOD_LABELS;
+        $this->signerLabels  = NoveltyConstants::SIGNER_LABELS;
+        $this->paymentLabels = NoveltyConstants::PAYMENT_LABELS;
+        $this->badgeColors   = NoveltyPresentation::STATUS_BADGES;
+
+        $this->isRejected    = $doc->pipeline_status === NoveltyConstants::STATUS_RECHAZADA;
+        $this->isPaid        = $doc->pipeline_status === NoveltyConstants::STATUS_PAGADA;
+        $this->isFinal       = $this->isRejected || $this->isPaid;
+        $this->currentStatus = $doc->pipeline_status;
+
+        // Badges del header del edit (NO consolidar con NoveltyPresentation;
+        // los colores son distintos a los de la novedad individual).
+        $this->statusBadgeMap = [
+            'rrhh'              => 'bg-secondary',
+            'contabilidad'      => 'bg-primary',
+            'aprobacion'        => 'bg-warning text-dark',
+            'revision_firmas'   => 'bg-warning text-dark',
+            'gdp'               => 'bg-dark',
+            'tesoreria'         => 'bg-info',
+            'autorizacion_pago' => 'bg-info',
+            'pagada'            => 'bg-success',
+            'rechazada'         => 'bg-danger',
+        ];
+        $this->currentStatusBadge = [
+            $this->statusLabels[$this->currentStatus]   ?? 'Desconocido',
+            $this->statusBadgeMap[$this->currentStatus] ?? 'bg-dark',
+        ];
+
+        $this->showUploadSection = !$this->isFinal;
+        $this->totalDocs         = array_sum(array_map('count', $documentsByStatus));
+        $this->noveltyCount      = count($doc->employee_novelties ?? []);
     }
 }

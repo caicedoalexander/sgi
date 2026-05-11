@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace App\ViewModel;
 
+use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
 use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
+use App\View\Presentation\AdvancePresentation;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -96,6 +98,36 @@ final readonly class AdvanceLegalizationViewModel
             ? $this->actionPolicy->canConfirmRefundPayment($this->leg, $this->roleId, $this->roleName)
             : false;
 
+        // ── Derivaciones de presentación (antes inline en el template) ──
+        $pageTitle         = 'Legalización ' . ($this->invoice->invoice_number ?? '#' . $this->invoice->id);
+        $legPipelineLabels = AdvanceConstants::STATUS_LABELS;
+
+        $beneficiary        = $this->invoice->provider->name ?? ($this->invoice->employee->full_name ?? '—');
+        $beneficiaryDoc     = $this->invoice->provider->document_number ?? ($this->invoice->employee->document_number ?? null);
+        $beneficiaryDocType = $this->invoice->provider_id
+            ? ($this->invoice->provider->document_type ?? '')
+            : ($this->invoice->employee_id ? ($this->invoice->employee->document_type ?? '') : '');
+        $beneficiaryKind = $this->invoice->provider_id
+            ? 'Proveedor'
+            : ($this->invoice->employee_id ? 'Empleado' : '—');
+
+        $ps = [
+            AdvanceConstants::STATUS_LABELS[$this->leg->status]        ?? 'Desconocido',
+            AdvancePresentation::STATUS_BADGES[$this->leg->status]     ?? 'bg-dark',
+        ];
+
+        $linkedCount = $linkedInvoices->count();
+
+        $diffBadgeClass = abs($diff) < 0.005
+            ? 'bg-success'
+            : ($diff > 0 ? 'bg-warning text-dark' : 'bg-danger');
+
+        $caseLabels = [
+            AdvanceConstants::CASE_EXACTO   => 'Exacto',
+            AdvanceConstants::CASE_FALTANTE => 'Faltante',
+            AdvanceConstants::CASE_SOBRANTE => 'Sobrante',
+        ];
+
         return [
             'invoice' => $this->invoice,
             'leg' => $this->leg,
@@ -111,6 +143,17 @@ final readonly class AdvanceLegalizationViewModel
             'canRegisterRefund' => $canRegisterRefund,
             'canAuthorizeRefundPayment' => $canAuthorizeRefundPayment,
             'canConfirmRefundPayment' => $canConfirmRefundPayment,
+            // Derivaciones de presentación.
+            'pageTitle' => $pageTitle,
+            'legPipelineLabels' => $legPipelineLabels,
+            'beneficiary' => $beneficiary,
+            'beneficiaryDoc' => $beneficiaryDoc,
+            'beneficiaryDocType' => $beneficiaryDocType,
+            'beneficiaryKind' => $beneficiaryKind,
+            'ps' => $ps,
+            'linkedCount' => $linkedCount,
+            'diffBadgeClass' => $diffBadgeClass,
+            'caseLabels' => $caseLabels,
         ];
     }
 }

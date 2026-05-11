@@ -1,83 +1,61 @@
 <?php
 /**
+ * El controller pasa los datos via $this->set(get_object_vars($vm)),
+ * desempaquetando PettyCashEditViewModel en variables individuales.
+ *
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\PettyCashRecord $record
- * @var iterable $availableInvoices
- * @var iterable $operationCenters
- * @var array $groupFilters
- * @var bool $canDeleteDocuments
- * @var array $bankingEntities
- * @var string|null $previousStatus
- * @var string|null $regressLockMessage
  * @var string $currentStatus
+ * @var string $roleName
  * @var \App\Model\Entity\User|null $currentUser
- * @var bool $canRegress
- * @var array $pipelineLabels
- * @var array $syntheticPayments
- * @var array $advanceErrors
+ *
+ * Permisos del pipeline:
+ * @var bool $canDeleteDocuments
  * @var bool $canRegisterPayment
  * @var bool $canAuthorizePayment
+ * @var bool $canConfirmPayment
+ * @var bool $canRegress
+ *
+ * Avance / retroceso:
+ * @var array $advanceErrors
+ * @var string|null $nextStatus
+ * @var string|null $previousStatus
+ * @var string|null $regressLockMessage
+ * @var bool $canAdvance
+ *
+ * Visualización:
+ * @var string $pageTitle
+ * @var array $pipelineLabels
+ * @var array $statusLabels
+ * @var array $statusBadgeMap
+ * @var array{0:string,1:string} $currentStatusBadge
+ * @var array $readyForPaymentOptions
+ * @var array $paymentStatusOptions
+ * @var int  $statusIndex
+ * @var bool $showAccounting
+ * @var bool $showTreasury
+ * @var bool $canEditAccounting
+ * @var bool $canEditTreasury
+ * @var bool $canSave
+ * @var string $submitButtonLabel
+ * @var string $submitButtonClass
+ * @var int $invoiceCount
+ *
+ * Listados y dropdowns:
+ * @var array $syntheticPayments
+ * @var iterable $availableInvoices
+ * @var iterable $operationCenters
+ * @var array $bankingEntities
+ * @var array $invoiceOptions
+ * @var array $groupFilters
  */
-use App\Constants\InvoiceConstants;
-use App\Constants\PettyCashConstants;
-$groupFilters = $groupFilters ?? [];
 
-$this->assign('title', 'Editar Caja Menor ' . $record->code);
+$this->assign('title', $pageTitle);
 
-$statusBadge = [
-    'agrupacion' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'tesoreria' => 'bg-warning text-dark',
-    'autorizacion_pago' => 'bg-info text-dark',
-    'pagada' => 'bg-success',
-];
-$statusLabels = PettyCashConstants::STATUS_LABELS;
-
-$nextStatus = PettyCashConstants::TRANSITIONS[$record->status] ?? null;
-
-$readyForPaymentLabels = [
-    InvoiceConstants::READY_FOR_PAYMENT_SI => 'Sí',
-    InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'Pago Prioritario',
-];
-$readyForPaymentOptions = ['' => '-- Seleccione --'] + array_combine(
-    InvoiceConstants::READY_FOR_PAYMENT_OPTIONS,
-    array_map(fn($v) => $readyForPaymentLabels[$v] ?? $v, InvoiceConstants::READY_FOR_PAYMENT_OPTIONS)
-);
-$paymentStatusOptions = ['' => '-- Seleccione --', InvoiceConstants::PAYMENT_FULL => 'Pago total', InvoiceConstants::PAYMENT_PARTIAL => 'Pago Parcial'];
-
-// Determine which sections to show based on status
-$statusIndex = array_search($record->status, PettyCashConstants::STATUSES);
-$showAccounting = $statusIndex >= 1; // contabilidad or later
-$showTreasury = $statusIndex >= 2;   // tesoreria or later
-
-$invoiceOptions = [];
-foreach ($availableInvoices as $inv) {
-    $label = ($inv->invoice_number ?? '#' . $inv->id)
-        . ' - ' . ($inv->provider->name ?? 'Sin proveedor')
-        . ' - ' . ($inv->operation_center->name ?? '')
-        . ' - $' . number_format((float)$inv->amount, 0, ',', '.')
-        . ' (' . ($inv->issue_date?->format('d/m/Y') ?? '') . ')';
-    $invoiceOptions[$inv->id] = $label;
-}
-
-// Can edit in current status?
-$canEditAccounting = $record->isContabilidad();
-$canEditTreasury = $record->isTesoreria();
-$canSave = $record->isAgrupacion() || $record->isContabilidad() || $record->isTesoreria();
-
-// Unified submit button (same pattern as invoice edit)
-$canAdvance = $nextStatus !== null;
-if ($canAdvance && empty($advanceErrors) && $nextStatus) {
-    $nextLabel = $statusLabels[$nextStatus] ?? $nextStatus;
-    $btnLabel  = '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a: ' . h($nextLabel);
-    $btnClass  = 'btn btn-primary';
-} else {
-    $btnLabel = '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
-    $btnClass = 'btn btn-primary';
-}
-
-// Compute invoice count and total for ledger
-$invoiceCount = count($record->invoices ?? []);
+// Aliases retrocompatibles con el markup heredado.
+$statusBadge = $statusBadgeMap;
+$btnLabel    = $submitButtonLabel;
+$btnClass    = $submitButtonClass;
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">

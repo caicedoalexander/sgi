@@ -4,85 +4,44 @@
  * @var \App\ViewModel\RefundEditViewModel $viewModel
  * @var \App\Model\Entity\User|null $currentUser
  */
-use App\Constants\InvoiceConstants;
-use App\Constants\RefundConstants;
 
-$record = $viewModel->record;
-$availableInvoices = $viewModel->availableInvoices;
-$operationCenters = $viewModel->operationCenters;
-$groupFilters = $viewModel->groupFilters;
-$employees = $viewModel->employees;
-$providers = $viewModel->providers;
-$bankingEntities = $viewModel->bankingEntities;
-$previousStatus = $viewModel->previousStatus;
-$regressLockMessage = $viewModel->regressLockMessage;
-$currentStatus = $viewModel->currentStatus;
-$advanceErrors = $viewModel->advanceErrors;
-$canRegisterPayment = $viewModel->canRegisterPayment;
+$this->assign('title', $viewModel->pageTitle);
+
+// Alias locales para mantener el markup corto.
+$record              = $viewModel->record;
+$availableInvoices   = $viewModel->availableInvoices;
+$operationCenters    = $viewModel->operationCenters;
+$groupFilters        = $viewModel->groupFilters;
+$employees           = $viewModel->employees;
+$providers           = $viewModel->providers;
+$bankingEntities     = $viewModel->bankingEntities;
+$previousStatus      = $viewModel->previousStatus;
+$regressLockMessage  = $viewModel->regressLockMessage;
+$currentStatus       = $viewModel->currentStatus;
+$advanceErrors       = $viewModel->advanceErrors;
+$canRegisterPayment  = $viewModel->canRegisterPayment;
 $canAuthorizePayment = $viewModel->canAuthorizePayment;
-$canConfirmPayment = $viewModel->canConfirmPayment;
-$canRegress = $viewModel->canRegress;
-$syntheticPayments = $viewModel->syntheticPayments;
-$pipelineLabels = $viewModel->pipelineLabels;
-$roleName = $viewModel->roleName;
-$nextStatus = $viewModel->nextStatus;
+$canConfirmPayment   = $viewModel->canConfirmPayment;
+$canRegress          = $viewModel->canRegress;
+$syntheticPayments   = $viewModel->syntheticPayments;
+$pipelineLabels      = $viewModel->pipelineLabels;
+$roleName            = $viewModel->roleName;
+$nextStatus          = $viewModel->nextStatus;
 
-$this->assign('title', 'Editar Reintegro ' . $record->code);
-
-$statusBadge = [
-    'agrupacion' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'tesoreria' => 'bg-warning text-dark',
-    'autorizacion_pago' => 'bg-secondary',
-    'pagada' => 'bg-success',
-];
-$statusLabels = RefundConstants::STATUS_LABELS;
-
-$nextStatus = RefundConstants::TRANSITIONS[$record->status] ?? null;
-
-$readyForPaymentLabels = [
-    InvoiceConstants::READY_FOR_PAYMENT_SI => 'Sí',
-    InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'Pago Prioritario',
-];
-$readyForPaymentOptions = ['' => '-- Seleccione --'] + array_combine(
-    InvoiceConstants::READY_FOR_PAYMENT_OPTIONS,
-    array_map(fn($v) => $readyForPaymentLabels[$v] ?? $v, InvoiceConstants::READY_FOR_PAYMENT_OPTIONS)
-);
-$paymentStatusOptions = ['' => '-- Seleccione --', InvoiceConstants::PAYMENT_FULL => 'Pago total', InvoiceConstants::PAYMENT_PARTIAL => 'Pago Parcial'];
-
-// Determine which sections to show based on status
-$statusIndex = array_search($record->status, RefundConstants::STATUSES);
-$showAccounting = $statusIndex >= 1; // contabilidad or later
-$showTreasury = $statusIndex >= 2;   // tesoreria or later
-
-$invoiceOptions = [];
-foreach ($availableInvoices as $inv) {
-    $label = ($inv->invoice_number ?? '#' . $inv->id)
-        . ' - ' . ($inv->provider->name ?? 'Sin proveedor')
-        . ' - ' . ($inv->operation_center->name ?? '')
-        . ' - $' . number_format((float)$inv->amount, 0, ',', '.')
-        . ' (' . ($inv->issue_date?->format('d/m/Y') ?? '') . ')';
-    $invoiceOptions[$inv->id] = $label;
-}
-
-// Can edit in current status?
-$canEditAccounting = $record->isContabilidad();
-$canEditTreasury = $record->isTesoreria();
-$canSave = $record->isAgrupacion() || $record->isContabilidad() || $record->isTesoreria();
-
-// Unified submit button (same pattern as invoice edit)
-$canAdvance = $nextStatus !== null;
-if ($canAdvance && empty($advanceErrors) && $nextStatus) {
-    $nextLabel = $statusLabels[$nextStatus] ?? $nextStatus;
-    $btnLabel  = '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a: ' . h($nextLabel);
-    $btnClass  = 'btn btn-primary';
-} else {
-    $btnLabel = '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
-    $btnClass = 'btn btn-primary';
-}
-
-// Compute invoice count and total for ledger
-$invoiceCount = count($record->invoices ?? []);
+$statusBadge            = $viewModel->statusBadgeMap;
+$statusLabels           = $viewModel->statusLabels;
+$readyForPaymentOptions = $viewModel->readyForPaymentOptions;
+$paymentStatusOptions   = $viewModel->paymentStatusOptions;
+$showAccounting         = $viewModel->showAccounting;
+$showTreasury           = $viewModel->showTreasury;
+$invoiceOptions         = $viewModel->invoiceOptions;
+$canEditAccounting      = $viewModel->canEditAccounting;
+$canEditTreasury        = $viewModel->canEditTreasury;
+$canSave                = $viewModel->canSave;
+$canAdvance             = $viewModel->canAdvance;
+$btnLabel               = $viewModel->submitButtonLabel;
+$btnClass               = $viewModel->submitButtonClass;
+$invoiceCount           = $viewModel->invoiceCount;
 ?>
 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">

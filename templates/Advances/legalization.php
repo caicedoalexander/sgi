@@ -1,16 +1,36 @@
 <?php
 /**
+ * El controller pasa los datos via $this->set(\$vm->build()),
+ * desempaquetando AdvanceLegalizationViewModel en variables individuales.
+ *
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Invoice $invoice
  * @var \App\Model\Entity\AdvanceLegalization $leg
- * @var iterable<\App\Model\Entity\Invoice> $linkedInvoices
+ * @var \Cake\Collection\CollectionInterface<\App\Model\Entity\Invoice> $linkedInvoices
  * @var float $linkedTotal
  * @var float $advanceTotal
  * @var float $diff
  * @var \App\Model\Entity\AdvanceLegalizationSignature|null $relationDocument
  * @var array<\App\Model\Entity\AdvanceLegalizationSignature> $signatureHistory
- * @var \App\Model\Entity\User|null $currentUser
  * @var array $bankingEntities
+ * @var \App\Model\Entity\InvoicePayment|null $surplusPayment
+ * @var string $roleName
+ * @var bool $canRegisterRefund
+ * @var bool $canAuthorizeRefundPayment
+ * @var bool $canConfirmRefundPayment
+ * @var \App\Model\Entity\User|null $currentUser
+ *
+ * Derivaciones de presentación (desde el ViewModel):
+ * @var string $pageTitle
+ * @var array<string,string> $legPipelineLabels
+ * @var string $beneficiary
+ * @var string|null $beneficiaryDoc
+ * @var string $beneficiaryDocType
+ * @var string $beneficiaryKind
+ * @var array{0:string,1:string} $ps
+ * @var int $linkedCount
+ * @var string $diffBadgeClass
+ * @var array<string,string> $caseLabels
  */
 
 use App\Constants\AdvanceConstants;
@@ -18,34 +38,7 @@ use App\Constants\InvoiceConstants;
 use App\View\Presentation\AdvancePresentation;
 use App\View\Presentation\InvoicePresentation;
 
-$this->assign('title', 'Legalización ' . ($invoice->invoice_number ?? '#' . $invoice->id));
-
-$legPipelineLabels = AdvanceConstants::STATUS_LABELS;
-
-$beneficiary = $invoice->provider->name ?? ($invoice->employee->full_name ?? '—');
-$beneficiaryDoc = $invoice->provider->document_number ?? ($invoice->employee->document_number ?? null);
-$beneficiaryDocType = $invoice->provider_id
-    ? ($invoice->provider->document_type ?? '')
-    : ($invoice->employee_id ? ($invoice->employee->document_type ?? '') : '');
-$beneficiaryKind = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id ? 'Empleado' : '—');
-
-$ps = [
-    AdvanceConstants::STATUS_LABELS[$leg->status] ?? 'Desconocido',
-    AdvancePresentation::STATUS_BADGES[$leg->status] ?? 'bg-dark',
-];
-
-$linkedCount = is_object($linkedInvoices) && method_exists($linkedInvoices, 'count')
-    ? $linkedInvoices->count()
-    : count((array)$linkedInvoices);
-
-$diffBadgeClass = abs($diff) < 0.005 ? 'bg-success' : ($diff > 0 ? 'bg-warning text-dark' : 'bg-danger');
-
-$caseLabels = [
-    AdvanceConstants::CASE_EXACTO => 'Exacto',
-    AdvanceConstants::CASE_FALTANTE => 'Faltante',
-    AdvanceConstants::CASE_SOBRANTE => 'Sobrante',
-];
-
+$this->assign('title', $pageTitle);
 ?>
 
 <?php
