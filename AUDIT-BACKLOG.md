@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **7 Minores** (MN-001, MN-006, MN-007, MN-008, MN-009, MN-012, MN-013) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **8 Minores** (MN-001, MN-006, MN-007, MN-008, MN-009, MN-011, MN-012, MN-013) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -95,7 +95,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (9)
+## 🟡 Minores (8)
 
 ### ~~MN-001~~ ✅ — `box-shadow` en checkbox toggle  (RESUELTO en `fa16845`, junto a MJ-010)
 
@@ -225,21 +225,13 @@ El helper `$navLink` cierre actual está OK, solo el markup repetitivo se benefi
 
 ---
 
-### MN-011 — Avatares con iniciales sin `aria-label`
+### ~~MN-011~~ ✅ — Avatares con iniciales sin texto accesible  (RESUELTO)
 
-**Ubicación:**
-- `templates/Employees/view.php:53`
-- `templates/Employees/index.php:122-125`
-- Buscar todos: `grep -rn 'border-radius:50%\|sgi-avatar' templates/`
+**Aplicado:** los 2 únicos avatares de iniciales (`templates/Employees/view.php:53` y `templates/Employees/index.php:130`) ahora llevan `aria-hidden="true"`.
 
-**Problema:** divs con iniciales (`<div>AC</div>`) sin texto accesible para lectores de pantalla.
+**Decisión de diseño:** se prefirió `aria-hidden="true"` sobre la sugerencia original del backlog (`role="img" aria-label="..."`) porque en ambos casos el nombre completo del empleado se renderiza como texto visible justo al lado del avatar (`.sgi-profile-name` / `.sgi-emp-name`). Usar `aria-label` causaría que el lector de pantalla anuncie el nombre dos veces. `aria-hidden="true"` marca el avatar como decorativo, el SR salta directo al nombre real adyacente — más correcto semánticamente.
 
-**Resolver:**
-```html
-<div class="sgi-avatar" role="img" aria-label="<?= h($employee->full_name) ?>">
-    <?= h($initials) ?>
-</div>
-```
+**Búsqueda exhaustiva confirmada:** `grep -rn 'sgi-avatar|sgi-profile-avatar|sgi-emp-avatar|h(\$initials)' templates/` solo arroja estas 2 ubicaciones; no hay otros patrones de avatar con iniciales en el codebase.
 
 ---
 
@@ -494,15 +486,15 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟡 MN-002 a MN-005, MN-010, MN-011, MN-014 a MN-016 | Design system polish + code smells + a11y | 1 día |
+| 🟡 MN-002 a MN-005, MN-010, MN-014 a MN-016 | Design system polish + code smells + a11y | 1 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
 **Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
 
 **Próximo paso recomendado:**
-1. **MN-011** (30 min) — `aria-label` en avatares con iniciales sin texto accesible.
-2. **MN-015** (10 min) — invertir orden `h(ucfirst(...))` en `EmployeeNovelties/index.php:124`.
-3. **MN-016** (15 min) — verificar y eliminar el inline `<script>` duplicado para `--sidebar-width` en `default.php`.
+1. **MN-015** (10 min) — invertir orden `h(ucfirst(...))` en `EmployeeNovelties/index.php:124`.
+2. **MN-016** (15 min) — verificar y eliminar el inline `<script>` duplicado para `--sidebar-width` en `default.php`.
+3. **MN-014** (15 min) — comentar/exponer `SGI_MAX_UPLOAD_BYTES` y documentar el guard global.
 
 ## Historial de aplicación
 
@@ -525,3 +517,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `fa16845` | MJ-010 (split de vendor-overrides; styles.css −520 LOC) + MN-001 (box-shadow toggle) |
 | `0423353` | MN-013 (progress_stepper CSS-driven con data-state; template −37 LOC, cero inline styles) |
 | `bf4c296` | MN-008 (window.SGI_OBRA_LABOR vía scriptBlock + fix bug latente del block 'scriptBottom') |
+| _pendiente_ | MN-011 (aria-hidden="true" en avatares con iniciales; nombre adyacente ya anuncia) |

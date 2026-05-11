@@ -50,7 +50,7 @@ foreach ($folders as $folder) {
                  class="sgi-profile-avatar"
                  style="object-fit:cover;">
         <?php else: ?>
-            <div class="sgi-profile-avatar"><?= h($initials) ?></div>
+            <div class="sgi-profile-avatar" aria-hidden="true"><?= h($initials) ?></div>
         <?php endif; ?>
         <div style="min-width:0">
             <div class="sgi-profile-name"><?= h($employee->full_name) ?></div>

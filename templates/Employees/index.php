@@ -127,7 +127,7 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
                          class="sgi-emp-avatar"
                          style="object-fit:cover;">
                 <?php else: ?>
-                    <div class="sgi-emp-avatar"><?= h($initials) ?></div>
+                    <div class="sgi-emp-avatar" aria-hidden="true"><?= h($initials) ?></div>
                 <?php endif; ?>
                 <div style="min-width:0">
                     <div class="sgi-emp-name"><?= h($employee->full_name) ?></div>
