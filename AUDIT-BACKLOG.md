@@ -537,4 +537,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `8e35bf0` | MN-010 (split de default.php 662→183 LOC en 4 elements sidebar/{financiero,rrhh,catalogos,administracion}.php) |
 | `00a5f62` | SG-008 (UploadConstants nuevo + consolidación en 2 services + meta + 7 templates; 0 duplicados residuales) |
 | `4d74008` | SG-006 (element/fullcalendar_assets.php; bloque de 4 líneas centralizado entre EmployeeNovelties/{index,active}) |
-| _pendiente_ | SG-001 (Inter-Variable.woff2 generado −60%; preload tag + @font-face dual format) |
+| `27f3ded` | SG-001 (Inter-Variable.woff2 generado −60%; preload tag + @font-face dual format) |
