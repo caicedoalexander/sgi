@@ -31,14 +31,14 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
     <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['dian_crosschecks']['can_create'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left-right me-1"></i>Cruce',
+            '<i class="bi bi-arrow-left-right me-1" aria-hidden="true"></i>Cruce',
             ['controller' => 'DianCrosschecks', 'action' => 'add'],
             ['class' => 'btn btn-outline-warning', 'escape' => false]
         ) ?>
         <?php endif; ?>
         <?php if (!empty($userPermissions['dian_crosschecks']['can_view'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-clipboard-data me-1"></i>Cruces',
+            '<i class="bi bi-clipboard-data me-1" aria-hidden="true"></i>Cruces',
             ['controller' => 'DianCrosschecks', 'action' => 'index'],
             ['class' => 'btn btn-outline-secondary', 'escape' => false]
         ) ?>
@@ -50,7 +50,7 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
         ]) ?>
         <?php if (!empty($userPermissions['invoices']['can_create'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1"></i>Nueva Factura',
+            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva Factura',
             ['action' => 'add'],
             ['class' => 'btn btn-primary', 'escape' => false]
         ) ?>
@@ -71,13 +71,13 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                 'value' => $this->request->getQuery('search', ''),
             ]) ?>
         </div>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i></button>
         <button type="button" class="btn btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#invoiceFilters" title="Filtros avanzados">
-            <i class="bi bi-funnel"></i>
+            <i class="bi bi-funnel" aria-hidden="true"></i>
         </button>
         <?php if ($hasFilters): ?>
             <?= $this->Html->link(
-                '<i class="bi bi-x-lg"></i> Limpiar',
+                '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
                 ['action' => $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index')],
                 ['class' => 'btn btn-outline-danger', 'escape' => false]
             ) ?>
@@ -158,7 +158,7 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                     <th style="width:120px;"><?= $this->Paginator->sort('due_date', 'Vencimiento') ?></th>
                     <th style="width:140px;" class="text-end"><?= $this->Paginator->sort('amount', 'Valor') ?></th>
                     <th style="width:180px;">Estado</th>
-                    <th style="width:1%;white-space:nowrap;"><i class="bi bi-chat-left-text" title="Observaciones"></i></th>
+                    <th style="width:1%;white-space:nowrap;"><i class="bi bi-chat-left-text" title="Observaciones" aria-hidden="true"></i></th>
                 </tr>
             </thead>
             <tbody>
@@ -203,7 +203,7 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                         </span>
                         <?php if ($row->isOverdue): ?>
                             <i class="bi bi-exclamation-circle-fill text-danger ms-1" style="font-size:.7rem;"
-                               title="Vencida"></i>
+                               title="Vencida" aria-hidden="true"></i>
                         <?php endif; ?>
                     </td>
 
@@ -249,10 +249,10 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                         <?php if ($unread > 0): ?>
                             <span class="badge bg-danger"
                                   title="<?= $unread ?> observación<?= $unread > 1 ? 'es' : '' ?> sin leer">
-                                <i class="bi bi-chat-left-text-fill me-1" style="font-size:.65rem;"></i><?= $unread ?>
+                                <i class="bi bi-chat-left-text-fill me-1" style="font-size:.65rem;" aria-hidden="true"></i><?= $unread ?>
                             </span>
                         <?php else: ?>
-                            <i class="bi bi-chat-left-text" style="color:#dee2e6;font-size:.85rem;" title="Sin observaciones nuevas"></i>
+                            <i class="bi bi-chat-left-text" style="color:#dee2e6;font-size:.85rem;" title="Sin observaciones nuevas" aria-hidden="true"></i>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -262,7 +262,7 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
                 <tr>
                     <td colspan="7">
                         <div class="sgi-doc-empty">
-                            <i class="bi bi-inbox sgi-doc-empty-icon"></i>
+                            <i class="bi bi-inbox sgi-doc-empty-icon" aria-hidden="true"></i>
                             No hay facturas en tu bandeja actual.
                         </div>
                     </td>

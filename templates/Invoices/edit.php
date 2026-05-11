@@ -34,14 +34,14 @@ $canEdit = fn(string $field): bool => in_array($field, $viewModel->editableField
 
 // Botón de submit
 if ($viewModel->isRejected) {
-    $btnLabel = '<i class="bi bi-save me-1"></i>Guardar Cambios';
+    $btnLabel = '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
     $btnClass = 'btn btn-primary';
 } elseif ($viewModel->canAdvance && empty($viewModel->advanceErrors) && $viewModel->nextStatus) {
     $nextLabel = $viewModel->pipelineLabels[$viewModel->nextStatus] ?? $viewModel->nextStatus;
-    $btnLabel  = '<i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar a: ' . h($nextLabel);
+    $btnLabel  = '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a: ' . h($nextLabel);
     $btnClass  = 'btn btn-primary';
 } else {
-    $btnLabel = '<i class="bi bi-save me-1"></i>Guardar Cambios';
+    $btnLabel = '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
     $btnClass = 'btn btn-primary';
 }
 
@@ -91,7 +91,7 @@ $isCollapsibleSection = fn(string $s): bool => in_array($s, $collapsible, true);
 <?php if (($viewModel->invoice->document_type ?? null) === \App\Constants\InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($viewModel->invoice->advance_id)): ?>
     <div class="alert alert-info d-flex justify-content-between align-items-center">
         <div>
-            <i class="bi bi-link-45deg me-1"></i>
+            <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
             Esta factura es una <strong>Legalización</strong> vinculada al
             <?= $this->Html->link('Anticipo #' . h($viewModel->invoice->advance_id), ['controller' => 'Advances', 'action' => 'view', $viewModel->invoice->advance_id]) ?>.
         </div>
@@ -103,12 +103,12 @@ $isCollapsibleSection = fn(string $s): bool => in_array($s, $collapsible, true);
     <span class="sgi-page-title"><?= $isAdvance ? 'Editar Anticipo' : 'Editar Factura' ?></span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             $isAdvance ? ['controller' => 'Advances', 'action' => 'index'] : ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?= $this->Html->link(
-            '<i class="bi bi-eye me-1"></i>Ver',
+            '<i class="bi bi-eye me-1" aria-hidden="true"></i>Ver',
             $isAdvance ? ['controller' => 'Advances', 'action' => 'view', $viewModel->invoice->id] : ['action' => 'view', $viewModel->invoice->id],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
@@ -119,7 +119,7 @@ $isCollapsibleSection = fn(string $s): bool => in_array($s, $collapsible, true);
 <?php if ($viewModel->canAdvance && !$viewModel->isRejected && !empty($viewModel->advanceErrors)): ?>
 <div class="alert alert-warning mb-4">
     <div class="d-flex align-items-start gap-2">
-        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
         <div>
             <strong>Para avanzar al siguiente estado complete:</strong>
             <ul class="mb-0 mt-1 ps-3">
@@ -158,7 +158,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         <div class="d-flex align-items-center gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-                <i class="bi <?= $isAdvance ? 'bi-cash-coin' : 'bi-receipt' ?>"></i>
+                <i class="bi <?= $isAdvance ? 'bi-cash-coin' : 'bi-receipt' ?>" aria-hidden="true"></i>
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
@@ -315,10 +315,10 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             <summary class="d-flex align-items-center gap-3 mb-0" style="cursor:pointer;list-style:none;">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi <?= $collapsibleLabels[$sectionName]['icon'] ?? 'bi-pencil' ?> me-1"></i><?= $collapsibleLabels[$sectionName]['label'] ?? ucfirst($sectionName) ?>
+                    <i class="bi <?= $collapsibleLabels[$sectionName]['icon'] ?? 'bi-pencil' ?> me-1" aria-hidden="true"></i><?= $collapsibleLabels[$sectionName]['label'] ?? ucfirst($sectionName) ?>
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
-                <i class="bi bi-chevron-right sgi-collapse-chevron" style="font-size:.7rem;color:#bbb;transition:transform .2s;"></i>
+                <i class="bi bi-chevron-right sgi-collapse-chevron" style="font-size:.7rem;color:#bbb;transition:transform .2s;" aria-hidden="true"></i>
             </summary>
             <div style="padding-top:.75rem;">
         <?php endif; ?>
@@ -332,7 +332,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-person-badge me-1"></i>Beneficiario
+                    <i class="bi bi-person-badge me-1" aria-hidden="true"></i>Beneficiario
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -374,7 +374,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-file-text me-1"></i>Documento
+                    <i class="bi bi-file-text me-1" aria-hidden="true"></i>Documento
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -457,7 +457,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-calendar3 me-1"></i>Fechas
+                    <i class="bi bi-calendar3 me-1" aria-hidden="true"></i>Fechas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -508,7 +508,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-tags me-1"></i>Clasificación y Valor
+                    <i class="bi bi-tags me-1" aria-hidden="true"></i>Clasificación y Valor
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -569,7 +569,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-search me-1"></i>Revisión
+                    <i class="bi bi-search me-1" aria-hidden="true"></i>Revisión
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -582,7 +582,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                 ?>
                 <div class="alert alert-warning mb-3" style="border:1px solid #ffc107;border-left:3px solid #CD6A15;border-radius:0;">
                     <div class="d-flex align-items-start gap-2">
-                        <i class="bi bi-exclamation-triangle-fill" style="color:#CD6A15;font-size:1.1rem;margin-top:1px;"></i>
+                        <i class="bi bi-exclamation-triangle-fill" style="color:#CD6A15;font-size:1.1rem;margin-top:1px;" aria-hidden="true"></i>
                         <div>
                             <strong>Rechazada por <?= h($rejector->user->full_name ?? $rejector->user->username ?? 'Aprobador') ?></strong>
                             <?php if ($rejector && $rejector->observations): ?>
@@ -609,7 +609,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                             <button type="submit" form="sendApprovalLinksForm"
                                     class="btn btn-primary btn-sm"
                                     onclick="return confirm('¿Enviar enlaces de aprobación a los aprobadores seleccionados?');">
-                                <i class="bi bi-send me-1"></i>Enviar links
+                                <i class="bi bi-send me-1" aria-hidden="true"></i>Enviar links
                             </button>
                             <span class="sgi-field-hint">Independiente del botón Guardar</span>
                         </div>
@@ -621,12 +621,12 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                         </div>
                         <?php else: ?>
                         <div class="sgi-status-chip --done">
-                            <i class="bi bi-check2-circle"></i> Aprobaciones registradas
+                            <i class="bi bi-check2-circle" aria-hidden="true"></i> Aprobaciones registradas
                         </div>
                         <?php endif; ?>
                         <div class="d-flex align-items-center gap-2 mt-1">
                             <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modifyApproversModal">
-                                <i class="bi bi-pencil-square me-1"></i>Modificar aprobadores
+                                <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>Modificar aprobadores
                             </button>
                             <span class="sgi-field-hint">Reemplaza el conjunto y reinicia la aprobación</span>
                         </div>
@@ -641,7 +641,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                           class="mt-2" onsubmit="return confirm('¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.');">
                         <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
                         <button type="submit" class="btn btn-sm btn-outline-dark">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i>Reiniciar flujo
+                            <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Reiniciar flujo
                         </button>
                     </form>
                     <?php endif; ?>
@@ -698,9 +698,9 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                         <?php foreach ($viewModel->currentApprovals as $i => $approval): ?>
                             <?php
                             $statusIcon = match ($approval->status) {
-                                \App\Constants\InvoiceConstants::APPROVER_STATUS_APPROVED => '<i class="bi bi-check-circle-fill" style="color:#469D61;"></i>',
-                                \App\Constants\InvoiceConstants::APPROVER_STATUS_REJECTED => '<i class="bi bi-x-circle-fill" style="color:#dc3545;"></i>',
-                                default => '<i class="bi bi-clock" style="color:#888;"></i>',
+                                \App\Constants\InvoiceConstants::APPROVER_STATUS_APPROVED => '<i class="bi bi-check-circle-fill" style="color:#469D61;" aria-hidden="true"></i>',
+                                \App\Constants\InvoiceConstants::APPROVER_STATUS_REJECTED => '<i class="bi bi-x-circle-fill" style="color:#dc3545;" aria-hidden="true"></i>',
+                                default => '<i class="bi bi-clock" style="color:#888;" aria-hidden="true"></i>',
                             };
                             $borderBottom = $i < $totalApprovals - 1 ? 'border-bottom:1px solid var(--border-color);' : '';
                             ?>
@@ -742,7 +742,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-calculator me-1"></i>Contabilidad
+                    <i class="bi bi-calculator me-1" aria-hidden="true"></i>Contabilidad
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -859,12 +859,12 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                 <?php if ($isLocked): ?>
                     <button type="button" class="btn btn-outline-secondary"
                             disabled title="<?= h($viewModel->regressLockMessage) ?>">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>Regresar al paso anterior
+                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Regresar al paso anterior
                     </button>
                 <?php else: ?>
                     <button type="button" class="btn btn-outline-secondary"
                             data-bs-toggle="modal" data-bs-target="#regressStatusModal">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>Regresar a: <?= h($prevLabel) ?>
+                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
                     </button>
                 <?php endif; ?>
             <?php endif; ?>
@@ -877,7 +877,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         </div>
         <?php elseif (empty(array_intersect($functionalSections, $viewModel->visibleSections))): ?>
         <div class="alert alert-info mb-0">
-            <i class="bi bi-info-circle me-1"></i>
+            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
             No tiene permisos de edición para esta factura en el estado actual.
         </div>
         <?php endif; ?>
@@ -914,19 +914,19 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
 <div class="card card-primary">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" style="font-size:.85rem;"></i>
+            <i class="bi bi-paperclip" style="font-size:.85rem;" aria-hidden="true"></i>
             <span style="font-size:.85rem;font-weight:600;">Soportes</span>
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
         <?php if ($showUploadSection): ?>
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadInvoiceDocModal">
-            <i class="bi bi-upload me-1"></i>Subir
+            <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
         </button>
         <?php endif; ?>
     </div>
 
     <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
-        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
     <div id="docs-list" style="max-height:420px;overflow-y:auto;">
@@ -958,7 +958,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
 <?php $obsCount = count($viewModel->invoice->invoice_observations ?? []); ?>
 <div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);"></i>
+        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);" aria-hidden="true"></i>
         <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
         <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
     </div>
@@ -973,7 +973,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
     </div>
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
+        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
         <span style="font-size:.78rem;">Sin observaciones aún</span>
     </div>
 
@@ -983,7 +983,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             <textarea id="obs-message" name="message" class="auto-resize" rows="1"
                       placeholder="Escriba una observación..."></textarea>
             <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                <i class="bi bi-send"></i>
+                <i class="bi bi-send" aria-hidden="true"></i>
             </button>
         </div>
         <?= $this->Form->end() ?>
@@ -1001,7 +1001,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
         <div class="modal-content">
             <form id="upload-doc-form" data-url="<?= $this->Url->build(['action' => 'uploadDocument', $viewModel->invoice->id]) ?>" enctype="multipart/form-data">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
+                <h5 class="modal-title"><i class="bi bi-upload me-2" aria-hidden="true"></i>Subir Soporte</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -1017,7 +1017,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" id="upload-doc-btn" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                <button type="submit" id="upload-doc-btn" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Subir</button>
             </div>
             </form>
         </div>

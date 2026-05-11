@@ -76,11 +76,11 @@ if ($currentIndex === false) {
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:32px;height:32px;border:2px solid <?= $borderColor ?>;background:<?= $bgColor ?>;color:<?= $iconColor ?>;font-size:.85rem;transition:all .3s ease;">
                 <?php if ($rejectedHere): ?>
-                    <i class="bi bi-x-lg fw-bold"></i>
+                    <i class="bi bi-x-lg fw-bold" aria-hidden="true"></i>
                 <?php elseif ($isPast): ?>
-                    <i class="bi bi-check-lg"></i>
+                    <i class="bi bi-check-lg" aria-hidden="true"></i>
                 <?php else: ?>
-                    <i class="bi <?= h($icon) ?>"></i>
+                    <i class="bi <?= h($icon) ?>" aria-hidden="true"></i>
                 <?php endif; ?>
             </div>
             <div>
@@ -100,7 +100,7 @@ if ($currentIndex === false) {
 
     <?php if ($isRejected): ?>
     <div class="alert alert-danger mt-3 py-2 mb-0 d-flex align-items-center gap-2">
-        <i class="bi bi-x-circle-fill fs-5"></i>
+        <i class="bi bi-x-circle-fill fs-5" aria-hidden="true"></i>
         <span><strong>Flujo terminado:</strong> Este registro fue rechazado y no puede avanzar.</span>
     </div>
     <?php endif; ?>

@@ -84,7 +84,7 @@
         <?= $this->fetch('content') ?>
 
         <a href="<?= $this->Url->build('/') ?>" class="sgi-error-action">
-            <i class="bi bi-arrow-left"></i>
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
             Volver al inicio
         </a>
 

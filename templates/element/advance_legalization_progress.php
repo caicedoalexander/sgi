@@ -18,11 +18,11 @@ if ($currentIndex === false) {
         <?php $isDone = $i < $currentIndex; $isCurrent = $i === $currentIndex; ?>
         <div class="d-flex align-items-center">
             <span class="badge <?= $isCurrent ? 'bg-primary' : ($isDone ? 'bg-success' : 'bg-light text-muted') ?>">
-                <i class="bi <?= h($icons[$s] ?? 'bi-circle') ?> me-1"></i>
+                <i class="bi <?= h($icons[$s] ?? 'bi-circle') ?> me-1" aria-hidden="true"></i>
                 <?= h($labels[$s] ?? $s) ?>
             </span>
             <?php if ($i < count($statuses) - 1): ?>
-                <i class="bi bi-arrow-right mx-2 text-muted"></i>
+                <i class="bi bi-arrow-right mx-2 text-muted" aria-hidden="true"></i>
             <?php endif; ?>
         </div>
     <?php endforeach; ?>

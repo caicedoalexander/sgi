@@ -11,7 +11,7 @@ $this->assign('title', 'Proveedor: ' . $provider->name);
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Detalle del Proveedor</span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
 <div class="card card-primary mb-4">
@@ -35,10 +35,10 @@ $this->assign('title', 'Proveedor: ' . $provider->name);
     </div>
     <div class="card-footer">
         <?php if (!empty($userPermissions['providers']['can_edit'])): ?>
-        <?= $this->Html->link('<i class="bi bi-pencil me-1"></i>Editar', ['action' => 'edit', $provider->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
+        <?= $this->Html->link('<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar', ['action' => 'edit', $provider->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
         <?php if (!empty($userPermissions['providers']['can_delete'])): ?>
-        <?= $this->Form->postLink('<i class="bi bi-trash me-1"></i>Eliminar', ['action' => 'delete', $provider->id], ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
+        <?= $this->Form->postLink('<i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar', ['action' => 'delete', $provider->id], ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
     </div>
 </div>

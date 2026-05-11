@@ -25,7 +25,7 @@ $showBadge = $showBadge ?? false;
                 <span class="badge" data-slot="badge" style="display:none;"></span>
                 <?php endif; ?>
                 <span class="doc-created sgi-doc-created">
-                    <i class="bi bi-clock"></i>
+                    <i class="bi bi-clock" aria-hidden="true"></i>
                     <span data-slot="created"></span>
                 </span>
                 <span class="doc-size sgi-doc-size" data-slot="size" style="display:none;"></span>
@@ -33,11 +33,11 @@ $showBadge = $showBadge ?? false;
         </div>
         <div class="doc-actions sgi-doc-actions">
             <a class="btn btn-sm btn-outline-secondary" data-slot="open-link" href="" target="_blank" title="Abrir">
-                <i class="bi bi-box-arrow-up-right"></i>
+                <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
             </a>
             <button type="button" class="btn btn-sm btn-outline-danger doc-delete-btn"
                     data-slot="delete-btn" data-url="" style="display:none;" title="Eliminar">
-                <i class="bi bi-trash"></i>
+                <i class="bi bi-trash" aria-hidden="true"></i>
             </button>
         </div>
     </div>

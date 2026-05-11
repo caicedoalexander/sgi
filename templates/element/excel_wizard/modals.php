@@ -33,7 +33,7 @@ $importable = $importable ?? true;
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="exportBtn">
-                    <i class="bi bi-download me-1"></i>Exportar
+                    <i class="bi bi-download me-1" aria-hidden="true"></i>Exportar
                 </button>
             </div>
         </div>
@@ -55,7 +55,7 @@ $importable = $importable ?? true;
                         Seleccione un archivo <code>.xlsx</code> para importar. El sistema detectará las columnas automáticamente y le permitirá configurar el mapeo.
                     </p>
                     <p style="font-size:.8rem;color:#999;">
-                        <i class="bi bi-info-circle me-1"></i>Tip: Exporte primero para obtener la plantilla con las columnas correctas.
+                        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>Tip: Exporte primero para obtener la plantilla con las columnas correctas.
                     </p>
                     <input type="file" id="importFileInput" class="form-control" accept=".xlsx">
                     <div id="importStep1Error" class="alert alert-danger py-2 px-3 mt-2" style="display:none;font-size:.825rem"></div>
@@ -89,13 +89,13 @@ $importable = $importable ?? true;
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-outline-secondary" id="importBackBtn" style="display:none">
-                    <i class="bi bi-arrow-left me-1"></i>Volver
+                    <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver
                 </button>
                 <button type="button" class="btn btn-primary" id="importUploadBtn">
-                    <i class="bi bi-upload me-1"></i>Subir
+                    <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
                 </button>
                 <button type="button" class="btn btn-primary" id="importProcessBtn" style="display:none">
-                    <i class="bi bi-check-lg me-1"></i>Importar
+                    <i class="bi bi-check-lg me-1" aria-hidden="true"></i>Importar
                 </button>
                 <button type="button" class="btn btn-primary" id="importCloseBtn" style="display:none">
                     Cerrar

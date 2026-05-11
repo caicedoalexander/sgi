@@ -13,7 +13,7 @@ $groupFilters = $groupFilters ?? [];
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nuevo Registro de Caja Menor</span>
     <?= $this->Html->link(
-        '<i class="bi bi-arrow-left me-1"></i>Volver',
+        '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
         ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
     ) ?>
@@ -22,7 +22,7 @@ $groupFilters = $groupFilters ?? [];
 <!-- Filtros de agrupación -->
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-funnel"></i>
+        <i class="bi bi-funnel" aria-hidden="true"></i>
         <span class="fw-semibold" style="font-size:.85rem;">Filtrar facturas para agrupar</span>
     </div>
     <div class="card-body py-2 px-3">
@@ -57,12 +57,12 @@ $groupFilters = $groupFilters ?? [];
                 </select>
             </div>
             <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Buscar</button>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>Buscar</button>
                 <?= $this->Html->link('Limpiar', ['action' => 'add'], ['class' => 'btn btn-sm btn-outline-secondary']) ?>
             </div>
         </div>
         <div class="mt-2 sgi-hint">
-            <i class="bi bi-info-circle"></i>
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
             Por defecto se muestran facturas emitidas en los últimos 90 días. Use "Fecha Desde" para ampliar el rango.
         </div>
         <?= $this->Form->end() ?>
@@ -72,7 +72,7 @@ $groupFilters = $groupFilters ?? [];
 <div class="card card-primary">
     <div class="card-header d-flex align-items-center gap-3">
         <div class="sgi-icon-chip">
-            <i class="bi bi-wallet2"></i>
+            <i class="bi bi-wallet2" aria-hidden="true"></i>
         </div>
         <div>
             <div class="sgi-card-title">Crear Registro</div>
@@ -101,7 +101,7 @@ $groupFilters = $groupFilters ?? [];
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="sgi-micro-caps flex-shrink-0">
-                    <i class="bi bi-receipt me-1"></i>Facturas Disponibles
+                    <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Disponibles
                 </span>
                 <div class="sgi-flex-divider"></div>
                 <span class="sgi-folder-count"><?= count($availableInvoices) ?></span>
@@ -109,7 +109,7 @@ $groupFilters = $groupFilters ?? [];
 
             <?php if (empty($availableInvoices) || count($availableInvoices) === 0): ?>
             <div class="alert alert-info">
-                <i class="bi bi-info-circle me-1"></i>
+                <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
                 No hay facturas de tipo "Caja menor" disponibles<?= !empty($groupFilters['date_from']) || !empty($groupFilters['date_to']) || !empty($groupFilters['operation_center_id']) || !empty($groupFilters['provider_id']) ? ' con los filtros seleccionados' : '' ?>.
             </div>
             <?php else: ?>
@@ -132,7 +132,7 @@ $groupFilters = $groupFilters ?? [];
 
         <div class="d-flex gap-2 pt-2" style="border-top:1px solid var(--border-color);">
             <button type="submit" class="sgi-btn-primary btn">
-                <i class="bi bi-plus-lg me-1"></i>Crear Registro
+                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear Registro
             </button>
             <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>
         </div>

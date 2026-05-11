@@ -19,13 +19,13 @@ $statusLabels = RefundConstants::STATUS_LABELS;
     <span class="sgi-page-title">Ver Registro de Reintegro</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?php if (!empty($userPermissions['refunds']['can_edit']) && !$record->isPagada()): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-pencil me-1"></i>Editar',
+            '<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
             ['action' => 'edit', $record->id],
             ['class' => 'btn btn-warning btn-sm', 'escape' => false]
         ) ?>
@@ -40,7 +40,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
         <div class="d-flex align-items-start gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:52px;height:52px;background:var(--primary-color);color:#fff;font-size:1.35rem;">
-                <i class="bi bi-wallet2"></i>
+                <i class="bi bi-wallet2" aria-hidden="true"></i>
             </div>
             <div>
                 <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;font-family:monospace;">
@@ -109,13 +109,13 @@ $statusLabels = RefundConstants::STATUS_LABELS;
 <!-- Facturas agrupadas -->
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-receipt"></i>
+        <i class="bi bi-receipt" aria-hidden="true"></i>
         <span>Facturas Agrupadas</span>
         <span class="sgi-folder-count"><?= count($record->invoices ?? []) ?></span>
     </div>
     <?php if (empty($record->invoices)): ?>
     <div class="p-3 text-center text-muted" style="font-size:.875rem;">
-        <i class="bi bi-inbox me-1"></i>No hay facturas agrupadas
+        <i class="bi bi-inbox me-1" aria-hidden="true"></i>No hay facturas agrupadas
     </div>
     <?php else: ?>
     <div class="table-responsive">
@@ -152,14 +152,14 @@ $statusLabels = RefundConstants::STATUS_LABELS;
 <div class="card card-primary mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" style="font-size:.85rem;"></i>
+            <i class="bi bi-paperclip" style="font-size:.85rem;" aria-hidden="true"></i>
             <span style="font-size:.85rem;font-weight:600;">Soportes</span>
             <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
         </span>
     </div>
     <?php if (empty($docs)): ?>
         <div style="padding:2rem 1rem;text-align:center;color:#c8c8c8;">
-            <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+            <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
             <span style="font-size:.8rem;">Sin soportes adjuntos</span>
         </div>
     <?php else: ?>
@@ -181,7 +181,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
 <?php if (!empty($obsList)): ?>
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-chat-left-text"></i>
+        <i class="bi bi-chat-left-text" aria-hidden="true"></i>
         <span>Observaciones</span>
         <span class="sgi-folder-count"><?= count($obsList) ?></span>
     </div>
@@ -215,7 +215,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
                 </div>
                 <?php if ($isRegression && $fromLbl && $toLbl): ?>
                     <div style="font-size:.74rem;color:#666;margin-top:.1rem;">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>
+                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
                         <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
                     </div>
                 <?php endif; ?>

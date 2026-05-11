@@ -21,7 +21,7 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
         ]) ?>
         <?php if (!empty($userPermissions['employees']['can_create'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1"></i>Nuevo Empleado',
+            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Empleado',
             ['action' => 'add'],
             ['class' => 'btn btn-primary', 'escape' => false]
         ) ?>
@@ -42,13 +42,13 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
                 'value' => $this->request->getQuery('search', ''),
             ]) ?>
         </div>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i></button>
         <button type="button" class="btn btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#employeeFilters" title="Filtros avanzados">
-            <i class="bi bi-funnel"></i>
+            <i class="bi bi-funnel" aria-hidden="true"></i>
         </button>
         <?php if ($hasFilters): ?>
             <?= $this->Html->link(
-                '<i class="bi bi-x-lg"></i> Limpiar',
+                '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
                 ['action' => 'index'],
                 ['class' => 'btn btn-outline-danger', 'escape' => false]
             ) ?>
@@ -99,7 +99,7 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
 <?php if (empty($employeeList)): ?>
 <div class="card">
     <div class="sgi-doc-empty">
-        <i class="bi bi-people sgi-doc-empty-icon"></i>
+        <i class="bi bi-people sgi-doc-empty-icon" aria-hidden="true"></i>
         <div style="font-size:.875rem;font-weight:500;color:#999">Sin empleados registrados</div>
         <div style="font-size:.8rem;margin-top:.3rem">
             <?= $this->Html->link('Crear el primer empleado', ['action' => 'add'], ['class' => 'text-decoration-none', 'style' => 'color:var(--primary-color)']) ?>
@@ -167,21 +167,21 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
                     <?php endif; ?>
                     <?php if ($employee->current_novelty): ?>
                         <span class="badge bg-warning text-dark">
-                            <i class="bi bi-journal-text me-1"></i><?= h($employee->current_novelty->novelty_type->name ?? '') ?>
+                            <i class="bi bi-journal-text me-1" aria-hidden="true"></i><?= h($employee->current_novelty->novelty_type->name ?? '') ?>
                         </span>
                     <?php endif; ?>
                 </div>
                 <div class="d-flex gap-1">
                     <?php if (!empty($userPermissions['employees']['can_edit'])): ?>
                     <?= $this->Html->link(
-                        '<i class="bi bi-pencil"></i>',
+                        '<i class="bi bi-pencil" aria-hidden="true"></i>',
                         ['action' => 'edit', $employee->id],
                         ['class' => 'btn btn-sm btn-outline-dark', 'escape' => false, 'title' => 'Editar']
                     ) ?>
                     <?php endif; ?>
                     <?php if (!empty($userPermissions['employees']['can_delete'])): ?>
                     <?= $this->Form->postLink(
-                        '<i class="bi bi-trash"></i>',
+                        '<i class="bi bi-trash" aria-hidden="true"></i>',
                         ['action' => 'delete', $employee->id],
                         ['confirm' => '¿Está seguro de eliminar este empleado?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']
                     ) ?>

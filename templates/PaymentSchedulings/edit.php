@@ -25,12 +25,12 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
     <span class="sgi-page-title">Editar Programación</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?= $this->Html->link(
-            '<i class="bi bi-eye me-1"></i>Ver',
+            '<i class="bi bi-eye me-1" aria-hidden="true"></i>Ver',
             ['action' => 'view', $viewModel->record->id],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
@@ -41,7 +41,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
 <?php if ($viewModel->canAdvance && !empty($viewModel->advanceErrors)): ?>
 <div class="alert alert-warning mb-4">
     <div class="d-flex align-items-start gap-2">
-        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
         <div>
             <strong>Para avanzar al siguiente estado complete:</strong>
             <ul class="mb-0 mt-1 ps-3">
@@ -66,7 +66,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
         <div class="d-flex align-items-center gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-                <i class="bi bi-calendar2-check"></i>
+                <i class="bi bi-calendar2-check" aria-hidden="true"></i>
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
@@ -95,16 +95,16 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                 <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                      style="width:32px;height:32px;border:2px solid <?= $isPast || $isCurrent ? 'var(--primary-color)' : '#ddd' ?>;background:<?= $isPast || $isCurrent ? 'var(--primary-color)' : '#fff' ?>;color:<?= $isPast || $isCurrent ? '#fff' : '#bbb' ?>;font-size:.85rem;">
                     <?php if ($isPast): ?>
-                        <i class="bi bi-check-lg"></i>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i>
                     <?php else: ?>
-                        <i class="bi <?= $icon ?>"></i>
+                        <i class="bi <?= $icon ?>" aria-hidden="true"></i>
                     <?php endif; ?>
                 </div>
                 <span style="font-size:.75rem;font-weight:<?= $isCurrent ? '700' : '500' ?>;color:<?= $isCurrent ? '#111' : ($isPast ? 'var(--primary-color)' : '#aaa') ?>;">
                     <?= $viewModel->pipelineLabels[$status] ?? $status ?>
                 </span>
                 <?php if ($isCurrent): ?>
-                <i class="bi bi-caret-left-fill" style="font-size:.6rem;color:var(--primary-color);"></i>
+                <i class="bi bi-caret-left-fill" style="font-size:.6rem;color:var(--primary-color);" aria-hidden="true"></i>
                 <?php endif; ?>
             </div>
             <?php if ($i < count(PaymentSchedulingConstants::PIPELINE_STATUSES) - 1): ?>
@@ -161,17 +161,17 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-receipt me-1"></i>Facturas Vinculadas
+                    <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Vinculadas
                     <span class="sgi-folder-count ms-1"><?= $itemCount ?></span>
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
                 <?php if ($isBorrador): ?>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#add-item-form">
-                        <i class="bi bi-plus-lg me-1"></i>Manual
+                        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Manual
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#importExcelModal">
-                        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                        <i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>Excel
                     </button>
                 </div>
                 <?php endif; ?>
@@ -201,7 +201,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                             <input type="text" name="amount" class="form-control form-control-sm currency-input" required>
                         </div>
                         <div class="col-md-2">
-                            <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus-lg me-1"></i>Agregar</button>
+                            <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Agregar</button>
                         </div>
                     </div>
                     <?= $this->Form->end() ?>
@@ -237,7 +237,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                             <?php if ($isBorrador): ?>
                             <td class="text-end">
                                 <?= $this->Form->postLink(
-                                    '<i class="bi bi-trash"></i>',
+                                    '<i class="bi bi-trash" aria-hidden="true"></i>',
                                     ['action' => 'removeItem', $viewModel->record->id, $item->id],
                                     ['confirm' => '¿Desvincular esta factura?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false]
                                 ) ?>
@@ -257,7 +257,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
             </div>
             <?php else: ?>
             <div class="text-muted text-center py-3" style="font-size:.85rem;border:1px dashed var(--border-color);">
-                <i class="bi bi-receipt me-1"></i>No hay facturas vinculadas
+                <i class="bi bi-receipt me-1" aria-hidden="true"></i>No hay facturas vinculadas
             </div>
             <?php endif; ?>
         </div>
@@ -274,7 +274,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
         <div class="sgi-sticky-actions">
             <?php if ($viewModel->canAdvance && empty($viewModel->advanceErrors) && $viewModel->nextStatus): ?>
             <?= $this->Form->postLink(
-                '<i class="bi bi-arrow-right-circle me-1"></i>Avanzar a ' . h($viewModel->pipelineLabels[$viewModel->nextStatus] ?? ''),
+                '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Avanzar a ' . h($viewModel->pipelineLabels[$viewModel->nextStatus] ?? ''),
                 ['action' => 'advance', $viewModel->record->id],
                 [
                     'confirm' => '¿Avanzar la programación?',
@@ -287,7 +287,7 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
 
             <?php if ($viewModel->canReject): ?>
             <?= $this->Form->postLink(
-                '<i class="bi bi-arrow-counterclockwise me-1"></i>Devolver a Tesorería',
+                '<i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Devolver a Tesorería',
                 ['action' => 'reject', $viewModel->record->id],
                 ['confirm' => '¿Devolver la programación a Tesorería?', 'class' => 'btn btn-outline-warning', 'escape' => false]
             ) ?>
@@ -300,12 +300,12 @@ $itemCount = count($viewModel->record->payment_scheduling_items ?? []);
                 <?php if ($isLocked): ?>
                     <button type="button" class="btn btn-outline-secondary"
                             disabled title="<?= h($viewModel->regressLockMessage) ?>">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>Regresar al paso anterior
+                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Regresar al paso anterior
                     </button>
                 <?php else: ?>
                     <button type="button" class="btn btn-outline-secondary"
                             data-bs-toggle="modal" data-bs-target="#regressStatusModal">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>Regresar a: <?= h($prevLabel) ?>
+                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
                     </button>
                 <?php endif; ?>
             <?php endif; ?>
@@ -328,19 +328,19 @@ $totalDocs = count($documents);
 <div class="card card-primary">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" style="font-size:.85rem;"></i>
+            <i class="bi bi-paperclip" style="font-size:.85rem;" aria-hidden="true"></i>
             <span style="font-size:.85rem;font-weight:600;">Soportes</span>
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
         <?php if (!$isPagada): ?>
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
-            <i class="bi bi-upload me-1"></i>Subir
+            <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
         </button>
         <?php endif; ?>
     </div>
 
     <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documents) ? 'display:none;' : '' ?>">
-        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
     <div id="docs-list" style="max-height:420px;overflow-y:auto;">
@@ -359,7 +359,7 @@ $totalDocs = count($documents);
 <?php $obsCount = count($viewModel->record->payment_scheduling_observations ?? []); ?>
 <div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);"></i>
+        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);" aria-hidden="true"></i>
         <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
         <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
     </div>
@@ -374,7 +374,7 @@ $totalDocs = count($documents);
     </div>
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
+        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
         <span style="font-size:.78rem;">Sin observaciones aún</span>
     </div>
 
@@ -384,7 +384,7 @@ $totalDocs = count($documents);
             <textarea id="obs-message" name="message" class="auto-resize" rows="1"
                       placeholder="Escriba una observación..."></textarea>
             <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                <i class="bi bi-send"></i>
+                <i class="bi bi-send" aria-hidden="true"></i>
             </button>
         </div>
         <?= $this->Form->end() ?>
@@ -402,7 +402,7 @@ $totalDocs = count($documents);
         <div class="modal-content">
             <?= $this->Form->create(null, ['url' => ['action' => 'importExcel', $viewModel->record->id], 'type' => 'file']) ?>
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-file-earmark-excel me-2"></i>Importar Excel</h5>
+                <h5 class="modal-title"><i class="bi bi-file-earmark-excel me-2" aria-hidden="true"></i>Importar Excel</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -421,7 +421,7 @@ $totalDocs = count($documents);
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Importar</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Importar</button>
             </div>
             <?= $this->Form->end() ?>
         </div>
@@ -438,7 +438,7 @@ $totalDocs = count($documents);
                   data-url="<?= $this->Url->build(['action' => 'uploadDocument', $viewModel->record->id]) ?>"
                   enctype="multipart/form-data">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
+                    <h5 class="modal-title"><i class="bi bi-upload me-2" aria-hidden="true"></i>Subir Soporte</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -451,7 +451,7 @@ $totalDocs = count($documents);
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Subir</button>
                 </div>
             </form>
         </div>

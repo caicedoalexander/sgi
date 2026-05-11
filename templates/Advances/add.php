@@ -15,7 +15,7 @@ $this->assign('title', 'Nuevo Anticipo');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nuevo Anticipo</span>
     <?= $this->Html->link(
-        '<i class="bi bi-arrow-left me-1"></i>Volver',
+        '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
         ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
     ) ?>
@@ -26,7 +26,7 @@ $this->assign('title', 'Nuevo Anticipo');
     <div class="card-header d-flex align-items-center gap-3">
         <div class="d-flex align-items-center justify-content-center flex-shrink-0"
              style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.95rem;">
-            <i class="bi bi-cash-coin"></i>
+            <i class="bi bi-cash-coin" aria-hidden="true"></i>
         </div>
         <span style="font-size:.875rem;font-weight:600;color:#333;">Información del Anticipo</span>
     </div>
@@ -148,7 +148,7 @@ $this->assign('title', 'Nuevo Anticipo');
 
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-save me-1"></i>Guardar Anticipo
+                <i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Anticipo
             </button>
             <?= $this->Html->link(
                 'Cancelar',

@@ -18,7 +18,7 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
 ?>
 <div class="card card-primary mt-3">
     <div class="card-header d-flex align-items-center gap-2" style="background:#fff;border-bottom:1px solid var(--border-color);padding:.6rem 1rem;">
-        <i class="bi bi-envelope-paper" style="color:var(--primary-color);"></i>
+        <i class="bi bi-envelope-paper" style="color:var(--primary-color);" aria-hidden="true"></i>
         <span style="font-size:.875rem;font-weight:600;letter-spacing:-.01em;">Notificaciones de correo</span>
     </div>
     <div class="table-responsive">
@@ -59,11 +59,11 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
                         <td style="color:#444;"><?= h($log->to_email) ?></td>
                         <td>
                             <span class="badge <?= $statusBadge ?>">
-                                <i class="bi <?= $statusIcon ?> me-1"></i><?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
+                                <i class="bi <?= $statusIcon ?> me-1" aria-hidden="true"></i><?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
                             </span>
                             <?php if ($log->status === EmailLogConstants::STATUS_FAILED && !empty($log->last_error)): ?>
                                 <div class="text-danger mt-1" style="font-size:.7rem;line-height:1.3;">
-                                    <i class="bi bi-exclamation-triangle me-1"></i><?= h($log->last_error) ?>
+                                    <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i><?= h($log->last_error) ?>
                                 </div>
                             <?php endif; ?>
                         </td>
@@ -74,7 +74,7 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
                         <td class="text-end">
                             <?php if ($showRetry): ?>
                                 <?= $this->Form->postLink(
-                                    '<i class="bi bi-arrow-clockwise me-1"></i>Reintentar',
+                                    '<i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Reintentar',
                                     ['controller' => 'EmailLogs', 'action' => 'retry', $log->id],
                                     [
                                         'class' => 'btn btn-sm btn-outline-primary',

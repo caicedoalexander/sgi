@@ -19,7 +19,7 @@ $statusBadges = [
     <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['dian_crosschecks']['can_create'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-upload me-1"></i>Subir Archivo',
+            '<i class="bi bi-upload me-1" aria-hidden="true"></i>Subir Archivo',
             ['action' => 'add'],
             ['class' => 'btn btn-primary', 'escape' => false]
         ) ?>
@@ -42,7 +42,7 @@ $statusBadges = [
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-sm btn-outline-dark">
-                    <i class="bi bi-funnel me-1"></i>Filtrar
+                    <i class="bi bi-funnel me-1" aria-hidden="true"></i>Filtrar
                 </button>
             </div>
         </form>

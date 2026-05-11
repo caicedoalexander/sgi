@@ -17,7 +17,7 @@ $this->assign('title', 'Nueva Novedad');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nueva Novedad</span>
     <?= $this->Html->link(
-        '<i class="bi bi-arrow-left me-1"></i>Volver',
+        '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
         ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
     ) ?>
@@ -155,7 +155,7 @@ $this->assign('title', 'Nueva Novedad');
 
         <div class="d-flex gap-2 pt-3 mt-3" style="border-top:1px solid var(--border-color);">
             <button type="submit" class="btn btn-primary" id="btn-submit">
-                <i class="bi bi-save me-1"></i>Registrar Novedad
+                <i class="bi bi-save me-1" aria-hidden="true"></i>Registrar Novedad
             </button>
             <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>
         </div>

@@ -16,7 +16,7 @@ $genderOptions = ['' => '-- Seleccione --'] + GenderConstants::LABELS;
 ?>
 <!-- Datos Personales -->
 <div class="card card-primary mb-4">
-    <div class="card-header"><h5 class="mb-0"><i class="bi bi-person me-2"></i>Datos Personales</h5></div>
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-person me-2" aria-hidden="true"></i>Datos Personales</h5></div>
     <div class="card-body">
         <div class="row">
             <div class="col-md-3 mb-3">
@@ -72,7 +72,7 @@ $genderOptions = ['' => '-- Seleccione --'] + GenderConstants::LABELS;
 
 <!-- Contacto -->
 <div class="card card-primary mb-4">
-    <div class="card-header"><h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Contacto</h5></div>
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-telephone me-2" aria-hidden="true"></i>Contacto</h5></div>
     <div class="card-body">
         <div class="row">
             <div class="col-md-3 mb-3">
@@ -93,7 +93,7 @@ $genderOptions = ['' => '-- Seleccione --'] + GenderConstants::LABELS;
 
 <!-- Datos Laborales -->
 <div class="card card-primary mb-4">
-    <div class="card-header"><h5 class="mb-0"><i class="bi bi-briefcase me-2"></i>Datos Laborales</h5></div>
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-briefcase me-2" aria-hidden="true"></i>Datos Laborales</h5></div>
     <div class="card-body">
         <div class="row">
             <div class="col-md-3 mb-3">

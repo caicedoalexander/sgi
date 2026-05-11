@@ -56,12 +56,12 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <span class="sgi-page-title">Editar Novedad</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?= $this->Html->link(
-            '<i class="bi bi-eye me-1"></i>Ver',
+            '<i class="bi bi-eye me-1" aria-hidden="true"></i>Ver',
             ['action' => 'view', $novelty->id],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
@@ -71,7 +71,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 <!-- Grouped novelty alert -->
 <?php if ($novelty->isGrouped()): ?>
 <div class="alert alert-info d-flex align-items-center gap-2 mb-4" style="border-left:3px solid #0dcaf0;">
-    <i class="bi bi-link-45deg fs-5"></i>
+    <i class="bi bi-link-45deg fs-5" aria-hidden="true"></i>
     <div>
         Esta novedad pertenece al documento de liquidación
         <strong><?= $this->Html->link(
@@ -87,10 +87,10 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 <!-- Approval rejection alert -->
 <?php if (!empty($isApprovalRejected)): ?>
 <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
-    <i class="bi bi-x-circle"></i>
+    <i class="bi bi-x-circle" aria-hidden="true"></i>
     <span>Esta novedad fue <strong>rechazada</strong> por el aprobador. Edite los datos necesarios y reenvíe para aprobación.</span>
     <?= $this->Form->postLink(
-        '<i class="bi bi-send me-1"></i>Reenviar para Aprobación',
+        '<i class="bi bi-send me-1" aria-hidden="true"></i>Reenviar para Aprobación',
         ['action' => 'resendApproval', $novelty->id],
         ['class' => 'btn btn-warning btn-sm ms-auto', 'escape' => false, 'confirm' => '¿Reenviar la solicitud de aprobación?']
     ) ?>
@@ -101,7 +101,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 <?php if ($canAdvance && !$isRejected && !empty($transitionErrors)): ?>
 <div class="alert alert-warning mb-4">
     <div class="d-flex align-items-start gap-2">
-        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
         <div>
             <strong>Para avanzar al siguiente estado complete:</strong>
             <ul class="mb-0 mt-1 ps-3">
@@ -126,7 +126,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
         <div class="d-flex align-items-center gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-                <i class="bi bi-calendar-check"></i>
+                <i class="bi bi-calendar-check" aria-hidden="true"></i>
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;">
@@ -266,7 +266,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-gear me-1"></i>Gestión
+                    <i class="bi bi-gear me-1" aria-hidden="true"></i>Gestión
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -301,7 +301,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                 <label class="form-label">Documento de Liquidación</label>
                 <div>
                     <?= $this->Html->link(
-                        '<i class="bi bi-link-45deg me-1"></i>' . h($novelty->novelty_liquidation_doc->liquidation_number ?? 'Ver'),
+                        '<i class="bi bi-link-45deg me-1" aria-hidden="true"></i>' . h($novelty->novelty_liquidation_doc->liquidation_number ?? 'Ver'),
                         ['controller' => 'NoveltyLiquidationDocs', 'action' => 'view', $novelty->liquidation_doc_id],
                         ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false]
                     ) ?>
@@ -317,7 +317,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-pen me-1"></i>Firmas
+                    <i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -339,7 +339,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-person-check me-1"></i>Aprobación
+                    <i class="bi bi-person-check me-1" aria-hidden="true"></i>Aprobación
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -357,7 +357,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                 </div>
                 <div class="col-md-6">
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="bi bi-send me-1"></i>Enviar link de aprobación
+                        <i class="bi bi-send me-1" aria-hidden="true"></i>Enviar link de aprobación
                     </button>
                 </div>
             </div>
@@ -381,7 +381,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                 </div>
                 <div class="col-md-4">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
+                        <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
                     </button>
                 </div>
             </div>
@@ -394,7 +394,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-file-earmark-text me-1"></i>Asignar a Documento de Liquidación
+                    <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Asignar a Documento de Liquidación
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -426,7 +426,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-link-45deg me-1"></i>Asignar
+                        <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Asignar
                     </button>
                 </div>
             </div>
@@ -441,7 +441,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
             <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id], 'class' => 'd-inline']) ?>
             <?= $this->Form->hidden('expected_status', ['value' => $novelty->pipeline_status]) ?>
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-arrow-right-circle me-1"></i>Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
+                <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
             </button>
             <?= $this->Form->end() ?>
             <?php endif; ?>
@@ -451,7 +451,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 
         <?php else: ?>
         <div class="alert alert-info mb-0">
-            <i class="bi bi-info-circle me-1"></i>
+            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
             No tiene permisos de edición para esta novedad en el estado actual.
         </div>
         <?php endif; ?>
@@ -469,19 +469,19 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 <div class="card card-primary">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" style="font-size:.85rem;"></i>
+            <i class="bi bi-paperclip" style="font-size:.85rem;" aria-hidden="true"></i>
             <span style="font-size:.85rem;font-weight:600;">Soportes</span>
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
         <?php if ($showUploadSection): ?>
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
-            <i class="bi bi-upload me-1"></i>Subir
+            <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
         </button>
         <?php endif; ?>
     </div>
 
     <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
-        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
     <div id="docs-list" style="max-height:420px;overflow-y:auto;">
@@ -513,7 +513,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 <?php $obsCount = count($novelty->novelty_observations ?? []); ?>
 <div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);"></i>
+        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);" aria-hidden="true"></i>
         <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
         <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
     </div>
@@ -528,7 +528,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     </div>
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
+        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
         <span style="font-size:.78rem;">Sin observaciones aún</span>
     </div>
 
@@ -539,7 +539,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
             <textarea name="message" class="auto-resize" rows="1"
                       placeholder="Escriba una observación..."></textarea>
             <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                <i class="bi bi-send"></i>
+                <i class="bi bi-send" aria-hidden="true"></i>
             </button>
         </div>
         <?= $this->Form->end() ?>
@@ -559,7 +559,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                   data-url="<?= $this->Url->build(['controller' => 'NoveltyDocuments', 'action' => 'upload', $novelty->id]) ?>"
                   enctype="multipart/form-data">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
+                    <h5 class="modal-title"><i class="bi bi-upload me-2" aria-hidden="true"></i>Subir Soporte</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -572,7 +572,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Subir</button>
                 </div>
             </form>
         </div>

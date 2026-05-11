@@ -32,7 +32,7 @@ $calendarColorCount = count($calendarColors);
     <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['employee_novelties']['can_create'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1"></i>Nueva Novedad',
+            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva Novedad',
             ['action' => 'add'],
             ['class' => 'btn btn-primary', 'escape' => false]
         ) ?>
@@ -53,10 +53,10 @@ $calendarColorCount = count($calendarColors);
     <?php if ($action === 'all'): ?>
     <div class="ms-auto btn-group btn-group-sm" role="group">
         <button type="button" class="btn btn-outline-dark" id="btn-view-list" title="Vista de lista">
-            <i class="bi bi-list-ul"></i>
+            <i class="bi bi-list-ul" aria-hidden="true"></i>
         </button>
         <button type="button" class="btn btn-dark" id="btn-view-calendar" title="Vista de calendario">
-            <i class="bi bi-calendar3"></i>
+            <i class="bi bi-calendar3" aria-hidden="true"></i>
         </button>
     </div>
     <?php endif; ?>
@@ -159,7 +159,7 @@ $calendarColorCount = count($calendarColors);
                     <?php endforeach; ?>
                 </select>
                 <button type="button" id="cal-btn-clear" class="btn btn-sm btn-outline-secondary" style="display:none;">
-                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                    <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Limpiar
                 </button>
             </div>
         </div>

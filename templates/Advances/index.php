@@ -22,7 +22,7 @@ $legalizationBadge = AdvancePresentation::STATUS_BADGES;
     <?php if (!empty($userPermissions['advances']['can_create'])): ?>
     <div>
         <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1"></i>Nuevo Anticipo',
+            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Anticipo',
             ['action' => 'add'],
             ['class' => 'sgi-btn-primary btn btn-sm', 'escape' => false]
         ) ?>

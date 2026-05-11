@@ -28,15 +28,15 @@ $groupIcons = [
     <span class="sgi-page-title">Editor: <?= h($template->name) ?></span>
     <div class="d-flex gap-2">
         <button type="button" id="btn-save-fields" class="btn btn-primary btn-sm">
-            <i class="bi bi-save me-1"></i>Guardar Campos
+            <i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Campos
         </button>
         <?= $this->Html->link(
-            '<i class="bi bi-eye me-1"></i>Previsualizar',
+            '<i class="bi bi-eye me-1" aria-hidden="true"></i>Previsualizar',
             ['action' => 'preview', $template->id],
             ['class' => 'btn btn-outline-primary btn-sm', 'escape' => false, 'target' => '_blank', 'id' => 'btn-preview']
         ) ?>
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
@@ -53,12 +53,12 @@ $groupIcons = [
                 <?php foreach ($grouped as $groupName => $fields): ?>
                 <div class="template-field-group">
                     <div class="template-field-group-title">
-                        <i class="bi <?= $groupIcons[$groupName] ?? 'bi-tag' ?> me-1"></i><?= h($groupName) ?>
+                        <i class="bi <?= $groupIcons[$groupName] ?? 'bi-tag' ?> me-1" aria-hidden="true"></i><?= h($groupName) ?>
                     </div>
                     <?php foreach ($fields as $key => $info): ?>
                     <div class="template-field-item" data-key="<?= h($key) ?>" data-label="<?= h($info['label']) ?>" data-type="<?= h($info['type']) ?>">
                         <button type="button" class="btn btn-sm btn-outline-dark w-100 text-start add-field-btn" title="Agregar <?= h($info['label']) ?>">
-                            <i class="bi bi-plus-circle me-1"></i>
+                            <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>
                             <span class="flex-grow-1"><?= h($info['label']) ?></span>
                             <span class="badge bg-light text-muted ms-1" style="font-size:.6rem;"><?= h($info['type']) ?></span>
                         </button>
@@ -126,11 +126,11 @@ $groupIcons = [
                     <label class="form-label mb-1" style="font-size:.75rem;">Alineación</label>
                     <div class="btn-group btn-group-sm w-100" role="group">
                         <input type="radio" class="btn-check" name="prop-alignment" id="align-L" value="L" checked>
-                        <label class="btn btn-outline-dark" for="align-L"><i class="bi bi-text-left"></i></label>
+                        <label class="btn btn-outline-dark" for="align-L"><i class="bi bi-text-left" aria-hidden="true"></i></label>
                         <input type="radio" class="btn-check" name="prop-alignment" id="align-C" value="C">
-                        <label class="btn btn-outline-dark" for="align-C"><i class="bi bi-text-center"></i></label>
+                        <label class="btn btn-outline-dark" for="align-C"><i class="bi bi-text-center" aria-hidden="true"></i></label>
                         <input type="radio" class="btn-check" name="prop-alignment" id="align-R" value="R">
-                        <label class="btn btn-outline-dark" for="align-R"><i class="bi bi-text-right"></i></label>
+                        <label class="btn btn-outline-dark" for="align-R"><i class="bi bi-text-right" aria-hidden="true"></i></label>
                     </div>
                 </div>
 
@@ -143,7 +143,7 @@ $groupIcons = [
                 </div>
 
                 <button type="button" id="btn-remove-field" class="btn btn-sm btn-outline-danger w-100 mt-2">
-                    <i class="bi bi-trash me-1"></i>Eliminar Campo
+                    <i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar Campo
                 </button>
             </div>
         </div>

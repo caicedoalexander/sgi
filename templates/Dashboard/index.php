@@ -68,7 +68,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
 <?php if (!empty($invoiceStats)): ?>
 <div>
     <div class="d-flex align-items-center gap-2 mb-3">
-        <i class="bi bi-receipt" style="color:var(--primary-color);font-size:1rem;"></i>
+        <i class="bi bi-receipt" style="color:var(--primary-color);font-size:1rem;" aria-hidden="true"></i>
         <span style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;">Facturación</span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>
@@ -227,7 +227,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
 <?php if (!empty($rrhhStats) || !empty($recentNovelties)): ?>
 <div>
     <div class="d-flex align-items-center gap-2 mb-3">
-        <i class="bi bi-people-fill" style="color:var(--primary-color);font-size:1rem;"></i>
+        <i class="bi bi-people-fill" style="color:var(--primary-color);font-size:1rem;" aria-hidden="true"></i>
         <span style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;">RRHH</span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>
@@ -365,7 +365,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
 <?php if (!empty($catalogStats)): ?>
 <div>
     <div class="d-flex align-items-center gap-2 mb-3">
-        <i class="bi bi-collection" style="color:var(--primary-color);font-size:1rem;"></i>
+        <i class="bi bi-collection" style="color:var(--primary-color);font-size:1rem;" aria-hidden="true"></i>
         <span style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;">Catálogos</span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>
@@ -416,7 +416,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
 <?php if (!empty($adminStats)): ?>
 <div>
     <div class="d-flex align-items-center gap-2 mb-3">
-        <i class="bi bi-shield-lock" style="color:var(--primary-color);font-size:1rem;"></i>
+        <i class="bi bi-shield-lock" style="color:var(--primary-color);font-size:1rem;" aria-hidden="true"></i>
         <span style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;">Administración</span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>

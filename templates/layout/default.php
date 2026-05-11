@@ -26,6 +26,8 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $this->fetch('title') ?> | SGI · COPCSA</title>
     <link rel="icon" type="image/png" href="<?= $this->Url->build('/img/copcsa.png') ?>">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <!-- Bootstrap primero, luego nuestros estilos para poder sobreescribir -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
@@ -90,7 +92,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
             <ul class="nav nav-pills flex-column mb-3">
                 <li class="nav-item">
                     <?= $this->Html->link(
-                        '<i class="bi bi-house-door me-2"></i>Inicio',
+                        '<i class="bi bi-house-door me-2" aria-hidden="true"></i>Inicio',
                         ['controller' => 'Dashboard', 'action' => 'index'],
                         ['class' => $navLink('Dashboard'), 'escape' => false],
                     ) ?>
@@ -108,7 +110,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                 <li class="nav-item sidebar-has-submenu">
                     <div class="sidebar-collapsible-header">
                         <?= $this->Html->link(
-                            '<i class="bi bi-receipt-cutoff me-2"></i><span class="flex-grow-1">Todas las Facturas</span>',
+                            '<i class="bi bi-receipt-cutoff me-2" aria-hidden="true"></i><span class="flex-grow-1">Todas las Facturas</span>',
                             ['controller' => 'Invoices', 'action' => 'all'],
                             ['class' => $navLink('Invoices', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false],
                         ) ?>
@@ -117,7 +119,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                                 data-bs-target="#facturacion-submenu"
                                 aria-expanded="<?= $facturacionSubActive ? 'true' : 'false' ?>"
                                 aria-controls="facturacion-submenu">
-                            <i class="bi bi-chevron-down"></i>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
                         </button>
                     </div>
                     <div class="collapse<?= $facturacionSubActive ? ' show' : '' ?>"
@@ -125,7 +127,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                         <ul class="sidebar-submenu">
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-receipt me-2"></i>Mis Facturas' .
+                                    '<i class="bi bi-receipt me-2" aria-hidden="true"></i>Mis Facturas' .
                                     (!empty($sidebarCounters) ? ' <span class="badge bg-success sidebar-badge ms-auto">' . array_sum($sidebarCounters) . '</span>' : ''),
                                     ['controller' => 'Invoices', 'action' => 'index'],
                                     ['class' => $navLink('Invoices', 'index') . ' d-flex align-items-center', 'escape' => false],
@@ -133,7 +135,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-x-circle me-2"></i>Rechazadas' .
+                                    '<i class="bi bi-x-circle me-2" aria-hidden="true"></i>Rechazadas' .
                                     ($rejectedInvoicesCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $rejectedInvoicesCount . '</span>' : ''),
                                     ['controller' => 'Invoices', 'action' => 'rejected'],
                                     ['class' => $navLink('Invoices', 'rejected') . ' d-flex align-items-center', 'escape' => false],
@@ -141,7 +143,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-clock-history me-2"></i>Vencidas' .
+                                    '<i class="bi bi-clock-history me-2" aria-hidden="true"></i>Vencidas' .
                                     (($overdueInvoicesCount ?? 0) > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . ($overdueInvoicesCount ?? 0) . '</span>' : ''),
                                     ['controller' => 'Invoices', 'action' => 'overdue'],
                                     ['class' => $navLink('Invoices', 'overdue') . ' d-flex align-items-center', 'escape' => false],
@@ -150,7 +152,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             <?php if ($canView('payment_schedulings')) : ?>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-calendar-check me-2"></i>Programación',
+                                    '<i class="bi bi-calendar-check me-2" aria-hidden="true"></i>Programación',
                                     ['controller' => 'PaymentSchedulings', 'action' => 'index'],
                                     ['class' => $navLink('PaymentSchedulings') . ' d-flex align-items-center', 'escape' => false],
                                 ) ?>
@@ -165,7 +167,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                 <li class="nav-item sidebar-has-submenu">
                     <div class="sidebar-collapsible-header">
                         <?= $this->Html->link(
-                            '<i class="bi bi-wallet2 me-2"></i><span class="flex-grow-1">Caja Menor</span>',
+                            '<i class="bi bi-wallet2 me-2" aria-hidden="true"></i><span class="flex-grow-1">Caja Menor</span>',
                             ['controller' => 'PettyCashRecords', 'action' => 'all'],
                             ['class' => $navLink('PettyCashRecords', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false],
                         ) ?>
@@ -174,14 +176,14 @@ $advancesMineCount = $advancesMineCount ?? 0;
                                 data-bs-target="#caja-menor-submenu"
                                 aria-expanded="<?= $pettyCashSubActive ? 'true' : 'false' ?>"
                                 aria-controls="caja-menor-submenu">
-                            <i class="bi bi-chevron-down"></i>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
                         </button>
                     </div>
                     <div class="collapse<?= $pettyCashSubActive ? ' show' : '' ?>" id="caja-menor-submenu">
                         <ul class="sidebar-submenu">
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-wallet2 me-2"></i>Mis Registros' .
+                                    '<i class="bi bi-wallet2 me-2" aria-hidden="true"></i>Mis Registros' .
                                     ($pettyCashMineCount > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $pettyCashMineCount . '</span>' : ''),
                                     ['controller' => 'PettyCashRecords', 'action' => 'index'],
                                     ['class' => $navLink('PettyCashRecords', 'index') . ' d-flex align-items-center', 'escape' => false],
@@ -189,7 +191,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-hourglass-split me-2"></i>Pendientes' .
+                                    '<i class="bi bi-hourglass-split me-2" aria-hidden="true"></i>Pendientes' .
                                     ($pettyCashCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $pettyCashCount . '</span>' : ''),
                                     ['controller' => 'PettyCashRecords', 'action' => 'pending'],
                                     ['class' => $navLink('PettyCashRecords', 'pending') . ' d-flex align-items-center', 'escape' => false],
@@ -204,7 +206,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                 <li class="nav-item sidebar-has-submenu">
                     <div class="sidebar-collapsible-header">
                         <?= $this->Html->link(
-                            '<i class="bi bi-arrow-counterclockwise me-2"></i><span class="flex-grow-1">Reintegros</span>',
+                            '<i class="bi bi-arrow-counterclockwise me-2" aria-hidden="true"></i><span class="flex-grow-1">Reintegros</span>',
                             ['controller' => 'Refunds', 'action' => 'all'],
                             ['class' => $navLink('Refunds', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false],
                         ) ?>
@@ -213,14 +215,14 @@ $advancesMineCount = $advancesMineCount ?? 0;
                                 data-bs-target="#refunds-submenu"
                                 aria-expanded="<?= $refundsSubActive ? 'true' : 'false' ?>"
                                 aria-controls="refunds-submenu">
-                            <i class="bi bi-chevron-down"></i>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
                         </button>
                     </div>
                     <div class="collapse<?= $refundsSubActive ? ' show' : '' ?>" id="refunds-submenu">
                         <ul class="sidebar-submenu">
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-arrow-counterclockwise me-2"></i>Mis Registros' .
+                                    '<i class="bi bi-arrow-counterclockwise me-2" aria-hidden="true"></i>Mis Registros' .
                                     (($refundsMineCount ?? 0) > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . (int)$refundsMineCount . '</span>' : ''),
                                     ['controller' => 'Refunds', 'action' => 'index'],
                                     ['class' => $navLink('Refunds', 'index') . ' d-flex align-items-center', 'escape' => false],
@@ -228,7 +230,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-hourglass-split me-2"></i>Pendientes' .
+                                    '<i class="bi bi-hourglass-split me-2" aria-hidden="true"></i>Pendientes' .
                                     (($refundsCount ?? 0) > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . (int)$refundsCount . '</span>' : ''),
                                     ['controller' => 'Refunds', 'action' => 'pending'],
                                     ['class' => $navLink('Refunds', 'pending') . ' d-flex align-items-center', 'escape' => false],
@@ -243,7 +245,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                 <li class="nav-item sidebar-has-submenu">
                     <div class="sidebar-collapsible-header">
                         <?= $this->Html->link(
-                            '<i class="bi bi-cash-coin me-2"></i><span class="flex-grow-1">Anticipos</span>',
+                            '<i class="bi bi-cash-coin me-2" aria-hidden="true"></i><span class="flex-grow-1">Anticipos</span>',
                             ['controller' => 'Advances', 'action' => 'all'],
                             ['class' => $navLink('Advances', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false],
                         ) ?>
@@ -252,14 +254,14 @@ $advancesMineCount = $advancesMineCount ?? 0;
                                 data-bs-target="#anticipos-submenu"
                                 aria-expanded="<?= $advancesSubActive ? 'true' : 'false' ?>"
                                 aria-controls="anticipos-submenu">
-                            <i class="bi bi-chevron-down"></i>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
                         </button>
                     </div>
                     <div class="collapse<?= $advancesSubActive ? ' show' : '' ?>" id="anticipos-submenu">
                         <ul class="sidebar-submenu">
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-cash-coin me-2"></i>Mis Anticipos' .
+                                    '<i class="bi bi-cash-coin me-2" aria-hidden="true"></i>Mis Anticipos' .
                                     ($advancesMineCount > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $advancesMineCount . '</span>' : ''),
                                     ['controller' => 'Advances', 'action' => 'index'],
                                     ['class' => $navLink('Advances', 'index') . ' d-flex align-items-center', 'escape' => false],
@@ -267,7 +269,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-hourglass-split me-2"></i>Pendientes' .
+                                    '<i class="bi bi-hourglass-split me-2" aria-hidden="true"></i>Pendientes' .
                                     (!empty($advancesPendingLegalizationCount) ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $advancesPendingLegalizationCount . '</span>' : ''),
                                     ['controller' => 'Advances', 'action' => 'pendingLegalization'],
                                     ['class' => $navLink('Advances', 'pendingLegalization') . ' d-flex align-items-center', 'escape' => false],
@@ -280,7 +282,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('payment_registry')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-cash-stack me-2"></i>Registro de Pagos',
+                            '<i class="bi bi-cash-stack me-2" aria-hidden="true"></i>Registro de Pagos',
                             ['controller' => 'PaymentRegistry', 'action' => 'index'],
                             ['class' => $navLink('PaymentRegistry') . ' d-flex align-items-center', 'escape' => false],
                         ) ?>
@@ -293,7 +295,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                 <li class="nav-item sidebar-has-submenu">
                     <div class="sidebar-collapsible-header">
                         <?= $this->Html->link(
-                            '<i class="bi bi-file-earmark-text me-2"></i><span class="flex-grow-1">D. de Liquidación</span>',
+                            '<i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i><span class="flex-grow-1">D. de Liquidación</span>',
                             ['controller' => 'NoveltyLiquidationDocs', 'action' => 'all'],
                             ['class' => $navLink('NoveltyLiquidationDocs', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false],
                         ) ?>
@@ -302,7 +304,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                                 data-bs-target="#liquidacion-submenu"
                                 aria-expanded="<?= $liquidacionSubActive ? 'true' : 'false' ?>"
                                 aria-controls="liquidacion-submenu">
-                            <i class="bi bi-chevron-down"></i>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
                         </button>
                     </div>
                     <div class="collapse<?= $liquidacionSubActive ? ' show' : '' ?>"
@@ -310,7 +312,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                         <ul class="sidebar-submenu">
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-file-earmark-text me-2"></i>Mis Documentos' .
+                                    '<i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>Mis Documentos' .
                                     ($liquidationMineCount > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . $liquidationMineCount . '</span>' : ''),
                                     ['controller' => 'NoveltyLiquidationDocs', 'action' => 'index'],
                                     ['class' => $navLink('NoveltyLiquidationDocs', 'index') . ' d-flex align-items-center', 'escape' => false],
@@ -318,7 +320,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             </li>
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-x-circle me-2"></i>Rechazadas' .
+                                    '<i class="bi bi-x-circle me-2" aria-hidden="true"></i>Rechazadas' .
                                     ($liquidationRejectedCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $liquidationRejectedCount . '</span>' : ''),
                                     ['controller' => 'NoveltyLiquidationDocs', 'action' => 'rejected'],
                                     ['class' => $navLink('NoveltyLiquidationDocs', 'rejected') . ' d-flex align-items-center', 'escape' => false],
@@ -340,7 +342,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('employees')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-people-fill me-2"></i>Empleados',
+                            '<i class="bi bi-people-fill me-2" aria-hidden="true"></i>Empleados',
                             ['controller' => 'Employees', 'action' => 'index'],
                             ['class' => $navLink('Employees'), 'escape' => false],
                         ) ?>
@@ -352,7 +354,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                 <li class="nav-item sidebar-has-submenu">
                     <div class="sidebar-collapsible-header">
                             <?= $this->Html->link(
-                                '<i class="bi bi-journal-text me-2"></i><span class="flex-grow-1">Todas las Novedades</span>',
+                                '<i class="bi bi-journal-text me-2" aria-hidden="true"></i><span class="flex-grow-1">Todas las Novedades</span>',
                                 ['controller' => 'EmployeeNovelties', 'action' => 'all'],
                                 ['class' => $navLink('EmployeeNovelties', 'all') . ' flex-grow-1 d-flex align-items-center', 'escape' => false],
                             ) ?>
@@ -361,7 +363,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                                 data-bs-target="#novedades-submenu"
                                 aria-expanded="<?= $noveltiesSubActive ? 'true' : 'false' ?>"
                                 aria-controls="novedades-submenu">
-                            <i class="bi bi-chevron-down"></i>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
                         </button>
                     </div>
                     <div class="collapse<?= $noveltiesSubActive ? ' show' : '' ?>"
@@ -369,7 +371,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                         <ul class="sidebar-submenu">
                             <li class="nav-item">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-journal-text me-2"></i>Mis Novedades' .
+                                    '<i class="bi bi-journal-text me-2" aria-hidden="true"></i>Mis Novedades' .
                                     ($noveltiesCount > 0 ? ' <span class="badge bg-warning text-dark sidebar-badge ms-auto">' . $noveltiesCount . '</span>' : ''),
                                     ['controller' => 'EmployeeNovelties', 'action' => 'index'],
                                     ['class' => $navLink('EmployeeNovelties', 'index') . ' d-flex align-items-center', 'escape' => false],
@@ -377,7 +379,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             </li>
                             <li class="nav-item">
                                     <?= $this->Html->link(
-                                        '<i class="bi bi-x-circle me-2"></i>Rechazadas' .
+                                        '<i class="bi bi-x-circle me-2" aria-hidden="true"></i>Rechazadas' .
                                         ($rejectedNoveltiesCount > 0 ? ' <span class="badge bg-danger sidebar-badge ms-auto">' . $rejectedNoveltiesCount . '</span>' : ''),
                                         ['controller' => 'EmployeeNovelties', 'action' => 'rejected'],
                                         ['class' => $navLink('EmployeeNovelties', 'rejected') . ' d-flex align-items-center', 'escape' => false],
@@ -385,7 +387,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                             </li>
                             <li class="nav-item">
                                     <?= $this->Html->link(
-                                        '<i class="bi bi-calendar-check me-2"></i>Vigentes' .
+                                        '<i class="bi bi-calendar-check me-2" aria-hidden="true"></i>Vigentes' .
                                         (($activeNoveltiesCount ?? 0) > 0 ? ' <span class="badge bg-success sidebar-badge ms-auto">' . ($activeNoveltiesCount ?? 0) . '</span>' : ''),
                                         ['controller' => 'EmployeeNovelties', 'action' => 'active'],
                                         ['class' => $navLink('EmployeeNovelties', 'active') . ' d-flex align-items-center', 'escape' => false],
@@ -417,7 +419,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('approvers')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-person-check me-2"></i>Aprobadores',
+                            '<i class="bi bi-person-check me-2" aria-hidden="true"></i>Aprobadores',
                             ['controller' => 'Approvers', 'action' => 'index'],
                             ['class' => $navLink('Approvers'), 'escape' => false],
                         ) ?>
@@ -426,7 +428,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('providers')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-truck me-2"></i>Proveedores',
+                            '<i class="bi bi-truck me-2" aria-hidden="true"></i>Proveedores',
                             ['controller' => 'Providers', 'action' => 'index'],
                             ['class' => $navLink('Providers'), 'escape' => false],
                         ) ?>
@@ -435,7 +437,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('banking_entities')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-bank me-2"></i>Entidades Bancarias',
+                            '<i class="bi bi-bank me-2" aria-hidden="true"></i>Entidades Bancarias',
                             ['controller' => 'BankingEntities', 'action' => 'index'],
                             ['class' => $navLink('BankingEntities'), 'escape' => false],
                         ) ?>
@@ -444,7 +446,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('operation_centers')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-geo-alt me-2"></i>Centros de Operación',
+                            '<i class="bi bi-geo-alt me-2" aria-hidden="true"></i>Centros de Operación',
                             ['controller' => 'OperationCenters', 'action' => 'index'],
                             ['class' => $navLink('OperationCenters'), 'escape' => false],
                         ) ?>
@@ -453,7 +455,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('expense_types')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-tags me-2"></i>Tipos de Gasto',
+                            '<i class="bi bi-tags me-2" aria-hidden="true"></i>Tipos de Gasto',
                             ['controller' => 'ExpenseTypes', 'action' => 'index'],
                             ['class' => $navLink('ExpenseTypes'), 'escape' => false],
                         ) ?>
@@ -462,7 +464,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('cost_centers')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-diagram-3 me-2"></i>Centros de Costos',
+                            '<i class="bi bi-diagram-3 me-2" aria-hidden="true"></i>Centros de Costos',
                             ['controller' => 'CostCenters', 'action' => 'index'],
                             ['class' => $navLink('CostCenters'), 'escape' => false],
                         ) ?>
@@ -471,7 +473,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('positions')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-briefcase me-2"></i>Cargos',
+                            '<i class="bi bi-briefcase me-2" aria-hidden="true"></i>Cargos',
                             ['controller' => 'Positions', 'action' => 'index'],
                             ['class' => $navLink('Positions'), 'escape' => false],
                         ) ?>
@@ -480,7 +482,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('marital_statuses')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-heart me-2"></i>Estados Civiles',
+                            '<i class="bi bi-heart me-2" aria-hidden="true"></i>Estados Civiles',
                             ['controller' => 'MaritalStatuses', 'action' => 'index'],
                             ['class' => $navLink('MaritalStatuses'), 'escape' => false],
                         ) ?>
@@ -489,7 +491,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('education_levels')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-mortarboard me-2"></i>Niveles Educativos',
+                            '<i class="bi bi-mortarboard me-2" aria-hidden="true"></i>Niveles Educativos',
                             ['controller' => 'EducationLevels', 'action' => 'index'],
                             ['class' => $navLink('EducationLevels'), 'escape' => false],
                         ) ?>
@@ -498,7 +500,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('default_folders')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-folder me-2"></i>Carpetas por Defecto',
+                            '<i class="bi bi-folder me-2" aria-hidden="true"></i>Carpetas por Defecto',
                             ['controller' => 'DefaultFolders', 'action' => 'index'],
                             ['class' => $navLink('DefaultFolders'), 'escape' => false],
                         ) ?>
@@ -507,7 +509,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('novelty_types')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-list-check me-2"></i>Tipos de Novedad',
+                            '<i class="bi bi-list-check me-2" aria-hidden="true"></i>Tipos de Novedad',
                             ['controller' => 'NoveltyTypes', 'action' => 'index'],
                             ['class' => $navLink('NoveltyTypes'), 'escape' => false],
                         ) ?>
@@ -516,7 +518,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('temporary_organizations')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-building-gear me-2"></i>Org. Temporales',
+                            '<i class="bi bi-building-gear me-2" aria-hidden="true"></i>Org. Temporales',
                             ['controller' => 'TemporaryOrganizations', 'action' => 'index'],
                             ['class' => $navLink('TemporaryOrganizations'), 'escape' => false],
                         ) ?>
@@ -525,7 +527,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('leave_document_templates')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-file-earmark-ruled me-2"></i>Plantillas Documento',
+                            '<i class="bi bi-file-earmark-ruled me-2" aria-hidden="true"></i>Plantillas Documento',
                             ['controller' => 'LeaveDocumentTemplates', 'action' => 'index'],
                             ['class' => $navLink('LeaveDocumentTemplates'), 'escape' => false],
                         ) ?>
@@ -545,7 +547,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('users')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-people me-2"></i>Usuarios',
+                            '<i class="bi bi-people me-2" aria-hidden="true"></i>Usuarios',
                             ['controller' => 'Users', 'action' => 'index'],
                             ['class' => $navLink('Users'), 'escape' => false],
                         ) ?>
@@ -554,7 +556,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('roles')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-shield-lock me-2"></i>Roles',
+                            '<i class="bi bi-shield-lock me-2" aria-hidden="true"></i>Roles',
                             ['controller' => 'Roles', 'action' => 'index'],
                             ['class' => $navLink('Roles'), 'escape' => false],
                         ) ?>
@@ -563,7 +565,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('system_settings')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-gear me-2"></i>Configuración',
+                            '<i class="bi bi-gear me-2" aria-hidden="true"></i>Configuración',
                             ['controller' => 'SystemSettings', 'action' => 'index'],
                             ['class' => $navLink('SystemSettings'), 'escape' => false],
                         ) ?>
@@ -572,7 +574,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?php if ($canView('email_logs')) : ?>
                 <li class="nav-item">
                         <?= $this->Html->link(
-                            '<i class="bi bi-envelope-exclamation me-2"></i>Logs de correo',
+                            '<i class="bi bi-envelope-exclamation me-2" aria-hidden="true"></i>Logs de correo',
                             ['controller' => 'EmailLogs', 'action' => 'index'],
                             ['class' => $navLink('EmailLogs'), 'escape' => false],
                         ) ?>
@@ -588,7 +590,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <div class="d-flex align-items-center" style="min-width:0;">
                         <div class="d-flex align-items-center justify-content-center me-2"
                              style="width:32px;height:32px;background-color:var(--primary-color);flex-shrink:0;">
-                            <i class="bi bi-person text-white" style="font-size:.95rem;"></i>
+                            <i class="bi bi-person text-white" style="font-size:.95rem;" aria-hidden="true"></i>
                         </div>
                         <div class="overflow-hidden">
                             <div class="text-white fw-medium text-truncate" style="font-size:.82rem;"><?= h($currentUser->full_name) ?></div>
@@ -596,7 +598,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                         </div>
                     </div>
                     <?= $this->Html->link(
-                        '<i class="bi bi-box-arrow-right"></i>',
+                        '<i class="bi bi-box-arrow-right" aria-hidden="true"></i>',
                         ['controller' => 'Users', 'action' => 'logout'],
                         ['class' => 'sgi-sidebar-logout', 'escape' => false],
                     ) ?>
@@ -616,7 +618,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
             <nav class="sgi-topbar sticky-top d-flex align-items-center justify-content-between px-4">
                 <span class="sgi-topbar-title"><?= $this->fetch('title') ?></span>
                 <div class="sgi-topbar-date d-none d-md-flex align-items-center gap-2">
-                    <i class="bi bi-calendar3" style="font-size:.75rem"></i>
+                    <i class="bi bi-calendar3" style="font-size:.75rem" aria-hidden="true"></i>
                     <?= $topbarDate ?>
                 </div>
             </nav>
@@ -631,14 +633,14 @@ $advancesMineCount = $advancesMineCount ?? 0;
         <?= $this->Flash->render() ?>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js" integrity="sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js" integrity="sha384-j/aEP2b+3OKmGqank2qCSosSrlrF9jpIpdgApXq2ryJYBpLSbEi63/PDdL+rKmcQ" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" integrity="sha384-d3UHjPdzJkZuk5H3qKYMLRyWLAQBJbby2yr2Q58hXXtAGF8RSNO9jpLDlKKPv5v3" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js" integrity="sha384-UeeDJLxU9E9sJVeeJ8aoFWAfW2uB0Hggm59b4wtvZl8A1FnbmWnAaH4DlLdlnHKD" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js" integrity="sha384-+xRXcGmExqvIzpl6UBfbrBkXyyxIDFnxQtfyoOiXSx0/ri19w6ifNhXjPLMxLwXM" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js" integrity="sha384-KNaFJ+EK516RuHsoycvreec5pD7BkTKJEkjMrVSQWu9KGTl7En4dhIDv7t1DFJ+g" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js" integrity="sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js" integrity="sha384-j/aEP2b+3OKmGqank2qCSosSrlrF9jpIpdgApXq2ryJYBpLSbEi63/PDdL+rKmcQ" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" integrity="sha384-d3UHjPdzJkZuk5H3qKYMLRyWLAQBJbby2yr2Q58hXXtAGF8RSNO9jpLDlKKPv5v3" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js" integrity="sha384-UeeDJLxU9E9sJVeeJ8aoFWAfW2uB0Hggm59b4wtvZl8A1FnbmWnAaH4DlLdlnHKD" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/autonumeric@4.10.5/dist/autoNumeric.min.js" integrity="sha384-+xRXcGmExqvIzpl6UBfbrBkXyyxIDFnxQtfyoOiXSx0/ri19w6ifNhXjPLMxLwXM" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1/dist/apexcharts.min.js" integrity="sha384-KNaFJ+EK516RuHsoycvreec5pD7BkTKJEkjMrVSQWu9KGTl7En4dhIDv7t1DFJ+g" crossorigin="anonymous"></script>
     <?= $this->Html->script('sgi-dialogs', ['block' => false]) ?>
     <?= $this->Html->script('sgi-common', ['block' => false]) ?>
     <?= $this->fetch('script') ?>

@@ -10,7 +10,7 @@ $this->assign('title', 'Estados Civiles');
             'canCreate' => !empty($userPermissions['marital_statuses']['can_create']),
         ]) ?>
         <?php if (!empty($userPermissions['marital_statuses']['can_create'])): ?>
-        <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Estado Civil', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
+        <?= $this->Html->link('<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Estado Civil', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
         <?php endif; ?>
     </div>
 </div>
@@ -31,12 +31,12 @@ $this->assign('title', 'Estados Civiles');
                     <td><?= $this->Number->format($maritalStatus->id) ?></td>
                     <td><?= h($maritalStatus->name) ?></td>
                     <td class="text-end">
-                        <?= $this->Html->link('<i class="bi bi-eye"></i>', ['action' => 'view', $maritalStatus->id], ['class' => 'btn btn-sm btn-outline-info', 'escape' => false, 'title' => 'Ver']) ?>
+                        <?= $this->Html->link('<i class="bi bi-eye" aria-hidden="true"></i>', ['action' => 'view', $maritalStatus->id], ['class' => 'btn btn-sm btn-outline-info', 'escape' => false, 'title' => 'Ver']) ?>
                         <?php if (!empty($userPermissions['marital_statuses']['can_edit'])): ?>
-                        <?= $this->Html->link('<i class="bi bi-pencil"></i>', ['action' => 'edit', $maritalStatus->id], ['class' => 'btn btn-sm btn-outline-warning', 'escape' => false, 'title' => 'Editar']) ?>
+                        <?= $this->Html->link('<i class="bi bi-pencil" aria-hidden="true"></i>', ['action' => 'edit', $maritalStatus->id], ['class' => 'btn btn-sm btn-outline-warning', 'escape' => false, 'title' => 'Editar']) ?>
                         <?php endif; ?>
                         <?php if (!empty($userPermissions['marital_statuses']['can_delete'])): ?>
-                        <?= $this->Form->postLink('<i class="bi bi-trash"></i>', ['action' => 'delete', $maritalStatus->id], ['confirm' => '¿Está seguro de eliminar?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
+                        <?= $this->Form->postLink('<i class="bi bi-trash" aria-hidden="true"></i>', ['action' => 'delete', $maritalStatus->id], ['confirm' => '¿Está seguro de eliminar?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
                         <?php endif; ?>
                     </td>
                 </tr>

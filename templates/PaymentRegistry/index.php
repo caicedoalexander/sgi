@@ -81,11 +81,11 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
         </div>
         <div class="col-md-1 d-flex gap-1">
             <button type="submit" class="btn btn-sm btn-primary flex-fill">
-                <i class="bi bi-search"></i>
+                <i class="bi bi-search" aria-hidden="true"></i>
             </button>
             <?php if ($hasFilters): ?>
             <?= $this->Html->link(
-                '<i class="bi bi-x-lg"></i>',
+                '<i class="bi bi-x-lg" aria-hidden="true"></i>',
                 ['action' => 'index'],
                 ['class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Limpiar filtros']
             ) ?>
@@ -118,7 +118,7 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                 <tr>
                     <td colspan="10">
                         <div class="sgi-doc-empty">
-                            <i class="bi bi-cash-stack sgi-doc-empty-icon"></i>
+                            <i class="bi bi-cash-stack sgi-doc-empty-icon" aria-hidden="true"></i>
                             No se encontraron pagos.
                         </div>
                     </td>
@@ -148,11 +148,11 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                     <td>
                         <?php if ($p['authorized']): ?>
                         <span class="badge bg-success">
-                            <i class="bi bi-check-circle me-1"></i>Autorizado
+                            <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Autorizado
                         </span>
                         <?php else: ?>
                         <span class="badge bg-warning text-dark">
-                            <i class="bi bi-clock me-1"></i>Pendiente
+                            <i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente
                         </span>
                         <?php endif; ?>
                     </td>
@@ -180,7 +180,7 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                                     'scheduling' => 'calendar-check',
                                     'petty_cash' => 'wallet2',
                                     default => 'box-arrow-up-right',
-                                }) . ' me-1"></i>' . h($p['source_label']),
+                                }) . ' me-1" aria-hidden="true"></i>' . h($p['source_label']),
                                 $p['source_url'],
                                 ['class' => 'badge badge-outline-dark text-decoration-none', 'escape' => false]
                             ) ?>

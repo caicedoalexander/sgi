@@ -9,7 +9,7 @@ $this->assign('title', 'Entidades Bancarias');
     <span class="sgi-page-title">Entidades Bancarias</span>
     <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['banking_entities']['can_create'])): ?>
-        <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nueva Entidad', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
+        <?= $this->Html->link('<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva Entidad', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
         <?php endif; ?>
     </div>
 </div>
@@ -43,10 +43,10 @@ $this->assign('title', 'Entidades Bancarias');
                     <td><?= $entity->created?->format('d/m/Y H:i') ?></td>
                     <td class="text-end">
                         <?php if (!empty($userPermissions['banking_entities']['can_edit'])): ?>
-                        <?= $this->Html->link('<i class="bi bi-pencil"></i>', ['action' => 'edit', $entity->id], ['class' => 'btn btn-sm btn-outline-warning', 'escape' => false, 'title' => 'Editar']) ?>
+                        <?= $this->Html->link('<i class="bi bi-pencil" aria-hidden="true"></i>', ['action' => 'edit', $entity->id], ['class' => 'btn btn-sm btn-outline-warning', 'escape' => false, 'title' => 'Editar']) ?>
                         <?php endif; ?>
                         <?php if (!empty($userPermissions['banking_entities']['can_delete'])): ?>
-                        <?= $this->Form->postLink('<i class="bi bi-trash"></i>', ['action' => 'delete', $entity->id], ['confirm' => '¿Está seguro de eliminar esta entidad bancaria?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
+                        <?= $this->Form->postLink('<i class="bi bi-trash" aria-hidden="true"></i>', ['action' => 'delete', $entity->id], ['confirm' => '¿Está seguro de eliminar esta entidad bancaria?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
                         <?php endif; ?>
                     </td>
                 </tr>

@@ -9,7 +9,7 @@ $this->assign('title', 'Nueva Plantilla de Documento');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nueva Plantilla de Documento</span>
     <?= $this->Html->link(
-        '<i class="bi bi-arrow-left me-1"></i>Volver',
+        '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
         ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
     ) ?>
@@ -70,7 +70,7 @@ $this->assign('title', 'Nueva Plantilla de Documento');
 
         <div class="d-flex gap-2 mt-4 pt-3" style="border-top:1px solid var(--border-color);">
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-save me-1"></i>Guardar y Configurar Campos
+                <i class="bi bi-save me-1" aria-hidden="true"></i>Guardar y Configurar Campos
             </button>
             <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>
         </div>

@@ -21,7 +21,7 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Logs de correo</span>
     <?= $this->Form->postLink(
-        '<i class="bi bi-arrow-clockwise me-1"></i>Reintentar fallidos',
+        '<i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Reintentar fallidos',
         ['action' => 'retryAllFailed'],
         [
             'class' => 'btn btn-outline-warning',
@@ -43,14 +43,14 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                 'value' => $email,
             ]) ?>
         </div>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i></button>
         <button type="button" class="btn btn-outline-dark" data-bs-toggle="collapse"
                 data-bs-target="#emailLogFilters" title="Filtros avanzados">
-            <i class="bi bi-funnel"></i>
+            <i class="bi bi-funnel" aria-hidden="true"></i>
         </button>
         <?php if ($hasFilters): ?>
             <?= $this->Html->link(
-                '<i class="bi bi-x-lg"></i> Limpiar',
+                '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
                 ['action' => 'index'],
                 ['class' => 'btn btn-outline-danger', 'escape' => false]
             ) ?>
@@ -156,7 +156,7 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                         <td class="text-end">
                             <?php if ($isFailed): ?>
                                 <?= $this->Form->postLink(
-                                    '<i class="bi bi-arrow-clockwise"></i>',
+                                    '<i class="bi bi-arrow-clockwise" aria-hidden="true"></i>',
                                     ['action' => 'retry', $log->id],
                                     [
                                         'class' => 'btn btn-sm btn-outline-primary',
@@ -174,7 +174,7 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                     <tr>
                         <td colspan="8">
                             <div class="sgi-doc-empty">
-                                <i class="bi bi-envelope-slash sgi-doc-empty-icon"></i>
+                                <i class="bi bi-envelope-slash sgi-doc-empty-icon" aria-hidden="true"></i>
                                 Sin registros de correo con los filtros actuales.
                             </div>
                         </td>

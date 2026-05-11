@@ -74,10 +74,10 @@ $canSave = $record->isAgrupacion() || $record->isContabilidad() || $record->isTe
 $canAdvance = $nextStatus !== null;
 if ($canAdvance && empty($advanceErrors) && $nextStatus) {
     $nextLabel = $statusLabels[$nextStatus] ?? $nextStatus;
-    $btnLabel  = '<i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar a: ' . h($nextLabel);
+    $btnLabel  = '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a: ' . h($nextLabel);
     $btnClass  = 'btn btn-primary';
 } else {
-    $btnLabel = '<i class="bi bi-save me-1"></i>Guardar Cambios';
+    $btnLabel = '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
     $btnClass = 'btn btn-primary';
 }
 
@@ -89,12 +89,12 @@ $invoiceCount = count($record->invoices ?? []);
     <span class="sgi-page-title">Editar Reintegro</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?= $this->Html->link(
-            '<i class="bi bi-eye me-1"></i>Ver',
+            '<i class="bi bi-eye me-1" aria-hidden="true"></i>Ver',
             ['action' => 'view', $record->id],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
@@ -105,7 +105,7 @@ $invoiceCount = count($record->invoices ?? []);
 <?php if ($canAdvance && !empty($advanceErrors)): ?>
 <div class="alert alert-warning mb-4">
     <div class="d-flex align-items-start gap-2">
-        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
         <div>
             <strong>Para avanzar al siguiente estado complete:</strong>
             <ul class="mb-0 mt-1 ps-3">
@@ -129,7 +129,7 @@ $invoiceCount = count($record->invoices ?? []);
         <div class="d-flex align-items-center gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-                <i class="bi bi-wallet2"></i>
+                <i class="bi bi-wallet2" aria-hidden="true"></i>
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
@@ -228,7 +228,7 @@ $invoiceCount = count($record->invoices ?? []);
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-person-badge me-1"></i>Beneficiario
+                    <i class="bi bi-person-badge me-1" aria-hidden="true"></i>Beneficiario
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -274,7 +274,7 @@ $invoiceCount = count($record->invoices ?? []);
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-receipt me-1"></i>Facturas Agrupadas
+                    <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Agrupadas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
                 <span class="sgi-folder-count"><?= $invoiceCount ?></span>
@@ -308,7 +308,7 @@ $invoiceCount = count($record->invoices ?? []);
                             <?php if ($record->isAgrupacion()): ?>
                             <td class="text-center">
                                 <?= $this->Form->postLink(
-                                    '<i class="bi bi-x-lg"></i>',
+                                    '<i class="bi bi-x-lg" aria-hidden="true"></i>',
                                     ['action' => 'removeInvoice', $record->id, $inv->id],
                                     ['confirm' => '¿Remover esta factura del registro?', 'class' => 'btn btn-sm btn-outline-danger', 'style' => 'padding:.15rem .4rem;font-size:.7rem;line-height:1;', 'escape' => false, 'title' => 'Quitar']
                                 ) ?>
@@ -332,7 +332,7 @@ $invoiceCount = count($record->invoices ?? []);
             </div>
             <?php else: ?>
             <div class="alert alert-warning mb-3">
-                <i class="bi bi-exclamation-triangle me-1"></i>
+                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
                 No hay facturas agrupadas. Agregue al menos una factura para poder avanzar.
             </div>
             <?php endif; ?>
@@ -342,7 +342,7 @@ $invoiceCount = count($record->invoices ?? []);
             <div class="mt-2">
                 <button type="button" class="btn btn-sm sgi-btn-primary"
                         data-bs-toggle="modal" data-bs-target="#linkRefundInvoicesModal">
-                    <i class="bi bi-link-45deg me-1"></i>Vincular facturas
+                    <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Vincular facturas
                 </button>
             </div>
             <?php endif; ?>
@@ -355,7 +355,7 @@ $invoiceCount = count($record->invoices ?? []);
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-calculator me-1"></i>Contabilidad
+                    <i class="bi bi-calculator me-1" aria-hidden="true"></i>Contabilidad
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -404,7 +404,7 @@ $invoiceCount = count($record->invoices ?? []);
         <?php if (!empty($record->payment_rejection_reason)
             && $record->status === RefundConstants::STATUS_TESORERIA): ?>
         <div class="alert alert-warning d-flex align-items-start gap-2 mb-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+            <i class="bi bi-exclamation-triangle-fill mt-1" aria-hidden="true"></i>
             <div>
                 <strong>Pago rechazado.</strong>
                 <div><?= h($record->payment_rejection_reason) ?></div>
@@ -450,19 +450,19 @@ $invoiceCount = count($record->invoices ?? []);
                 <?php if ($isLocked): ?>
                     <button type="button" class="btn btn-outline-secondary"
                             disabled title="<?= h($regressLockMessage) ?>">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>Regresar al paso anterior
+                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Regresar al paso anterior
                     </button>
                 <?php else: ?>
                     <button type="button" class="btn btn-outline-secondary"
                             data-bs-toggle="modal" data-bs-target="#regressStatusModal">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>Regresar a: <?= h($prevLabel) ?>
+                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
                     </button>
                 <?php endif; ?>
             <?php endif; ?>
 
             <?php if ($record->isAgrupacion() && !empty($userPermissions['refunds']['can_delete'])): ?>
             <?= $this->Form->postLink(
-                '<i class="bi bi-trash me-1"></i>Eliminar',
+                '<i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar',
                 ['action' => 'delete', $record->id],
                 ['class' => 'btn btn-outline-danger', 'escape' => false, 'confirm' => '¿Eliminar este registro? Las facturas agrupadas quedarán libres.']
             ) ?>
@@ -507,19 +507,19 @@ $invoiceCount = count($record->invoices ?? []);
 <div class="card card-primary mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" style="font-size:.85rem;"></i>
+            <i class="bi bi-paperclip" style="font-size:.85rem;" aria-hidden="true"></i>
             <span style="font-size:.85rem;font-weight:600;">Soportes</span>
             <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
         </span>
         <?php if (!$record->isPagada()): ?>
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadRefundDocModal">
-            <i class="bi bi-upload me-1"></i>Subir
+            <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
         </button>
         <?php endif; ?>
     </div>
 
     <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($docs) ? 'display:none;' : '' ?>">
-        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
     <div id="docs-list" style="max-height:420px;overflow-y:auto;">
@@ -538,7 +538,7 @@ $invoiceCount = count($record->invoices ?? []);
 <?php $obsCount = count($record->refund_observations ?? []); ?>
 <div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);"></i>
+        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);" aria-hidden="true"></i>
         <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
         <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
     </div>
@@ -553,7 +553,7 @@ $invoiceCount = count($record->invoices ?? []);
     </div>
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
+        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
         <span style="font-size:.78rem;">Sin observaciones aún</span>
     </div>
 
@@ -563,7 +563,7 @@ $invoiceCount = count($record->invoices ?? []);
             <textarea name="message" class="auto-resize" rows="1"
                       placeholder="Escriba una observación..."></textarea>
             <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                <i class="bi bi-send"></i>
+                <i class="bi bi-send" aria-hidden="true"></i>
             </button>
         </div>
         <?= $this->Form->end() ?>
@@ -583,7 +583,7 @@ $invoiceCount = count($record->invoices ?? []);
                   data-url="<?= $this->Url->build(['action' => 'uploadDocument', $record->id]) ?>"
                   enctype="multipart/form-data">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
+                    <h5 class="modal-title"><i class="bi bi-upload me-2" aria-hidden="true"></i>Subir Soporte</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -599,7 +599,7 @@ $invoiceCount = count($record->invoices ?? []);
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Subir</button>
                 </div>
             </form>
         </div>

@@ -20,7 +20,7 @@ $params = $this->request->getQueryParams();
     <?php if (!empty($userPermissions['payment_schedulings']['can_create'])): ?>
     <div>
         <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1"></i>Nueva Programación',
+            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva Programación',
             ['action' => 'add'],
             ['class' => 'sgi-btn-primary btn btn-sm', 'escape' => false]
         ) ?>
@@ -48,7 +48,7 @@ $params = $this->request->getQueryParams();
                 </select>
             </div>
             <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Filtrar</button>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>Filtrar</button>
                 <?= $this->Html->link('Limpiar', ['action' => 'index'], ['class' => 'btn btn-sm btn-outline-secondary']) ?>
             </div>
         </div>

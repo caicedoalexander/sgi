@@ -10,7 +10,7 @@ $this->assign('title', 'Nuevo Rol');
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nuevo Rol</span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
 <?= $this->Form->create($role) ?>
@@ -27,7 +27,7 @@ $this->assign('title', 'Nuevo Rol');
         </div>
 
         <hr>
-        <h6 class="text-muted mb-3"><i class="bi bi-shield-check me-1"></i>Permisos por Módulo</h6>
+        <h6 class="text-muted mb-3"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>Permisos por Módulo</h6>
 
         <div class="table-responsive">
             <table class="table table-bordered table-sm align-middle">
@@ -62,7 +62,7 @@ $this->assign('title', 'Nuevo Rol');
 
 <div class="card card-primary mt-3">
     <div class="card-body">
-        <h6 class="text-muted mb-3"><i class="bi bi-diagram-3 me-1"></i>Permisos de Pipeline</h6>
+        <h6 class="text-muted mb-3"><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>Permisos de Pipeline</h6>
         <p class="text-muted small mb-3">
             Cada checkbox autoriza al rol a operar el paso indicado: avanzar/regresar la pieza,
             editar los campos definidos para ese paso y ver la sección correspondiente del formulario.
@@ -97,7 +97,7 @@ $this->assign('title', 'Nuevo Rol');
             </div>
         <?php endforeach; ?>
 
-        <button type="submit" class="btn btn-primary mt-2"><i class="bi bi-save me-1"></i>Guardar</button>
+        <button type="submit" class="btn btn-primary mt-2"><i class="bi bi-save me-1" aria-hidden="true"></i>Guardar</button>
     </div>
 </div>
 

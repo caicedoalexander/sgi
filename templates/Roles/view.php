@@ -10,7 +10,7 @@ $this->assign('title', 'Rol: ' . $role->name);
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Detalle del Rol</span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
 <div class="card card-primary mb-4">
@@ -30,17 +30,17 @@ $this->assign('title', 'Rol: ' . $role->name);
     </div>
     <div class="card-footer">
         <?php if (!empty($userPermissions['roles']['can_edit'])): ?>
-        <?= $this->Html->link('<i class="bi bi-pencil me-1"></i>Editar', ['action' => 'edit', $role->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
+        <?= $this->Html->link('<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar', ['action' => 'edit', $role->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
         <?php if (!empty($userPermissions['roles']['can_delete'])): ?>
-        <?= $this->Form->postLink('<i class="bi bi-trash me-1"></i>Eliminar', ['action' => 'delete', $role->id], ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
+        <?= $this->Form->postLink('<i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar', ['action' => 'delete', $role->id], ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
     </div>
 </div>
 
 <div class="card card-primary mb-4">
     <div class="card-body">
-        <h6 class="text-muted mb-3"><i class="bi bi-diagram-3 me-1"></i>Permisos de Pipeline</h6>
+        <h6 class="text-muted mb-3"><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>Permisos de Pipeline</h6>
         <?php foreach ($pipelineLabels as $pipeline => $pipelineLabel): ?>
             <div class="mb-3">
                 <div class="fw-semibold mb-2"><?= h($pipelineLabel) ?></div>
@@ -48,7 +48,7 @@ $this->assign('title', 'Rol: ' . $role->name);
                 <?php foreach ($stepLabels[$pipeline] ?? [] as $step => $stepLabel): ?>
                     <?php $allowed = !empty($pipelineMatrix[$pipeline][$step]); ?>
                     <li>
-                        <i class="bi <?= $allowed ? 'bi-check-circle text-success' : 'bi-x-circle text-muted' ?> me-1"></i>
+                        <i class="bi <?= $allowed ? 'bi-check-circle text-success' : 'bi-x-circle text-muted' ?> me-1" aria-hidden="true"></i>
                         <?= h($stepLabel) ?>
                     </li>
                 <?php endforeach; ?>

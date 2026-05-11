@@ -50,13 +50,13 @@ $showHeader = $showHeader ?? true;
                 <td class="text-end">
                     <div class="d-flex gap-1 justify-content-end">
                         <?= $this->Html->link(
-                            '<i class="bi bi-box-arrow-up-right"></i>',
+                            '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
                             ['action' => 'downloadDocument', $employeeId, $doc->id],
                             ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
                         ) ?>
                         <?php if ($canDelete): ?>
                         <?= $this->Form->postLink(
-                            '<i class="bi bi-trash"></i>',
+                            '<i class="bi bi-trash" aria-hidden="true"></i>',
                             ['action' => 'deleteDocument', $employeeId, $doc->id],
                             ['confirm' => '¿Eliminar este documento?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']
                         ) ?>

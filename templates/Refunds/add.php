@@ -13,7 +13,7 @@ $this->assign('title', 'Nuevo Reintegro');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nuevo Reintegro</span>
     <?= $this->Html->link(
-        '<i class="bi bi-arrow-left me-1"></i>Volver',
+        '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
         ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
     ) ?>
@@ -23,7 +23,7 @@ $this->assign('title', 'Nuevo Reintegro');
     <div class="card-header d-flex align-items-center gap-3">
         <div class="d-flex align-items-center justify-content-center flex-shrink-0"
              style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-            <i class="bi bi-arrow-counterclockwise"></i>
+            <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
         </div>
         <div>
             <div style="font-size:.95rem;font-weight:700;color:#111;">Crear Reintegro</div>
@@ -80,7 +80,7 @@ $this->assign('title', 'Nuevo Reintegro');
 
         <div class="d-flex gap-2 pt-2" style="border-top:1px solid var(--border-color);">
             <button type="submit" class="sgi-btn-primary btn">
-                <i class="bi bi-plus-lg me-1"></i>Crear Reintegro
+                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear Reintegro
             </button>
             <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>
         </div>

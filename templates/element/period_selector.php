@@ -40,7 +40,7 @@ $periods = [
                style="width:110px;font-size:.75rem;">
         <button type="button" class="btn btn-sm btn-outline-dark" id="period-custom-btn"
                 style="font-size:.75rem;font-weight:500;">
-            <i class="bi bi-funnel"></i>
+            <i class="bi bi-funnel" aria-hidden="true"></i>
         </button>
     </div>
 </div>

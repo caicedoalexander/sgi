@@ -42,7 +42,7 @@ $badgeLabel = $statusLabels[$doc->pipeline_status ?? ''] ?? ($doc->pipeline_stat
 ?>
 <div class="doc-row sgi-doc-row" data-doc-id="<?= h($doc->id) ?>">
     <div class="doc-icon sgi-doc-icon">
-        <i class="bi <?= h($icon) ?>" style="color:<?= h($iconColor) ?>;"></i>
+        <i class="bi <?= h($icon) ?>" style="color:<?= h($iconColor) ?>;" aria-hidden="true"></i>
     </div>
     <div class="doc-body sgi-doc-body">
         <div class="doc-label sgi-doc-label" data-slot="label" title="<?= h($label) ?>"><?= h($label) ?></div>
@@ -54,7 +54,7 @@ $badgeLabel = $statusLabels[$doc->pipeline_status ?? ''] ?? ($doc->pipeline_stat
             <span class="badge <?= h($badgeClass) ?>" data-slot="badge"><?= h($badgeLabel) ?></span>
             <?php endif; ?>
             <span class="doc-created sgi-doc-created">
-                <i class="bi bi-clock"></i>
+                <i class="bi bi-clock" aria-hidden="true"></i>
                 <span data-slot="created"><?= h($doc->created?->format('d/m/Y H:i')) ?></span>
             </span>
             <?php if ($doc->file_size): ?>
@@ -65,12 +65,12 @@ $badgeLabel = $statusLabels[$doc->pipeline_status ?? ''] ?? ($doc->pipeline_stat
     <div class="doc-actions sgi-doc-actions">
         <a class="btn btn-sm btn-outline-secondary" data-slot="open-link"
            href="/<?= h($doc->file_path) ?>" target="_blank" title="Abrir">
-            <i class="bi bi-box-arrow-up-right"></i>
+            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
         </a>
         <?php if ($canDelete): ?>
         <button type="button" class="btn btn-sm btn-outline-danger doc-delete-btn"
                 data-slot="delete-btn" data-url="<?= h($deleteUrl) ?>" title="Eliminar">
-            <i class="bi bi-trash"></i>
+            <i class="bi bi-trash" aria-hidden="true"></i>
         </button>
         <?php endif; ?>
     </div>

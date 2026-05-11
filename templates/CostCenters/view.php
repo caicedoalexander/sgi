@@ -7,7 +7,7 @@ $this->assign('title', 'Centro de Costos: ' . $costCenter->name);
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Detalle del Centro de Costos</span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
 <div class="card card-primary">
@@ -25,10 +25,10 @@ $this->assign('title', 'Centro de Costos: ' . $costCenter->name);
     </div>
     <div class="card-footer">
         <?php if (!empty($userPermissions['cost_centers']['can_edit'])): ?>
-        <?= $this->Html->link('<i class="bi bi-pencil me-1"></i>Editar', ['action' => 'edit', $costCenter->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
+        <?= $this->Html->link('<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar', ['action' => 'edit', $costCenter->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
         <?php if (!empty($userPermissions['cost_centers']['can_delete'])): ?>
-        <?= $this->Form->postLink('<i class="bi bi-trash me-1"></i>Eliminar', ['action' => 'delete', $costCenter->id], ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
+        <?= $this->Form->postLink('<i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar', ['action' => 'delete', $costCenter->id], ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
     </div>
 </div>

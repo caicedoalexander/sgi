@@ -16,7 +16,7 @@ $this->assign('title', 'Configuración del Sistema');
     <div class="card-header d-flex align-items-center gap-3">
         <div class="d-flex align-items-center justify-content-center flex-shrink-0"
              style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-            <i class="bi bi-envelope"></i>
+            <i class="bi bi-envelope" aria-hidden="true"></i>
         </div>
         <div>
             <div style="font-size:.95rem;font-weight:700;color:#111;">Configuración SMTP</div>
@@ -80,7 +80,7 @@ $this->assign('title', 'Configuración del Sistema');
 
         <div class="d-flex gap-2 pt-3 mt-3" style="border-top:1px solid var(--border-color);">
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-save me-1"></i>Guardar Configuración
+                <i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Configuración
             </button>
         </div>
 
@@ -89,7 +89,7 @@ $this->assign('title', 'Configuración del Sistema');
         <?= $this->Form->create(null, ['url' => ['action' => 'testSmtp']]) ?>
         <div class="mt-3">
             <button type="submit" class="btn btn-outline-secondary">
-                <i class="bi bi-send me-1"></i>Probar Conexión SMTP
+                <i class="bi bi-send me-1" aria-hidden="true"></i>Probar Conexión SMTP
             </button>
         </div>
 
@@ -101,7 +101,7 @@ $this->assign('title', 'Configuración del Sistema');
     <div class="card-header d-flex align-items-center gap-3">
         <div class="d-flex align-items-center justify-content-center flex-shrink-0"
              style="width:36px;height:36px;background:var(--secondary-color);color:#fff;font-size:.9rem;">
-            <i class="bi bi-diagram-3"></i>
+            <i class="bi bi-diagram-3" aria-hidden="true"></i>
         </div>
         <div>
             <div style="font-size:.95rem;font-weight:700;color:#111;">Integración n8n</div>
@@ -126,7 +126,7 @@ $this->assign('title', 'Configuración del Sistema');
 
         <div class="d-flex gap-2 pt-3 mt-3" style="border-top:1px solid var(--border-color);">
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-save me-1"></i>Guardar Configuración n8n
+                <i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Configuración n8n
             </button>
         </div>
 
@@ -139,7 +139,7 @@ $this->assign('title', 'Configuración del Sistema');
     <div class="card-header d-flex align-items-center gap-3">
         <div class="d-flex align-items-center justify-content-center flex-shrink-0"
              style="width:36px;height:36px;background:var(--bg-dark);color:#fff;font-size:.9rem;">
-            <i class="bi bi-key"></i>
+            <i class="bi bi-key" aria-hidden="true"></i>
         </div>
         <div>
             <div style="font-size:.95rem;font-weight:700;color:#111;">API Key de Notificaciones</div>
@@ -153,7 +153,7 @@ $this->assign('title', 'Configuración del Sistema');
             <p class="text-muted mb-3">Aún no hay API key generada. Generá una para activar el workflow de notificaciones en n8n.</p>
             <?= $this->Form->create(null, ['url' => ['action' => 'regenerateApiKey']]) ?>
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-magic me-1"></i>Generar API Key
+                <i class="bi bi-magic me-1" aria-hidden="true"></i>Generar API Key
             </button>
             <?= $this->Form->end() ?>
         <?php else: ?>
@@ -164,7 +164,7 @@ $this->assign('title', 'Configuración del Sistema');
                        style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem;">
                 <button type="button" class="btn btn-light border-0" id="btn-copy-api-key"
                         title="Copiar al portapapeles">
-                    <i class="bi bi-clipboard"></i>
+                    <i class="bi bi-clipboard" aria-hidden="true"></i>
                 </button>
             </div>
             <small class="text-muted d-block mt-2">
@@ -175,7 +175,7 @@ $this->assign('title', 'Configuración del Sistema');
                 <?= $this->Form->create(null, ['url' => ['action' => 'regenerateApiKey']]) ?>
                 <button type="submit" class="btn btn-outline-secondary"
                         onclick="return confirm('¿Regenerar la API key? Tendrás que actualizar la credencial en n8n.');">
-                    <i class="bi bi-arrow-clockwise me-1"></i>Regenerar
+                    <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Regenerar
                 </button>
                 <?= $this->Form->end() ?>
             </div>

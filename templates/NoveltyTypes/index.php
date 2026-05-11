@@ -11,7 +11,7 @@ $this->assign('title', 'Tipos de Novedad');
     <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['novelty_types']['can_create'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1"></i>Nuevo Tipo',
+            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Tipo',
             ['action' => 'add'],
             ['class' => 'btn btn-primary', 'escape' => false]
         ) ?>
@@ -39,7 +39,7 @@ $this->assign('title', 'Tipos de Novedad');
                             <?php foreach ($noveltyType->child_novelty_types as $child): ?>
                                 <?php if (!empty($userPermissions['novelty_types']['can_edit'])): ?>
                                     <?= $this->Html->link(
-                                        h($child->name) . ' <i class="bi bi-pencil-fill" style="font-size:0.65em;"></i>',
+                                        h($child->name) . ' <i class="bi bi-pencil-fill" style="font-size:0.65em;" aria-hidden="true"></i>',
                                         ['action' => 'edit', $child->id],
                                         ['class' => 'badge bg-light text-dark border me-1 text-decoration-none', 'escape' => false, 'title' => 'Editar subtipo']
                                     ) ?>
@@ -54,7 +54,7 @@ $this->assign('title', 'Tipos de Novedad');
                     <td>
                         <?php if (!empty($noveltyType->novelty_type_contract_templates)): ?>
                             <span class="text-muted">
-                                <i class="bi bi-file-earmark-pdf me-1"></i><?= count($noveltyType->novelty_type_contract_templates) ?> asignación(es)
+                                <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i><?= count($noveltyType->novelty_type_contract_templates) ?> asignación(es)
                             </span>
                         <?php else: ?>
                             <span class="text-muted">—</span>
@@ -64,21 +64,21 @@ $this->assign('title', 'Tipos de Novedad');
                         <div class="d-flex gap-1">
                             <?php if (!empty($userPermissions['novelty_types']['can_create'])): ?>
                             <?= $this->Html->link(
-                                '<i class="bi bi-plus-circle"></i>',
+                                '<i class="bi bi-plus-circle" aria-hidden="true"></i>',
                                 ['action' => 'add', '?' => ['parent_id' => $noveltyType->id]],
                                 ['class' => 'btn btn-sm btn-outline-success', 'escape' => false, 'title' => 'Agregar subtipo']
                             ) ?>
                             <?php endif; ?>
                             <?php if (!empty($userPermissions['novelty_types']['can_edit'])): ?>
                             <?= $this->Html->link(
-                                '<i class="bi bi-pencil"></i>',
+                                '<i class="bi bi-pencil" aria-hidden="true"></i>',
                                 ['action' => 'edit', $noveltyType->id],
                                 ['class' => 'btn btn-sm btn-outline-dark', 'escape' => false]
                             ) ?>
                             <?php endif; ?>
                             <?php if (!empty($userPermissions['novelty_types']['can_delete'])): ?>
                             <?= $this->Form->postLink(
-                                '<i class="bi bi-trash"></i>',
+                                '<i class="bi bi-trash" aria-hidden="true"></i>',
                                 ['action' => 'delete', $noveltyType->id],
                                 ['class' => 'btn btn-sm btn-outline-danger', 'escape' => false,
                                  'confirm' => '¿Eliminar este tipo de novedad?']

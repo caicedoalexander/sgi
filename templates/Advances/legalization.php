@@ -61,7 +61,7 @@ $caseLabels = [
     <span class="sgi-page-title">Legalización del Anticipo</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
@@ -80,7 +80,7 @@ $caseLabels = [
         <div class="d-flex align-items-center gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-                <i class="bi bi-clipboard-check"></i>
+                <i class="bi bi-clipboard-check" aria-hidden="true"></i>
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
@@ -180,18 +180,18 @@ $caseLabels = [
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-link-45deg me-1"></i>Facturas vinculadas
+                    <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Facturas vinculadas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
                 <?php if ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
                 <button type="button" class="btn btn-sm sgi-btn-primary" data-bs-toggle="modal" data-bs-target="#advanceLinkModal">
-                    <i class="bi bi-plus-lg me-1"></i>Vincular
+                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Vincular
                 </button>
                 <?php endif; ?>
             </div>
             <?php if ($linkedCount === 0): ?>
             <div class="text-muted text-center py-3" style="font-size:.85rem;">
-                <i class="bi bi-inbox me-1"></i>Sin facturas vinculadas
+                <i class="bi bi-inbox me-1" aria-hidden="true"></i>Sin facturas vinculadas
             </div>
             <?php else: ?>
             <div class="table-responsive">
@@ -217,7 +217,7 @@ $caseLabels = [
                             <td class="text-end">
                                 <?php if ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
                                 <?= $this->Form->postLink(
-                                    '<i class="bi bi-x-lg"></i>',
+                                    '<i class="bi bi-x-lg" aria-hidden="true"></i>',
                                     ['action' => 'unlinkInvoice', $invoice->id, $li->id],
                                     ['class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'confirm' => '¿Desvincular esta factura?', 'title' => 'Desvincular']
                                 ) ?>
@@ -245,7 +245,7 @@ $caseLabels = [
         <div class="sgi-sticky-actions">
             <div class="d-flex flex-wrap gap-2 align-items-center">
                 <?= $this->Form->postLink(
-                    '<i class="bi bi-arrow-right-circle me-1"></i>Pasar a Revisión y Firmas',
+                    '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Pasar a Revisión y Firmas',
                     ['action' => 'moveToRevision', $leg->advance_invoice_id],
                     ['class' => 'btn sgi-btn-primary', 'escape' => false, 'confirm' => '¿Pasar a Revisión y Firmas?']
                 ) ?>
@@ -256,12 +256,12 @@ $caseLabels = [
         <div class="sgi-sticky-actions">
             <div class="d-flex flex-wrap gap-2">
                 <?= $this->Form->postLink(
-                    '<i class="bi bi-check-circle me-1"></i>Marcar como firmado',
+                    '<i class="bi bi-check-circle me-1" aria-hidden="true"></i>Marcar como firmado',
                     ['action' => 'markSigned', $leg->advance_invoice_id],
                     ['class' => 'btn btn-primary', 'escape' => false]
                 ) ?>
                 <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#advReturnModal">
-                    <i class="bi bi-arrow-return-left me-1"></i>Devolver a Validación
+                    <i class="bi bi-arrow-return-left me-1" aria-hidden="true"></i>Devolver a Validación
                 </button>
             </div>
         </div>
@@ -290,7 +290,7 @@ $caseLabels = [
         <div class="sgi-sticky-actions">
             <?php if (abs($diff) < 0.005): ?>
             <?= $this->Form->postLink(
-                '<i class="bi bi-check-circle me-1"></i>Marcar legalizada (caso exacto)',
+                '<i class="bi bi-check-circle me-1" aria-hidden="true"></i>Marcar legalizada (caso exacto)',
                 ['action' => 'markExact', $leg->advance_invoice_id],
                 ['class' => 'btn btn-primary', 'escape' => false]
             ) ?>
@@ -305,7 +305,7 @@ $caseLabels = [
                 </div>
                 <div class="col-md-6">
                     <button type="submit" class="btn btn-warning w-100">
-                        <i class="bi bi-arrow-down-circle me-1"></i>Registrar faltante
+                        <i class="bi bi-arrow-down-circle me-1" aria-hidden="true"></i>Registrar faltante
                     </button>
                 </div>
             </div>
@@ -321,7 +321,7 @@ $caseLabels = [
                 </div>
                 <div class="col-md-6">
                     <button type="submit" class="btn btn-danger w-100">
-                        <i class="bi bi-arrow-up-circle me-1"></i>Registrar sobrante
+                        <i class="bi bi-arrow-up-circle me-1" aria-hidden="true"></i>Registrar sobrante
                     </button>
                 </div>
             </div>
@@ -334,14 +334,14 @@ $caseLabels = [
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-uppercase fw-semibold flex-shrink-0"
                           style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                        <i class="bi bi-bank me-1"></i>Confirmar consignación
+                        <i class="bi bi-bank me-1" aria-hidden="true"></i>Confirmar consignación
                     </span>
                     <div style="flex:1;height:1px;background:var(--border-color);"></div>
                 </div>
                 <div class="d-flex align-items-center gap-2"
                      style="border-left:2px solid var(--secondary-color);padding:.35rem .7rem;">
                     <i class="bi bi-info-circle-fill flex-shrink-0"
-                       style="color:var(--secondary-color);font-size:.85rem;"></i>
+                       style="color:var(--secondary-color);font-size:.85rem;" aria-hidden="true"></i>
                     <span style="font-size:.75rem;color:#666;">Monto pendiente:</span>
                     <strong style="color:#222;font-size:.85rem;letter-spacing:-.01em;">
                         $ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?>
@@ -368,7 +368,7 @@ $caseLabels = [
             </div>
             <div class="d-flex justify-content-end mt-3">
                 <button type="submit" id="confirm-shortage-btn" class="btn sgi-btn-primary">
-                    <i class="bi bi-check-circle me-1"></i>Confirmar consignación
+                    <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Confirmar consignación
                 </button>
             </div>
             </form>
@@ -428,7 +428,7 @@ $caseLabels = [
         ]) ?>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_LEGALIZADA): ?>
         <div class="alert alert-success d-flex align-items-center gap-2 mb-0">
-            <i class="bi bi-check-circle-fill fs-5"></i>
+            <i class="bi bi-check-circle-fill fs-5" aria-hidden="true"></i>
             <span>
                 <strong>Legalizada</strong>
                 <?php if ($leg->legalized_at): ?> el <?= h(date('d/m/Y H:i', strtotime((string)$leg->legalized_at))) ?><?php endif; ?>
@@ -448,7 +448,7 @@ $caseLabels = [
 <div class="card card-primary mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" style="font-size:.85rem;"></i>
+            <i class="bi bi-paperclip" style="font-size:.85rem;" aria-hidden="true"></i>
             <span style="font-size:.85rem;font-weight:600;">Soportes</span>
         </span>
     </div>
@@ -471,19 +471,19 @@ $caseLabels = [
             <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
                 <?php if ($relationDocument->isSigned()): ?>
                 <span class="badge bg-success" style="font-size:.6rem;">
-                    <i class="bi bi-check-circle me-1"></i>Firmado
+                    <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Firmado
                     <?php if ($relationDocument->signed_by_user): ?>
                         — <?= h($relationDocument->signed_by_user->full_name ?? '') ?>
                     <?php endif; ?>
                 </span>
                 <?php else: ?>
                 <span class="badge bg-warning text-dark" style="font-size:.6rem;">
-                    <i class="bi bi-clock me-1"></i>Pendiente de firma
+                    <i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente de firma
                 </span>
                 <?php endif; ?>
                 <?php if ($relationDocument->created): ?>
                 <span style="font-size:.65rem;color:#bbb;">
-                    <i class="bi bi-clock" style="font-size:.6rem;"></i>
+                    <i class="bi bi-clock" style="font-size:.6rem;" aria-hidden="true"></i>
                     <?= $relationDocument->created->format('d/m/Y H:i') ?>
                 </span>
                 <?php endif; ?>
@@ -498,13 +498,13 @@ $caseLabels = [
                    style="display:none;" data-rel-doc-trigger>
             <label for="rel-doc-file-update" class="btn btn-sm btn-outline-primary"
                    style="width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;cursor:pointer;" title="Reemplazar">
-                <i class="bi bi-arrow-repeat"></i>
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
             </label>
             </form>
             <?php endif; ?>
             <?php if (!empty($relationDocument->file_path)): ?>
             <?= $this->Html->link(
-                '<i class="bi bi-box-arrow-up-right"></i>',
+                '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
                 '/' . $relationDocument->file_path,
                 ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
             ) ?>
@@ -515,7 +515,7 @@ $caseLabels = [
     <?php elseif ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;"></i>
+            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
             <span style="font-size:.76rem;color:#999;">Sin documento adjunto</span>
@@ -527,7 +527,7 @@ $caseLabels = [
                style="display:none;" data-rel-doc-trigger>
         <label for="rel-doc-file-new" class="btn btn-sm btn-outline-primary"
                style="padding:.25rem .5rem;font-size:.72rem;line-height:1;cursor:pointer;" title="Subir">
-            <i class="bi bi-upload me-1"></i>Subir
+            <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
         </label>
         </form>
     </div>
@@ -535,7 +535,7 @@ $caseLabels = [
     <?php else: ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;"></i>
+            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;" aria-hidden="true"></i>
         </div>
         <span style="font-size:.76rem;color:#c8c8c8;">Sin documento</span>
     </div>
@@ -549,7 +549,7 @@ $caseLabels = [
     </div>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-pdf" style="color:#dc3545;font-size:1rem;"></i>
+            <i class="bi bi-file-earmark-pdf" style="color:#dc3545;font-size:1rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
             <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;">
@@ -557,12 +557,12 @@ $caseLabels = [
             </div>
             <div style="font-size:.65rem;color:#bbb;margin-top:.25rem;">
                 <?php if ($leg->shortage_received_at): ?>
-                <i class="bi bi-clock"></i> <?= h(date('d/m/Y', strtotime((string)$leg->shortage_received_at))) ?>
+                <i class="bi bi-clock" aria-hidden="true"></i> <?= h(date('d/m/Y', strtotime((string)$leg->shortage_received_at))) ?>
                 <?php endif; ?>
             </div>
         </div>
         <?= $this->Html->link(
-            '<i class="bi bi-box-arrow-up-right"></i>',
+            '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
             '/' . $leg->shortage_receipt_path,
             ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
         ) ?>
@@ -577,7 +577,7 @@ $caseLabels = [
     <?php foreach ($signatureHistory as $sig): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .875rem;border-bottom:1px solid var(--border-color);opacity:.7;">
         <div style="width:30px;height:30px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi <?= h($this->DocumentIcon->iconClass($sig->mime_type ?? null)) ?>" style="color:#999;font-size:.9rem;"></i>
+            <i class="bi <?= h($this->DocumentIcon->iconClass($sig->mime_type ?? null)) ?>" style="color:#999;font-size:.9rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
             <div style="font-size:.74rem;font-weight:600;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -592,7 +592,7 @@ $caseLabels = [
         </div>
         <?php if (!empty($sig->file_path)): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-box-arrow-up-right"></i>',
+            '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
             '/' . $sig->file_path,
             ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:26px;height:26px;padding:0;font-size:.7rem;line-height:26px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
         ) ?>
@@ -603,7 +603,7 @@ $caseLabels = [
 
     <?php if (!$relationDocument && empty($signatureHistory) && !$leg->shortage_receipt_path): ?>
     <div style="padding:1.5rem 1rem;text-align:center;color:#c8c8c8;">
-        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
     <?php endif; ?>
@@ -613,7 +613,7 @@ $caseLabels = [
 <?php $obsCount = count($invoice->invoice_observations ?? []); ?>
 <div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);"></i>
+        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);" aria-hidden="true"></i>
         <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
         <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
     </div>
@@ -628,7 +628,7 @@ $caseLabels = [
     </div>
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
+        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
         <span style="font-size:.78rem;">Sin observaciones aún</span>
     </div>
 
@@ -638,7 +638,7 @@ $caseLabels = [
             <textarea id="obs-message" name="message" class="auto-resize" rows="1"
                       placeholder="Escriba una observación..."></textarea>
             <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                <i class="bi bi-send"></i>
+                <i class="bi bi-send" aria-hidden="true"></i>
             </button>
         </div>
         <?= $this->Form->end() ?>

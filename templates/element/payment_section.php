@@ -74,19 +74,19 @@ $addUrl = $this->Url->build($addPaymentUrl);
     <div class="d-flex align-items-center gap-3 mb-3">
         <span class="text-uppercase fw-semibold flex-shrink-0"
               style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-            <i class="bi <?= h($sectionIcon) ?> me-1"></i><?= h($sectionTitle) ?>
+            <i class="bi <?= h($sectionIcon) ?> me-1" aria-hidden="true"></i><?= h($sectionTitle) ?>
         </span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
         <?php if ($paymentStatus !== null): ?>
             <?php if ($paymentStatus === 'Pago total'): ?>
                 <span class="badge flex-shrink-0"
                       style="background:var(--primary-color);border-radius:0;font-size:.58rem;letter-spacing:.08em;">
-                    <i class="bi bi-check-circle me-1"></i>PAGO TOTAL
+                    <i class="bi bi-check-circle me-1" aria-hidden="true"></i>PAGO TOTAL
                 </span>
             <?php elseif ($paymentStatus === 'Pago Parcial'): ?>
                 <span class="badge bg-warning text-dark flex-shrink-0"
                       style="border-radius:0;font-size:.58rem;letter-spacing:.08em;">
-                    <i class="bi bi-clock me-1"></i>PAGO PARCIAL
+                    <i class="bi bi-clock me-1" aria-hidden="true"></i>PAGO PARCIAL
                 </span>
             <?php else: ?>
                 <span class="badge bg-secondary flex-shrink-0"
@@ -119,13 +119,13 @@ $addUrl = $this->Url->build($addPaymentUrl);
     <div class="mt-2">
         <div class="d-flex align-items-center justify-content-between mb-2">
             <span class="text-uppercase fw-semibold" style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                <i class="bi bi-credit-card me-1"></i>Pagos Registrados
+                <i class="bi bi-credit-card me-1" aria-hidden="true"></i>Pagos Registrados
             </span>
             <?php if ($showAddButton): ?>
             <button type="button" class="btn btn-sm btn-outline-primary"
                     style="border-radius:0;font-size:.75rem;"
                     data-bs-toggle="collapse" data-bs-target="#add-payment-form">
-                <i class="bi bi-plus-lg me-1"></i>Agregar Pago
+                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Agregar Pago
             </button>
             <?php endif; ?>
         </div>
@@ -194,7 +194,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                         </button>
                         <button type="button" data-btn-register-advance
                                 class="btn btn-sm sgi-btn-primary">
-                            <i class="bi bi-send-check me-1"></i>Registrar y enviar a autorización
+                            <i class="bi bi-send-check me-1" aria-hidden="true"></i>Registrar y enviar a autorización
                         </button>
                     </div>
                 </div>
@@ -242,7 +242,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                             <?php if ($pStatus === 'authorized'): ?>
                                 <span class="badge"
                                       style="background:var(--primary-color);border-radius:0;font-size:.6rem;letter-spacing:.06em;">
-                                    <i class="bi bi-check-circle me-1"></i>AUTORIZADO
+                                    <i class="bi bi-check-circle me-1" aria-hidden="true"></i>AUTORIZADO
                                 </span>
                                 <?php if ($payment->authorized_by_user): ?>
                                 <br><small class="text-muted" style="font-size:.7rem;">
@@ -253,7 +253,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                             <?php elseif ($pStatus === 'rejected'): ?>
                                 <span class="badge bg-danger"
                                       style="border-radius:0;font-size:.6rem;letter-spacing:.06em;">
-                                    <i class="bi bi-x-circle me-1"></i>RECHAZADO
+                                    <i class="bi bi-x-circle me-1" aria-hidden="true"></i>RECHAZADO
                                 </span>
                                 <?php if (!empty($payment->rejection_reason)): ?>
                                 <br><small class="text-muted" style="font-size:.7rem;"><?= h($payment->rejection_reason) ?></small>
@@ -261,7 +261,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                             <?php else: ?>
                                 <span class="badge bg-warning text-dark"
                                       style="border-radius:0;font-size:.6rem;letter-spacing:.06em;">
-                                    <i class="bi bi-clock me-1"></i>PENDIENTE
+                                    <i class="bi bi-clock me-1" aria-hidden="true"></i>PENDIENTE
                                 </span>
                             <?php endif; ?>
                         </td>
@@ -271,13 +271,13 @@ $addUrl = $this->Url->build($addPaymentUrl);
                         <td>
                             <?php if (!empty($payment->payment_scheduling_id)): ?>
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-calendar-check me-1"></i>' . h($payment->payment_scheduling->code ?? '#' . $payment->payment_scheduling_id),
+                                    '<i class="bi bi-calendar-check me-1" aria-hidden="true"></i>' . h($payment->payment_scheduling->code ?? '#' . $payment->payment_scheduling_id),
                                     ['controller' => 'PaymentSchedulings', 'action' => 'view', $payment->payment_scheduling_id],
                                     ['class' => 'badge bg-light text-dark text-decoration-none border', 'style' => 'border-radius:0;font-size:.65rem;', 'escape' => false]
                                 ) ?>
                             <?php elseif (!empty($payment->petty_cash_record_id)): ?>
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-wallet2 me-1"></i>' . h($payment->petty_cash_record->code ?? '#' . $payment->petty_cash_record_id),
+                                    '<i class="bi bi-wallet2 me-1" aria-hidden="true"></i>' . h($payment->petty_cash_record->code ?? '#' . $payment->petty_cash_record_id),
                                     ['controller' => 'PettyCashRecords', 'action' => 'view', $payment->petty_cash_record_id],
                                     ['class' => 'badge bg-light text-dark text-decoration-none border', 'style' => 'border-radius:0;font-size:.65rem;', 'escape' => false]
                                 ) ?>
@@ -297,14 +297,14 @@ $addUrl = $this->Url->build($addPaymentUrl);
                                     style="border-radius:0;font-size:.75rem;"
                                     data-url="<?= $this->Url->build($authorizeUrlFn($payment->id)) ?>"
                                     data-confirm="¿Autorizar este pago?">
-                                <i class="bi bi-shield-check me-1"></i>Autorizar
+                                <i class="bi bi-shield-check me-1" aria-hidden="true"></i>Autorizar
                             </button>
                             <?php endif; ?>
                             <?php if ($canAuthorize && !$payment->authorized && !$isFromModule && $rejectUrlFn): ?>
                             <button type="button" class="btn btn-sm btn-outline-danger btn-reject-payment"
                                     style="border-radius:0;font-size:.75rem;"
                                     data-url="<?= $this->Url->build($rejectUrlFn($payment->id)) ?>">
-                                <i class="bi bi-x-circle me-1"></i>Rechazar
+                                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Rechazar
                             </button>
                             <?php endif; ?>
                             <?php if ($canDelete && !$payment->authorized && !$isFromModule && $deleteUrlFn): ?>
@@ -312,7 +312,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                                     style="border-radius:0;font-size:.75rem;"
                                     data-url="<?= $this->Url->build($deleteUrlFn($payment->id)) ?>"
                                     data-confirm="¿Eliminar este pago?">
-                                <i class="bi bi-trash"></i>
+                                <i class="bi bi-trash" aria-hidden="true"></i>
                             </button>
                             <?php endif; ?>
                         </td>
@@ -333,7 +333,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
         </div>
         <?php else: ?>
         <div class="text-center py-4" style="border:1px dashed var(--border-color);">
-            <i class="bi bi-credit-card d-block mb-1" style="font-size:1.4rem;color:#ccc;"></i>
+            <i class="bi bi-credit-card d-block mb-1" style="font-size:1.4rem;color:#ccc;" aria-hidden="true"></i>
             <span style="font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:#bbb;">
                 No hay pagos registrados
             </span>

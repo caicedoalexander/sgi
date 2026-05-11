@@ -29,12 +29,12 @@ foreach ($folders as $folder) {
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Empleado</span>
     <div class="d-flex gap-2">
-        <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+        <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
         <?php if (!empty($userPermissions['employees']['can_edit'])): ?>
-        <?= $this->Html->link('<i class="bi bi-pencil me-1"></i>Editar', ['action' => 'edit', $employee->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
+        <?= $this->Html->link('<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar', ['action' => 'edit', $employee->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
         <?php if (!empty($userPermissions['employees']['can_delete'])): ?>
-        <?= $this->Form->postLink('<i class="bi bi-trash me-1"></i>Eliminar', ['action' => 'delete', $employee->id], ['confirm' => '¿Está seguro de eliminar este empleado y todos sus documentos?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
+        <?= $this->Form->postLink('<i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar', ['action' => 'delete', $employee->id], ['confirm' => '¿Está seguro de eliminar este empleado y todos sus documentos?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
     </div>
 </div>
@@ -71,7 +71,7 @@ foreach ($folders as $folder) {
                 <?php endif; ?>
                 <?php if (!empty($currentNovelty)): ?>
                     <span class="badge bg-warning text-dark">
-                        <i class="bi bi-journal-text me-1"></i><?= h($currentNovelty->novelty_type->name ?? '') ?>
+                        <i class="bi bi-journal-text me-1" aria-hidden="true"></i><?= h($currentNovelty->novelty_type->name ?? '') ?>
                     </span>
                 <?php endif; ?>
             </div>
@@ -194,25 +194,25 @@ foreach ($folders as $folder) {
     <div class="sgi-contact-bar">
         <?php if ($employee->email): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-envelope"></i>
+            <i class="bi bi-envelope" aria-hidden="true"></i>
             <?= h($employee->email) ?>
         </div>
         <?php endif; ?>
         <?php if ($employee->phone): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-telephone"></i>
+            <i class="bi bi-telephone" aria-hidden="true"></i>
             <?= h($employee->phone) ?>
         </div>
         <?php endif; ?>
         <?php if ($employee->city): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-geo-alt"></i>
+            <i class="bi bi-geo-alt" aria-hidden="true"></i>
             <?= h($employee->city) ?>
         </div>
         <?php endif; ?>
         <?php if ($employee->address): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-house"></i>
+            <i class="bi bi-house" aria-hidden="true"></i>
             <?= h($employee->address) ?>
         </div>
         <?php endif; ?>
@@ -240,7 +240,7 @@ foreach ($folders as $folder) {
         </div>
 
         <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-            <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
+            <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
             <span style="font-size:.78rem;">Sin observaciones aún</span>
         </div>
 
@@ -251,7 +251,7 @@ foreach ($folders as $folder) {
                 <textarea name="message" class="auto-resize" rows="1"
                           placeholder="Escriba una observación..."></textarea>
                 <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                    <i class="bi bi-send"></i>
+                    <i class="bi bi-send" aria-hidden="true"></i>
                 </button>
             </div>
             <?= $this->Form->end() ?>
@@ -275,12 +275,12 @@ $novedades = $employee->employee_novelties ?? [];
 <div class="card card-primary mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-journal-text"></i>
+            <i class="bi bi-journal-text" aria-hidden="true"></i>
             Novedades
         </span>
         <?php if (!empty($userPermissions['employee_novelties']['can_create'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1"></i>Nueva Novedad',
+            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva Novedad',
             ['controller' => 'EmployeeNovelties', 'action' => 'add', '?' => ['employee_id' => $employee->id]],
             ['class' => 'btn btn-sm btn-primary', 'escape' => false]
         ) ?>
@@ -322,7 +322,7 @@ $novedades = $employee->employee_novelties ?? [];
     </div>
     <?php else: ?>
     <div class="p-3 text-center text-muted" style="font-size:.875rem">
-        <i class="bi bi-check-circle me-1"></i>Sin novedades registradas
+        <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Sin novedades registradas
     </div>
     <?php endif; ?>
 </div>
@@ -331,17 +331,17 @@ $novedades = $employee->employee_novelties ?? [];
 <div class="card card-primary mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-folder2-open"></i>
+            <i class="bi bi-folder2-open" aria-hidden="true"></i>
             Gestión Documental
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
         <?php if (!empty($userPermissions['employees']['can_create'])): ?>
         <div class="d-flex gap-2">
             <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#newFolderModal">
-                <i class="bi bi-folder-plus me-1"></i>Nueva Carpeta
+                <i class="bi bi-folder-plus me-1" aria-hidden="true"></i>Nueva Carpeta
             </button>
             <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
-                <i class="bi bi-upload me-1"></i>Subir Documento
+                <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir Documento
             </button>
         </div>
         <?php endif; ?>
@@ -349,7 +349,7 @@ $novedades = $employee->employee_novelties ?? [];
 
     <?php if ($folders->isEmpty()): ?>
         <div class="sgi-doc-empty">
-            <i class="bi bi-folder-x sgi-doc-empty-icon"></i>
+            <i class="bi bi-folder-x sgi-doc-empty-icon" aria-hidden="true"></i>
             <div style="font-size:.875rem;font-weight:500;color:#999">Sin carpetas ni documentos</div>
             <div style="font-size:.8rem;margin-top:.3rem">Crea una carpeta o sube un documento para comenzar</div>
         </div>
@@ -360,7 +360,7 @@ $novedades = $employee->employee_novelties ?? [];
                 <h2 class="accordion-header">
                     <button class="accordion-button <?= $i > 0 ? 'collapsed' : '' ?>" type="button"
                             data-bs-toggle="collapse" data-bs-target="#folder-<?= $folder->id ?>">
-                        <i class="bi bi-folder-fill me-2" style="color:#f6a623;font-size:1rem"></i>
+                        <i class="bi bi-folder-fill me-2" style="color:#f6a623;font-size:1rem" aria-hidden="true"></i>
                         <span><?= h($folder->name) ?></span>
                         <span class="sgi-folder-count ms-2"><?= count($folder->employee_documents) ?></span>
                     </button>
@@ -378,7 +378,7 @@ $novedades = $employee->employee_novelties ?? [];
                             'showHeader' => true,
                         ]) ?>
                         <?php else: ?>
-                        <div class="sgi-doc-empty-sm"><i class="bi bi-file-earmark me-1"></i>Carpeta vacía</div>
+                        <div class="sgi-doc-empty-sm"><i class="bi bi-file-earmark me-1" aria-hidden="true"></i>Carpeta vacía</div>
                         <?php endif; ?>
 
                         <?php if (!empty($folder->child_folders)): ?>
@@ -386,7 +386,7 @@ $novedades = $employee->employee_novelties ?? [];
                             <?php foreach ($folder->child_folders as $subfolder): ?>
                             <div class="sgi-subfolder-item">
                                 <div class="sgi-subfolder-header">
-                                    <i class="bi bi-folder-fill" style="color:#f6a623"></i>
+                                    <i class="bi bi-folder-fill" style="color:#f6a623" aria-hidden="true"></i>
                                     <?= h($subfolder->name) ?>
                                     <span class="sgi-folder-count ms-1"><?= count($subfolder->employee_documents) ?></span>
                                 </div>
@@ -398,7 +398,7 @@ $novedades = $employee->employee_novelties ?? [];
                                     'showHeader' => false,
                                 ]) ?>
                                 <?php else: ?>
-                                <div class="sgi-doc-empty-sm"><i class="bi bi-file-earmark me-1"></i>Subcarpeta vacía</div>
+                                <div class="sgi-doc-empty-sm"><i class="bi bi-file-earmark me-1" aria-hidden="true"></i>Subcarpeta vacía</div>
                                 <?php endif; ?>
                             </div>
                             <?php endforeach; ?>
@@ -418,7 +418,7 @@ $novedades = $employee->employee_novelties ?? [];
 <div class="card card-primary mb-4">
     <div class="card-header">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-clock-history"></i>
+            <i class="bi bi-clock-history" aria-hidden="true"></i>
             Historial de Cambios
         </span>
     </div>
@@ -455,7 +455,7 @@ $novedades = $employee->employee_novelties ?? [];
         <div class="modal-content">
             <?= $this->Form->create(null, ['url' => ['action' => 'addFolder', $employee->id]]) ?>
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-folder-plus me-2"></i>Nueva Carpeta</h5>
+                <h5 class="modal-title"><i class="bi bi-folder-plus me-2" aria-hidden="true"></i>Nueva Carpeta</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -472,7 +472,7 @@ $novedades = $employee->employee_novelties ?? [];
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-folder-plus me-1"></i>Crear Carpeta</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-folder-plus me-1" aria-hidden="true"></i>Crear Carpeta</button>
             </div>
             <?= $this->Form->end() ?>
         </div>
@@ -485,7 +485,7 @@ $novedades = $employee->employee_novelties ?? [];
         <div class="modal-content">
             <?= $this->Form->create(null, ['url' => ['action' => 'uploadDocument', $employee->id], 'type' => 'file']) ?>
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Documento</h5>
+                <h5 class="modal-title"><i class="bi bi-upload me-2" aria-hidden="true"></i>Subir Documento</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -508,7 +508,7 @@ $novedades = $employee->employee_novelties ?? [];
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Subir</button>
             </div>
             <?= $this->Form->end() ?>
         </div>

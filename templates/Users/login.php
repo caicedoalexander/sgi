@@ -15,7 +15,7 @@ $this->assign('title', 'Iniciar Sesión');
     </label>
     <div class="sgi-input-group d-flex align-items-center">
         <span class="px-3" style="color:#bbb;flex-shrink:0;">
-            <i class="bi bi-person" style="font-size:.95rem;"></i>
+            <i class="bi bi-person" style="font-size:.95rem;" aria-hidden="true"></i>
         </span>
         <?= $this->Form->control('username', [
             'label'     => false,
@@ -37,7 +37,7 @@ $this->assign('title', 'Iniciar Sesión');
     </label>
     <div class="sgi-input-group d-flex align-items-center">
         <span class="px-3" style="color:#bbb;flex-shrink:0;">
-            <i class="bi bi-lock" style="font-size:.95rem;"></i>
+            <i class="bi bi-lock" style="font-size:.95rem;" aria-hidden="true"></i>
         </span>
         <?= $this->Form->control('password', [
             'label'     => false,

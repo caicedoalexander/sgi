@@ -22,12 +22,12 @@ $ps = [
     <span class="sgi-page-title">Ver Programación</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?= $this->Html->link(
-            '<i class="bi bi-pencil me-1"></i>Editar',
+            '<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
             ['action' => 'edit', $record->id],
             ['class' => 'btn btn-warning btn-sm', 'escape' => false]
         ) ?>
@@ -44,7 +44,7 @@ $ps = [
             <!-- Ícono -->
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:52px;height:52px;background:var(--primary-color);color:#fff;font-size:1.35rem;">
-                <i class="bi bi-calendar2-check"></i>
+                <i class="bi bi-calendar2-check" aria-hidden="true"></i>
             </div>
             <!-- Código, título y badges -->
             <div>
@@ -83,9 +83,9 @@ $ps = [
                 <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                      style="width:32px;height:32px;border:2px solid <?= $isPast || $isCurrent ? 'var(--primary-color)' : '#ddd' ?>;background:<?= $isPast || $isCurrent ? 'var(--primary-color)' : '#fff' ?>;color:<?= $isPast || $isCurrent ? '#fff' : '#bbb' ?>;font-size:.85rem;">
                     <?php if ($isPast): ?>
-                        <i class="bi bi-check-lg"></i>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i>
                     <?php else: ?>
-                        <i class="bi <?= $icon ?>"></i>
+                        <i class="bi <?= $icon ?>" aria-hidden="true"></i>
                     <?php endif; ?>
                 </div>
                 <span style="font-size:.75rem;font-weight:<?= $isCurrent ? '700' : '500' ?>;color:<?= $isCurrent ? '#111' : ($isPast ? 'var(--primary-color)' : '#aaa') ?>;">
@@ -184,19 +184,19 @@ $ps = [
     <div class="sgi-contact-bar">
         <?php if (!empty($record->created_by_user)): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-person"></i>
+            <i class="bi bi-person" aria-hidden="true"></i>
             <span>Creado por <?= h($record->created_by_user->full_name) ?></span>
         </div>
         <?php endif; ?>
         <?php if ($record->created): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-calendar3"></i>
+            <i class="bi bi-calendar3" aria-hidden="true"></i>
             <span>Creado: <?= $record->created?->format('d/m/Y') ?? '' ?></span>
         </div>
         <?php endif; ?>
         <?php if ($record->modified): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-pencil-square"></i>
+            <i class="bi bi-pencil-square" aria-hidden="true"></i>
             <span>Modificado: <?= $record->modified?->format('d/m/Y') ?? '' ?></span>
         </div>
         <?php endif; ?>
@@ -212,7 +212,7 @@ $totalDocs = count($documents);
 <div class="card card-primary mb-4">
     <div class="card-header">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip"></i>
+            <i class="bi bi-paperclip" aria-hidden="true"></i>
             Soportes
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
@@ -220,7 +220,7 @@ $totalDocs = count($documents);
 
     <?php if (empty($documents)): ?>
         <div class="p-3 text-center text-muted" style="font-size:.875rem">
-            <i class="bi bi-file-earmark-x me-1"></i>Sin soportes adjuntos
+            <i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin soportes adjuntos
         </div>
     <?php else: ?>
         <div class="p-3">
@@ -241,18 +241,18 @@ $totalDocs = count($documents);
                         <!-- Card body: usuario + fecha -->
                         <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
                             <div style="display:flex;align-items:center;gap:.35rem;color:#666;">
-                                <i class="bi bi-person" style="font-size:.8rem;"></i>
+                                <i class="bi bi-person" style="font-size:.8rem;" aria-hidden="true"></i>
                                 <span><?= h($att->uploaded_by_user->full_name ?? '—') ?></span>
                             </div>
                             <div style="display:flex;align-items:center;gap:.35rem;color:#888;">
-                                <i class="bi bi-clock" style="font-size:.75rem;"></i>
+                                <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
                                 <span><?= $att->created?->format('d/m/Y H:i') ?></span>
                             </div>
                         </div>
                         <!-- Card footer: botón abrir -->
                         <div style="padding:.5rem .875rem;border-top:1px solid var(--border-color);text-align:right;">
                             <?= $this->Html->link(
-                                '<i class="bi bi-box-arrow-up-right me-1"></i>Abrir',
+                                '<i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Abrir',
                                 '/' . $att->file_path,
                                 ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank']
                             ) ?>
@@ -272,7 +272,7 @@ $totalDocs = count($documents);
 <div class="card card-primary mb-4">
     <div class="card-header">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-chat-left-text"></i>
+            <i class="bi bi-chat-left-text" aria-hidden="true"></i>
             Observaciones
             <span class="sgi-folder-count"><?= count($observations) ?></span>
         </span>
@@ -307,7 +307,7 @@ $totalDocs = count($documents);
                 </div>
                 <?php if ($isRegression && $fromLbl && $toLbl): ?>
                     <div style="font-size:.74rem;color:#666;margin-top:.1rem;">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>
+                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
                         <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
                     </div>
                 <?php endif; ?>

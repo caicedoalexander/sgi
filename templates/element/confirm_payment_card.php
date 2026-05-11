@@ -23,7 +23,7 @@ if (!($canConfirm ?? false) || !($isVerificacionPago ?? false)) {
     <div class="sgi-action-card-label">Cierre de flujo</div>
     <p class="sgi-action-card-message"><?= h($message) ?></p>
     <?= $this->Form->postLink(
-        '<i class="bi bi-check2-circle me-1"></i>Cerrar flujo',
+        '<i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Cerrar flujo',
         $confirmUrl,
         [
             'class' => 'btn sgi-btn-primary',

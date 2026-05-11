@@ -22,13 +22,13 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
     <span class="sgi-page-title">Ver Anticipo</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?php if (!empty($userPermissions['advances']['can_edit']) && $invoice->pipeline_status !== InvoiceConstants::STATUS_PAGADA): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-pencil me-1"></i>Editar',
+            '<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
             ['controller' => 'Invoices', 'action' => 'edit', $invoice->id],
             ['class' => 'btn btn-warning btn-sm', 'escape' => false]
         ) ?>
@@ -41,7 +41,7 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
         <div class="d-flex align-items-start gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:52px;height:52px;background:var(--primary-color);color:#fff;font-size:1.35rem;">
-                <i class="bi bi-cash-coin"></i>
+                <i class="bi bi-cash-coin" aria-hidden="true"></i>
             </div>
             <div>
                 <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;font-family:monospace;">
@@ -121,6 +121,6 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
 </div>
 
 <div class="alert alert-info d-flex align-items-center gap-2">
-    <i class="bi bi-info-circle-fill"></i>
+    <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
     <span>La legalización iniciará automáticamente cuando este anticipo llegue al estado <strong>Pagada</strong>.</span>
 </div>

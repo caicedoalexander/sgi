@@ -36,7 +36,7 @@ $filterFormId = $modalId . 'Filter';
         <div class="modal-content">
 <?php endif; ?>
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-link-45deg me-1"></i><?= h($title) ?></h5>
+                <h5 class="modal-title"><i class="bi bi-link-45deg me-1" aria-hidden="true"></i><?= h($title) ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <?= $this->Form->create(null, ['url' => $formUrl]) ?>
@@ -82,7 +82,7 @@ $filterFormId = $modalId . 'Filter';
                         <?php endif; ?>
                         <div class="col-md-3">
                             <button type="submit" form="<?= h($filterFormId) ?>" class="btn btn-sm btn-outline-primary w-100">
-                                <i class="bi bi-search me-1"></i>Buscar
+                                <i class="bi bi-search me-1" aria-hidden="true"></i>Buscar
                             </button>
                         </div>
                     </div>
@@ -114,7 +114,7 @@ $filterFormId = $modalId . 'Filter';
                         <?php endforeach; ?>
                         <?php if (!$hasAny): ?>
                             <tr><td colspan="6" class="text-center text-muted py-3">
-                                <i class="bi bi-info-circle me-1"></i>No hay facturas disponibles<?= !empty($filters) ? ' con los filtros seleccionados' : '' ?>.
+                                <i class="bi bi-info-circle me-1" aria-hidden="true"></i>No hay facturas disponibles<?= !empty($filters) ? ' con los filtros seleccionados' : '' ?>.
                             </td></tr>
                         <?php endif; ?>
                         </tbody>
@@ -123,7 +123,7 @@ $filterFormId = $modalId . 'Filter';
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn sgi-btn-primary"><i class="bi bi-link-45deg me-1"></i>Vincular seleccionadas</button>
+                <button type="submit" class="btn sgi-btn-primary"><i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Vincular seleccionadas</button>
             </div>
             <?= $this->Form->end() ?>
 <?php if (!$fragmentOnly): ?>

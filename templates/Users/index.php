@@ -8,7 +8,7 @@ $this->assign('title', 'Usuarios');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Usuarios</span>
     <?php if (!empty($userPermissions['users']['can_create'])): ?>
-    <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Usuario', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
+    <?= $this->Html->link('<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Usuario', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
     <?php endif; ?>
 </div>
 
@@ -36,12 +36,12 @@ $this->assign('title', 'Usuarios');
                     <td><?= $user->hasValue('role') ? h($user->role->name) : '' ?></td>
                     <td><?= $user->active ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>' ?></td>
                     <td class="text-end">
-                        <?= $this->Html->link('<i class="bi bi-eye"></i>', ['action' => 'view', $user->id], ['class' => 'btn btn-sm btn-outline-info', 'escape' => false, 'title' => 'Ver']) ?>
+                        <?= $this->Html->link('<i class="bi bi-eye" aria-hidden="true"></i>', ['action' => 'view', $user->id], ['class' => 'btn btn-sm btn-outline-info', 'escape' => false, 'title' => 'Ver']) ?>
                         <?php if (!empty($userPermissions['users']['can_edit'])): ?>
-                        <?= $this->Html->link('<i class="bi bi-pencil"></i>', ['action' => 'edit', $user->id], ['class' => 'btn btn-sm btn-outline-warning', 'escape' => false, 'title' => 'Editar']) ?>
+                        <?= $this->Html->link('<i class="bi bi-pencil" aria-hidden="true"></i>', ['action' => 'edit', $user->id], ['class' => 'btn btn-sm btn-outline-warning', 'escape' => false, 'title' => 'Editar']) ?>
                         <?php endif; ?>
                         <?php if (!empty($userPermissions['users']['can_delete'])): ?>
-                        <?= $this->Form->postLink('<i class="bi bi-trash"></i>', ['action' => 'delete', $user->id], ['confirm' => '¿Está seguro de eliminar este usuario?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
+                        <?= $this->Form->postLink('<i class="bi bi-trash" aria-hidden="true"></i>', ['action' => 'delete', $user->id], ['confirm' => '¿Está seguro de eliminar este usuario?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
                         <?php endif; ?>
                     </td>
                 </tr>

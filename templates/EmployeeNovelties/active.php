@@ -40,7 +40,7 @@ $this->assign('title', 'Novedades Vigentes');
                 <?php endforeach; ?>
             </select>
             <button type="button" id="btn-clear-filters" class="btn btn-sm btn-outline-secondary" style="display:none;">
-                <i class="bi bi-x-circle me-1"></i>Limpiar
+                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Limpiar
             </button>
         </div>
     </div>

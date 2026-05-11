@@ -9,6 +9,6 @@ if (!isset($params['escape']) || $params['escape'] !== false) {
 }
 ?>
 <div class="alert alert-success alert-dismissible fade show" role="alert">
-    <i class="bi bi-check-circle me-2"></i><?= $message ?>
+    <i class="bi bi-check-circle me-2" aria-hidden="true"></i><?= $message ?>
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>

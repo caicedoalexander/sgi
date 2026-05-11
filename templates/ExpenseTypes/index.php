@@ -8,7 +8,7 @@ $this->assign('title', 'Tipos de Gasto');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Tipos de Gasto</span>
     <?php if (!empty($userPermissions['expense_types']['can_create'])): ?>
-    <?= $this->Html->link('<i class="bi bi-plus-lg me-1"></i>Nuevo Tipo', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
+    <?= $this->Html->link('<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Tipo', ['action' => 'add'], ['class' => 'btn btn-primary', 'escape' => false]) ?>
     <?php endif; ?>
 </div>
 
@@ -30,12 +30,12 @@ $this->assign('title', 'Tipos de Gasto');
                     <td><?= h($expenseType->name) ?></td>
                     <td><?= $expenseType->created?->format('d/m/Y H:i') ?></td>
                     <td class="text-end">
-                        <?= $this->Html->link('<i class="bi bi-eye"></i>', ['action' => 'view', $expenseType->id], ['class' => 'btn btn-sm btn-outline-info', 'escape' => false, 'title' => 'Ver']) ?>
+                        <?= $this->Html->link('<i class="bi bi-eye" aria-hidden="true"></i>', ['action' => 'view', $expenseType->id], ['class' => 'btn btn-sm btn-outline-info', 'escape' => false, 'title' => 'Ver']) ?>
                         <?php if (!empty($userPermissions['expense_types']['can_edit'])): ?>
-                        <?= $this->Html->link('<i class="bi bi-pencil"></i>', ['action' => 'edit', $expenseType->id], ['class' => 'btn btn-sm btn-outline-warning', 'escape' => false, 'title' => 'Editar']) ?>
+                        <?= $this->Html->link('<i class="bi bi-pencil" aria-hidden="true"></i>', ['action' => 'edit', $expenseType->id], ['class' => 'btn btn-sm btn-outline-warning', 'escape' => false, 'title' => 'Editar']) ?>
                         <?php endif; ?>
                         <?php if (!empty($userPermissions['expense_types']['can_delete'])): ?>
-                        <?= $this->Form->postLink('<i class="bi bi-trash"></i>', ['action' => 'delete', $expenseType->id], ['confirm' => '¿Está seguro de eliminar este tipo de gasto?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
+                        <?= $this->Form->postLink('<i class="bi bi-trash" aria-hidden="true"></i>', ['action' => 'delete', $expenseType->id], ['confirm' => '¿Está seguro de eliminar este tipo de gasto?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']) ?>
                         <?php endif; ?>
                     </td>
                 </tr>

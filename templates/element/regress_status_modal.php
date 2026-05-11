@@ -30,7 +30,7 @@ $extraHiddenInputs = $extraHiddenInputs ?? [];
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i>
+                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
                         Regresar al paso anterior
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>

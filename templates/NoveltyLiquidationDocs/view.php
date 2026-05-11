@@ -46,13 +46,13 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <span class="sgi-page-title">Ver Liquidación</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?php if (!empty($userPermissions['novelty_liquidation_docs']['can_edit'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-pencil me-1"></i>Editar',
+            '<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
             ['action' => 'edit', $doc->id],
             ['class' => 'btn btn-warning btn-sm', 'escape' => false]
         ) ?>
@@ -68,7 +68,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
         <div class="d-flex align-items-start gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:52px;height:52px;background:var(--primary-color);color:#fff;font-size:1.35rem;">
-                <i class="bi bi-file-earmark-text"></i>
+                <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
             </div>
             <div>
                 <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;">
@@ -226,12 +226,12 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                         <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
                         <td>
                             <?php if ($payment->authorized): ?>
-                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Autorizado</span>
                                 <?php if ($payment->authorized_by_user): ?>
                                 <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente</span>
                             <?php endif; ?>
                         </td>
                         <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
@@ -280,19 +280,19 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <div class="sgi-contact-bar">
         <?php if ($doc->performed_by_user): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-person"></i>
+            <i class="bi bi-person" aria-hidden="true"></i>
             <span>Elaborado por <?= h($doc->performed_by_user->full_name) ?></span>
         </div>
         <?php endif; ?>
         <?php if ($doc->created): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-calendar3"></i>
+            <i class="bi bi-calendar3" aria-hidden="true"></i>
             <span>Creado: <?= $doc->created->format('d/m/Y') ?></span>
         </div>
         <?php endif; ?>
         <?php if ($doc->modified): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-pencil-square"></i>
+            <i class="bi bi-pencil-square" aria-hidden="true"></i>
             <span>Modificado: <?= $doc->modified->format('d/m/Y') ?></span>
         </div>
         <?php endif; ?>
@@ -303,7 +303,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 <div class="card card-primary mb-4">
     <div class="card-header">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip"></i>
+            <i class="bi bi-paperclip" aria-hidden="true"></i>
             Soportes
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
@@ -326,7 +326,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
             </div>
             <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
                 <span style="font-size:.65rem;color:#bbb;">
-                    <i class="bi bi-clock" style="font-size:.6rem;"></i>
+                    <i class="bi bi-clock" style="font-size:.6rem;" aria-hidden="true"></i>
                     <?= $liquidationDocument->created?->format('d/m/Y H:i') ?>
                 </span>
                 <?php if ($liquidationDocument->file_size): ?>
@@ -336,7 +336,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
         </div>
         <div style="display:flex;gap:.25rem;flex-shrink:0;align-self:center;">
             <?= $this->Html->link(
-                '<i class="bi bi-box-arrow-up-right"></i>',
+                '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
                 '/' . $liquidationDocument->file_path,
                 ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'padding:.25rem .45rem;font-size:.72rem;line-height:1;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
             ) ?>
@@ -344,13 +344,13 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     </div>
     <?php else: ?>
     <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);text-align:center;color:#c8c8c8;background:rgba(70,157,97,.03);">
-        <span style="font-size:.73rem;"><i class="bi bi-file-earmark-x me-1"></i>Sin documento</span>
+        <span style="font-size:.73rem;"><i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin documento</span>
     </div>
     <?php endif; ?>
 
     <?php if (empty($documentsByStatus)): ?>
         <div class="p-3 text-center text-muted" style="font-size:.875rem">
-            <i class="bi bi-file-earmark-x me-1"></i>Sin soportes adjuntos
+            <i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin soportes adjuntos
         </div>
     <?php else: ?>
         <div class="p-3">
@@ -375,11 +375,11 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                                     </span>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:.35rem;color:#666;">
-                                    <i class="bi bi-person" style="font-size:.8rem;"></i>
+                                    <i class="bi bi-person" style="font-size:.8rem;" aria-hidden="true"></i>
                                     <span><?= $docFile->has('uploaded_by_user') ? h($docFile->uploaded_by_user->full_name) : '—' ?></span>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:.35rem;color:#888;">
-                                    <i class="bi bi-clock" style="font-size:.75rem;"></i>
+                                    <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
                                     <span><?= $docFile->created?->format('d/m/Y H:i') ?></span>
                                 </div>
                                 <?php if ($docFile->file_size): ?>
@@ -388,7 +388,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                             </div>
                             <div style="padding:.5rem .875rem;border-top:1px solid var(--border-color);text-align:right;">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-box-arrow-up-right me-1"></i>Abrir',
+                                    '<i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Abrir',
                                     '/' . $docFile->file_path,
                                     ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank']
                                 ) ?>

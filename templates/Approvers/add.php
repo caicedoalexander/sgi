@@ -7,7 +7,7 @@ $this->assign('title', 'Nuevo Aprobador');
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nuevo Aprobador</span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
 <div class="card card-primary" style="max-width:600px;">
@@ -38,7 +38,7 @@ $this->assign('title', 'Nuevo Aprobador');
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Guardar</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1" aria-hidden="true"></i>Guardar</button>
         <?= $this->Form->end() ?>
     </div>
 </div>

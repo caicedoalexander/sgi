@@ -9,7 +9,7 @@ $this->assign('title', 'Nueva Programación');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nueva Programación</span>
     <?= $this->Html->link(
-        '<i class="bi bi-arrow-left me-1"></i>Volver',
+        '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
         ['class' => 'btn btn-sm btn-outline-secondary', 'escape' => false]
     ) ?>
@@ -35,7 +35,7 @@ $this->assign('title', 'Nueva Programación');
         </div>
         <div class="mt-4">
             <button type="submit" class="sgi-btn-primary btn">
-                <i class="bi bi-plus-lg me-1"></i>Crear Programación
+                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear Programación
             </button>
         </div>
         <?= $this->Form->end() ?>

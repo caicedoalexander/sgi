@@ -17,7 +17,7 @@ $badgeMap = $entityType === 'employee_novelties'
 ?>
 
 <div class="alert alert-info d-flex align-items-center gap-2 mb-3" style="font-size:.875rem">
-    <i class="bi bi-person-check"></i>
+    <i class="bi bi-person-check" aria-hidden="true"></i>
     <span>Aprobando como: <strong><?= h($currentUser->full_name) ?></strong></span>
 </div>
 
@@ -25,7 +25,7 @@ $badgeMap = $entityType === 'employee_novelties'
     <div class="card-header d-flex align-items-center gap-3">
         <div class="d-flex align-items-center justify-content-center flex-shrink-0"
              style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-            <i class="bi bi-clipboard-check"></i>
+            <i class="bi bi-clipboard-check" aria-hidden="true"></i>
         </div>
         <div>
             <div style="font-size:.95rem;font-weight:700;color:#111;">Solicitud de Aprobación</div>
@@ -135,7 +135,7 @@ $badgeMap = $entityType === 'employee_novelties'
                             </div>
                             <?php endif; ?>
                             <div style="display:flex;align-items:center;gap:.35rem;color:#888;">
-                                <i class="bi bi-clock" style="font-size:.75rem;"></i>
+                                <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
                                 <span><?= $doc->created?->format('d/m/Y H:i') ?></span>
                             </div>
                             <?php if ($doc->file_size): ?>
@@ -145,7 +145,7 @@ $badgeMap = $entityType === 'employee_novelties'
                         <!-- Footer: botón abrir -->
                         <div style="padding:.5rem .875rem;border-top:1px solid var(--border-color);text-align:right;">
                             <?= $this->Html->link(
-                                '<i class="bi bi-box-arrow-up-right me-1"></i>Abrir',
+                                '<i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Abrir',
                                 '/' . $doc->file_path,
                                 ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank']
                             ) ?>
@@ -168,10 +168,10 @@ $badgeMap = $entityType === 'employee_novelties'
 
         <div class="d-flex gap-2">
             <button type="submit" name="action" value="approve" class="btn btn-primary">
-                <i class="bi bi-check-lg me-1"></i>Aprobar
+                <i class="bi bi-check-lg me-1" aria-hidden="true"></i>Aprobar
             </button>
             <button type="submit" name="action" value="reject" class="btn btn-danger">
-                <i class="bi bi-x-lg me-1"></i>Rechazar
+                <i class="bi bi-x-lg me-1" aria-hidden="true"></i>Rechazar
             </button>
         </div>
 

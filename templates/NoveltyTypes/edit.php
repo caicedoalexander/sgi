@@ -13,7 +13,7 @@ $this->assign('title', 'Editar Tipo de Novedad');
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Editar Tipo de Novedad</span>
     <?= $this->Html->link(
-        '<i class="bi bi-arrow-left me-1"></i>Volver',
+        '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
         ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
     ) ?>
@@ -91,7 +91,7 @@ $this->assign('title', 'Editar Tipo de Novedad');
         <div class="mt-4 pt-3" style="border-top:1px solid var(--border-color);" id="contract-templates-section">
             <label class="sgi-section-label">Asignación de plantillas por tipo de contrato</label>
             <p class="text-muted small mb-2" id="subtype-templates-notice" style="display:none;">
-                <i class="bi bi-info-circle me-1"></i>Los subtipos heredan las plantillas asignadas al tipo padre.
+                <i class="bi bi-info-circle me-1" aria-hidden="true"></i>Los subtipos heredan las plantillas asignadas al tipo padre.
             </p>
             <div id="contract-templates-fields">
                 <table class="table table-sm align-middle mb-2" id="contract-templates-table">
@@ -107,13 +107,13 @@ $this->assign('title', 'Editar Tipo de Novedad');
                     </tbody>
                 </table>
                 <button type="button" class="btn btn-outline-dark btn-sm" id="add-contract-template-row">
-                    <i class="bi bi-plus-lg me-1"></i>Agregar asignación
+                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Agregar asignación
                 </button>
             </div>
         </div>
 
         <div class="d-flex gap-2 pt-3 mt-3" style="border-top:1px solid var(--border-color);">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Guardar</button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1" aria-hidden="true"></i>Guardar</button>
             <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>
         </div>
         <?= $this->Form->end() ?>
@@ -171,7 +171,7 @@ if (!empty($noveltyType->novelty_type_contract_templates)) {
             + buildOptions(temporaryOrgs, '-- Seleccione --') + '</select></td>'
             + '<td><select name="' + prefix + '[leave_document_template_id]" class="form-select form-select-sm">'
             + buildOptions(documentTemplates, '-- Seleccione --') + '</select></td>'
-            + '<td><button type="button" class="btn btn-sm btn-outline-danger ct-remove-row"><i class="bi bi-trash"></i></button></td>';
+            + '<td><button type="button" class="btn btn-sm btn-outline-danger ct-remove-row"><i class="bi bi-trash" aria-hidden="true"></i></button></td>';
 
         tbody.appendChild(tr);
 

@@ -10,7 +10,7 @@ $this->assign('title', 'Plantillas de Documento');
     <span class="sgi-page-title">Plantillas de Documento</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1"></i>Nueva Plantilla',
+            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva Plantilla',
             ['action' => 'add'],
             ['class' => 'btn btn-primary', 'escape' => false]
         ) ?>
@@ -61,17 +61,17 @@ $this->assign('title', 'Plantillas de Documento');
                     <td>
                         <div class="d-flex gap-1">
                             <?= $this->Html->link(
-                                '<i class="bi bi-pencil"></i>',
+                                '<i class="bi bi-pencil" aria-hidden="true"></i>',
                                 ['action' => 'edit', $template->id],
                                 ['class' => 'btn btn-sm btn-outline-dark', 'escape' => false, 'title' => 'Editar']
                             ) ?>
                             <?= $this->Html->link(
-                                '<i class="bi bi-eye"></i>',
+                                '<i class="bi bi-eye" aria-hidden="true"></i>',
                                 ['action' => 'preview', $template->id],
                                 ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'title' => 'Previsualizar', 'target' => '_blank']
                             ) ?>
                             <?= $this->Form->postLink(
-                                '<i class="bi bi-trash"></i>',
+                                '<i class="bi bi-trash" aria-hidden="true"></i>',
                                 ['action' => 'delete', $template->id],
                                 ['class' => 'btn btn-sm btn-outline-danger', 'escape' => false,
                                  'confirm' => '¿Eliminar esta plantilla?']

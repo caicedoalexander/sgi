@@ -13,7 +13,7 @@ $errors = $result['errors'] ?? [];
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Previsualización de Importación — <?= h($record->code) ?></span>
     <?= $this->Html->link(
-        '<i class="bi bi-arrow-left me-1"></i>Cancelar',
+        '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Cancelar',
         ['action' => 'edit', $record->id],
         ['class' => 'btn btn-sm btn-outline-secondary', 'escape' => false]
     ) ?>
@@ -23,7 +23,7 @@ $errors = $result['errors'] ?? [];
 <div class="card card-primary mb-4" style="border-top:2px solid #dc3545;">
     <div class="card-header" style="background:#fff5f5;">
         <span style="font-size:.85rem;font-weight:600;color:#dc3545;">
-            <i class="bi bi-exclamation-triangle me-1"></i>Errores (<?= count($errors) ?>)
+            <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>Errores (<?= count($errors) ?>)
         </span>
     </div>
     <div class="card-body">
@@ -40,7 +40,7 @@ $errors = $result['errors'] ?? [];
 <div class="card card-primary mb-4" style="border-top:2px solid var(--primary-color);">
     <div class="card-header">
         <span style="font-size:.85rem;font-weight:600;color:var(--primary-color);">
-            <i class="bi bi-check-circle me-1"></i>Facturas válidas (<?= count($validItems) ?>)
+            <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Facturas válidas (<?= count($validItems) ?>)
         </span>
     </div>
     <div class="table-responsive">
@@ -77,7 +77,7 @@ $errors = $result['errors'] ?? [];
 
 <div class="d-flex gap-3">
     <?= $this->Form->postLink(
-        '<i class="bi bi-check-lg me-1"></i>Confirmar importación (' . count($validItems) . ' facturas)',
+        '<i class="bi bi-check-lg me-1" aria-hidden="true"></i>Confirmar importación (' . count($validItems) . ' facturas)',
         ['action' => 'confirmImport', $record->id],
         ['confirm' => '¿Confirmar la importación de ' . count($validItems) . ' facturas?', 'class' => 'btn btn-primary', 'escape' => false]
     ) ?>
@@ -89,7 +89,7 @@ $errors = $result['errors'] ?? [];
 </div>
 <?php else: ?>
 <div class="alert alert-warning">
-    <i class="bi bi-exclamation-triangle me-1"></i>No se encontraron facturas válidas en el archivo.
+    <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>No se encontraron facturas válidas en el archivo.
     <?= $this->Html->link('Volver', ['action' => 'edit', $record->id], ['class' => 'alert-link']) ?>
 </div>
 <?php endif; ?>

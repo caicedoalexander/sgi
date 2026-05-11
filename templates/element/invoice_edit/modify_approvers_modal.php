@@ -11,12 +11,12 @@
             <form method="post" action="<?= $this->Url->build(['action' => 'modifyApprovers', $invoice->id]) ?>">
                 <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-pencil-square me-1"></i>Modificar aprobadores</h5>
+                    <h5 class="modal-title"><i class="bi bi-pencil-square me-1" aria-hidden="true"></i>Modificar aprobadores</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning py-2" style="font-size:.8rem;">
-                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
                         Los enlaces de aprobación previos quedarán invalidados.
                     </div>
                     <div class="mb-3">
@@ -37,7 +37,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-warning">
-                        <i class="bi bi-send me-1"></i>Guardar y reenviar enlaces
+                        <i class="bi bi-send me-1" aria-hidden="true"></i>Guardar y reenviar enlaces
                     </button>
                 </div>
             </form>

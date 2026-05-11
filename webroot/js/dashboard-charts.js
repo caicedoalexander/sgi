@@ -7,7 +7,19 @@
 (function () {
     'use strict';
 
-    if (typeof ApexCharts === 'undefined') return;
+    function run() {
+        if (typeof ApexCharts === 'undefined') return;
+        // body original abajo
+        boot();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', run);
+    } else {
+        run();
+    }
+
+    function boot() {
 
     /* ── Color palettes ──────────────────────────────────────── */
     /* Hex equivalentes a las clases Bootstrap usadas en
@@ -390,4 +402,5 @@
         })).render();
     }
 
+    } // end boot()
 })();

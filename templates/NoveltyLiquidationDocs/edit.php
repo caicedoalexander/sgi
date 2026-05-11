@@ -58,12 +58,12 @@ $noveltyCount = count($doc->employee_novelties);
     <span class="sgi-page-title">Editar Liquidación</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?= $this->Html->link(
-            '<i class="bi bi-eye me-1"></i>Ver',
+            '<i class="bi bi-eye me-1" aria-hidden="true"></i>Ver',
             ['action' => 'view', $doc->id],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
@@ -74,7 +74,7 @@ $noveltyCount = count($doc->employee_novelties);
 <?php if (!$isFinal && !empty($groupErrors)): ?>
 <div class="alert alert-warning mb-4">
     <div class="d-flex align-items-start gap-2">
-        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
         <div>
             <strong>Para avanzar al siguiente estado complete:</strong>
             <ul class="mb-0 mt-1 ps-3">
@@ -99,7 +99,7 @@ $noveltyCount = count($doc->employee_novelties);
         <div class="d-flex align-items-center gap-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
-                <i class="bi bi-file-earmark-text"></i>
+                <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
             </div>
             <div>
                 <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
@@ -183,7 +183,7 @@ $noveltyCount = count($doc->employee_novelties);
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-people me-1"></i>Novedades Asociadas (<?= $noveltyCount ?>)
+                    <i class="bi bi-people me-1" aria-hidden="true"></i>Novedades Asociadas (<?= $noveltyCount ?>)
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -226,7 +226,7 @@ $noveltyCount = count($doc->employee_novelties);
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
                       style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
-                    <i class="bi bi-pen me-1"></i>Firmas
+                    <i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
@@ -236,7 +236,7 @@ $noveltyCount = count($doc->employee_novelties);
                     <div class="border p-3 text-center h-100" style="border-radius:2px;">
                         <div class="fw-bold small mb-2"><?= $signerLabels[$sig->signer_type] ?? h($sig->signer_type) ?></div>
                         <?php if ($sig->signature_path): ?>
-                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Firmado</span>
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Firmado</span>
                             <div class="mt-1 small text-muted">
                                 <?= h($sig->signed_by_user->full_name ?? '') ?>
                                 <?php if ($sig->approved_at): ?>
@@ -259,12 +259,12 @@ $noveltyCount = count($doc->employee_novelties);
                             <?php if ($sig->signature_path): ?>
                             <input type="hidden" name="signature_status" value="pending">
                             <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-x-circle me-1"></i>Marcar Pendiente
+                                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Marcar Pendiente
                             </button>
                             <?php else: ?>
                             <input type="hidden" name="signature_status" value="signed">
                             <button type="submit" class="btn btn-sm btn-outline-success">
-                                <i class="bi bi-check-circle me-1"></i>Marcar Firmado
+                                <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Marcar Firmado
                             </button>
                             <?php endif; ?>
                             <?= $this->Form->end() ?>
@@ -293,7 +293,7 @@ $noveltyCount = count($doc->employee_novelties);
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary flex-shrink-0">
-                    <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
+                    <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar
                 </button>
             </div>
             <?= $this->Form->end() ?>
@@ -307,7 +307,7 @@ $noveltyCount = count($doc->employee_novelties);
                            value="<?= $doc->document_date?->format('Y-m-d') ?>">
                 </div>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_REVISION_FIRMAS] ?? '' ?>
+                    <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_REVISION_FIRMAS] ?? '' ?>
                 </button>
             </div>
             <?= $this->Form->end() ?>
@@ -326,7 +326,7 @@ $noveltyCount = count($doc->employee_novelties);
                 </div>
                 <?php endif; ?>
                 <button type="submit" class="btn btn-primary flex-shrink-0">
-                    <i class="bi bi-arrow-right-circle me-1"></i>Guardar y Avanzar
+                    <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar
                 </button>
             </div>
             <?= $this->Form->end() ?>
@@ -334,7 +334,7 @@ $noveltyCount = count($doc->employee_novelties);
             <?php elseif ($currentStatus === NoveltyConstants::STATUS_RRHH): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'class' => 'd-inline']) ?>
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-arrow-right-circle me-1"></i>Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_CONTABILIDAD] ?? 'Contabilidad' ?>
+                <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Avanzar a <?= $statusLabels[NoveltyConstants::STATUS_CONTABILIDAD] ?? 'Contabilidad' ?>
             </button>
             <?= $this->Form->end() ?>
 
@@ -391,13 +391,13 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
 <div class="card card-primary">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" style="font-size:.85rem;"></i>
+            <i class="bi bi-paperclip" style="font-size:.85rem;" aria-hidden="true"></i>
             <span style="font-size:.85rem;font-weight:600;">Soportes</span>
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
         <?php if ($showUploadSection): ?>
         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
-            <i class="bi bi-upload me-1"></i>Subir
+            <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
         </button>
         <?php endif; ?>
     </div>
@@ -419,7 +419,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
             </div>
             <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
                 <span style="font-size:.65rem;color:#bbb;">
-                    <i class="bi bi-clock" style="font-size:.6rem;"></i>
+                    <i class="bi bi-clock" style="font-size:.6rem;" aria-hidden="true"></i>
                     <?= $liquidationDocument->created?->format('d/m/Y H:i') ?>
                 </span>
                 <?php if ($liquidationDocument->file_size): ?>
@@ -440,12 +440,12 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
                    style="display:none;"
                    data-liq-trigger="liq-doc-update-form">
             <label for="liq-doc-file" class="btn btn-sm btn-outline-primary" style="width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;cursor:pointer;" title="Reemplazar">
-                <i class="bi bi-arrow-repeat"></i>
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
             </label>
             <?= $this->Form->end() ?>
             <?php endif; ?>
             <?= $this->Html->link(
-                '<i class="bi bi-box-arrow-up-right"></i>',
+                '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
                 '/' . $liquidationDocument->file_path,
                 ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
             ) ?>
@@ -455,7 +455,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
     <?php elseif ($canUploadLiqDoc): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;"></i>
+            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
             <span style="font-size:.76rem;color:#999;">Sin documento</span>
@@ -471,7 +471,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
                style="display:none;"
                data-liq-trigger="liq-doc-upload-form">
         <label for="liq-doc-file-new" class="btn btn-sm btn-outline-primary" style="padding:.25rem .5rem;font-size:.72rem;line-height:1;cursor:pointer;" title="Subir documento">
-            <i class="bi bi-upload me-1"></i>Subir
+            <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
         </label>
         <?= $this->Form->end() ?>
     </div>
@@ -479,7 +479,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
     <?php else: ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;"></i>
+            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;" aria-hidden="true"></i>
         </div>
         <span style="font-size:.76rem;color:#c8c8c8;">Sin documento</span>
     </div>
@@ -487,7 +487,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
     <?php endif; ?>
 
     <div id="docs-empty-state" style="padding:1.5rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
-        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;"></i>
+        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
     <div id="docs-list" style="max-height:420px;overflow-y:auto;">
@@ -519,7 +519,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
 <?php $obsCount = count($doc->novelty_observations ?? []); ?>
 <div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
     <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);"></i>
+        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);" aria-hidden="true"></i>
         <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
         <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
     </div>
@@ -534,7 +534,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
     </div>
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;"></i>
+        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
         <span style="font-size:.78rem;">Sin observaciones aún</span>
     </div>
 
@@ -545,7 +545,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
             <textarea name="message" class="auto-resize" rows="1"
                       placeholder="Escriba una observación..."></textarea>
             <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                <i class="bi bi-send"></i>
+                <i class="bi bi-send" aria-hidden="true"></i>
             </button>
         </div>
         <?= $this->Form->end() ?>
@@ -565,7 +565,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
                   data-url="<?= $this->Url->build(['action' => 'uploadDocument', $doc->id]) ?>"
                   enctype="multipart/form-data">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Subir Soporte</h5>
+                    <h5 class="modal-title"><i class="bi bi-upload me-2" aria-hidden="true"></i>Subir Soporte</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -578,7 +578,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Subir</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Subir</button>
                 </div>
             </form>
         </div>

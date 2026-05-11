@@ -7,7 +7,7 @@ $this->assign('title', 'Editar Proveedor');
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Editar Proveedor</span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
 <div class="card card-primary">
@@ -34,7 +34,7 @@ $this->assign('title', 'Editar Proveedor');
                 <?= $this->Form->label('active', 'Activo', ['class' => 'form-check-label']) ?>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Actualizar</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1" aria-hidden="true"></i>Actualizar</button>
         <?= $this->Form->end() ?>
     </div>
 </div>

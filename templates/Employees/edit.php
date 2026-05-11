@@ -10,7 +10,7 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Editar Empleado: <?= h($employee->full_name) ?></span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1"></i>Volver', ['action' => 'view', $employee->id], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'view', $employee->id], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
 </div>
 
 <?= $this->Form->create($employee, ['type' => 'file']) ?>
@@ -34,5 +34,5 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
     </div>
 </div>
 
-<button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Actualizar</button>
+<button type="submit" class="btn btn-primary"><i class="bi bi-save me-1" aria-hidden="true"></i>Actualizar</button>
 <?= $this->Form->end() ?>

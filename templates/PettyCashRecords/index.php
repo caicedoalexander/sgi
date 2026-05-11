@@ -16,7 +16,7 @@ $params = $this->request->getQueryParams();
     <?php if (!empty($userPermissions['petty_cash']['can_create'])): ?>
     <div>
         <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1"></i>Nuevo Registro',
+            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Registro',
             ['action' => 'add'],
             ['class' => 'sgi-btn-primary btn btn-sm', 'escape' => false]
         ) ?>
@@ -54,7 +54,7 @@ $params = $this->request->getQueryParams();
                        value="<?= h($params['date_to'] ?? '') ?>">
             </div>
             <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1"></i>Filtrar</button>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>Filtrar</button>
                 <?= $this->Html->link('Limpiar', ['action' => 'index'], ['class' => 'btn btn-sm btn-outline-secondary']) ?>
             </div>
         </div>

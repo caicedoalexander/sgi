@@ -36,7 +36,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
 <?php if (($invoice->document_type ?? null) === \App\Constants\InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($invoice->advance_id)): ?>
     <div class="alert alert-info d-flex justify-content-between align-items-center">
         <div>
-            <i class="bi bi-link-45deg me-1"></i>
+            <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
             Esta factura es una <strong>Legalización</strong> vinculada al
             <?= $this->Html->link('Anticipo #' . h($invoice->advance_id), ['controller' => 'Advances', 'action' => 'view', $invoice->advance_id]) ?>.
         </div>
@@ -48,13 +48,13 @@ $dianClass = match($invoice->dian_validation ?? '') {
     <span class="sgi-page-title">Ver Factura</span>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1"></i>Volver',
+            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
             ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
         ) ?>
         <?php if ($canShowEdit): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-pencil me-1"></i>Editar',
+            '<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
             ['action' => 'edit', $invoice->id],
             ['class' => 'btn btn-warning btn-sm', 'escape' => false]
         ) ?>
@@ -64,7 +64,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
 
 <?php if (!empty($showPettyCashLock)): ?>
 <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
-    <i class="bi bi-lock-fill fs-5"></i>
+    <i class="bi bi-lock-fill fs-5" aria-hidden="true"></i>
     <div>
         Factura bloqueada: pertenece al registro de Caja Menor
         <strong><?= $this->Html->link(
@@ -79,7 +79,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
 
 <?php if (!empty($showSchedulingLock)): ?>
 <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
-    <i class="bi bi-lock-fill fs-5"></i>
+    <i class="bi bi-lock-fill fs-5" aria-hidden="true"></i>
     <div>
         Factura bloqueada: tiene pagos aplicados desde una <strong>programación ya pagada</strong>.
     </div>
@@ -96,7 +96,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
             <!-- Ícono -->
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:52px;height:52px;background:var(--primary-color);color:#fff;font-size:1.35rem;">
-                <i class="bi bi-receipt"></i>
+                <i class="bi bi-receipt" aria-hidden="true"></i>
             </div>
             <!-- Número, tipo y badges -->
             <div>
@@ -262,7 +262,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
                     </div>
                     <?php if ($isRegression && $fromLbl && $toLbl): ?>
                         <div style="font-size:.74rem;color:#666;margin-top:.1rem;">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i>
+                            <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
                             <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
                         </div>
                     <?php endif; ?>
@@ -392,17 +392,17 @@ $dianClass = match($invoice->dian_validation ?? '') {
                             <td>
                                 <?php $pSt = $payment->status ?? ($payment->authorized ? 'authorized' : 'pending'); ?>
                                 <?php if ($pSt === 'authorized'): ?>
-                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Autorizado</span>
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Autorizado</span>
                                     <?php if ($payment->authorized_by_user): ?>
                                     <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
                                     <?php endif; ?>
                                 <?php elseif ($pSt === 'rejected'): ?>
-                                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Rechazado</span>
+                                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Rechazado</span>
                                     <?php if (!empty($payment->rejection_reason)): ?>
                                     <br><small class="text-muted"><?= h($payment->rejection_reason) ?></small>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente</span>
                                 <?php endif; ?>
                             </td>
                             <td>
@@ -411,13 +411,13 @@ $dianClass = match($invoice->dian_validation ?? '') {
                             <td>
                                 <?php if (!empty($payment->payment_scheduling_id)): ?>
                                     <?= $this->Html->link(
-                                        '<i class="bi bi-calendar-check me-1"></i>Programación ' . h($payment->payment_scheduling->code ?? '#' . $payment->payment_scheduling_id),
+                                        '<i class="bi bi-calendar-check me-1" aria-hidden="true"></i>Programación ' . h($payment->payment_scheduling->code ?? '#' . $payment->payment_scheduling_id),
                                         ['controller' => 'PaymentSchedulings', 'action' => 'view', $payment->payment_scheduling_id],
                                         ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
                                     ) ?>
                                 <?php elseif (!empty($payment->petty_cash_record_id)): ?>
                                     <?= $this->Html->link(
-                                        '<i class="bi bi-wallet2 me-1"></i>Caja Menor ' . h($payment->petty_cash_record->code ?? '#' . $payment->petty_cash_record_id),
+                                        '<i class="bi bi-wallet2 me-1" aria-hidden="true"></i>Caja Menor ' . h($payment->petty_cash_record->code ?? '#' . $payment->petty_cash_record_id),
                                         ['controller' => 'PettyCashRecords', 'action' => 'view', $payment->petty_cash_record_id],
                                         ['class' => 'badge bg-light text-dark text-decoration-none border', 'escape' => false]
                                     ) ?>
@@ -445,19 +445,19 @@ $dianClass = match($invoice->dian_validation ?? '') {
     <div class="sgi-contact-bar">
         <?php if ($invoice->hasValue('registered_by_user')): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-person"></i>
+            <i class="bi bi-person" aria-hidden="true"></i>
             <span>Registrado por <?= h($invoice->registered_by_user->full_name) ?></span>
         </div>
         <?php endif; ?>
         <?php if ($invoice->created): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-calendar3"></i>
+            <i class="bi bi-calendar3" aria-hidden="true"></i>
             <span>Creado: <?= $invoice->created?->format('d/m/Y') ?? '' ?></span>
         </div>
         <?php endif; ?>
         <?php if ($invoice->modified): ?>
         <div class="sgi-contact-item">
-            <i class="bi bi-pencil-square"></i>
+            <i class="bi bi-pencil-square" aria-hidden="true"></i>
             <span>Modificado: <?= $invoice->modified?->format('d/m/Y') ?? '' ?></span>
         </div>
         <?php endif; ?>
@@ -474,7 +474,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
 <div class="card card-primary mb-4">
     <div class="card-header">
         <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip"></i>
+            <i class="bi bi-paperclip" aria-hidden="true"></i>
             Soportes
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
@@ -482,7 +482,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
 
     <?php if (empty($documentsByStatus)): ?>
         <div class="p-3 text-center text-muted" style="font-size:.875rem">
-            <i class="bi bi-file-earmark-x me-1"></i>Sin soportes adjuntos
+            <i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin soportes adjuntos
         </div>
     <?php else: ?>
         <div class="p-3">
@@ -514,11 +514,11 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                                     </span>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:.35rem;color:#666;">
-                                    <i class="bi bi-person" style="font-size:.8rem;"></i>
+                                    <i class="bi bi-person" style="font-size:.8rem;" aria-hidden="true"></i>
                                     <span><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></span>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:.35rem;color:#888;">
-                                    <i class="bi bi-clock" style="font-size:.75rem;"></i>
+                                    <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
                                     <span><?= $doc->created?->format('d/m/Y H:i') ?></span>
                                 </div>
                                 <?php if ($doc->file_size): ?>
@@ -528,7 +528,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                             <!-- Card footer: botón abrir -->
                             <div style="padding:.5rem .875rem;border-top:1px solid var(--border-color);text-align:right;">
                                 <?= $this->Html->link(
-                                    '<i class="bi bi-box-arrow-up-right me-1"></i>Abrir',
+                                    '<i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Abrir',
                                     '/' . $doc->file_path,
                                     ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank']
                                 ) ?>
