@@ -8,84 +8,29 @@
 use App\Constants\InvoiceConstants;
 use App\View\Presentation\InvoicePresentation;
 
-$isAdvance = ($viewModel->invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO;
+$this->assign('title', $viewModel->pageTitle);
 
-$this->assign(
-    'title',
-    $isAdvance
-        ? ('Editar Anticipo #' . $viewModel->invoice->id)
-        : ('Editar Factura ' . ($viewModel->invoice->invoice_number ?? '#' . $viewModel->invoice->id)),
-);
+// Alias locales: convenientes para mantener el markup corto.
+$isAdvance              = $viewModel->isAdvance;
+$documentTypes          = $viewModel->documentTypes;
+$approvalOptions        = $viewModel->approvalOptions;
+$dianOptions            = $viewModel->dianOptions;
+$readyForPaymentOptions = $viewModel->readyForPaymentOptions;
+$paymentStatusOptions   = $viewModel->paymentStatusOptions;
+$renderOrder            = $viewModel->renderOrder;
+$readOnlySectionKeys    = $viewModel->readOnlySectionKeys;
+$canEdit                = fn(string $field): bool => $viewModel->canEditField($field);
+$isReadOnlySection      = fn(string $s): bool      => $viewModel->isReadOnlySection($s);
+$isCollapsibleSection   = fn(string $s): bool      => $viewModel->isCollapsibleSection($s);
 
-$documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstants::DOCUMENT_TYPES);
-$approvalOptions       = array_combine(InvoiceConstants::APPROVAL_STATUSES, InvoiceConstants::APPROVAL_STATUSES);
-$dianOptions           = array_combine(InvoiceConstants::DIAN_STATUSES, InvoiceConstants::DIAN_STATUSES);
-$readyForPaymentLabels = [
-    InvoiceConstants::READY_FOR_PAYMENT_SI => 'Sí',
-    InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'Pago Prioritario',
-];
-$readyForPaymentOptions = ['' => '-- Seleccione --'] + array_combine(
-    InvoiceConstants::READY_FOR_PAYMENT_OPTIONS,
-    array_map(fn($v) => $readyForPaymentLabels[$v] ?? $v, InvoiceConstants::READY_FOR_PAYMENT_OPTIONS)
-);
-$paymentStatusOptions = ['' => '-- Seleccione --', InvoiceConstants::PAYMENT_FULL => 'Pago total', InvoiceConstants::PAYMENT_PARTIAL => 'Pago Parcial'];
-
-$canEdit = fn(string $field): bool => in_array($field, $viewModel->editableFields, true);
-
-// Botón de submit
-if ($viewModel->isRejected) {
-    $btnLabel = '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
-    $btnClass = 'btn btn-primary';
-} elseif ($viewModel->canAdvance && empty($viewModel->advanceErrors) && $viewModel->nextStatus) {
-    $nextLabel = $viewModel->pipelineLabels[$viewModel->nextStatus] ?? $viewModel->nextStatus;
-    $btnLabel  = '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a: ' . h($nextLabel);
-    $btnClass  = 'btn btn-primary';
-} else {
-    $btnLabel = '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
-    $btnClass = 'btn btn-primary';
-}
-
-$pipelineBadgeMap = [
-    'aprobacion'        => ['Aprobación',    'bg-info text-dark'],
-    'contabilidad'      => ['Contabilidad',  'bg-primary'],
-    'tesoreria'         => ['Tesorería',     'bg-warning text-dark'],
-    'autorizacion_pago' => ['Autorización de pago', 'bg-info'],
-    'verificacion_pago' => ['Verificación de pago', 'bg-warning text-dark'],
-    'pagada'            => ['Pagada',        'bg-success'],
-];
-$ps = $pipelineBadgeMap[$viewModel->currentStatus] ?? ['Desconocido', 'bg-dark'];
+$ps       = $viewModel->currentStatusBadge;
+$btnLabel = $viewModel->submitButtonLabel;
+$btnClass = $viewModel->submitButtonClass;
 
 // ── Ledger lookup arrays (ResultSet → array for bracket access) ──
-$expenseTypesArr = is_array($viewModel->expenseTypes) ? $viewModel->expenseTypes : (method_exists($viewModel->expenseTypes, 'toArray') ? $viewModel->expenseTypes->toArray() : []);
-
-// ── Compute section render order: editable first, read-only after ──
-$sectionFieldMap = [
-    'general'               => ['invoice_number', 'document_type', 'purchase_order', 'provider_id'],
-    'dates'                 => ['issue_date', 'due_date'],
-    'classification'        => ['operation_center_id', 'expense_type_id', 'cost_center_id', 'amount', 'detail'],
-    'revision'              => ['approver_id', 'dian_validation'],
-    'accounting'            => ['accrued', 'ready_for_payment'],
-    'treasury'              => [],
-    'payment_authorization' => [],
-];
-// Sections with their own internal permission logic — never skip as read-only
-$functionalSections = ['treasury', 'payment_authorization'];
-$editableSectionKeys = [];
-$readOnlySectionKeys = [];
-foreach ($viewModel->visibleSections as $s) {
-    if (in_array($s, $functionalSections, true) || !empty(array_intersect($sectionFieldMap[$s] ?? [], $viewModel->editableFields))) {
-        $editableSectionKeys[] = $s;
-    } else {
-        $readOnlySectionKeys[] = $s;
-    }
-}
-// Reorder: non-collapsible editable first, then collapsible editable, then read-only
-$collapsible = $viewModel->collapsibleSections ?? [];
-$nonCollapsibleEditable = array_filter($editableSectionKeys, fn($s) => !in_array($s, $collapsible, true));
-$collapsibleEditable = array_filter($editableSectionKeys, fn($s) => in_array($s, $collapsible, true));
-$renderOrder = array_merge(array_values($nonCollapsibleEditable), array_values($collapsibleEditable), $readOnlySectionKeys);
-$isReadOnlySection = fn(string $s): bool => in_array($s, $readOnlySectionKeys, true);
-$isCollapsibleSection = fn(string $s): bool => in_array($s, $collapsible, true);
+$expenseTypesArr = is_array($viewModel->expenseTypes)
+    ? $viewModel->expenseTypes
+    : (method_exists($viewModel->expenseTypes, 'toArray') ? $viewModel->expenseTypes->toArray() : []);
 ?>
 
 <?php if (($viewModel->invoice->document_type ?? null) === \App\Constants\InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($viewModel->invoice->advance_id)): ?>
@@ -875,7 +820,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
                 ['class' => 'btn btn-outline-secondary ms-auto']
             ) ?>
         </div>
-        <?php elseif (empty(array_intersect($functionalSections, $viewModel->visibleSections))): ?>
+        <?php elseif (empty(array_intersect(['treasury', 'payment_authorization'], $viewModel->visibleSections))): ?>
         <div class="alert alert-info mb-0">
             <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
             No tiene permisos de edición para esta factura en el estado actual.
