@@ -158,7 +158,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
                 <div class="card-body">
                     <div style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;margin-bottom:.75rem;">Distribución por estado</div>
                     <div id="invoiceDonutChart"
-                         data-chart-donut='<?= json_encode($invoiceChartData['donut_status'] ?? []) ?>'></div>
+                         data-chart-donut="<?= h(json_encode($invoiceChartData['donut_status'] ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>"></div>
                 </div>
             </div>
         </div>
@@ -167,7 +167,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
                 <div class="card-body">
                     <div style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;margin-bottom:.75rem;">Facturas por mes</div>
                     <div id="invoiceBarChart"
-                         data-chart-monthly='<?= json_encode($invoiceChartData['monthly'] ?? []) ?>'></div>
+                         data-chart-monthly="<?= h(json_encode($invoiceChartData['monthly'] ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>"></div>
                 </div>
             </div>
         </div>
@@ -306,7 +306,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
                 <div class="card-body">
                     <div style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;margin-bottom:.75rem;">Distribución por contrato</div>
                     <div id="employeeDonutChart"
-                         data-chart-contract='<?= json_encode($rrhhChartData['donut_contract'] ?? []) ?>'></div>
+                         data-chart-contract="<?= h(json_encode($rrhhChartData['donut_contract'] ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>"></div>
                 </div>
             </div>
         </div>
@@ -315,7 +315,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
                 <div class="card-body">
                     <div style="font-size:.63rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#999;margin-bottom:.75rem;">Novedades por mes</div>
                     <div id="noveltyBarChart"
-                         data-chart-novelties='<?= json_encode($rrhhChartData['monthly_novelties'] ?? []) ?>'></div>
+                         data-chart-novelties="<?= h(json_encode($rrhhChartData['monthly_novelties'] ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>"></div>
                 </div>
             </div>
         </div>

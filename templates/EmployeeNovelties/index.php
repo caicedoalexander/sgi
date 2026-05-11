@@ -173,8 +173,8 @@ $calendarColorCount = count($calendarColors);
 </div>
 
 <!-- FullCalendar CDN (v6 includes CSS in the JS bundle) -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/es.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js" integrity="sha384-5JIwZN3kuxX2zKsavvNmbZ3zhZZMUtu/eQiK3BbXukpSXp0Cd2ZP4OAYKx7mrPgI" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/es.global.min.js" integrity="sha384-cbWTKHcCEJ2+hxgYjdtf8NabqzATKWy5P0INfIVl7OYEEQd5JvMTECWiyswNhvyF" crossorigin="anonymous"></script>
 <?= $this->Html->css('sgi-calendar') ?>
 <script src="<?= $this->Url->build('/js/sgi-calendar.js') ?>"></script>
 <script>

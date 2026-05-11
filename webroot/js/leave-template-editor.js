@@ -338,7 +338,14 @@
         if (!container) return;
         var div = document.createElement('div');
         div.className = 'alert alert-' + type + ' alert-dismissible fade show';
-        div.innerHTML = msg + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        var text = document.createElement('span');
+        text.textContent = msg;
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'btn-close';
+        close.setAttribute('data-bs-dismiss', 'alert');
+        div.appendChild(text);
+        div.appendChild(close);
         container.appendChild(div);
         setTimeout(function () { if (div.parentNode) div.remove(); }, 5000);
     }
