@@ -4,12 +4,11 @@ declare(strict_types=1);
 namespace App\ViewModel;
 
 use App\Constants\AdvanceConstants;
-use App\Constants\InvoiceConstants;
 use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
+use App\Model\Entity\InvoicePayment;
 use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\View\Presentation\AdvancePresentation;
-use Cake\ORM\TableRegistry;
 
 /**
  * Datos pre-calculados que el template `templates/Advances/legalization.php` necesita.
@@ -18,6 +17,10 @@ use Cake\ORM\TableRegistry;
  * `AdvancesController` (audit MI-005). Centraliza linked invoices, separación
  * de signature activa vs historial, totales, diff, banking entities y surplus
  * payment para mantener la action delgada.
+ *
+ * Los datos crudos (linkedInvoices, bankingEntities, surplusPayment) los carga
+ * el controller y se inyectan vía constructor — alinea con el patrón uniforme
+ * de los otros 5 edit ViewModels: el VM solo deriva, no consulta (audit CR-102).
  */
 final readonly class AdvanceLegalizationViewModel
 {
@@ -25,11 +28,17 @@ final readonly class AdvanceLegalizationViewModel
      * @param \App\Model\Entity\Invoice $invoice Anticipo invoice.
      * @param \App\Model\Entity\AdvanceLegalization $leg Legalización en curso.
      * @param string $roleName Rol del usuario actual (para ocultar/mostrar acciones).
+     * @param iterable $linkedInvoices Facturas tipo Legalización vinculadas al anticipo.
+     * @param array<int,string> $bankingEntities Lista [id => name].
+     * @param \App\Model\Entity\InvoicePayment|null $surplusPayment Pago del sobrante (caso CASE_SOBRANTE) si existe.
      */
     public function __construct(
         public Invoice $invoice,
         public AdvanceLegalization $leg,
         public string $roleName,
+        public iterable $linkedInvoices,
+        public array $bankingEntities,
+        public ?InvoicePayment $surplusPayment,
         public int $userId = 0,
         public ?AdvanceLegalizationActionPolicy $actionPolicy = null,
         public int $roleId = 0,
@@ -43,19 +52,8 @@ final readonly class AdvanceLegalizationViewModel
      */
     public function build(): array
     {
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-
-        $linkedInvoices = $invoicesTable->find()
-            ->where([
-                'Invoices.document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
-                'Invoices.advance_id' => $this->invoice->id,
-            ])
-            ->contain(['Providers', 'Employees'])
-            ->orderBy(['Invoices.issue_date' => 'ASC'])
-            ->all();
-
         $linkedTotal = 0.0;
-        foreach ($linkedInvoices as $li) {
+        foreach ($this->linkedInvoices as $li) {
             $linkedTotal += (float)$li->amount;
         }
         $advanceTotal = (float)$this->invoice->amount;
@@ -73,19 +71,6 @@ final readonly class AdvanceLegalizationViewModel
                     $signatureHistory[] = $sig;
                 }
             }
-        }
-
-        $bankingEntities = TableRegistry::getTableLocator()->get('BankingEntities')
-            ->find('list')
-            ->all()
-            ->toArray();
-
-        $surplusPayment = null;
-        if ($this->leg->surplus_payment_id) {
-            $surplusPayment = TableRegistry::getTableLocator()->get('InvoicePayments')->get(
-                $this->leg->surplus_payment_id,
-                contain: ['BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'],
-            );
         }
 
         $canRegisterRefund = $this->actionPolicy !== null && $this->roleId > 0
@@ -116,7 +101,9 @@ final readonly class AdvanceLegalizationViewModel
             AdvancePresentation::STATUS_BADGES[$this->leg->status]     ?? 'bg-dark',
         ];
 
-        $linkedCount = $linkedInvoices->count();
+        $linkedCount = is_countable($this->linkedInvoices)
+            ? count($this->linkedInvoices)
+            : iterator_count($this->linkedInvoices);
 
         $diffBadgeClass = abs($diff) < 0.005
             ? 'bg-success'
@@ -131,14 +118,14 @@ final readonly class AdvanceLegalizationViewModel
         return [
             'invoice' => $this->invoice,
             'leg' => $this->leg,
-            'linkedInvoices' => $linkedInvoices,
+            'linkedInvoices' => $this->linkedInvoices,
             'linkedTotal' => $linkedTotal,
             'advanceTotal' => $advanceTotal,
             'diff' => $diff,
             'relationDocument' => $relationDocument,
             'signatureHistory' => $signatureHistory,
-            'bankingEntities' => $bankingEntities,
-            'surplusPayment' => $surplusPayment,
+            'bankingEntities' => $this->bankingEntities,
+            'surplusPayment' => $this->surplusPayment,
             'roleName' => $this->roleName,
             'canRegisterRefund' => $canRegisterRefund,
             'canAuthorizeRefundPayment' => $canAuthorizeRefundPayment,

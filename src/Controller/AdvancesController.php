@@ -263,10 +263,37 @@ class AdvancesController extends AppController
 
         $user = $this->_getCurrentUser();
         $roleName = $user->role->name ?? '';
+
+        // Cargar datos crudos que el VM solo deriva (audit CR-102).
+        $linkedInvoices = $invoicesTable->find()
+            ->where([
+                'Invoices.document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+                'Invoices.advance_id' => $invoice->id,
+            ])
+            ->contain(['Providers', 'Employees'])
+            ->orderBy(['Invoices.issue_date' => 'ASC'])
+            ->all();
+
+        $bankingEntities = TableRegistry::getTableLocator()->get('BankingEntities')
+            ->find('list')
+            ->all()
+            ->toArray();
+
+        $surplusPayment = null;
+        if ($leg->surplus_payment_id) {
+            $surplusPayment = TableRegistry::getTableLocator()->get('InvoicePayments')->get(
+                $leg->surplus_payment_id,
+                contain: ['BankingEntities', 'CreatedByUsers', 'AuthorizedByUsers'],
+            );
+        }
+
         $vm = new AdvanceLegalizationViewModel(
             $invoice,
             $leg,
             $roleName,
+            $linkedInvoices,
+            $bankingEntities,
+            $surplusPayment,
             (int)$user->id,
             $this->actionPolicy,
             (int)$user->role_id,
