@@ -517,4 +517,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `fa16845` | MJ-010 (split de vendor-overrides; styles.css −520 LOC) + MN-001 (box-shadow toggle) |
 | `0423353` | MN-013 (progress_stepper CSS-driven con data-state; template −37 LOC, cero inline styles) |
 | `bf4c296` | MN-008 (window.SGI_OBRA_LABOR vía scriptBlock + fix bug latente del block 'scriptBottom') |
-| _pendiente_ | MN-011 (aria-hidden="true" en avatares con iniciales; nombre adyacente ya anuncia) |
+| `e355f63` | MN-011 (aria-hidden="true" en avatares con iniciales; nombre adyacente ya anuncia) |
