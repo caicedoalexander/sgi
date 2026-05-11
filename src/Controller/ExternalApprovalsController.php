@@ -6,10 +6,7 @@ namespace App\Controller;
 use App\Constants\InvoiceConstants;
 use App\Service\ApprovalTokenService;
 use App\Service\InvoiceApprovalService;
-use App\Service\InvoicePipelineService;
 use Cake\Event\EventInterface;
-use Cake\Log\Log;
-use Cake\ORM\TableRegistry;
 
 class ExternalApprovalsController extends AppController
 {
@@ -17,15 +14,12 @@ class ExternalApprovalsController extends AppController
 
     private InvoiceApprovalService $approvalService;
 
-    private InvoicePipelineService $pipelineService;
-
     public function initialize(): void
     {
         parent::initialize();
         $container = $this->getContainer();
         $this->tokenService = $container->get(ApprovalTokenService::class);
         $this->approvalService = $container->get(InvoiceApprovalService::class);
-        $this->pipelineService = $container->get(InvoicePipelineService::class);
     }
 
     public function beforeFilter(EventInterface $event): void
@@ -152,25 +146,6 @@ class ExternalApprovalsController extends AppController
                     $observations,
                     $action,
                 );
-            }
-
-            $allApproved = (bool)($result->data['allApproved'] ?? false);
-            $invoiceId = $result->data['invoice_id'] ?? null;
-
-            if ($allApproved && $invoiceId !== null) {
-                $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-                $invoice = $invoicesTable->get($invoiceId);
-
-                if ($invoice->pipeline_status === InvoiceConstants::STATUS_APROBACION) {
-                    $identity = $this->Authentication->getIdentity();
-                    $advanceResult = $this->pipelineService->advance($invoice, 0, 'Admin', (int)$identity->getIdentifier());
-                    if (!$advanceResult->success) {
-                        Log::warning('External approval: auto-advance falló', [
-                            'invoice_id' => $invoice->id,
-                            'errors' => $advanceResult->errors,
-                        ]);
-                    }
-                }
             }
 
             $success = true;

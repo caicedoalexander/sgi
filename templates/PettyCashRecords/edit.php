@@ -50,6 +50,8 @@
  * @var array $groupFilters
  */
 
+use App\Constants\PettyCashConstants;
+
 $this->assign('title', $pageTitle);
 
 // Aliases retrocompatibles con el markup heredado.
