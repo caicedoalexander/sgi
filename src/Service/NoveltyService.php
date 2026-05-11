@@ -6,7 +6,6 @@ namespace App\Service;
 use App\Constants\Domain\Novelty\PipelineStatus as NoveltyPipelineStatus;
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
-use App\Constants\RoleConstants;
 use App\Model\Entity\EmployeeNovelty;
 use App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry;
 use Cake\ORM\TableRegistry;
@@ -14,64 +13,6 @@ use DateTime;
 
 class NoveltyService
 {
-    // Which statuses each role can see/work with in "Mis Novedades"
-    private const ROLE_VISIBLE_STATUSES = [
-        RoleConstants::AUXILIAR_PERSONAL => [
-            NoveltyConstants::STATUS_APROBACION,
-            NoveltyConstants::STATUS_RRHH,
-            NoveltyConstants::STATUS_REVISION_FIRMAS,
-            NoveltyConstants::STATUS_GDP,
-        ],
-        RoleConstants::ASISTENTE_PERSONAL => [
-            NoveltyConstants::STATUS_APROBACION,
-            NoveltyConstants::STATUS_RRHH,
-            NoveltyConstants::STATUS_REVISION_FIRMAS,
-            NoveltyConstants::STATUS_GDP,
-        ],
-        RoleConstants::CONTABILIDAD => [NoveltyConstants::STATUS_CONTABILIDAD],
-        RoleConstants::CONTADOR => [
-            NoveltyConstants::STATUS_REVISION_FIRMAS,
-            NoveltyConstants::STATUS_AUTORIZACION_PAGO,
-            NoveltyConstants::STATUS_VERIFICACION_PAGO,
-        ],
-        RoleConstants::COORDINADOR_ADMIN => [NoveltyConstants::STATUS_REVISION_FIRMAS],
-        RoleConstants::TESORERIA => [
-            NoveltyConstants::STATUS_TESORERIA,
-            NoveltyConstants::STATUS_AUTORIZACION_PAGO,
-            NoveltyConstants::STATUS_VERIFICACION_PAGO,
-        ],
-        RoleConstants::ADMIN => NoveltyConstants::PIPELINE_STATUSES,
-    ];
-
-    // Pipeline statuses applicable to liquidation documents (no 'registro', 'aprobacion', 'rrhh').
-    private const LIQUIDATION_ACTIVE_STATUSES = [
-        NoveltyConstants::STATUS_CONTABILIDAD,
-        NoveltyConstants::STATUS_REVISION_FIRMAS,
-        NoveltyConstants::STATUS_GDP,
-        NoveltyConstants::STATUS_TESORERIA,
-        NoveltyConstants::STATUS_AUTORIZACION_PAGO,
-        NoveltyConstants::STATUS_VERIFICACION_PAGO,
-    ];
-
-    // Which liquidation-doc statuses each role sees in "Mis D. de Liquidación".
-    private const LIQUIDATION_VISIBLE_STATUSES = [
-        RoleConstants::CONTABILIDAD => [NoveltyConstants::STATUS_CONTABILIDAD],
-        RoleConstants::TESORERIA => [
-            NoveltyConstants::STATUS_TESORERIA,
-            NoveltyConstants::STATUS_AUTORIZACION_PAGO,
-            NoveltyConstants::STATUS_VERIFICACION_PAGO,
-        ],
-        RoleConstants::CONTADOR => [NoveltyConstants::STATUS_AUTORIZACION_PAGO, NoveltyConstants::STATUS_VERIFICACION_PAGO],
-        RoleConstants::REGISTRO_REVISION => [
-            NoveltyConstants::STATUS_REVISION_FIRMAS,
-            NoveltyConstants::STATUS_GDP,
-        ],
-        RoleConstants::AUXILIAR_PERSONAL => self::LIQUIDATION_ACTIVE_STATUSES,
-        RoleConstants::ASISTENTE_PERSONAL => self::LIQUIDATION_ACTIVE_STATUSES,
-        RoleConstants::COORDINADOR_ADMIN => self::LIQUIDATION_ACTIVE_STATUSES,
-        RoleConstants::ADMIN => self::LIQUIDATION_ACTIVE_STATUSES,
-    ];
-
     /**
      * Campos editables por paso del pipeline (sin acoplamiento a rol).
      */
@@ -451,17 +392,25 @@ class NoveltyService
     /**
      * Get the statuses visible to a role in "Mis Novedades".
      */
-    public function getVisibleStatuses(string $roleName): array
+    public function getVisibleStatuses(int $roleId): array
     {
-        return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+        return $this->pipelineAuth->getOperableSteps(
+            $roleId,
+            '',
+            PipelineStepConstants::PIPELINE_NOVELTIES,
+        );
     }
 
     /**
      * Get the liquidation-doc statuses visible to a role in "Mis D. de Liquidación".
      */
-    public function getVisibleLiquidationStatuses(string $roleName): array
+    public function getVisibleLiquidationStatuses(int $roleId): array
     {
-        return self::LIQUIDATION_VISIBLE_STATUSES[$roleName] ?? [];
+        return $this->pipelineAuth->getOperableSteps(
+            $roleId,
+            '',
+            PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS,
+        );
     }
 
     /**
