@@ -216,8 +216,7 @@ class AppController extends Controller
 
     protected function _setSidebarCounters(object $user): void
     {
-        $roleName = $this->_getUserRoleName($user);
-        $counters = $this->counterService->getCounters($roleName);
+        $counters = $this->counterService->getCounters((int)$user->role_id);
 
         foreach ($counters as $key => $value) {
             $this->set($key, $value);

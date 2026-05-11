@@ -34,20 +34,19 @@ class SidebarCounterService
     /**
      * Get all sidebar counters for a given role.
      *
-     * @param string $roleName Current user's role name.
+     * @param int $roleId Current user's role id.
      * @return array<string, mixed> All counter values keyed by name.
      */
-    public function getCounters(string $roleName): array
+    public function getCounters(int $roleId): array
     {
         return Cache::remember(
-            "sidebar_counters_{$roleName}",
-            function () use ($roleName) {
+            "sidebar_counters_{$roleId}",
+            function () use ($roleId) {
                 try {
-                    return $this->_buildCounters($roleName);
+                    return $this->_buildCounters($roleId);
                 } catch (DatabaseException $e) {
-                    // UI degradable: si una query falla, el sidebar muestra ceros en lugar de romper la página.
                     $this->logger->error('sidebar_counters_failed', [
-                        'role' => $roleName,
+                        'role_id' => $roleId,
                         'exception' => $e->getMessage(),
                     ]);
 
@@ -58,10 +57,10 @@ class SidebarCounterService
         );
     }
 
-    private function _buildCounters(string $roleName): array
+    private function _buildCounters(int $roleId): array
     {
         return [
-            'sidebarCounters' => $this->getInvoiceStatusCounters($roleName),
+            'sidebarCounters' => $this->getInvoiceStatusCounters($roleId),
             'totalInvoicesCount' => $this->getCount(
                 'Invoices',
                 ['document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO],
@@ -78,20 +77,20 @@ class SidebarCounterService
                 'PettyCashRecords',
                 ['status !=' => PettyCashConstants::STATUS_PAGADA],
             ),
-            'pettyCashMineCount' => $this->getPettyCashMineCount($roleName),
+            'pettyCashMineCount' => $this->getPettyCashMineCount($roleId),
             'refundsCount' => $this->getCount(
                 'Refunds',
                 ['status !=' => RefundConstants::STATUS_PAGADA],
             ),
-            'refundsMineCount' => $this->getRefundsMineCount($roleName),
-            'advancesMineCount' => $this->getAdvancesMineCount($roleName),
-            'noveltiesCount' => $this->getNoveltiesCount($roleName),
+            'refundsMineCount' => $this->getRefundsMineCount($roleId),
+            'advancesMineCount' => $this->getAdvancesMineCount($roleId),
+            'noveltiesCount' => $this->getNoveltiesCount($roleId),
             'rejectedNoveltiesCount' => $this->getCount(
                 'EmployeeNovelties',
                 ['pipeline_status' => NoveltyConstants::STATUS_RECHAZADA],
             ),
             'activeNoveltiesCount' => $this->getActiveNoveltiesCount(),
-            'liquidationMineCount' => $this->getLiquidationMineCount($roleName),
+            'liquidationMineCount' => $this->getLiquidationMineCount($roleId),
             'liquidationRejectedCount' => $this->getCount(
                 'NoveltyLiquidationDocs',
                 ['pipeline_status' => NoveltyConstants::STATUS_RECHAZADA],
@@ -124,15 +123,13 @@ class SidebarCounterService
         ];
     }
 
-    private function getInvoiceStatusCounters(string $roleName): array
+    private function getInvoiceStatusCounters(int $roleId): array
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $visibleStatuses = $this->invoicePipeline->getVisibleStatuses($roleName);
+        $visibleStatuses = $this->invoicePipeline->getVisibleStatuses($roleId);
 
         $counters = [];
         foreach ($visibleStatuses as $status) {
-            // `legalizada` no es un estado del pipeline normal — se reporta vía
-            // advancesPendingLegalizationCount, no como contador de pendientes.
             if ($status === InvoiceConstants::STATUS_LEGALIZADA) {
                 continue;
             }
@@ -161,9 +158,9 @@ class SidebarCounterService
             ->count();
     }
 
-    private function getNoveltiesCount(string $roleName): int
+    private function getNoveltiesCount(int $roleId): int
     {
-        $noveltyVisibleStatuses = $this->noveltyPipeline->getVisibleStatuses($roleName);
+        $noveltyVisibleStatuses = $this->noveltyPipeline->getVisibleStatuses($roleId);
         if (empty($noveltyVisibleStatuses)) {
             return 0;
         }
@@ -209,9 +206,9 @@ class SidebarCounterService
     /**
      * Count advances visible to the current role.
      */
-    private function getAdvancesMineCount(string $roleName): int
+    private function getAdvancesMineCount(int $roleId): int
     {
-        $visibleStatuses = $this->invoicePipeline->getVisibleAdvanceStatuses($roleName);
+        $visibleStatuses = $this->invoicePipeline->getVisibleStatuses($roleId);
         if (empty($visibleStatuses)) {
             return 0;
         }
@@ -227,9 +224,9 @@ class SidebarCounterService
     /**
      * Count petty cash records visible to the current role.
      */
-    private function getPettyCashMineCount(string $roleName): int
+    private function getPettyCashMineCount(int $roleId): int
     {
-        $visibleStatuses = $this->pettyCashService->getVisibleStatuses($roleName);
+        $visibleStatuses = $this->pettyCashService->getVisibleStatuses($roleId);
         if (empty($visibleStatuses)) {
             return 0;
         }
@@ -242,9 +239,9 @@ class SidebarCounterService
     /**
      * Count refund records visible to the current role.
      */
-    private function getRefundsMineCount(string $roleName): int
+    private function getRefundsMineCount(int $roleId): int
     {
-        $visibleStatuses = $this->refundService->getVisibleStatuses($roleName);
+        $visibleStatuses = $this->refundService->getVisibleStatuses($roleId);
         if (empty($visibleStatuses)) {
             return 0;
         }
@@ -254,9 +251,9 @@ class SidebarCounterService
             ->count();
     }
 
-    private function getLiquidationMineCount(string $roleName): int
+    private function getLiquidationMineCount(int $roleId): int
     {
-        $visibleStatuses = $this->noveltyPipeline->getVisibleLiquidationStatuses($roleName);
+        $visibleStatuses = $this->noveltyPipeline->getVisibleLiquidationStatuses($roleId);
         if (empty($visibleStatuses)) {
             return 0;
         }
