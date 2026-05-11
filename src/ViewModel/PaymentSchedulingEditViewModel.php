@@ -11,7 +11,7 @@ use App\View\Presentation\PaymentSchedulingPresentation;
  * Datos inmutables de vista para PaymentSchedulingsController::edit().
  * El controller construye este objeto; la vista accede via get_object_vars().
  */
-final class PaymentSchedulingEditViewModel
+final class PaymentSchedulingEditViewModel implements EditViewModelInterface
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
     public readonly string $pageTitle;

@@ -13,7 +13,7 @@ use App\View\Presentation\NoveltyPresentation;
  * Datos inmutables de vista para NoveltyLiquidationDocsController::edit().
  * El controller construye este objeto; la vista accede via get_object_vars().
  */
-final class NoveltyLiquidationDocEditViewModel
+final class NoveltyLiquidationDocEditViewModel implements EditViewModelInterface
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
     public readonly string $pageTitle;

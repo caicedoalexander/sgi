@@ -16,7 +16,7 @@ use App\ViewModel\Support\SubmitButton;
  * Datos inmutables de vista para InvoicesController::edit().
  * El controller construye este objeto; la vista accede via get_object_vars().
  */
-final class InvoiceEditViewModel
+final class InvoiceEditViewModel implements EditViewModelInterface
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
     /** @var array<string,string> */

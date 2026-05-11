@@ -14,7 +14,7 @@ use App\ViewModel\Support\SubmitButton;
  * Datos inmutables de vista para PettyCashRecordsController::edit().
  * El controller construye este objeto; la vista accede via get_object_vars().
  */
-final class PettyCashEditViewModel
+final class PettyCashEditViewModel implements EditViewModelInterface
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
     public readonly string $pageTitle;
