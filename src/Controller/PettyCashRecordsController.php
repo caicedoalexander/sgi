@@ -76,16 +76,14 @@ class PettyCashRecordsController extends AppController
      */
     public function index(): void
     {
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        $visibleStatuses = $this->pettyCashService->getVisibleStatuses($roleName);
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        $visibleStatuses = $this->pettyCashService->getVisibleStatuses($roleId);
 
         $query = $this->PettyCashRecords->find()
             ->contain(['CreatedByUsers', 'Invoices'])
             ->orderBy(['PettyCashRecords.created' => 'DESC']);
 
-        if (!empty($visibleStatuses)) {
-            $query->where(['PettyCashRecords.status IN' => $visibleStatuses]);
-        }
+        $query->where($this->_visibleStatusConditions('PettyCashRecords.status', $visibleStatuses));
 
         $this->_applyListFilters($query);
 
