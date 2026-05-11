@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **8 Minores** (MN-001, MN-006, MN-007, MN-008, MN-009, MN-011, MN-012, MN-013) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **9 Minores** (MN-001, MN-006, MN-007, MN-008, MN-009, MN-011, MN-012, MN-013, MN-015) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -95,7 +95,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (8)
+## 🟡 Minores (7)
 
 ### ~~MN-001~~ ✅ — `box-shadow` en checkbox toggle  (RESUELTO en `fa16845`, junto a MJ-010)
 
@@ -279,21 +279,20 @@ El helper `$navLink` cierre actual está OK, solo el markup repetitivo se benefi
 
 ---
 
-### MN-015 — `ucfirst()` antes de `h()` en EmployeeNovelties
+### ~~MN-015~~ ✅ — `ucfirst()` antes de `h()` (4 templates)  (RESUELTO)
 
-**Ubicación:** `templates/EmployeeNovelties/index.php:124`
+**Aplicado:** la convención "`h()` siempre al final" ahora se cumple en los 4 lugares donde se invertía:
 
-**Código actual:**
-```php
-ucfirst($statusLabels[$novelty->pipeline_status] ?? ucfirst(h($novelty->pipeline_status)))
-```
+| Archivo | Patrón anterior | Patrón nuevo |
+|---|---|---|
+| `EmployeeNovelties/index.php:125` | `$labels[X] ?? ucfirst(h(X))` | `h($labels[X] ?? ucfirst(X))` |
+| `NoveltyLiquidationDocs/index.php:80` | `$labels[X] ?? ucfirst(h(X))` | `h($labels[X] ?? ucfirst(X))` |
+| `DianCrosschecks/index.php:71` | `ucfirst(h(X))` | `h(ucfirst(X))` |
+| `Employees/view.php:316` | `ucfirst(h(X))` | `h(ucfirst(X))` |
 
-**Problema:** `ucfirst(h($x))` aplica `ucfirst` después de escapar — el orden invertido es harmless aquí (entidades HTML no afectan), pero rompe la convención "siempre `h()` al final".
+**Mejora defensiva incluida:** las 2 variantes con `??` (EmployeeNovelties, NoveltyLiquidationDocs) antes NO escapaban el valor de `$statusLabels[X]` (asumía safe). Ahora SÍ lo escapan al envolver toda la expresión con `h()`. Para las otras 2 el cambio es semánticamente equivalente (`ucfirst` no toca entidades HTML), pero alinea con la convención del proyecto.
 
-**Resolver:**
-```php
-h(ucfirst($statusLabels[$novelty->pipeline_status] ?? $novelty->pipeline_status))
-```
+**Nota:** el backlog original solo mencionaba `EmployeeNovelties/index.php`. Al revisar el patrón aparecieron 3 instancias adicionales con el mismo problema — se incluyeron todas en el fix para cerrar la convención completa.
 
 ---
 
@@ -486,15 +485,15 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟡 MN-002 a MN-005, MN-010, MN-014 a MN-016 | Design system polish + code smells + a11y | 1 día |
+| 🟡 MN-002 a MN-005, MN-010, MN-014, MN-016 | Design system polish + code smells + a11y | 1 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
 **Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
 
 **Próximo paso recomendado:**
-1. **MN-015** (10 min) — invertir orden `h(ucfirst(...))` en `EmployeeNovelties/index.php:124`.
-2. **MN-016** (15 min) — verificar y eliminar el inline `<script>` duplicado para `--sidebar-width` en `default.php`.
-3. **MN-014** (15 min) — comentar/exponer `SGI_MAX_UPLOAD_BYTES` y documentar el guard global.
+1. **MN-016** (15 min) — verificar y eliminar el inline `<script>` duplicado para `--sidebar-width` en `default.php`.
+2. **MN-014** (15 min) — comentar/exponer `SGI_MAX_UPLOAD_BYTES` y documentar el guard global.
+3. **MN-002/003/004** (30 min) — documentar excepciones de `border-radius:10px` en `.claude/rules/design.md` o reducirlas.
 
 ## Historial de aplicación
 
@@ -518,3 +517,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `0423353` | MN-013 (progress_stepper CSS-driven con data-state; template −37 LOC, cero inline styles) |
 | `bf4c296` | MN-008 (window.SGI_OBRA_LABOR vía scriptBlock + fix bug latente del block 'scriptBottom') |
 | `e355f63` | MN-011 (aria-hidden="true" en avatares con iniciales; nombre adyacente ya anuncia) |
+| _pendiente_ | MN-015 (h() al final en 4 templates; +escape defensivo de $statusLabels) |

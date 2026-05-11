@@ -313,7 +313,7 @@ $novedades = $employee->employee_novelties ?? [];
                             <span class="badge bg-secondary">No</span>
                         <?php endif; ?>
                     </td>
-                    <td><span class="badge <?= $statusBadges[$nov->status] ?? 'bg-secondary' ?>"><?= ucfirst(h($nov->status)) ?></span></td>
+                    <td><span class="badge <?= $statusBadges[$nov->status] ?? 'bg-secondary' ?>"><?= h(ucfirst($nov->status)) ?></span></td>
                     <td style="font-size:.8rem"><?= h($nov->registered_by_user->full_name ?? '—') ?></td>
                 </tr>
                 <?php endforeach; ?>

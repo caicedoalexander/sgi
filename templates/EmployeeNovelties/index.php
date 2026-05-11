@@ -122,7 +122,7 @@ $calendarColorCount = count($calendarColors);
                                 <span class="badge bg-secondary">No</span>
                             <?php endif; ?>
                         </td>
-                        <td><span class="badge <?= NoveltyPresentation::STATUS_BADGES[$novelty->pipeline_status] ?? 'bg-secondary' ?>"><?= $statusLabels[$novelty->pipeline_status] ?? ucfirst(h($novelty->pipeline_status)) ?></span></td>
+                        <td><span class="badge <?= NoveltyPresentation::STATUS_BADGES[$novelty->pipeline_status] ?? 'bg-secondary' ?>"><?= h($statusLabels[$novelty->pipeline_status] ?? ucfirst($novelty->pipeline_status)) ?></span></td>
                         <td style="font-size:.8125rem;color:#888"><?= h($novelty->registered_by_user->full_name ?? '—') ?></td>
                     </tr>
                     <?php endforeach; ?>

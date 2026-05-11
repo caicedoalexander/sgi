@@ -68,7 +68,7 @@ $statusBadges = [
                     <td><?= h($crosscheck->uploaded_by_user->full_name ?? '—') ?></td>
                     <td>
                         <span class="badge <?= $statusBadges[$crosscheck->status] ?? 'bg-secondary' ?>">
-                            <?= ucfirst(h($crosscheck->status)) ?>
+                            <?= h(ucfirst($crosscheck->status)) ?>
                         </span>
                     </td>
                     <td><?= $crosscheck->created?->format('d/m/Y H:i') ?: '—' ?></td>
