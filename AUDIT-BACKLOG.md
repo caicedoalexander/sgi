@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-Los **3 Críticos** y **9 de los 12 Mayores** ya fueron resueltos (ver commits `6b12baa` → `49f7d88`). Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
+Los **3 Críticos**, **9 de los 12 Mayores**, **1 Mayor parcial** (MJ-005 pasos 1-2 aplicados, 3-4 pendientes) y **1 Minor** (MN-012) ya fueron resueltos. Ver commits `6b12baa` → `e204fa6`. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -12,44 +12,36 @@ Los **3 Críticos** y **9 de los 12 Mayores** ya fueron resueltos (ver commits `
 
 ---
 
-## 🟠 Mayores pendientes (3)
+## 🟠 Mayores pendientes (2)
 
-### MJ-005 — Performance frontend de CDNs
+### MJ-005 — Performance frontend de CDNs (parcial — pasos 3 y 4 pendientes)
 
-**Ubicación:** `templates/layout/default.php:30-33,634-641`
+**Ubicación:** `templates/layout/default.php:30-33,636-643`
 
-**Estado actual:** las 16 referencias CDN ya tienen `integrity` + `crossorigin` (commit `6b12baa`). Falta optimizar la carga.
+**Estado actual:** las 16 referencias CDN tienen `integrity` + `crossorigin` (commit `6b12baa`). **Pasos 1 y 2 aplicados** en commit `e204fa6`: agregado `preconnect`/`dns-prefetch` y `defer` a los 8 scripts CDN del footer. `dashboard-charts.js` envuelto en guard `DOMContentLoaded` para soportar `defer` en ApexCharts.
 
-**Problema:**
-- 9 round-trips serializados a `cdn.jsdelivr.net` antes del primer render autenticado.
-- Ningún `<script>` usa `defer`/`async` → bloquean parsing.
+**Problema restante:**
 - Bootstrap, jQuery, AutoNumeric, Select2, ApexCharts se cargan en **todas** las vistas (no solo donde se usan).
+- Dependencia de CDN externo en runtime (problema para staging/dev sin red, CSP estricto).
 
 **Cómo resolver:**
 
-1. **Quick win** (10 min): agregar `defer` a los `<script>` en `default.php:634-641`. `jquery` debe quedar sin `defer` (Select2 lo necesita sincrono) o reordenar con jQuery/Select2 como bloque defer único.
-   ```html
-   <script src="..." defer integrity="..." crossorigin="..."></script>
-   ```
+1. ~~**Quick win** (10 min): agregar `defer` a los `<script>` en `default.php`.~~ ✅ **Aplicado** en `e204fa6`.
 
-2. **Preconnect** (5 min): en `<head>` de `default.php`:
-   ```html
-   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-   ```
+2. ~~**Preconnect** (5 min): en `<head>` de `default.php`.~~ ✅ **Aplicado** en `e204fa6`.
 
-3. **Cargar bajo demanda** (1-2 horas):
-   - **ApexCharts**: solo se usa en `Dashboard/index.php` y vistas con charts. Mover a esos templates con `$this->Html->script('https://.../apexcharts.min.js', ['block' => true, 'integrity' => '...', 'crossorigin' => 'anonymous'])`.
+3. **Cargar bajo demanda** (1-2 horas) — **PENDIENTE**:
+   - **ApexCharts**: solo se usa en `Dashboard/index.php` y vistas con charts. Mover a esos templates con `$this->Html->script('https://.../apexcharts.min.js', ['block' => true, 'defer' => true, 'integrity' => '...', 'crossorigin' => 'anonymous'])`.
    - **AutoNumeric**: solo donde hay `.currency-input`. Detectar en JS y cargar dinámicamente si hace falta, o mover a templates con monto.
    - **Select2**: ídem, donde hay `.select2`.
 
-4. **Self-host** (1 día, depende del entorno):
+4. **Self-host** (1 día, depende del entorno) — **PENDIENTE**:
    - Descargar a `webroot/vendor/{bootstrap,bootstrap-icons,flatpickr,select2,jquery,autonumeric,apexcharts,fullcalendar,sortablejs}/<version>/`.
    - Reemplazar URLs en los 4 layouts + 3 templates puntuales (`EmployeeNovelties/index`, `EmployeeNovelties/active`, `Employees/index`).
-   - Removed los hashes SRI (no aplican a same-origin) o mantener para detectar corrupción local.
+   - Remover los hashes SRI (no aplican a same-origin) o mantener para detectar corrupción local.
    - Beneficio: elimina dependencia de internet, mejor para staging/dev sin red, CSP estricto.
 
-**Validación manual:** abrir DevTools → Network, contar requests y medir TTFB en `/dashboard`. Confirmar charts renderizan.
+**Validación manual del progreso actual:** abrir DevTools → Network en `/dashboard`. Los 8 CDN scripts ahora muestran `Initiator: Parser (defer)` y se descargan en paralelo sin bloquear el parsing. Charts y formularios siguen funcionando.
 
 ---
 
@@ -150,7 +142,7 @@ Es lógica de presentación que debería vivir en el ViewModel.
 
 ---
 
-## 🟡 Minores (16)
+## 🟡 Minores (15)
 
 ### MN-001 — `box-shadow` en checkbox toggle
 
@@ -315,21 +307,11 @@ El helper `$navLink` cierre actual está OK, solo el markup repetitivo se benefi
 
 ---
 
-### MN-012 — Iconos decorativos sin `aria-hidden`
+### ~~MN-012~~ ✅ — Iconos decorativos sin `aria-hidden`  (RESUELTO en `e204fa6`)
 
-**Ubicación:** `templates/Dashboard/index.php:262` y muchas otras.
+**Aplicado:** 688 íconos `<i class="bi bi-...">` ahora tienen `aria-hidden="true"`. 121 templates modificados con `perl -i -pe` + negative lookahead. Verificado que no quedan ocurrencias sin marcar (incluyendo opening tags multilínea).
 
-**Problema:** todos los `<i class="bi bi-...">` decorativos los anuncia el screen reader.
-
-**Resolver:** patrón:
-- Ícono decorativo (acompañante de texto): `<i class="bi bi-..." aria-hidden="true"></i>`
-- Ícono interactivo solo (sin texto adyacente): `<button aria-label="Eliminar"><i class="bi bi-trash" aria-hidden="true"></i></button>`
-
-**Búsqueda masiva:**
-```bash
-grep -rn '<i class="bi ' templates/ | wc -l   # estimar trabajo
-```
-Aplicar primero en `Dashboard/index.php`, `layout/default.php` (sidebar), y luego en index/view de cada módulo.
+**Pendiente de seguimiento (no bloqueante):** los botones ícono-only sin texto adyacente (ej. acciones de fila con `<button title="Eliminar"><i class="bi bi-trash" aria-hidden="true"></i></button>`) siguen dependiendo del atributo `title=` que es semi-accesible pero no ideal. Migrar `title=` a `aria-label=` en esos botones cuando se aborde un sprint de accesibilidad.
 
 ---
 
@@ -587,13 +569,28 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟠 MJ-005 | Performance frontend | 1 día (incluye self-host) |
+| 🟠 MJ-005 (pasos 3-4) | Carga bajo demanda + self-host | 1 día |
 | 🟠 MJ-010 | CSS limpieza + split | 1-2 días |
 | 🟠 MJ-012 | Invoices/edit pre-render | 1 día |
 | 🟡 MN-001 a MN-007 | Design system polish | 4-6 horas total |
-| 🟡 MN-008 a MN-016 | Code smells + a11y | 1 día |
+| 🟡 MN-008 a MN-011, MN-013 a MN-016 | Code smells + a11y | 1 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
-**Total estimado:** ~5-7 días de trabajo para dejar todo cerrado, repartibles entre sprints.
+**Total estimado:** ~4-6 días de trabajo para dejar todo cerrado, repartibles entre sprints.
 
-**Próximo paso recomendado:** atacar **MJ-005 (defer + preconnect)** primero — son 15 minutos y mejoran inmediatamente el TTI. Después **MN-012 (aria-hidden)** que es bulk-grep-replace y mejora accesibilidad.
+**Próximo paso recomendado** (tras los quick wins ya aplicados):
+1. **MJ-012** (1 día) — mover el bloque pre-render de `Invoices/edit.php` al ViewModel. Es el refactor de mayor ROI en términos de testability.
+2. **MN-007** (30 min) — reemplazar las ~30 ocurrencias del bloque `style="font-size:.63rem;..."` por `class="sgi-micro-caps"` en `Dashboard/index.php`. Trivial pero mejora consistencia visual del design system.
+3. **MJ-005 paso 3** (1-2 horas) — cargar ApexCharts solo en templates que renderizan charts (no en todas las vistas).
+
+## Historial de aplicación
+
+| Commit | Hallazgos cerrados |
+|--------|---------------------|
+| `6b12baa` | CR-001 (SRI CDNs), CR-002 (XSS leave-template-editor), CR-003 (Dashboard JSON) |
+| `b21d22f` | MJ-001 (XSS excel-mapper), MJ-004 (mapping MIME→icono) |
+| `0e63f06` | MJ-006 (progress_stepper), MJ-007 (regress_status_modal) |
+| `523b339` | MJ-008 (employee_documents_table), MJ-009 (SgiDialogs) |
+| `38a0d96` | MJ-002 (ResultSet count), MJ-011 (label for=) |
+| `49f7d88` | MJ-003 (InvoicePresentation::forRow + InvoiceRowView) |
+| `e204fa6` | MJ-005 pasos 1-2 (defer + preconnect), MN-012 (aria-hidden bulk) |
