@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **6 Minores** (MN-001, MN-006, MN-007, MN-009, MN-012, MN-013) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **7 Minores** (MN-001, MN-006, MN-007, MN-008, MN-009, MN-012, MN-013) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -95,7 +95,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (10)
+## 🟡 Minores (9)
 
 ### ~~MN-001~~ ✅ — `box-shadow` en checkbox toggle  (RESUELTO en `fa16845`, junto a MJ-010)
 
@@ -177,23 +177,11 @@ Reemplazadas 40 de 41 ocurrencias inline en `Dashboard/index.php`. La restante (
 
 ---
 
-### MN-008 — Constante `'OBRA O LABOR DETERMINADA'` hardcoded en JS
+### ~~MN-008~~ ✅ — Constante `'OBRA O LABOR DETERMINADA'` hardcoded en JS  (RESUELTO)
 
-**Ubicación:** `webroot/js/employees-form.js:8`
+**Aplicado:** la string ahora se inyecta desde PHP vía `scriptBlock` que escribe `window.SGI_OBRA_LABOR` al block `'script'`. El JS lee `window.SGI_OBRA_LABOR || 'OBRA O LABOR DETERMINADA'` (fallback defensivo). Fuente única de verdad: `ContractTypeConstants::OBRA_LABOR`.
 
-**Problema:** la string vive duplicada entre JS y `App\Constants\ContractTypeConstants::OBRA_LABOR`.
-
-**Resolver:** inyectar desde el server al template que carga el JS (probablemente `Employees/add.php` y `edit.php`):
-```php
-<script>
-window.SGI_OBRA_LABOR = <?= json_encode(\App\Constants\ContractTypeConstants::OBRA_LABOR) ?>;
-</script>
-<?= $this->Html->script('employees-form', ['block' => true]) ?>
-```
-Y en `employees-form.js:8`:
-```js
-const OBRA_LABOR = window.SGI_OBRA_LABOR || 'OBRA O LABOR DETERMINADA';
-```
+**Bug latente arreglado en el mismo cambio:** `templates/element/Employees/form.php:156` cargaba el JS con `'block' => 'scriptBottom'`, pero el layout solo hace `fetch('script')` (no existe `fetch('scriptBottom')` en ningún template). Resultado: `employees-form.js` **nunca se cargaba en runtime** — el toggle dinámico de "Organización Temporal" al cambiar el tipo de contrato estaba muerto (solo funcionaba el `display:none` inicial calculado en PHP via `$employee->requiresTemporaryOrg()`). Cambiado a `'block' => 'script'` y ahora el JS sí ejecuta.
 
 ---
 
@@ -506,15 +494,15 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟡 MN-002 a MN-005, MN-008, MN-010, MN-011, MN-014 a MN-016 | Design system polish + code smells + a11y | 1 día |
+| 🟡 MN-002 a MN-005, MN-010, MN-011, MN-014 a MN-016 | Design system polish + code smells + a11y | 1 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
 **Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
 
 **Próximo paso recomendado:**
-1. **MN-008** (15 min) — extraer constante `'OBRA O LABOR DETERMINADA'` de `employees-form.js` a una `<meta>`/`window.SGI_OBRA_LABOR` definida desde PHP.
-2. **MN-011** (30 min) — `aria-label` en avatares con iniciales sin texto accesible.
-3. **MN-015** (10 min) — invertir orden `h(ucfirst(...))` en `EmployeeNovelties/index.php:124`.
+1. **MN-011** (30 min) — `aria-label` en avatares con iniciales sin texto accesible.
+2. **MN-015** (10 min) — invertir orden `h(ucfirst(...))` en `EmployeeNovelties/index.php:124`.
+3. **MN-016** (15 min) — verificar y eliminar el inline `<script>` duplicado para `--sidebar-width` en `default.php`.
 
 ## Historial de aplicación
 
@@ -535,4 +523,5 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `be8dc72` | MN-006 (6 variables CSS semánticas + 142 reemplazos de hex en css/templates) |
 | `300af41` | MJ-005 paso 4 (self-host de todos los vendors a webroot/vendor/) |
 | `fa16845` | MJ-010 (split de vendor-overrides; styles.css −520 LOC) + MN-001 (box-shadow toggle) |
-| _pendiente_ | MN-013 (progress_stepper CSS-driven con data-state; template −37 LOC, cero inline styles) |
+| `0423353` | MN-013 (progress_stepper CSS-driven con data-state; template −37 LOC, cero inline styles) |
+| _pendiente_ | MN-008 (window.SGI_OBRA_LABOR vía scriptBlock + fix bug latente del block 'scriptBottom') |

@@ -4,8 +4,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!contractType || !orgWrapper) {
         return;
     }
+    var OBRA_LABOR = window.SGI_OBRA_LABOR || 'OBRA O LABOR DETERMINADA';
     function toggleOrg() {
-        orgWrapper.style.display = contractType.value === 'OBRA O LABOR DETERMINADA' ? '' : 'none';
+        orgWrapper.style.display = contractType.value === OBRA_LABOR ? '' : 'none';
     }
     contractType.addEventListener('change', toggleOrg);
     toggleOrg();

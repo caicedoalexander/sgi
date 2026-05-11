@@ -153,4 +153,8 @@ $genderOptions = ['' => '-- Seleccione --'] + GenderConstants::LABELS;
         </div>
     </div>
 </div>
-<?= $this->Html->script('employees-form', ['block' => 'scriptBottom']) ?>
+<?php $this->Html->scriptBlock(
+    'window.SGI_OBRA_LABOR = ' . json_encode(ContractTypeConstants::OBRA_LABOR) . ';',
+    ['block' => 'script'],
+); ?>
+<?= $this->Html->script('employees-form', ['block' => 'script']) ?>
