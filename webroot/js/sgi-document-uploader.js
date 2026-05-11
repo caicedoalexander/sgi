@@ -31,24 +31,42 @@
 (function (global) {
     'use strict';
 
-    // Espejo cliente de src/View/Helper/DocumentIconHelper. Mantener sincronizado.
-    function docIconClass(mime) {
+    // Reglas MIME → ícono/color cargadas desde PHP (audit CR-202).
+    // Fuente única: src/View/Helper/DocumentIconHelper::MIME_RULES, inyectado
+    // por templates/layout/default.php como JSON inline. Fallback defensivo
+    // por si el script no existe (layouts ajax/external que no extienden default).
+    var DOC_ICON_RULES = (function () {
+        var defaultRules = [
+            { matches: ['pdf'],                            icon: 'bi-file-earmark-pdf',   color: '#dc3545' },
+            { matches: ['image'],                          icon: 'bi-file-earmark-image', color: '#0dcaf0' },
+            { matches: ['wordprocessingml', 'msword'],     icon: 'bi-file-earmark-word',  color: '#0d6efd' },
+            { matches: ['spreadsheet', 'excel'],           icon: 'bi-file-earmark-excel', color: 'var(--primary-color)' },
+            { matches: [],                                 icon: 'bi-file-earmark',       color: '#aaa' }
+        ];
+        try {
+            var el = document.getElementById('sgi-doc-icon-rules');
+            if (el) {
+                var parsed = JSON.parse(el.textContent || '');
+                if (parsed && Array.isArray(parsed.mime)) return parsed.mime;
+            }
+        } catch (e) { /* fall through to defaults */ }
+        return defaultRules;
+    })();
+
+    function resolveByMime(mime) {
         mime = mime || '';
-        if (mime.indexOf('pdf') !== -1) return 'bi-file-earmark-pdf';
-        if (mime.indexOf('image') !== -1) return 'bi-file-earmark-image';
-        if (mime.indexOf('wordprocessingml') !== -1 || mime.indexOf('msword') !== -1) return 'bi-file-earmark-word';
-        if (mime.indexOf('spreadsheet') !== -1 || mime.indexOf('excel') !== -1) return 'bi-file-earmark-excel';
-        return 'bi-file-earmark';
+        for (var i = 0; i < DOC_ICON_RULES.length; i++) {
+            var rule = DOC_ICON_RULES[i];
+            if (!rule.matches || rule.matches.length === 0) return rule;
+            for (var j = 0; j < rule.matches.length; j++) {
+                if (mime.indexOf(rule.matches[j]) !== -1) return rule;
+            }
+        }
+        return DOC_ICON_RULES[DOC_ICON_RULES.length - 1];
     }
 
-    function docIconColor(mime) {
-        mime = mime || '';
-        if (mime.indexOf('pdf') !== -1) return '#dc3545';
-        if (mime.indexOf('image') !== -1) return '#0dcaf0';
-        if (mime.indexOf('wordprocessingml') !== -1 || mime.indexOf('msword') !== -1) return '#0d6efd';
-        if (mime.indexOf('spreadsheet') !== -1 || mime.indexOf('excel') !== -1) return 'var(--primary-color)';
-        return '#aaa';
-    }
+    function docIconClass(mime) { return resolveByMime(mime).icon; }
+    function docIconColor(mime) { return resolveByMime(mime).color; }
 
     function formatFileSize(bytes) {
         if (!bytes) return '';

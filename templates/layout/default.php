@@ -52,6 +52,13 @@ $advancesMineCount = $advancesMineCount ?? 0;
     */ ?>
     <meta name="sgi-max-upload-bytes" content="<?= UploadConstants::MAX_BYTES ?>">
     <meta name="sgi-max-upload-label" content="<?= h(UploadConstants::MAX_BYTES_LABEL) ?>">
+    <?php /*
+        Reglas MIME → ícono/color para sgi-document-uploader.js (audit CR-202).
+        Fuente única en App\View\Helper\DocumentIconHelper::MIME_RULES; el JS lee
+        este JSON para evitar duplicar el match expression en cliente. El JSON está
+        escapado con JSON_HEX_TAG/AMP/APOS/QUOT — seguro insertar inline.
+    */ ?>
+    <script type="application/json" id="sgi-doc-icon-rules"><?= $this->DocumentIcon->rulesJson() ?></script>
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
     <style>

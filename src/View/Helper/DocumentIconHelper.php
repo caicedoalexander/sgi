@@ -8,65 +8,73 @@ use Cake\View\Helper;
 class DocumentIconHelper extends Helper
 {
     /**
-     * @param string|null $mime
-     * @return string
+     * Reglas MIME → ícono/color. Fuente única para PHP y para el cliente JS
+     * (vía `rulesJson()` que se inyecta como `<script type="application/json"
+     * id="sgi-doc-icon-rules">` en el layout — ver audit CR-202).
+     *
+     * Se evalúan en orden; el primer match gana. La última entrada (`matches: []`)
+     * es el default y debe quedar al final.
+     *
+     * Cada entrada:
+     *  - matches: substrings que se buscan con str_contains en el MIME
+     *  - icon: clase Bootstrap Icons
+     *  - color: hex o var() CSS
+     *  - label: badge label para typeLabel()
      */
+    private const MIME_RULES = [
+        ['matches' => ['pdf'],                            'icon' => 'bi-file-earmark-pdf',   'color' => '#dc3545',              'label' => 'PDF'],
+        ['matches' => ['image/jpeg', 'image/jpg'],        'icon' => 'bi-file-earmark-image', 'color' => '#0dcaf0',              'label' => 'JPG'],
+        ['matches' => ['image/png'],                      'icon' => 'bi-file-earmark-image', 'color' => '#0dcaf0',              'label' => 'PNG'],
+        ['matches' => ['image'],                          'icon' => 'bi-file-earmark-image', 'color' => '#0dcaf0',              'label' => 'IMG'],
+        ['matches' => ['wordprocessingml', 'msword'],     'icon' => 'bi-file-earmark-word',  'color' => '#0d6efd',              'label' => 'WORD'],
+        ['matches' => ['spreadsheet', 'excel'],           'icon' => 'bi-file-earmark-excel', 'color' => 'var(--primary-color)', 'label' => 'EXCEL'],
+        ['matches' => ['text/plain'],                     'icon' => 'bi-file-earmark-text',  'color' => '#aaa',                 'label' => 'TXT'],
+        ['matches' => [],                                 'icon' => 'bi-file-earmark',       'color' => '#aaa',                 'label' => 'ARCH.'],
+    ];
+
+    /**
+     * Match exacto por extensión final del archivo (cuando no hay MIME).
+     */
+    private const EXT_RULES = [
+        ['exts' => ['pdf'],                       'icon' => 'bi-file-earmark-pdf',   'color' => '#dc3545'],
+        ['exts' => ['jpg', 'jpeg', 'png', 'gif', 'webp'], 'icon' => 'bi-file-earmark-image', 'color' => '#0dcaf0'],
+        ['exts' => ['doc', 'docx'],               'icon' => 'bi-file-earmark-word',  'color' => '#0d6efd'],
+        ['exts' => ['xls', 'xlsx', 'csv'],        'icon' => 'bi-file-earmark-excel', 'color' => 'var(--primary-color)'],
+        ['exts' => ['txt'],                       'icon' => 'bi-file-earmark-text',  'color' => '#aaa'],
+    ];
+
+    private function resolveByMime(?string $mime): array
+    {
+        $mime ??= '';
+        foreach (self::MIME_RULES as $rule) {
+            if ($rule['matches'] === []) {
+                return $rule;
+            }
+            foreach ($rule['matches'] as $needle) {
+                if (str_contains($mime, $needle)) {
+                    return $rule;
+                }
+            }
+        }
+
+        return end(self::MIME_RULES); // unreachable: empty matches actúa como default.
+    }
+
     public function iconClass(?string $mime): string
     {
-        return match (true) {
-            str_contains($mime ?? '', 'pdf') => 'bi-file-earmark-pdf',
-            str_contains($mime ?? '', 'image') => 'bi-file-earmark-image',
-            str_contains($mime ?? '', 'wordprocessingml')
-                || str_contains($mime ?? '', 'msword') => 'bi-file-earmark-word',
-            str_contains($mime ?? '', 'spreadsheet')
-                || str_contains($mime ?? '', 'excel') => 'bi-file-earmark-excel',
-            str_contains($mime ?? '', 'text/plain') => 'bi-file-earmark-text',
-            default => 'bi-file-earmark',
-        };
+        return $this->resolveByMime($mime)['icon'];
     }
 
-    /**
-     * @param string|null $mime
-     * @return string
-     */
     public function iconColor(?string $mime): string
     {
-        return match (true) {
-            str_contains($mime ?? '', 'pdf') => '#dc3545',
-            str_contains($mime ?? '', 'image') => '#0dcaf0',
-            str_contains($mime ?? '', 'wordprocessingml')
-                || str_contains($mime ?? '', 'msword') => '#0d6efd',
-            str_contains($mime ?? '', 'spreadsheet')
-                || str_contains($mime ?? '', 'excel') => 'var(--primary-color)',
-            default => '#aaa',
-        };
+        return $this->resolveByMime($mime)['color'];
     }
 
-    /**
-     * @param string|null $mime
-     * @return string
-     */
     public function typeLabel(?string $mime): string
     {
-        return match (true) {
-            str_contains($mime ?? '', 'pdf') => 'PDF',
-            str_contains($mime ?? '', 'image/jpeg')
-                || str_contains($mime ?? '', 'image/jpg') => 'JPG',
-            str_contains($mime ?? '', 'image/png') => 'PNG',
-            str_contains($mime ?? '', 'image') => 'IMG',
-            str_contains($mime ?? '', 'wordprocessingml')
-                || str_contains($mime ?? '', 'msword') => 'WORD',
-            str_contains($mime ?? '', 'spreadsheet')
-                || str_contains($mime ?? '', 'excel') => 'EXCEL',
-            str_contains($mime ?? '', 'text/plain') => 'TXT',
-            default => 'ARCH.',
-        };
+        return $this->resolveByMime($mime)['label'];
     }
 
-    /**
-     * @param string $type
-     * @return string
-     */
     public function badgeClass(string $type): string
     {
         return match ($type) {
@@ -78,21 +86,29 @@ class DocumentIconHelper extends Helper
         };
     }
 
+    private function resolveByExt(?string $name): ?array
+    {
+        $name = strtolower($name ?? '');
+        $dotPos = strrpos($name, '.');
+        if ($dotPos === false) {
+            return null;
+        }
+        $ext = substr($name, $dotPos + 1);
+        foreach (self::EXT_RULES as $rule) {
+            if (in_array($ext, $rule['exts'], true)) {
+                return $rule;
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Resuelve clase de ícono por nombre de archivo (cuando no se tiene el MIME).
      */
     public function iconClassByName(?string $name): string
     {
-        $name = strtolower($name ?? '');
-
-        return match (true) {
-            str_ends_with($name, '.pdf') => 'bi-file-earmark-pdf',
-            (bool)preg_match('/\.(jpg|jpeg|png|gif|webp)$/', $name) => 'bi-file-earmark-image',
-            (bool)preg_match('/\.(doc|docx)$/', $name) => 'bi-file-earmark-word',
-            (bool)preg_match('/\.(xls|xlsx|csv)$/', $name) => 'bi-file-earmark-excel',
-            str_ends_with($name, '.txt') => 'bi-file-earmark-text',
-            default => 'bi-file-earmark',
-        };
+        return $this->resolveByExt($name)['icon'] ?? 'bi-file-earmark';
     }
 
     /**
@@ -100,14 +116,19 @@ class DocumentIconHelper extends Helper
      */
     public function iconColorByName(?string $name): string
     {
-        $name = strtolower($name ?? '');
+        return $this->resolveByExt($name)['color'] ?? '#aaa';
+    }
 
-        return match (true) {
-            str_ends_with($name, '.pdf') => '#dc3545',
-            (bool)preg_match('/\.(jpg|jpeg|png|gif|webp)$/', $name) => '#0dcaf0',
-            (bool)preg_match('/\.(doc|docx)$/', $name) => '#0d6efd',
-            (bool)preg_match('/\.(xls|xlsx|csv)$/', $name) => 'var(--primary-color)',
-            default => '#aaa',
-        };
+    /**
+     * Reglas serializadas para consumo cliente (sgi-document-uploader.js).
+     * Se inyectan vía `<script type="application/json" id="sgi-doc-icon-rules">`
+     * en el layout. JSON_HEX_TAG previene cierre prematuro del script.
+     */
+    public function rulesJson(): string
+    {
+        return json_encode(
+            ['mime' => self::MIME_RULES, 'ext' => self::EXT_RULES],
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE,
+        );
     }
 }
