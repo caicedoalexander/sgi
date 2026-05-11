@@ -16,7 +16,7 @@
  * @var \App\View\AppView $this
  */
 ?>
-<script src="<?= $this->Url->build('/vendor/fullcalendar/index.global.min.js') ?>"></script>
-<script src="<?= $this->Url->build('/vendor/fullcalendar/locales/es.global.min.js') ?>"></script>
+<script defer src="<?= $this->Url->build('/vendor/fullcalendar/index.global.min.js') ?>"></script>
+<script defer src="<?= $this->Url->build('/vendor/fullcalendar/locales/es.global.min.js') ?>"></script>
 <?= $this->Html->css('sgi-calendar') ?>
-<script src="<?= $this->Url->build('/js/sgi-calendar.js') ?>"></script>
+<script defer src="<?= $this->Url->build('/js/sgi-calendar.js') ?>"></script>
