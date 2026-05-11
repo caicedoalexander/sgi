@@ -1326,6 +1326,16 @@ textarea.form-control.auto-resize {
 .sgi-input-group:focus-within {
     border-color: var(--primary-color);
 }
+/* Focus indicator más visible para navegación por teclado (Tab).
+   :focus-visible no dispara con mouse click → mantiene el look limpio en uso
+   con puntero, pero garantiza WCAG 2.4.7 cuando se navega con teclado.
+   Los inputs internos usan `border-0 shadow-none` (Bootstrap utilities) y por
+   tanto pierden el outline nativo; este selector lo restituye. */
+.sgi-input-group input:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 0;
+}
 
 /* Validación - success */
 .form-control.is-valid,

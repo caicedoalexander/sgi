@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60% peso de fuente), **SG-006** (FullCalendar assets centralizados), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 7 Sugerencias discrecionales (SG-002 a SG-005, SG-007, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60% peso de fuente), **SG-006** (FullCalendar assets centralizados), **SG-007** (focus-visible a11y), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 6 Sugerencias discrecionales (SG-002 a SG-005, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -410,19 +410,25 @@ $viewModel->idempotencyKey = \Cake\Utility\Text::uuid();
 
 ---
 
-### SG-007 — Focus visible en `.sgi-input-group`
+### ~~SG-007~~ ✅ — Focus visible en `.sgi-input-group` (a11y WCAG 2.4.7)  (RESUELTO)
 
-**Ubicación:** `templates/Users/login.php:42-46`, `webroot/css/styles.css` (estilos de `.sgi-input-group:focus-within`)
+**Aplicado:** regla CSS nueva en `webroot/css/styles.css` después del `:focus-within` existente:
 
-**Problema:** el border verde aparece en focus-within pero el outline nativo del input se elimina (Bootstrap default `border-0 shadow-none`).
-
-**Resolver:** verificar manualmente con Tab navigation que el focus es visible. Si no, agregar:
 ```css
 .sgi-input-group input:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
+    border-radius: 0;
 }
 ```
+
+**Por qué `:focus-visible` (no `:focus`):** la spec dispara `:focus-visible` solo cuando el browser determina que el foco vino de navegación por teclado o algún mecanismo equivalente, NO con mouse click. Esto preserva el look limpio en interacción con puntero y garantiza el indicator visible para usuarios de teclado.
+
+**Por qué `border-radius: 0`:** mantiene coherencia con el design system del SGI (radio 0-2px máx). Sin esto, el browser default `border-radius: 4px` se aplicaría al outline.
+
+**Ubicaciones que se benefician:** `templates/Users/login.php` (campos de login) y `templates/SystemSettings/index.php:161` (API key field). El selector cubre cualquier uso futuro de `.sgi-input-group`.
+
+**El `:focus-within` previo (1px border verde) se preserva** — funciona con mouse y teclado pero es sutil. El nuevo outline 2px es defense-in-depth solo para teclado.
 
 ---
 
@@ -498,13 +504,13 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟢 SG-002 a SG-005, SG-007, SG-009, SG-010 | Mejoras incrementales (SG-001, SG-006, SG-008 cerradas) | A discreción |
+| 🟢 SG-002 a SG-005, SG-009, SG-010 | Mejoras incrementales (SG-001, SG-006, SG-007, SG-008 cerradas) | A discreción |
 
 **Estado:** todos los Críticos (3), Mayores (12), Minores (16) y la primera Sugerencia (SG-008) están cerrados. Quedan 9 Sugerencias discrecionales.
 
-**Próximo paso recomendado:** las 7 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
-- **SG-007** — Verificar focus-visible en `.sgi-input-group` para a11y de teclado (10 min).
+**Próximo paso recomendado:** las 6 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
 - **SG-005** — Documentar fallback de `getRawAmount()` en `sgi-payment.js` o eliminarlo (15 min).
+- **SG-003** — Generar UUID de idempotencia en controller/ViewModel en lugar del template (15 min).
 - **SG-010** — Decisión de producto sobre i18n (`es_CO` único vs preparar `__()`).
 
 ## Historial de aplicación
@@ -538,3 +544,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `00a5f62` | SG-008 (UploadConstants nuevo + consolidación en 2 services + meta + 7 templates; 0 duplicados residuales) |
 | `4d74008` | SG-006 (element/fullcalendar_assets.php; bloque de 4 líneas centralizado entre EmployeeNovelties/{index,active}) |
 | `27f3ded` | SG-001 (Inter-Variable.woff2 generado −60%; preload tag + @font-face dual format) |
+| _pendiente_ | SG-007 (:focus-visible outline en .sgi-input-group input; a11y WCAG 2.4.7) |
