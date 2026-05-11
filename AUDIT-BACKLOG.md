@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012, ahora incluyendo MJ-005 completo), **4 Minores** (MN-006, MN-007, MN-009, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **5 Minores** (MN-001, MN-006, MN-007, MN-009, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -12,7 +12,7 @@ Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templat
 
 ---
 
-## 🟠 Mayores pendientes (1)
+## 🟠 Mayores pendientes (0) — ¡todos cerrados!
 
 ### ~~MJ-005~~ ✅ — Performance frontend de CDNs  (RESUELTO completo)
 
@@ -30,58 +30,22 @@ Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templat
 
 ---
 
-### MJ-010 — `styles.css` monolítico (3,301 LOC)
+### ~~MJ-010~~ ✅ — `styles.css` monolítico  (RESUELTO en `fa16845`)
 
-**Ubicación:** `webroot/css/styles.css`
+**Aplicado:**
 
-**Problema:**
-- 1 stylesheet de ~120 KB servido en **todas** las vistas, incluyendo `login.php` y `external.php` que solo necesitan una fracción.
-- 39 declaraciones `box-shadow` (contradicen `design.md` que prohíbe sombras).
-- 23 `!important` declarations (algunos legítimos override de Bootstrap, otros revelan specificity wars).
-- Greys hex repetidos (`#aaa #bbb #ccc #111 #444 #888 #999`) que deberían ser variables CSS.
+1. **!important auditados (23)** — todos son overrides legítimos de Bootstrap/Flatpickr (no specificity wars). Comentarios faltantes agregados.
 
-**Cómo resolver:**
+2. **box-shadow ofensor** — único caso real: knob del checkbox toggle. Reemplazado por `border 1px var(--border-color)`. Los 38 box-shadow restantes son legítimos: `box-shadow: none` (eliminar Bootstrap defaults) o `inset 2px 0 0 var(--primary-color)` (lenguaje de bordes del SGI: sidebar/accordion activos). Esto cierra también **MN-001**.
 
-1. **Auditoría de `!important`** (1-2 horas):
-   ```bash
-   grep -nE '!important' webroot/css/styles.css | wc -l   # baseline
-   grep -nE '!important' webroot/css/styles.css           # listar todos
-   ```
-   - Override legítimo de Bootstrap (`.btn { box-shadow: none !important }`): documentar con comentario `/* override Bootstrap */`.
-   - Specificity wars (ej. `:first-child { display:none !important }` en `webroot/css/styles.css:2521+`): refactorizar con selector más específico.
+3. **Split de overrides de vendors** — styles.css pasa de **3350 → 2830 LOC (−520)**. 3 archivos nuevos:
+   - `webroot/css/sgi-flatpickr-overrides.css` (187 LOC) — cargado en `layout/default.php` junto a Flatpickr.
+   - `webroot/css/sgi-select2-overrides.css` (234 LOC) — cargado en `element/cdn_select2.php` (solo donde se usa Select2).
+   - `webroot/css/sgi-fullcalendar-overrides.css` (101 LOC) — cargado en `EmployeeNovelties/{index,active}`.
 
-2. **Variables para grises** (30 min): agregar en `:root` de `styles.css:2-12`:
-   ```css
-   :root {
-       --text-strong:    #111;
-       --text-default:   #222;
-       --text-muted:     #555;
-       --text-faint:     #888;
-       --text-disabled:  #aaa;
-       --border-faint:   #ccc;
-       --danger-color:   #dc3545;
-       --warning-color:  #ffc107;
-       --info-color:     #0dcaf0;
-   }
-   ```
-   Luego `grep -n '#aaa\|#bbb\|#ccc\|#111\|#888' webroot/css/styles.css` y reemplazar caso por caso.
+4. **Variables CSS** — ya cubierto por MN-006 (commit `be8dc72`).
 
-3. **`box-shadow` ofensores** (1 hora): revisar las 39 declaraciones:
-   ```bash
-   grep -n "box-shadow" webroot/css/styles.css
-   ```
-   - Casos legítimos: `inset 2px 0 0` (sidebar activo, parte del lenguaje de bordes — mantener).
-   - Casos a corregir: sombras drop reales (deberían reemplazarse por bordes 1px).
-   - Excepciones documentadas: chat bubbles (`webroot/css/styles.css:2680,2685`), signature (`webroot/js/sgi-signature.js:59,61`) — pedir decisión al PO o documentar en `design.md`.
-
-4. **Split en 2 archivos** (medio día):
-   - **`core.css`**: variables `:root`, `@font-face`, tipografía, `.sgi-btn-*`, `.sgi-input-group`, `.sgi-topbar`, sidebar, login. Cargar en TODOS los layouts.
-   - **`app.css`**: módulos (`.sgi-stat-card`, `.sgi-quick-tile`, `.sgi-doc-row`, `.sgi-folder-*`, chat, payment, document uploader). Cargar solo en `default.php` (autenticado).
-   - `login.php`, `external.php`, `error.php` solo cargan `core.css`.
-
-5. **Minify en producción** (opcional, 1 hora): añadir paso de build (npm script + `cssnano`) o usar CakePHP AssetCompress. Si no hay pipeline, dejar para más adelante.
-
-**Validación manual:** comparar screenshots antes/después de cada vista representativa: `/dashboard`, `/invoices`, `/login`, `/external-approvals/<token>`, `/employees/<id>/view`, formulario edit de factura.
+**Pendiente de seguimiento (no bloqueante):** split físico de `styles.css` en `core.css` + `app.css` para que login/external/error solo carguen lo mínimo. Requiere auditoría visual prolongada para identificar el subset estricto sin romper estilos.
 
 ---
 
@@ -131,15 +95,11 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (12)
+## 🟡 Minores (11)
 
-### MN-001 — `box-shadow` en checkbox toggle
+### ~~MN-001~~ ✅ — `box-shadow` en checkbox toggle  (RESUELTO en `fa16845`, junto a MJ-010)
 
-**Ubicación:** `webroot/css/styles.css:1183`
-
-**Problema:** `box-shadow: 0 1px 3px rgba(0,0,0,.15)` en el "knob" del toggle contradice "no sombras" de `design.md`.
-
-**Resolver:** reemplazar por `border: 1px solid var(--border-color)` o eliminar.
+**Aplicado:** removido el `box-shadow: 0 1px 3px rgba(0,0,0,.15)` del knob de `.form-switch` y reemplazado por `border: 1px solid var(--border-color)`. Cumple con "no sombras" del design system.
 
 ---
 
@@ -557,16 +517,15 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟠 MJ-010 | CSS limpieza + split | 1-2 días |
-| 🟡 MN-001 a MN-005, MN-008, MN-010, MN-011, MN-013 a MN-016 | Design system polish + code smells + a11y | 1 día |
+| 🟡 MN-002 a MN-005, MN-008, MN-010, MN-011, MN-013 a MN-016 | Design system polish + code smells + a11y | 1 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
-**Total estimado:** ~1.5-2 días de trabajo para dejar todo cerrado, repartibles entre sprints.
+**Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
 
 **Próximo paso recomendado:**
-1. **MN-005** (1-2 horas) — auditoría de los 23 `!important` en `styles.css`. Categorizar entre override-legítimo-Bootstrap (comentar) y specificity wars (refactorizar).
-2. **MN-013** (1 hora) — refactorizar `templates/element/progress_stepper.php` a CSS-driven con `data-state="past|current|future|rejected"` en lugar de inline hex.
-3. **MJ-010** (1-2 días) — gran cleanup de `styles.css`: usar las variables tipográficas que MN-006 dejó listas, eliminar `box-shadow` ofensores del design system, evaluar split en core/app.
+1. **MN-013** (1 hora) — refactorizar `templates/element/progress_stepper.php` a CSS-driven con `data-state="past|current|future|rejected"` en lugar de inline hex.
+2. **MN-008** (15 min) — extraer constante `'OBRA O LABOR DETERMINADA'` de `employees-form.js` a una `<meta>`/`window.SGI_OBRA_LABOR` definida desde PHP.
+3. **MN-011** (30 min) — `aria-label` en avatares con iniciales sin texto accesible.
 
 ## Historial de aplicación
 
@@ -586,3 +545,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `e85e89d` | MN-009 (split Invoices/edit en 11 elements; −686 LOC del template principal) |
 | `be8dc72` | MN-006 (6 variables CSS semánticas + 142 reemplazos de hex en css/templates) |
 | `300af41` | MJ-005 paso 4 (self-host de todos los vendors a webroot/vendor/) |
+| `fa16845` | MJ-010 (split de vendor-overrides; styles.css −520 LOC) + MN-001 (box-shadow toggle) |
