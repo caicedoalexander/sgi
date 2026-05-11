@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **10 de los 12 Mayores** (incluyendo MJ-012), **1 Mayor parcial** (MJ-005 pasos 1, 2, 3, 3b aplicados, **paso 4 pendiente**), **2 Minores** (MN-007, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → `2de2727`. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
+**Estado:** los **3 Críticos**, **10 de los 12 Mayores** (incluyendo MJ-012), **1 Mayor parcial** (MJ-005 pasos 1, 2, 3, 3b aplicados, **paso 4 pendiente**), **3 Minores** (MN-007, MN-009, MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -151,7 +151,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (14)
+## 🟡 Minores (13)
 
 ### MN-001 — `box-shadow` en checkbox toggle
 
@@ -253,19 +253,27 @@ const OBRA_LABOR = window.SGI_OBRA_LABOR || 'OBRA O LABOR DETERMINADA';
 
 ---
 
-### MN-009 — `Invoices/edit.php` 1200+ LOC
+### ~~MN-009~~ ✅ — `Invoices/edit.php` 1200+ LOC  (RESUELTO)
 
-**Ubicación:** `templates/Invoices/edit.php` (entero)
+**Aplicado:** template principal pasa de **1101 → 415 LOC** (−62%). Habilitado por MJ-012 que dejó la lógica de presentación en `InvoiceEditViewModel`. 11 elements nuevos creados en `templates/element/invoice_edit/`:
 
-**Problema:** monolito que mezcla layout, 4 inline `<script>`, 2 modals, business logic, helpers.
+| Element | LOC | Contenido |
+|---------|----:|-----------|
+| `page_header.php` | 25 | Título + Volver/Ver (Anticipo vs Factura) |
+| `advance_alert.php` | 26 | Alerta amarilla con errores para avanzar |
+| `sidebar.php` | 90 | Columna derecha: documentos + chat de observaciones |
+| `upload_doc_modal.php` | 37 | Modal "Subir Soporte" |
+| `scripts.php` | 137 | 3 bloques: SgiDocumentUploader init, beneficiary toggle, doc-type/holder toggle |
+| `sections/general.php` | 94 | Factura no-anticipo + sub-form Recibo de Caja |
+| `sections/general_advance.php` | 55 | Beneficiario provider/employee (anticipo) |
+| `sections/dates.php` | 59 | Registro/emisión/vencimiento |
+| `sections/classification.php` | 68 | Centros + monto + detalle |
+| `sections/revision.php` | 186 | Aprobadores + DIAN + status individuals |
+| `sections/accounting.php` | 52 | Accrued + lista para pago |
 
-**Resolver:** split por secciones (depende de MJ-012):
-- `element/invoice_edit/header.php` — pipeline progress + acciones principales
-- `element/invoice_edit/form/{general,dates,classification,revision,accounting,treasury,payment_authorization}.php`
-- `element/invoice_edit/modals.php` — modify approvers + (ya extraído) regress modal
-- `element/invoice_edit/scripts.php` — los 4 bloques `<script>` consolidados
+Treasury y payment_authorization no se extrajeron (ya son wrappers de 7-12 LOC sobre `element('payment_section')`).
 
-**Validación manual:** todos los estados del pipeline + role bypass + factura rechazada.
+Cada section element recibe `$viewModel` + closure `$canEdit` + las opciones específicas. El template principal mantiene el foreach `$renderOrder` + lógica de collapsible details + invocaciones.
 
 ---
 
@@ -573,9 +581,9 @@ Quita el flag del backlog hasta que el PO lo pida.
 **Total estimado:** ~2-3 días de trabajo para dejar todo cerrado, repartibles entre sprints.
 
 **Próximo paso recomendado:**
-1. **MN-009** (medio día) — split de `Invoices/edit.php` (1098 LOC) en elements por sección. Habilitado ahora que MJ-012 dejó la lógica en el ViewModel.
-2. **MN-006** (1-2 horas) — promover hex literales a variables CSS (`#212529`, `#CD6A15`, `#dee2e6`, `#495057`). Ya hay base con las nuevas clases `.sgi-stat-label` etc.
-3. **MJ-005 paso 4** (1 día) — self-host de vendors. Mayor inversión pero elimina dependencia runtime de jsDelivr (importante para staging/dev sin red, CSP estricto).
+1. **MN-006** (1-2 horas) — promover hex literales a variables CSS (`#212529`, `#CD6A15`, `#dee2e6`, `#495057`). Ya hay base con las nuevas clases `.sgi-stat-label`/`.sgi-section-eyebrow`/`.sgi-block-title`.
+2. **MJ-005 paso 4** (1 día) — self-host de vendors. Mayor inversión pero elimina dependencia runtime de jsDelivr (importante para staging/dev sin red, CSP estricto).
+3. **MN-005** (1-2 horas) — auditoría de los 23 `!important` en `styles.css`. Categorizar entre override-legítimo-Bootstrap (comentar) y specificity wars (refactorizar).
 
 ## Historial de aplicación
 
@@ -592,3 +600,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `2fbd197` | Refactor derivado: uniformación de los 5 edit templates restantes + helper `PaymentOptions` |
 | `a265c93` | MN-007 (micro-caps → classes), MJ-005 paso 3 (ApexCharts/AutoNumeric lazy) |
 | `2de2727` | MJ-005 paso 3b (Select2 + jQuery lazy vía cdn_select2.php) |
+| `e85e89d` | MN-009 (split Invoices/edit en 11 elements; −686 LOC del template principal) |
