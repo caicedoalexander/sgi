@@ -50,21 +50,6 @@ $statusIndex = array_search($record->status, PettyCashConstants::STATUSES);
 $showAccounting = $statusIndex >= 1; // contabilidad or later
 $showTreasury = $statusIndex >= 2;   // tesoreria or later
 
-$docIcon = fn(?string $mime): string => match(true) {
-    str_contains($mime ?? '', 'pdf') => 'bi-file-earmark-pdf',
-    str_contains($mime ?? '', 'image') => 'bi-file-earmark-image',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => 'bi-file-earmark-word',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'bi-file-earmark-excel',
-    default => 'bi-file-earmark',
-};
-$docIconColor = fn(?string $mime): string => match(true) {
-    str_contains($mime ?? '', 'pdf') => '#dc3545',
-    str_contains($mime ?? '', 'image') => '#0dcaf0',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => '#0d6efd',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'var(--primary-color)',
-    default => '#aaa',
-};
-
 $invoiceOptions = [];
 foreach ($availableInvoices as $inv) {
     $label = ($inv->invoice_number ?? '#' . $inv->id)

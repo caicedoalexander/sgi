@@ -52,11 +52,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 const item = document.createElement('div');
                 item.className = 'export-field-item d-flex align-items-center gap-2 px-3 py-2';
                 item.dataset.field = f.field;
-                item.innerHTML = `
-                    <i class="bi bi-grip-vertical text-muted export-drag-handle" style="cursor:grab"></i>
-                    <input type="checkbox" class="form-check-input export-field-check" value="${f.field}" ${f.checked ? 'checked' : ''} id="exp_${f.field}">
-                    <label class="form-check-label flex-grow-1" for="exp_${f.field}" style="font-size:.875rem">${f.label}</label>
-                `;
+
+                const grip = document.createElement('i');
+                grip.className = 'bi bi-grip-vertical text-muted export-drag-handle';
+                grip.style.cursor = 'grab';
+
+                const inputId = 'exp_' + f.field;
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'form-check-input export-field-check';
+                cb.value = f.field;
+                cb.id = inputId;
+                if (f.checked) cb.checked = true;
+
+                const lbl = document.createElement('label');
+                lbl.className = 'form-check-label flex-grow-1';
+                lbl.htmlFor = inputId;
+                lbl.style.fontSize = '.875rem';
+                lbl.textContent = f.label;
+
+                item.appendChild(grip);
+                item.appendChild(cb);
+                item.appendChild(lbl);
                 exportFieldList.appendChild(item);
             });
         }
@@ -261,6 +278,15 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        function setStatusIcon(cell, mapped) {
+            cell.innerHTML = '';
+            const icon = document.createElement('i');
+            icon.className = mapped
+                ? 'bi bi-check-circle-fill text-success'
+                : 'bi bi-dash-circle text-muted';
+            cell.appendChild(icon);
+        }
+
         function renderMappingTable(headers, autoMapping, fields) {
             importMappingBody.innerHTML = '';
 
@@ -268,37 +294,59 @@ document.addEventListener('DOMContentLoaded', function () {
                 const mappedField = autoMapping[header] || '';
 
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="align-middle">
-                        <input type="checkbox" class="form-check-input import-col-check" data-header="${escapeHtml(header)}" ${mappedField ? 'checked' : ''}>
-                    </td>
-                    <td class="align-middle" style="font-size:.875rem">
-                        <code>${escapeHtml(header)}</code>
-                    </td>
-                    <td>
-                        <select class="form-select form-select-sm import-field-select" data-header="${escapeHtml(header)}">
-                            <option value="">\u2014 Sin asignar \u2014</option>
-                            ${fields.map(f => `<option value="${f.field}" ${mappedField === f.field ? 'selected' : ''}>${f.label}${f.required ? ' *' : ''}</option>`).join('')}
-                        </select>
-                    </td>
-                    <td class="align-middle text-center import-status-cell">
-                        ${mappedField ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-dash-circle text-muted"></i>'}
-                    </td>
-                `;
-                importMappingBody.appendChild(tr);
 
-                // Update status on select change
-                const select = tr.querySelector('.import-field-select');
-                const checkbox = tr.querySelector('.import-col-check');
-                const statusCell = tr.querySelector('.import-status-cell');
+                // Col 1: checkbox
+                const tdCheck = document.createElement('td');
+                tdCheck.className = 'align-middle';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'form-check-input import-col-check';
+                checkbox.dataset.header = header;
+                if (mappedField) checkbox.checked = true;
+                tdCheck.appendChild(checkbox);
+
+                // Col 2: header label
+                const tdHeader = document.createElement('td');
+                tdHeader.className = 'align-middle';
+                tdHeader.style.fontSize = '.875rem';
+                const code = document.createElement('code');
+                code.textContent = header;
+                tdHeader.appendChild(code);
+
+                // Col 3: select
+                const tdSelect = document.createElement('td');
+                const select = document.createElement('select');
+                select.className = 'form-select form-select-sm import-field-select';
+                select.dataset.header = header;
+                const emptyOpt = document.createElement('option');
+                emptyOpt.value = '';
+                emptyOpt.textContent = '\u2014 Sin asignar \u2014';
+                select.appendChild(emptyOpt);
+                fields.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.field;
+                    opt.textContent = f.label + (f.required ? ' *' : '');
+                    if (mappedField === f.field) opt.selected = true;
+                    select.appendChild(opt);
+                });
+                tdSelect.appendChild(select);
+
+                // Col 4: status icon
+                const statusCell = document.createElement('td');
+                statusCell.className = 'align-middle text-center import-status-cell';
+                setStatusIcon(statusCell, !!mappedField);
+
+                tr.appendChild(tdCheck);
+                tr.appendChild(tdHeader);
+                tr.appendChild(tdSelect);
+                tr.appendChild(statusCell);
+                importMappingBody.appendChild(tr);
 
                 select.addEventListener('change', function () {
                     if (this.value) {
                         checkbox.checked = true;
-                        statusCell.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
-                    } else {
-                        statusCell.innerHTML = '<i class="bi bi-dash-circle text-muted"></i>';
                     }
+                    setStatusIcon(statusCell, !!this.value);
                     validateRequiredMapped();
                 });
 
@@ -331,7 +379,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     return sf ? sf.label : f;
                 });
                 if (indicator) {
-                    indicator.innerHTML = `<i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>Faltan campos obligatorios: ${missingLabels.join(', ')}`;
+                    indicator.innerHTML = '';
+                    const icon = document.createElement('i');
+                    icon.className = 'bi bi-exclamation-triangle-fill text-warning me-1';
+                    indicator.appendChild(icon);
+                    indicator.appendChild(document.createTextNode('Faltan campos obligatorios: ' + missingLabels.join(', ')));
                     indicator.className = 'alert alert-warning py-2 px-3 mb-0 mt-2';
                     indicator.style.display = 'block';
                     indicator.style.fontSize = '.825rem';
@@ -413,6 +465,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const container = document.getElementById('importResults');
             if (!container) return;
 
+            const n = v => Number.isFinite(Number(v)) ? Number(v) : 0;
             let html = `
                 <div class="d-flex align-items-center gap-2 mb-3">
                     <i class="bi bi-check-circle-fill text-success" style="font-size:1.5rem"></i>
@@ -420,19 +473,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div class="d-flex justify-content-center gap-3 mb-3 flex-wrap">
                     <div class="text-center" style="min-width:80px">
-                        <div style="font-size:1.5rem;font-weight:600;color:var(--primary-color)">${data.created}</div>
+                        <div style="font-size:1.5rem;font-weight:600;color:var(--primary-color)">${n(data.created)}</div>
                         <div style="font-size:.75rem;color:#666">Creados</div>
                     </div>
                     <div class="text-center" style="min-width:80px">
-                        <div style="font-size:1.5rem;font-weight:600;color:#0d6efd">${data.updated}</div>
+                        <div style="font-size:1.5rem;font-weight:600;color:#0d6efd">${n(data.updated)}</div>
                         <div style="font-size:.75rem;color:#666">Actualizados</div>
                     </div>
                     <div class="text-center" style="min-width:80px">
-                        <div style="font-size:1.5rem;font-weight:600;color:#6c757d">${data.unchanged || 0}</div>
+                        <div style="font-size:1.5rem;font-weight:600;color:#6c757d">${n(data.unchanged)}</div>
                         <div style="font-size:.75rem;color:#666">Sin cambios</div>
                     </div>
                     <div class="text-center" style="min-width:80px">
-                        <div style="font-size:1.5rem;font-weight:600;color:#6c757d">${data.skipped}</div>
+                        <div style="font-size:1.5rem;font-weight:600;color:#6c757d">${n(data.skipped)}</div>
                         <div style="font-size:.75rem;color:#666">Omitidos</div>
                     </div>
                     <div class="text-center" style="min-width:80px">

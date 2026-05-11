@@ -46,20 +46,6 @@ $caseLabels = [
     AdvanceConstants::CASE_SOBRANTE => 'Sobrante',
 ];
 
-$docIcon = fn(?string $mime): string => match (true) {
-    str_contains($mime ?? '', 'pdf') => 'bi-file-earmark-pdf',
-    str_contains($mime ?? '', 'image') => 'bi-file-earmark-image',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => 'bi-file-earmark-word',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'bi-file-earmark-excel',
-    default => 'bi-file-earmark',
-};
-$docIconColor = fn(?string $mime): string => match (true) {
-    str_contains($mime ?? '', 'pdf') => '#dc3545',
-    str_contains($mime ?? '', 'image') => '#0dcaf0',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => '#0d6efd',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'var(--primary-color)',
-    default => '#aaa',
-};
 ?>
 
 <?php
@@ -474,8 +460,8 @@ $docIconColor = fn(?string $mime): string => match (true) {
     <?php if ($relationDocument): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi <?= $docIcon($relationDocument->mime_type ?? null) ?>"
-               style="color:<?= $docIconColor($relationDocument->mime_type ?? null) ?>;font-size:1rem;"></i>
+            <i class="bi <?= h($this->DocumentIcon->iconClass($relationDocument->mime_type ?? null)) ?>"
+               style="color:<?= h($this->DocumentIcon->iconColor($relationDocument->mime_type ?? null)) ?>;font-size:1rem;"></i>
         </div>
         <div style="flex:1;min-width:0;">
             <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
@@ -591,7 +577,7 @@ $docIconColor = fn(?string $mime): string => match (true) {
     <?php foreach ($signatureHistory as $sig): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .875rem;border-bottom:1px solid var(--border-color);opacity:.7;">
         <div style="width:30px;height:30px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi <?= $docIcon($sig->mime_type ?? null) ?>" style="color:#999;font-size:.9rem;"></i>
+            <i class="bi <?= h($this->DocumentIcon->iconClass($sig->mime_type ?? null)) ?>" style="color:#999;font-size:.9rem;"></i>
         </div>
         <div style="flex:1;min-width:0;">
             <div style="font-size:.74rem;font-weight:600;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">

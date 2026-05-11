@@ -31,6 +31,7 @@
 (function (global) {
     'use strict';
 
+    // Espejo cliente de src/View/Helper/DocumentIconHelper. Mantener sincronizado.
     function docIconClass(mime) {
         mime = mime || '';
         if (mime.indexOf('pdf') !== -1) return 'bi-file-earmark-pdf';

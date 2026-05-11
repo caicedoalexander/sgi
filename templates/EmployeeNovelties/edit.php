@@ -47,20 +47,6 @@ $ps = [$statusLabels[$currentStatus] ?? 'Desconocido', $statusBadgeMap[$currentS
 
 // Documents prep
 $showUploadSection = !$isRejected && !$novelty->isPaid();
-$docIcon = fn(?string $mime): string => match(true) {
-    str_contains($mime ?? '', 'pdf') => 'bi-file-earmark-pdf',
-    str_contains($mime ?? '', 'image') => 'bi-file-earmark-image',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => 'bi-file-earmark-word',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'bi-file-earmark-excel',
-    default => 'bi-file-earmark',
-};
-$docIconColor = fn(?string $mime): string => match(true) {
-    str_contains($mime ?? '', 'pdf') => '#dc3545',
-    str_contains($mime ?? '', 'image') => '#0dcaf0',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => '#0d6efd',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'var(--primary-color)',
-    default => '#aaa',
-};
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
 $badgeColors = NoveltyPresentation::STATUS_BADGES;
 ?>

@@ -33,12 +33,8 @@ $statusLabels = $statusLabels ?? [];
 $deleteUrl    = $deleteUrl    ?? '';
 
 $mime = $doc->mime_type ?? '';
-$icon = 'bi-file-earmark';
-$iconColor = '#aaa';
-if (str_contains($mime, 'pdf'))                                         { $icon = 'bi-file-earmark-pdf';   $iconColor = '#dc3545'; }
-elseif (str_contains($mime, 'image'))                                   { $icon = 'bi-file-earmark-image'; $iconColor = '#0dcaf0'; }
-elseif (str_contains($mime, 'wordprocessingml') || str_contains($mime, 'msword')) { $icon = 'bi-file-earmark-word';  $iconColor = '#0d6efd'; }
-elseif (str_contains($mime, 'spreadsheet') || str_contains($mime, 'excel'))       { $icon = 'bi-file-earmark-excel'; $iconColor = 'var(--primary-color)'; }
+$icon = $this->DocumentIcon->iconClass($mime);
+$iconColor = $this->DocumentIcon->iconColor($mime);
 
 $label = $doc->document_type ?: $doc->file_name;
 $badgeClass = $badgeColors[$doc->pipeline_status ?? ''] ?? 'bg-secondary';

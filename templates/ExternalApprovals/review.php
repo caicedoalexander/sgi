@@ -108,20 +108,6 @@ $badgeMap = $entityType === 'employee_novelties'
 
     <?php if ($entityType === 'invoices' && !empty($entity->invoice_documents)): ?>
     <?php
-    $docIcon = fn(?string $mime): string => match(true) {
-        str_contains($mime ?? '', 'pdf') => 'bi-file-earmark-pdf',
-        str_contains($mime ?? '', 'image') => 'bi-file-earmark-image',
-        str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => 'bi-file-earmark-word',
-        str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'bi-file-earmark-excel',
-        default => 'bi-file-earmark',
-    };
-    $docIconColor = fn(?string $mime): string => match(true) {
-        str_contains($mime ?? '', 'pdf') => '#dc3545',
-        str_contains($mime ?? '', 'image') => '#0dcaf0',
-        str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => '#0d6efd',
-        str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'var(--primary-color)',
-        default => '#aaa',
-    };
     $statusLabels = ['aprobacion' => 'Aprobación', 'contabilidad' => 'Contabilidad', 'tesoreria' => 'Tesorería', 'pagada' => 'Pagada'];
     ?>
     <div style="border-top:1px solid var(--border-color);">
@@ -133,8 +119,8 @@ $badgeMap = $entityType === 'employee_novelties'
                     <div style="border:1px solid var(--border-color);height:100%;display:flex;flex-direction:column;">
                         <!-- Header: icono + nombre -->
                         <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:#fafafa;display:flex;align-items:center;gap:.5rem;min-width:0;">
-                            <i class="bi <?= $docIcon($doc->mime_type) ?> flex-shrink-0"
-                               style="color:<?= $docIconColor($doc->mime_type) ?>;font-size:1.1rem;"></i>
+                            <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> flex-shrink-0"
+                               style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.1rem;"></i>
                             <span style="font-size:.78rem;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;" title="<?= h($doc->file_name) ?>">
                                 <?= h($doc->file_name) ?>
                             </span>

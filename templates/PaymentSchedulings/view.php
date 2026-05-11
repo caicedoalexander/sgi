@@ -208,20 +208,6 @@ $ps = [
 <?php
 $documents = $record->payment_scheduling_documents ?? [];
 $totalDocs = count($documents);
-$docIcon = fn(?string $name): string => match(true) {
-    str_contains($name ?? '', '.pdf') => 'bi-file-earmark-pdf',
-    (bool)preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $name ?? '') => 'bi-file-earmark-image',
-    (bool)preg_match('/\.(doc|docx)$/i', $name ?? '') => 'bi-file-earmark-word',
-    (bool)preg_match('/\.(xls|xlsx|csv)$/i', $name ?? '') => 'bi-file-earmark-excel',
-    default => 'bi-file-earmark',
-};
-$docIconColor = fn(?string $name): string => match(true) {
-    str_contains($name ?? '', '.pdf') => '#dc3545',
-    (bool)preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $name ?? '') => '#0dcaf0',
-    (bool)preg_match('/\.(doc|docx)$/i', $name ?? '') => '#0d6efd',
-    (bool)preg_match('/\.(xls|xlsx|csv)$/i', $name ?? '') => 'var(--primary-color)',
-    default => '#aaa',
-};
 ?>
 <div class="card card-primary mb-4">
     <div class="card-header">
@@ -244,8 +230,8 @@ $docIconColor = fn(?string $name): string => match(true) {
                     <div style="border:1px solid var(--border-color);height:100%;display:flex;flex-direction:column;">
                         <!-- Card header: icono + nombre -->
                         <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:#fafafa;display:flex;align-items:center;gap:.5rem;min-width:0;">
-                            <i class="bi <?= $docIcon($att->file_name) ?> flex-shrink-0"
-                               style="color:<?= $docIconColor($att->file_name) ?>;font-size:1.1rem;"></i>
+                            <i class="bi <?= h($this->DocumentIcon->iconClassByName($att->file_name)) ?> flex-shrink-0"
+                               style="color:<?= h($this->DocumentIcon->iconColorByName($att->file_name)) ?>;font-size:1.1rem;"></i>
                             <div style="min-width:0;flex:1;overflow:hidden;">
                                 <span style="font-size:.78rem;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($att->file_name) ?>">
                                     <?= h($att->file_name) ?>

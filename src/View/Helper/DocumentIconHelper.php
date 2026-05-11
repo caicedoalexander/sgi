@@ -77,4 +77,37 @@ class DocumentIconHelper extends Helper
             default => 'badge-outline-dark',
         };
     }
+
+    /**
+     * Resuelve clase de ícono por nombre de archivo (cuando no se tiene el MIME).
+     */
+    public function iconClassByName(?string $name): string
+    {
+        $name = strtolower($name ?? '');
+
+        return match (true) {
+            str_ends_with($name, '.pdf') => 'bi-file-earmark-pdf',
+            (bool)preg_match('/\.(jpg|jpeg|png|gif|webp)$/', $name) => 'bi-file-earmark-image',
+            (bool)preg_match('/\.(doc|docx)$/', $name) => 'bi-file-earmark-word',
+            (bool)preg_match('/\.(xls|xlsx|csv)$/', $name) => 'bi-file-earmark-excel',
+            str_ends_with($name, '.txt') => 'bi-file-earmark-text',
+            default => 'bi-file-earmark',
+        };
+    }
+
+    /**
+     * Color de ícono por nombre de archivo.
+     */
+    public function iconColorByName(?string $name): string
+    {
+        $name = strtolower($name ?? '');
+
+        return match (true) {
+            str_ends_with($name, '.pdf') => '#dc3545',
+            (bool)preg_match('/\.(jpg|jpeg|png|gif|webp)$/', $name) => '#0dcaf0',
+            (bool)preg_match('/\.(doc|docx)$/', $name) => '#0d6efd',
+            (bool)preg_match('/\.(xls|xlsx|csv)$/', $name) => 'var(--primary-color)',
+            default => '#aaa',
+        };
+    }
 }

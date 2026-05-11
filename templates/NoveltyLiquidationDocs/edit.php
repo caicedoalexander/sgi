@@ -48,20 +48,6 @@ $ps = [$statusLabels[$currentStatus] ?? 'Desconocido', $statusBadgeMap[$currentS
 
 // Documents prep
 $showUploadSection = !$isFinal;
-$docIcon = fn(?string $mime): string => match(true) {
-    str_contains($mime ?? '', 'pdf') => 'bi-file-earmark-pdf',
-    str_contains($mime ?? '', 'image') => 'bi-file-earmark-image',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => 'bi-file-earmark-word',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'bi-file-earmark-excel',
-    default => 'bi-file-earmark',
-};
-$docIconColor = fn(?string $mime): string => match(true) {
-    str_contains($mime ?? '', 'pdf') => '#dc3545',
-    str_contains($mime ?? '', 'image') => '#0dcaf0',
-    str_contains($mime ?? '', 'wordprocessingml') || str_contains($mime ?? '', 'msword') => '#0d6efd',
-    str_contains($mime ?? '', 'spreadsheet') || str_contains($mime ?? '', 'excel') => 'var(--primary-color)',
-    default => '#aaa',
-};
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
 $badgeColors = NoveltyPresentation::STATUS_BADGES;
 $noveltyCount = count($doc->employee_novelties);
@@ -423,8 +409,8 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
     <?php if ($liquidationDocument): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi <?= $docIcon($liquidationDocument->mime_type) ?>"
-               style="color:<?= $docIconColor($liquidationDocument->mime_type) ?>;font-size:1rem;"></i>
+            <i class="bi <?= h($this->DocumentIcon->iconClass($liquidationDocument->mime_type)) ?>"
+               style="color:<?= h($this->DocumentIcon->iconColor($liquidationDocument->mime_type)) ?>;font-size:1rem;"></i>
         </div>
         <div style="flex:1;min-width:0;">
             <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
