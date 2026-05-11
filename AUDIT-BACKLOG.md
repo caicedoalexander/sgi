@@ -552,5 +552,5 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `13cdb60` | SG-007 (:focus-visible outline en .sgi-input-group input; a11y WCAG 2.4.7) |
 | `33b9338` | SG-005 (eliminado fallback de getRawAmount/setAmount; precondición documentada, opción A) |
 | `0df227c` | SG-003 (dead code de idempotency-key client-side eliminado; server-side intacto) |
-| _pendiente_ | SG-002 (<template> parsing en modal AJAX loader; defense in depth) |
+| `6f5a5f9` | SG-002 (<template> parsing en modal AJAX loader; defense in depth) |
 | --------  | SG-004 (Por decisión, nos quedamos con Bootstrap Icons)
