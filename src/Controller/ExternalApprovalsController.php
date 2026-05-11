@@ -107,7 +107,7 @@ class ExternalApprovalsController extends AppController
         $this->viewBuilder()->setLayout('external');
 
         $action = $this->request->getData('action');
-        if (!in_array($action, ['approve', 'reject'])) {
+        if (!in_array($action, ['approve', 'reject'], true)) {
             $this->Flash->error('Acción no válida.');
 
             return $this->redirect(['action' => 'review', $token]);

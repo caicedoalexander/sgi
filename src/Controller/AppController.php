@@ -163,7 +163,7 @@ class AppController extends Controller
         }
 
         // Skip login/logout actions
-        if ($controllerName === 'Users' && in_array($action, ['login', 'logout'])) {
+        if ($controllerName === 'Users' && in_array($action, ['login', 'logout'], true)) {
             return;
         }
 
