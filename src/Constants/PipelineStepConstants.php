@@ -18,6 +18,7 @@ final class PipelineStepConstants
     public const PIPELINE_REFUNDS = 'refunds';
     public const PIPELINE_PETTY_CASH = 'petty_cash';
     public const PIPELINE_LEGALIZATIONS = 'legalizations';
+    public const PIPELINE_LIQUIDATION_DOCS = 'liquidation_docs';
 
     public const PIPELINE_LABELS = [
         self::PIPELINE_INVOICES => 'Facturas',
@@ -26,6 +27,7 @@ final class PipelineStepConstants
         self::PIPELINE_REFUNDS => 'Reintegros',
         self::PIPELINE_PETTY_CASH => 'Caja menor',
         self::PIPELINE_LEGALIZATIONS => 'Legalizaciones',
+        self::PIPELINE_LIQUIDATION_DOCS => 'Documentos de liquidación',
     ];
 
     /**
@@ -80,6 +82,14 @@ final class PipelineStepConstants
             AdvanceConstants::STATUS_AUTORIZACION_PAGO,
             AdvanceConstants::STATUS_VERIFICACION_PAGO,
         ],
+        self::PIPELINE_LIQUIDATION_DOCS => [
+            NoveltyConstants::STATUS_CONTABILIDAD,
+            NoveltyConstants::STATUS_REVISION_FIRMAS,
+            NoveltyConstants::STATUS_GDP,
+            NoveltyConstants::STATUS_TESORERIA,
+            NoveltyConstants::STATUS_AUTORIZACION_PAGO,
+            NoveltyConstants::STATUS_VERIFICACION_PAGO,
+        ],
     ];
 
     /**
@@ -130,6 +140,14 @@ final class PipelineStepConstants
             AdvanceConstants::STATUS_TESORERIA => 'Tesorería',
             AdvanceConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
             AdvanceConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
+        ],
+        self::PIPELINE_LIQUIDATION_DOCS => [
+            NoveltyConstants::STATUS_CONTABILIDAD => 'Contabilidad',
+            NoveltyConstants::STATUS_REVISION_FIRMAS => 'Revisión y Firmas',
+            NoveltyConstants::STATUS_GDP => 'GDP',
+            NoveltyConstants::STATUS_TESORERIA => 'Tesorería',
+            NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
+            NoveltyConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
         ],
     ];
 
