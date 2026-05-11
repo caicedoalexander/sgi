@@ -11,8 +11,8 @@ use App\ViewModel\Support\PipelineEditFlags;
 use App\ViewModel\Support\SubmitButton;
 
 /**
- * Datos pre-calculados que el template `templates/Refunds/edit.php` necesita.
- * Construido por `RefundsController::_buildEditViewModel()` y pasado como `$viewModel`.
+ * Datos inmutables de vista para RefundsController::edit().
+ * El controller construye este objeto; la vista accede via get_object_vars().
  */
 final class RefundEditViewModel
 {
@@ -35,7 +35,8 @@ final class RefundEditViewModel
     public readonly bool $canEditTreasury;
     public readonly bool $canSave;
     public readonly bool $canAdvance;
-    public readonly string $submitButtonLabel;
+    /** HTML pre-renderizado (ícono + texto). El template lo imprime raw. */
+    public readonly string $submitButtonHtml;
     public readonly string $submitButtonClass;
     public readonly int $invoiceCount;
 
@@ -111,7 +112,7 @@ final class RefundEditViewModel
         // Botón de submit (mismo patrón que Invoices/edit y PettyCash/edit).
         $this->canAdvance        = $nextStatus !== null;
         $this->submitButtonClass = 'btn btn-primary';
-        $this->submitButtonLabel = SubmitButton::decide(
+        $this->submitButtonHtml = SubmitButton::decide(
             canAdvance: $this->canAdvance,
             advanceErrors: $advanceErrors,
             nextStatusLabel: $nextStatus !== null ? ($this->statusLabels[$nextStatus] ?? $nextStatus) : null,

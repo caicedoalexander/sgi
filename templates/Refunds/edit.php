@@ -38,7 +38,7 @@ $canEditAccounting      = $viewModel->canEditAccounting;
 $canEditTreasury        = $viewModel->canEditTreasury;
 $canSave                = $viewModel->canSave;
 $canAdvance             = $viewModel->canAdvance;
-$btnLabel               = $viewModel->submitButtonLabel;
+$btnLabel               = $viewModel->submitButtonHtml;
 $btnClass               = $viewModel->submitButtonClass;
 $invoiceCount           = $viewModel->invoiceCount;
 ?>

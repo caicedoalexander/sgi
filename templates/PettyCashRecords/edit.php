@@ -37,7 +37,7 @@
  * @var bool $canEditAccounting
  * @var bool $canEditTreasury
  * @var bool $canSave
- * @var string $submitButtonLabel
+ * @var string $submitButtonHtml
  * @var string $submitButtonClass
  * @var int $invoiceCount
  *
@@ -55,7 +55,7 @@ $this->assign('title', $pageTitle);
 
 // Aliases retrocompatibles con el markup heredado.
 $statusBadge = $statusBadgeMap;
-$btnLabel    = $submitButtonLabel;
+$btnLabel    = $submitButtonHtml;
 $btnClass    = $submitButtonClass;
 ?>
 <?= $this->element('cdn_autonumeric') ?>

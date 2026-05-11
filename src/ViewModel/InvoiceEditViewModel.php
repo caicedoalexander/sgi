@@ -42,7 +42,8 @@ final class InvoiceEditViewModel
     /** @var string[] Render order: non-collapsible editable → collapsible editable → read-only. */
     public readonly array $renderOrder;
 
-    public readonly string $submitButtonLabel;
+    /** HTML pre-renderizado (ícono + texto). El template lo imprime raw. */
+    public readonly string $submitButtonHtml;
     public readonly string $submitButtonClass;
 
     public function __construct(
@@ -163,7 +164,7 @@ final class InvoiceEditViewModel
 
         // ── Botón de submit ──────────────────────────────────────────────
         $this->submitButtonClass = 'btn btn-primary';
-        $this->submitButtonLabel = SubmitButton::decide(
+        $this->submitButtonHtml = SubmitButton::decide(
             canAdvance: !$isRejected && $canAdvance,
             advanceErrors: $advanceErrors,
             nextStatusLabel: $nextStatus !== null ? ($pipelineLabels[$nextStatus] ?? $nextStatus) : null,

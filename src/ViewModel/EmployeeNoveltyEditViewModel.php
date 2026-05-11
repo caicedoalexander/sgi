@@ -9,6 +9,7 @@ use App\View\Presentation\NoveltyPresentation;
 
 /**
  * Datos inmutables de vista para EmployeeNoveltiesController::edit().
+ * El controller construye este objeto; la vista accede via get_object_vars().
  */
 final class EmployeeNoveltyEditViewModel
 {

@@ -24,7 +24,7 @@ $isReadOnlySection      = fn(string $s): bool      => $viewModel->isReadOnlySect
 $isCollapsibleSection   = fn(string $s): bool      => $viewModel->isCollapsibleSection($s);
 
 $ps       = $viewModel->currentStatusBadge;
-$btnLabel = $viewModel->submitButtonLabel;
+$btnLabel = $viewModel->submitButtonHtml;
 $btnClass = $viewModel->submitButtonClass;
 
 // ── Ledger lookup arrays (ResultSet → array for bracket access) ──

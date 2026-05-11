@@ -35,7 +35,8 @@ final class PettyCashEditViewModel
     public readonly bool $canEditTreasury;
     public readonly bool $canSave;
     public readonly bool $canAdvance;
-    public readonly string $submitButtonLabel;
+    /** HTML pre-renderizado (ícono + texto). El template lo imprime raw. */
+    public readonly string $submitButtonHtml;
     public readonly string $submitButtonClass;
     public readonly int $invoiceCount;
 
@@ -97,7 +98,7 @@ final class PettyCashEditViewModel
         // Botón de submit (mismo patrón que Invoices/edit y Refunds/edit).
         $this->canAdvance        = $nextStatus !== null;
         $this->submitButtonClass = 'btn btn-primary';
-        $this->submitButtonLabel = SubmitButton::decide(
+        $this->submitButtonHtml = SubmitButton::decide(
             canAdvance: $this->canAdvance,
             advanceErrors: $advanceErrors,
             nextStatusLabel: $nextStatus !== null ? ($this->statusLabels[$nextStatus] ?? $nextStatus) : null,
