@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Solo quedan las 10 Sugerencias (SG-001 a SG-010) discrecionales. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 9 Sugerencias discrecionales (SG-001 a SG-007, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -437,13 +437,36 @@ Y consumirlo:
 
 ---
 
-### SG-008 — `SGI_MAX_UPLOAD_BYTES` duplicado
+### ~~SG-008~~ ✅ — `MAX_UPLOAD_BYTES` consolidado en `UploadConstants`  (RESUELTO)
 
-**Ubicación:** `webroot/js/sgi-common.js:5-6`, `webroot/js/sgi-document-uploader.js:279`
+**Aplicado:** una sola fuente de verdad para tamaño máximo de upload en todo el SGI.
 
-**Problema:** el valor `20 * 1024 * 1024` aparece dos veces.
+**Nueva constante:** `src/Constants/UploadConstants.php`
+```php
+final class UploadConstants {
+    public const MAX_BYTES = 20 * 1024 * 1024;
+    public const MAX_BYTES_LABEL = '20 MB';
+}
+```
 
-**Resolver:** ver MN-014 — exponer desde PHP en `<meta>` y leerlo una sola vez en `sgi-common.js`. `sgi-document-uploader.js` consume `window.SGI_MAX_UPLOAD_BYTES`.
+**Refactorizaciones aplicadas (11 sitios):**
+
+| Sitio | Cambio |
+|---|---|
+| `src/Service/Trait/DocumentUploadTrait.php` | const privada `MAX_DOC_SIZE` eliminada → `UploadConstants::MAX_BYTES`. Error message también parameterizado. |
+| `src/Service/EmployeeDocumentService.php` | idem |
+| `templates/layout/default.php` | `<meta sgi-max-upload-bytes content="<?= UploadConstants::MAX_BYTES ?>">` y label idem |
+| `templates/PettyCashRecords/edit.php` | "Máximo 20 MB" → `<?= h(UploadConstants::MAX_BYTES_LABEL) ?>` |
+| `templates/Employees/view.php` | idem |
+| `templates/element/invoice_edit/upload_doc_modal.php` | idem |
+| `templates/EmployeeNovelties/edit.php` | idem |
+| `templates/Refunds/edit.php` | idem |
+| `templates/NoveltyLiquidationDocs/edit.php` | idem |
+| `templates/PaymentSchedulings/edit.php` | idem |
+
+**Verificación:** `grep -rn "20 \\* 1024 \\* 1024\\|MAX_DOC_SIZE\\|Máximo 20 MB\\|20971520" src/ templates/` excluyendo `UploadConstants` arroja **0 resultados**. La duplicación queda eliminada.
+
+**Mantenimiento:** cambiar el límite ahora requiere editar SOLO `UploadConstants.php`. Si nginx o php.ini tienen un límite menor, ese gana — la constante representa el límite aplicacional. Mantener sincronizado con `client_max_body_size` (nginx) y `upload_max_filesize`/`post_max_size` (php.ini) — documentado en el doc-comment de la clase.
 
 ---
 
@@ -486,12 +509,14 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
-| 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
+| 🟢 SG-001 a SG-007, SG-009, SG-010 | Mejoras incrementales (SG-008 cerrada) | A discreción |
 
-**Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
+**Estado:** todos los Críticos (3), Mayores (12), Minores (16) y la primera Sugerencia (SG-008) están cerrados. Quedan 9 Sugerencias discrecionales.
 
-**Próximo paso recomendado:** todos los Minores están cerrados. Las 10 Sugerencias (SG-001 a SG-010) son polish discrecional sin urgencia. Si se decide continuar, **SG-008** (consolidar `MAX_UPLOAD_BYTES` en una constante PHP única) es la más práctica porque cierra la duplicación residual que MN-014 dejó documentada.
+**Próximo paso recomendado:** las 9 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
+- **SG-001** — Preload de Inter font + WOFF2 (mejora real de performance percibido).
+- **SG-006** — Extraer FullCalendar a `element/fullcalendar_assets.php` (cierra duplicación entre EmployeeNovelties/index y EmployeeNovelties/active).
+- **SG-010** — Decisión de producto sobre i18n (`es_CO` único vs preparar `__()`).
 
 ## Historial de aplicación
 
@@ -521,3 +546,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `6ea0dd2` | MN-002/003/004 (sección "Excepciones permitidas" en design.md + comments cross-file) |
 | `40e5b1d` | MN-005 (inventario completo de 25 !important; comentarios inline a las 6 sin doc; header de flatpickr-overrides expandido) |
 | `8e35bf0` | MN-010 (split de default.php 662→183 LOC en 4 elements sidebar/{financiero,rrhh,catalogos,administracion}.php) |
+| _pendiente_ | SG-008 (UploadConstants nuevo + consolidación en 2 services + meta + 7 templates; 0 duplicados residuales) |

@@ -3,14 +3,13 @@ declare(strict_types=1);
 
 namespace App\Service\Trait;
 
+use App\Constants\UploadConstants;
 use Cake\ORM\TableRegistry;
 use finfo;
 use Laminas\Diactoros\UploadedFile;
 
 trait DocumentUploadTrait
 {
-    private const MAX_DOC_SIZE = 20 * 1024 * 1024; // 20 MB
-
     /**
      * Mapa MIME real (validado con finfo) → extensión que se grabará en disco.
      * La extensión se deriva de aquí, NUNCA del nombre enviado por el cliente:
@@ -51,8 +50,8 @@ trait DocumentUploadTrait
             return 'No se recibió ningún archivo válido.';
         }
 
-        if ($file->getSize() > self::MAX_DOC_SIZE) {
-            return 'El archivo excede el tamaño máximo de 20 MB.';
+        if ($file->getSize() > UploadConstants::MAX_BYTES) {
+            return 'El archivo excede el tamaño máximo de ' . UploadConstants::MAX_BYTES_LABEL . '.';
         }
 
         $uploadDir = WWW_ROOT . 'uploads' . DS . $subDir;

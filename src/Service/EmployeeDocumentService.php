@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\UploadConstants;
 use App\Model\Entity\EmployeeDocument;
 use App\Model\Entity\EmployeeFolder;
 use Cake\Datasource\Exception\RecordNotFoundException;
@@ -13,7 +14,6 @@ use Throwable;
 
 class EmployeeDocumentService
 {
-    private const MAX_DOC_SIZE = 20 * 1024 * 1024; // 20 MB
     private const MAX_PROFILE_SIZE = 2 * 1024 * 1024; // 2 MB
 
     /**
@@ -138,8 +138,8 @@ class EmployeeDocumentService
             return ServiceResult::fail('No se recibió ningún archivo válido.');
         }
 
-        if ($file->getSize() > self::MAX_DOC_SIZE) {
-            return ServiceResult::fail('El archivo excede el tamaño máximo de 20 MB.');
+        if ($file->getSize() > UploadConstants::MAX_BYTES) {
+            return ServiceResult::fail('El archivo excede el tamaño máximo de ' . UploadConstants::MAX_BYTES_LABEL . '.');
         }
 
         $originalName = $file->getClientFilename() ?? '';

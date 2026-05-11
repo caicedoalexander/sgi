@@ -447,7 +447,7 @@ $totalDocs = count($documents);
                         <label class="form-label">Archivo</label>
                         <input type="file" name="file" class="form-control" required
                                accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
-                        <div class="form-text">Máximo 20 MB — PDF, imágenes, Word o Excel.</div>
+                        <div class="form-text">Máximo <?= h(\App\Constants\UploadConstants::MAX_BYTES_LABEL) ?> — PDF, imágenes, Word o Excel.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
