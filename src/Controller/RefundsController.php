@@ -114,16 +114,14 @@ class RefundsController extends AppController
      */
     public function index(): void
     {
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        $visibleStatuses = $this->refundService->getVisibleStatuses($roleName);
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        $visibleStatuses = $this->refundService->getVisibleStatuses($roleId);
 
         $query = $this->Refunds->find()
             ->contain(['CreatedByUsers', 'BeneficiaryEmployees', 'BeneficiaryProviders', 'Invoices'])
             ->orderBy(['Refunds.created' => 'DESC']);
 
-        if (!empty($visibleStatuses)) {
-            $query->where(['Refunds.status IN' => $visibleStatuses]);
-        }
+        $query->where($this->_visibleStatusConditions('Refunds.status', $visibleStatuses));
 
         $this->_applyListFilters($query);
 
