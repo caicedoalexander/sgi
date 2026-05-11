@@ -72,19 +72,7 @@ final class NoveltyLiquidationDocEditViewModel
         $this->isFinal       = $this->isRejected || $this->isPaid;
         $this->currentStatus = $doc->pipeline_status;
 
-        // Badges del header del edit (NO consolidar con NoveltyPresentation;
-        // los colores son distintos a los de la novedad individual).
-        $this->statusBadgeMap = [
-            'rrhh'              => 'bg-secondary',
-            'contabilidad'      => 'bg-primary',
-            'aprobacion'        => 'bg-warning text-dark',
-            'revision_firmas'   => 'bg-warning text-dark',
-            'gdp'               => 'bg-dark',
-            'tesoreria'         => 'bg-info',
-            'autorizacion_pago' => 'bg-info',
-            'pagada'            => 'bg-success',
-            'rechazada'         => 'bg-danger',
-        ];
+        $this->statusBadgeMap = NoveltyPresentation::STATUS_BADGES;
         $this->currentStatusBadge = [
             $this->statusLabels[$this->currentStatus]   ?? 'Desconocido',
             $this->statusBadgeMap[$this->currentStatus] ?? 'bg-dark',

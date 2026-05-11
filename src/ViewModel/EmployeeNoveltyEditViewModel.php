@@ -72,19 +72,7 @@ final class EmployeeNoveltyEditViewModel
             ? $visibleSections
             : ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'];
 
-        // Badges del header del edit (específicos, NO consolidar con
-        // NoveltyPresentation::STATUS_BADGES — los colores difieren).
-        $this->statusBadgeMap = [
-            'registro'        => 'bg-secondary',
-            'aprobacion'      => 'bg-warning text-dark',
-            'rrhh'            => 'bg-info text-dark',
-            'contabilidad'    => 'bg-primary',
-            'revision_firmas' => 'bg-warning text-dark',
-            'gdp'             => 'bg-dark',
-            'tesoreria'       => 'bg-info',
-            'pagada'          => 'bg-success',
-            'rechazada'       => 'bg-danger',
-        ];
+        $this->statusBadgeMap = NoveltyPresentation::STATUS_BADGES;
         $this->currentStatusBadge = [
             $this->statusLabels[$this->currentStatus]   ?? 'Desconocido',
             $this->statusBadgeMap[$this->currentStatus] ?? 'bg-dark',

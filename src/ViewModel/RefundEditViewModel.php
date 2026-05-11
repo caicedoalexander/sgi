@@ -82,9 +82,7 @@ final class RefundEditViewModel
         $this->pageTitle    = 'Editar Reintegro ' . ($record->code ?? ('#' . $record->id));
         $this->statusLabels = RefundConstants::STATUS_LABELS;
 
-        // Badges del header del edit viven en RefundPresentation::EDIT_HEADER_BADGES.
-        // Distintos a STATUS_BADGES (énfasis visual del contexto edit) — audit CR-203.
-        $this->statusBadgeMap = RefundPresentation::EDIT_HEADER_BADGES;
+        $this->statusBadgeMap = RefundPresentation::STATUS_BADGES;
         $this->currentStatusBadge = [
             $this->statusLabels[$currentStatus]  ?? 'Desconocido',
             $this->statusBadgeMap[$currentStatus] ?? 'bg-dark',

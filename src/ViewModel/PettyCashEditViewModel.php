@@ -68,9 +68,7 @@ final class PettyCashEditViewModel
         $this->pageTitle    = 'Editar Caja Menor ' . ($record->code ?? ('#' . $record->id));
         $this->statusLabels = PettyCashConstants::STATUS_LABELS;
 
-        // Badges del header del edit viven en PettyCashPresentation::EDIT_HEADER_BADGES.
-        // Distintos a STATUS_BADGES (énfasis visual del contexto edit) — audit CR-203.
-        $this->statusBadgeMap = PettyCashPresentation::EDIT_HEADER_BADGES;
+        $this->statusBadgeMap = PettyCashPresentation::STATUS_BADGES;
         $this->currentStatusBadge = [
             $this->statusLabels[$currentStatus]  ?? 'Desconocido',
             $this->statusBadgeMap[$currentStatus] ?? 'bg-dark',

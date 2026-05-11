@@ -114,11 +114,9 @@ final class InvoiceEditViewModel
         $this->paymentStatusOptions   = PaymentOptions::paymentStatus();
 
         // ── Badge del estado actual del pipeline ─────────────────────────
-        // Los badges del header del edit viven en InvoicePresentation::EDIT_HEADER_BADGES.
-        // Son distintos a STATUS_BADGES (énfasis visual del contexto edit) — audit CR-203.
         $this->currentStatusBadge = [
             $pipelineLabels[$currentStatus] ?? 'Desconocido',
-            InvoicePresentation::EDIT_HEADER_BADGES[$currentStatus] ?? 'bg-dark',
+            InvoicePresentation::STATUS_BADGES[$currentStatus] ?? 'bg-dark',
         ];
 
         // ── Render order de las secciones del formulario ─────────────────
