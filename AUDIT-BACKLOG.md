@@ -499,4 +499,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `d316440` | MN-015 (h() al final en 4 templates; +escape defensivo de $statusLabels) |
 | `39752d0` | MN-016 (documentar contrato inline+ResizeObserver; falso positivo del audit) |
 | `9acafb1` | MN-014 (meta tags sgi-max-upload-* + comments cross-file; SG-008 sigue abierto) |
-| _pendiente_ | MN-002/003/004 (sección "Excepciones permitidas" en design.md + comments cross-file) |
+| `6ea0dd2` | MN-002/003/004 (sección "Excepciones permitidas" en design.md + comments cross-file) |
