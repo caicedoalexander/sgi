@@ -36,7 +36,11 @@
    ============================================= */
 @font-face {
     font-family: 'Inter';
-    src: url('../fonts/Inter-Variable.ttf') format('truetype');
+    /* WOFF2 primero (349 KB, ~60% menor que TTF). El TTF queda como fallback para
+       browsers muy antiguos sin soporte WOFF2 (cualquier cosa pre-2014). El preload
+       en default.php apunta solo a WOFF2 — los modernos nunca tocan el TTF. */
+    src: url('../fonts/Inter-Variable.woff2') format('woff2'),
+         url('../fonts/Inter-Variable.ttf') format('truetype');
     font-weight: 100 900;
     font-style: normal;
     font-display: swap;

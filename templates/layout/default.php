@@ -28,6 +28,12 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= $this->fetch('title') ?> | SGI · COPCSA</title>
     <link rel="icon" type="image/png" href="<?= $this->Url->build('/img/copcsa.png') ?>">
+    <?php /*
+        Preload de Inter Variable WOFF2 — la fuente del @font-face en styles.css.
+        as="font" + crossorigin son requeridos por la spec para evitar doble fetch.
+        El WOFF2 pesa 349 KB (60% menos que el TTF de 875 KB).
+    */ ?>
+    <link rel="preload" href="<?= $this->Url->build('/fonts/Inter-Variable.woff2') ?>" as="font" type="font/woff2" crossorigin>
     <!-- Bootstrap primero, luego nuestros estilos para poder sobreescribir -->
     <link href="<?= $this->Url->build('/vendor/bootstrap/bootstrap.min.css') ?>" rel="stylesheet">
     <link href="<?= $this->Url->build('/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>" rel="stylesheet">

@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-006** (FullCalendar assets centralizados), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 8 Sugerencias discrecionales (SG-001 a SG-005, SG-007, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60% peso de fuente), **SG-006** (FullCalendar assets centralizados), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 7 Sugerencias discrecionales (SG-002 a SG-005, SG-007, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -313,26 +313,26 @@ Cada section element recibe `$viewModel` + closure `$canEdit` + las opciones esp
 
 ## 🟢 Sugerencias (10)
 
-### SG-001 — Preload de Inter font + WOFF2
+### ~~SG-001~~ ✅ — Preload de Inter font + WOFF2  (RESUELTO)
 
-**Ubicación:** `webroot/css/styles.css:18-24`, `templates/layout/default.php` (head)
+**Aplicado:**
 
-**Resolver:**
-1. Convertir `webroot/fonts/Inter-Variable.ttf` a WOFF2 (`fonttools` o `woff2_compress`). WOFF2 ahorra ~30%.
-2. En `default.php` head:
+1. **WOFF2 generado** vía `python -m fontTools` (fonttools + brotli): `webroot/fonts/Inter-Variable.woff2` (349 KB vs 875 KB del TTF, **−60%**, mejor que la estimación del audit de 30%).
+
+2. **Preload en `templates/layout/default.php`** (head, antes del CSS):
    ```html
    <link rel="preload" href="/fonts/Inter-Variable.woff2" as="font" type="font/woff2" crossorigin>
    ```
-3. Actualizar `@font-face`:
+   El `crossorigin` es requerido por la spec aunque sea same-origin (los preloads de fuente exigen credentialed mode coincidente con el `@font-face`, que por default es anonymous).
+
+3. **`@font-face` en `webroot/css/styles.css`** actualizado para preferir WOFF2 con TTF como fallback:
    ```css
-   @font-face {
-       font-family: 'Inter';
-       src: url('../fonts/Inter-Variable.woff2') format('woff2'),
-            url('../fonts/Inter-Variable.ttf')   format('truetype');
-       font-display: optional;  /* o swap si se prefiere */
-       font-weight: 100 900;
-   }
+   src: url('../fonts/Inter-Variable.woff2') format('woff2'),
+        url('../fonts/Inter-Variable.ttf') format('truetype');
    ```
+   `font-display: swap` se mantiene (decisión previa del proyecto; muestra system-ui durante el load y reemplaza al cargar — `optional` que sugería el audit eliminaría el swap pero también cancelaría la carga si tarda >100ms, perdiendo Inter en redes lentas).
+
+**Impacto:** los browsers modernos ahora descargan 349 KB en lugar de 875 KB (ahorro de 526 KB en el primer paint). El TTF se mantiene en disco solo como fallback para browsers pre-2014 — no se descarga en uso normal.
 
 ---
 
@@ -498,14 +498,14 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟢 SG-001 a SG-005, SG-007, SG-009, SG-010 | Mejoras incrementales (SG-006, SG-008 cerradas) | A discreción |
+| 🟢 SG-002 a SG-005, SG-007, SG-009, SG-010 | Mejoras incrementales (SG-001, SG-006, SG-008 cerradas) | A discreción |
 
 **Estado:** todos los Críticos (3), Mayores (12), Minores (16) y la primera Sugerencia (SG-008) están cerrados. Quedan 9 Sugerencias discrecionales.
 
-**Próximo paso recomendado:** las 8 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
-- **SG-001** — Preload de Inter font + WOFF2 (mejora real de performance percibido).
+**Próximo paso recomendado:** las 7 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
+- **SG-007** — Verificar focus-visible en `.sgi-input-group` para a11y de teclado (10 min).
+- **SG-005** — Documentar fallback de `getRawAmount()` en `sgi-payment.js` o eliminarlo (15 min).
 - **SG-010** — Decisión de producto sobre i18n (`es_CO` único vs preparar `__()`).
-- **SG-007** — Verificar focus-visible en `.sgi-input-group` para a11y de teclado.
 
 ## Historial de aplicación
 
@@ -537,3 +537,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `8e35bf0` | MN-010 (split de default.php 662→183 LOC en 4 elements sidebar/{financiero,rrhh,catalogos,administracion}.php) |
 | `00a5f62` | SG-008 (UploadConstants nuevo + consolidación en 2 services + meta + 7 templates; 0 duplicados residuales) |
 | `4d74008` | SG-006 (element/fullcalendar_assets.php; bloque de 4 líneas centralizado entre EmployeeNovelties/{index,active}) |
+| _pendiente_ | SG-001 (Inter-Variable.woff2 generado −60%; preload tag + @font-face dual format) |
