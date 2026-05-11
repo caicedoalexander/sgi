@@ -163,11 +163,11 @@ final class InvoiceEditViewModel
 
         // ── Botón de submit ──────────────────────────────────────────────
         $this->submitButtonClass = 'btn btn-primary';
-        if (!$isRejected && $canAdvance && empty($advanceErrors) && $nextStatus !== null) {
-            $this->submitButtonLabel = SubmitButton::forAdvance($pipelineLabels[$nextStatus] ?? $nextStatus);
-        } else {
-            $this->submitButtonLabel = SubmitButton::forSave();
-        }
+        $this->submitButtonLabel = SubmitButton::decide(
+            canAdvance: !$isRejected && $canAdvance,
+            advanceErrors: $advanceErrors,
+            nextStatusLabel: $nextStatus !== null ? ($pipelineLabels[$nextStatus] ?? $nextStatus) : null,
+        );
     }
 
     public function isReadOnlySection(string $section): bool

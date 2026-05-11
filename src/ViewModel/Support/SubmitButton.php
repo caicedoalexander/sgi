@@ -31,4 +31,22 @@ final class SubmitButton
     {
         return '<i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Cambios';
     }
+
+    /**
+     * Decide cuál label mostrar según las condiciones canónicas del pipeline.
+     * Avanza si: $canAdvance && sin errores && hay $nextStatusLabel. Si no, guarda.
+     * El caller AND-ea sus propios flags adicionales (p. ej. !$isRejected) en $canAdvance.
+     *
+     * @param array<int,string> $advanceErrors
+     */
+    public static function decide(
+        bool $canAdvance,
+        array $advanceErrors,
+        ?string $nextStatusLabel,
+    ): string {
+        if ($canAdvance && empty($advanceErrors) && $nextStatusLabel !== null) {
+            return self::forAdvance($nextStatusLabel);
+        }
+        return self::forSave();
+    }
 }

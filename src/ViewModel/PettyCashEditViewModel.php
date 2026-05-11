@@ -7,6 +7,7 @@ use App\Constants\PettyCashConstants;
 use App\Model\Entity\PettyCashRecord;
 use App\View\Presentation\PettyCashPresentation;
 use App\ViewModel\Support\PaymentOptions;
+use App\ViewModel\Support\PipelineEditFlags;
 use App\ViewModel\Support\SubmitButton;
 
 /**
@@ -77,25 +78,29 @@ final class PettyCashEditViewModel
         $this->readyForPaymentOptions = PaymentOptions::readyForPayment();
         $this->paymentStatusOptions   = PaymentOptions::paymentStatus();
 
-        // Secciones visibles por estado.
-        $idx = array_search($record->status, PettyCashConstants::STATUSES, true);
-        $this->statusIndex    = $idx === false ? 0 : (int)$idx;
-        $this->showAccounting = $this->statusIndex >= 1; // contabilidad+
-        $this->showTreasury   = $this->statusIndex >= 2; // tesoreria+
-
-        // Permisos de edición por estado.
-        $this->canEditAccounting = $record->isContabilidad();
-        $this->canEditTreasury   = $record->isTesoreria();
-        $this->canSave           = $record->isAgrupacion() || $record->isContabilidad() || $record->isTesoreria();
+        // Visibilidad y permisos de edición por estado (lógica compartida con Refunds/edit).
+        $flags = PipelineEditFlags::fromRecord(
+            currentStatus: $record->status,
+            statuses: PettyCashConstants::STATUSES,
+            isAgrupacion: $record->isAgrupacion(),
+            isContabilidad: $record->isContabilidad(),
+            isTesoreria: $record->isTesoreria(),
+        );
+        $this->statusIndex       = $flags->statusIndex;
+        $this->showAccounting    = $flags->showAccounting;
+        $this->showTreasury      = $flags->showTreasury;
+        $this->canEditAccounting = $flags->canEditAccounting;
+        $this->canEditTreasury   = $flags->canEditTreasury;
+        $this->canSave           = $flags->canSave;
         $this->invoiceCount      = count($record->invoices ?? []);
 
         // Botón de submit (mismo patrón que Invoices/edit y Refunds/edit).
         $this->canAdvance        = $nextStatus !== null;
         $this->submitButtonClass = 'btn btn-primary';
-        if ($this->canAdvance && empty($advanceErrors) && $nextStatus !== null) {
-            $this->submitButtonLabel = SubmitButton::forAdvance($this->statusLabels[$nextStatus] ?? $nextStatus);
-        } else {
-            $this->submitButtonLabel = SubmitButton::forSave();
-        }
+        $this->submitButtonLabel = SubmitButton::decide(
+            canAdvance: $this->canAdvance,
+            advanceErrors: $advanceErrors,
+            nextStatusLabel: $nextStatus !== null ? ($this->statusLabels[$nextStatus] ?? $nextStatus) : null,
+        );
     }
 }
