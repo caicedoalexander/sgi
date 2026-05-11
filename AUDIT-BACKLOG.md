@@ -514,4 +514,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `e355f63` | MN-011 (aria-hidden="true" en avatares con iniciales; nombre adyacente ya anuncia) |
 | `d316440` | MN-015 (h() al final en 4 templates; +escape defensivo de $statusLabels) |
 | `39752d0` | MN-016 (documentar contrato inline+ResizeObserver; falso positivo del audit) |
-| _pendiente_ | MN-014 (meta tags sgi-max-upload-* + comments cross-file; SG-008 sigue abierto) |
+| `9acafb1` | MN-014 (meta tags sgi-max-upload-* + comments cross-file; SG-008 sigue abierto) |
