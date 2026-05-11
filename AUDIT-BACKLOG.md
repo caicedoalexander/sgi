@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **15 Minores** (MN-001 a MN-009, MN-011 a MN-016) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Solo quedan las 10 Sugerencias (SG-001 a SG-010) discrecionales. Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -95,7 +95,7 @@ No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrone
 
 ---
 
-## 🟡 Minores (1)
+## 🟡 Minores (0) — ¡todos cerrados!
 
 ### ~~MN-001~~ ✅ — `box-shadow` en checkbox toggle  (RESUELTO en `fa16845`, junto a MJ-010)
 
@@ -212,19 +212,22 @@ Cada section element recibe `$viewModel` + closure `$canEdit` + las opciones esp
 
 ---
 
-### MN-010 — `default.php` 644 LOC con permission logic inline
+### ~~MN-010~~ ✅ — `default.php` split por secciones del sidebar  (RESUELTO)
 
-**Ubicación:** `templates/layout/default.php`
+**Aplicado:** las 4 secciones del sidebar nav se extrajeron a elements en `templates/element/sidebar/`. `default.php` pasa de **662 → 183 LOC** (−479, −72%).
 
-**Problema:** sidebar nav con badges concatenados inline en cada item.
+| Element | LOC | Contiene |
+|---|---:|---|
+| `sidebar/financiero.php` | 233 | Facturas (con submenús: Mis, Rechazadas, Vencidas, Programación), Caja Menor (Mis, Pendientes), Reintegros (Mis, Pendientes), Anticipos (Mis, Pendientes), Registro de Pagos, D. de Liquidación (Mis, Rechazadas) |
+| `sidebar/rrhh.php` | 81 | Empleados, Todas las Novedades (con submenús: Mis, Rechazadas, Vigentes) |
+| `sidebar/catalogos.php` | 145 | Aprobadores, Proveedores, Entidades Bancarias, Centros de Operación/Costos, Tipos de Gasto, Cargos, Estados Civiles, Niveles Educativos, Carpetas, Tipos de Novedad, Org. Temporales, Plantillas Documento |
+| `sidebar/administracion.php` | 56 | Usuarios, Roles, Configuración, Logs de correo |
 
-**Resolver:** extraer por sección:
-- `element/sidebar/financiero.php` (facturas, anticipos, reintegros, caja menor, programación pagos, registro pagos)
-- `element/sidebar/rrhh.php` (empleados, novedades, calendario, doc. liquidación)
-- `element/sidebar/catalogos.php` (cost centers, expense types, operation centers, banking entities, etc.)
-- `element/sidebar/administracion.php` (users, roles, system settings, email logs)
+**Patrón:** cada element recibe las closures `$canView` y `$navLink` vía element data; los counters (`$sidebarCounters`, `$rejectedInvoicesCount`, etc.) están disponibles automáticamente como view vars (settean desde `AppController::_setSidebarCounters`). El item "Inicio" (Dashboard) sigue en `default.php` porque es siempre visible y no pertenece a una sección.
 
-El helper `$navLink` cierre actual está OK, solo el markup repetitivo se beneficia del split.
+**Decisión de diseño:** cada element hace `return` temprano si su `*Items` filtrado está vacío — evita renderizar el `<li class="nav-heading">` huérfano cuando el usuario no tiene permisos para ningún ítem de la sección.
+
+**Sin cambios funcionales** — el HTML renderizado es idéntico al anterior.
 
 ---
 
@@ -483,15 +486,12 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟡 MN-010 | Refactor estructural de `default.php` (644 LOC → elements) | 1-2h |
+| 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
 **Total estimado:** ~1 día de trabajo para cerrar todos los Minores restantes; las sugerencias son a discreción.
 
-**Próximo paso recomendado:**
-1. **MN-010** (1-2h) — split de `default.php` (644 LOC) en elements por sección del sidebar.
-
-Tras MN-010 todos los Minores quedan cerrados; solo quedarían las 10 Sugerencias (SG-001 a SG-010) que son discrecionales.
+**Próximo paso recomendado:** todos los Minores están cerrados. Las 10 Sugerencias (SG-001 a SG-010) son polish discrecional sin urgencia. Si se decide continuar, **SG-008** (consolidar `MAX_UPLOAD_BYTES` en una constante PHP única) es la más práctica porque cierra la duplicación residual que MN-014 dejó documentada.
 
 ## Historial de aplicación
 
@@ -520,3 +520,4 @@ Tras MN-010 todos los Minores quedan cerrados; solo quedarían las 10 Sugerencia
 | `9acafb1` | MN-014 (meta tags sgi-max-upload-* + comments cross-file; SG-008 sigue abierto) |
 | `6ea0dd2` | MN-002/003/004 (sección "Excepciones permitidas" en design.md + comments cross-file) |
 | `40e5b1d` | MN-005 (inventario completo de 25 !important; comentarios inline a las 6 sin doc; header de flatpickr-overrides expandido) |
+| _pendiente_ | MN-010 (split de default.php 662→183 LOC en 4 elements sidebar/{financiero,rrhh,catalogos,administracion}.php) |
