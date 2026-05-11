@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-Los **3 Críticos**, **9 de los 12 Mayores**, **1 Mayor parcial** (MJ-005 pasos 1-2 aplicados, 3-4 pendientes) y **1 Minor** (MN-012) ya fueron resueltos. Ver commits `6b12baa` → `e204fa6`. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
+**Estado:** los **3 Críticos**, **10 de los 12 Mayores** (incluyendo MJ-012 ya cerrado), **1 Mayor parcial** (MJ-005 pasos 1-2 aplicados, 3-4 pendientes), **1 Minor** (MN-012) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Ver commits `6b12baa` → `2fbd197`. Este documento agrupa los hallazgos diferidos con instrucciones concretas para cerrarlos en próximos sprints.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -12,7 +12,7 @@ Los **3 Críticos**, **9 de los 12 Mayores**, **1 Mayor parcial** (MJ-005 pasos 
 
 ---
 
-## 🟠 Mayores pendientes (2)
+## 🟠 Mayores pendientes (2 enteros + MJ-005 parcial)
 
 ### MJ-005 — Performance frontend de CDNs (parcial — pasos 3 y 4 pendientes)
 
@@ -100,45 +100,49 @@ Los **3 Críticos**, **9 de los 12 Mayores**, **1 Mayor parcial** (MJ-005 pasos 
 
 ---
 
-### MJ-012 — 80 líneas de pre-render en `Invoices/edit.php`
+### ~~MJ-012~~ ✅ — 80 líneas de pre-render en `Invoices/edit.php`  (RESUELTO en `39b889f`)
 
-**Ubicación:** `templates/Invoices/edit.php:13-89`
+**Aplicado:** las ~80 líneas de derivaciones en `Invoices/edit.php:13-89` ahora viven en `InvoiceEditViewModel` como propiedades readonly calculadas en el constructor body. El controller no cambió (named arguments preservados). El template solo hace aliasing local y consume `$viewModel->*` + 3 helpers (`canEditField`, `isReadOnlySection`, `isCollapsibleSection`).
 
-**Problema:** el template hace pre-procesamiento de datos en su cabecera:
-- Construir `$documentTypes`, `$readyForPaymentOptions`, `$pipelineBadgeMap`.
-- Computar `$sectionFieldMap`, `$editableSectionKeys`, `$readOnlySectionKeys`, `$renderOrder`, `$collapsibleEditable`.
+**Δ:** template 1175 → 1098 LOC (−77); ViewModel 67 → 212 LOC (+145 con phpdoc).
 
-Es lógica de presentación que debería vivir en el ViewModel.
+**Refactor derivado (`2fbd197`):** al revisar Invoices/edit el usuario preguntó por qué tenía más derivaciones que los demás. Se uniformó el patrón en los 6 templates de edit (Invoices, Refunds, PettyCash, EmployeeNovelties, NoveltyLiquidationDocs, Advances/legalization) → ver sección "Uniformación de edit templates" abajo. Cada ViewModel ahora encapsula las derivaciones, incluyendo `statusBadgeMap`, `pageTitle`, `currentStatusBadge`, `submitButton(Label,Class)` y opciones de pago vía `App\ViewModel\Support\PaymentOptions` (helper shared).
 
-**Cómo resolver:**
+**Pendiente de seguimiento (no bloqueante):** considerar split del template `Invoices/edit.php` que aún tiene 1098 LOC (MN-009):
+- `element/invoice_edit/header.php`
+- `element/invoice_edit/sections/{general,dates,classification,revision,accounting,treasury,payment_authorization}.php`
+- `element/invoice_edit/modals.php`
 
-1. **Localizar el ViewModel** (5 min):
-   ```bash
-   grep -rn "InvoiceEditViewModel\|InvoiceViewModel" src/
-   ```
+---
 
-2. **Extender ViewModel** (1 hora): agregar al ViewModel campos pre-computados:
-   ```php
-   public readonly array $documentTypes;
-   public readonly array $readyForPaymentOptions;
-   public readonly array $sectionFieldMap;
-   public readonly array $editableSectionKeys;
-   public readonly array $readOnlySectionKeys;
-   public readonly array $renderOrder;
-   public readonly array $collapsibleEditable;
-   ```
-   Mover la lógica del template al constructor o a `forEdit()` factory.
+## ✅ Uniformación de edit templates (refactor derivado, fuera del audit original)
 
-3. **Actualizar el controller** (30 min): `InvoicesController::edit()` que crea el ViewModel debe pasar los inputs necesarios (current user role, current status, etc.) para que el ViewModel los compute.
+**Commit:** `2fbd197`. **Disparado por:** pregunta del usuario tras MJ-012 sobre por qué `Invoices/edit` tenía más derivaciones que los otros edit templates.
 
-4. **Limpiar template** (15 min): eliminar el bloque `templates/Invoices/edit.php:13-89` y consumir `$viewModel->documentTypes`, `$viewModel->renderOrder`, etc.
+**Diagnóstico:** las "más validaciones" en Invoices NO eran arbitrarias — reflejan que el dominio de facturas es más complejo (6 estados + 1 terminal, 3 tipos de documento, granularidad por campo, multi-aprobador externo, render order dinámico). Los demás módulos son más simples (4-5 estados, 1 tipo de doc, granularidad por sección).
 
-5. **Considerar split del template** (opcional, medio día): si el archivo sigue siendo >800 LOC, extraer secciones:
-   - `element/invoice_edit/header.php`
-   - `element/invoice_edit/sections/{general,dates,classification,revision,accounting,treasury,payment_authorization}.php`
-   - `element/invoice_edit/modals.php`
+**Aplicado:** todos los 6 edit templates ahora comparten el mismo patrón "ViewModel completo, template solo lee":
 
-**Validación manual:** abrir factura en cada estado del pipeline (aprobacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada) y verificar que las secciones visibles/editables coincidan con el comportamiento anterior. Crear factura nueva. Editar con diferentes roles.
+| Template | Header LOC antes → después | ViewModel extendido con |
+|----------|---------------------------:|--------------------------|
+| `Invoices/edit` (commit `39b889f`) | 89 → 34 | `documentTypes`, `sectionFieldMap`, `renderOrder`, `submitButton*` |
+| `Refunds/edit` | 86 → 44 | `statusBadgeMap`, payment options, `showAccounting/Treasury`, `invoiceOptions`, `canEditAccounting/Treasury`, `canSave`, `submitButton*`, `invoiceCount` |
+| `PettyCashRecords/edit` | 80 → 50 (phpdoc) | mismas que Refunds |
+| `EmployeeNovelties/edit` | 52 → 33 | `statusBadgeMap`, labels, `badgeColors`, `sections`, `showUploadSection`, `totalDocs` |
+| `NoveltyLiquidationDocs/edit` | 54 → 33 | mismas que EmployeeNovelties + `period/signer/paymentLabels`, `isFinal`, `noveltyCount` |
+| `Advances/legalization` | 48 → 30 | `pageTitle`, `beneficiary*`, `ps`, `linkedCount`, `diffBadgeClass`, `caseLabels` (vía `build()` array) |
+
+**Helper compartido nuevo:** `src/ViewModel/Support/PaymentOptions.php` con `readyForPayment()` y `paymentStatus()`. Reemplaza el copy-paste literal que existía en 3 templates.
+
+**Decisión de diseño documentada en cada ViewModel:** los `statusBadgeMap` específicos del header de edit NO se consolidan con `*Presentation::STATUS_BADGES` porque los colores son distintos (énfasis visual distinto entre listado y edición). Comentario explícito en cada constructor.
+
+**Δ neto del refactor derivado:** +560 / −305 LOC (más en ViewModels con phpdoc, menos en templates).
+
+**Pendiente:** los controllers usan dos patrones de paso al template:
+- `$this->set('viewModel', $vm)` → template accede `$viewModel->X` (Invoices, Refunds).
+- `$this->set(get_object_vars($vm))` o `$this->set($vm->build())` → variables directas (PettyCash, EmployeeNovelties, NoveltyLiquidationDocs, Advances).
+
+No se uniformó esta diferencia (sería intrusivo en controllers). Ambos patrones resultan en "template solo lee, no calcula", que era el objetivo. Si se quiere uniformar en el futuro, preferir `$this->set('viewModel', $vm)` (más explícito, menos magia, mejor IDE autocomplete).
 
 ---
 
@@ -571,17 +575,16 @@ Quita el flag del backlog hasta que el PO lo pida.
 |-----------|-----------|-----------|
 | 🟠 MJ-005 (pasos 3-4) | Carga bajo demanda + self-host | 1 día |
 | 🟠 MJ-010 | CSS limpieza + split | 1-2 días |
-| 🟠 MJ-012 | Invoices/edit pre-render | 1 día |
 | 🟡 MN-001 a MN-007 | Design system polish | 4-6 horas total |
 | 🟡 MN-008 a MN-011, MN-013 a MN-016 | Code smells + a11y | 1 día |
 | 🟢 SG-001 a SG-010 | Mejoras incrementales | A discreción |
 
-**Total estimado:** ~4-6 días de trabajo para dejar todo cerrado, repartibles entre sprints.
+**Total estimado:** ~3-4 días de trabajo para dejar todo cerrado, repartibles entre sprints.
 
-**Próximo paso recomendado** (tras los quick wins ya aplicados):
-1. **MJ-012** (1 día) — mover el bloque pre-render de `Invoices/edit.php` al ViewModel. Es el refactor de mayor ROI en términos de testability.
-2. **MN-007** (30 min) — reemplazar las ~30 ocurrencias del bloque `style="font-size:.63rem;..."` por `class="sgi-micro-caps"` en `Dashboard/index.php`. Trivial pero mejora consistencia visual del design system.
-3. **MJ-005 paso 3** (1-2 horas) — cargar ApexCharts solo en templates que renderizan charts (no en todas las vistas).
+**Próximo paso recomendado:**
+1. **MN-007** (30 min) — reemplazar las ~30 ocurrencias del bloque `style="font-size:.63rem;..."` por `class="sgi-micro-caps"` en `Dashboard/index.php`. Trivial pero mejora consistencia visual del design system.
+2. **MJ-005 paso 3** (1-2 horas) — cargar ApexCharts solo en templates que renderizan charts (no en todas las vistas). AutoNumeric y Select2 también pueden moverse a templates que los usan.
+3. **MN-009** (medio día) — split de `Invoices/edit.php` (1098 LOC) en elements por sección. Habilitado ahora que MJ-012 dejó la lógica en el ViewModel.
 
 ## Historial de aplicación
 
@@ -594,3 +597,5 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `38a0d96` | MJ-002 (ResultSet count), MJ-011 (label for=) |
 | `49f7d88` | MJ-003 (InvoicePresentation::forRow + InvoiceRowView) |
 | `e204fa6` | MJ-005 pasos 1-2 (defer + preconnect), MN-012 (aria-hidden bulk) |
+| `39b889f` | MJ-012 (Invoices/edit pre-render → InvoiceEditViewModel) |
+| `2fbd197` | Refactor derivado: uniformación de los 5 edit templates restantes + helper `PaymentOptions` |
