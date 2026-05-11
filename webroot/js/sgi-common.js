@@ -190,7 +190,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 return res.text();
             })
             .then(function (html) {
-                content.innerHTML = html;
+                // Defense in depth: parsear el fragmento dentro de <template> antes
+                // de insertar — contexto de parsing estricto (no embebido en <body>,
+                // preserva <tr>/<td>/<option> sueltos correctamente) y nodos quedan
+                // inertes hasta replaceChildren.
+                var tpl = document.createElement('template');
+                tpl.innerHTML = html;
+                content.replaceChildren(tpl.content);
                 modal.dataset.loaded = '1';
                 window.sgiInit(content);
             })
@@ -222,7 +228,10 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function (res) { return res.text(); })
             .then(function (html) {
-                content.innerHTML = html;
+                // Defense in depth: ver comentario en el handler de show.bs.modal.
+                var tpl = document.createElement('template');
+                tpl.innerHTML = html;
+                content.replaceChildren(tpl.content);
                 window.sgiInit(content);
             });
     });

@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60%), **SG-003** (dead code de idempotency eliminado), **SG-005** (eliminado fallback de `getRawAmount`), **SG-006** (FullCalendar assets centralizados), **SG-007** (focus-visible a11y), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 4 Sugerencias discrecionales (SG-002, SG-004, SG-009, SG-010). Ver commits `6b12baa` → reciente. Solo quedan minores menores y sugerencias.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60%), **SG-002** (modal AJAX loader con `<template>` parsing), **SG-003** (dead code de idempotency eliminado), **SG-005** (eliminado fallback de `getRawAmount`), **SG-006** (FullCalendar assets centralizados), **SG-007** (focus-visible a11y), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 3 Sugerencias discrecionales (SG-004, SG-009, SG-010). Ver commits `6b12baa` → reciente.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -336,21 +336,27 @@ Cada section element recibe `$viewModel` + closure `$canEdit` + las opciones esp
 
 ---
 
-### SG-002 — Modal AJAX loader: usar `<template>` parsing
+### ~~SG-002~~ ✅ — Modal AJAX loader usa `<template>` parsing  (RESUELTO)
 
-**Ubicación:** `webroot/js/sgi-common.js:166`
+**Aplicado:** las 2 ubicaciones en `webroot/js/sgi-common.js` donde se inyectaba HTML fetcheado vía `content.innerHTML = html` ahora usan el patrón canónico de `<template>`:
 
-**Problema:** `innerHTML` con HTML fetchado, aunque del mismo origen.
-
-**Resolver:** fetched HTML envuelto en `<template>`:
 ```js
-fetch(url).then(r => r.text()).then(html => {
-    var tpl = document.createElement('template');
-    tpl.innerHTML = html;
-    container.replaceChildren(...tpl.content.childNodes);
-});
+var tpl = document.createElement('template');
+tpl.innerHTML = html;
+content.replaceChildren(tpl.content);
 ```
-No es vulnerability — es defensa en profundidad y un contrato más estricto.
+
+| Ubicación | Función |
+|---|---|
+| Handler `show.bs.modal` | Carga inicial del modal vía AJAX (data-load-url) |
+| Handler `submit` para `[data-modal-filter-form]` | Refresh del cuerpo del modal al filtrar |
+
+**Por qué `<template>` es mejor que `innerHTML` directo:**
+1. Contexto de parsing estricto — fragmentos sueltos como `<tr>`, `<td>` o `<option>` se preservan correctamente (sin estar embebidos en `<table>`/`<select>` que es lo que `innerHTML` en un `<div>` espera).
+2. Los nodos quedan inertes hasta `replaceChildren` — no hay estado transitorio donde el browser renderice algo a medio parsear.
+3. Defense in depth — no es fix de vulnerability, es contrato más estricto.
+
+**Δ:** +11 / −2 LOC con comentarios explicativos. Comportamiento funcional idéntico bajo el uso actual.
 
 ---
 
@@ -503,12 +509,11 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟢 SG-002, SG-004, SG-009, SG-010 | Mejoras incrementales (SG-001, SG-003, SG-005, SG-006, SG-007, SG-008 cerradas) | A discreción |
+| 🟢 SG-004, SG-009, SG-010 | Mejoras incrementales (SG-001, SG-002, SG-003, SG-005, SG-006, SG-007, SG-008 cerradas) | A discreción |
 
 **Estado:** todos los Críticos (3), Mayores (12), Minores (16) y la primera Sugerencia (SG-008) están cerrados. Quedan 9 Sugerencias discrecionales.
 
-**Próximo paso recomendado:** las 4 Sugerencias restantes son polish sin urgencia. Las más prácticas si se quiere continuar:
-- **SG-002** — `<template>` parsing en AJAX modal loader (defense in depth) (10 min).
+**Próximo paso recomendado:** las 3 Sugerencias restantes son polish sin urgencia:
 - **SG-009** — Ya cubierto por MN-006 — cerrar como duplicado (5 min).
 - **SG-004** — Opcional, migrar a SVG icons (sin urgencia).
 - **SG-010** — Decisión de producto sobre i18n.
@@ -547,3 +552,5 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `13cdb60` | SG-007 (:focus-visible outline en .sgi-input-group input; a11y WCAG 2.4.7) |
 | `33b9338` | SG-005 (eliminado fallback de getRawAmount/setAmount; precondición documentada, opción A) |
 | `0df227c` | SG-003 (dead code de idempotency-key client-side eliminado; server-side intacto) |
+| _pendiente_ | SG-002 (<template> parsing en modal AJAX loader; defense in depth) |
+| --------  | SG-004 (Por decisión, nos quedamos con Bootstrap Icons)
