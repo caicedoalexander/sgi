@@ -5,6 +5,7 @@ namespace App\Service;
 
 use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
+use App\Constants\PipelineStepConstants;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
 
@@ -33,6 +34,7 @@ final class InvoiceTransitionValidator
         private readonly InvoicePipelineStateRegistry $states,
         private readonly DocumentTypePolicyFactory $policies,
         private readonly InvoiceFieldAccessPolicy $fieldPolicy,
+        private readonly PipelineAuthorizationService $pipelineAuth,
     ) {
     }
 
@@ -93,9 +95,12 @@ final class InvoiceTransitionValidator
     public function filterErrorsForRole(array $errors, array $rules, int $roleId, string $roleName, string $status): array
     {
         $editable = $this->fieldPolicy->getEditableFields($roleId, $roleName, $status);
-        $statusEnum = PipelineStatus::tryFrom($status);
-        $statusVisible = $statusEnum !== null
-            && in_array($roleName, $this->states->get($statusEnum)->getRoleVisibility(), true);
+        $statusVisible = $this->pipelineAuth->canOperate(
+            $roleId,
+            $roleName,
+            PipelineStepConstants::PIPELINE_INVOICES,
+            $status,
+        );
 
         $filtered = [];
         foreach ($rules as $i => $rule) {

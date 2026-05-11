@@ -213,6 +213,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoicePipelineStateRegistry::class,
                 DocumentTypePolicyFactory::class,
                 InvoiceFieldAccessPolicy::class,
+                PipelineAuthorizationService::class,
             ]);
         $container->addShared(InvoiceFilterService::class);
         $container->addShared(InvoiceDocumentService::class);

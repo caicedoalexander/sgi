@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Service\Pipeline\Invoice\State;
 
 use App\Constants\Domain\Invoice\PipelineStatus;
-use App\Constants\RoleConstants;
 use App\Service\Pipeline\Invoice\InvoicePipelineState;
 
 final class VerificacionPagoState implements InvoicePipelineState
@@ -22,16 +21,6 @@ final class VerificacionPagoState implements InvoicePipelineState
     public function getPreviousStatus(): ?PipelineStatus
     {
         return PipelineStatus::AUTORIZACION_PAGO;
-    }
-
-    public function getRoleVisibility(): array
-    {
-        return [RoleConstants::TESORERIA, RoleConstants::ADMIN];
-    }
-
-    public function getAdvanceRoleVisibility(): array
-    {
-        return [RoleConstants::TESORERIA, RoleConstants::ADMIN];
     }
 
     public function validateAdvance(object $invoice): array

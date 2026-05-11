@@ -5,7 +5,6 @@ namespace App\Service\Pipeline\Invoice\State;
 
 use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
-use App\Constants\RoleConstants;
 use App\Service\Pipeline\Invoice\InvoicePipelineState;
 
 final class AprobacionState implements InvoicePipelineState
@@ -23,22 +22,6 @@ final class AprobacionState implements InvoicePipelineState
     public function getPreviousStatus(): ?PipelineStatus
     {
         return null;
-    }
-
-    public function getRoleVisibility(): array
-    {
-        return [RoleConstants::REGISTRO_REVISION, RoleConstants::ADMIN];
-    }
-
-    public function getAdvanceRoleVisibility(): array
-    {
-        return [
-            RoleConstants::REGISTRO_REVISION,
-            RoleConstants::AUXILIAR_PERSONAL,
-            RoleConstants::ASISTENTE_PERSONAL,
-            RoleConstants::COORDINADOR_ADMIN,
-            RoleConstants::ADMIN,
-        ];
     }
 
     public function validateAdvance(object $invoice): array

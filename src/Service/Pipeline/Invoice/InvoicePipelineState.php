@@ -24,20 +24,6 @@ interface InvoicePipelineState
     public function getPreviousStatus(): ?PipelineStatus;
 
     /**
-     * Roles (RoleConstants::*) que ven este estado en el index principal.
-     *
-     * @return array<string>
-     */
-    public function getRoleVisibility(): array;
-
-    /**
-     * Roles que ven este estado en "Mis Anticipos".
-     *
-     * @return array<string>
-     */
-    public function getAdvanceRoleVisibility(): array;
-
-    /**
      * Errores de requirement de este estado para avanzar al siguiente.
      * No incluye rejection ni doctype block — el coordinador los compone.
      *
