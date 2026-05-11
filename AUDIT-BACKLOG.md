@@ -2,7 +2,7 @@
 
 Hallazgos pendientes de la auditoría realizada el **2026-05-11** sobre `templates/`, `webroot/css/` y `webroot/js/`.
 
-**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60%), **SG-002** (modal AJAX loader con `<template>` parsing), **SG-003** (dead code de idempotency eliminado), **SG-005** (eliminado fallback de `getRawAmount`), **SG-006** (FullCalendar assets centralizados), **SG-007** (focus-visible a11y), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 3 Sugerencias discrecionales (SG-004, SG-009, SG-010). Ver commits `6b12baa` → reciente.
+**Estado:** los **3 Críticos**, **los 12 Mayores** (MJ-001 a MJ-012 completos), **los 16 Minores** (MN-001 a MN-016, todos cerrados), **SG-001** (preload Inter WOFF2, −60%), **SG-002** (modal AJAX loader con `<template>` parsing), **SG-003** (dead code de idempotency eliminado), **SG-005** (eliminado fallback de `getRawAmount`), **SG-006** (FullCalendar assets centralizados), **SG-007** (focus-visible a11y), **SG-008** (consolidación de `MAX_UPLOAD_BYTES` en `UploadConstants`), **SG-009** (cerrado como duplicado funcional de MN-006) y **1 refactor derivado fuera del audit** (uniformación de los 6 edit templates) ya fueron resueltos. Quedan 2 Sugerencias discrecionales (SG-004, SG-010). Ver commits `6b12baa` → reciente.
 
 **Convenciones:**
 - 🟠 Mayor — bloquea un sprint si se acumula.
@@ -470,19 +470,18 @@ final class UploadConstants {
 
 ---
 
-### SG-009 — Variables CSS para colores semánticos
+### ~~SG-009~~ ✅ — Variables CSS semánticas  (CERRADO como duplicado de MN-006)
 
-**Ubicación:** `webroot/css/styles.css:2-12`
+**Estado final:** sin cambios de código. SG-009 listaba 4 variables (`--danger-color`, `--warning-color`, `--success-color`, `--info-color`) — 3 de ellas ya las agregó MN-006 (commit `be8dc72`) y se usan en todo `styles.css`.
 
-**Resolver:** ya cubierto parcialmente por MN-006. Variables semánticas adicionales:
-```css
-:root {
-    --danger-color:   #dc3545;
-    --warning-color:  #ffc107;
-    --success-color:  var(--primary-color);
-    --info-color:     #0dcaf0;
-}
-```
+**La 4ta variable (`--success-color`) NO se agrega** por decisión deliberada:
+
+1. **En el SGI, "success" es definicionalmente "primary"** (verde corporativo) — ver `.claude/rules/design.md` sección "Asignación de colores por módulo". No son conceptos separados.
+2. **Los 3 selectores success-named** (`.btn-success`, `.bg-success.badge`, `.badge-success`) ya referencian `var(--primary-color)` directamente desde MN-006. Funcionan correctamente.
+3. **Agregar un alias sin consumer ni variante `-hover`** introduce indirection sin valor. Per CLAUDE.md "Simplicity First — minimum code that solves the problem. Nothing speculative."
+4. Si en el futuro se desacoplara "success" de "primary" (no previsto), agregar la variable es trivial.
+
+**Conclusión:** SG-009 ya estaba cubierto al 100% funcional por MN-006 desde el commit `be8dc72`. Se marca cerrado sin commit adicional.
 
 ---
 
@@ -509,14 +508,13 @@ Quita el flag del backlog hasta que el PO lo pida.
 
 | Prioridad | Categoría | Estimación |
 |-----------|-----------|-----------|
-| 🟢 SG-004, SG-009, SG-010 | Mejoras incrementales (SG-001, SG-002, SG-003, SG-005, SG-006, SG-007, SG-008 cerradas) | A discreción |
+| 🟢 SG-004, SG-010 | Mejoras incrementales (SG-001-003, SG-005-009 cerradas) | A discreción |
 
 **Estado:** todos los Críticos (3), Mayores (12), Minores (16) y la primera Sugerencia (SG-008) están cerrados. Quedan 9 Sugerencias discrecionales.
 
-**Próximo paso recomendado:** las 3 Sugerencias restantes son polish sin urgencia:
-- **SG-009** — Ya cubierto por MN-006 — cerrar como duplicado (5 min).
-- **SG-004** — Opcional, migrar a SVG icons (sin urgencia).
-- **SG-010** — Decisión de producto sobre i18n.
+**Próximo paso recomendado:** las 2 Sugerencias restantes requieren decisión externa, no son trabajo técnico inmediato:
+- **SG-004** — Migración de Bootstrap Icons (font) a SVGs inline. Decisión de diseño + esfuerzo significativo. No bloquea nada.
+- **SG-010** — i18n preparation. Decisión de producto: ¿soporte multi-idioma o `es_CO` único?
 
 ## Historial de aplicación
 
@@ -553,4 +551,5 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `33b9338` | SG-005 (eliminado fallback de getRawAmount/setAmount; precondición documentada, opción A) |
 | `0df227c` | SG-003 (dead code de idempotency-key client-side eliminado; server-side intacto) |
 | `6f5a5f9` | SG-002 (<template> parsing en modal AJAX loader; defense in depth) |
+| (sin commit) | SG-009 (cerrado como duplicado funcional de MN-006; no agregar `--success-color` por decisión deliberada) |
 | --------  | SG-004 (Por decisión, nos quedamos con Bootstrap Icons)
