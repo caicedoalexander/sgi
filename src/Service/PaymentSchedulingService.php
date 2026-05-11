@@ -7,7 +7,6 @@ use App\Constants\Domain\PaymentScheduling\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PaymentSchedulingConstants;
 use App\Constants\PipelineStepConstants;
-use App\Constants\RoleConstants;
 use App\Event\InvoicePaidEvent;
 use App\Model\Entity\PaymentScheduling;
 use App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineStateRegistry;
@@ -17,22 +16,6 @@ use Cake\ORM\TableRegistry;
 
 class PaymentSchedulingService
 {
-    private const ROLE_VISIBLE_STATUSES = [
-        RoleConstants::TESORERIA => [
-            PaymentSchedulingConstants::STATUS_BORRADOR,
-            PaymentSchedulingConstants::STATUS_TESORERIA,
-            PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO,
-            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
-            PaymentSchedulingConstants::STATUS_PAGADA,
-        ],
-        RoleConstants::CONTADOR => [
-            PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO,
-            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
-            PaymentSchedulingConstants::STATUS_PAGADA,
-        ],
-        RoleConstants::ADMIN => PaymentSchedulingConstants::PIPELINE_STATUSES,
-    ];
-
     private PipelineAuthorizationService $pipelineAuth;
     private PaymentSchedulingPipelineStateRegistry $stateRegistry;
     private InvoiceHistoryService $historyService;
@@ -51,9 +34,13 @@ class PaymentSchedulingService
         $this->events = $events;
     }
 
-    public function getVisibleStatuses(string $roleName): array
+    public function getVisibleStatuses(int $roleId): array
     {
-        return self::ROLE_VISIBLE_STATUSES[$roleName] ?? [];
+        return $this->pipelineAuth->getOperableSteps(
+            $roleId,
+            '',
+            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+        );
     }
 
     public function getNextStatus(string $currentStatus): ?string
