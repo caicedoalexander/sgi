@@ -521,4 +521,4 @@ Quita el flag del backlog hasta que el PO lo pida.
 | `bf4c296` | MN-008 (window.SGI_OBRA_LABOR vía scriptBlock + fix bug latente del block 'scriptBottom') |
 | `e355f63` | MN-011 (aria-hidden="true" en avatares con iniciales; nombre adyacente ya anuncia) |
 | `d316440` | MN-015 (h() al final en 4 templates; +escape defensivo de $statusLabels) |
-| _pendiente_ | MN-016 (documentar contrato inline+ResizeObserver; falso positivo del audit) |
+| `39752d0` | MN-016 (documentar contrato inline+ResizeObserver; falso positivo del audit) |
