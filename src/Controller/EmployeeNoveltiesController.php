@@ -68,13 +68,10 @@ class EmployeeNoveltiesController extends AppController
     public function index()
     {
         $user = $this->Authentication->getIdentity()->getOriginalData();
-        $roleName = $this->_getUserRoleName($user);
-        $visibleStatuses = $this->pipelineService->getVisibleStatuses($roleName);
+        $roleId = (int)$user->role_id;
+        $visibleStatuses = $this->pipelineService->getVisibleStatuses($roleId);
 
-        $conditions = [];
-        if (!empty($visibleStatuses)) {
-            $conditions['EmployeeNovelties.pipeline_status IN'] = $visibleStatuses;
-        }
+        $conditions = $this->_visibleStatusConditions('EmployeeNovelties.pipeline_status', $visibleStatuses);
         // Exclude rejected from "Mis Novedades"
         $conditions['EmployeeNovelties.pipeline_status !='] = NoveltyConstants::STATUS_RECHAZADA;
 
