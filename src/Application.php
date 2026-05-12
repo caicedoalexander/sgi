@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Authorization\AuthorizationFacade;
+use App\Authorization\DefaultAuthorizationFacade;
 use App\Controller\AppController;
 use App\Middleware\CorrelationIdMiddleware;
 use App\Middleware\HostHeaderMiddleware;
@@ -185,6 +187,11 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         // === Auth / Authorization ===
         $container->addShared(AuthorizationService::class);
         $container->addShared(PipelineAuthorizationService::class);
+        $container->addShared(AuthorizationFacade::class, DefaultAuthorizationFacade::class)
+            ->addArguments([
+                AuthorizationService::class,
+                PipelineAuthorizationService::class,
+            ]);
         $container->addShared(ApprovalTokenService::class)
             ->addArguments([
                 InvoiceApprovalStrategy::class,
