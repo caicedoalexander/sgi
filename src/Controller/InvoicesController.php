@@ -345,12 +345,13 @@ class InvoicesController extends AppController
     {
         $currentStatus = $invoice->pipeline_status;
         $editableFields = $this->pipeline->getEditableFields($roleId, $currentStatus);
-        $canAdvance = $this->pipeline->canAdvance($roleId, $currentStatus, $invoice->document_type);
+        $advanceDenial = $this->pipeline->denialReasonForAdvance($invoice, $roleId);
+        $canAdvance = $advanceDenial === null;
         $isRejected = $this->pipeline->isRejected($invoice);
 
         $advanceErrors = [];
         $nextStatus = null;
-        if ($canAdvance && !$isRejected) {
+        if ($canAdvance) {
             $rawErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
             $rules = $this->pipeline->getTransitionRules($currentStatus);
             $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleId, $currentStatus);
@@ -359,7 +360,7 @@ class InvoicesController extends AppController
             }
         }
 
-        $canRegress = $this->pipeline->canRegress($roleId, $currentStatus);
+        $canRegress = $this->pipeline->denialReasonForRegress($invoice, $roleId) === null;
         $canConfirmPayment = $this->pipelineAuth->canOperate(
             $roleId,
             PipelineStepConstants::PIPELINE_INVOICES,

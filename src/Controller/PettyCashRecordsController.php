@@ -335,7 +335,7 @@ class PettyCashRecordsController extends AppController
             canRegisterPayment: $canRegisterPayment,
             canAuthorizePayment: $canAuthorizePayment,
             canConfirmPayment: $canConfirmPayment,
-            canRegress: $this->pettyCashService->canRegress($roleId, $record->status),
+            canRegress: $this->pettyCashService->denialReasonForRegress($record, $roleId) === null,
             advanceErrors: $advanceErrors,
             nextStatus: $nextStatus,
             previousStatus: $this->pettyCashService->getPreviousStatus($record->status),

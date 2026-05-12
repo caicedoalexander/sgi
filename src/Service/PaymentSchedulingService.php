@@ -153,11 +153,11 @@ class PaymentSchedulingService
         $reason = trim($reason);
         $currentStatus = $scheduling->pipeline_status;
 
-        if (!$this->canRegress($roleId, $currentStatus)) {
-            $previous = $this->getPreviousStatus($currentStatus);
-            $error = $previous === null
+        $regressDenial = $this->denialReasonForRegress($scheduling, $roleId);
+        if ($regressDenial !== null) {
+            $error = $regressDenial === DenialReason::TERMINAL_STATE
                 ? 'Esta programación ya está en el primer paso del flujo.'
-                : 'No tiene permisos para regresar esta programación.';
+                : $regressDenial->message();
 
             return ServiceResult::fail([$error]);
         }

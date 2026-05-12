@@ -455,7 +455,7 @@ class RefundsController extends AppController
             groupFilters: $groupFilters,
             nextStatus: $nextStatus,
             advanceErrors: $advanceErrors,
-            canRegress: $this->refundService->canRegress($roleId, $record->status),
+            canRegress: $this->refundService->denialReasonForRegress($record, $roleId) === null,
             previousStatus: $this->refundService->getPreviousStatus($record->status),
             regressLockMessage: $this->refundService->getRegressionLockMessage($record),
             canRegisterPayment: $this->pipelineAuth->canOperate(

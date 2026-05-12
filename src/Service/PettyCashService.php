@@ -205,7 +205,7 @@ class PettyCashService
         $advanced = false;
         $nextStatus = null;
         $advanceWarning = null;
-        if (!$record->isPagada() && $this->canAdvance($roleId, $record->status)) {
+        if (!$record->isPagada() && $this->denialReasonForAdvance($record, $roleId) === null) {
             $advanceResult = $this->advanceStatus($record, $roleId, $userId);
             if ($advanceResult->success) {
                 $advanced = true;
@@ -290,8 +290,9 @@ class PettyCashService
             return ServiceResult::fail('Este registro ya está en su estado final.');
         }
 
-        if (!$this->canAdvance($roleId, $currentStatus)) {
-            return ServiceResult::fail('No tiene permisos para avanzar este registro.');
+        $advanceDenial = $this->denialReasonForAdvance($record, $roleId);
+        if ($advanceDenial !== null) {
+            return ServiceResult::fail($advanceDenial->message());
         }
 
         if ($nextStatus === PettyCashConstants::STATUS_AUTORIZACION_PAGO) {
@@ -787,11 +788,11 @@ class PettyCashService
         $reason = trim($reason);
         $currentStatus = $record->status;
 
-        if (!$this->canRegress($roleId, $currentStatus)) {
-            $previous = $this->getPreviousStatus($currentStatus);
-            $error = $previous === null
+        $regressDenial = $this->denialReasonForRegress($record, $roleId);
+        if ($regressDenial !== null) {
+            $error = $regressDenial === DenialReason::TERMINAL_STATE
                 ? 'Este registro ya está en el primer paso del flujo.'
-                : 'No tiene permisos para regresar este registro.';
+                : $regressDenial->message();
 
             return ServiceResult::fail($error);
         }

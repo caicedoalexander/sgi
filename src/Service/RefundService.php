@@ -413,11 +413,11 @@ class RefundService
         $reason = trim($reason);
         $currentStatus = $record->status;
 
-        if (!$this->canRegress($roleId, $currentStatus)) {
-            $previous = $this->getPreviousStatus($currentStatus);
-            $error = $previous === null
+        $regressDenial = $this->denialReasonForRegress($record, $roleId);
+        if ($regressDenial !== null) {
+            $error = $regressDenial === DenialReason::TERMINAL_STATE
                 ? 'Este registro ya está en el primer paso del flujo.'
-                : 'No tiene permisos para regresar este registro.';
+                : $regressDenial->message();
 
             return ['success' => false, 'error' => $error, 'previousStatus' => null];
         }

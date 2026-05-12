@@ -131,14 +131,15 @@ class InvoicePipelineService
 
     /**
      * Retorna el motivo por el que la factura no puede avanzar, o null si puede.
-     *
-     * En commit 1 detecta sólo TERMINAL_STATE y UNAUTHORIZED. REJECTED y
-     * MISSING_FIELDS se añadirán en Task 7 al migrar callers.
      */
     public function denialReasonForAdvance(Invoice $invoice, int $roleId): ?DenialReason
     {
         if ($this->getNextStatus($invoice->pipeline_status, $invoice->document_type) === null) {
             return DenialReason::TERMINAL_STATE;
+        }
+
+        if ($this->isRejected($invoice)) {
+            return DenialReason::REJECTED;
         }
 
         if (
@@ -213,6 +214,10 @@ class InvoicePipelineService
             return DenialReason::TERMINAL_STATE;
         }
 
+        if ($this->isRejected($invoice)) {
+            return DenialReason::REJECTED;
+        }
+
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
@@ -253,12 +258,12 @@ class InvoicePipelineService
             }
         }
 
-        $canAdvance = $this->canAdvance($roleId, $currentStatus, $invoice->document_type ?? null);
+        $canAdvance = $this->denialReasonForAdvance($invoice, $roleId) === null;
         $isRejected = $this->isRejected($invoice);
 
         $advanceNextStatus = null;
         $postAdvanceErrors = [];
-        if ($canAdvance && !$isRejected) {
+        if ($canAdvance) {
             $postAdvanceErrors = $this->validateTransitionRequirements($invoice, $currentStatus, $filteredData);
             if (empty($postAdvanceErrors)) {
                 $advanceNextStatus = $this->getNextStatus($currentStatus, $invoice->document_type);
@@ -342,12 +347,9 @@ class InvoicePipelineService
     {
         $currentStatus = $invoice->pipeline_status;
 
-        if (!$this->canAdvance($roleId, $currentStatus, $invoice->document_type ?? null)) {
-            return ServiceResult::fail(['No tiene permisos para avanzar esta factura.']);
-        }
-
-        if ($this->isRejected($invoice)) {
-            return ServiceResult::fail(['La factura fue rechazada. El flujo ha terminado.']);
+        $denial = $this->denialReasonForAdvance($invoice, $roleId);
+        if ($denial !== null) {
+            return ServiceResult::fail([$denial->message()]);
         }
 
         $errors = $this->validateTransitionRequirements($invoice, $currentStatus);
@@ -386,11 +388,11 @@ class InvoicePipelineService
         $reason = trim($reason);
         $currentStatus = $invoice->pipeline_status;
 
-        if (!$this->canRegress($roleId, $currentStatus)) {
-            $previous = $this->getPreviousStatus($currentStatus);
-            $error = $previous === null
+        $regressDenial = $this->denialReasonForRegress($invoice, $roleId);
+        if ($regressDenial !== null) {
+            $error = $regressDenial === DenialReason::TERMINAL_STATE
                 ? 'Esta factura ya está en el primer paso del flujo.'
-                : 'No tiene permisos para regresar esta factura.';
+                : $regressDenial->message();
 
             return ServiceResult::fail([$error]);
         }
