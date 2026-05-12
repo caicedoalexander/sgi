@@ -36,7 +36,7 @@
 
 | ID | Severidad | Hallazgo | Estado | Resuelto en |
 |----|-----------|----------|--------|-------------|
-| PA-001 | 🔴 Critical | `_actionToPermission` cae a `'view'` por defecto cuando una acción no está mapeada → over-permission silencioso | ⏳ Pendiente | — |
+| PA-001 | 🔴 Critical | `_actionToPermission` cae a `'view'` por defecto cuando una acción no está mapeada → over-permission silencioso | ✅ Resuelto | commit `0d84bd7` (2026-05-12) |
 | PA-002 | 🔴 Critical | 3 lugares sin chequeo para registrar una acción de pipeline (`$pipelineActions`, `_actionToPermission`, llamada manual a `canOperate`) | ⏳ Pendiente | — |
 | PA-003 | 🟠 Major | `$roleName` declarado y propagado en 55 call-sites pero nunca consultado (cleanup 2026-05-02 inacabado) | ✅ Resuelto | PR #4 / commit `1c73514` (2026-05-12) |
 | PA-004 | 🟠 Major | `AuthorizationService` y `PipelineAuthorizationService` duplican shape (cache, matrix, save, isAllowed/canOperate) sin contrato común | ⏳ Pendiente | — |
@@ -53,7 +53,11 @@
 
 ---
 
-## PA-001 — `_actionToPermission` cae a `'view'` 🔴
+## PA-001 — `_actionToPermission` cae a `'view'` 🔴 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** commit `0d84bd7` mapeó las 7 acciones huérfanas detectadas en el inventario (5 a `'view'`, 1 a `'add'`, 1 a `'edit'`) y reemplazó `default => 'view'` por `LogicException` con mensaje accionable. Precheck en BD confirmó cero impacto runtime: solo `Administrador` tiene fila en `permissions` para `employee_novelties` y `novelty_liquidation_docs` con `can_view = can_create = can_edit = 1`, los demás roles no tienen fila (403 antes y después). Validación manual: throw probado con acción dummy en `InvoicesController` (HTTP 500 + mensaje citando `dummyMissing`), exceptions de `_enforcePermission` (login/logout, `EmailLogs::retry`, Pages, Error) intactas, smoke E2E del pipeline de facturas sin regresiones.
+
+
 
 **Ubicación:** `src/Controller/AppController.php:112-121`
 
