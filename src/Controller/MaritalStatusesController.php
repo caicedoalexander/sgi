@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class MaritalStatusesController extends AppController
@@ -11,6 +12,7 @@ class MaritalStatusesController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $maritalStatuses = $this->paginate($this->MaritalStatuses);
@@ -18,6 +20,7 @@ class MaritalStatusesController extends AppController
         $this->set(compact('maritalStatuses'));
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null)
     {
         $maritalStatus = $this->MaritalStatuses->get($id);
@@ -25,6 +28,7 @@ class MaritalStatusesController extends AppController
         $this->set(compact('maritalStatus'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $maritalStatus = $this->MaritalStatuses->newEmptyEntity();
@@ -41,6 +45,7 @@ class MaritalStatusesController extends AppController
         $this->set(compact('maritalStatus'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $maritalStatus = $this->MaritalStatuses->get($id);
@@ -57,6 +62,7 @@ class MaritalStatusesController extends AppController
         $this->set(compact('maritalStatus'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

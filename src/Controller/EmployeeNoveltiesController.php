@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
+use App\Attribute\PipelineAction;
 use App\Constants\NoveltyConstants;
+use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\EmployeeNovelty;
 use App\Service\ApprovalTokenService;
@@ -65,6 +68,7 @@ class EmployeeNoveltiesController extends AppController
      *
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'view')]
     public function index()
     {
         $user = $this->Authentication->getIdentity()->getOriginalData();
@@ -111,6 +115,7 @@ class EmployeeNoveltiesController extends AppController
      *
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'view')]
     public function all()
     {
         $query = $this->EmployeeNovelties->find()
@@ -149,6 +154,7 @@ class EmployeeNoveltiesController extends AppController
      *
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'view')]
     public function rejected()
     {
         $query = $this->EmployeeNovelties->find()
@@ -179,6 +185,7 @@ class EmployeeNoveltiesController extends AppController
      *
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'view')]
     public function active()
     {
         $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list', [
@@ -199,6 +206,7 @@ class EmployeeNoveltiesController extends AppController
      *
      * @return \Cake\Http\Response
      */
+    #[Permission(action: 'view')]
     public function activeEvents(): Response
     {
         $this->request->allowMethod(['get']);
@@ -287,6 +295,7 @@ class EmployeeNoveltiesController extends AppController
      *
      * @return \Cake\Http\Response
      */
+    #[Permission(action: 'view')]
     public function allEvents(): Response
     {
         $this->request->allowMethod(['get']);
@@ -379,6 +388,7 @@ class EmployeeNoveltiesController extends AppController
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'edit')]
     public function edit(?string $id = null)
     {
         $novelty = $this->EmployeeNovelties->get($id, contain: [
@@ -489,6 +499,7 @@ class EmployeeNoveltiesController extends AppController
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'view')]
     public function view(?string $id = null)
     {
         $novelty = $this->EmployeeNovelties->get($id, contain: [
@@ -543,6 +554,7 @@ class EmployeeNoveltiesController extends AppController
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'view')]
     public function exportPdf(?string $id = null): ?Response
     {
         $this->autoRender = false;
@@ -576,6 +588,7 @@ class EmployeeNoveltiesController extends AppController
     /**
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'add')]
     public function add()
     {
         $novelty = $this->EmployeeNovelties->newEmptyEntity();
@@ -801,6 +814,7 @@ class EmployeeNoveltiesController extends AppController
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'edit')]
     public function resendApproval(?string $id = null)
     {
         $this->request->allowMethod(['post']);
@@ -865,6 +879,7 @@ class EmployeeNoveltiesController extends AppController
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'edit')]
     public function assignLiquidation(?string $id = null)
     {
         $this->request->allowMethod(['post']);
@@ -905,6 +920,7 @@ class EmployeeNoveltiesController extends AppController
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'edit')]
     public function addObservation(?string $id = null): Response
     {
         return $this->_handleAddObservation(

@@ -3,10 +3,13 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
+
 class ApproversController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $query = $this->Approvers->find()->contain(['Users', 'OperationCenters']);
@@ -15,6 +18,7 @@ class ApproversController extends AppController
         $this->set(compact('approvers'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $approver = $this->Approvers->newEmptyEntity();
@@ -34,6 +38,7 @@ class ApproversController extends AppController
         $this->set(compact('approver', 'users', 'operationCenters'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $approver = $this->Approvers->get($id, contain: ['Users', 'OperationCenters']);
@@ -53,6 +58,7 @@ class ApproversController extends AppController
         $this->set(compact('approver', 'users', 'operationCenters'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Service\DianCrosscheckService;
+use Cake\Http\Response;
 
 class DianCrosschecksController extends AppController
 {
@@ -22,6 +24,7 @@ class DianCrosschecksController extends AppController
      *
      * @return void
      */
+    #[Permission(action: 'view')]
     public function index(): void
     {
         $query = $this->DianCrosschecks->find()
@@ -44,6 +47,7 @@ class DianCrosschecksController extends AppController
      *
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'add')]
     public function add(): ?Response
     {
         if ($this->request->is('post')) {

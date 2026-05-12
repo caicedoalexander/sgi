@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Constants\ContractTypeConstants;
 use Cake\ORM\TableRegistry;
 
@@ -10,6 +11,7 @@ class NoveltyTypesController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $query = $this->NoveltyTypes->find()
@@ -25,6 +27,7 @@ class NoveltyTypesController extends AppController
         $this->set(compact('noveltyTypes'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $noveltyType = $this->NoveltyTypes->newEmptyEntity();
@@ -52,6 +55,7 @@ class NoveltyTypesController extends AppController
         $this->set(compact('noveltyType', 'parentTypes'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $noveltyType = $this->NoveltyTypes->get($id, contain: ['NoveltyTypeContractTemplates']);
@@ -79,6 +83,7 @@ class NoveltyTypesController extends AppController
         $this->set(compact('noveltyType', 'parentTypes'));
     }
 
+    #[Permission(action: 'view')]
     public function getFlags($id = null)
     {
         $this->request->allowMethod(['get']);
@@ -101,6 +106,7 @@ class NoveltyTypesController extends AppController
             ]));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

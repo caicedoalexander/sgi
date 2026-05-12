@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Constants\PipelineStepConstants;
 use App\Service\AuthorizationService;
 use App\Service\PipelineAuthorizationService;
@@ -25,6 +26,7 @@ class RolesController extends AppController
     /**
      * @return void
      */
+    #[Permission(action: 'view')]
     public function index()
     {
         $roles = $this->paginate($this->Roles);
@@ -35,6 +37,7 @@ class RolesController extends AppController
     /**
      * @return void
      */
+    #[Permission(action: 'view')]
     public function view($id = null)
     {
         $role = $this->Roles->get($id, contain: ['Users', 'Permissions']);
@@ -48,6 +51,7 @@ class RolesController extends AppController
     /**
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'add')]
     public function add()
     {
         $role = $this->Roles->newEmptyEntity();
@@ -83,6 +87,7 @@ class RolesController extends AppController
     /**
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $role = $this->Roles->get($id, contain: ['Permissions']);
@@ -116,6 +121,7 @@ class RolesController extends AppController
     /**
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Service\LeaveDocumentService;
+use Cake\Http\Response;
 
 class LeaveDocumentTemplatesController extends AppController
 {
@@ -17,6 +19,7 @@ class LeaveDocumentTemplatesController extends AppController
         $this->leaveDocumentService = $this->getContainer()->get(LeaveDocumentService::class);
     }
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $query = $this->LeaveDocumentTemplates->find()
@@ -28,6 +31,7 @@ class LeaveDocumentTemplatesController extends AppController
         $this->set(compact('templates'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $template = $this->LeaveDocumentTemplates->newEmptyEntity();
@@ -88,6 +92,7 @@ class LeaveDocumentTemplatesController extends AppController
         $this->set(compact('template'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $template = $this->LeaveDocumentTemplates->get($id, contain: ['LeaveTemplateFields']);
@@ -97,6 +102,7 @@ class LeaveDocumentTemplatesController extends AppController
         $this->set(compact('template', 'availableFields'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -114,6 +120,7 @@ class LeaveDocumentTemplatesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    #[Permission(action: 'edit')]
     public function saveFields($id = null): ?Response
     {
         $this->request->allowMethod(['post']);
@@ -154,6 +161,7 @@ class LeaveDocumentTemplatesController extends AppController
             ->withStringBody(json_encode(['success' => true, 'count' => count($fieldsData)]));
     }
 
+    #[Permission(action: 'view')]
     public function preview($id = null): ?Response
     {
         $this->autoRender = false;

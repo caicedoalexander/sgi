@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class TemporaryOrganizationsController extends AppController
@@ -11,6 +12,7 @@ class TemporaryOrganizationsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $temporaryOrganizations = $this->paginate($this->TemporaryOrganizations);
@@ -18,6 +20,7 @@ class TemporaryOrganizationsController extends AppController
         $this->set(compact('temporaryOrganizations'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $temporaryOrganization = $this->TemporaryOrganizations->newEmptyEntity();
@@ -34,6 +37,7 @@ class TemporaryOrganizationsController extends AppController
         $this->set(compact('temporaryOrganization'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $temporaryOrganization = $this->TemporaryOrganizations->get($id);
@@ -50,6 +54,7 @@ class TemporaryOrganizationsController extends AppController
         $this->set(compact('temporaryOrganization'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

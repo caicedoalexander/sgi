@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\Attribute\NoAuthGate;
 use App\Controller\AppController;
 use App\Service\PendingNotificationsService;
 use App\Service\SystemSettingsService;
@@ -31,6 +32,7 @@ class NotificationsController extends AppController
         }
     }
 
+    #[NoAuthGate(reason: 'API endpoint autenticado por X-Api-Key en beforeFilter; sin gate de módulo')]
     public function pending(): Response
     {
         $service = $this->getContainer()->get(PendingNotificationsService::class);

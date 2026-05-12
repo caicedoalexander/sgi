@@ -3,10 +3,13 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
+
 class ExpenseTypesController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $expenseTypes = $this->paginate($this->ExpenseTypes);
@@ -14,6 +17,7 @@ class ExpenseTypesController extends AppController
         $this->set(compact('expenseTypes'));
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null)
     {
         $expenseType = $this->ExpenseTypes->get($id, contain: ['Invoices']);
@@ -21,6 +25,7 @@ class ExpenseTypesController extends AppController
         $this->set(compact('expenseType'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $expenseType = $this->ExpenseTypes->newEmptyEntity();
@@ -37,6 +42,7 @@ class ExpenseTypesController extends AppController
         $this->set(compact('expenseType'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $expenseType = $this->ExpenseTypes->get($id);
@@ -53,6 +59,7 @@ class ExpenseTypesController extends AppController
         $this->set(compact('expenseType'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

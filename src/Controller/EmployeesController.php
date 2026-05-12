@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Controller\Trait\ExcelWizardTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Service\EmployeeDocumentService;
@@ -40,6 +41,7 @@ class EmployeesController extends AppController
         $employeesTable->setHistoryService($this->historyService);
     }
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $query = $this->Employees->find('withCurrentNovelty')
@@ -57,6 +59,7 @@ class EmployeesController extends AppController
         $this->set(compact('employees', 'positions', 'operationCenters', 'employeeStatuses'));
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null)
     {
         $employee = $this->Employees->get($id, contain: [
@@ -106,6 +109,7 @@ class EmployeesController extends AppController
         $this->set('fieldLabels', EmployeeHistoryService::FIELD_LABELS);
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $employee = $this->Employees->newEmptyEntity();
@@ -126,6 +130,7 @@ class EmployeesController extends AppController
         $this->set(compact('employee'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $employee = $this->Employees->get($id);
@@ -147,6 +152,7 @@ class EmployeesController extends AppController
         $this->set(compact('employee'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -164,6 +170,7 @@ class EmployeesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    #[Permission(action: 'edit')]
     public function addObservation($id = null)
     {
         $userId = (int)$this->Authentication->getIdentity()->getIdentifier();
@@ -178,6 +185,7 @@ class EmployeesController extends AppController
         );
     }
 
+    #[Permission(action: 'add')]
     public function addFolder($employeeId = null)
     {
         $this->request->allowMethod(['post']);
@@ -199,6 +207,7 @@ class EmployeesController extends AppController
         return $this->redirect(['action' => 'view', $employeeId]);
     }
 
+    #[Permission(action: 'add')]
     public function uploadDocument($employeeId = null)
     {
         $this->request->allowMethod(['post']);
@@ -228,6 +237,7 @@ class EmployeesController extends AppController
         return $this->redirect(['action' => 'view', $employeeId]);
     }
 
+    #[Permission(action: 'delete')]
     public function deleteDocument($employeeId = null, $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -248,6 +258,7 @@ class EmployeesController extends AppController
      * con headers de Content-Disposition. Documentos nuevos viven fuera de
      * webroot; documentos legacy aún pueden estar bajo webroot/uploads/.
      */
+    #[Permission(action: 'view')]
     public function downloadDocument($employeeId = null, $documentId = null): Response
     {
         $this->Employees->get($employeeId);

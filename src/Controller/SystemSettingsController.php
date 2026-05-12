@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Service\NotificationService;
 use App\Service\SystemSettingsService;
 
@@ -20,6 +21,7 @@ class SystemSettingsController extends AppController
         $this->notificationService = $container->get(NotificationService::class);
     }
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $smtpSettings = $this->settingsService->getGroup('smtp');
@@ -66,6 +68,7 @@ class SystemSettingsController extends AppController
         $this->set(compact('smtpSettings', 'n8nSettings', 'apiSettings'));
     }
 
+    #[Permission(action: 'edit')]
     public function regenerateApiKey()
     {
         $this->request->allowMethod(['post']);
@@ -78,6 +81,7 @@ class SystemSettingsController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    #[Permission(action: 'edit')]
     public function testSmtp()
     {
         $this->request->allowMethod(['post']);

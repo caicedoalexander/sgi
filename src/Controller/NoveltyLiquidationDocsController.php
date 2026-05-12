@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
@@ -57,6 +58,7 @@ class NoveltyLiquidationDocsController extends AppController
      *
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'view')]
     public function index()
     {
         $user = $this->Authentication->getIdentity()->getOriginalData();
@@ -83,6 +85,7 @@ class NoveltyLiquidationDocsController extends AppController
      *
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'view')]
     public function all()
     {
         $query = $this->NoveltyLiquidationDocs->find()
@@ -105,6 +108,7 @@ class NoveltyLiquidationDocsController extends AppController
      *
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'view')]
     public function rejected()
     {
         $query = $this->NoveltyLiquidationDocs->find()
@@ -123,6 +127,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'view')]
     public function view(?string $id = null)
     {
         $doc = $this->NoveltyLiquidationDocs->get($id, contain: [
@@ -183,6 +188,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null|void
      */
+    #[Permission(action: 'edit')]
     public function edit(?string $id = null)
     {
         $doc = $this->NoveltyLiquidationDocs->get($id, contain: [
@@ -267,6 +273,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'edit')]
     public function advanceGroup(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
@@ -301,6 +308,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'edit')]
     public function addSignature(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
@@ -342,6 +350,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'add')]
     public function uploadDocument(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
@@ -398,6 +407,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'add')]
     public function uploadLiquidationDocument(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
@@ -439,6 +449,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'edit')]
     public function updateLiquidationDocument(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
@@ -496,6 +507,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $documentId Document attachment ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'delete')]
     public function deleteDocument(?string $id = null, ?string $documentId = null): ?Response
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -544,6 +556,7 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'edit')]
     public function addObservation(?string $id = null): ?Response
     {
         return $this->_handleAddObservation(

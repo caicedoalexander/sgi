@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class OperationCentersController extends AppController
@@ -11,6 +12,7 @@ class OperationCentersController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $operationCenters = $this->paginate($this->OperationCenters);
@@ -18,6 +20,7 @@ class OperationCentersController extends AppController
         $this->set(compact('operationCenters'));
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null)
     {
         $operationCenter = $this->OperationCenters->get($id, contain: ['Invoices']);
@@ -25,6 +28,7 @@ class OperationCentersController extends AppController
         $this->set(compact('operationCenter'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $operationCenter = $this->OperationCenters->newEmptyEntity();
@@ -41,6 +45,7 @@ class OperationCentersController extends AppController
         $this->set(compact('operationCenter'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $operationCenter = $this->OperationCenters->get($id);
@@ -57,6 +62,7 @@ class OperationCentersController extends AppController
         $this->set(compact('operationCenter'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

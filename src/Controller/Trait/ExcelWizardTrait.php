@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Trait;
 
+use App\Attribute\Permission;
 use App\Model\Excel\ExcelExportableInterface;
 use App\Service\ExcelImportService;
 use App\Service\ExcelMappingService;
@@ -48,6 +49,7 @@ trait ExcelWizardTrait
      *
      * @return void
      */
+    #[Permission(action: 'view')]
     public function exportConfig(): void
     {
         $this->request->allowMethod(['get']);
@@ -65,6 +67,7 @@ trait ExcelWizardTrait
      *
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'view')]
     public function export(): ?Response
     {
         $this->request->allowMethod(['post']);
@@ -145,6 +148,7 @@ trait ExcelWizardTrait
      *
      * @return void
      */
+    #[Permission(action: 'add')]
     public function importUpload(): void
     {
         $this->request->allowMethod(['post']);
@@ -197,6 +201,7 @@ trait ExcelWizardTrait
      *
      * @return void
      */
+    #[Permission(action: 'add')]
     public function importProcess(): void
     {
         $this->request->allowMethod(['post']);

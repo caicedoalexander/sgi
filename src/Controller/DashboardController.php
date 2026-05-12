@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\NoAuthGate;
 use App\Service\DashboardStatisticsService;
 use DateTime;
 
@@ -13,6 +14,7 @@ class DashboardController extends AppController
      *
      * @return \Cake\Http\Response|null|void
      */
+    #[NoAuthGate(reason: 'Dashboard accesible a todo usuario autenticado; filtra contenido por can_view de cada módulo internamente')]
     public function index()
     {
         $identity = $this->Authentication->getIdentity();

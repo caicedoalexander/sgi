@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Service\PaymentRegistryService;
 
 class PaymentRegistryController extends AppController
@@ -22,6 +23,7 @@ class PaymentRegistryController extends AppController
      *
      * @return void
      */
+    #[Permission(action: 'view')]
     public function index(): void
     {
         $filters = [

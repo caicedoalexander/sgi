@@ -3,10 +3,13 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
+
 class BankingEntitiesController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $bankingEntities = $this->paginate($this->BankingEntities);
@@ -14,6 +17,7 @@ class BankingEntitiesController extends AppController
         $this->set(compact('bankingEntities'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $bankingEntity = $this->BankingEntities->newEmptyEntity();
@@ -30,6 +34,7 @@ class BankingEntitiesController extends AppController
         $this->set(compact('bankingEntity'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $bankingEntity = $this->BankingEntities->get($id);
@@ -46,6 +51,7 @@ class BankingEntitiesController extends AppController
         $this->set(compact('bankingEntity'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\NoAuthGate;
+use App\Attribute\Permission;
 use Cake\Event\EventInterface;
 
 class UsersController extends AppController
@@ -15,6 +17,7 @@ class UsersController extends AppController
         $this->Authentication->allowUnauthenticated(['login']);
     }
 
+    #[NoAuthGate(reason: 'External flow before authentication')]
     public function login()
     {
         $this->viewBuilder()->setLayout('login');
@@ -32,6 +35,7 @@ class UsersController extends AppController
         }
     }
 
+    #[NoAuthGate(reason: 'Always available to authenticated users')]
     public function logout()
     {
         $result = $this->Authentication->getResult();
@@ -42,6 +46,7 @@ class UsersController extends AppController
         return $this->redirect(['action' => 'login']);
     }
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $query = $this->Users->find()->contain(['Roles']);
@@ -50,6 +55,7 @@ class UsersController extends AppController
         $this->set(compact('users'));
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null)
     {
         $user = $this->Users->get($id, contain: ['Roles']);
@@ -57,6 +63,7 @@ class UsersController extends AppController
         $this->set(compact('user'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $user = $this->Users->newEmptyEntity();
@@ -74,6 +81,7 @@ class UsersController extends AppController
         $this->set(compact('user', 'roles'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $user = $this->Users->get($id);
@@ -95,6 +103,7 @@ class UsersController extends AppController
         $this->set(compact('user', 'roles'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

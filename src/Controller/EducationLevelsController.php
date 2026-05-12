@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class EducationLevelsController extends AppController
@@ -11,6 +12,7 @@ class EducationLevelsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $educationLevels = $this->paginate($this->EducationLevels);
@@ -18,6 +20,7 @@ class EducationLevelsController extends AppController
         $this->set(compact('educationLevels'));
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null)
     {
         $educationLevel = $this->EducationLevels->get($id);
@@ -25,6 +28,7 @@ class EducationLevelsController extends AppController
         $this->set(compact('educationLevel'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $educationLevel = $this->EducationLevels->newEmptyEntity();
@@ -41,6 +45,7 @@ class EducationLevelsController extends AppController
         $this->set(compact('educationLevel'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $educationLevel = $this->EducationLevels->get($id);
@@ -57,6 +62,7 @@ class EducationLevelsController extends AppController
         $this->set(compact('educationLevel'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class DefaultFoldersController extends AppController
@@ -11,6 +12,7 @@ class DefaultFoldersController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $defaultFolders = $this->paginate($this->DefaultFolders, ['order' => ['sort_order' => 'ASC']]);
@@ -18,6 +20,7 @@ class DefaultFoldersController extends AppController
         $this->set(compact('defaultFolders'));
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null)
     {
         $defaultFolder = $this->DefaultFolders->get($id);
@@ -25,6 +28,7 @@ class DefaultFoldersController extends AppController
         $this->set(compact('defaultFolder'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $defaultFolder = $this->DefaultFolders->newEmptyEntity();
@@ -41,6 +45,7 @@ class DefaultFoldersController extends AppController
         $this->set(compact('defaultFolder'));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $defaultFolder = $this->DefaultFolders->get($id);
@@ -57,6 +62,7 @@ class DefaultFoldersController extends AppController
         $this->set(compact('defaultFolder'));
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\NoAuthGate;
+use App\Attribute\Permission;
 use App\Constants\EmailLogConstants;
 use App\Model\Entity\EmailLog;
 use App\Service\EmailLogService;
@@ -28,6 +30,7 @@ class EmailLogsController extends AppController
      *
      * @return void
      */
+    #[Permission(action: 'view')]
     public function index(): void
     {
         // Sweep lazy de huérfanos antes de listar.
@@ -81,6 +84,7 @@ class EmailLogsController extends AppController
      * @param string|null $id ID del email log a reintentar.
      * @return \Cake\Http\Response
      */
+    #[NoAuthGate(reason: 'Permission delegated internally to entity-specific module (invoices.can_edit or employee_novelties.can_edit) via _canRetry()')]
     public function retry(?string $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -151,6 +155,7 @@ class EmailLogsController extends AppController
      *
      * @return \Cake\Http\Response
      */
+    #[Permission(action: 'edit')]
     public function retryAllFailed(): Response
     {
         $this->request->allowMethod(['post']);

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\NoAuthGate;
 use App\Constants\InvoiceConstants;
 use App\Service\ApprovalTokenService;
 use App\Service\InvoiceApprovalService;
@@ -33,6 +34,7 @@ class ExternalApprovalsController extends AppController
         // Access is controlled by token validation + user identity match
     }
 
+    #[NoAuthGate(reason: 'External approval via SHA256 token + identity match; sin gate de módulo')]
     public function review($token = null)
     {
         $this->viewBuilder()->setLayout('external');
@@ -101,6 +103,7 @@ class ExternalApprovalsController extends AppController
         $this->set('isMultiApprover', false);
     }
 
+    #[NoAuthGate(reason: 'External approval via SHA256 token + identity match; sin gate de módulo')]
     public function process($token = null)
     {
         $this->request->allowMethod(['post']);

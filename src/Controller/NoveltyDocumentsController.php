@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
 use App\Constants\NoveltyConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Service\NoveltyDocumentService;
@@ -21,6 +22,7 @@ class NoveltyDocumentsController extends AppController
         $this->documentService = $this->getContainer()->get(NoveltyDocumentService::class);
     }
 
+    #[Permission(action: 'edit')]
     public function upload(?string $noveltyId = null)
     {
         $this->request->allowMethod(['post']);
@@ -72,6 +74,7 @@ class NoveltyDocumentsController extends AppController
         return $this->redirect(['controller' => 'EmployeeNovelties', 'action' => 'edit', $noveltyId]);
     }
 
+    #[Permission(action: 'delete')]
     public function delete(?string $noveltyId = null, ?string $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);

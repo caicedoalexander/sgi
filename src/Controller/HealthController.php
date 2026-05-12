@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\NoAuthGate;
 use App\Service\HealthCheck\CacheHealthCheck;
 use App\Service\HealthCheck\CircuitBreakerHealthCheck;
 use App\Service\HealthCheck\DatabaseHealthCheck;
@@ -34,6 +35,7 @@ class HealthController extends AppController
      * (críticos para que la app procese requests). CB abierto y
      * email_logs_failed > 0 se reportan como degraded con status 200.
      */
+    #[NoAuthGate(reason: 'Liveness/readiness probe; allowUnauthenticated en initialize()')]
     public function index(): Response
     {
         $container = $this->getContainer();
