@@ -18,6 +18,9 @@ use App\ValueObject\UserContext;
  */
 abstract class PipelineFieldPolicy
 {
+    /**
+     * @param \App\Authorization\AuthorizationFacade $auth Fachada de autorización.
+     */
     public function __construct(
         protected readonly AuthorizationFacade $auth,
     ) {

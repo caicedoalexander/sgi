@@ -20,6 +20,9 @@ final class FilterResult
     ) {
     }
 
+    /**
+     * @return bool
+     */
     public function hasErrors(): bool
     {
         return $this->errors !== [];

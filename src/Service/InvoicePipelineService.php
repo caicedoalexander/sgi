@@ -168,7 +168,7 @@ class InvoicePipelineService
 
     public function filterEntityData(array $data, int $roleId, string $status): array
     {
-        return $this->fieldPolicy->filterEntityData($data, $roleId, $status);
+        return $this->fieldPolicy->filterEntityData($data, $roleId, $status)->patch;
     }
 
     public function getStatusIndex(string $status): int

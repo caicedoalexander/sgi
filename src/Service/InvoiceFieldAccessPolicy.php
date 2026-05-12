@@ -3,22 +3,21 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Authorization\AuthorizationFacade;
 use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
-use App\ValueObject\UserContext;
+use App\Service\Pipeline\PipelineFieldPolicy;
 
 /**
  * Calcula qué campos puede editar un usuario en una factura y qué secciones
  * del formulario debe ver, dado su rol y el estado actual del pipeline.
  *
- * El mapeo `step → campos editables` y `step → sección visible` es lógica de
- * dominio (vive en código). La autorización (¿este rol puede operar este
- * paso?) se delega a `AuthorizationFacade`, que consulta
- * `pipeline_permissions`.
+ * Audit PA-008 — antes implementaba todo inline; ahora extiende
+ * `PipelineFieldPolicy` y aporta solo el mapeo específico de Invoice. El shape
+ * de secciones pasó de `step => 'section'` a `step => ['section', ...]` para
+ * unificar con Novelty/PettyCash/Refund.
  */
-class InvoiceFieldAccessPolicy
+class InvoiceFieldAccessPolicy extends PipelineFieldPolicy
 {
     /**
      * Campos editables por paso del pipeline (sin acoplamiento a rol).
@@ -42,100 +41,71 @@ class InvoiceFieldAccessPolicy
     ];
 
     /**
-     * Sección del formulario asociada a cada paso.
+     * Secciones del formulario asociadas a cada paso (shape unificado con
+     * Novelty/PettyCash/Refund — array, no string).
      */
-    private const SECTION_BY_STEP = [
-        InvoiceConstants::STATUS_APROBACION => 'revision',
-        InvoiceConstants::STATUS_CONTABILIDAD => 'accounting',
-        InvoiceConstants::STATUS_TESORERIA => 'treasury',
-        InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'payment_authorization',
+    private const SECTIONS_BY_STEP = [
+        InvoiceConstants::STATUS_APROBACION => ['revision'],
+        InvoiceConstants::STATUS_CONTABILIDAD => ['accounting'],
+        InvoiceConstants::STATUS_TESORERIA => ['treasury'],
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO => ['payment_authorization'],
         // Verificación de pago reusa la sección de autorización (read-only),
         // donde aparece el botón "Pasar a Pagada".
-        InvoiceConstants::STATUS_VERIFICACION_PAGO => 'payment_authorization',
+        InvoiceConstants::STATUS_VERIFICACION_PAGO => ['payment_authorization'],
     ];
 
-    public function __construct(
-        private readonly AuthorizationFacade $auth,
-    ) {
+    /**
+     * @return array<string, array<int, string>>
+     */
+    protected static function fieldsByStep(): array
+    {
+        return self::FIELDS_BY_STEP;
     }
 
     /**
-     * @param int $roleId
-     * @param string $status
-     * @return array
+     * @return array<string, array<int, string>>
      */
-    public function getEditableFields(int $roleId, string $status): array
+    protected static function sectionsByStep(): array
+    {
+        return self::SECTIONS_BY_STEP;
+    }
+
+    /**
+     * @return string
+     */
+    protected static function pipelineKey(): string
+    {
+        return PipelineStepConstants::PIPELINE_INVOICES;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected static function alwaysVisibleSections(): array
+    {
+        return ['ledger'];
+    }
+
+    /**
+     * Guard adicional sobre la base: si el status no es un valor válido del
+     * enum, retorna vacío (la base ya lo hace por canOperate(false), pero el
+     * guard explícito documenta la intención).
+     */
+    final public function getEditableFields(int $roleId, string $status): array
     {
         if (PipelineStatus::tryFrom($status) === null) {
             return [];
         }
 
-        $allowedSteps = $this->auth->operableSteps(
-            new UserContext($roleId),
-            PipelineStepConstants::PIPELINE_INVOICES,
-        );
-
-        if (!in_array($status, $allowedSteps, true)) {
-            return [];
-        }
-
-        return self::FIELDS_BY_STEP[$status] ?? [];
+        return parent::getEditableFields($roleId, $status);
     }
 
     /**
-     * @param int $roleId
-     * @param string $status
-     * @return array
-     */
-    public function getVisibleSections(int $roleId, string $status): array
-    {
-        $sections = ['ledger'];
-
-        if (PipelineStatus::tryFrom($status) === null) {
-            return $sections;
-        }
-
-        $operableSteps = $this->auth->operableSteps(
-            new UserContext($roleId),
-            PipelineStepConstants::PIPELINE_INVOICES,
-        );
-
-        foreach ($operableSteps as $step) {
-            if (isset(self::SECTION_BY_STEP[$step])) {
-                $sections[] = self::SECTION_BY_STEP[$step];
-            }
-        }
-
-        return array_values(array_unique($sections));
-    }
-
-    /**
-     * @param int $roleId
-     * @param string $status
-     * @return array
+     * @return array Secciones colapsables — contrato heredado del audit previo;
+     * no se usa hoy pero el caller (`InvoicePipelineService`) lo invoca.
      */
     public function getCollapsibleSections(int $roleId, string $status): array
     {
-        // La política previa no definía secciones colapsables por rol/estado;
-        // se mantiene el contrato vacío.
         return [];
     }
-
-    /**
-     * @param array $data
-     * @param int $roleId
-     * @param string $status
-     * @return array
-     */
-    public function filterEntityData(array $data, int $roleId, string $status): array
-    {
-        $allowed = $this->getEditableFields($roleId, $status);
-
-        return array_intersect_key($data, array_flip($allowed));
-    }
-
-    /**
-     * @param string $status
-     * @return array
-     */
 }
