@@ -118,6 +118,15 @@ class PipelineAuthorizationService
             }
         }
 
+        $this->invalidate($roleId);
+    }
+
+    /**
+     * Invalida la cache per-request para un rol específico. Llamado tras
+     * `savePermissions` y desde `AuthorizationFacade::invalidate`.
+     */
+    public function invalidate(int $roleId): void
+    {
         unset($this->cache[$roleId]);
     }
 

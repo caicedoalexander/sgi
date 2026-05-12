@@ -146,7 +146,15 @@ class AuthorizationService
             }
         }
 
-        // Clear cache for this role
+        $this->invalidate($roleId);
+    }
+
+    /**
+     * Invalida la cache per-request para un rol específico. Llamado tras
+     * `savePermissionsForRole` y desde `AuthorizationFacade::invalidate`.
+     */
+    public function invalidate(int $roleId): void
+    {
         unset($this->cache[$roleId]);
     }
 }
