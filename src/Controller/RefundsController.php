@@ -10,6 +10,7 @@ use App\Constants\RefundConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\Refund;
+use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\RefundDocumentService;
 use App\Service\RefundPaymentService;
 use App\Service\RefundService;
@@ -18,6 +19,7 @@ use App\ViewModel\RefundEditViewModel;
 use Cake\Http\Response;
 use Cake\ORM\Query\SelectQuery;
 use Cake\Routing\Router;
+use DateTimeImmutable;
 
 class RefundsController extends AppController
 {
@@ -29,6 +31,7 @@ class RefundsController extends AppController
     private RefundService $refundService;
     private RefundPaymentService $paymentService;
     private RefundDocumentService $documentService;
+    private RefundFieldAccessPolicy $fieldPolicy;
 
     /**
      * @return void
@@ -40,6 +43,7 @@ class RefundsController extends AppController
         $this->refundService = $container->get(RefundService::class);
         $this->paymentService = $container->get(RefundPaymentService::class);
         $this->documentService = $container->get(RefundDocumentService::class);
+        $this->fieldPolicy = $container->get(RefundFieldAccessPolicy::class);
     }
 
     private function _getCurrentUser(): object
@@ -198,7 +202,7 @@ class RefundsController extends AppController
 
     private static function _isValidDate(string $value): bool
     {
-        $d = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
+        $d = DateTimeImmutable::createFromFormat('Y-m-d', $value);
 
         return $d !== false && $d->format('Y-m-d') === $value;
     }
@@ -327,39 +331,18 @@ class RefundsController extends AppController
             }
 
             $data = $this->request->getData();
-            $patchData = [];
+            $roleId = (int)$this->_getCurrentUser()->role_id;
+            $filtered = $this->fieldPolicy->filterEntityData($data, $roleId, (string)$record->status);
 
-            // Beneficiary: editable only in agrupacion
-            if ($record->isAgrupacion()) {
-                $beneficiaryType = $data['beneficiary_type'] ?? null;
-                $patchData['beneficiary_type'] = $beneficiaryType ?: null;
-                $patchData['beneficiary_employee_id'] = $beneficiaryType === RefundConstants::BENEFICIARY_TYPE_EMPLOYEE
-                    && !empty($data['beneficiary_employee_id'])
-                    ? (int)$data['beneficiary_employee_id']
-                    : null;
-                $patchData['beneficiary_provider_id'] = $beneficiaryType === RefundConstants::BENEFICIARY_TYPE_PROVIDER
-                    && !empty($data['beneficiary_provider_id'])
-                    ? (int)$data['beneficiary_provider_id']
-                    : null;
-            }
-
-            // Accounting fields: editable in contabilidad
-            if ($record->isContabilidad()) {
-                $isAccrued = !empty($data['accrued']);
-                $patchData['accrued'] = $isAccrued;
-                if ($isAccrued) {
-                    $submittedDate = !empty($data['accrual_date']) ? $data['accrual_date'] : null;
-                    if (empty($submittedDate)) {
-                        $this->Flash->error('La fecha de causación es requerida cuando el registro está marcado como causado.');
-
-                        return $this->redirect(['action' => 'edit', $id]);
-                    }
-                    $patchData['accrual_date'] = $submittedDate;
-                } else {
-                    $patchData['accrual_date'] = null;
+            if ($filtered->hasErrors()) {
+                foreach ($filtered->errors as $err) {
+                    $this->Flash->error($err);
                 }
-                $patchData['ready_for_payment'] = $data['ready_for_payment'] ?? null;
+
+                return $this->redirect(['action' => 'edit', $id]);
             }
+
+            $patchData = $filtered->patch;
 
             if (!empty($patchData)) {
                 $record = $this->Refunds->patchEntity($record, $patchData);
