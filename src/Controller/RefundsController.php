@@ -10,6 +10,7 @@ use App\Constants\RefundConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\Refund;
+use App\Service\Pipeline\Refund\Policy\RefundActionPolicy;
 use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\RefundDocumentService;
 use App\Service\RefundPaymentService;
@@ -32,6 +33,7 @@ class RefundsController extends AppController
     private RefundPaymentService $paymentService;
     private RefundDocumentService $documentService;
     private RefundFieldAccessPolicy $fieldPolicy;
+    private RefundActionPolicy $actionPolicy;
 
     /**
      * @return void
@@ -44,24 +46,12 @@ class RefundsController extends AppController
         $this->paymentService = $container->get(RefundPaymentService::class);
         $this->documentService = $container->get(RefundDocumentService::class);
         $this->fieldPolicy = $container->get(RefundFieldAccessPolicy::class);
+        $this->actionPolicy = $container->get(RefundActionPolicy::class);
     }
 
     private function _getCurrentUser(): object
     {
         return $this->Authentication->getIdentity()->getOriginalData();
-    }
-
-    /**
-     * True si el rol del usuario actual puede operar en el step indicado del
-     * pipeline de reembolsos. Se usa para gates de upload/delete de soportes.
-     */
-    private function _canOperateRefundStep(string $step): bool
-    {
-        return $this->authFacade->canOperate(
-            $this->_userContext(),
-            PipelineStepConstants::PIPELINE_REFUNDS,
-            $step,
-        );
     }
 
     /**
@@ -80,7 +70,8 @@ class RefundsController extends AppController
             );
         }
 
-        if (!$this->_canOperateRefundStep($record->status)) {
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        if (!$this->actionPolicy->canOperateStep($roleId, (string)$record->status)) {
             return $this->_documentGateError(
                 'No tiene permisos para gestionar soportes en este paso.',
                 $record->id,
@@ -437,21 +428,9 @@ class RefundsController extends AppController
             canRegress: $this->refundService->denialReasonForRegress($record, $roleId) === null,
             previousStatus: $this->refundService->getPreviousStatus($record->status),
             regressLockMessage: $this->refundService->getRegressionLockMessage($record),
-            canRegisterPayment: $this->authFacade->canOperate(
-                $userContext,
-                PipelineStepConstants::PIPELINE_REFUNDS,
-                RefundConstants::STATUS_TESORERIA,
-            ),
-            canAuthorizePayment: $this->authFacade->canOperate(
-                $userContext,
-                PipelineStepConstants::PIPELINE_REFUNDS,
-                RefundConstants::STATUS_AUTORIZACION_PAGO,
-            ),
-            canConfirmPayment: $this->authFacade->canOperate(
-                $userContext,
-                PipelineStepConstants::PIPELINE_REFUNDS,
-                RefundConstants::STATUS_VERIFICACION_PAGO,
-            ),
+            canRegisterPayment: $this->actionPolicy->canRegisterPayment($record, $roleId),
+            canAuthorizePayment: $this->actionPolicy->canAuthorizePayment($record, $roleId),
+            canConfirmPayment: $this->actionPolicy->canConfirmPayment($record, $roleId),
             syntheticPayments: $this->refundService->buildSyntheticPayments($record),
             roleName: $roleName,
             pipelineLabels: RefundConstants::STATUS_LABELS,
@@ -581,13 +560,7 @@ class RefundsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_REFUNDS,
-                RefundConstants::STATUS_VERIFICACION_PAGO,
-            )
-        ) {
+        if (!$this->actionPolicy->canOperateStep((int)$user->role_id, RefundConstants::STATUS_VERIFICACION_PAGO)) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->redirect(['action' => 'view', $id]);
@@ -727,7 +700,7 @@ class RefundsController extends AppController
      *    para esta acción (mapeo `uploadDocument` → `add` en
      *    `_actionToPermission`). Sin ese permiso de módulo el request es
      *    rechazado con 403 antes de entrar al método.
-     * 2. `_canOperateRefundStep` valida que el rol tenga permiso de pipeline
+     * 2. `actionPolicy->canOperateStep` valida que el rol tenga permiso de pipeline
      *    para operar en el step actual del reintegro.
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
@@ -792,7 +765,7 @@ class RefundsController extends AppController
      * 1. `AppController::_enforcePermission` ya valida `refunds.can_delete`
      *    para esta acción (mapeo `deleteDocument` → `delete` en
      *    `_actionToPermission`).
-     * 2. `_canOperateRefundStep` valida permiso de pipeline para el step
+     * 2. `actionPolicy->canOperateStep` valida permiso de pipeline para el step
      *    actual; el servicio además valida la pertenencia del documento al
      *    refund (anti-IDOR).
      */
