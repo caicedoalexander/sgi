@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Authorization\AuthorizationFacade;
 use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
+use App\ValueObject\UserContext;
 
 /**
  * Calcula qué campos puede editar un usuario en una factura y qué secciones
@@ -13,7 +15,7 @@ use App\Constants\PipelineStepConstants;
  *
  * El mapeo `step → campos editables` y `step → sección visible` es lógica de
  * dominio (vive en código). La autorización (¿este rol puede operar este
- * paso?) se delega a `PipelineAuthorizationService`, que consulta
+ * paso?) se delega a `AuthorizationFacade`, que consulta
  * `pipeline_permissions`.
  */
 class InvoiceFieldAccessPolicy
@@ -52,14 +54,9 @@ class InvoiceFieldAccessPolicy
         InvoiceConstants::STATUS_VERIFICACION_PAGO => 'payment_authorization',
     ];
 
-    private PipelineAuthorizationService $pipelineAuth;
-
-    /**
-     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth
-     */
-    public function __construct(?PipelineAuthorizationService $pipelineAuth = null)
-    {
-        $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+    public function __construct(
+        private readonly AuthorizationFacade $auth,
+    ) {
     }
 
     /**
@@ -73,8 +70,8 @@ class InvoiceFieldAccessPolicy
             return [];
         }
 
-        $allowedSteps = $this->pipelineAuth->getOperableSteps(
-            $roleId,
+        $allowedSteps = $this->auth->operableSteps(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_INVOICES,
         );
 
@@ -98,8 +95,8 @@ class InvoiceFieldAccessPolicy
             return $sections;
         }
 
-        $operableSteps = $this->pipelineAuth->getOperableSteps(
-            $roleId,
+        $operableSteps = $this->auth->operableSteps(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_INVOICES,
         );
 

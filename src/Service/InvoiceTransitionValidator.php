@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Authorization\AuthorizationFacade;
 use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
+use App\ValueObject\UserContext;
 
 /**
  * Orquesta la validación de avance del pipeline:
@@ -34,7 +36,7 @@ final class InvoiceTransitionValidator
         private readonly InvoicePipelineStateRegistry $states,
         private readonly DocumentTypePolicyFactory $policies,
         private readonly InvoiceFieldAccessPolicy $fieldPolicy,
-        private readonly PipelineAuthorizationService $pipelineAuth,
+        private readonly AuthorizationFacade $auth,
     ) {
     }
 
@@ -95,8 +97,8 @@ final class InvoiceTransitionValidator
     public function filterErrorsForRole(array $errors, array $rules, int $roleId, string $status): array
     {
         $editable = $this->fieldPolicy->getEditableFields($roleId, $status);
-        $statusVisible = $this->pipelineAuth->canOperate(
-            $roleId,
+        $statusVisible = $this->auth->canOperate(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_INVOICES,
             $status,
         );

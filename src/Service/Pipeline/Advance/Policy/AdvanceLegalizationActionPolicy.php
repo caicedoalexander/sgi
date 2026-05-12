@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Advance\Policy;
 
+use App\Authorization\AuthorizationFacade;
 use App\Constants\PipelineStepConstants;
 use App\Model\Entity\AdvanceLegalization;
-use App\Service\PipelineAuthorizationService;
+use App\ValueObject\UserContext;
 
 /**
  * Decide whether a given role is allowed to execute a mutating action on an
@@ -13,13 +14,13 @@ use App\Service\PipelineAuthorizationService;
  *
  * Audit MA-010 — la regla de **estado** vive en los predicates `canXxx()` de
  * `AdvanceLegalization`. Este policy compone solo la dimensión de **rol×paso**,
- * delegando esa decisión a `PipelineAuthorizationService` (matriz configurable
+ * delegando esa decisión a `AuthorizationFacade` (matriz configurable
  * desde /roles/edit). El chequeo de estado sigue delegado a la entidad.
  */
 final class AdvanceLegalizationActionPolicy
 {
     public function __construct(
-        private PipelineAuthorizationService $pipelineAuth,
+        private AuthorizationFacade $auth,
     ) {
     }
 
@@ -90,8 +91,8 @@ final class AdvanceLegalizationActionPolicy
 
     private function _canOperate(int $roleId, string $step): bool
     {
-        return $this->pipelineAuth->canOperate(
-            $roleId,
+        return $this->auth->canOperate(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_LEGALIZATIONS,
             $step,
         );

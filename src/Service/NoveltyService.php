@@ -3,12 +3,14 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Authorization\AuthorizationFacade;
 use App\Constants\Domain\Novelty\PipelineStatus as NoveltyPipelineStatus;
 use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Model\Entity\EmployeeNovelty;
 use App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry;
+use App\ValueObject\UserContext;
 use Cake\ORM\TableRegistry;
 use DateTime;
 
@@ -36,18 +38,18 @@ class NoveltyService
         NoveltyConstants::STATUS_AUTORIZACION_PAGO => ['informacion'],
     ];
 
-    private PipelineAuthorizationService $pipelineAuth;
+    private AuthorizationFacade $auth;
     private NoveltyPipelineStateRegistry $stateRegistry;
 
     /**
-     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth Pipeline auth service.
+     * @param \App\Authorization\AuthorizationFacade $auth Authorization facade.
      * @param \App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry|null $stateRegistry State registry.
      */
     public function __construct(
-        ?PipelineAuthorizationService $pipelineAuth = null,
+        AuthorizationFacade $auth,
         ?NoveltyPipelineStateRegistry $stateRegistry = null,
     ) {
-        $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+        $this->auth = $auth;
         $this->stateRegistry = $stateRegistry ?? new NoveltyPipelineStateRegistry();
     }
 
@@ -395,8 +397,8 @@ class NoveltyService
      */
     public function getVisibleStatuses(int $roleId): array
     {
-        return $this->pipelineAuth->getOperableSteps(
-            $roleId,
+        return $this->auth->operableSteps(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_NOVELTIES,
         );
     }
@@ -406,8 +408,8 @@ class NoveltyService
      */
     public function getVisibleLiquidationStatuses(int $roleId): array
     {
-        return $this->pipelineAuth->getOperableSteps(
-            $roleId,
+        return $this->auth->operableSteps(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS,
         );
     }
@@ -418,8 +420,8 @@ class NoveltyService
     public function getEditableFields(int $roleId, string $status): array
     {
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 $status,
             )
@@ -435,8 +437,8 @@ class NoveltyService
      */
     public function getVisibleSections(int $roleId, string $status): array
     {
-        $operableSteps = $this->pipelineAuth->getOperableSteps(
-            $roleId,
+        $operableSteps = $this->auth->operableSteps(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_NOVELTIES,
         );
 
@@ -458,8 +460,8 @@ class NoveltyService
         }
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 (string)$novelty->pipeline_status,
             )

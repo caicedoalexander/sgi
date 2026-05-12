@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Authorization\AuthorizationFacade;
 use App\Constants\Domain\PettyCash\PipelineStatus as PettyCashPipelineStatus;
 use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\InvoiceConstants;
@@ -13,6 +14,7 @@ use App\Model\Entity\PettyCashRecord;
 use App\Service\Dto\BulkPaymentView;
 use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry;
+use App\ValueObject\UserContext;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
 use Cake\I18n\Date;
@@ -24,7 +26,7 @@ use InvalidArgumentException;
 class PettyCashService
 {
     private GroupedInvoiceService $grouped;
-    private PipelineAuthorizationService $pipelineAuth;
+    private AuthorizationFacade $auth;
     private PettyCashHistoryService $history;
     private PettyCashPipelineStateRegistry $stateRegistry;
     private HistoryServiceInterface $invoiceHistory;
@@ -32,13 +34,13 @@ class PettyCashService
 
     /**
      * @param \App\Service\Interface\HistoryServiceInterface $historyService History service for child invoices.
-     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth
+     * @param \App\Authorization\AuthorizationFacade $auth Authorization facade.
      * @param \App\Service\PettyCashHistoryService|null $history Audit trail for the petty cash record itself.
      * @param \App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry|null $stateRegistry
      */
     public function __construct(
         HistoryServiceInterface $historyService,
-        ?PipelineAuthorizationService $pipelineAuth = null,
+        AuthorizationFacade $auth,
         ?PettyCashHistoryService $history = null,
         ?PettyCashPipelineStateRegistry $stateRegistry = null,
         ?EventManagerInterface $events = null,
@@ -51,7 +53,7 @@ class PettyCashService
             historyService: $historyService,
         );
         $this->invoiceHistory = $historyService;
-        $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+        $this->auth = $auth;
         $this->history = $history ?? new PettyCashHistoryService();
         $this->stateRegistry = $stateRegistry ?? new PettyCashPipelineStateRegistry();
         $this->events = $events;
@@ -62,8 +64,8 @@ class PettyCashService
      */
     public function getVisibleStatuses(int $roleId): array
     {
-        return $this->pipelineAuth->getOperableSteps(
-            $roleId,
+        return $this->auth->operableSteps(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_PETTY_CASH,
         );
     }
@@ -246,8 +248,8 @@ class PettyCashService
         }
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
                 $record->status,
             )
@@ -479,8 +481,8 @@ class PettyCashService
         int $createdBy,
     ): ServiceResult {
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
                 PettyCashConstants::STATUS_TESORERIA,
             )
@@ -552,8 +554,8 @@ class PettyCashService
         int $authorizedBy,
     ): ServiceResult {
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
                 PettyCashConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -664,8 +666,8 @@ class PettyCashService
         string $reason,
     ): ServiceResult {
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
                 PettyCashConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -728,8 +730,8 @@ class PettyCashService
         }
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
                 $record->status,
             )

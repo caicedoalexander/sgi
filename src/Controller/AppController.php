@@ -6,11 +6,14 @@ namespace App\Controller;
 use App\Attribute\NoAuthGate;
 use App\Attribute\Permission;
 use App\Attribute\PipelineAction;
+use App\Authorization\AuthorizationFacade;
+use App\Authorization\CrudAction;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
 use App\Service\AuthorizationService;
 use App\Service\PipelineAuthorizationService;
 use App\Service\SidebarCounterService;
+use App\ValueObject\UserContext;
 use Cake\Controller\Controller;
 use Cake\Core\ContainerInterface;
 use Cake\Event\EventInterface;
@@ -29,6 +32,8 @@ class AppController extends Controller
     protected SidebarCounterService $counterService;
 
     protected PipelineAuthorizationService $pipelineAuth;
+
+    protected AuthorizationFacade $authFacade;
 
     /**
      * Stash the application container so controllers can resolve services on demand.
@@ -59,6 +64,7 @@ class AppController extends Controller
         $this->authService = $this->getContainer()->get(AuthorizationService::class);
         $this->counterService = $this->getContainer()->get(SidebarCounterService::class);
         $this->pipelineAuth = $this->getContainer()->get(PipelineAuthorizationService::class);
+        $this->authFacade = $this->getContainer()->get(AuthorizationFacade::class);
 
         $this->loadComponent('Flash');
         $this->loadComponent('Authentication.Authentication');
@@ -230,8 +236,8 @@ class AppController extends Controller
                 return;
             }
 
-            $roleId = (int)$user->role_id;
-            if (!$this->pipelineAuth->canOperate($roleId, $attribute->pipeline, $attribute->step)) {
+            $context = UserContext::fromIdentity($user);
+            if (!$this->authFacade->canOperate($context, $attribute->pipeline, $attribute->step)) {
                 throw new ForbiddenException(
                     sprintf(
                         'No tiene permisos para operar el paso "%s" del pipeline "%s".',
@@ -249,6 +255,20 @@ class AppController extends Controller
     protected function _getUserRoleName(object $user): string
     {
         return $user?->role?->name ?? '';
+    }
+
+    /**
+     * Compone un `UserContext` desde el identity actual. Útil para pasarlo
+     * a `AuthorizationFacade::can*` o a services/policies que reciben el VO.
+     */
+    protected function _userContext(): ?UserContext
+    {
+        $identity = $this->Authentication->getIdentity();
+        if ($identity === null) {
+            return null;
+        }
+
+        return UserContext::fromIdentity($identity->getOriginalData());
     }
 
     /**
@@ -293,15 +313,12 @@ class AppController extends Controller
 
     protected function _checkPermission(string $module, string $action): bool
     {
-        $identity = $this->Authentication->getIdentity();
-        if (!$identity) {
+        $context = $this->_userContext();
+        if ($context === null) {
             return false;
         }
 
-        $user = $identity->getOriginalData();
-        $roleName = $this->_getUserRoleName($user);
-
-        return $this->authService->isAllowed((int)$user->role_id, $roleName, $module, $action);
+        return $this->authFacade->canCrud($context, $module, CrudAction::from($action));
     }
 
     protected function _isJsonRequest(): bool

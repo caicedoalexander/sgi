@@ -213,14 +213,14 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         // === Invoice domain (cycle: closure factory in AdvanceLegalization) ===
         $container->addShared(InvoiceHistoryService::class);
         $container->addShared(InvoiceFieldAccessPolicy::class)
-            ->addArgument(PipelineAuthorizationService::class);
+            ->addArgument(AuthorizationFacade::class);
         $container->addShared(InvoiceLockPolicy::class);
         $container->addShared(InvoiceTransitionValidator::class)
             ->addArguments([
                 InvoicePipelineStateRegistry::class,
                 DocumentTypePolicyFactory::class,
                 InvoiceFieldAccessPolicy::class,
-                PipelineAuthorizationService::class,
+                AuthorizationFacade::class,
             ]);
         $container->addShared(InvoiceFilterService::class);
         $container->addShared(InvoiceDocumentService::class);
@@ -239,7 +239,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 AdvanceLegalizationDocumentService::class,
             ]);
         $container->addShared(AdvanceLegalizationActionPolicy::class)
-            ->addArgument(PipelineAuthorizationService::class);
+            ->addArgument(AuthorizationFacade::class);
         $container->addShared(InvoicePipelineService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
@@ -250,7 +250,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoicePipelineStateRegistry::class,
                 DocumentTypePolicyFactory::class,
                 EventManagerInterface::class,
-                PipelineAuthorizationService::class,
+                AuthorizationFacade::class,
             ]);
         $container->addShared(InvoiceApprovalService::class)
             ->addArgument(NotificationService::class);
@@ -324,7 +324,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(NoveltyDocumentService::class);
         $container->addShared(NoveltySignatureService::class);
         $container->addShared(NoveltyService::class)
-            ->addArgument(PipelineAuthorizationService::class);
+            ->addArgument(AuthorizationFacade::class);
         $container->addShared(LeaveDocumentService::class);
         $container->addShared(LeaveSignatureService::class);
         $container->addShared(LiquidationDocPaymentService::class);
@@ -334,17 +334,21 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(PettyCashService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
-                PipelineAuthorizationService::class,
+                AuthorizationFacade::class,
             ]);
         $container->addShared(RefundDocumentService::class);
         $container->addShared(RefundService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
-                PipelineAuthorizationService::class,
+                AuthorizationFacade::class,
             ]);
-        $container->addShared(RefundPaymentService::class);
+        $container->addShared(RefundPaymentService::class)
+            ->addArgument(AuthorizationFacade::class);
         $container->addShared(PaymentSchedulingService::class)
-            ->addArgument(InvoicePaymentService::class);
+            ->addArguments([
+                InvoicePaymentService::class,
+                AuthorizationFacade::class,
+            ]);
         $container->addShared(PaymentSchedulingImportService::class)
             ->addArgument(InvoicePaymentService::class);
         $container->addShared(PaymentSchedulingDocumentService::class);

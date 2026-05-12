@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Authorization\AuthorizationFacade;
 use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\InvoiceConstants;
@@ -12,6 +13,7 @@ use App\Model\Entity\Invoice;
 use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
+use App\ValueObject\UserContext;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
@@ -33,7 +35,7 @@ class InvoicePipelineService
         private readonly InvoicePipelineStateRegistry $states,
         private readonly DocumentTypePolicyFactory $docTypePolicies,
         private readonly EventManagerInterface $events,
-        private readonly PipelineAuthorizationService $pipelineAuth,
+        private readonly AuthorizationFacade $auth,
     ) {
     }
 
@@ -41,8 +43,8 @@ class InvoicePipelineService
 
     public function getVisibleStatuses(int $roleId): array
     {
-        return $this->pipelineAuth->getOperableSteps(
-            $roleId,
+        return $this->auth->operableSteps(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_INVOICES,
         );
     }
@@ -132,8 +134,8 @@ class InvoicePipelineService
         }
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_INVOICES,
                 $invoice->pipeline_status,
             )
@@ -200,8 +202,8 @@ class InvoicePipelineService
         }
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_INVOICES,
                 $invoice->pipeline_status,
             )

@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Authorization\AuthorizationFacade;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
 use App\Event\InvoicePaidEvent;
 use App\Service\Interface\HistoryServiceInterface;
+use App\ValueObject\UserContext;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
@@ -23,17 +25,17 @@ use Cake\ORM\TableRegistry;
 class RefundPaymentService
 {
     private RefundHistoryService $refundHistory;
-    private PipelineAuthorizationService $pipelineAuth;
+    private AuthorizationFacade $auth;
     private HistoryServiceInterface $invoiceHistory;
     private ?EventManagerInterface $events;
 
     public function __construct(
-        ?PipelineAuthorizationService $pipelineAuth = null,
+        AuthorizationFacade $auth,
         ?RefundHistoryService $refundHistory = null,
         ?HistoryServiceInterface $invoiceHistory = null,
         ?EventManagerInterface $events = null,
     ) {
-        $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+        $this->auth = $auth;
         $this->refundHistory = $refundHistory ?? new RefundHistoryService();
         $this->invoiceHistory = $invoiceHistory ?? new InvoiceHistoryService();
         $this->events = $events;
@@ -56,8 +58,8 @@ class RefundPaymentService
         int $roleId,
     ): ServiceResult {
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_TESORERIA,
             )
@@ -190,8 +192,8 @@ class RefundPaymentService
         int $roleId,
     ): ServiceResult {
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -365,8 +367,8 @@ class RefundPaymentService
         int $roleId,
     ): ServiceResult {
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_AUTORIZACION_PAGO,
             )

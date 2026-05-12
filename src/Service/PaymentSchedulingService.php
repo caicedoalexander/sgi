@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Authorization\AuthorizationFacade;
 use App\Constants\Domain\PaymentScheduling\PipelineStatus;
 use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\InvoiceConstants;
@@ -11,25 +12,26 @@ use App\Constants\PipelineStepConstants;
 use App\Event\InvoicePaidEvent;
 use App\Model\Entity\PaymentScheduling;
 use App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineStateRegistry;
+use App\ValueObject\UserContext;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
 
 class PaymentSchedulingService
 {
-    private PipelineAuthorizationService $pipelineAuth;
+    private AuthorizationFacade $auth;
     private PaymentSchedulingPipelineStateRegistry $stateRegistry;
     private InvoiceHistoryService $historyService;
     private ?EventManagerInterface $events;
 
     public function __construct(
         private readonly InvoicePaymentService $paymentService,
-        ?PipelineAuthorizationService $pipelineAuth = null,
+        AuthorizationFacade $auth,
         ?PaymentSchedulingPipelineStateRegistry $stateRegistry = null,
         ?InvoiceHistoryService $historyService = null,
         ?EventManagerInterface $events = null,
     ) {
-        $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+        $this->auth = $auth;
         $this->stateRegistry = $stateRegistry ?? new PaymentSchedulingPipelineStateRegistry();
         $this->historyService = $historyService ?? new InvoiceHistoryService();
         $this->events = $events;
@@ -37,8 +39,8 @@ class PaymentSchedulingService
 
     public function getVisibleStatuses(int $roleId): array
     {
-        return $this->pipelineAuth->getOperableSteps(
-            $roleId,
+        return $this->auth->operableSteps(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
         );
     }
@@ -63,8 +65,8 @@ class PaymentSchedulingService
         }
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
                 $scheduling->pipeline_status,
             )
@@ -85,8 +87,8 @@ class PaymentSchedulingService
         }
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
                 $scheduling->pipeline_status,
             )

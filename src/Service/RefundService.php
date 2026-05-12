@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Authorization\AuthorizationFacade;
 use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\Domain\Refund\PipelineStatus as RefundPipelineStatus;
 use App\Constants\InvoiceConstants;
@@ -12,6 +13,7 @@ use App\Model\Entity\Refund;
 use App\Service\Dto\BulkPaymentView;
 use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\Refund\RefundPipelineStateRegistry;
+use App\ValueObject\UserContext;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
@@ -22,17 +24,17 @@ class RefundService
     private GroupedInvoiceService $grouped;
     private RefundHistoryService $refundHistory;
     private RefundPipelineStateRegistry $stateRegistry;
-    private PipelineAuthorizationService $pipelineAuth;
+    private AuthorizationFacade $auth;
 
     /**
      * @param \App\Service\Interface\HistoryServiceInterface $historyService History service for child invoices.
-     * @param \App\Service\PipelineAuthorizationService|null $pipelineAuth Pipeline authorization service.
+     * @param \App\Authorization\AuthorizationFacade $auth Authorization facade.
      * @param \App\Service\RefundHistoryService|null $refundHistory Refund-specific audit trail.
      * @param \App\Service\Pipeline\Refund\RefundPipelineStateRegistry|null $stateRegistry Pipeline states.
      */
     public function __construct(
         HistoryServiceInterface $historyService,
-        ?PipelineAuthorizationService $pipelineAuth = null,
+        AuthorizationFacade $auth,
         ?RefundHistoryService $refundHistory = null,
         ?RefundPipelineStateRegistry $stateRegistry = null,
     ) {
@@ -43,7 +45,7 @@ class RefundService
             fkLabel: 'Reintegro',
             historyService: $historyService,
         );
-        $this->pipelineAuth = $pipelineAuth ?? new PipelineAuthorizationService();
+        $this->auth = $auth;
         $this->refundHistory = $refundHistory ?? new RefundHistoryService();
         $this->stateRegistry = $stateRegistry ?? new RefundPipelineStateRegistry();
     }
@@ -53,8 +55,8 @@ class RefundService
      */
     public function getVisibleStatuses(int $roleId): array
     {
-        return $this->pipelineAuth->getOperableSteps(
-            $roleId,
+        return $this->auth->operableSteps(
+            new UserContext($roleId),
             PipelineStepConstants::PIPELINE_REFUNDS,
         );
     }
@@ -130,8 +132,8 @@ class RefundService
         }
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 $currentStatus,
             )
@@ -364,8 +366,8 @@ class RefundService
         }
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->auth->canOperate(
+                new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 $refund->status,
             )
