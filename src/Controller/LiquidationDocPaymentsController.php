@@ -7,11 +7,13 @@ use App\Attribute\PipelineAction;
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Service\LiquidationDocPaymentService;
+use App\Service\Pipeline\Novelty\Policy\NoveltyActionPolicy;
 use Cake\Http\Response;
 
 class LiquidationDocPaymentsController extends AppController
 {
     private LiquidationDocPaymentService $paymentService;
+    private NoveltyActionPolicy $actionPolicy;
 
     /**
      * @return void
@@ -19,7 +21,9 @@ class LiquidationDocPaymentsController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->paymentService = $this->getContainer()->get(LiquidationDocPaymentService::class);
+        $container = $this->getContainer();
+        $this->paymentService = $container->get(LiquidationDocPaymentService::class);
+        $this->actionPolicy = $container->get(NoveltyActionPolicy::class);
     }
 
     private function _getRoleId(): int
@@ -57,13 +61,9 @@ class LiquidationDocPaymentsController extends AppController
     public function addPayment(?string $docId = null): ?Response
     {
         $this->request->allowMethod(['post']);
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_NOVELTIES,
-                NoveltyConstants::STATUS_TESORERIA,
-            )
-        ) {
+        $doc = $this->fetchTable('NoveltyLiquidationDocs')->get($docId);
+
+        if (!$this->actionPolicy->canRegisterPayment($doc, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'edit', $docId]);
@@ -95,13 +95,9 @@ class LiquidationDocPaymentsController extends AppController
     public function authorizePayment(?string $docId = null, ?string $paymentId = null): ?Response
     {
         $this->request->allowMethod(['post']);
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_NOVELTIES,
-                NoveltyConstants::STATUS_AUTORIZACION_PAGO,
-            )
-        ) {
+        $doc = $this->fetchTable('NoveltyLiquidationDocs')->get($docId);
+
+        if (!$this->actionPolicy->canAuthorizePayment($doc, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'edit', $docId]);
@@ -129,13 +125,9 @@ class LiquidationDocPaymentsController extends AppController
     public function confirmPayment(?string $docId = null): ?Response
     {
         $this->request->allowMethod(['post']);
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_NOVELTIES,
-                NoveltyConstants::STATUS_VERIFICACION_PAGO,
-            )
-        ) {
+        $doc = $this->fetchTable('NoveltyLiquidationDocs')->get($docId);
+
+        if (!$this->actionPolicy->canConfirmPayment($doc, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'view', $docId]);
@@ -163,13 +155,9 @@ class LiquidationDocPaymentsController extends AppController
     public function rejectPayment(?string $docId = null, ?string $paymentId = null): ?Response
     {
         $this->request->allowMethod(['post']);
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_NOVELTIES,
-                NoveltyConstants::STATUS_AUTORIZACION_PAGO,
-            )
-        ) {
+        $doc = $this->fetchTable('NoveltyLiquidationDocs')->get($docId);
+
+        if (!$this->actionPolicy->canRejectPayment($doc, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'edit', $docId]);

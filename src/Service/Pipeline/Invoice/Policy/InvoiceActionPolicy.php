@@ -60,6 +60,50 @@ final class InvoiceActionPolicy
     }
 
     /**
+     * @param \App\Model\Entity\Invoice $invoice Factura.
+     * @param int $roleId Role ID.
+     * @return bool
+     */
+    public function canAddPayment(Invoice $invoice, int $roleId): bool
+    {
+        return $invoice->canAddPayment()
+            && $this->_canOperate($roleId, InvoiceConstants::STATUS_TESORERIA);
+    }
+
+    /**
+     * @param \App\Model\Entity\Invoice $invoice Factura.
+     * @param int $roleId Role ID.
+     * @return bool
+     */
+    public function canEditPayment(Invoice $invoice, int $roleId): bool
+    {
+        return $invoice->canEditPayment()
+            && $this->_canOperate($roleId, InvoiceConstants::STATUS_TESORERIA);
+    }
+
+    /**
+     * @param \App\Model\Entity\Invoice $invoice Factura.
+     * @param int $roleId Role ID.
+     * @return bool
+     */
+    public function canRejectPayment(Invoice $invoice, int $roleId): bool
+    {
+        return $invoice->canRejectPayment()
+            && $this->_canOperate($roleId, InvoiceConstants::STATUS_AUTORIZACION_PAGO);
+    }
+
+    /**
+     * @param \App\Model\Entity\Invoice $invoice Factura.
+     * @param int $roleId Role ID.
+     * @return bool
+     */
+    public function canDeletePayment(Invoice $invoice, int $roleId): bool
+    {
+        return $invoice->canDeletePayment()
+            && $this->_canOperate($roleId, InvoiceConstants::STATUS_TESORERIA);
+    }
+
+    /**
      * @param int $roleId Role ID.
      * @param string $step Pipeline step.
      * @return bool

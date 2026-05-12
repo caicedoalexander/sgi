@@ -7,10 +7,12 @@ use App\Attribute\PipelineAction;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Service\InvoicePaymentService;
+use App\Service\Pipeline\Invoice\Policy\InvoiceActionPolicy;
 
 class InvoicePaymentsController extends AppController
 {
     private InvoicePaymentService $paymentService;
+    private InvoiceActionPolicy $actionPolicy;
 
     /**
      * @return void
@@ -18,7 +20,9 @@ class InvoicePaymentsController extends AppController
     public function initialize(): void
     {
         parent::initialize();
-        $this->paymentService = $this->getContainer()->get(InvoicePaymentService::class);
+        $container = $this->getContainer();
+        $this->paymentService = $container->get(InvoicePaymentService::class);
+        $this->actionPolicy = $container->get(InvoiceActionPolicy::class);
     }
 
     private function _getCurrentUser(): object
@@ -47,19 +51,7 @@ class InvoicePaymentsController extends AppController
         $invoicesTable = $this->fetchTable('Invoices');
         $invoice = $invoicesTable->get($invoiceId);
 
-        $roleId = $this->_getRoleId();
-        $currentStatus = $invoice->pipeline_status;
-
-        if (
-            !(
-                $this->authFacade->canOperate(
-                    $this->_userContext(),
-                    PipelineStepConstants::PIPELINE_INVOICES,
-                    InvoiceConstants::STATUS_TESORERIA,
-                )
-                && $currentStatus === InvoiceConstants::STATUS_TESORERIA
-            )
-        ) {
+        if (!$this->actionPolicy->canAddPayment($invoice, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para registrar pagos en este estado.');
 
             return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);
@@ -95,15 +87,9 @@ class InvoicePaymentsController extends AppController
     public function editPayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
-        $roleId = $this->_getRoleId();
+        $invoice = $this->fetchTable('Invoices')->get($invoiceId);
 
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_INVOICES,
-                InvoiceConstants::STATUS_TESORERIA,
-            )
-        ) {
+        if (!$this->actionPolicy->canEditPayment($invoice, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
@@ -140,15 +126,9 @@ class InvoicePaymentsController extends AppController
     public function authorizePayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
-        $roleId = $this->_getRoleId();
+        $invoice = $this->fetchTable('Invoices')->get($invoiceId);
 
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_INVOICES,
-                InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-            )
-        ) {
+        if (!$this->actionPolicy->canAuthorizePayment($invoice, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
@@ -180,15 +160,9 @@ class InvoicePaymentsController extends AppController
     public function confirmPayment($invoiceId = null)
     {
         $this->request->allowMethod(['post']);
-        $roleId = $this->_getRoleId();
+        $invoice = $this->fetchTable('Invoices')->get($invoiceId);
 
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_INVOICES,
-                InvoiceConstants::STATUS_VERIFICACION_PAGO,
-            )
-        ) {
+        if (!$this->actionPolicy->canConfirmPayment($invoice, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->_redirectForInvoice((int)$invoiceId, 'view', $invoiceId);
@@ -217,15 +191,9 @@ class InvoicePaymentsController extends AppController
     public function rejectPayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
-        $roleId = $this->_getRoleId();
+        $invoice = $this->fetchTable('Invoices')->get($invoiceId);
 
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_INVOICES,
-                InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-            )
-        ) {
+        if (!$this->actionPolicy->canRejectPayment($invoice, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para operar este paso del pipeline.');
 
             return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
@@ -259,19 +227,7 @@ class InvoicePaymentsController extends AppController
         $invoicesTable = $this->fetchTable('Invoices');
         $invoice = $invoicesTable->get($invoiceId);
 
-        $roleId = $this->_getRoleId();
-        $currentStatus = $invoice->pipeline_status;
-
-        if (
-            !(
-                $this->authFacade->canOperate(
-                    $this->_userContext(),
-                    PipelineStepConstants::PIPELINE_INVOICES,
-                    InvoiceConstants::STATUS_TESORERIA,
-                )
-                && $currentStatus === InvoiceConstants::STATUS_TESORERIA
-            )
-        ) {
+        if (!$this->actionPolicy->canDeletePayment($invoice, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para eliminar pagos en este estado.');
 
             return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);

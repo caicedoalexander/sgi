@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace App\Service\Pipeline\Novelty\Policy;
 
 use App\Authorization\AuthorizationFacade;
+use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Model\Entity\EmployeeNovelty;
+use App\Model\Entity\NoveltyLiquidationDoc;
 use App\ValueObject\UserContext;
 
 /**
@@ -51,5 +53,49 @@ final class NoveltyActionPolicy
         }
 
         return $this->canOperateStep($roleId, (string)$novelty->pipeline_status);
+    }
+
+    /**
+     * @param \App\Model\Entity\NoveltyLiquidationDoc $doc Documento de liquidación.
+     * @param int $roleId Role ID.
+     * @return bool
+     */
+    public function canRegisterPayment(NoveltyLiquidationDoc $doc, int $roleId): bool
+    {
+        return $doc->canRegisterPayment()
+            && $this->canOperateStep($roleId, NoveltyConstants::STATUS_TESORERIA);
+    }
+
+    /**
+     * @param \App\Model\Entity\NoveltyLiquidationDoc $doc Documento de liquidación.
+     * @param int $roleId Role ID.
+     * @return bool
+     */
+    public function canAuthorizePayment(NoveltyLiquidationDoc $doc, int $roleId): bool
+    {
+        return $doc->canAuthorizePayment()
+            && $this->canOperateStep($roleId, NoveltyConstants::STATUS_AUTORIZACION_PAGO);
+    }
+
+    /**
+     * @param \App\Model\Entity\NoveltyLiquidationDoc $doc Documento de liquidación.
+     * @param int $roleId Role ID.
+     * @return bool
+     */
+    public function canRejectPayment(NoveltyLiquidationDoc $doc, int $roleId): bool
+    {
+        return $doc->canRejectPayment()
+            && $this->canOperateStep($roleId, NoveltyConstants::STATUS_AUTORIZACION_PAGO);
+    }
+
+    /**
+     * @param \App\Model\Entity\NoveltyLiquidationDoc $doc Documento de liquidación.
+     * @param int $roleId Role ID.
+     * @return bool
+     */
+    public function canConfirmPayment(NoveltyLiquidationDoc $doc, int $roleId): bool
+    {
+        return $doc->canConfirmPayment()
+            && $this->canOperateStep($roleId, NoveltyConstants::STATUS_VERIFICACION_PAGO);
     }
 }

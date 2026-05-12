@@ -5,7 +5,6 @@ namespace App\Controller;
 
 use App\Attribute\Permission;
 use App\Constants\NoveltyConstants;
-use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\NoveltyLiquidationDoc;
@@ -15,6 +14,7 @@ use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
+use App\Service\Pipeline\Novelty\Policy\NoveltyActionPolicy;
 use App\View\Presentation\NoveltyPresentation;
 use App\ViewModel\NoveltyLiquidationDocEditViewModel;
 use Cake\Routing\Router;
@@ -35,6 +35,8 @@ class NoveltyLiquidationDocsController extends AppController
 
     private NoveltySignatureService $signatureService;
 
+    private NoveltyActionPolicy $actionPolicy;
+
     /**
      * @return void
      */
@@ -46,6 +48,7 @@ class NoveltyLiquidationDocsController extends AppController
         $this->documentService = $container->get(NoveltyDocumentService::class);
         $this->observationService = $container->get(NoveltyObservationService::class);
         $this->signatureService = $container->get(NoveltySignatureService::class);
+        $this->actionPolicy = $container->get(NoveltyActionPolicy::class);
     }
 
     /**
@@ -229,26 +232,9 @@ class NoveltyLiquidationDocsController extends AppController
 
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
         $roleId = (int)$user->role_id;
-        $userContext = $this->_userContext();
-        $canOpTesoreria = $this->authFacade->canOperate(
-            $userContext,
-            PipelineStepConstants::PIPELINE_NOVELTIES,
-            NoveltyConstants::STATUS_TESORERIA,
-        );
-        $canOpAutPago = $this->authFacade->canOperate(
-            $userContext,
-            PipelineStepConstants::PIPELINE_NOVELTIES,
-            NoveltyConstants::STATUS_AUTORIZACION_PAGO,
-        );
-        $canConfirmPayment = $this->authFacade->canOperate(
-            $userContext,
-            PipelineStepConstants::PIPELINE_NOVELTIES,
-            NoveltyConstants::STATUS_VERIFICACION_PAGO,
-        );
-        $canRegisterPayment = $canOpTesoreria
-            && $doc->pipeline_status === NoveltyConstants::STATUS_TESORERIA;
-        $canAuthorizePayment = $canOpAutPago
-            && $doc->pipeline_status === NoveltyConstants::STATUS_AUTORIZACION_PAGO;
+        $canRegisterPayment = $this->actionPolicy->canRegisterPayment($doc, $roleId);
+        $canAuthorizePayment = $this->actionPolicy->canAuthorizePayment($doc, $roleId);
+        $canConfirmPayment = $this->actionPolicy->canConfirmPayment($doc, $roleId);
 
         return new NoveltyLiquidationDocEditViewModel(
             doc: $doc,
