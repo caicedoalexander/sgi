@@ -229,19 +229,16 @@ class NoveltyLiquidationDocsController extends AppController
         $roleId = (int)$user->role_id;
         $canOpTesoreria = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_NOVELTIES,
             NoveltyConstants::STATUS_TESORERIA,
         );
         $canOpAutPago = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_NOVELTIES,
             NoveltyConstants::STATUS_AUTORIZACION_PAGO,
         );
         $canConfirmPayment = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_NOVELTIES,
             NoveltyConstants::STATUS_VERIFICACION_PAGO,
         );

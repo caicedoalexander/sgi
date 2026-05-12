@@ -54,7 +54,6 @@ class RefundService
     {
         return $this->pipelineAuth->getOperableSteps(
             $roleId,
-            '',
             PipelineStepConstants::PIPELINE_REFUNDS,
         );
     }
@@ -132,7 +131,6 @@ class RefundService
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                '',
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 $currentStatus,
             )
@@ -363,7 +361,6 @@ class RefundService
 
         return $this->pipelineAuth->canOperate(
             $roleId,
-            '',
             PipelineStepConstants::PIPELINE_REFUNDS,
             $currentStatus,
         );

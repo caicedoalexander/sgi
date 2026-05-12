@@ -64,11 +64,10 @@ class InvoiceFieldAccessPolicy
 
     /**
      * @param int $roleId
-     * @param string $roleName
      * @param string $status
      * @return array
      */
-    public function getEditableFields(int $roleId, string $roleName, string $status): array
+    public function getEditableFields(int $roleId, string $status): array
     {
         if (PipelineStatus::tryFrom($status) === null) {
             return [];
@@ -76,7 +75,6 @@ class InvoiceFieldAccessPolicy
 
         $allowedSteps = $this->pipelineAuth->getOperableSteps(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_INVOICES,
         );
 
@@ -89,11 +87,10 @@ class InvoiceFieldAccessPolicy
 
     /**
      * @param int $roleId
-     * @param string $roleName
      * @param string $status
      * @return array
      */
-    public function getVisibleSections(int $roleId, string $roleName, string $status): array
+    public function getVisibleSections(int $roleId, string $status): array
     {
         $sections = ['ledger'];
 
@@ -103,7 +100,6 @@ class InvoiceFieldAccessPolicy
 
         $operableSteps = $this->pipelineAuth->getOperableSteps(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_INVOICES,
         );
 
@@ -118,11 +114,10 @@ class InvoiceFieldAccessPolicy
 
     /**
      * @param int $roleId
-     * @param string $roleName
      * @param string $status
      * @return array
      */
-    public function getCollapsibleSections(int $roleId, string $roleName, string $status): array
+    public function getCollapsibleSections(int $roleId, string $status): array
     {
         // La política previa no definía secciones colapsables por rol/estado;
         // se mantiene el contrato vacío.
@@ -132,13 +127,12 @@ class InvoiceFieldAccessPolicy
     /**
      * @param array $data
      * @param int $roleId
-     * @param string $roleName
      * @param string $status
      * @return array
      */
-    public function filterEntityData(array $data, int $roleId, string $roleName, string $status): array
+    public function filterEntityData(array $data, int $roleId, string $status): array
     {
-        $allowed = $this->getEditableFields($roleId, $roleName, $status);
+        $allowed = $this->getEditableFields($roleId, $status);
 
         return array_intersect_key($data, array_flip($allowed));
     }

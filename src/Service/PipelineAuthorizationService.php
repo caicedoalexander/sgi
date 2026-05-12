@@ -22,12 +22,11 @@ class PipelineAuthorizationService
 
     /**
      * @param int $roleId
-     * @param string $roleName Conservado para compat con callers; no se consulta tras cleanup 2026-05-02.
      * @param string $pipeline
      * @param string $step
      * @return bool true si el rol puede operar el paso del pipeline.
      */
-    public function canOperate(int $roleId, string $roleName, string $pipeline, string $step): bool
+    public function canOperate(int $roleId, string $pipeline, string $step): bool
     {
         $perms = $this->_loadForRole($roleId);
 
@@ -36,11 +35,10 @@ class PipelineAuthorizationService
 
     /**
      * @param int $roleId
-     * @param string $roleName Conservado para compat con callers; no se consulta tras cleanup 2026-05-02.
      * @param string $pipeline
      * @return array<string> Pasos del pipeline donde el rol puede operar.
      */
-    public function getOperableSteps(int $roleId, string $roleName, string $pipeline): array
+    public function getOperableSteps(int $roleId, string $pipeline): array
     {
         $perms = $this->_loadForRole($roleId);
         $stepsForPipeline = $perms[$pipeline] ?? [];

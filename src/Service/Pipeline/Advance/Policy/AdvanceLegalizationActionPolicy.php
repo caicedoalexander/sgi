@@ -23,76 +23,75 @@ final class AdvanceLegalizationActionPolicy
     ) {
     }
 
-    public function canLinkInvoices(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canLinkInvoices(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canLinkInvoices();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canLinkInvoices();
     }
 
-    public function canUnlinkInvoice(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canUnlinkInvoice(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canUnlinkInvoice();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canUnlinkInvoice();
     }
 
-    public function canUploadRelationDocument(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canUploadRelationDocument(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canUploadRelationDocument();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canUploadRelationDocument();
     }
 
-    public function canMoveToRevision(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canMoveToRevision(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canMoveToRevision();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canMoveToRevision();
     }
 
-    public function canMarkSigned(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canMarkSigned(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canMarkSigned();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canMarkSigned();
     }
 
-    public function canReturnToValidacion(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canReturnToValidacion(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canReturnToValidacion();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canReturnToValidacion();
     }
 
-    public function canMarkExact(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canMarkExact(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canMarkExact();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canMarkExact();
     }
 
-    public function canRegisterShortage(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canRegisterShortage(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canRegisterShortage();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canRegisterShortage();
     }
 
-    public function canRegisterSurplus(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canRegisterSurplus(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canRegisterSurplus();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canRegisterSurplus();
     }
 
-    public function canConfirmShortage(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canConfirmShortage(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canConfirmShortage();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canConfirmShortage();
     }
 
-    public function canRegisterRefund(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canRegisterRefund(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canRegisterRefund();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canRegisterRefund();
     }
 
-    public function canAuthorizeRefundPayment(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canAuthorizeRefundPayment(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canAuthorizeRefundPayment();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canAuthorizeRefundPayment();
     }
 
-    public function canConfirmRefundPayment(AdvanceLegalization $leg, int $roleId, string $roleName): bool
+    public function canConfirmRefundPayment(AdvanceLegalization $leg, int $roleId): bool
     {
-        return $this->_canOperate($roleId, $roleName, $leg->status) && $leg->canConfirmRefundPayment();
+        return $this->_canOperate($roleId, $leg->status) && $leg->canConfirmRefundPayment();
     }
 
-    private function _canOperate(int $roleId, string $roleName, string $step): bool
+    private function _canOperate(int $roleId, string $step): bool
     {
         return $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_LEGALIZATIONS,
             $step,
         );

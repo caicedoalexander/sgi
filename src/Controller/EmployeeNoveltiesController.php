@@ -416,8 +416,8 @@ class EmployeeNoveltiesController extends AppController
         int $roleId,
         string $roleName,
     ): EmployeeNoveltyEditViewModel {
-        $editableFields = $this->pipelineService->getEditableFields($roleId, $roleName, $novelty->pipeline_status);
-        $visibleSections = $this->pipelineService->getVisibleSections($roleId, $roleName, $novelty->pipeline_status);
+        $editableFields = $this->pipelineService->getEditableFields($roleId, $novelty->pipeline_status);
+        $visibleSections = $this->pipelineService->getVisibleSections($roleId, $novelty->pipeline_status);
         if (empty($visibleSections)) {
             // Defensive fallback: rol sin pasos operables ve las secciones canónicas (read-only).
             $visibleSections = ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'contabilidad', 'firmas'];

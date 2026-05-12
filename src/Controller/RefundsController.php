@@ -77,7 +77,6 @@ class RefundsController extends AppController
 
         return $this->pipelineAuth->canOperate(
             (int)$user->role_id,
-            $this->_getUserRoleName($user),
             PipelineStepConstants::PIPELINE_REFUNDS,
             $step,
         );
@@ -472,19 +471,16 @@ class RefundsController extends AppController
             regressLockMessage: $this->refundService->getRegressionLockMessage($record),
             canRegisterPayment: $this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_TESORERIA,
             ),
             canAuthorizePayment: $this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_AUTORIZACION_PAGO,
             ),
             canConfirmPayment: $this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_VERIFICACION_PAGO,
             ),
@@ -612,11 +608,9 @@ class RefundsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
         if (
             !$this->pipelineAuth->canOperate(
                 (int)$user->role_id,
-                $roleName,
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_VERIFICACION_PAGO,
             )

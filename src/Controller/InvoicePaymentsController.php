@@ -65,7 +65,6 @@ class InvoicePaymentsController extends AppController
         $invoicesTable = $this->fetchTable('Invoices');
         $invoice = $invoicesTable->get($invoiceId);
 
-        $roleName = $this->_getRoleName();
         $roleId = $this->_getRoleId();
         $currentStatus = $invoice->pipeline_status;
 
@@ -73,7 +72,6 @@ class InvoicePaymentsController extends AppController
             !(
                 $this->pipelineAuth->canOperate(
                     $roleId,
-                    $roleName,
                     PipelineStepConstants::PIPELINE_INVOICES,
                     InvoiceConstants::STATUS_TESORERIA,
                 )
@@ -114,13 +112,11 @@ class InvoicePaymentsController extends AppController
     public function editPayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
         $roleId = $this->_getRoleId();
 
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_INVOICES,
                 InvoiceConstants::STATUS_TESORERIA,
             )
@@ -160,13 +156,11 @@ class InvoicePaymentsController extends AppController
     public function authorizePayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
         $roleId = $this->_getRoleId();
 
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_INVOICES,
                 InvoiceConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -201,13 +195,11 @@ class InvoicePaymentsController extends AppController
     public function confirmPayment($invoiceId = null)
     {
         $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
         $roleId = $this->_getRoleId();
 
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_INVOICES,
                 InvoiceConstants::STATUS_VERIFICACION_PAGO,
             )
@@ -239,13 +231,11 @@ class InvoicePaymentsController extends AppController
     public function rejectPayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
         $roleId = $this->_getRoleId();
 
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_INVOICES,
                 InvoiceConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -282,7 +272,6 @@ class InvoicePaymentsController extends AppController
         $invoicesTable = $this->fetchTable('Invoices');
         $invoice = $invoicesTable->get($invoiceId);
 
-        $roleName = $this->_getRoleName();
         $roleId = $this->_getRoleId();
         $currentStatus = $invoice->pipeline_status;
 
@@ -290,7 +279,6 @@ class InvoicePaymentsController extends AppController
             !(
                 $this->pipelineAuth->canOperate(
                     $roleId,
-                    $roleName,
                     PipelineStepConstants::PIPELINE_INVOICES,
                     InvoiceConstants::STATUS_TESORERIA,
                 )
