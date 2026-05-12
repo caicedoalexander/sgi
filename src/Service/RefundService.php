@@ -109,26 +109,30 @@ class RefundService
     }
 
     /**
-     * @param \App\Model\Entity\Refund $record Record.
-     * @param int $userId User ID.
-     * @param int $roleId Role ID (para enforcement RBAC).
-     * @return array{success: bool, error?: string, nextStatus?: string}
+     * Retorna el motivo por el que el reintegro no puede avanzar, o null si puede.
+     *
+     * Mapea las 4 condiciones de denial estructurales (sin contar validaciones
+     * de campos del state, que se manejan separadamente en validateAdvance):
+     * - TERMINAL_STATE: no hay transición forward desde el estado actual.
+     * - REQUIRES_PAYMENT: el avance desde Tesorería requiere registrar un pago.
+     * - MANAGED_ELSEWHERE: el avance desde Autorización de pago se gestiona desde pagos.
+     * - UNAUTHORIZED: el rol no tiene permiso para operar el paso actual.
      */
-    public function advanceStatus(Refund $record, int $userId, int $roleId): array
+    public function denialReasonForAdvance(Refund $refund, int $roleId): ?DenialReason
     {
-        $currentStatus = $record->status;
+        $currentStatus = $refund->status;
         $nextStatus = RefundConstants::TRANSITIONS[$currentStatus] ?? null;
 
         if ($nextStatus === null) {
-            return ['success' => false, 'error' => 'Este registro ya está en su estado final.'];
+            return DenialReason::TERMINAL_STATE;
         }
 
         if ($nextStatus === RefundConstants::STATUS_AUTORIZACION_PAGO) {
-            return ['success' => false, 'error' => 'Debe registrar un pago para avanzar desde Tesorería.'];
+            return DenialReason::REQUIRES_PAYMENT;
         }
 
         if ($currentStatus === RefundConstants::STATUS_AUTORIZACION_PAGO) {
-            return ['success' => false, 'error' => 'La autorización de pago se gestiona desde la sección de pagos.'];
+            return DenialReason::MANAGED_ELSEWHERE;
         }
 
         if (
@@ -138,8 +142,29 @@ class RefundService
                 $currentStatus,
             )
         ) {
-            return ['success' => false, 'error' => 'No tiene permisos para avanzar este registro.'];
+            return DenialReason::UNAUTHORIZED;
         }
+
+        return null;
+    }
+
+    /**
+     * @param \App\Model\Entity\Refund $record Record.
+     * @param int $userId User ID.
+     * @param int $roleId Role ID (para enforcement RBAC).
+     * @return array{success: bool, error?: string, nextStatus?: string}
+     */
+    public function advanceStatus(Refund $record, int $userId, int $roleId): array
+    {
+        $currentStatus = $record->status;
+
+        $denial = $this->denialReasonForAdvance($record, $roleId);
+        if ($denial !== null) {
+            return ['success' => false, 'error' => $denial->message()];
+        }
+
+        // Garantizado no-null por denialReasonForAdvance (TERMINAL_STATE descartado).
+        $nextStatus = RefundConstants::TRANSITIONS[$currentStatus];
 
         $currentEnum = RefundPipelineStatus::tryFrom($currentStatus);
         if ($currentEnum === null) {
