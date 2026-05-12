@@ -58,10 +58,10 @@ use App\Service\PaymentSchedulingService;
 use App\Service\PendingNotificationsService;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
+use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
 use App\Service\Pipeline\Invoice\LinkedInvoiceLegalizer;
-use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\Service\Pipeline\Invoice\Policy\AnticipoDocumentTypePolicy;
 use App\Service\Pipeline\Invoice\Policy\LegalizacionDocumentTypePolicy;
 use App\Service\Pipeline\Invoice\Policy\StandardDocumentTypePolicy;
@@ -70,12 +70,15 @@ use App\Service\Pipeline\Invoice\State\AutorizacionPagoState;
 use App\Service\Pipeline\Invoice\State\ContabilidadState;
 use App\Service\Pipeline\Invoice\State\LegalizadaState;
 use App\Service\Pipeline\Invoice\State\PagadaState;
-use App\Service\Pipeline\Invoice\State\VerificacionPagoState;
 use App\Service\Pipeline\Invoice\State\TesoreriaState;
+use App\Service\Pipeline\Invoice\State\VerificacionPagoState;
+use App\Service\Pipeline\Novelty\Policy\NoveltyFieldAccessPolicy;
+use App\Service\Pipeline\PettyCash\Policy\PettyCashFieldAccessPolicy;
+use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\PipelineAuthorizationService;
-use App\Service\RefundService;
 use App\Service\RefundDocumentService;
 use App\Service\RefundPaymentService;
+use App\Service\RefundService;
 use App\Service\SidebarCounterService;
 use App\Service\Strategy\InvoiceApprovalStrategy;
 use App\Service\Strategy\NoveltyApprovalStrategy;
@@ -323,19 +326,29 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(NoveltyObservationService::class);
         $container->addShared(NoveltyDocumentService::class);
         $container->addShared(NoveltySignatureService::class);
-        $container->addShared(NoveltyService::class)
+        $container->addShared(NoveltyFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
+        $container->addShared(NoveltyService::class)
+            ->addArguments([
+                AuthorizationFacade::class,
+                NoveltyFieldAccessPolicy::class,
+            ]);
         $container->addShared(LeaveDocumentService::class);
         $container->addShared(LeaveSignatureService::class);
         $container->addShared(LiquidationDocPaymentService::class);
 
         // === Petty cash / payment scheduling / advances ===
         $container->addShared(PettyCashDocumentService::class);
+        $container->addShared(PettyCashFieldAccessPolicy::class)
+            ->addArgument(AuthorizationFacade::class);
         $container->addShared(PettyCashService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
                 AuthorizationFacade::class,
+                PettyCashFieldAccessPolicy::class,
             ]);
+        $container->addShared(RefundFieldAccessPolicy::class)
+            ->addArgument(AuthorizationFacade::class);
         $container->addShared(RefundDocumentService::class);
         $container->addShared(RefundService::class)
             ->addArguments([
