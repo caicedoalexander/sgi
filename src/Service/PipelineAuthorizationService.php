@@ -10,6 +10,12 @@ use Cake\ORM\TableRegistry;
  * Resuelve si un rol puede operar (avanzar, regresar, editar campos, ver
  * sección) en un paso específico de un pipeline. Cache per-request.
  *
+ * Caché: `$cache` se invalida explícitamente vía `invalidate(int $roleId)` y
+ * tras `savePermissions()`. No persiste entre requests por diseño: depende del
+ * scope per-request del container de CakePHP DI (la instancia se recolecta al
+ * cerrar la respuesta). No promover a caché global sin invalidación
+ * cross-request explícita.
+ *
  * @internal Depender de `App\Authorization\AuthorizationFacade` en su lugar.
  * Esta clase concreta solo debe inyectarse en `RolesController` y
  * `AppController::_setUserPermissions` (matrices y save quedan fuera del
