@@ -57,4 +57,29 @@ class PettyCashRecord extends Entity
     {
         return ($this->status ?? '') === PettyCashConstants::STATUS_PAGADA;
     }
+
+    // -----------------------------------------------------------------
+    // State-machine predicates (permissions-unification 2026-05-12, PR1).
+    //
+    // Encapsulan solo estado del agregado — la composición con rol vive
+    // en PettyCashActionPolicy: _canOperate($roleId, $step) && $record->canX().
+    // -----------------------------------------------------------------
+
+    /** @return bool true cuando Tesorería puede registrar un nuevo pago. */
+    public function canRegisterPayment(): bool
+    {
+        return $this->isTesoreria();
+    }
+
+    /** @return bool true cuando Contador puede autorizar un pago pendiente. */
+    public function canAuthorizePayment(): bool
+    {
+        return $this->isAutorizacionPago();
+    }
+
+    /** @return bool true cuando Tesorería puede confirmar la ejecución del pago. */
+    public function canConfirmPayment(): bool
+    {
+        return $this->isVerificacionPago();
+    }
 }

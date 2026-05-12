@@ -33,15 +33,8 @@ final class InvoiceActionPolicy
      */
     public function canRegisterPayment(Invoice $invoice, int $roleId): bool
     {
-        if ($invoice->isRejected() || $invoice->isPaid()) {
-            return false;
-        }
-
-        if ($invoice->pipeline_status !== InvoiceConstants::STATUS_TESORERIA) {
-            return false;
-        }
-
-        return $this->_canOperate($roleId, InvoiceConstants::STATUS_TESORERIA);
+        return $invoice->canRegisterPayment()
+            && $this->_canOperate($roleId, InvoiceConstants::STATUS_TESORERIA);
     }
 
     /**
@@ -51,15 +44,8 @@ final class InvoiceActionPolicy
      */
     public function canAuthorizePayment(Invoice $invoice, int $roleId): bool
     {
-        if ($invoice->isRejected() || $invoice->isPaid()) {
-            return false;
-        }
-
-        if ($invoice->pipeline_status !== InvoiceConstants::STATUS_AUTORIZACION_PAGO) {
-            return false;
-        }
-
-        return $this->_canOperate($roleId, InvoiceConstants::STATUS_AUTORIZACION_PAGO);
+        return $invoice->canAuthorizePayment()
+            && $this->_canOperate($roleId, InvoiceConstants::STATUS_AUTORIZACION_PAGO);
     }
 
     /**
@@ -69,11 +55,8 @@ final class InvoiceActionPolicy
      */
     public function canConfirmPayment(Invoice $invoice, int $roleId): bool
     {
-        if ($invoice->isRejected() || $invoice->isPaid()) {
-            return false;
-        }
-
-        return $this->_canOperate($roleId, InvoiceConstants::STATUS_VERIFICACION_PAGO);
+        return $invoice->canConfirmPayment()
+            && $this->_canOperate($roleId, InvoiceConstants::STATUS_VERIFICACION_PAGO);
     }
 
     /**

@@ -59,11 +59,8 @@ final class RefundActionPolicy
      */
     public function canRegisterPayment(Refund $refund, int $roleId): bool
     {
-        if ($refund->isPagada()) {
-            return false;
-        }
-
-        return $this->canOperateStep($roleId, RefundConstants::STATUS_TESORERIA);
+        return $refund->canRegisterPayment()
+            && $this->canOperateStep($roleId, RefundConstants::STATUS_TESORERIA);
     }
 
     /**
@@ -73,11 +70,8 @@ final class RefundActionPolicy
      */
     public function canAuthorizePayment(Refund $refund, int $roleId): bool
     {
-        if ($refund->isPagada()) {
-            return false;
-        }
-
-        return $this->canOperateStep($roleId, RefundConstants::STATUS_AUTORIZACION_PAGO);
+        return $refund->canAuthorizePayment()
+            && $this->canOperateStep($roleId, RefundConstants::STATUS_AUTORIZACION_PAGO);
     }
 
     /**
@@ -87,10 +81,7 @@ final class RefundActionPolicy
      */
     public function canConfirmPayment(Refund $refund, int $roleId): bool
     {
-        if ($refund->isPagada()) {
-            return false;
-        }
-
-        return $this->canOperateStep($roleId, RefundConstants::STATUS_VERIFICACION_PAGO);
+        return $refund->canConfirmPayment()
+            && $this->canOperateStep($roleId, RefundConstants::STATUS_VERIFICACION_PAGO);
     }
 }

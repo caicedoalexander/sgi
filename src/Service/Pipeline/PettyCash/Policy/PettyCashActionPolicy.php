@@ -44,11 +44,8 @@ final class PettyCashActionPolicy
      */
     public function canRegisterPayment(PettyCashRecord $record, int $roleId): bool
     {
-        if ($record->isPagada()) {
-            return false;
-        }
-
-        return $this->canOperateStep($roleId, PettyCashConstants::STATUS_TESORERIA);
+        return $record->canRegisterPayment()
+            && $this->canOperateStep($roleId, PettyCashConstants::STATUS_TESORERIA);
     }
 
     /**
@@ -58,11 +55,8 @@ final class PettyCashActionPolicy
      */
     public function canAuthorizePayment(PettyCashRecord $record, int $roleId): bool
     {
-        if ($record->isPagada()) {
-            return false;
-        }
-
-        return $this->canOperateStep($roleId, PettyCashConstants::STATUS_AUTORIZACION_PAGO);
+        return $record->canAuthorizePayment()
+            && $this->canOperateStep($roleId, PettyCashConstants::STATUS_AUTORIZACION_PAGO);
     }
 
     /**
@@ -72,10 +66,7 @@ final class PettyCashActionPolicy
      */
     public function canConfirmPayment(PettyCashRecord $record, int $roleId): bool
     {
-        if ($record->isPagada()) {
-            return false;
-        }
-
-        return $this->canOperateStep($roleId, PettyCashConstants::STATUS_VERIFICACION_PAGO);
+        return $record->canConfirmPayment()
+            && $this->canOperateStep($roleId, PettyCashConstants::STATUS_VERIFICACION_PAGO);
     }
 }

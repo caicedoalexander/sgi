@@ -44,15 +44,8 @@ final class PaymentSchedulingActionPolicy
      */
     public function canReject(PaymentScheduling $scheduling, int $roleId): bool
     {
-        if ($scheduling->isPagada()) {
-            return false;
-        }
-
-        if ($scheduling->pipeline_status !== PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO) {
-            return false;
-        }
-
-        return $this->canOperateStep($roleId, PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO);
+        return $scheduling->canReject()
+            && $this->canOperateStep($roleId, PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO);
     }
 
     /**
@@ -62,10 +55,7 @@ final class PaymentSchedulingActionPolicy
      */
     public function canConfirmPayment(PaymentScheduling $scheduling, int $roleId): bool
     {
-        if ($scheduling->isPagada()) {
-            return false;
-        }
-
-        return $this->canOperateStep($roleId, PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO);
+        return $scheduling->canConfirmPayment()
+            && $this->canOperateStep($roleId, PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO);
     }
 }

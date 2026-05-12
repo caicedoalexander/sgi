@@ -101,4 +101,61 @@ class Invoice extends Entity
 
         return $this->due_date && $this->due_date->isPast();
     }
+
+    // -----------------------------------------------------------------
+    // State-machine predicates (permissions-unification 2026-05-12, PR1).
+    //
+    // Encapsulan solo estado del agregado — sin combinar con rol del
+    // usuario, que es responsabilidad de InvoiceActionPolicy. La policy
+    // compone _canOperate($roleId, $step) && $invoice->canX(). Única fuente
+    // de verdad de la regla de estado para el verbo correspondiente.
+    // -----------------------------------------------------------------
+
+    /** @return bool true cuando Tesorería puede registrar un nuevo pago. */
+    public function canRegisterPayment(): bool
+    {
+        return !$this->isRejected()
+            && !$this->isPaid()
+            && ($this->pipeline_status ?? '') === InvoiceConstants::STATUS_TESORERIA;
+    }
+
+    /** @return bool true cuando Contador puede autorizar un pago pendiente. */
+    public function canAuthorizePayment(): bool
+    {
+        return !$this->isRejected()
+            && !$this->isPaid()
+            && ($this->pipeline_status ?? '') === InvoiceConstants::STATUS_AUTORIZACION_PAGO;
+    }
+
+    /** @return bool true cuando Tesorería puede confirmar la ejecución del pago. */
+    public function canConfirmPayment(): bool
+    {
+        return !$this->isRejected()
+            && !$this->isPaid()
+            && ($this->pipeline_status ?? '') === InvoiceConstants::STATUS_VERIFICACION_PAGO;
+    }
+
+    /** @return bool alias de canRegisterPayment para el verbo "add" del sub-controller. */
+    public function canAddPayment(): bool
+    {
+        return $this->canRegisterPayment();
+    }
+
+    /** @return bool alias de canRegisterPayment para el verbo "edit" (mismo estado). */
+    public function canEditPayment(): bool
+    {
+        return $this->canRegisterPayment();
+    }
+
+    /** @return bool alias de canAuthorizePayment para el verbo "reject" (mismo estado). */
+    public function canRejectPayment(): bool
+    {
+        return $this->canAuthorizePayment();
+    }
+
+    /** @return bool alias de canRegisterPayment para el verbo "delete" (mismo estado). */
+    public function canDeletePayment(): bool
+    {
+        return $this->canRegisterPayment();
+    }
 }
