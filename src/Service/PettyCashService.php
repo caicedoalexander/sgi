@@ -14,6 +14,7 @@ use App\Model\Entity\PettyCashRecord;
 use App\Service\Dto\BulkPaymentView;
 use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry;
+use App\Service\Pipeline\PettyCash\Policy\PettyCashFieldAccessPolicy;
 use App\ValueObject\UserContext;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
@@ -21,12 +22,12 @@ use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use DateTimeInterface;
-use InvalidArgumentException;
 
 class PettyCashService
 {
     private GroupedInvoiceService $grouped;
     private AuthorizationFacade $auth;
+    private PettyCashFieldAccessPolicy $fieldPolicy;
     private PettyCashHistoryService $history;
     private PettyCashPipelineStateRegistry $stateRegistry;
     private HistoryServiceInterface $invoiceHistory;
@@ -35,12 +36,15 @@ class PettyCashService
     /**
      * @param \App\Service\Interface\HistoryServiceInterface $historyService History service for child invoices.
      * @param \App\Authorization\AuthorizationFacade $auth Authorization facade.
+     * @param \App\Service\Pipeline\PettyCash\Policy\PettyCashFieldAccessPolicy $fieldPolicy Field access policy.
      * @param \App\Service\PettyCashHistoryService|null $history Audit trail for the petty cash record itself.
-     * @param \App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry|null $stateRegistry
+     * @param \App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry|null $stateRegistry State registry.
+     * @param \Cake\Event\EventManagerInterface|null $events Event manager.
      */
     public function __construct(
         HistoryServiceInterface $historyService,
         AuthorizationFacade $auth,
+        PettyCashFieldAccessPolicy $fieldPolicy,
         ?PettyCashHistoryService $history = null,
         ?PettyCashPipelineStateRegistry $stateRegistry = null,
         ?EventManagerInterface $events = null,
@@ -54,6 +58,7 @@ class PettyCashService
         );
         $this->invoiceHistory = $historyService;
         $this->auth = $auth;
+        $this->fieldPolicy = $fieldPolicy;
         $this->history = $history ?? new PettyCashHistoryService();
         $this->stateRegistry = $stateRegistry ?? new PettyCashPipelineStateRegistry();
         $this->events = $events;
@@ -118,42 +123,6 @@ class PettyCashService
     }
 
     /**
-     * Filter raw POST data into editable fields per current status, and detect
-     * inline validation errors that block the save (e.g. accrual_date required
-     * when accrued is true).
-     *
-     * @param \App\Model\Entity\PettyCashRecord $record Record.
-     * @param array $data Raw request data.
-     * @return array{patch: array, errors: array<string>}
-     */
-    private function _filterEditPatch(PettyCashRecord $record, array $data): array
-    {
-        $patch = [];
-        $errors = [];
-
-        if ($record->isAgrupacion() || $record->isContabilidad()) {
-            $patch['notes'] = $data['notes'] ?? $record->notes;
-        }
-
-        if ($record->isContabilidad()) {
-            $isAccrued = !empty($data['accrued']);
-            $patch['accrued'] = $isAccrued;
-            if ($isAccrued) {
-                $submittedDate = !empty($data['accrual_date']) ? $data['accrual_date'] : null;
-                if (empty($submittedDate)) {
-                    $errors[] = 'La fecha de causación es requerida cuando el registro está marcado como causado.';
-                }
-                $patch['accrual_date'] = $submittedDate;
-            } else {
-                $patch['accrual_date'] = null;
-            }
-            $patch['ready_for_payment'] = $data['ready_for_payment'] ?? null;
-        }
-
-        return ['patch' => $patch, 'errors' => $errors];
-    }
-
-    /**
      * Persist editable fields, link any new invoices, and try to advance the
      * pipeline in a single coordinated operation. Mirrors the save+advance
      * pattern of `InvoicePipelineService::saveAndAdvance`.
@@ -171,15 +140,15 @@ class PettyCashService
         int $userId,
         array $data,
     ): ServiceResult {
-        $filtered = $this->_filterEditPatch($record, $data);
-        if (!empty($filtered['errors'])) {
-            return ServiceResult::fail($filtered['errors']);
+        $filtered = $this->fieldPolicy->filterEntityData($data, $roleId, (string)$record->status);
+        if ($filtered->hasErrors()) {
+            return ServiceResult::fail($filtered->errors);
         }
 
         $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
 
-        if (!empty($filtered['patch'])) {
-            $record = $recordsTable->patchEntity($record, $filtered['patch']);
+        if (!empty($filtered->patch)) {
+            $record = $recordsTable->patchEntity($record, $filtered->patch);
             if (!$recordsTable->save($record)) {
                 $messages = [];
                 foreach ($record->getErrors() as $fieldErrors) {
@@ -232,6 +201,7 @@ class PettyCashService
      * @param string $currentStatus Current pipeline status.
      * @return bool
      */
+
     /**
      * Retorna el motivo por el que el registro no puede avanzar, o null si puede.
      */
@@ -720,6 +690,7 @@ class PettyCashService
     /**
      * Returns true if the role can regress the record from the current status.
      */
+
     /**
      * Retorna el motivo por el que el registro no puede regresar, o null si puede.
      */
