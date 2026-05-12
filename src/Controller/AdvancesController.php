@@ -62,13 +62,25 @@ class AdvancesController extends AppController
 
     /**
      * Reject the action when the current role cannot perform it on the leg's
-     * current state. Caller does `return $this->_denyAction(...)`.
+     * current state. El mensaje nombra el paso y el pipeline cuyo permiso de
+     * operación falta, para que el usuario sepa exactamente qué pedirle al
+     * administrador. Caller does `return $this->_denyAction(...)`.
      */
-    private function _denyAction(int $advanceId): Response
+    private function _denyAction(AdvanceLegalization $leg): Response
     {
-        $this->Flash->error('No tienes permiso para esta acción en el estado actual.');
+        $pipeline = PipelineStepConstants::PIPELINE_LEGALIZATIONS;
+        $pipelineLabel = PipelineStepConstants::PIPELINE_LABELS[$pipeline] ?? $pipeline;
+        $stepLabel = PipelineStepConstants::STEP_LABELS[$pipeline][$leg->status] ?? $leg->status;
 
-        return $this->redirect(['action' => 'view', $advanceId]);
+        $this->Flash->error(sprintf(
+            'No tienes permiso para esta acción en el estado actual. '
+            . 'Requiere permiso de operación sobre el paso «%s» del pipeline «%s». '
+            . 'Solicita al administrador que lo habilite en Roles → Editar.',
+            $stepLabel,
+            $pipelineLabel,
+        ));
+
+        return $this->redirect(['action' => 'view', $leg->advance_invoice_id]);
     }
 
     /**
@@ -339,7 +351,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         if (!$this->actionPolicy->canLinkInvoices($leg, (int)$this->_getCurrentUser()->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
 
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
@@ -409,7 +421,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         if (!$this->actionPolicy->canLinkInvoices($leg, (int)$this->_getCurrentUser()->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         $userId = (int)$this->_getCurrentUser()->id;
 
@@ -438,7 +450,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         if (!$this->actionPolicy->canUnlinkInvoice($leg, (int)$this->_getCurrentUser()->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         $result = $this->legalizationService->unlinkInvoice($leg, (int)$invoiceId, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
@@ -469,7 +481,7 @@ class AdvancesController extends AppController
                 ]);
             }
 
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         $file = $this->request->getUploadedFile('relation_document');
         if (!$file) {
@@ -512,7 +524,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         if (!$this->actionPolicy->canMoveToRevision($leg, (int)$this->_getCurrentUser()->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         $result = $this->legalizationService->moveToRevisionFirmas($leg, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
@@ -536,7 +548,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         if (!$this->actionPolicy->canMarkSigned($leg, (int)$this->_getCurrentUser()->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         $result = $this->legalizationService->markSigned($leg, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
@@ -560,7 +572,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         if (!$this->actionPolicy->canReturnToValidacion($leg, (int)$this->_getCurrentUser()->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         $reason = (string)$this->request->getData('reason', '');
         $result = $this->legalizationService->returnToValidacion($leg, $reason, (int)$this->_getCurrentUser()->id);
@@ -585,7 +597,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         if (!$this->actionPolicy->canMarkExact($leg, (int)$this->_getCurrentUser()->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         $result = $this->legalizationService->markExact($leg, (int)$this->_getCurrentUser()->id);
         if ($result->success) {
@@ -609,7 +621,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         if (!$this->actionPolicy->canRegisterShortage($leg, (int)$this->_getCurrentUser()->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         if (!$this->_ensureExpectedStatus($leg->status)) {
             return $this->redirect(['action' => 'view', $id]);
@@ -644,7 +656,7 @@ class AdvancesController extends AppController
                 ]);
             }
 
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         $data = $this->request->getData();
         $data['receipt_file'] = $this->request->getUploadedFile('receipt_file');
@@ -683,7 +695,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         if (!$this->actionPolicy->canRegisterSurplus($leg, (int)$this->_getCurrentUser()->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         if (!$this->_ensureExpectedStatus($leg->status)) {
             return $this->redirect(['action' => 'view', $id]);
@@ -711,7 +723,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         if (!$this->actionPolicy->canRegisterRefund($leg, (int)$this->_getCurrentUser()->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         $data = $this->request->getData();
         $result = $this->legalizationService->registerRefundPayment(
@@ -742,7 +754,7 @@ class AdvancesController extends AppController
         }
         $user = $this->_getCurrentUser();
         if (!$this->actionPolicy->canConfirmRefundPayment($leg, (int)$user->id)) {
-            return $this->_denyAction((int)$id);
+            return $this->_denyAction($leg);
         }
         $result = $this->legalizationService->confirmRefundExecuted($leg, (int)$user->id);
         if ($result->success) {
