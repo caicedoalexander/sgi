@@ -5,7 +5,7 @@
 **Modo:** Auditoría arquitectónica enfocada en simplificación.
 **Nivel:** DEEP (Architecture + DX + Security surface).
 **Objetivo del solicitante:** simplificar la validación de permisos para reducir el coste de añadir/editar módulos y bajar la superficie de bugs por configuración silenciosa.
-**Verdicto global:** ⚠️ **NEEDS REWORK** — sistema funcional y bien tipado, pero con **3 lugares sin chequeo** para registrar una acción de pipeline (acoplamiento implícito) y un **default `'view'` silencioso** en el mapeo CRUD que puede materializar over-permission al añadir endpoints. Refactor de DX/seguridad recomendado en 10 pasos, ~150 LoC netas menos.
+**Verdicto global:** ✅ **RESUELTO** (2026-05-12) — 13 hallazgos cerrados, 1 marcado como WONTFIX con criterio explícito de reapertura (PA-007). Refactor original de 14 hallazgos completado; sistema de permisos unificado bajo `AuthorizationFacade` (PA-004), atributos de método para gating (PA-002), `DenialReason` enum para mensajes (PA-005), `PipelineFieldPolicy` base para campos editables (PA-008) y `*ActionPolicy` por dominio (PA-011).
 
 > **Nota:** los planes describen *cómo llegar* a la solución. El código concreto se decide al ejecutar cada plan.
 
@@ -46,7 +46,7 @@
 | PA-008 | 🟡 Minor | `InvoiceFieldAccessPolicy::SECTION_BY_STEP` (string) vs `NoveltyService::SECTIONS_BY_STEP` (array) — divergencia gratuita | ✅ Resuelto | commits `6d8f677..243529d` (2026-05-12) |
 | PA-009 | 🟡 Minor | `RolesController::add` llama `getPermissionsMatrix(0)` con `role_id` inexistente; funciona porque `?? false` casts a `false` | ✅ Resuelto | commit `d294aaf` (2026-05-12) |
 | PA-010 | 🟡 Minor | `_actionToPermission` agrupa 35+ acciones en un `match` plano que vive en `AppController`; cada acción nueva en cualquier controller exige tocar la base | ✅ Resuelto | commit `a903f54` (2026-05-12) |
-| PA-011 | 🟡 Minor | `AdvanceLegalizationActionPolicy` modela bien el Policy pattern; Refund/PettyCash/Invoice/Novelty/PaymentScheduling siguen llamando `canOperate` inline → dos estilos coexistiendo | ⏳ Pendiente | — |
+| PA-011 | 🟡 Minor | `AdvanceLegalizationActionPolicy` modela bien el Policy pattern; Refund/PettyCash/Invoice/Novelty/PaymentScheduling siguen llamando `canOperate` inline → dos estilos coexistiendo | ✅ Resuelto | commits `868558a..036ace0` (2026-05-12) |
 | PA-012 | 🟢 Sugerencia | 6 services hacen `$pipelineAuth ?? new PipelineAuthorizationService()`; cada instancia tiene su propia cache si el DI falla | ✅ Resuelto | colateral de PA-004 (verificado 2026-05-12) |
 | PA-013 | 🟢 Sugerencia | Cache de `private array $cache` depende del scope per-request del contenedor de DI; no documentado en el docblock | ✅ Resuelto | commit `d9bebf5` (2026-05-12) |
 | PA-014 | 🟢 Sugerencia | `PipelineStepConstants::STEP_LABELS` repite strings que ya existen en `STATUS_LABELS` de cada `*Constants`; drift posible | ✅ Resuelto | commit `0c66096` (2026-05-12) |
@@ -379,7 +379,9 @@ Cubierto por el plan de validación de PA-002.
 
 ---
 
-## PA-011 — Dos modelos de Policy coexisten 🟡
+## PA-011 — Dos modelos de Policy coexisten 🟡 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** se crearon `InvoiceActionPolicy`, `RefundActionPolicy`, `PettyCashActionPolicy`, `NoveltyActionPolicy`, `PaymentSchedulingActionPolicy` espejando el shape de `AdvanceLegalizationActionPolicy`. Controllers y ViewModels migrados a `$this->actionPolicy->canX(...)`. `RefundsController::_canOperateRefundStep` eliminado. `grep "authFacade->canOperate" src/Controller/{Invoices,Refunds,PettyCashRecords,EmployeeNovelties,PaymentSchedulings}*Controller.php` retorna 0 matches tras el refactor. **Fuera del alcance original del audit (deuda separada):** `InvoicePaymentsController`, `LiquidationDocPaymentsController` y `NoveltyLiquidationDocsController` aún tienen `authFacade->canOperate` inline (controllers sub-recurso no nombrados en PA-011); `AppController::_enforcePipelineActionGate` conserva su `canOperate` central porque es el enforcement del attribute `PipelineAction` (no domain gate).
 
 **Ubicación:**
 - **Modelo A** (preferido implícito): `src/Service/Pipeline/Advance/Policy/AdvanceLegalizationActionPolicy.php` — objeto policy con `canX(entity, roleId, roleName)` que compone `pipelineAuth->canOperate(...)` con `entity->canX()`.
