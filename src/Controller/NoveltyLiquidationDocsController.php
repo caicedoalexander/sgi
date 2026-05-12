@@ -15,7 +15,6 @@ use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
-use App\Service\PipelineAuthorizationService;
 use App\View\Presentation\NoveltyPresentation;
 use App\ViewModel\NoveltyLiquidationDocEditViewModel;
 use Cake\Routing\Router;
@@ -36,8 +35,6 @@ class NoveltyLiquidationDocsController extends AppController
 
     private NoveltySignatureService $signatureService;
 
-    private PipelineAuthorizationService $pipelineAuth;
-
     /**
      * @return void
      */
@@ -49,7 +46,6 @@ class NoveltyLiquidationDocsController extends AppController
         $this->documentService = $container->get(NoveltyDocumentService::class);
         $this->observationService = $container->get(NoveltyObservationService::class);
         $this->signatureService = $container->get(NoveltySignatureService::class);
-        $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
     }
 
     /**
@@ -233,18 +229,19 @@ class NoveltyLiquidationDocsController extends AppController
 
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
         $roleId = (int)$user->role_id;
-        $canOpTesoreria = $this->pipelineAuth->canOperate(
-            $roleId,
+        $userContext = $this->_userContext();
+        $canOpTesoreria = $this->authFacade->canOperate(
+            $userContext,
             PipelineStepConstants::PIPELINE_NOVELTIES,
             NoveltyConstants::STATUS_TESORERIA,
         );
-        $canOpAutPago = $this->pipelineAuth->canOperate(
-            $roleId,
+        $canOpAutPago = $this->authFacade->canOperate(
+            $userContext,
             PipelineStepConstants::PIPELINE_NOVELTIES,
             NoveltyConstants::STATUS_AUTORIZACION_PAGO,
         );
-        $canConfirmPayment = $this->pipelineAuth->canOperate(
-            $roleId,
+        $canConfirmPayment = $this->authFacade->canOperate(
+            $userContext,
             PipelineStepConstants::PIPELINE_NOVELTIES,
             NoveltyConstants::STATUS_VERIFICACION_PAGO,
         );

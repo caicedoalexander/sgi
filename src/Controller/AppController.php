@@ -11,7 +11,6 @@ use App\Authorization\CrudAction;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
 use App\Service\AuthorizationService;
-use App\Service\PipelineAuthorizationService;
 use App\Service\SidebarCounterService;
 use App\ValueObject\UserContext;
 use Cake\Controller\Controller;
@@ -30,8 +29,6 @@ class AppController extends Controller
     protected AuthorizationService $authService;
 
     protected SidebarCounterService $counterService;
-
-    protected PipelineAuthorizationService $pipelineAuth;
 
     protected AuthorizationFacade $authFacade;
 
@@ -63,7 +60,6 @@ class AppController extends Controller
 
         $this->authService = $this->getContainer()->get(AuthorizationService::class);
         $this->counterService = $this->getContainer()->get(SidebarCounterService::class);
-        $this->pipelineAuth = $this->getContainer()->get(PipelineAuthorizationService::class);
         $this->authFacade = $this->getContainer()->get(AuthorizationFacade::class);
 
         $this->loadComponent('Flash');

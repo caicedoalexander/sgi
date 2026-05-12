@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Attribute\NoAuthGate;
 use App\Attribute\Permission;
+use App\Authorization\CrudAction;
 use App\Constants\EmailLogConstants;
 use App\Model\Entity\EmailLog;
 use App\Service\EmailLogService;
@@ -130,20 +131,17 @@ class EmailLogsController extends AppController
      */
     private function _canRetry(EmailLog $logRow): bool
     {
-        $user = $this->Authentication->getIdentity()?->getOriginalData();
-        if (!$user) {
+        $context = $this->_userContext();
+        if ($context === null) {
             return false;
         }
 
-        $roleName = $this->_getUserRoleName($user);
-        $roleId = (int)($user->role_id ?? 0);
-
         if ($logRow->entity_type === EmailLogConstants::ENTITY_INVOICE) {
-            return $this->authService->isAllowed($roleId, $roleName, 'invoices', 'edit');
+            return $this->authFacade->canCrud($context, 'invoices', CrudAction::Edit);
         }
 
         if ($logRow->entity_type === EmailLogConstants::ENTITY_NOVELTY) {
-            return $this->authService->isAllowed($roleId, $roleName, 'employee_novelties', 'edit');
+            return $this->authFacade->canCrud($context, 'employee_novelties', CrudAction::Edit);
         }
 
         return false;

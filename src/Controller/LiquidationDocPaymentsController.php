@@ -7,13 +7,11 @@ use App\Attribute\PipelineAction;
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Service\LiquidationDocPaymentService;
-use App\Service\PipelineAuthorizationService;
 use Cake\Http\Response;
 
 class LiquidationDocPaymentsController extends AppController
 {
     private LiquidationDocPaymentService $paymentService;
-    private PipelineAuthorizationService $pipelineAuth;
 
     /**
      * @return void
@@ -22,7 +20,6 @@ class LiquidationDocPaymentsController extends AppController
     {
         parent::initialize();
         $this->paymentService = $this->getContainer()->get(LiquidationDocPaymentService::class);
-        $this->pipelineAuth = $this->getContainer()->get(PipelineAuthorizationService::class);
     }
 
     private function _getRoleId(): int
@@ -61,8 +58,8 @@ class LiquidationDocPaymentsController extends AppController
     {
         $this->request->allowMethod(['post']);
         if (
-            !$this->pipelineAuth->canOperate(
-                $this->_getRoleId(),
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 NoveltyConstants::STATUS_TESORERIA,
             )
@@ -99,8 +96,8 @@ class LiquidationDocPaymentsController extends AppController
     {
         $this->request->allowMethod(['post']);
         if (
-            !$this->pipelineAuth->canOperate(
-                $this->_getRoleId(),
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 NoveltyConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -133,8 +130,8 @@ class LiquidationDocPaymentsController extends AppController
     {
         $this->request->allowMethod(['post']);
         if (
-            !$this->pipelineAuth->canOperate(
-                $this->_getRoleId(),
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 NoveltyConstants::STATUS_VERIFICACION_PAGO,
             )
@@ -167,8 +164,8 @@ class LiquidationDocPaymentsController extends AppController
     {
         $this->request->allowMethod(['post']);
         if (
-            !$this->pipelineAuth->canOperate(
-                $this->_getRoleId(),
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 NoveltyConstants::STATUS_AUTORIZACION_PAGO,
             )

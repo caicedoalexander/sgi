@@ -10,7 +10,6 @@ use App\Constants\RefundConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\Refund;
-use App\Service\PipelineAuthorizationService;
 use App\Service\RefundDocumentService;
 use App\Service\RefundPaymentService;
 use App\Service\RefundService;
@@ -29,7 +28,6 @@ class RefundsController extends AppController
 
     private RefundService $refundService;
     private RefundPaymentService $paymentService;
-    private PipelineAuthorizationService $pipelineAuth;
     private RefundDocumentService $documentService;
 
     /**
@@ -41,7 +39,6 @@ class RefundsController extends AppController
         $container = $this->getContainer();
         $this->refundService = $container->get(RefundService::class);
         $this->paymentService = $container->get(RefundPaymentService::class);
-        $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
         $this->documentService = $container->get(RefundDocumentService::class);
     }
 
@@ -56,10 +53,8 @@ class RefundsController extends AppController
      */
     private function _canOperateRefundStep(string $step): bool
     {
-        $user = $this->_getCurrentUser();
-
-        return $this->pipelineAuth->canOperate(
-            (int)$user->role_id,
+        return $this->authFacade->canOperate(
+            $this->_userContext(),
             PipelineStepConstants::PIPELINE_REFUNDS,
             $step,
         );
@@ -443,6 +438,7 @@ class RefundsController extends AppController
         [$employees, $providers] = $this->_loadBeneficiaryLists();
         $roleName = $this->_getUserRoleName($user);
         $roleId = (int)$user->role_id;
+        $userContext = $this->_userContext();
 
         return new RefundEditViewModel(
             record: $record,
@@ -458,18 +454,18 @@ class RefundsController extends AppController
             canRegress: $this->refundService->denialReasonForRegress($record, $roleId) === null,
             previousStatus: $this->refundService->getPreviousStatus($record->status),
             regressLockMessage: $this->refundService->getRegressionLockMessage($record),
-            canRegisterPayment: $this->pipelineAuth->canOperate(
-                $roleId,
+            canRegisterPayment: $this->authFacade->canOperate(
+                $userContext,
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_TESORERIA,
             ),
-            canAuthorizePayment: $this->pipelineAuth->canOperate(
-                $roleId,
+            canAuthorizePayment: $this->authFacade->canOperate(
+                $userContext,
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_AUTORIZACION_PAGO,
             ),
-            canConfirmPayment: $this->pipelineAuth->canOperate(
-                $roleId,
+            canConfirmPayment: $this->authFacade->canOperate(
+                $userContext,
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_VERIFICACION_PAGO,
             ),
@@ -603,8 +599,8 @@ class RefundsController extends AppController
 
         $user = $this->_getCurrentUser();
         if (
-            !$this->pipelineAuth->canOperate(
-                (int)$user->role_id,
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_VERIFICACION_PAGO,
             )

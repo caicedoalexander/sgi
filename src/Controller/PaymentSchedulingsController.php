@@ -13,7 +13,6 @@ use App\Model\Entity\PaymentScheduling;
 use App\Service\PaymentSchedulingDocumentService;
 use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
-use App\Service\PipelineAuthorizationService;
 use App\ViewModel\PaymentSchedulingAddViewModel;
 use App\ViewModel\PaymentSchedulingEditViewModel;
 use Cake\Routing\Router;
@@ -31,8 +30,6 @@ class PaymentSchedulingsController extends AppController
 
     private PaymentSchedulingImportService $importService;
 
-    private PipelineAuthorizationService $pipelineAuth;
-
     public function initialize(): void
     {
         parent::initialize();
@@ -40,7 +37,6 @@ class PaymentSchedulingsController extends AppController
         $this->schedulingService = $container->get(PaymentSchedulingService::class);
         $this->documentService = $container->get(PaymentSchedulingDocumentService::class);
         $this->importService = $container->get(PaymentSchedulingImportService::class);
-        $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
     }
 
     private function _getCurrentUser(): object
@@ -171,16 +167,17 @@ class PaymentSchedulingsController extends AppController
         string $roleName,
     ): PaymentSchedulingEditViewModel {
         $currentStatus = $record->pipeline_status;
+        $userContext = $this->_userContext();
         $canAdvance = $this->schedulingService->denialReasonForAdvance($record, $roleId) === null;
         $canReject = $currentStatus === PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO
-            && $this->pipelineAuth->canOperate(
-                $roleId,
+            && $this->authFacade->canOperate(
+                $userContext,
                 PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
                 $currentStatus,
             );
         $canRegress = $this->schedulingService->denialReasonForRegress($record, $roleId) === null;
-        $canConfirmPayment = $this->pipelineAuth->canOperate(
-            $roleId,
+        $canConfirmPayment = $this->authFacade->canOperate(
+            $userContext,
             PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
             PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
         );
@@ -280,8 +277,8 @@ class PaymentSchedulingsController extends AppController
         $roleId = (int)$this->_getCurrentUser()->role_id;
 
         $canReject = $record->pipeline_status === PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO
-            && $this->pipelineAuth->canOperate(
-                $roleId,
+            && $this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
                 $record->pipeline_status,
             );
@@ -339,8 +336,8 @@ class PaymentSchedulingsController extends AppController
         $this->request->allowMethod(['post']);
 
         if (
-            !$this->pipelineAuth->canOperate(
-                (int)$this->_getCurrentUser()->role_id,
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
                 PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
             )

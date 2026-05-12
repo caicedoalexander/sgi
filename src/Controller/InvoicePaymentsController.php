@@ -7,12 +7,10 @@ use App\Attribute\PipelineAction;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Service\InvoicePaymentService;
-use App\Service\PipelineAuthorizationService;
 
 class InvoicePaymentsController extends AppController
 {
     private InvoicePaymentService $paymentService;
-    private PipelineAuthorizationService $pipelineAuth;
 
     /**
      * @return void
@@ -21,7 +19,6 @@ class InvoicePaymentsController extends AppController
     {
         parent::initialize();
         $this->paymentService = $this->getContainer()->get(InvoicePaymentService::class);
-        $this->pipelineAuth = $this->getContainer()->get(PipelineAuthorizationService::class);
     }
 
     private function _getCurrentUser(): object
@@ -55,8 +52,8 @@ class InvoicePaymentsController extends AppController
 
         if (
             !(
-                $this->pipelineAuth->canOperate(
-                    $roleId,
+                $this->authFacade->canOperate(
+                    $this->_userContext(),
                     PipelineStepConstants::PIPELINE_INVOICES,
                     InvoiceConstants::STATUS_TESORERIA,
                 )
@@ -101,8 +98,8 @@ class InvoicePaymentsController extends AppController
         $roleId = $this->_getRoleId();
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_INVOICES,
                 InvoiceConstants::STATUS_TESORERIA,
             )
@@ -146,8 +143,8 @@ class InvoicePaymentsController extends AppController
         $roleId = $this->_getRoleId();
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_INVOICES,
                 InvoiceConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -186,8 +183,8 @@ class InvoicePaymentsController extends AppController
         $roleId = $this->_getRoleId();
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_INVOICES,
                 InvoiceConstants::STATUS_VERIFICACION_PAGO,
             )
@@ -223,8 +220,8 @@ class InvoicePaymentsController extends AppController
         $roleId = $this->_getRoleId();
 
         if (
-            !$this->pipelineAuth->canOperate(
-                $roleId,
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_INVOICES,
                 InvoiceConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -267,8 +264,8 @@ class InvoicePaymentsController extends AppController
 
         if (
             !(
-                $this->pipelineAuth->canOperate(
-                    $roleId,
+                $this->authFacade->canOperate(
+                    $this->_userContext(),
                     PipelineStepConstants::PIPELINE_INVOICES,
                     InvoiceConstants::STATUS_TESORERIA,
                 )

@@ -12,7 +12,6 @@ use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
-use App\Service\PipelineAuthorizationService;
 use App\ViewModel\PettyCashAddViewModel;
 use App\ViewModel\PettyCashEditViewModel;
 use Cake\ORM\Query\SelectQuery;
@@ -29,8 +28,6 @@ class PettyCashRecordsController extends AppController
 
     private PettyCashDocumentService $documentService;
 
-    private PipelineAuthorizationService $pipelineAuth;
-
     /**
      * @return void
      */
@@ -40,7 +37,6 @@ class PettyCashRecordsController extends AppController
         $container = $this->getContainer();
         $this->pettyCashService = $container->get(PettyCashService::class);
         $this->documentService = $container->get(PettyCashDocumentService::class);
-        $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
     }
 
     private function _getCurrentUser(): \App\Model\Entity\User
@@ -311,18 +307,19 @@ class PettyCashRecordsController extends AppController
             ? $this->pettyCashService->getTransitionErrors($record)
             : [];
 
-        $canRegisterPayment = $this->pipelineAuth->canOperate(
-            $roleId,
+        $userContext = $this->_userContext();
+        $canRegisterPayment = $this->authFacade->canOperate(
+            $userContext,
             PipelineStepConstants::PIPELINE_PETTY_CASH,
             PettyCashConstants::STATUS_TESORERIA,
         );
-        $canAuthorizePayment = $this->pipelineAuth->canOperate(
-            $roleId,
+        $canAuthorizePayment = $this->authFacade->canOperate(
+            $userContext,
             PipelineStepConstants::PIPELINE_PETTY_CASH,
             PettyCashConstants::STATUS_AUTORIZACION_PAGO,
         );
-        $canConfirmPayment = $this->pipelineAuth->canOperate(
-            $roleId,
+        $canConfirmPayment = $this->authFacade->canOperate(
+            $userContext,
             PipelineStepConstants::PIPELINE_PETTY_CASH,
             PettyCashConstants::STATUS_VERIFICACION_PAGO,
         );
@@ -471,8 +468,8 @@ class PettyCashRecordsController extends AppController
 
         $user = $this->_getCurrentUser();
         if (
-            !$this->pipelineAuth->canOperate(
-                (int)$user->role_id,
+            !$this->authFacade->canOperate(
+                $this->_userContext(),
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
                 PettyCashConstants::STATUS_VERIFICACION_PAGO,
             )

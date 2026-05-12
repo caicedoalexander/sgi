@@ -26,7 +26,6 @@ use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
-use App\Service\PipelineAuthorizationService;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
@@ -49,8 +48,6 @@ class InvoicesController extends AppController
 
     private InvoicePaymentService $paymentService;
 
-    private PipelineAuthorizationService $pipelineAuth;
-
     public function initialize(): void
     {
         parent::initialize();
@@ -60,7 +57,6 @@ class InvoicesController extends AppController
         $this->documentService = $container->get(InvoiceDocumentService::class);
         $this->approvalService = $container->get(InvoiceApprovalService::class);
         $this->paymentService = $container->get(InvoicePaymentService::class);
-        $this->pipelineAuth = $container->get(PipelineAuthorizationService::class);
     }
 
     private function _getCurrentUser(): object
@@ -361,18 +357,19 @@ class InvoicesController extends AppController
         }
 
         $canRegress = $this->pipeline->denialReasonForRegress($invoice, $roleId) === null;
-        $canConfirmPayment = $this->pipelineAuth->canOperate(
-            $roleId,
+        $userContext = $this->_userContext();
+        $canConfirmPayment = $this->authFacade->canOperate(
+            $userContext,
             PipelineStepConstants::PIPELINE_INVOICES,
             InvoiceConstants::STATUS_VERIFICACION_PAGO,
         );
-        $canRegisterPayment = $this->pipelineAuth->canOperate(
-            $roleId,
+        $canRegisterPayment = $this->authFacade->canOperate(
+            $userContext,
             PipelineStepConstants::PIPELINE_INVOICES,
             InvoiceConstants::STATUS_TESORERIA,
         ) && $currentStatus === InvoiceConstants::STATUS_TESORERIA;
-        $canAuthorizePayment = $this->pipelineAuth->canOperate(
-            $roleId,
+        $canAuthorizePayment = $this->authFacade->canOperate(
+            $userContext,
             PipelineStepConstants::PIPELINE_INVOICES,
             InvoiceConstants::STATUS_AUTORIZACION_PAGO,
         ) && $currentStatus === InvoiceConstants::STATUS_AUTORIZACION_PAGO;
