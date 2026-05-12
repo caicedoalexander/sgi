@@ -13,6 +13,7 @@ use App\Model\Entity\PaymentScheduling;
 use App\Service\PaymentSchedulingDocumentService;
 use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
+use App\Service\Pipeline\PaymentScheduling\Policy\PaymentSchedulingActionPolicy;
 use App\ViewModel\PaymentSchedulingAddViewModel;
 use App\ViewModel\PaymentSchedulingEditViewModel;
 use Cake\Routing\Router;
@@ -30,6 +31,8 @@ class PaymentSchedulingsController extends AppController
 
     private PaymentSchedulingImportService $importService;
 
+    private PaymentSchedulingActionPolicy $actionPolicy;
+
     public function initialize(): void
     {
         parent::initialize();
@@ -37,6 +40,7 @@ class PaymentSchedulingsController extends AppController
         $this->schedulingService = $container->get(PaymentSchedulingService::class);
         $this->documentService = $container->get(PaymentSchedulingDocumentService::class);
         $this->importService = $container->get(PaymentSchedulingImportService::class);
+        $this->actionPolicy = $container->get(PaymentSchedulingActionPolicy::class);
     }
 
     private function _getCurrentUser(): object
@@ -167,20 +171,10 @@ class PaymentSchedulingsController extends AppController
         string $roleName,
     ): PaymentSchedulingEditViewModel {
         $currentStatus = $record->pipeline_status;
-        $userContext = $this->_userContext();
         $canAdvance = $this->schedulingService->denialReasonForAdvance($record, $roleId) === null;
-        $canReject = $currentStatus === PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO
-            && $this->authFacade->canOperate(
-                $userContext,
-                PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
-                $currentStatus,
-            );
+        $canReject = $this->actionPolicy->canReject($record, $roleId);
         $canRegress = $this->schedulingService->denialReasonForRegress($record, $roleId) === null;
-        $canConfirmPayment = $this->authFacade->canOperate(
-            $userContext,
-            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
-            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
-        );
+        $canConfirmPayment = $this->actionPolicy->canConfirmPayment($record, $roleId);
 
         $advanceErrors = $canAdvance
             ? $this->schedulingService->validateTransitionRequirements($record, $currentStatus)
@@ -276,13 +270,7 @@ class PaymentSchedulingsController extends AppController
         $record = $this->PaymentSchedulings->get($id);
         $roleId = (int)$this->_getCurrentUser()->role_id;
 
-        $canReject = $record->pipeline_status === PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO
-            && $this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
-                $record->pipeline_status,
-            );
-        if (!$canReject) {
+        if (!$this->actionPolicy->canReject($record, $roleId)) {
             $this->Flash->error('No tiene permisos para rechazar esta programación.');
 
             return $this->redirect(['action' => 'edit', $id]);
@@ -335,13 +323,8 @@ class PaymentSchedulingsController extends AppController
     {
         $this->request->allowMethod(['post']);
 
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
-                PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
-            )
-        ) {
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        if (!$this->actionPolicy->canOperateStep($roleId, PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO)) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->redirect(['action' => 'view', $id]);
