@@ -3,9 +3,13 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\NoAuthGate;
+use App\Attribute\Permission;
+use App\Attribute\PipelineAction;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
 use App\Service\AuthorizationService;
+use App\Service\PipelineAuthorizationService;
 use App\Service\SidebarCounterService;
 use Cake\Controller\Controller;
 use Cake\Core\ContainerInterface;
@@ -13,6 +17,7 @@ use Cake\Event\EventInterface;
 use Cake\Http\Exception\ForbiddenException;
 use Cake\Http\Response;
 use LogicException;
+use ReflectionMethod;
 use RuntimeException;
 
 class AppController extends Controller
@@ -22,6 +27,8 @@ class AppController extends Controller
     protected AuthorizationService $authService;
 
     protected SidebarCounterService $counterService;
+
+    protected PipelineAuthorizationService $pipelineAuth;
 
     /**
      * Stash the application container so controllers can resolve services on demand.
@@ -51,6 +58,7 @@ class AppController extends Controller
 
         $this->authService = $this->getContainer()->get(AuthorizationService::class);
         $this->counterService = $this->getContainer()->get(SidebarCounterService::class);
+        $this->pipelineAuth = $this->getContainer()->get(PipelineAuthorizationService::class);
 
         $this->loadComponent('Flash');
         $this->loadComponent('Authentication.Authentication');
@@ -170,36 +178,41 @@ class AppController extends Controller
     }
 
     /**
-     * Automatically enforce permissions based on current controller/action.
+     * Aplica el gate de permisos según el atributo del método de la acción.
+     *
+     * Flujo:
+     *  1. Resolver el método del controller actual.
+     *  2. Buscar uno de los 3 atributos (#[NoAuthGate], #[Permission], #[PipelineAction]).
+     *  3. Si hay atributo, aplicar su regla.
+     *  4. Si no hay atributo, caer al fallback legacy (controllerModuleMap +
+     *     _actionToPermission + $pipelineActions) — se eliminará en commit 6.
      */
     protected function _enforcePermission(object $user): void
     {
-        $controllerName = $this->request->getParam('controller');
         $action = $this->request->getParam('action');
 
-        // Skip controllers not in the permission map (Pages, Error, etc.)
+        $attribute = $this->_resolveAuthAttribute($action);
+        if ($attribute !== null) {
+            $this->_applyAuthAttribute($user, $attribute);
+
+            return;
+        }
+
+        // ─── Fallback legacy — eliminar en commit 6 ────────────────────────
+        $controllerName = $this->request->getParam('controller');
+
         if (!isset($this->controllerModuleMap[$controllerName])) {
             return;
         }
 
-        // Skip login/logout actions
         if ($controllerName === 'Users' && in_array($action, ['login', 'logout'], true)) {
             return;
         }
 
-        // EmailLogs::retry valida permisos internamente (delega a invoices.can_edit
-        // o employee_novelties.can_edit según entity_type). Saltarse el check de
-        // módulo aquí para no bloquear a usuarios no-admin desde el panel inline.
         if ($controllerName === 'EmailLogs' && $action === 'retry') {
             return;
         }
 
-        // Acciones de pipeline-step: el control fino vive en el `actionPolicy`
-        // del controlador (consulta `pipeline_permissions`). Aquí se evita el
-        // doble gate del CRUD del módulo — si el rol tiene la pipeline-permission
-        // del paso correspondiente puede operarlo aunque no tenga can_edit del
-        // módulo. Si tampoco tiene la pipeline-permission, el propio controlador
-        // responde con su Flash de denegación.
         if (in_array($action, $this->pipelineActions, true)) {
             return;
         }
@@ -211,6 +224,81 @@ class AppController extends Controller
             throw new ForbiddenException(
                 sprintf('No tiene permisos para %s en %s.', $permAction, $module),
             );
+        }
+    }
+
+    /**
+     * Resuelve el atributo de autorización del método de la acción actual.
+     *
+     * @param string $action Nombre de la acción del controller.
+     * @return \App\Attribute\Permission|\App\Attribute\PipelineAction|\App\Attribute\NoAuthGate|null
+     */
+    private function _resolveAuthAttribute(string $action): Permission|PipelineAction|NoAuthGate|null
+    {
+        if (!method_exists($this, $action)) {
+            return null;
+        }
+
+        $method = new ReflectionMethod($this, $action);
+
+        foreach ([NoAuthGate::class, Permission::class, PipelineAction::class] as $attrClass) {
+            $attrs = $method->getAttributes($attrClass);
+            if ($attrs !== []) {
+                return $attrs[0]->newInstance();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Aplica la regla del atributo resuelto.
+     *
+     * @param object $user Usuario autenticado (entity con role_id).
+     * @param object $attribute \App\Attribute\Permission|\App\Attribute\PipelineAction|\App\Attribute\NoAuthGate.
+     */
+    private function _applyAuthAttribute(object $user, object $attribute): void
+    {
+        if ($attribute instanceof NoAuthGate) {
+            return;
+        }
+
+        if ($attribute instanceof Permission) {
+            $controllerName = $this->request->getParam('controller');
+            $module = $this->controllerModuleMap[$controllerName] ?? null;
+            if ($module === null) {
+                throw new LogicException(sprintf(
+                    "Controller '%s' has #[Permission] but no entry in \$controllerModuleMap.",
+                    $controllerName,
+                ));
+            }
+
+            if (!$this->_checkPermission($module, $attribute->action)) {
+                throw new ForbiddenException(
+                    sprintf('No tiene permisos para %s en %s.', $attribute->action, $module),
+                );
+            }
+
+            return;
+        }
+
+        if ($attribute instanceof PipelineAction) {
+            if ($attribute->step === null) {
+                // Acción dinámica — el método decide vía canOperate inline o
+                // denialReasonForAdvance. Solo se salta el gate CRUD.
+                return;
+            }
+
+            $roleId = (int)$user->role_id;
+            if (!$this->pipelineAuth->canOperate($roleId, $attribute->pipeline, $attribute->step)) {
+                throw new ForbiddenException(
+                    sprintf(
+                        'No tiene permisos para operar el paso "%s" del pipeline "%s".',
+                        $attribute->step,
+                        $attribute->pipeline,
+                    ),
+                );
+            }
         }
     }
 
