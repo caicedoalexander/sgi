@@ -44,12 +44,12 @@
 | PA-006 | 🟠 Major | `$pipelineActions` declarado per-controller; añadir una acción nueva exige tocarlo + recordar el patrón | ✅ Resuelto | commit `a903f54` (2026-05-12) |
 | PA-007 | 🟡 Minor | `ADMIN_BYPASS_MODULES` ejecuta lógica en `isAllowed` y se re-aplica en `AppController::_setUserPermissions` para el sidebar | ⏳ Pendiente | — |
 | PA-008 | 🟡 Minor | `InvoiceFieldAccessPolicy::SECTION_BY_STEP` (string) vs `NoveltyService::SECTIONS_BY_STEP` (array) — divergencia gratuita | ⏳ Pendiente | — |
-| PA-009 | 🟡 Minor | `RolesController::add` llama `getPermissionsMatrix(0)` con `role_id` inexistente; funciona porque `?? false` casts a `false` | ⏳ Pendiente | — |
+| PA-009 | 🟡 Minor | `RolesController::add` llama `getPermissionsMatrix(0)` con `role_id` inexistente; funciona porque `?? false` casts a `false` | ✅ Resuelto | commit `d294aaf` (2026-05-12) |
 | PA-010 | 🟡 Minor | `_actionToPermission` agrupa 35+ acciones en un `match` plano que vive en `AppController`; cada acción nueva en cualquier controller exige tocar la base | ✅ Resuelto | commit `a903f54` (2026-05-12) |
 | PA-011 | 🟡 Minor | `AdvanceLegalizationActionPolicy` modela bien el Policy pattern; Refund/PettyCash/Invoice/Novelty/PaymentScheduling siguen llamando `canOperate` inline → dos estilos coexistiendo | ⏳ Pendiente | — |
-| PA-012 | 🟢 Sugerencia | 6 services hacen `$pipelineAuth ?? new PipelineAuthorizationService()`; cada instancia tiene su propia cache si el DI falla | ⏳ Pendiente | — |
-| PA-013 | 🟢 Sugerencia | Cache de `private array $cache` depende del scope per-request del contenedor de DI; no documentado en el docblock | ⏳ Pendiente | — |
-| PA-014 | 🟢 Sugerencia | `PipelineStepConstants::STEP_LABELS` repite strings que ya existen en `STATUS_LABELS` de cada `*Constants`; drift posible | ⏳ Pendiente | — |
+| PA-012 | 🟢 Sugerencia | 6 services hacen `$pipelineAuth ?? new PipelineAuthorizationService()`; cada instancia tiene su propia cache si el DI falla | ✅ Resuelto | colateral de PA-004 (verificado 2026-05-12) |
+| PA-013 | 🟢 Sugerencia | Cache de `private array $cache` depende del scope per-request del contenedor de DI; no documentado en el docblock | ✅ Resuelto | commit `d9bebf5` (2026-05-12) |
+| PA-014 | 🟢 Sugerencia | `PipelineStepConstants::STEP_LABELS` repite strings que ya existen en `STATUS_LABELS` de cada `*Constants`; drift posible | ✅ Resuelto | commit `0c66096` (2026-05-12) |
 
 ---
 
@@ -329,7 +329,9 @@ abstract class PipelineFieldPolicy {
 
 ---
 
-## PA-009 — `getPermissionsMatrix(0)` "funciona" por accidente 🟡
+## PA-009 — `getPermissionsMatrix(0)` "funciona" por accidente 🟡 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** commit `d294aaf` añadió `PipelineAuthorizationService::getEmptyMatrix()` que itera `STEPS_BY_PIPELINE` sin tocar BD. `RolesController::add` ahora usa el método explícito en lugar de `getPermissionsMatrix(0)`. No se añadió simétrico `getEmptyPermissionsMatrix()` en `AuthorizationService` porque el template `templates/Roles/add.php` no consume `$permissionsMatrix` (solo itera `$modules`), por lo que sería abstracción especulativa (YAGNI). Validación: render del formulario `/roles/add` idéntico al previo (todos los checkboxes desmarcados); creación de rol y edición posterior sin regresión.
 
 **Ubicación:** `src/Controller/RolesController.php:74`.
 
@@ -399,7 +401,9 @@ Crear `RefundActionPolicy`, `PettyCashActionPolicy`, `InvoiceActionPolicy`, `Nov
 
 ---
 
-## PA-012 — Fallback `?? new PipelineAuthorizationService()` 🟢
+## PA-012 — Fallback `?? new PipelineAuthorizationService()` 🟢 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** verificación negativa tras PA-004. Tres búsquedas (`?? new (Pipeline)?AuthorizationService(\|Facade)`, parámetros con default `= null` tipados `?(Pipeline)?AuthorizationService(\|Facade)`, y firmas nullable `?{Service}`) no encontraron coincidencias en `src/`. La migración a `AuthorizationFacade` (commits `424249d..3949528`) ya había eliminado los 6 fallbacks listados en el inventario original. Sin cambios de código en PR1.
 
 **Ubicación:** `RefundService:45`, `NoveltyService:49`, `PaymentSchedulingService:31`, `PettyCashService:53`, `RefundPaymentService:36`, `InvoiceFieldAccessPolicy:62`.
 
@@ -417,7 +421,9 @@ Si se implementa PA-004 (`AuthorizationFacade`), eliminar los fallbacks y hacer 
 
 ---
 
-## PA-013 — Cache per-request implícito sin documentar 🟢
+## PA-013 — Cache per-request implícito sin documentar 🟢 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** commit `d9bebf5` añadió docblock explícito en `AuthorizationService` y `PipelineAuthorizationService` describiendo la política de caché: invalidación vía `invalidate(int $roleId)` y tras `save*Permissions()`, no persiste entre requests por scope del container de DI, y warning explícito contra promover a caché global sin invalidación cross-request.
 
 **Ubicación:** `PipelineAuthorizationService:21` y `AuthorizationService:52`.
 
@@ -435,7 +441,9 @@ Cambio puramente documental.
 
 ---
 
-## PA-014 — `STEP_LABELS` duplica `STATUS_LABELS` 🟢
+## PA-014 — `STEP_LABELS` duplica `STATUS_LABELS` 🟢 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** commit `0c66096` migró `PipelineStepConstants::STEP_LABELS` a referenciar `STATUS_LABELS` de cada `*Constants` donde el label coincide exactamente. Se aprovecha PHP 8.4 (array element access en class constants). De los 38 pares (pipeline, step), 36 quedan delegando y 2 conservan literal por divergencia intencional documentada inline: `STATUS_REVISION_FIRMAS` en pipelines `novelties` y `liquidation_docs` (NoveltyConstants usa `'Revisión y Firmas de documentos'` pero la UI de matriz requiere el label corto `'Revisión y Firmas'`). Drift entre fuentes eliminado para los matches. Validación runtime: las 38 entradas resuelven exactamente igual a antes del refactor.
 
 **Ubicación:** `src/Constants/PipelineStepConstants.php:98-152`.
 
