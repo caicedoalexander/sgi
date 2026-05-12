@@ -8,10 +8,12 @@ use Cake\ORM\TableRegistry;
 
 /**
  * Resuelve si un rol puede operar (avanzar, regresar, editar campos, ver
- * sección) en un paso específico de un pipeline.
+ * sección) en un paso específico de un pipeline. Cache per-request.
  *
- * Espejo de patrón a `AuthorizationService` para módulos CRUD: misma
- * estructura de cache por request, mismo bypass para Admin.
+ * @internal Depender de `App\Authorization\AuthorizationFacade` en su lugar.
+ * Esta clase concreta solo debe inyectarse en `RolesController` y
+ * `AppController::_setUserPermissions` (matrices y save quedan fuera del
+ * contrato del Facade — ver audit PA-004).
  */
 class PipelineAuthorizationService
 {

@@ -130,6 +130,10 @@ class AppController extends Controller
     protected function _setUserPermissions(object $user): void
     {
         $roleName = $this->_getUserRoleName($user);
+        // PA-004: uso directo de AuthorizationService legal aquí porque
+        // getPermissionsForRoleAsMatrix queda fuera del contrato de
+        // AuthorizationFacade (matriz para sidebar). El resto del gate
+        // pasa por $this->authFacade.
         $perms = $this->authService->getPermissionsForRoleAsMatrix((int)$user->role_id);
 
         if ($roleName === AuthorizationService::ROLE_ADMIN) {

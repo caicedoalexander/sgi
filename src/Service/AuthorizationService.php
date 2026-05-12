@@ -6,6 +6,15 @@ namespace App\Service;
 use App\Constants\RoleConstants;
 use Cake\ORM\TableRegistry;
 
+/**
+ * Servicio CRUD de permisos. Consulta directa a `permissions` con cache
+ * per-request.
+ *
+ * @internal Depender de `App\Authorization\AuthorizationFacade` en su lugar.
+ * Esta clase concreta solo debe inyectarse en `RolesController` y
+ * `AppController::_setUserPermissions` (matrices y save quedan fuera del
+ * contrato del Facade — ver audit PA-004).
+ */
 class AuthorizationService
 {
     // Role name constants — reference centralized constants

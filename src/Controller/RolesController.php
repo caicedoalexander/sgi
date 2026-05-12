@@ -20,6 +20,9 @@ class RolesController extends AppController
     public function initialize(): void
     {
         parent::initialize();
+        // PA-004: dependencia directa a PipelineAuthorizationService legal aquí
+        // porque RolesController consume matrices y save*, que quedan fuera del
+        // contrato de AuthorizationFacade. El resto del código usa el Facade.
         $this->pipelineAuth = $this->getContainer()->get(PipelineAuthorizationService::class);
     }
 

@@ -39,7 +39,7 @@
 | PA-001 | 🔴 Critical | `_actionToPermission` cae a `'view'` por defecto cuando una acción no está mapeada → over-permission silencioso | ✅ Resuelto | commit `0d84bd7` (2026-05-12) |
 | PA-002 | 🔴 Critical | 3 lugares sin chequeo para registrar una acción de pipeline (`$pipelineActions`, `_actionToPermission`, llamada manual a `canOperate`) | ✅ Resuelto | commits `882718a..a903f54` (2026-05-12) |
 | PA-003 | 🟠 Major | `$roleName` declarado y propagado en 55 call-sites pero nunca consultado (cleanup 2026-05-02 inacabado) | ✅ Resuelto | PR #4 / commit `1c73514` (2026-05-12) |
-| PA-004 | 🟠 Major | `AuthorizationService` y `PipelineAuthorizationService` duplican shape (cache, matrix, save, isAllowed/canOperate) sin contrato común | ⏳ Pendiente | — |
+| PA-004 | 🟠 Major | `AuthorizationService` y `PipelineAuthorizationService` duplican shape (cache, matrix, save, isAllowed/canOperate) sin contrato común | ✅ Resuelto | commits `424249d..3949528` (2026-05-12) |
 | PA-005 | 🟠 Major | `canAdvance(...)` y `canRegress(...)` mezclan "no hay next/previous" con "rol sin permiso" en el mismo `bool` | ✅ Resuelto | commits `882718a..e9551aa` (2026-05-12) |
 | PA-006 | 🟠 Major | `$pipelineActions` declarado per-controller; añadir una acción nueva exige tocarlo + recordar el patrón | ✅ Resuelto | commit `a903f54` (2026-05-12) |
 | PA-007 | 🟡 Minor | `ADMIN_BYPASS_MODULES` ejecuta lógica en `isAllowed` y se re-aplica en `AppController::_setUserPermissions` para el sidebar | ⏳ Pendiente | — |
@@ -168,7 +168,11 @@ Search-and-delete mecánico. Una sola PR. `RefundService::canRegress` ya tiene l
 
 ---
 
-## PA-004 — Sin abstracción común entre los dos servicios 🟠
+## PA-004 — Sin abstracción común entre los dos servicios 🟠 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** commits `424249d` (capa contractual: `UserContext` VO + `CrudAction` enum + `AuthorizationFacade` interface + `DefaultAuthorizationFacade` impl + DI registry) → `07c7d05` (método público `invalidate(int $roleId)` en ambos services, reemplaza `unset` inline en `save*`) → `d8be20e` (AppController + 9 services/policies migran al Facade; resolución colateral del fallback `?? new PipelineAuthorizationService()` PA-012 en 5 services) → `3949528` (8 controllers migran sus call-sites inline a `authFacade->canOperate`/`canCrud`; AppController limpia su propiedad heredada `$pipelineAuth`) → este commit (docblocks `@internal` + comentarios delimitando que la dependencia directa solo es legal en `RolesController` y `AppController::_setUserPermissions`). Resultado: una sola fachada inyectable para chequeos; matrices/save quedan como detalle interno consumido solo en los 2 puntos previstos.
+
+> Validación manual: server arranca limpio (`php bin/cake routes` carga sin errores). E2E queda pendiente para validación humana (login multi-rol + flow completo pipeline en facturas/reintegros/caja menor/anticipos/novedades/programación).
 
 **Ubicación:** `src/Service/AuthorizationService.php` y `src/Service/PipelineAuthorizationService.php`.
 
