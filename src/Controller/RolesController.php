@@ -78,7 +78,7 @@ class RolesController extends AppController
 
         $modules = AuthorizationService::MODULES;
         $permissionsMatrix = [];
-        $pipelineMatrix = $this->pipelineAuth->getPermissionsMatrix(0);
+        $pipelineMatrix = $this->pipelineAuth->getEmptyMatrix();
         $pipelineLabels = PipelineStepConstants::PIPELINE_LABELS;
         $stepLabels = PipelineStepConstants::STEP_LABELS;
 

@@ -79,6 +79,26 @@ class PipelineAuthorizationService
     }
 
     /**
+     * Devuelve una matriz vacía (todos los steps en `false`) sin consultar BD.
+     * Útil en `RolesController::add` donde aún no existe `role_id`.
+     *
+     * @return array<string, array<string, bool>> matrix[pipeline][step] = false
+     */
+    public function getEmptyMatrix(): array
+    {
+        $matrix = [];
+
+        foreach (PipelineStepConstants::STEPS_BY_PIPELINE as $pipeline => $steps) {
+            $matrix[$pipeline] = [];
+            foreach ($steps as $step) {
+                $matrix[$pipeline][$step] = false;
+            }
+        }
+
+        return $matrix;
+    }
+
+    /**
      * Persiste la matriz para un rol. Ignora pares (pipeline, step) inválidos.
      *
      * Estrategia: para cada par válido, upsert por (role_id, pipeline, step).
