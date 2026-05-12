@@ -25,30 +25,6 @@ class AdvancesController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
-    /**
-     * Acciones del flujo de legalización autorizadas por `pipeline_permissions`
-     * (rol×paso) vía `AdvanceLegalizationActionPolicy`. El gate CRUD del módulo
-     * `advances` no aplica a estas acciones — el chequeo fino lo hace cada
-     * endpoint contra el policy correspondiente al paso actual.
-     *
-     * @var array<int, string>
-     */
-    protected array $pipelineActions = [
-        'linkCandidates',
-        'linkInvoices',
-        'unlinkInvoice',
-        'uploadRelationDocument',
-        'moveToRevision',
-        'markSigned',
-        'returnToValidacion',
-        'markExact',
-        'registerShortage',
-        'confirmShortage',
-        'registerSurplus',
-        'registerRefund',
-        'confirmRefundPayment',
-    ];
-
     private AdvanceLegalizationService $legalizationService;
 
     private AdvanceLegalizationDocumentService $documentService;

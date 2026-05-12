@@ -67,20 +67,6 @@ class AppController extends Controller
     /**
      * Map controller names to module keys used in permissions table.
      */
-    /**
-     * Acciones que son operaciones de pipeline-step. Cada controlador con flujo
-     * de pipeline puede sobreescribir esta lista para indicar qué acciones se
-     * autorizan exclusivamente por `pipeline_permissions` (rol×paso) y NO por
-     * el CRUD del módulo. El control de acceso fino lo hace el `actionPolicy`
-     * del controlador; aquí solo se desacopla del chequeo CRUD obligatorio.
-     *
-     * Las acciones de entrada (view/index) y de mutación CRUD pura (add/edit/
-     * delete) siguen pasando por el chequeo del módulo.
-     *
-     * @var array<int, string>
-     */
-    protected array $pipelineActions = [];
-
     protected array $controllerModuleMap = [
         'Invoices' => 'invoices',
         'Providers' => 'providers',
@@ -114,25 +100,6 @@ class AppController extends Controller
         'Advances' => 'advances',
         'EmailLogs' => 'email_logs',
     ];
-
-    /**
-     * Map CakePHP action names to permission actions.
-     */
-    protected function _actionToPermission(string $action): string
-    {
-        return match ($action) {
-            'index', 'view', 'export', 'exportConfig', 'all', 'rejected', 'exportPdf', 'preview', 'active', 'activeEvents', 'allEvents', 'legalization', 'downloadDocument', 'pendingLegalization', 'overdue', 'pending' => 'view',
-            'add', 'addFolder', 'uploadDocument', 'import', 'importExcel', 'importUpload', 'importProcess', 'previewImport', 'confirmImport', 'addItem', 'uploadAttachment', 'addPayment', 'uploadLiquidationDocument' => 'add',
-            'edit', 'advanceStatus', 'regressStatus', 'addObservation', 'testSmtp', 'regenerateApiKey', 'approve', 'reject', 'deactivate', 'saveFields', 'removeInvoice', 'advance', 'advanceGroup', 'addSignature', 'assignLiquidation', 'getFlags', 'authorizePayment', 'confirmPayment', 'confirmRefundPayment', 'rejectPayment', 'editPayment', 'sendApprovalLinks', 'modifyApprovers', 'resetFlow', 'upload', 'linkInvoices', 'linkCandidates', 'unlinkInvoice', 'uploadRelationDocument', 'markSigned', 'markExact', 'registerShortage', 'registerSurplus', 'confirmShortage', 'registerRefund', 'moveToRevision', 'returnToValidacion', 'retry', 'retryAllFailed', 'resendApproval', 'updateLiquidationDocument' => 'edit',
-            'delete', 'deleteDocument', 'removeItem', 'deleteAttachment' => 'delete',
-            default => throw new LogicException(sprintf(
-                "Action '%s' has no permission mapping in AppController::_actionToPermission(). " .
-                'Register it explicitly in the match, add it to the controller\'s $pipelineActions, ' .
-                'or extend the bypass in _enforcePermission().',
-                $action,
-            )),
-        };
-    }
 
     public function beforeFilter(EventInterface $event): void
     {
@@ -178,53 +145,27 @@ class AppController extends Controller
     }
 
     /**
-     * Aplica el gate de permisos según el atributo del método de la acción.
+     * Aplica el gate de permisos leyendo el atributo del método de la acción.
      *
-     * Flujo:
-     *  1. Resolver el método del controller actual.
-     *  2. Buscar uno de los 3 atributos (#[NoAuthGate], #[Permission], #[PipelineAction]).
-     *  3. Si hay atributo, aplicar su regla.
-     *  4. Si no hay atributo, caer al fallback legacy (controllerModuleMap +
-     *     _actionToPermission + $pipelineActions) — se eliminará en commit 6.
+     * Atributos válidos: #[NoAuthGate], #[Permission], #[PipelineAction].
+     * Falta de atributo ⇒ LogicException 500 (loud-and-clear).
      */
     protected function _enforcePermission(object $user): void
     {
         $action = $this->request->getParam('action');
-
-        $attribute = $this->_resolveAuthAttribute($action);
-        if ($attribute !== null) {
-            $this->_applyAuthAttribute($user, $attribute);
-
-            return;
-        }
-
-        // ─── Fallback legacy — eliminar en commit 6 ────────────────────────
         $controllerName = $this->request->getParam('controller');
 
-        if (!isset($this->controllerModuleMap[$controllerName])) {
-            return;
+        $attribute = $this->_resolveAuthAttribute($action);
+        if ($attribute === null) {
+            throw new LogicException(sprintf(
+                "Action '%s::%s' has no auth attribute. " .
+                'Annotate the method with #[Permission], #[PipelineAction] or #[NoAuthGate].',
+                $controllerName,
+                $action,
+            ));
         }
 
-        if ($controllerName === 'Users' && in_array($action, ['login', 'logout'], true)) {
-            return;
-        }
-
-        if ($controllerName === 'EmailLogs' && $action === 'retry') {
-            return;
-        }
-
-        if (in_array($action, $this->pipelineActions, true)) {
-            return;
-        }
-
-        $module = $this->controllerModuleMap[$controllerName];
-        $permAction = $this->_actionToPermission($action);
-
-        if (!$this->_checkPermission($module, $permAction)) {
-            throw new ForbiddenException(
-                sprintf('No tiene permisos para %s en %s.', $permAction, $module),
-            );
-        }
+        $this->_applyAuthAttribute($user, $attribute);
     }
 
     /**

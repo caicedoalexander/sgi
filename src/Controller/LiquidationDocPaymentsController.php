@@ -12,21 +12,6 @@ use Cake\Http\Response;
 
 class LiquidationDocPaymentsController extends AppController
 {
-    /**
-     * Todas las acciones de este controlador operan pasos del pipeline de
-     * novedades (Tesorería/Autorización de pago/Verificación de pago) y validan
-     * internamente vía `PipelineAuthorizationService::canOperate`. Saltan el
-     * gate CRUD del módulo `novelty_liquidation_docs`.
-     *
-     * @var array<int, string>
-     */
-    protected array $pipelineActions = [
-        'addPayment',
-        'authorizePayment',
-        'confirmPayment',
-        'rejectPayment',
-    ];
-
     private LiquidationDocPaymentService $paymentService;
     private PipelineAuthorizationService $pipelineAuth;
 

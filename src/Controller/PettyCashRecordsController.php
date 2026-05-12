@@ -25,23 +25,6 @@ class PettyCashRecordsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
-    /**
-     * Acciones del pipeline de caja menor autorizadas por `pipeline_permissions`
-     * (rol×paso). El gate CRUD del módulo `petty_cash` no aplica — cada endpoint
-     * valida internamente vía `PettyCashService` o el chequeo explícito en el
-     * controlador, que consulta `PipelineAuthorizationService`.
-     *
-     * @var array<int, string>
-     */
-    protected array $pipelineActions = [
-        'advanceStatus',
-        'regressStatus',
-        'registerPayment',
-        'authorizePayment',
-        'confirmPayment',
-        'rejectPayment',
-    ];
-
     private PettyCashService $pettyCashService;
 
     private PettyCashDocumentService $documentService;
