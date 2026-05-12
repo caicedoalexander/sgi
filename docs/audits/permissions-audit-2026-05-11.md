@@ -43,7 +43,7 @@
 | PA-005 | 🟠 Major | `canAdvance(...)` y `canRegress(...)` mezclan "no hay next/previous" con "rol sin permiso" en el mismo `bool` | ✅ Resuelto | commits `882718a..e9551aa` (2026-05-12) |
 | PA-006 | 🟠 Major | `$pipelineActions` declarado per-controller; añadir una acción nueva exige tocarlo + recordar el patrón | ✅ Resuelto | commit `a903f54` (2026-05-12) |
 | PA-007 | 🟡 Minor | `ADMIN_BYPASS_MODULES` ejecuta lógica en `isAllowed` y se re-aplica en `AppController::_setUserPermissions` para el sidebar | 🟢 WONTFIX | 2026-05-12 |
-| PA-008 | 🟡 Minor | `InvoiceFieldAccessPolicy::SECTION_BY_STEP` (string) vs `NoveltyService::SECTIONS_BY_STEP` (array) — divergencia gratuita | ⏳ Pendiente | — |
+| PA-008 | 🟡 Minor | `InvoiceFieldAccessPolicy::SECTION_BY_STEP` (string) vs `NoveltyService::SECTIONS_BY_STEP` (array) — divergencia gratuita | ✅ Resuelto | commits `6d8f677..243529d` (2026-05-12) |
 | PA-009 | 🟡 Minor | `RolesController::add` llama `getPermissionsMatrix(0)` con `role_id` inexistente; funciona porque `?? false` casts a `false` | ✅ Resuelto | commit `d294aaf` (2026-05-12) |
 | PA-010 | 🟡 Minor | `_actionToPermission` agrupa 35+ acciones en un `match` plano que vive en `AppController`; cada acción nueva en cualquier controller exige tocar la base | ✅ Resuelto | commit `a903f54` (2026-05-12) |
 | PA-011 | 🟡 Minor | `AdvanceLegalizationActionPolicy` modela bien el Policy pattern; Refund/PettyCash/Invoice/Novelty/PaymentScheduling siguen llamando `canOperate` inline → dos estilos coexistiendo | ⏳ Pendiente | — |
@@ -295,7 +295,9 @@ Migration seeder que inserta `(admin_role_id, 'users', true, true, true, true)` 
 
 ---
 
-## PA-008 — Shape divergente de `FIELDS_BY_STEP` / `SECTIONS_BY_STEP` 🟡
+## PA-008 — Shape divergente de `FIELDS_BY_STEP` / `SECTIONS_BY_STEP` 🟡 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** alcance ampliado durante implementación: el audit declaraba 2 consumidores (Invoice, Novelty) pero la exploración previa identificó 4 dominios con la misma necesidad (PettyCash con `_filterEditPatch` inline en service, Refund con la misma lógica inline en controller). Refactor unifica los 4 bajo `PipelineFieldPolicy` abstracta + `FilterResult` DTO. Shape de secciones unificado a `array<step, string[]>`. PettyCash/Refund usan la policy en el lado data (filterEntityData/eliminación de `_filterEditPatch`); el reemplazo de los flags `showAccounting/showTreasury` del ViewModel (status-based via `PipelineEditFlags::fromRecord`) por flags role-based vía `policy->getVisibleSections()` se difiere — implicaba un cambio de UX (visibilidad por rol vs. por progreso del registro) fuera del alcance estricto del audit.
 
 **Ubicación:**
 - `src/Service/InvoiceFieldAccessPolicy.php:45-53` → `STATUS_X => 'one_section'` (string).
