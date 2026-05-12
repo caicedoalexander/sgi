@@ -172,9 +172,9 @@ Acciones recolectadas de los 7 `$pipelineActions` actuales (referencia: auditor�
 | `InvoicePayments` | `addPayment`, `editPayment`, `deletePayment` | `PIPELINE_INVOICES` | `STATUS_TESORERIA` |
 | `InvoicePayments` | `authorizePayment`, `rejectPayment` | `PIPELINE_INVOICES` | `STATUS_AUTORIZACION_PAGO` |
 | `InvoicePayments` | `confirmPayment` | `PIPELINE_INVOICES` | `STATUS_VERIFICACION_PAGO` |
-| `LiquidationDocPayments` | `addPayment` | `PIPELINE_NOVELTIES` | `STATUS_TESORERIA` |
-| `LiquidationDocPayments` | `authorizePayment`, `rejectPayment` | `PIPELINE_NOVELTIES` | `STATUS_AUTORIZACION_PAGO` |
-| `LiquidationDocPayments` | `confirmPayment` | `PIPELINE_NOVELTIES` | `STATUS_VERIFICACION_PAGO` |
+| `LiquidationDocPayments` | `addPayment` | `PIPELINE_LIQUIDATION_DOCS` | `STATUS_TESORERIA` |
+| `LiquidationDocPayments` | `authorizePayment`, `rejectPayment` | `PIPELINE_LIQUIDATION_DOCS` | `STATUS_AUTORIZACION_PAGO` |
+| `LiquidationDocPayments` | `confirmPayment` | `PIPELINE_LIQUIDATION_DOCS` | `STATUS_VERIFICACION_PAGO` |
 | `PettyCashRecords` | `registerPayment` | `PIPELINE_PETTY_CASH` | `STATUS_TESORERIA` |
 | `PettyCashRecords` | `authorizePayment`, `rejectPayment` | `PIPELINE_PETTY_CASH` | `STATUS_AUTORIZACION_PAGO` |
 | `PettyCashRecords` | `confirmPayment` | `PIPELINE_PETTY_CASH` | `STATUS_VERIFICACION_PAGO` |
@@ -182,9 +182,9 @@ Acciones recolectadas de los 7 `$pipelineActions` actuales (referencia: auditor�
 | `Refunds` | `authorizePayment`, `rejectPayment` | `PIPELINE_REFUNDS` | `STATUS_AUTORIZACION_PAGO` |
 | `Refunds` | `confirmPayment` | `PIPELINE_REFUNDS` | `STATUS_VERIFICACION_PAGO` |
 | `PaymentSchedulings` | `confirmPayment` | `PIPELINE_PAYMENT_SCHEDULINGS` | `STATUS_VERIFICACION_PAGO` |
-| `Advances` | `moveToRevision`, `markSigned`, `returnToValidacion`, `markExact` | `PIPELINE_ADVANCES` | `STATUS_REVISION_FIRMAS` |
-| `Advances` | `linkCandidates`, `linkInvoices`, `unlinkInvoice`, `uploadRelationDocument` | `PIPELINE_ADVANCES` | a verificar por inspección del controller (probable `STATUS_TESORERIA` o `STATUS_VERIFICACION_PAGO`) |
-| `Advances` | `registerShortage`, `confirmShortage`, `registerSurplus`, `registerRefund`, `confirmRefundPayment` | `PIPELINE_ADVANCES` | a verificar — probablemente `STATUS_VERIFICACION_PAGO` o `STATUS_REVISION_FIRMAS` |
+| `Advances` | `moveToRevision`, `markSigned`, `returnToValidacion`, `markExact` | `PIPELINE_LEGALIZATIONS` | `STATUS_REVISION_FIRMAS` |
+| `Advances` | `linkCandidates`, `linkInvoices`, `unlinkInvoice`, `uploadRelationDocument` | `PIPELINE_LEGALIZATIONS` | a verificar por inspección del controller (probable `STATUS_TESORERIA` o `STATUS_VERIFICACION_PAGO`) |
+| `Advances` | `registerShortage`, `confirmShortage`, `registerSurplus`, `registerRefund`, `confirmRefundPayment` | `PIPELINE_LEGALIZATIONS` | a verificar — probablemente `STATUS_VERIFICACION_PAGO` o `STATUS_REVISION_FIRMAS` |
 
 **Dinámicas — `#[PipelineAction(pipeline)]` (sin step, gate manual con `denialReasonForAdvance/Regress` dentro):**
 
@@ -196,8 +196,8 @@ Acciones recolectadas de los 7 `$pipelineActions` actuales (referencia: auditor�
 | `PaymentSchedulings` | `advance`, `reject`, `regressStatus` | `PIPELINE_PAYMENT_SCHEDULINGS` |
 
 > **Nota:** las celdas marcadas "a verificar por inspección" en la tabla de Advances son intencionalmente provisionales en este spec. La resolución exacta de cada step (o reclasificación a dinámica) **es trabajo de commit 5**: se inspecciona el cuerpo de cada acción en `AdvancesController` y `AdvanceLegalizationActionPolicy`, se identifica contra qué step llama `canOperate`, y se decide:
-> - Si el step es fijo (no depende de estado runtime) ⇒ `#[PipelineAction(PIPELINE_ADVANCES, step: STATUS_X)]`.
-> - Si depende del estado del agregado ⇒ `#[PipelineAction(PIPELINE_ADVANCES)]` sin step + `canOperate` inline.
+> - Si el step es fijo (no depende de estado runtime) ⇒ `#[PipelineAction(PIPELINE_LEGALIZATIONS, step: STATUS_X)]`.
+> - Si depende del estado del agregado ⇒ `#[PipelineAction(PIPELINE_LEGALIZATIONS)]` sin step + `canOperate` inline.
 >
 > Estas decisiones se documentan en el commit message correspondiente; no requieren cambio de spec.
 
