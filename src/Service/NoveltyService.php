@@ -10,46 +10,29 @@ use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Model\Entity\EmployeeNovelty;
 use App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry;
+use App\Service\Pipeline\Novelty\Policy\NoveltyFieldAccessPolicy;
 use App\ValueObject\UserContext;
 use Cake\ORM\TableRegistry;
 use DateTime;
 
 class NoveltyService
 {
-    /**
-     * Campos editables por paso del pipeline (sin acoplamiento a rol).
-     */
-    private const FIELDS_BY_STEP = [
-        NoveltyConstants::STATUS_APROBACION => ['approver_id'],
-        NoveltyConstants::STATUS_RRHH => ['passes_payroll'],
-        NoveltyConstants::STATUS_CONTABILIDAD => ['liquidation_doc_id'],
-    ];
-
-    /**
-     * Secciones del formulario asociadas a cada paso (unión cuando el rol opera varios).
-     */
-    private const SECTIONS_BY_STEP = [
-        NoveltyConstants::STATUS_APROBACION => ['informacion', 'fechas', 'motivo', 'aprobacion', 'firmas'],
-        NoveltyConstants::STATUS_RRHH => ['informacion', 'fechas', 'motivo', 'aprobacion', 'rrhh', 'firmas'],
-        NoveltyConstants::STATUS_CONTABILIDAD => ['informacion', 'fechas', 'contabilidad'],
-        NoveltyConstants::STATUS_REVISION_FIRMAS => ['informacion', 'fechas', 'firmas'],
-        NoveltyConstants::STATUS_GDP => ['informacion', 'fechas', 'firmas'],
-        NoveltyConstants::STATUS_TESORERIA => ['informacion'],
-        NoveltyConstants::STATUS_AUTORIZACION_PAGO => ['informacion'],
-    ];
-
     private AuthorizationFacade $auth;
+    private NoveltyFieldAccessPolicy $fieldPolicy;
     private NoveltyPipelineStateRegistry $stateRegistry;
 
     /**
      * @param \App\Authorization\AuthorizationFacade $auth Authorization facade.
+     * @param \App\Service\Pipeline\Novelty\Policy\NoveltyFieldAccessPolicy $fieldPolicy Field access policy.
      * @param \App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry|null $stateRegistry State registry.
      */
     public function __construct(
         AuthorizationFacade $auth,
+        NoveltyFieldAccessPolicy $fieldPolicy,
         ?NoveltyPipelineStateRegistry $stateRegistry = null,
     ) {
         $this->auth = $auth;
+        $this->fieldPolicy = $fieldPolicy;
         $this->stateRegistry = $stateRegistry ?? new NoveltyPipelineStateRegistry();
     }
 
@@ -419,17 +402,7 @@ class NoveltyService
      */
     public function getEditableFields(int $roleId, string $status): array
     {
-        if (
-            !$this->auth->canOperate(
-                new UserContext($roleId),
-                PipelineStepConstants::PIPELINE_NOVELTIES,
-                $status,
-            )
-        ) {
-            return [];
-        }
-
-        return self::FIELDS_BY_STEP[$status] ?? [];
+        return $this->fieldPolicy->getEditableFields($roleId, $status);
     }
 
     /**
@@ -437,17 +410,11 @@ class NoveltyService
      */
     public function getVisibleSections(int $roleId, string $status): array
     {
-        $operableSteps = $this->auth->operableSteps(
-            new UserContext($roleId),
-            PipelineStepConstants::PIPELINE_NOVELTIES,
-        );
+        // El parámetro $status se conserva por compatibilidad con callers; la
+        // base computa la unión de operable steps sin necesitar el status actual.
+        unset($status);
 
-        $sections = [];
-        foreach ($operableSteps as $step) {
-            $sections = array_merge($sections, self::SECTIONS_BY_STEP[$step] ?? []);
-        }
-
-        return array_values(array_unique($sections));
+        return $this->fieldPolicy->getVisibleSections($roleId);
     }
 
     /**
@@ -477,8 +444,6 @@ class NoveltyService
      */
     public function filterEntityData(array $data, int $roleId, string $status): array
     {
-        $allowed = $this->getEditableFields($roleId, $status);
-
-        return array_intersect_key($data, array_flip($allowed));
+        return $this->fieldPolicy->filterEntityData($data, $roleId, $status)->patch;
     }
 }
