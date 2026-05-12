@@ -94,60 +94,68 @@ final class PipelineStepConstants
 
     /**
      * Etiquetas en español para mostrar en la UI de configuración.
+     *
+     * Las entradas referencian `STATUS_LABELS` de cada `*Constants` cuando el
+     * label coincide; las 2 excepciones documentadas (Revisión y Firmas en
+     * pipelines de novedades) se conservan como literal por divergencia
+     * intencional con `NoveltyConstants::STATUS_LABELS`.
      */
     public const STEP_LABELS = [
         self::PIPELINE_INVOICES => [
-            InvoiceConstants::STATUS_APROBACION => 'Aprobación',
-            InvoiceConstants::STATUS_CONTABILIDAD => 'Contabilidad',
-            InvoiceConstants::STATUS_TESORERIA => 'Tesorería',
-            InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
-            InvoiceConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
+            InvoiceConstants::STATUS_APROBACION => InvoiceConstants::STATUS_LABELS[InvoiceConstants::STATUS_APROBACION],
+            InvoiceConstants::STATUS_CONTABILIDAD => InvoiceConstants::STATUS_LABELS[InvoiceConstants::STATUS_CONTABILIDAD],
+            InvoiceConstants::STATUS_TESORERIA => InvoiceConstants::STATUS_LABELS[InvoiceConstants::STATUS_TESORERIA],
+            InvoiceConstants::STATUS_AUTORIZACION_PAGO => InvoiceConstants::STATUS_LABELS[InvoiceConstants::STATUS_AUTORIZACION_PAGO],
+            InvoiceConstants::STATUS_VERIFICACION_PAGO => InvoiceConstants::STATUS_LABELS[InvoiceConstants::STATUS_VERIFICACION_PAGO],
         ],
         self::PIPELINE_NOVELTIES => [
-            NoveltyConstants::STATUS_APROBACION => 'Aprobación',
-            NoveltyConstants::STATUS_RRHH => 'RRHH',
-            NoveltyConstants::STATUS_CONTABILIDAD => 'Contabilidad',
+            NoveltyConstants::STATUS_APROBACION => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_APROBACION],
+            NoveltyConstants::STATUS_RRHH => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_RRHH],
+            NoveltyConstants::STATUS_CONTABILIDAD => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_CONTABILIDAD],
+            // Divergencia intencional: NoveltyConstants dice 'Revisión y Firmas de documentos',
+            // aquí se usa el label corto por espacio en la UI de matriz de permisos.
             NoveltyConstants::STATUS_REVISION_FIRMAS => 'Revisión y Firmas',
-            NoveltyConstants::STATUS_GDP => 'GDP',
-            NoveltyConstants::STATUS_TESORERIA => 'Tesorería',
-            NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
-            NoveltyConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
+            NoveltyConstants::STATUS_GDP => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_GDP],
+            NoveltyConstants::STATUS_TESORERIA => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_TESORERIA],
+            NoveltyConstants::STATUS_AUTORIZACION_PAGO => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_AUTORIZACION_PAGO],
+            NoveltyConstants::STATUS_VERIFICACION_PAGO => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_VERIFICACION_PAGO],
         ],
         self::PIPELINE_PAYMENT_SCHEDULINGS => [
-            PaymentSchedulingConstants::STATUS_BORRADOR => 'Borrador',
-            PaymentSchedulingConstants::STATUS_TESORERIA => 'Tesorería',
-            PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
-            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
+            PaymentSchedulingConstants::STATUS_BORRADOR => PaymentSchedulingConstants::STATUS_LABELS[PaymentSchedulingConstants::STATUS_BORRADOR],
+            PaymentSchedulingConstants::STATUS_TESORERIA => PaymentSchedulingConstants::STATUS_LABELS[PaymentSchedulingConstants::STATUS_TESORERIA],
+            PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => PaymentSchedulingConstants::STATUS_LABELS[PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO],
+            PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => PaymentSchedulingConstants::STATUS_LABELS[PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO],
         ],
         self::PIPELINE_REFUNDS => [
-            RefundConstants::STATUS_AGRUPACION => 'Agrupación',
-            RefundConstants::STATUS_CONTABILIDAD => 'Contabilidad',
-            RefundConstants::STATUS_TESORERIA => 'Tesorería',
-            RefundConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
-            RefundConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
+            RefundConstants::STATUS_AGRUPACION => RefundConstants::STATUS_LABELS[RefundConstants::STATUS_AGRUPACION],
+            RefundConstants::STATUS_CONTABILIDAD => RefundConstants::STATUS_LABELS[RefundConstants::STATUS_CONTABILIDAD],
+            RefundConstants::STATUS_TESORERIA => RefundConstants::STATUS_LABELS[RefundConstants::STATUS_TESORERIA],
+            RefundConstants::STATUS_AUTORIZACION_PAGO => RefundConstants::STATUS_LABELS[RefundConstants::STATUS_AUTORIZACION_PAGO],
+            RefundConstants::STATUS_VERIFICACION_PAGO => RefundConstants::STATUS_LABELS[RefundConstants::STATUS_VERIFICACION_PAGO],
         ],
         self::PIPELINE_PETTY_CASH => [
-            PettyCashConstants::STATUS_AGRUPACION => 'Agrupación',
-            PettyCashConstants::STATUS_CONTABILIDAD => 'Contabilidad',
-            PettyCashConstants::STATUS_TESORERIA => 'Tesorería',
-            PettyCashConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
-            PettyCashConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
+            PettyCashConstants::STATUS_AGRUPACION => PettyCashConstants::STATUS_LABELS[PettyCashConstants::STATUS_AGRUPACION],
+            PettyCashConstants::STATUS_CONTABILIDAD => PettyCashConstants::STATUS_LABELS[PettyCashConstants::STATUS_CONTABILIDAD],
+            PettyCashConstants::STATUS_TESORERIA => PettyCashConstants::STATUS_LABELS[PettyCashConstants::STATUS_TESORERIA],
+            PettyCashConstants::STATUS_AUTORIZACION_PAGO => PettyCashConstants::STATUS_LABELS[PettyCashConstants::STATUS_AUTORIZACION_PAGO],
+            PettyCashConstants::STATUS_VERIFICACION_PAGO => PettyCashConstants::STATUS_LABELS[PettyCashConstants::STATUS_VERIFICACION_PAGO],
         ],
         self::PIPELINE_LEGALIZATIONS => [
-            AdvanceConstants::STATUS_VALIDACION => 'Validación',
-            AdvanceConstants::STATUS_REVISION_FIRMAS => 'Revisión y Firmas',
-            AdvanceConstants::STATUS_CONTABILIDAD => 'Contabilidad',
-            AdvanceConstants::STATUS_TESORERIA => 'Tesorería',
-            AdvanceConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
-            AdvanceConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
+            AdvanceConstants::STATUS_VALIDACION => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_VALIDACION],
+            AdvanceConstants::STATUS_REVISION_FIRMAS => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_REVISION_FIRMAS],
+            AdvanceConstants::STATUS_CONTABILIDAD => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_CONTABILIDAD],
+            AdvanceConstants::STATUS_TESORERIA => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_TESORERIA],
+            AdvanceConstants::STATUS_AUTORIZACION_PAGO => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_AUTORIZACION_PAGO],
+            AdvanceConstants::STATUS_VERIFICACION_PAGO => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_VERIFICACION_PAGO],
         ],
         self::PIPELINE_LIQUIDATION_DOCS => [
-            NoveltyConstants::STATUS_CONTABILIDAD => 'Contabilidad',
+            NoveltyConstants::STATUS_CONTABILIDAD => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_CONTABILIDAD],
+            // Divergencia intencional (idem PIPELINE_NOVELTIES).
             NoveltyConstants::STATUS_REVISION_FIRMAS => 'Revisión y Firmas',
-            NoveltyConstants::STATUS_GDP => 'GDP',
-            NoveltyConstants::STATUS_TESORERIA => 'Tesorería',
-            NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',
-            NoveltyConstants::STATUS_VERIFICACION_PAGO => 'Verificación de pago',
+            NoveltyConstants::STATUS_GDP => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_GDP],
+            NoveltyConstants::STATUS_TESORERIA => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_TESORERIA],
+            NoveltyConstants::STATUS_AUTORIZACION_PAGO => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_AUTORIZACION_PAGO],
+            NoveltyConstants::STATUS_VERIFICACION_PAGO => NoveltyConstants::STATUS_LABELS[NoveltyConstants::STATUS_VERIFICACION_PAGO],
         ],
     ];
 
