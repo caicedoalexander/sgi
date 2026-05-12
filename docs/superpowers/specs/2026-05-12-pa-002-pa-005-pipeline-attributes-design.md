@@ -148,7 +148,7 @@ enum DenialReason: string
 }
 ```
 
-**Nuevos métodos en los 4 services afectados:**
+**Nuevos métodos en los 5 services afectados:**
 
 | Service | Método nuevo | Método legacy (delega) |
 |---|---|---|
@@ -156,6 +156,9 @@ enum DenialReason: string
 | `NoveltyService` | `denialReasonForAdvance(EmployeeNovelty $n, int $roleId): ?DenialReason` | `canAdvanceFromStatus(...)` |
 | `PaymentSchedulingService` | `denialReasonForAdvance(PaymentScheduling $p, int $roleId): ?DenialReason` <br> `denialReasonForRegress(...)` | `canAdvance(...)`, `canReject(...)`, `canRegress(...)` |
 | `RefundService` | `denialReasonForRegress(Refund $r, int $roleId): ?DenialReason` | `canRegress(...)` |
+| `PettyCashService` | `denialReasonForAdvance(PettyCashRecord $r, int $roleId): ?DenialReason` <br> `denialReasonForRegress(...)` | `canAdvance(...)`, `canRegress(...)` |
+
+> Nota: la auditoría original (PA-005) sólo listó 4 services; al inventariar para este spec se detectó que `PettyCashService` tiene el mismo patrón en líneas 232/710. Se incluye para no dejar PA-005 a medio resolver.
 
 **Semántica:** `null` ⇒ puede avanzar. Cualquier `DenialReason` ⇒ no puede, con motivo explícito.
 
@@ -225,7 +228,7 @@ Todas las acciones públicas de controllers que extienden `AppController` recibe
 | Bloques `if controllerName==='Users' && in_array(action, ['login', 'logout'])` | AppController:186-188 | `#[NoAuthGate(reason)]` en `Users::login/logout` |
 | Bloque `if controllerName==='EmailLogs' && action==='retry'` | AppController:193-195 | `#[NoAuthGate(reason)]` en `EmailLogs::retry` |
 | Bloque `if in_array(action, $this->pipelineActions, true)` | AppController:203-205 | Lógica del switch sobre atributos |
-| `canAdvance/canRegress` (4 services) | varios | `denialReasonForAdvance/Regress` |
+| `canAdvance/canRegress` (5 services) | varios | `denialReasonForAdvance/Regress` |
 
 ### 7. Lo que se mantiene
 
@@ -241,7 +244,7 @@ Cada commit debe dejar la app funcional. `composer cs-check` debe pasar en cada 
 
 | # | Commit | Cambia | Ruptura |
 |---|---|---|---|
-| 1 | `feat(pipeline): DenialReason enum + denialReasonForAdvance/Regress en 4 services` | Añade enum y métodos. `canAdvance/canRegress` legacy delegan internamente al nuevo método. | Cero (additive). |
+| 1 | `feat(pipeline): DenialReason enum + denialReasonForAdvance/Regress en 5 services` | Añade enum y métodos. `canAdvance/canRegress` legacy delegan internamente al nuevo método. | Cero (additive). |
 | 2 | `feat(auth): atributos Permission/PipelineAction/NoAuthGate` | Crea las 3 clases en `src/Attribute/`. Aún no se usan. | Cero. |
 | 3 | `feat(auth): _enforcePermission lee atributos con fallback legacy` | Refactor del método: si la acción tiene atributo → nuevo flujo; si no → fallback al match + `$pipelineActions` actual. Permite migrar incrementalmente. | Cero. |
 | 4 | `refactor(controllers): anotar controllers no-pipeline con #[Permission]/#[NoAuthGate]` | Todos los métodos públicos de los ~22 controllers no-pipeline reciben atributo. `Users::login/logout` y `EmailLogs::retry` reciben `#[NoAuthGate]`. | Cero (fallback activo). |
