@@ -72,12 +72,9 @@ class LiquidationDocPaymentsController extends AppController
     public function addPayment(?string $docId = null): ?Response
     {
         $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
-
         if (
             !$this->pipelineAuth->canOperate(
                 $this->_getRoleId(),
-                $roleName,
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 NoveltyConstants::STATUS_TESORERIA,
             )
@@ -112,12 +109,9 @@ class LiquidationDocPaymentsController extends AppController
     public function authorizePayment(?string $docId = null, ?string $paymentId = null): ?Response
     {
         $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
-
         if (
             !$this->pipelineAuth->canOperate(
                 $this->_getRoleId(),
-                $roleName,
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 NoveltyConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -148,12 +142,9 @@ class LiquidationDocPaymentsController extends AppController
     public function confirmPayment(?string $docId = null): ?Response
     {
         $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
-
         if (
             !$this->pipelineAuth->canOperate(
                 $this->_getRoleId(),
-                $roleName,
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 NoveltyConstants::STATUS_VERIFICACION_PAGO,
             )
@@ -184,12 +175,9 @@ class LiquidationDocPaymentsController extends AppController
     public function rejectPayment(?string $docId = null, ?string $paymentId = null): ?Response
     {
         $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
-
         if (
             !$this->pipelineAuth->canOperate(
                 $this->_getRoleId(),
-                $roleName,
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 NoveltyConstants::STATUS_AUTORIZACION_PAGO,
             )

@@ -351,8 +351,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canLinkInvoices($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canLinkInvoices($leg, (int)$this->_getCurrentUser()->id)) {
             return $this->_denyAction((int)$id);
         }
 
@@ -421,8 +420,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canLinkInvoices($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canLinkInvoices($leg, (int)$this->_getCurrentUser()->id)) {
             return $this->_denyAction((int)$id);
         }
         $userId = (int)$this->_getCurrentUser()->id;
@@ -450,8 +448,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canUnlinkInvoice($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canUnlinkInvoice($leg, (int)$this->_getCurrentUser()->id)) {
             return $this->_denyAction((int)$id);
         }
         $result = $this->legalizationService->unlinkInvoice($leg, (int)$invoiceId, (int)$this->_getCurrentUser()->id);
@@ -474,8 +471,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canUploadRelationDocument($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canUploadRelationDocument($leg, (int)$this->_getCurrentUser()->id)) {
             if ($this->_isJsonRequest()) {
                 return $this->_jsonResponse([
                     'success' => false,
@@ -524,8 +520,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canMoveToRevision($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canMoveToRevision($leg, (int)$this->_getCurrentUser()->id)) {
             return $this->_denyAction((int)$id);
         }
         $result = $this->legalizationService->moveToRevisionFirmas($leg, (int)$this->_getCurrentUser()->id);
@@ -548,8 +543,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canMarkSigned($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canMarkSigned($leg, (int)$this->_getCurrentUser()->id)) {
             return $this->_denyAction((int)$id);
         }
         $result = $this->legalizationService->markSigned($leg, (int)$this->_getCurrentUser()->id);
@@ -572,8 +566,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canReturnToValidacion($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canReturnToValidacion($leg, (int)$this->_getCurrentUser()->id)) {
             return $this->_denyAction((int)$id);
         }
         $reason = (string)$this->request->getData('reason', '');
@@ -597,8 +590,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canMarkExact($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canMarkExact($leg, (int)$this->_getCurrentUser()->id)) {
             return $this->_denyAction((int)$id);
         }
         $result = $this->legalizationService->markExact($leg, (int)$this->_getCurrentUser()->id);
@@ -621,8 +613,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canRegisterShortage($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canRegisterShortage($leg, (int)$this->_getCurrentUser()->id)) {
             return $this->_denyAction((int)$id);
         }
         if (!$this->_ensureExpectedStatus($leg->status)) {
@@ -649,8 +640,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canConfirmShortage($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canConfirmShortage($leg, (int)$this->_getCurrentUser()->id)) {
             if ($this->_isJsonRequest()) {
                 return $this->_jsonResponse([
                     'success' => false,
@@ -695,8 +685,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canRegisterSurplus($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canRegisterSurplus($leg, (int)$this->_getCurrentUser()->id)) {
             return $this->_denyAction((int)$id);
         }
         if (!$this->_ensureExpectedStatus($leg->status)) {
@@ -723,8 +712,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        $roleName = $this->_getUserRoleName($this->_getCurrentUser());
-        if (!$this->actionPolicy->canRegisterRefund($leg, (int)$this->_getCurrentUser()->id, $roleName)) {
+        if (!$this->actionPolicy->canRegisterRefund($leg, (int)$this->_getCurrentUser()->id)) {
             return $this->_denyAction((int)$id);
         }
         $data = $this->request->getData();
@@ -754,8 +742,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
-        if (!$this->actionPolicy->canConfirmRefundPayment($leg, (int)$user->id, $roleName)) {
+        if (!$this->actionPolicy->canConfirmRefundPayment($leg, (int)$user->id)) {
             return $this->_denyAction((int)$id);
         }
         $result = $this->legalizationService->confirmRefundExecuted($leg, (int)$user->id);

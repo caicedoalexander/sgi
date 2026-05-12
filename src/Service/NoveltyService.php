@@ -396,7 +396,6 @@ class NoveltyService
     {
         return $this->pipelineAuth->getOperableSteps(
             $roleId,
-            '',
             PipelineStepConstants::PIPELINE_NOVELTIES,
         );
     }
@@ -408,7 +407,6 @@ class NoveltyService
     {
         return $this->pipelineAuth->getOperableSteps(
             $roleId,
-            '',
             PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS,
         );
     }
@@ -416,12 +414,11 @@ class NoveltyService
     /**
      * Get editable fields for a role in a given status.
      */
-    public function getEditableFields(int $roleId, string $roleName, string $status): array
+    public function getEditableFields(int $roleId, string $status): array
     {
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 $status,
             )
@@ -435,11 +432,10 @@ class NoveltyService
     /**
      * Get visible sections for a role in a given status.
      */
-    public function getVisibleSections(int $roleId, string $roleName, string $status): array
+    public function getVisibleSections(int $roleId, string $status): array
     {
         $operableSteps = $this->pipelineAuth->getOperableSteps(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_NOVELTIES,
         );
 
@@ -454,11 +450,10 @@ class NoveltyService
     /**
      * Check if a role can advance from a given status.
      */
-    public function canAdvanceFromStatus(int $roleId, string $roleName, string $status): bool
+    public function canAdvanceFromStatus(int $roleId, string $status): bool
     {
         return $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_NOVELTIES,
             $status,
         );
@@ -467,9 +462,9 @@ class NoveltyService
     /**
      * Filter entity data to only allowed fields for the role/status.
      */
-    public function filterEntityData(array $data, int $roleId, string $roleName, string $status): array
+    public function filterEntityData(array $data, int $roleId, string $status): array
     {
-        $allowed = $this->getEditableFields($roleId, $roleName, $status);
+        $allowed = $this->getEditableFields($roleId, $status);
 
         return array_intersect_key($data, array_flip($allowed));
     }

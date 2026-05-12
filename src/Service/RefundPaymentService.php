@@ -58,7 +58,6 @@ class RefundPaymentService
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                '',
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_TESORERIA,
             )
@@ -193,7 +192,6 @@ class RefundPaymentService
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                '',
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -369,7 +367,6 @@ class RefundPaymentService
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                '',
                 PipelineStepConstants::PIPELINE_REFUNDS,
                 RefundConstants::STATUS_AUTORIZACION_PAGO,
             )

@@ -74,13 +74,13 @@ final readonly class AdvanceLegalizationViewModel
         }
 
         $canRegisterRefund = $this->actionPolicy !== null && $this->roleId > 0
-            ? $this->actionPolicy->canRegisterRefund($this->leg, $this->roleId, $this->roleName)
+            ? $this->actionPolicy->canRegisterRefund($this->leg, $this->roleId)
             : false;
         $canAuthorizeRefundPayment = $this->actionPolicy !== null && $this->roleId > 0
-            ? $this->actionPolicy->canAuthorizeRefundPayment($this->leg, $this->roleId, $this->roleName)
+            ? $this->actionPolicy->canAuthorizeRefundPayment($this->leg, $this->roleId)
             : false;
         $canConfirmRefundPayment = $this->actionPolicy !== null && $this->roleId > 0
-            ? $this->actionPolicy->canConfirmRefundPayment($this->leg, $this->roleId, $this->roleName)
+            ? $this->actionPolicy->canConfirmRefundPayment($this->leg, $this->roleId)
             : false;
 
         // ── Derivaciones de presentación (antes inline en el template) ──

@@ -263,12 +263,10 @@ class PettyCashRecordsController extends AppController
             }
 
             $user = $this->_getCurrentUser();
-            $roleName = $this->_getUserRoleName($user);
 
             $result = $this->pettyCashService->saveAndAdvance(
                 $record,
                 (int)$user->role_id,
-                $roleName,
                 (int)$user->id,
                 $this->request->getData(),
             );
@@ -324,19 +322,16 @@ class PettyCashRecordsController extends AppController
 
         $canRegisterPayment = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_PETTY_CASH,
             PettyCashConstants::STATUS_TESORERIA,
         );
         $canAuthorizePayment = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_PETTY_CASH,
             PettyCashConstants::STATUS_AUTORIZACION_PAGO,
         );
         $canConfirmPayment = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_PETTY_CASH,
             PettyCashConstants::STATUS_VERIFICACION_PAGO,
         );
@@ -349,7 +344,7 @@ class PettyCashRecordsController extends AppController
             canRegisterPayment: $canRegisterPayment,
             canAuthorizePayment: $canAuthorizePayment,
             canConfirmPayment: $canConfirmPayment,
-            canRegress: $this->pettyCashService->canRegress($roleId, $roleName, $record->status),
+            canRegress: $this->pettyCashService->canRegress($roleId, $record->status),
             advanceErrors: $advanceErrors,
             nextStatus: $nextStatus,
             previousStatus: $this->pettyCashService->getPreviousStatus($record->status),
@@ -375,12 +370,10 @@ class PettyCashRecordsController extends AppController
         }
 
         $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
 
         $result = $this->pettyCashService->advanceStatus(
             $record,
             (int)$user->role_id,
-            $roleName,
             $user->id,
         );
 
@@ -402,13 +395,11 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
         $record = $this->PettyCashRecords->get($id);
         $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
         $reason = trim((string)$this->request->getData('reason', ''));
 
         $result = $this->pettyCashService->regress(
             $record,
             (int)$user->role_id,
-            $roleName,
             (int)$user->id,
             $reason,
         );
@@ -431,7 +422,6 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
 
         // The shared payment_section JS posts 'amount'; map to 'payment_amount'.
         $data = $this->request->getData();
@@ -442,7 +432,6 @@ class PettyCashRecordsController extends AppController
         $result = $this->pettyCashService->registerPayment(
             (int)$id,
             (int)$user->role_id,
-            $roleName,
             $data,
             $user->id,
         );
@@ -461,11 +450,9 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
         $result = $this->pettyCashService->authorizePayment(
             (int)$id,
             (int)$user->role_id,
-            $roleName,
             $user->id,
         );
 
@@ -487,11 +474,9 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
         if (
             !$this->pipelineAuth->canOperate(
                 (int)$user->role_id,
-                $roleName,
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
                 PettyCashConstants::STATUS_VERIFICACION_PAGO,
             )
@@ -524,11 +509,9 @@ class PettyCashRecordsController extends AppController
         }
 
         $user = $this->_getCurrentUser();
-        $roleName = $this->_getUserRoleName($user);
         $result = $this->pettyCashService->rejectPayment(
             (int)$id,
             (int)$user->role_id,
-            $roleName,
             $user->id,
             $reason,
         );

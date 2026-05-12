@@ -63,7 +63,6 @@ class PettyCashService
     {
         return $this->pipelineAuth->getOperableSteps(
             $roleId,
-            '',
             PipelineStepConstants::PIPELINE_PETTY_CASH,
         );
     }
@@ -166,7 +165,6 @@ class PettyCashService
     public function saveAndAdvance(
         PettyCashRecord $record,
         int $roleId,
-        string $roleName,
         int $userId,
         array $data,
     ): ServiceResult {
@@ -206,8 +204,8 @@ class PettyCashService
         $advanced = false;
         $nextStatus = null;
         $advanceWarning = null;
-        if (!$record->isPagada() && $this->canAdvance($roleId, $roleName, $record->status)) {
-            $advanceResult = $this->advanceStatus($record, $roleId, $roleName, $userId);
+        if (!$record->isPagada() && $this->canAdvance($roleId, $record->status)) {
+            $advanceResult = $this->advanceStatus($record, $roleId, $userId);
             if ($advanceResult->success) {
                 $advanced = true;
                 $nextStatus = $advanceResult->data['nextStatus'] ?? null;
@@ -228,11 +226,10 @@ class PettyCashService
      * Returns true if the role can advance the record from the current status.
      *
      * @param int $roleId Role ID.
-     * @param string $roleName Role name (kept for compat with PipelineAuthorizationService API).
      * @param string $currentStatus Current pipeline status.
      * @return bool
      */
-    public function canAdvance(int $roleId, string $roleName, string $currentStatus): bool
+    public function canAdvance(int $roleId, string $currentStatus): bool
     {
         $currentEnum = PettyCashPipelineStatus::tryFrom($currentStatus);
         if ($currentEnum === null) {
@@ -246,7 +243,6 @@ class PettyCashService
 
         return $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_PETTY_CASH,
             $currentStatus,
         );
@@ -255,14 +251,12 @@ class PettyCashService
     /**
      * @param \App\Model\Entity\PettyCashRecord $record Record.
      * @param int $roleId Role ID of the caller (for pipeline authorization).
-     * @param string $roleName Role name of the caller (for pipeline authorization).
      * @param int $userId User ID.
      * @return \App\Service\ServiceResult on success: data = ['nextStatus' => string]
      */
     public function advanceStatus(
         PettyCashRecord $record,
         int $roleId,
-        string $roleName,
         int $userId,
     ): ServiceResult {
         $currentStatus = $record->status;
@@ -278,7 +272,7 @@ class PettyCashService
             return ServiceResult::fail('Este registro ya está en su estado final.');
         }
 
-        if (!$this->canAdvance($roleId, $roleName, $currentStatus)) {
+        if (!$this->canAdvance($roleId, $currentStatus)) {
             return ServiceResult::fail('No tiene permisos para avanzar este registro.');
         }
 
@@ -463,7 +457,6 @@ class PettyCashService
      *
      * @param int $recordId Record ID.
      * @param int $roleId Role ID of the caller (for pipeline authorization).
-     * @param string $roleName Role name of the caller (for pipeline authorization).
      * @param array $data Payment data (banking_entity_id, payment_amount, payment_date).
      * @param int $createdBy User ID registering the payment.
      * @return \App\Service\ServiceResult
@@ -471,14 +464,12 @@ class PettyCashService
     public function registerPayment(
         int $recordId,
         int $roleId,
-        string $roleName,
         array $data,
         int $createdBy,
     ): ServiceResult {
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
                 PettyCashConstants::STATUS_TESORERIA,
             )
@@ -541,20 +532,17 @@ class PettyCashService
      *
      * @param int $recordId Record ID.
      * @param int $roleId Role ID of the caller (for pipeline authorization).
-     * @param string $roleName Role name of the caller (for pipeline authorization).
      * @param int $authorizedBy User ID authorizing.
      * @return \App\Service\ServiceResult
      */
     public function authorizePayment(
         int $recordId,
         int $roleId,
-        string $roleName,
         int $authorizedBy,
     ): ServiceResult {
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
                 PettyCashConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -654,7 +642,6 @@ class PettyCashService
      *
      * @param int $recordId Record ID.
      * @param int $roleId Role ID of the caller (for pipeline authorization).
-     * @param string $roleName Role name of the caller (for pipeline authorization).
      * @param int $rejectedBy User ID rejecting (currently unused, reserved for audit).
      * @param string $reason Rejection reason (required).
      * @return \App\Service\ServiceResult
@@ -662,14 +649,12 @@ class PettyCashService
     public function rejectPayment(
         int $recordId,
         int $roleId,
-        string $roleName,
         int $rejectedBy,
         string $reason,
     ): ServiceResult {
         if (
             !$this->pipelineAuth->canOperate(
                 $roleId,
-                $roleName,
                 PipelineStepConstants::PIPELINE_PETTY_CASH,
                 PettyCashConstants::STATUS_AUTORIZACION_PAGO,
             )
@@ -722,7 +707,7 @@ class PettyCashService
     /**
      * Returns true if the role can regress the record from the current status.
      */
-    public function canRegress(int $roleId, string $roleName, string $currentStatus): bool
+    public function canRegress(int $roleId, string $currentStatus): bool
     {
         if ($this->getPreviousStatus($currentStatus) === null) {
             return false;
@@ -730,7 +715,6 @@ class PettyCashService
 
         return $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_PETTY_CASH,
             $currentStatus,
         );
@@ -762,14 +746,13 @@ class PettyCashService
     public function regress(
         PettyCashRecord $record,
         int $roleId,
-        string $roleName,
         int $userId,
         string $reason,
     ): ServiceResult {
         $reason = trim($reason);
         $currentStatus = $record->status;
 
-        if (!$this->canRegress($roleId, $roleName, $currentStatus)) {
+        if (!$this->canRegress($roleId, $currentStatus)) {
             $previous = $this->getPreviousStatus($currentStatus);
             $error = $previous === null
                 ? 'Este registro ya está en el primer paso del flujo.'

@@ -310,7 +310,6 @@ class InvoicesController extends AppController
                 $invoice,
                 $this->request->getData(),
                 $roleId,
-                $roleName,
                 $this->_getCurrentUser()->id,
                 $this->_getBaseUrl(),
             );
@@ -327,7 +326,7 @@ class InvoicesController extends AppController
                     $this->Flash->success('La factura ha sido actualizada.');
                     $rules = $this->pipeline->getTransitionRules($currentStatus);
                     $filteredErrors = $this->pipeline->filterAdvanceErrorsForRole(
-                        $advanceErrors, $rules, $roleId, $roleName, $currentStatus,
+                        $advanceErrors, $rules, $roleId, $currentStatus,
                     );
                     foreach ($filteredErrors as $err) {
                         $this->Flash->warning($err);
@@ -349,8 +348,8 @@ class InvoicesController extends AppController
     private function _buildEditViewModel(Invoice $invoice, int $roleId, string $roleName): InvoiceEditViewModel
     {
         $currentStatus = $invoice->pipeline_status;
-        $editableFields = $this->pipeline->getEditableFields($roleId, $roleName, $currentStatus);
-        $canAdvance = $this->pipeline->canAdvance($roleId, $roleName, $currentStatus, $invoice->document_type);
+        $editableFields = $this->pipeline->getEditableFields($roleId, $currentStatus);
+        $canAdvance = $this->pipeline->canAdvance($roleId, $currentStatus, $invoice->document_type);
         $isRejected = $this->pipeline->isRejected($invoice);
 
         $advanceErrors = [];
@@ -358,28 +357,25 @@ class InvoicesController extends AppController
         if ($canAdvance && !$isRejected) {
             $rawErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
             $rules = $this->pipeline->getTransitionRules($currentStatus);
-            $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleId, $roleName, $currentStatus);
+            $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleId, $currentStatus);
             if (empty($rawErrors)) {
                 $nextStatus = $this->pipeline->getNextStatus($currentStatus);
             }
         }
 
-        $canRegress = $this->pipeline->canRegress($roleId, $roleName, $currentStatus);
+        $canRegress = $this->pipeline->canRegress($roleId, $currentStatus);
         $canConfirmPayment = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_INVOICES,
             InvoiceConstants::STATUS_VERIFICACION_PAGO,
         );
         $canRegisterPayment = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_INVOICES,
             InvoiceConstants::STATUS_TESORERIA,
         ) && $currentStatus === InvoiceConstants::STATUS_TESORERIA;
         $canAuthorizePayment = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_INVOICES,
             InvoiceConstants::STATUS_AUTORIZACION_PAGO,
         ) && $currentStatus === InvoiceConstants::STATUS_AUTORIZACION_PAGO;
@@ -422,8 +418,8 @@ class InvoicesController extends AppController
             currentStatus: $currentStatus,
             roleName: $roleName,
             editableFields: $editableFields,
-            visibleSections: $this->pipeline->getVisibleSections($roleId, $roleName, $currentStatus, $invoice->document_type),
-            collapsibleSections: $this->pipeline->getCollapsibleSections($roleId, $roleName, $currentStatus),
+            visibleSections: $this->pipeline->getVisibleSections($roleId, $currentStatus, $invoice->document_type),
+            collapsibleSections: $this->pipeline->getCollapsibleSections($roleId, $currentStatus),
             advanceErrors: $advanceErrors,
             nextStatus: $nextStatus,
             previousStatus: $this->pipeline->getPreviousStatus($currentStatus),
@@ -456,7 +452,7 @@ class InvoicesController extends AppController
 
         $user = $this->_getCurrentUser();
 
-        $result = $this->pipeline->advance($invoice, (int)$user->role_id, $this->_getRoleName(), $user->id);
+        $result = $this->pipeline->advance($invoice, (int)$user->role_id, $user->id);
 
         if ($result->success) {
             $nextStatus = $result->data['nextStatus'] ?? null;
@@ -486,7 +482,6 @@ class InvoicesController extends AppController
         $result = $this->pipeline->regress(
             $invoice,
             (int)$user->role_id,
-            $this->_getRoleName(),
             (int)$user->id,
             $reason,
         );

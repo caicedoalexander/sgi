@@ -181,12 +181,11 @@ class PaymentSchedulingsController extends AppController
         string $roleName,
     ): PaymentSchedulingEditViewModel {
         $currentStatus = $record->pipeline_status;
-        $canAdvance = $this->schedulingService->canAdvance($roleId, $roleName, $currentStatus);
-        $canReject = $this->schedulingService->canReject($roleId, $roleName, $currentStatus);
-        $canRegress = $this->schedulingService->canRegress($roleId, $roleName, $currentStatus);
+        $canAdvance = $this->schedulingService->canAdvance($roleId, $currentStatus);
+        $canReject = $this->schedulingService->canReject($roleId, $currentStatus);
+        $canRegress = $this->schedulingService->canRegress($roleId, $currentStatus);
         $canConfirmPayment = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
             PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
         );
@@ -222,10 +221,9 @@ class PaymentSchedulingsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $roleName = $this->_getRoleName();
         $user = $this->_getCurrentUser();
 
-        if (!$this->schedulingService->canAdvance((int)$user->role_id, $roleName, $record->pipeline_status)) {
+        if (!$this->schedulingService->canAdvance((int)$user->role_id, $record->pipeline_status)) {
             $this->Flash->error('No tiene permisos para avanzar esta programación.');
 
             return $this->redirect(['action' => 'edit', $id]);
@@ -281,10 +279,9 @@ class PaymentSchedulingsController extends AppController
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
-        $roleName = $this->_getRoleName();
         $roleId = (int)$this->_getCurrentUser()->role_id;
 
-        if (!$this->schedulingService->canReject($roleId, $roleName, $record->pipeline_status)) {
+        if (!$this->schedulingService->canReject($roleId, $record->pipeline_status)) {
             $this->Flash->error('No tiene permisos para rechazar esta programación.');
 
             return $this->redirect(['action' => 'edit', $id]);
@@ -305,13 +302,11 @@ class PaymentSchedulingsController extends AppController
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
         $user = $this->_getCurrentUser();
-        $roleName = $this->_getRoleName();
         $reason = trim((string)$this->request->getData('reason', ''));
 
         $result = $this->schedulingService->regress(
             $record,
             (int)$user->role_id,
-            $roleName,
             (int)$user->id,
             $reason,
         );
@@ -336,12 +331,10 @@ class PaymentSchedulingsController extends AppController
     public function confirmPayment($id = null)
     {
         $this->request->allowMethod(['post']);
-        $roleName = $this->_getRoleName();
 
         if (
             !$this->pipelineAuth->canOperate(
                 (int)$this->_getCurrentUser()->role_id,
-                $roleName,
                 PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
                 PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
             )

@@ -92,12 +92,11 @@ final class InvoiceTransitionValidator
      * @param array<int, array{field: string, label: string}> $rules
      * @return array<string>
      */
-    public function filterErrorsForRole(array $errors, array $rules, int $roleId, string $roleName, string $status): array
+    public function filterErrorsForRole(array $errors, array $rules, int $roleId, string $status): array
     {
-        $editable = $this->fieldPolicy->getEditableFields($roleId, $roleName, $status);
+        $editable = $this->fieldPolicy->getEditableFields($roleId, $status);
         $statusVisible = $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_INVOICES,
             $status,
         );

@@ -38,7 +38,6 @@ class PaymentSchedulingService
     {
         return $this->pipelineAuth->getOperableSteps(
             $roleId,
-            '',
             PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
         );
     }
@@ -53,7 +52,7 @@ class PaymentSchedulingService
         return PaymentSchedulingConstants::BACKWARD_TRANSITIONS[$currentStatus] ?? null;
     }
 
-    public function canAdvance(int $roleId, string $roleName, string $currentStatus): bool
+    public function canAdvance(int $roleId, string $currentStatus): bool
     {
         if ($this->getNextStatus($currentStatus) === null) {
             return false;
@@ -61,13 +60,12 @@ class PaymentSchedulingService
 
         return $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
             $currentStatus,
         );
     }
 
-    public function canReject(int $roleId, string $roleName, string $currentStatus): bool
+    public function canReject(int $roleId, string $currentStatus): bool
     {
         if ($currentStatus !== PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO) {
             return false;
@@ -75,13 +73,12 @@ class PaymentSchedulingService
 
         return $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
             $currentStatus,
         );
     }
 
-    public function canRegress(int $roleId, string $roleName, string $currentStatus): bool
+    public function canRegress(int $roleId, string $currentStatus): bool
     {
         if ($this->getPreviousStatus($currentStatus) === null) {
             return false;
@@ -89,7 +86,6 @@ class PaymentSchedulingService
 
         return $this->pipelineAuth->canOperate(
             $roleId,
-            $roleName,
             PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
             $currentStatus,
         );
@@ -116,14 +112,13 @@ class PaymentSchedulingService
     public function regress(
         PaymentScheduling $scheduling,
         int $roleId,
-        string $roleName,
         int $userId,
         string $reason,
     ): ServiceResult {
         $reason = trim($reason);
         $currentStatus = $scheduling->pipeline_status;
 
-        if (!$this->canRegress($roleId, $roleName, $currentStatus)) {
+        if (!$this->canRegress($roleId, $currentStatus)) {
             $previous = $this->getPreviousStatus($currentStatus);
             $error = $previous === null
                 ? 'Esta programación ya está en el primer paso del flujo.'
