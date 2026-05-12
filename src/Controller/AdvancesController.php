@@ -338,7 +338,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canLinkInvoices($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canLinkInvoices($leg, (int)$this->_getCurrentUser()->role_id)) {
             return $this->_denyAction((int)$id);
         }
 
@@ -408,7 +408,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canLinkInvoices($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canLinkInvoices($leg, (int)$this->_getCurrentUser()->role_id)) {
             return $this->_denyAction((int)$id);
         }
         $userId = (int)$this->_getCurrentUser()->id;
@@ -437,7 +437,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canUnlinkInvoice($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canUnlinkInvoice($leg, (int)$this->_getCurrentUser()->role_id)) {
             return $this->_denyAction((int)$id);
         }
         $result = $this->legalizationService->unlinkInvoice($leg, (int)$invoiceId, (int)$this->_getCurrentUser()->id);
@@ -461,7 +461,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canUploadRelationDocument($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canUploadRelationDocument($leg, (int)$this->_getCurrentUser()->role_id)) {
             if ($this->_isJsonRequest()) {
                 return $this->_jsonResponse([
                     'success' => false,
@@ -511,7 +511,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canMoveToRevision($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canMoveToRevision($leg, (int)$this->_getCurrentUser()->role_id)) {
             return $this->_denyAction((int)$id);
         }
         $result = $this->legalizationService->moveToRevisionFirmas($leg, (int)$this->_getCurrentUser()->id);
@@ -535,7 +535,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canMarkSigned($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canMarkSigned($leg, (int)$this->_getCurrentUser()->role_id)) {
             return $this->_denyAction((int)$id);
         }
         $result = $this->legalizationService->markSigned($leg, (int)$this->_getCurrentUser()->id);
@@ -559,7 +559,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canReturnToValidacion($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canReturnToValidacion($leg, (int)$this->_getCurrentUser()->role_id)) {
             return $this->_denyAction((int)$id);
         }
         $reason = (string)$this->request->getData('reason', '');
@@ -584,7 +584,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canMarkExact($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canMarkExact($leg, (int)$this->_getCurrentUser()->role_id)) {
             return $this->_denyAction((int)$id);
         }
         $result = $this->legalizationService->markExact($leg, (int)$this->_getCurrentUser()->id);
@@ -608,7 +608,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canRegisterShortage($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canRegisterShortage($leg, (int)$this->_getCurrentUser()->role_id)) {
             return $this->_denyAction((int)$id);
         }
         if (!$this->_ensureExpectedStatus($leg->status)) {
@@ -636,7 +636,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canConfirmShortage($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canConfirmShortage($leg, (int)$this->_getCurrentUser()->role_id)) {
             if ($this->_isJsonRequest()) {
                 return $this->_jsonResponse([
                     'success' => false,
@@ -682,7 +682,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canRegisterSurplus($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canRegisterSurplus($leg, (int)$this->_getCurrentUser()->role_id)) {
             return $this->_denyAction((int)$id);
         }
         if (!$this->_ensureExpectedStatus($leg->status)) {
@@ -710,7 +710,7 @@ class AdvancesController extends AppController
         if (!$leg) {
             return $this->_redirectMissing();
         }
-        if (!$this->actionPolicy->canRegisterRefund($leg, (int)$this->_getCurrentUser()->id)) {
+        if (!$this->actionPolicy->canRegisterRefund($leg, (int)$this->_getCurrentUser()->role_id)) {
             return $this->_denyAction((int)$id);
         }
         $data = $this->request->getData();
@@ -741,7 +741,7 @@ class AdvancesController extends AppController
             return $this->_redirectMissing();
         }
         $user = $this->_getCurrentUser();
-        if (!$this->actionPolicy->canConfirmRefundPayment($leg, (int)$user->id)) {
+        if (!$this->actionPolicy->canConfirmRefundPayment($leg, (int)$user->role_id)) {
             return $this->_denyAction((int)$id);
         }
         $result = $this->legalizationService->confirmRefundExecuted($leg, (int)$user->id);
