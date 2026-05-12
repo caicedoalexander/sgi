@@ -296,16 +296,17 @@ class AdvancesController extends AppController
             );
         }
 
+        $roleId = (int)$user->role_id;
         $vm = new AdvanceLegalizationViewModel(
-            $invoice,
-            $leg,
-            $roleName,
-            $linkedInvoices,
-            $bankingEntities,
-            $surplusPayment,
-            (int)$user->id,
-            $this->actionPolicy,
-            (int)$user->role_id,
+            invoice: $invoice,
+            leg: $leg,
+            roleName: $roleName,
+            linkedInvoices: $linkedInvoices,
+            bankingEntities: $bankingEntities,
+            surplusPayment: $surplusPayment,
+            canRegisterRefund: $this->actionPolicy->canRegisterRefund($leg, $roleId),
+            canAuthorizeRefundPayment: $this->actionPolicy->canAuthorizeRefundPayment($leg, $roleId),
+            canConfirmRefundPayment: $this->actionPolicy->canConfirmRefundPayment($leg, $roleId),
         );
         $this->set($vm->build());
         $this->set('actionPolicy', $this->actionPolicy);

@@ -436,10 +436,9 @@ class EmployeeNoveltiesController extends AppController
         $noveltyStatuses = $this->pipelineService->getNoveltyStatuses($novelty->novelty_type);
         $nextStatus = $this->pipelineService->getNextStatus($novelty);
         $transitionErrors = $this->pipelineService->validateTransition($novelty, $novelty->pipeline_status);
-        $canAdvance = !$novelty->isRejected()
-            && !$novelty->isPaid()
-            && !$novelty->isGrouped()
-            && $nextStatus !== null;
+        // isGrouped no es estado de pipeline (vive en liquidation_doc_id) — se compone aparte.
+        $canAdvance = !$novelty->isGrouped()
+            && $this->pipelineService->denialReasonForAdvance($novelty, $roleId) === null;
 
         $isApprovalRejected = $novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION
             && $novelty->area_approval === NoveltyConstants::APPROVAL_REJECTED;

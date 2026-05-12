@@ -314,6 +314,7 @@ class PettyCashRecordsController extends AppController
         $canRegisterPayment = $this->actionPolicy->canRegisterPayment($record, $roleId);
         $canAuthorizePayment = $this->actionPolicy->canAuthorizePayment($record, $roleId);
         $canConfirmPayment = $this->actionPolicy->canConfirmPayment($record, $roleId);
+        $canAdvance = $this->pettyCashService->denialReasonForAdvance($record, $roleId) === null;
 
         return new PettyCashEditViewModel(
             record: $record,
@@ -324,6 +325,7 @@ class PettyCashRecordsController extends AppController
             canAuthorizePayment: $canAuthorizePayment,
             canConfirmPayment: $canConfirmPayment,
             canRegress: $this->pettyCashService->denialReasonForRegress($record, $roleId) === null,
+            canAdvance: $canAdvance,
             advanceErrors: $advanceErrors,
             nextStatus: $nextStatus,
             previousStatus: $this->pettyCashService->getPreviousStatus($record->status),

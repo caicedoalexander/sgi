@@ -34,7 +34,6 @@ final class RefundEditViewModel implements EditViewModelInterface
     public readonly bool $canEditAccounting;
     public readonly bool $canEditTreasury;
     public readonly bool $canSave;
-    public readonly bool $canAdvance;
     /** HTML pre-renderizado (ícono + texto). El template lo imprime raw. */
     public readonly string $submitButtonHtml;
     public readonly string $submitButtonClass;
@@ -71,6 +70,7 @@ final class RefundEditViewModel implements EditViewModelInterface
         public readonly array $groupFilters,
         public readonly ?string $nextStatus,
         public readonly array $advanceErrors,
+        public readonly bool $canAdvance,
         public readonly bool $canRegress,
         public readonly ?string $previousStatus,
         public readonly ?string $regressLockMessage,
@@ -110,10 +110,9 @@ final class RefundEditViewModel implements EditViewModelInterface
         $this->invoiceCount      = count($record->invoices ?? []);
 
         // Botón de submit (mismo patrón que Invoices/edit y PettyCash/edit).
-        $this->canAdvance        = $nextStatus !== null;
         $this->submitButtonClass = 'btn btn-primary';
         $this->submitButtonHtml = SubmitButton::decide(
-            canAdvance: $this->canAdvance,
+            canAdvance: $canAdvance,
             advanceErrors: $advanceErrors,
             nextStatusLabel: $nextStatus !== null ? ($this->statusLabels[$nextStatus] ?? $nextStatus) : null,
         );

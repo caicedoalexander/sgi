@@ -7,7 +7,6 @@ use App\Constants\AdvanceConstants;
 use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
 use App\Model\Entity\InvoicePayment;
-use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\View\Presentation\AdvancePresentation;
 
 /**
@@ -31,6 +30,9 @@ final readonly class AdvanceLegalizationViewModel
      * @param iterable $linkedInvoices Facturas tipo Legalización vinculadas al anticipo.
      * @param array<int,string> $bankingEntities Lista [id => name].
      * @param \App\Model\Entity\InvoicePayment|null $surplusPayment Pago del sobrante (caso CASE_SOBRANTE) si existe.
+     * @param bool $canRegisterRefund Pre-computado por el controller vía AdvanceLegalizationActionPolicy.
+     * @param bool $canAuthorizeRefundPayment Pre-computado por el controller vía AdvanceLegalizationActionPolicy.
+     * @param bool $canConfirmRefundPayment Pre-computado por el controller vía AdvanceLegalizationActionPolicy.
      */
     public function __construct(
         public Invoice $invoice,
@@ -39,9 +41,9 @@ final readonly class AdvanceLegalizationViewModel
         public iterable $linkedInvoices,
         public array $bankingEntities,
         public ?InvoicePayment $surplusPayment,
-        public int $userId = 0,
-        public ?AdvanceLegalizationActionPolicy $actionPolicy = null,
-        public int $roleId = 0,
+        public bool $canRegisterRefund = false,
+        public bool $canAuthorizeRefundPayment = false,
+        public bool $canConfirmRefundPayment = false,
     ) {
     }
 
@@ -72,16 +74,6 @@ final readonly class AdvanceLegalizationViewModel
                 }
             }
         }
-
-        $canRegisterRefund = $this->actionPolicy !== null && $this->roleId > 0
-            ? $this->actionPolicy->canRegisterRefund($this->leg, $this->roleId)
-            : false;
-        $canAuthorizeRefundPayment = $this->actionPolicy !== null && $this->roleId > 0
-            ? $this->actionPolicy->canAuthorizeRefundPayment($this->leg, $this->roleId)
-            : false;
-        $canConfirmRefundPayment = $this->actionPolicy !== null && $this->roleId > 0
-            ? $this->actionPolicy->canConfirmRefundPayment($this->leg, $this->roleId)
-            : false;
 
         // ── Derivaciones de presentación (antes inline en el template) ──
         $pageTitle         = 'Legalización ' . ($this->invoice->invoice_number ?? '#' . $this->invoice->id);
@@ -127,9 +119,9 @@ final readonly class AdvanceLegalizationViewModel
             'bankingEntities' => $this->bankingEntities,
             'surplusPayment' => $this->surplusPayment,
             'roleName' => $this->roleName,
-            'canRegisterRefund' => $canRegisterRefund,
-            'canAuthorizeRefundPayment' => $canAuthorizeRefundPayment,
-            'canConfirmRefundPayment' => $canConfirmRefundPayment,
+            'canRegisterRefund' => $this->canRegisterRefund,
+            'canAuthorizeRefundPayment' => $this->canAuthorizeRefundPayment,
+            'canConfirmRefundPayment' => $this->canConfirmRefundPayment,
             // Derivaciones de presentación.
             'pageTitle' => $pageTitle,
             'legPipelineLabels' => $legPipelineLabels,
