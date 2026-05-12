@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
+use App\Attribute\PipelineAction;
 use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
@@ -91,6 +93,7 @@ class PettyCashRecordsController extends AppController
     /**
      * "Mis Registros" — filtra por los status visibles del rol.
      */
+    #[Permission(action: 'view')]
     public function index(): void
     {
         $roleId = (int)$this->_getCurrentUser()->role_id;
@@ -111,6 +114,7 @@ class PettyCashRecordsController extends AppController
     /**
      * "Todos los Registros" — sin filtro de rol.
      */
+    #[Permission(action: 'view')]
     public function all(): void
     {
         $query = $this->PettyCashRecords->find()
@@ -128,6 +132,7 @@ class PettyCashRecordsController extends AppController
     /**
      * "Pendientes" — registros activos (status != pagado).
      */
+    #[Permission(action: 'view')]
     public function pending(): void
     {
         $query = $this->PettyCashRecords->find()
@@ -168,6 +173,7 @@ class PettyCashRecordsController extends AppController
         }
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null): void
     {
         $record = $this->PettyCashRecords->get($id, contain: [
@@ -189,6 +195,7 @@ class PettyCashRecordsController extends AppController
         $this->set(compact('record'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $record = $this->PettyCashRecords->newEmptyEntity();
@@ -238,6 +245,7 @@ class PettyCashRecordsController extends AppController
         $this->set(get_object_vars($vm));
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $record = $this->PettyCashRecords->get($id, contain: [
@@ -360,6 +368,7 @@ class PettyCashRecordsController extends AppController
         );
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH)]
     public function advanceStatus($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -390,6 +399,7 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH)]
     public function regressStatus($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -417,6 +427,7 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH, step: PettyCashConstants::STATUS_TESORERIA)]
     public function registerPayment($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -445,6 +456,7 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH, step: PettyCashConstants::STATUS_AUTORIZACION_PAGO)]
     public function authorizePayment($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -469,6 +481,7 @@ class PettyCashRecordsController extends AppController
      * Tesorería confirma que el pago del record ya se ejecutó.
      * Avanza record y facturas hijas de verificacion_pago → pagada.
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH, step: PettyCashConstants::STATUS_VERIFICACION_PAGO)]
     public function confirmPayment($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -497,6 +510,7 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH, step: PettyCashConstants::STATUS_AUTORIZACION_PAGO)]
     public function rejectPayment($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -525,6 +539,7 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -541,6 +556,7 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    #[Permission(action: 'edit')]
     public function removeInvoice($recordId = null, $invoiceId = null)
     {
         $this->request->allowMethod(['post']);
@@ -555,6 +571,7 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $recordId]);
     }
 
+    #[Permission(action: 'edit')]
     public function linkInvoices($recordId = null)
     {
         $this->request->allowMethod(['post']);
@@ -585,6 +602,7 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $recordId]);
     }
 
+    #[Permission(action: 'add')]
     public function uploadDocument($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -633,6 +651,7 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[Permission(action: 'edit')]
     public function addObservation($id = null)
     {
         return $this->_handleAddObservation(
@@ -644,6 +663,7 @@ class PettyCashRecordsController extends AppController
         );
     }
 
+    #[Permission(action: 'delete')]
     public function deleteDocument($recordId = null, $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);

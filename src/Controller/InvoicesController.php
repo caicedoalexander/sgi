@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
+use App\Attribute\PipelineAction;
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
@@ -84,6 +86,7 @@ class InvoicesController extends AppController
         return $this->_getUserRoleName($this->_getCurrentUser());
     }
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $roleName = $this->_getRoleName();
@@ -111,6 +114,7 @@ class InvoicesController extends AppController
         $this->set($this->_getFilterDropdowns());
     }
 
+    #[Permission(action: 'view')]
     public function all()
     {
         $roleName = $this->_getRoleName();
@@ -129,6 +133,7 @@ class InvoicesController extends AppController
         $this->render('index');
     }
 
+    #[Permission(action: 'view')]
     public function rejected(): void
     {
         $roleName = $this->_getRoleName();
@@ -147,6 +152,7 @@ class InvoicesController extends AppController
         $this->render('index');
     }
 
+    #[Permission(action: 'view')]
     public function overdue(): void
     {
         $roleName = $this->_getRoleName();
@@ -169,6 +175,7 @@ class InvoicesController extends AppController
         $this->render('index');
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null)
     {
         $this->fetchTable('InvoiceReads')->markAsRead((int)$id, (int)$this->_getCurrentUser()->id);
@@ -232,6 +239,7 @@ class InvoicesController extends AppController
         $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'canShowEdit', 'showPettyCashLock', 'showSchedulingLock', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         if ($this->request->is('post')) {
@@ -258,6 +266,7 @@ class InvoicesController extends AppController
         $this->set($this->_getFormDropdowns());
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $this->fetchTable('InvoiceReads')->markAsRead((int)$id, (int)$this->_getCurrentUser()->id);
@@ -434,6 +443,7 @@ class InvoicesController extends AppController
         );
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES)]
     public function advanceStatus($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -467,6 +477,7 @@ class InvoicesController extends AppController
         return $this->_redirectForInvoice($invoice, 'edit', $id);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES)]
     public function regressStatus($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -506,6 +517,7 @@ class InvoicesController extends AppController
         return $scheme . '://' . $this->request->host();
     }
 
+    #[Permission(action: 'edit')]
     public function addObservation($id = null)
     {
         return $this->_handleAddObservation(
@@ -517,6 +529,7 @@ class InvoicesController extends AppController
         );
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -627,6 +640,7 @@ class InvoicesController extends AppController
         ];
     }
 
+    #[Permission(action: 'add')]
     public function uploadDocument($invoiceId = null)
     {
         $this->request->allowMethod(['post']);
@@ -685,6 +699,7 @@ class InvoicesController extends AppController
         return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);
     }
 
+    #[Permission(action: 'delete')]
     public function deleteDocument($invoiceId = null, $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -725,6 +740,7 @@ class InvoicesController extends AppController
      * Sends approval links to the selected approvers. Fails if there are
      * pending approvals already active.
      */
+    #[Permission(action: 'edit')]
     public function sendApprovalLinks($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -754,6 +770,7 @@ class InvoicesController extends AppController
      * Replaces the current approver set. Requires a reason and invalidates
      * any active tokens.
      */
+    #[Permission(action: 'edit')]
     public function modifyApprovers($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -784,6 +801,7 @@ class InvoicesController extends AppController
     /**
      * Resets a rejected approval flow back to pending.
      */
+    #[Permission(action: 'edit')]
     public function resetFlow($id = null)
     {
         $this->request->allowMethod(['post']);

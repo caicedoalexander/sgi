@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
+use App\Attribute\PipelineAction;
 use App\Constants\PaymentSchedulingConstants;
 use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
@@ -67,6 +69,7 @@ class PaymentSchedulingsController extends AppController
         return $this->_getUserRoleName($this->_getCurrentUser());
     }
 
+    #[Permission(action: 'view')]
     public function index()
     {
         $roleId = (int)$this->_getCurrentUser()->role_id;
@@ -91,6 +94,7 @@ class PaymentSchedulingsController extends AppController
         $this->set(compact('records', 'roleName'));
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null)
     {
         $record = $this->PaymentSchedulings->get($id, contain: [
@@ -116,6 +120,7 @@ class PaymentSchedulingsController extends AppController
         $this->set(compact('record', 'roleName', 'total', 'pipelineLabels'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $record = $this->PaymentSchedulings->newEmptyEntity();
@@ -150,6 +155,7 @@ class PaymentSchedulingsController extends AppController
         );
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $record = $this->PaymentSchedulings->get($id, contain: [
@@ -212,6 +218,7 @@ class PaymentSchedulingsController extends AppController
         );
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS)]
     public function advance($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -275,6 +282,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS)]
     public function reject($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -297,6 +305,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS)]
     public function regressStatus($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -328,6 +337,7 @@ class PaymentSchedulingsController extends AppController
      * Tesorería confirma que los pagos de la programación ya se ejecutaron.
      * Avanza scheduling y facturas hijas de verificacion_pago → pagada.
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS, step: PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO)]
     public function confirmPayment($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -358,6 +368,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
+    #[Permission(action: 'add')]
     public function importExcel($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -386,6 +397,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'previewImport', $id]);
     }
 
+    #[Permission(action: 'add')]
     public function previewImport($id = null)
     {
         $record = $this->PaymentSchedulings->get($id);
@@ -400,6 +412,7 @@ class PaymentSchedulingsController extends AppController
         $this->set(compact('record', 'result'));
     }
 
+    #[Permission(action: 'add')]
     public function confirmImport($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -424,6 +437,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[Permission(action: 'add')]
     public function addItem($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -452,6 +466,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[Permission(action: 'delete')]
     public function removeItem($id = null, $itemId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -475,6 +490,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[Permission(action: 'add')]
     public function uploadDocument($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -522,6 +538,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[Permission(action: 'delete')]
     public function deleteDocument($id = null, $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -569,6 +586,7 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[Permission(action: 'edit')]
     public function addObservation($id = null)
     {
         return $this->_handleAddObservation(

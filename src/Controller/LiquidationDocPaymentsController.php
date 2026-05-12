@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\PipelineAction;
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Service\LiquidationDocPaymentService;
 use App\Service\PipelineAuthorizationService;
+use Cake\Http\Response;
 
 class LiquidationDocPaymentsController extends AppController
 {
@@ -69,6 +71,7 @@ class LiquidationDocPaymentsController extends AppController
      * @param string|null $docId Document ID.
      * @return \Cake\Http\Response|null
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS, step: NoveltyConstants::STATUS_TESORERIA)]
     public function addPayment(?string $docId = null): ?Response
     {
         $this->request->allowMethod(['post']);
@@ -106,6 +109,7 @@ class LiquidationDocPaymentsController extends AppController
      * @param string|null $paymentId Payment ID.
      * @return \Cake\Http\Response|null
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS, step: NoveltyConstants::STATUS_AUTORIZACION_PAGO)]
     public function authorizePayment(?string $docId = null, ?string $paymentId = null): ?Response
     {
         $this->request->allowMethod(['post']);
@@ -139,6 +143,7 @@ class LiquidationDocPaymentsController extends AppController
      * @param string|null $docId Document ID.
      * @return \Cake\Http\Response|null
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS, step: NoveltyConstants::STATUS_VERIFICACION_PAGO)]
     public function confirmPayment(?string $docId = null): ?Response
     {
         $this->request->allowMethod(['post']);
@@ -172,6 +177,7 @@ class LiquidationDocPaymentsController extends AppController
      * @param string|null $paymentId Payment ID.
      * @return \Cake\Http\Response|null
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS, step: NoveltyConstants::STATUS_AUTORIZACION_PAGO)]
     public function rejectPayment(?string $docId = null, ?string $paymentId = null): ?Response
     {
         $this->request->allowMethod(['post']);

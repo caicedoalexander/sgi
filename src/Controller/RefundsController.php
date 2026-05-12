@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
+use App\Attribute\PipelineAction;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
@@ -130,6 +132,7 @@ class RefundsController extends AppController
     /**
      * "Mis Registros" — filtra por los status visibles del rol.
      */
+    #[Permission(action: 'view')]
     public function index(): void
     {
         $roleId = (int)$this->_getCurrentUser()->role_id;
@@ -150,6 +153,7 @@ class RefundsController extends AppController
     /**
      * "Todos los Registros" — sin filtro de rol.
      */
+    #[Permission(action: 'view')]
     public function all(): void
     {
         $query = $this->Refunds->find()
@@ -167,6 +171,7 @@ class RefundsController extends AppController
     /**
      * "Pendientes" — registros activos (status != pagado).
      */
+    #[Permission(action: 'view')]
     public function pending(): void
     {
         $query = $this->Refunds->find()
@@ -222,6 +227,7 @@ class RefundsController extends AppController
         return $d !== false && $d->format('Y-m-d') === $value;
     }
 
+    #[Permission(action: 'view')]
     public function view($id = null): void
     {
         $record = $this->Refunds->get($id, contain: [
@@ -243,6 +249,7 @@ class RefundsController extends AppController
         $this->set(compact('record'));
     }
 
+    #[Permission(action: 'add')]
     public function add()
     {
         $record = $this->Refunds->newEmptyEntity();
@@ -319,6 +326,7 @@ class RefundsController extends AppController
         return [$employees, $providers];
     }
 
+    #[Permission(action: 'edit')]
     public function edit($id = null)
     {
         $record = $this->Refunds->get($id, contain: [
@@ -490,6 +498,7 @@ class RefundsController extends AppController
         );
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
     public function advanceStatus($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -519,6 +528,7 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
     public function regressStatus($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -551,6 +561,7 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS, step: RefundConstants::STATUS_TESORERIA)]
     public function registerPayment($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -579,6 +590,7 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS, step: RefundConstants::STATUS_AUTORIZACION_PAGO)]
     public function authorizePayment($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -603,6 +615,7 @@ class RefundsController extends AppController
      * Tesorería confirma que el pago del reintegro se ejecutó.
      * Avanza reintegro y facturas hijas de verificacion_pago → pagada.
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS, step: RefundConstants::STATUS_VERIFICACION_PAGO)]
     public function confirmPayment($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -631,6 +644,7 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS, step: RefundConstants::STATUS_AUTORIZACION_PAGO)]
     public function rejectPayment($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -659,6 +673,7 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    #[Permission(action: 'delete')]
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
@@ -686,6 +701,7 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    #[Permission(action: 'edit')]
     public function removeInvoice($recordId = null, $invoiceId = null)
     {
         $this->request->allowMethod(['post']);
@@ -700,6 +716,7 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $recordId]);
     }
 
+    #[Permission(action: 'edit')]
     public function linkInvoices($recordId = null)
     {
         $this->request->allowMethod(['post']);
@@ -730,6 +747,7 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $recordId]);
     }
 
+    #[Permission(action: 'edit')]
     public function addObservation($id = null)
     {
         return $this->_handleAddObservation(
@@ -752,6 +770,7 @@ class RefundsController extends AppController
      * 2. `_canOperateRefundStep` valida que el rol tenga permiso de pipeline
      *    para operar en el step actual del reintegro.
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
     public function uploadDocument($id = null)
     {
         $this->request->allowMethod(['post']);
@@ -817,6 +836,7 @@ class RefundsController extends AppController
      *    actual; el servicio además valida la pertenencia del documento al
      *    refund (anti-IDOR).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
     public function deleteDocument($refundId = null, $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);

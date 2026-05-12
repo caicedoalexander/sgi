@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\Permission;
+use App\Attribute\PipelineAction;
 use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
+use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\AdvanceLegalizationDocumentService;
@@ -95,6 +98,7 @@ class AdvancesController extends AppController
     /**
      * "Mis Anticipos" — filtra por los pipeline_status visibles del rol.
      */
+    #[Permission(action: 'view')]
     public function index(): void
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
@@ -121,6 +125,7 @@ class AdvancesController extends AppController
     /**
      * "Todos los Anticipos" — sin filtros de rol.
      */
+    #[Permission(action: 'view')]
     public function all(): void
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
@@ -144,6 +149,7 @@ class AdvancesController extends AppController
     /**
      * "Pendientes de Legalización" — anticipos pagados con legalización en curso.
      */
+    #[Permission(action: 'view')]
     public function pendingLegalization(): void
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
@@ -175,6 +181,7 @@ class AdvancesController extends AppController
         $this->render('index');
     }
 
+    #[Permission(action: 'add')]
     public function add(): ?Response
     {
         /** @var \App\Model\Table\InvoicesTable $invoicesTable */
@@ -217,6 +224,7 @@ class AdvancesController extends AppController
         return null;
     }
 
+    #[Permission(action: 'view')]
     public function view(?int $id = null): ?Response
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
@@ -253,6 +261,7 @@ class AdvancesController extends AppController
     /**
      * Vista dedicada del proceso de legalización del anticipo (Phase 2).
      */
+    #[Permission(action: 'view')]
     public function legalization(?int $id = null): ?Response
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
@@ -331,6 +340,7 @@ class AdvancesController extends AppController
     /**
      * The Anticipo is an Invoice; edit lives in InvoicesController.
      */
+    #[Permission(action: 'edit')]
     public function edit(?int $id = null): Response
     {
         return $this->redirect(['controller' => 'Invoices', 'action' => 'edit', $id]);
@@ -344,6 +354,7 @@ class AdvancesController extends AppController
      * modal (o se aplica un filtro). Acepta filtros vía query string: date_from,
      * date_to, provider_id, operation_center_id (default: OC del anticipo).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function linkCandidates(?int $id = null): ?Response
     {
         $this->request->allowMethod(['get']);
@@ -413,6 +424,7 @@ class AdvancesController extends AppController
     /**
      * Bulk-link Legalización invoices to this advance (POST).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function linkInvoices(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -441,6 +453,7 @@ class AdvancesController extends AppController
     /**
      * Unlink a single Legalización invoice (POST).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function unlinkInvoice(?int $id = null, ?int $invoiceId = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -464,6 +477,7 @@ class AdvancesController extends AppController
     /**
      * Upload the relation-of-invoices document (POST multipart).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function uploadRelationDocument(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -513,6 +527,7 @@ class AdvancesController extends AppController
     /**
      * Move legalization from validacion → revision_firmas (POST).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function moveToRevision(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -536,6 +551,7 @@ class AdvancesController extends AppController
     /**
      * Mark relation document as signed and advance to contabilidad (POST).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS, step: AdvanceConstants::STATUS_REVISION_FIRMAS)]
     public function markSigned(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -559,6 +575,7 @@ class AdvancesController extends AppController
     /**
      * Reject signature and bounce back to validacion (POST).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS, step: AdvanceConstants::STATUS_REVISION_FIRMAS)]
     public function returnToValidacion(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -583,6 +600,7 @@ class AdvancesController extends AppController
     /**
      * Close legalization as caso exacto (POST).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function markExact(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -606,6 +624,7 @@ class AdvancesController extends AppController
     /**
      * Contabilidad declares a shortage and pushes legalization to Tesorería (POST).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function registerShortage(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -633,6 +652,7 @@ class AdvancesController extends AppController
     /**
      * Tesorería confirms beneficiary's shortage deposit (POST multipart).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function confirmShortage(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -678,6 +698,7 @@ class AdvancesController extends AppController
     /**
      * Contabilidad declares a surplus and pushes legalization to Tesorería (POST).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function registerSurplus(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -705,6 +726,7 @@ class AdvancesController extends AppController
     /**
      * Tesorería registers a refund payment to the beneficiary (POST).
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function registerRefund(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);
@@ -734,6 +756,7 @@ class AdvancesController extends AppController
      * Tesorería confirma que el reintegro al beneficiario ya se ejecutó.
      * Cierra la legalización (caso sobrante) de `verificacion_pago` → `legalizada`.
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LEGALIZATIONS)]
     public function confirmRefundPayment(?int $id = null): Response
     {
         $this->request->allowMethod(['post']);

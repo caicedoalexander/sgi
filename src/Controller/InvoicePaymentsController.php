@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Attribute\PipelineAction;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Service\InvoicePaymentService;
@@ -59,6 +60,7 @@ class InvoicePaymentsController extends AppController
      * @param string|int|null $invoiceId
      * @return \Cake\Http\Response|null
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_TESORERIA)]
     public function addPayment($invoiceId = null)
     {
         $this->request->allowMethod(['post']);
@@ -109,6 +111,7 @@ class InvoicePaymentsController extends AppController
      * @param string|int|null $paymentId
      * @return \Cake\Http\Response|null
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_TESORERIA)]
     public function editPayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
@@ -153,6 +156,7 @@ class InvoicePaymentsController extends AppController
      * @param string|int|null $paymentId
      * @return \Cake\Http\Response|null
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_AUTORIZACION_PAGO)]
     public function authorizePayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
@@ -192,6 +196,7 @@ class InvoicePaymentsController extends AppController
      * @param string|int|null $invoiceId
      * @return \Cake\Http\Response|null
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_VERIFICACION_PAGO)]
     public function confirmPayment($invoiceId = null)
     {
         $this->request->allowMethod(['post']);
@@ -228,6 +233,7 @@ class InvoicePaymentsController extends AppController
      * @param string|int|null $paymentId
      * @return \Cake\Http\Response|null
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_AUTORIZACION_PAGO)]
     public function rejectPayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post']);
@@ -266,6 +272,7 @@ class InvoicePaymentsController extends AppController
      * @param string|int|null $paymentId
      * @return \Cake\Http\Response|null
      */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_TESORERIA)]
     public function deletePayment($invoiceId = null, $paymentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);

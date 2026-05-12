@@ -740,6 +740,7 @@ class EmployeeNoveltiesController extends AppController
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'edit')]
     public function advance(?string $id = null)
     {
         $this->request->allowMethod(['post']);
@@ -783,6 +784,7 @@ class EmployeeNoveltiesController extends AppController
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null
      */
+    #[Permission(action: 'edit')]
     public function reject(?string $id = null)
     {
         $this->request->allowMethod(['post']);
