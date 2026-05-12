@@ -12,6 +12,7 @@ use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
+use App\Service\Pipeline\PettyCash\Policy\PettyCashActionPolicy;
 use App\ViewModel\PettyCashAddViewModel;
 use App\ViewModel\PettyCashEditViewModel;
 use Cake\ORM\Query\SelectQuery;
@@ -28,6 +29,8 @@ class PettyCashRecordsController extends AppController
 
     private PettyCashDocumentService $documentService;
 
+    private PettyCashActionPolicy $actionPolicy;
+
     /**
      * @return void
      */
@@ -37,6 +40,7 @@ class PettyCashRecordsController extends AppController
         $container = $this->getContainer();
         $this->pettyCashService = $container->get(PettyCashService::class);
         $this->documentService = $container->get(PettyCashDocumentService::class);
+        $this->actionPolicy = $container->get(PettyCashActionPolicy::class);
     }
 
     private function _getCurrentUser(): \App\Model\Entity\User
@@ -307,22 +311,9 @@ class PettyCashRecordsController extends AppController
             ? $this->pettyCashService->getTransitionErrors($record)
             : [];
 
-        $userContext = $this->_userContext();
-        $canRegisterPayment = $this->authFacade->canOperate(
-            $userContext,
-            PipelineStepConstants::PIPELINE_PETTY_CASH,
-            PettyCashConstants::STATUS_TESORERIA,
-        );
-        $canAuthorizePayment = $this->authFacade->canOperate(
-            $userContext,
-            PipelineStepConstants::PIPELINE_PETTY_CASH,
-            PettyCashConstants::STATUS_AUTORIZACION_PAGO,
-        );
-        $canConfirmPayment = $this->authFacade->canOperate(
-            $userContext,
-            PipelineStepConstants::PIPELINE_PETTY_CASH,
-            PettyCashConstants::STATUS_VERIFICACION_PAGO,
-        );
+        $canRegisterPayment = $this->actionPolicy->canRegisterPayment($record, $roleId);
+        $canAuthorizePayment = $this->actionPolicy->canAuthorizePayment($record, $roleId);
+        $canConfirmPayment = $this->actionPolicy->canConfirmPayment($record, $roleId);
 
         return new PettyCashEditViewModel(
             record: $record,
@@ -467,13 +458,7 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        if (
-            !$this->authFacade->canOperate(
-                $this->_userContext(),
-                PipelineStepConstants::PIPELINE_PETTY_CASH,
-                PettyCashConstants::STATUS_VERIFICACION_PAGO,
-            )
-        ) {
+        if (!$this->actionPolicy->canOperateStep((int)$user->role_id, PettyCashConstants::STATUS_VERIFICACION_PAGO)) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
             return $this->redirect(['action' => 'view', $id]);
