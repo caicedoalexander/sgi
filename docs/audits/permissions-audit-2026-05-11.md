@@ -42,7 +42,7 @@
 | PA-004 | 🟠 Major | `AuthorizationService` y `PipelineAuthorizationService` duplican shape (cache, matrix, save, isAllowed/canOperate) sin contrato común | ✅ Resuelto | commits `424249d..3949528` (2026-05-12) |
 | PA-005 | 🟠 Major | `canAdvance(...)` y `canRegress(...)` mezclan "no hay next/previous" con "rol sin permiso" en el mismo `bool` | ✅ Resuelto | commits `882718a..e9551aa` (2026-05-12) |
 | PA-006 | 🟠 Major | `$pipelineActions` declarado per-controller; añadir una acción nueva exige tocarlo + recordar el patrón | ✅ Resuelto | commit `a903f54` (2026-05-12) |
-| PA-007 | 🟡 Minor | `ADMIN_BYPASS_MODULES` ejecuta lógica en `isAllowed` y se re-aplica en `AppController::_setUserPermissions` para el sidebar | ⏳ Pendiente | — |
+| PA-007 | 🟡 Minor | `ADMIN_BYPASS_MODULES` ejecuta lógica en `isAllowed` y se re-aplica en `AppController::_setUserPermissions` para el sidebar | 🟢 WONTFIX | 2026-05-12 |
 | PA-008 | 🟡 Minor | `InvoiceFieldAccessPolicy::SECTION_BY_STEP` (string) vs `NoveltyService::SECTIONS_BY_STEP` (array) — divergencia gratuita | ⏳ Pendiente | — |
 | PA-009 | 🟡 Minor | `RolesController::add` llama `getPermissionsMatrix(0)` con `role_id` inexistente; funciona porque `?? false` casts a `false` | ✅ Resuelto | commit `d294aaf` (2026-05-12) |
 | PA-010 | 🟡 Minor | `_actionToPermission` agrupa 35+ acciones en un `match` plano que vive en `AppController`; cada acción nueva en cualquier controller exige tocar la base | ✅ Resuelto | commit `a903f54` (2026-05-12) |
@@ -273,7 +273,9 @@ Cubierto por el plan de validación de PA-002.
 
 ---
 
-## PA-007 — Admin bypass duplicado 🟡
+## PA-007 — Admin bypass duplicado 🟡 🟢 WONTFIX (2026-05-12)
+
+> **Cierre:** marcado como WONTFIX. Bypass acotado a 2 sitios (`AuthorizationService::isAllowed:72` + `AppController::_setUserPermissions:139`) y 2 módulos (`users`, `roles`). Migrar a seeder introduce 2 filas permanentes en BD (`admin_role × users`, `admin_role × roles`) para resolver una duplicación menor que está bien delimitada. Criterio de reapertura: si surge un 3er módulo que requiera `ADMIN_BYPASS_MODULES`, migrar a seeder y eliminar el bypass por código.
 
 **Ubicación:** `src/Service/AuthorizationService.php:19,57` (constante + uso en `isAllowed`) y `src/Controller/AppController.php:152-161` (merge manual en `_setUserPermissions`).
 
