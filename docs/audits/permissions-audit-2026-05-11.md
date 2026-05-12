@@ -38,7 +38,7 @@
 |----|-----------|----------|--------|-------------|
 | PA-001 | 🔴 Critical | `_actionToPermission` cae a `'view'` por defecto cuando una acción no está mapeada → over-permission silencioso | ⏳ Pendiente | — |
 | PA-002 | 🔴 Critical | 3 lugares sin chequeo para registrar una acción de pipeline (`$pipelineActions`, `_actionToPermission`, llamada manual a `canOperate`) | ⏳ Pendiente | — |
-| PA-003 | 🟠 Major | `$roleName` declarado y propagado en 55 call-sites pero nunca consultado (cleanup 2026-05-02 inacabado) | ⏳ Pendiente | — |
+| PA-003 | 🟠 Major | `$roleName` declarado y propagado en 55 call-sites pero nunca consultado (cleanup 2026-05-02 inacabado) | ✅ Resuelto | PR #4 / commit `1c73514` (2026-05-12) |
 | PA-004 | 🟠 Major | `AuthorizationService` y `PipelineAuthorizationService` duplican shape (cache, matrix, save, isAllowed/canOperate) sin contrato común | ⏳ Pendiente | — |
 | PA-005 | 🟠 Major | `canAdvance(...)` y `canRegress(...)` mezclan "no hay next/previous" con "rol sin permiso" en el mismo `bool` | ⏳ Pendiente | — |
 | PA-006 | 🟠 Major | `$pipelineActions` declarado per-controller; añadir una acción nueva exige tocarlo + recordar el patrón | ⏳ Pendiente | — |
@@ -129,7 +129,10 @@ Un `AuthorizationMiddleware` (o `AppController::beforeFilter` extendido) lee el 
 
 ---
 
-## PA-003 — `$roleName` muerto en 55 call-sites + 13 firmas de policy 🟠
+## PA-003 — `$roleName` muerto en 55 call-sites + 13 firmas de policy 🟠 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** PR #4 (commit `1c73514`) eliminó `$roleName` de `PipelineAuthorizationService::canOperate/getOperableSteps` y de la cascada de servicios/policies/controllers que lo propagaban. Verificación manual (`php bin/cake server` + flujos E2E por rol) sin regresiones. `AuthorizationService::isAllowed($roleId, $roleName, ...)` se conserva porque sí consulta `$roleName` para el admin bypass (ver PA-007).
+
 
 **Ubicación:**
 - `src/Service/PipelineAuthorizationService.php:25,30,39,43` (declarado "conservado para compat, no se consulta tras cleanup 2026-05-02").
