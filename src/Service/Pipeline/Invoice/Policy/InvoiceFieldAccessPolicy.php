@@ -1,9 +1,8 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\Pipeline\Invoice\Policy;
 
-use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Service\Pipeline\PipelineFieldPolicy;
@@ -84,28 +83,5 @@ class InvoiceFieldAccessPolicy extends PipelineFieldPolicy
     protected static function alwaysVisibleSections(): array
     {
         return ['ledger'];
-    }
-
-    /**
-     * Guard adicional sobre la base: si el status no es un valor válido del
-     * enum, retorna vacío (la base ya lo hace por canOperate(false), pero el
-     * guard explícito documenta la intención).
-     */
-    final public function getEditableFields(int $roleId, string $status): array
-    {
-        if (PipelineStatus::tryFrom($status) === null) {
-            return [];
-        }
-
-        return parent::getEditableFields($roleId, $status);
-    }
-
-    /**
-     * @return array Secciones colapsables — contrato heredado del audit previo;
-     * no se usa hoy pero el caller (`InvoicePipelineService`) lo invoca.
-     */
-    public function getCollapsibleSections(int $roleId, string $status): array
-    {
-        return [];
     }
 }

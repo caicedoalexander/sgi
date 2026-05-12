@@ -34,7 +34,7 @@ use App\Service\Interface\MailerInterface;
 use App\Service\Interface\SpreadsheetReaderInterface;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
-use App\Service\InvoiceFieldAccessPolicy;
+use App\Service\Pipeline\Invoice\Policy\InvoiceFieldAccessPolicy;
 use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoiceLockPolicy;

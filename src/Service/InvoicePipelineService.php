@@ -13,6 +13,7 @@ use App\Model\Entity\Invoice;
 use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
+use App\Service\Pipeline\Invoice\Policy\InvoiceFieldAccessPolicy;
 use App\ValueObject\UserContext;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
@@ -64,11 +65,6 @@ class InvoicePipelineService
         $sections = $this->fieldPolicy->getVisibleSections($roleId, $status);
 
         return $this->docTypePolicies->for($documentType)->filterVisibleSections($sections);
-    }
-
-    public function getCollapsibleSections(int $roleId, string $status): array
-    {
-        return $this->fieldPolicy->getCollapsibleSections($roleId, $status);
     }
 
     public function isRejected(object $invoice): bool

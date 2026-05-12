@@ -82,7 +82,6 @@ final class InvoiceEditViewModel implements EditViewModelInterface
         // Campos editables y secciones
         public readonly array $editableFields,
         public readonly array $visibleSections,
-        public readonly array $collapsibleSections,
 
         // Avance / retroceso
         public readonly array $advanceErrors,
@@ -178,19 +177,7 @@ final class InvoiceEditViewModel implements EditViewModelInterface
         $this->editableSectionKeys = $editable;
         $this->readOnlySectionKeys = $readOnly;
 
-        $nonCollapsibleEditable = array_values(array_filter(
-            $editable,
-            fn($s) => !in_array($s, $collapsibleSections, true),
-        ));
-        $collapsibleEditable = array_values(array_filter(
-            $editable,
-            fn($s) => in_array($s, $collapsibleSections, true),
-        ));
-        $this->renderOrder = array_merge(
-            $nonCollapsibleEditable,
-            $collapsibleEditable,
-            $readOnly,
-        );
+        $this->renderOrder = array_merge($editable, $readOnly);
 
         // ── Botón de submit ──────────────────────────────────────────────
         $this->submitButtonClass = 'btn btn-primary';
@@ -204,11 +191,6 @@ final class InvoiceEditViewModel implements EditViewModelInterface
     public function isReadOnlySection(string $section): bool
     {
         return in_array($section, $this->readOnlySectionKeys, true);
-    }
-
-    public function isCollapsibleSection(string $section): bool
-    {
-        return in_array($section, $this->collapsibleSections, true);
     }
 
     public function canEditField(string $field): bool

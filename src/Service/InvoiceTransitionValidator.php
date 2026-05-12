@@ -9,6 +9,7 @@ use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
+use App\Service\Pipeline\Invoice\Policy\InvoiceFieldAccessPolicy;
 use App\ValueObject\UserContext;
 
 /**

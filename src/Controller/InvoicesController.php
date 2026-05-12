@@ -404,7 +404,6 @@ class InvoicesController extends AppController
             roleName: $roleName,
             editableFields: $editableFields,
             visibleSections: $this->pipeline->getVisibleSections($roleId, $currentStatus, $invoice->document_type),
-            collapsibleSections: $this->pipeline->getCollapsibleSections($roleId, $currentStatus),
             advanceErrors: $advanceErrors,
             nextStatus: $nextStatus,
             previousStatus: $this->pipeline->getPreviousStatus($currentStatus),
