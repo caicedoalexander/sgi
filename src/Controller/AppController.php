@@ -12,6 +12,7 @@ use Cake\Core\ContainerInterface;
 use Cake\Event\EventInterface;
 use Cake\Http\Exception\ForbiddenException;
 use Cake\Http\Response;
+use LogicException;
 use RuntimeException;
 
 class AppController extends Controller
@@ -112,11 +113,16 @@ class AppController extends Controller
     protected function _actionToPermission(string $action): string
     {
         return match ($action) {
-            'index', 'view', 'export', 'exportConfig', 'all', 'rejected', 'exportPdf', 'preview', 'active', 'activeEvents', 'allEvents', 'legalization', 'downloadDocument' => 'view',
-            'add', 'addFolder', 'uploadDocument', 'import', 'importExcel', 'importUpload', 'importProcess', 'previewImport', 'confirmImport', 'addItem', 'uploadAttachment', 'addPayment' => 'add',
-            'edit', 'advanceStatus', 'regressStatus', 'addObservation', 'testSmtp', 'regenerateApiKey', 'approve', 'reject', 'deactivate', 'saveFields', 'removeInvoice', 'advance', 'advanceGroup', 'addSignature', 'assignLiquidation', 'getFlags', 'authorizePayment', 'confirmPayment', 'confirmRefundPayment', 'rejectPayment', 'editPayment', 'sendApprovalLinks', 'modifyApprovers', 'resetFlow', 'upload', 'linkInvoices', 'linkCandidates', 'unlinkInvoice', 'uploadRelationDocument', 'markSigned', 'markExact', 'registerShortage', 'registerSurplus', 'confirmShortage', 'registerRefund', 'moveToRevision', 'returnToValidacion', 'retry', 'retryAllFailed' => 'edit',
+            'index', 'view', 'export', 'exportConfig', 'all', 'rejected', 'exportPdf', 'preview', 'active', 'activeEvents', 'allEvents', 'legalization', 'downloadDocument', 'pendingLegalization', 'overdue', 'pending' => 'view',
+            'add', 'addFolder', 'uploadDocument', 'import', 'importExcel', 'importUpload', 'importProcess', 'previewImport', 'confirmImport', 'addItem', 'uploadAttachment', 'addPayment', 'uploadLiquidationDocument' => 'add',
+            'edit', 'advanceStatus', 'regressStatus', 'addObservation', 'testSmtp', 'regenerateApiKey', 'approve', 'reject', 'deactivate', 'saveFields', 'removeInvoice', 'advance', 'advanceGroup', 'addSignature', 'assignLiquidation', 'getFlags', 'authorizePayment', 'confirmPayment', 'confirmRefundPayment', 'rejectPayment', 'editPayment', 'sendApprovalLinks', 'modifyApprovers', 'resetFlow', 'upload', 'linkInvoices', 'linkCandidates', 'unlinkInvoice', 'uploadRelationDocument', 'markSigned', 'markExact', 'registerShortage', 'registerSurplus', 'confirmShortage', 'registerRefund', 'moveToRevision', 'returnToValidacion', 'retry', 'retryAllFailed', 'resendApproval', 'updateLiquidationDocument' => 'edit',
             'delete', 'deleteDocument', 'removeItem', 'deleteAttachment' => 'delete',
-            default => 'view',
+            default => throw new LogicException(sprintf(
+                "Action '%s' has no permission mapping in AppController::_actionToPermission(). " .
+                'Register it explicitly in the match, add it to the controller\'s $pipelineActions, ' .
+                'or extend the bypass in _enforcePermission().',
+                $action,
+            )),
         };
     }
 
