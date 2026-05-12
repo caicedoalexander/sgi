@@ -60,6 +60,7 @@ use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashService;
 use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
+use App\Service\Pipeline\Invoice\Policy\InvoiceActionPolicy;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
 use App\Service\Pipeline\Invoice\LinkedInvoiceLegalizer;
 use App\Service\Pipeline\Invoice\Policy\AnticipoDocumentTypePolicy;
@@ -72,8 +73,12 @@ use App\Service\Pipeline\Invoice\State\LegalizadaState;
 use App\Service\Pipeline\Invoice\State\PagadaState;
 use App\Service\Pipeline\Invoice\State\TesoreriaState;
 use App\Service\Pipeline\Invoice\State\VerificacionPagoState;
+use App\Service\Pipeline\Novelty\Policy\NoveltyActionPolicy;
 use App\Service\Pipeline\Novelty\Policy\NoveltyFieldAccessPolicy;
+use App\Service\Pipeline\PaymentScheduling\Policy\PaymentSchedulingActionPolicy;
+use App\Service\Pipeline\PettyCash\Policy\PettyCashActionPolicy;
 use App\Service\Pipeline\PettyCash\Policy\PettyCashFieldAccessPolicy;
+use App\Service\Pipeline\Refund\Policy\RefundActionPolicy;
 use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\PipelineAuthorizationService;
 use App\Service\RefundDocumentService;
@@ -242,6 +247,16 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 AdvanceLegalizationDocumentService::class,
             ]);
         $container->addShared(AdvanceLegalizationActionPolicy::class)
+            ->addArgument(AuthorizationFacade::class);
+        $container->addShared(InvoiceActionPolicy::class)
+            ->addArgument(AuthorizationFacade::class);
+        $container->addShared(NoveltyActionPolicy::class)
+            ->addArgument(AuthorizationFacade::class);
+        $container->addShared(PaymentSchedulingActionPolicy::class)
+            ->addArgument(AuthorizationFacade::class);
+        $container->addShared(PettyCashActionPolicy::class)
+            ->addArgument(AuthorizationFacade::class);
+        $container->addShared(RefundActionPolicy::class)
             ->addArgument(AuthorizationFacade::class);
         $container->addShared(InvoicePipelineService::class)
             ->addArguments([
