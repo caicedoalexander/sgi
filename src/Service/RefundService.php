@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\Domain\Refund\PipelineStatus as RefundPipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
@@ -355,15 +356,32 @@ class RefundService
      */
     public function canRegress(int $roleId, string $currentStatus): bool
     {
-        if ($this->getPreviousStatus($currentStatus) === null) {
-            return false;
+        $stub = new Refund(['status' => $currentStatus]);
+        $stub->setNew(false);
+
+        return $this->denialReasonForRegress($stub, $roleId) === null;
+    }
+
+    /**
+     * Retorna el motivo por el que el reintegro no puede regresar, o null si puede.
+     */
+    public function denialReasonForRegress(Refund $refund, int $roleId): ?DenialReason
+    {
+        if ($this->getPreviousStatus($refund->status) === null) {
+            return DenialReason::TERMINAL_STATE;
         }
 
-        return $this->pipelineAuth->canOperate(
-            $roleId,
-            PipelineStepConstants::PIPELINE_REFUNDS,
-            $currentStatus,
-        );
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                PipelineStepConstants::PIPELINE_REFUNDS,
+                $refund->status,
+            )
+        ) {
+            return DenialReason::UNAUTHORIZED;
+        }
+
+        return null;
     }
 
     /**

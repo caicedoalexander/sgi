@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\Domain\PaymentScheduling\PipelineStatus;
+use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\InvoiceConstants;
 use App\Constants\PaymentSchedulingConstants;
 use App\Constants\PipelineStepConstants;
@@ -54,15 +55,10 @@ class PaymentSchedulingService
 
     public function canAdvance(int $roleId, string $currentStatus): bool
     {
-        if ($this->getNextStatus($currentStatus) === null) {
-            return false;
-        }
+        $stub = new PaymentScheduling(['pipeline_status' => $currentStatus]);
+        $stub->setNew(false);
 
-        return $this->pipelineAuth->canOperate(
-            $roleId,
-            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
-            $currentStatus,
-        );
+        return $this->denialReasonForAdvance($stub, $roleId) === null;
     }
 
     public function canReject(int $roleId, string $currentStatus): bool
@@ -80,15 +76,54 @@ class PaymentSchedulingService
 
     public function canRegress(int $roleId, string $currentStatus): bool
     {
-        if ($this->getPreviousStatus($currentStatus) === null) {
-            return false;
+        $stub = new PaymentScheduling(['pipeline_status' => $currentStatus]);
+        $stub->setNew(false);
+
+        return $this->denialReasonForRegress($stub, $roleId) === null;
+    }
+
+    /**
+     * Retorna el motivo por el que la programación no puede avanzar, o null si puede.
+     */
+    public function denialReasonForAdvance(PaymentScheduling $scheduling, int $roleId): ?DenialReason
+    {
+        if ($this->getNextStatus($scheduling->pipeline_status) === null) {
+            return DenialReason::TERMINAL_STATE;
         }
 
-        return $this->pipelineAuth->canOperate(
-            $roleId,
-            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
-            $currentStatus,
-        );
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+                $scheduling->pipeline_status,
+            )
+        ) {
+            return DenialReason::UNAUTHORIZED;
+        }
+
+        return null;
+    }
+
+    /**
+     * Retorna el motivo por el que la programación no puede regresar, o null si puede.
+     */
+    public function denialReasonForRegress(PaymentScheduling $scheduling, int $roleId): ?DenialReason
+    {
+        if ($this->getPreviousStatus($scheduling->pipeline_status) === null) {
+            return DenialReason::TERMINAL_STATE;
+        }
+
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
+                $scheduling->pipeline_status,
+            )
+        ) {
+            return DenialReason::UNAUTHORIZED;
+        }
+
+        return null;
     }
 
     public function validateTransitionRequirements(PaymentScheduling $scheduling, string $fromStatus): array

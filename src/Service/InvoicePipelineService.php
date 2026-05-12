@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\Domain\Invoice\PipelineStatus;
+use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Event\InvoicePaidEvent;
@@ -119,15 +120,38 @@ class InvoicePipelineService
 
     public function canAdvance(int $roleId, string $currentStatus, ?string $documentType = null): bool
     {
-        if ($this->getNextStatus($currentStatus, $documentType) === null) {
-            return false;
+        $stub = new Invoice([
+            'pipeline_status' => $currentStatus,
+            'document_type' => $documentType,
+        ]);
+        $stub->setNew(false);
+
+        return $this->denialReasonForAdvance($stub, $roleId) === null;
+    }
+
+    /**
+     * Retorna el motivo por el que la factura no puede avanzar, o null si puede.
+     *
+     * En commit 1 detecta sólo TERMINAL_STATE y UNAUTHORIZED. REJECTED y
+     * MISSING_FIELDS se añadirán en Task 7 al migrar callers.
+     */
+    public function denialReasonForAdvance(Invoice $invoice, int $roleId): ?DenialReason
+    {
+        if ($this->getNextStatus($invoice->pipeline_status, $invoice->document_type) === null) {
+            return DenialReason::TERMINAL_STATE;
         }
 
-        return $this->pipelineAuth->canOperate(
-            $roleId,
-            PipelineStepConstants::PIPELINE_INVOICES,
-            $currentStatus,
-        );
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                PipelineStepConstants::PIPELINE_INVOICES,
+                $invoice->pipeline_status,
+            )
+        ) {
+            return DenialReason::UNAUTHORIZED;
+        }
+
+        return null;
     }
 
     public function getNextStatus(string $currentStatus, ?string $documentType = null): ?string
@@ -174,15 +198,32 @@ class InvoicePipelineService
 
     public function canRegress(int $roleId, string $currentStatus): bool
     {
-        if ($this->getPreviousStatus($currentStatus) === null) {
-            return false;
+        $stub = new Invoice(['pipeline_status' => $currentStatus]);
+        $stub->setNew(false);
+
+        return $this->denialReasonForRegress($stub, $roleId) === null;
+    }
+
+    /**
+     * Retorna el motivo por el que la factura no puede regresar, o null si puede.
+     */
+    public function denialReasonForRegress(Invoice $invoice, int $roleId): ?DenialReason
+    {
+        if ($this->getPreviousStatus($invoice->pipeline_status) === null) {
+            return DenialReason::TERMINAL_STATE;
         }
 
-        return $this->pipelineAuth->canOperate(
-            $roleId,
-            PipelineStepConstants::PIPELINE_INVOICES,
-            $currentStatus,
-        );
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                PipelineStepConstants::PIPELINE_INVOICES,
+                $invoice->pipeline_status,
+            )
+        ) {
+            return DenialReason::UNAUTHORIZED;
+        }
+
+        return null;
     }
 
     /**

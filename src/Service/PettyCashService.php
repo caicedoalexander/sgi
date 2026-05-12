@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\Domain\PettyCash\PipelineStatus as PettyCashPipelineStatus;
+use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
@@ -231,21 +232,38 @@ class PettyCashService
      */
     public function canAdvance(int $roleId, string $currentStatus): bool
     {
-        $currentEnum = PettyCashPipelineStatus::tryFrom($currentStatus);
+        $stub = new PettyCashRecord(['status' => $currentStatus]);
+        $stub->setNew(false);
+
+        return $this->denialReasonForAdvance($stub, $roleId) === null;
+    }
+
+    /**
+     * Retorna el motivo por el que el registro no puede avanzar, o null si puede.
+     */
+    public function denialReasonForAdvance(PettyCashRecord $record, int $roleId): ?DenialReason
+    {
+        $currentEnum = PettyCashPipelineStatus::tryFrom($record->status);
         if ($currentEnum === null) {
-            return false;
+            return DenialReason::TERMINAL_STATE;
         }
 
         $state = $this->stateRegistry->get($currentEnum);
         if ($state->getNextStatus() === null) {
-            return false;
+            return DenialReason::TERMINAL_STATE;
         }
 
-        return $this->pipelineAuth->canOperate(
-            $roleId,
-            PipelineStepConstants::PIPELINE_PETTY_CASH,
-            $currentStatus,
-        );
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                PipelineStepConstants::PIPELINE_PETTY_CASH,
+                $record->status,
+            )
+        ) {
+            return DenialReason::UNAUTHORIZED;
+        }
+
+        return null;
     }
 
     /**
@@ -709,15 +727,32 @@ class PettyCashService
      */
     public function canRegress(int $roleId, string $currentStatus): bool
     {
-        if ($this->getPreviousStatus($currentStatus) === null) {
-            return false;
+        $stub = new PettyCashRecord(['status' => $currentStatus]);
+        $stub->setNew(false);
+
+        return $this->denialReasonForRegress($stub, $roleId) === null;
+    }
+
+    /**
+     * Retorna el motivo por el que el registro no puede regresar, o null si puede.
+     */
+    public function denialReasonForRegress(PettyCashRecord $record, int $roleId): ?DenialReason
+    {
+        if ($this->getPreviousStatus($record->status) === null) {
+            return DenialReason::TERMINAL_STATE;
         }
 
-        return $this->pipelineAuth->canOperate(
-            $roleId,
-            PipelineStepConstants::PIPELINE_PETTY_CASH,
-            $currentStatus,
-        );
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                PipelineStepConstants::PIPELINE_PETTY_CASH,
+                $record->status,
+            )
+        ) {
+            return DenialReason::UNAUTHORIZED;
+        }
+
+        return null;
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\Domain\Novelty\PipelineStatus as NoveltyPipelineStatus;
+use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Model\Entity\EmployeeNovelty;
@@ -457,6 +458,30 @@ class NoveltyService
             PipelineStepConstants::PIPELINE_NOVELTIES,
             $status,
         );
+    }
+
+    /**
+     * Retorna el motivo por el que la novedad no puede avanzar, o null si puede.
+     *
+     * En commit 1 detecta sólo TERMINAL_STATE y UNAUTHORIZED.
+     */
+    public function denialReasonForAdvance(EmployeeNovelty $novelty, int $roleId): ?DenialReason
+    {
+        if ($this->getNextStatus($novelty) === null) {
+            return DenialReason::TERMINAL_STATE;
+        }
+
+        if (
+            !$this->pipelineAuth->canOperate(
+                $roleId,
+                PipelineStepConstants::PIPELINE_NOVELTIES,
+                (string)$novelty->pipeline_status,
+            )
+        ) {
+            return DenialReason::UNAUTHORIZED;
+        }
+
+        return null;
     }
 
     /**
