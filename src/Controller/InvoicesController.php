@@ -26,6 +26,7 @@ use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
+use App\Service\Pipeline\Invoice\Policy\InvoiceActionPolicy;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
@@ -48,6 +49,8 @@ class InvoicesController extends AppController
 
     private InvoicePaymentService $paymentService;
 
+    private InvoiceActionPolicy $actionPolicy;
+
     public function initialize(): void
     {
         parent::initialize();
@@ -57,6 +60,7 @@ class InvoicesController extends AppController
         $this->documentService = $container->get(InvoiceDocumentService::class);
         $this->approvalService = $container->get(InvoiceApprovalService::class);
         $this->paymentService = $container->get(InvoicePaymentService::class);
+        $this->actionPolicy = $container->get(InvoiceActionPolicy::class);
     }
 
     private function _getCurrentUser(): object
@@ -357,22 +361,9 @@ class InvoicesController extends AppController
         }
 
         $canRegress = $this->pipeline->denialReasonForRegress($invoice, $roleId) === null;
-        $userContext = $this->_userContext();
-        $canConfirmPayment = $this->authFacade->canOperate(
-            $userContext,
-            PipelineStepConstants::PIPELINE_INVOICES,
-            InvoiceConstants::STATUS_VERIFICACION_PAGO,
-        );
-        $canRegisterPayment = $this->authFacade->canOperate(
-            $userContext,
-            PipelineStepConstants::PIPELINE_INVOICES,
-            InvoiceConstants::STATUS_TESORERIA,
-        ) && $currentStatus === InvoiceConstants::STATUS_TESORERIA;
-        $canAuthorizePayment = $this->authFacade->canOperate(
-            $userContext,
-            PipelineStepConstants::PIPELINE_INVOICES,
-            InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-        ) && $currentStatus === InvoiceConstants::STATUS_AUTORIZACION_PAGO;
+        $canConfirmPayment = $this->actionPolicy->canConfirmPayment($invoice, $roleId);
+        $canRegisterPayment = $this->actionPolicy->canRegisterPayment($invoice, $roleId);
+        $canAuthorizePayment = $this->actionPolicy->canAuthorizePayment($invoice, $roleId);
         $hasAnyActiveApprovals = $this->approvalService->hasAnyActiveApprovals($invoice->id);
         $isApprovalEditableState = $currentStatus === InvoiceConstants::STATUS_APROBACION && !empty($editableFields);
         $dropdowns = $this->_getFormDropdowns();
