@@ -354,14 +354,6 @@ class RefundService
     /**
      * Returns true if the role can regress the record from the current status.
      */
-    public function canRegress(int $roleId, string $currentStatus): bool
-    {
-        $stub = new Refund(['status' => $currentStatus]);
-        $stub->setNew(false);
-
-        return $this->denialReasonForRegress($stub, $roleId) === null;
-    }
-
     /**
      * Retorna el motivo por el que el reintegro no puede regresar, o null si puede.
      */

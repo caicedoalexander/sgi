@@ -449,21 +449,7 @@ class NoveltyService
     }
 
     /**
-     * Check if a role can advance from a given status.
-     */
-    public function canAdvanceFromStatus(int $roleId, string $status): bool
-    {
-        return $this->pipelineAuth->canOperate(
-            $roleId,
-            PipelineStepConstants::PIPELINE_NOVELTIES,
-            $status,
-        );
-    }
-
-    /**
      * Retorna el motivo por el que la novedad no puede avanzar, o null si puede.
-     *
-     * En commit 1 detecta sólo TERMINAL_STATE y UNAUTHORIZED.
      */
     public function denialReasonForAdvance(EmployeeNovelty $novelty, int $roleId): ?DenialReason
     {

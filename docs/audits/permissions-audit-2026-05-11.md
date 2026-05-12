@@ -37,15 +37,15 @@
 | ID | Severidad | Hallazgo | Estado | Resuelto en |
 |----|-----------|----------|--------|-------------|
 | PA-001 | 🔴 Critical | `_actionToPermission` cae a `'view'` por defecto cuando una acción no está mapeada → over-permission silencioso | ✅ Resuelto | commit `0d84bd7` (2026-05-12) |
-| PA-002 | 🔴 Critical | 3 lugares sin chequeo para registrar una acción de pipeline (`$pipelineActions`, `_actionToPermission`, llamada manual a `canOperate`) | ⏳ Pendiente | — |
+| PA-002 | 🔴 Critical | 3 lugares sin chequeo para registrar una acción de pipeline (`$pipelineActions`, `_actionToPermission`, llamada manual a `canOperate`) | ✅ Resuelto | commits `882718a..a903f54` (2026-05-12) |
 | PA-003 | 🟠 Major | `$roleName` declarado y propagado en 55 call-sites pero nunca consultado (cleanup 2026-05-02 inacabado) | ✅ Resuelto | PR #4 / commit `1c73514` (2026-05-12) |
 | PA-004 | 🟠 Major | `AuthorizationService` y `PipelineAuthorizationService` duplican shape (cache, matrix, save, isAllowed/canOperate) sin contrato común | ⏳ Pendiente | — |
-| PA-005 | 🟠 Major | `canAdvance(...)` y `canRegress(...)` mezclan "no hay next/previous" con "rol sin permiso" en el mismo `bool` | ⏳ Pendiente | — |
-| PA-006 | 🟠 Major | `$pipelineActions` declarado per-controller; añadir una acción nueva exige tocarlo + recordar el patrón | ⏳ Pendiente | — |
+| PA-005 | 🟠 Major | `canAdvance(...)` y `canRegress(...)` mezclan "no hay next/previous" con "rol sin permiso" en el mismo `bool` | ✅ Resuelto | commits `882718a..e9551aa` (2026-05-12) |
+| PA-006 | 🟠 Major | `$pipelineActions` declarado per-controller; añadir una acción nueva exige tocarlo + recordar el patrón | ✅ Resuelto | commit `a903f54` (2026-05-12) |
 | PA-007 | 🟡 Minor | `ADMIN_BYPASS_MODULES` ejecuta lógica en `isAllowed` y se re-aplica en `AppController::_setUserPermissions` para el sidebar | ⏳ Pendiente | — |
 | PA-008 | 🟡 Minor | `InvoiceFieldAccessPolicy::SECTION_BY_STEP` (string) vs `NoveltyService::SECTIONS_BY_STEP` (array) — divergencia gratuita | ⏳ Pendiente | — |
 | PA-009 | 🟡 Minor | `RolesController::add` llama `getPermissionsMatrix(0)` con `role_id` inexistente; funciona porque `?? false` casts a `false` | ⏳ Pendiente | — |
-| PA-010 | 🟡 Minor | `_actionToPermission` agrupa 35+ acciones en un `match` plano que vive en `AppController`; cada acción nueva en cualquier controller exige tocar la base | ⏳ Pendiente | — |
+| PA-010 | 🟡 Minor | `_actionToPermission` agrupa 35+ acciones en un `match` plano que vive en `AppController`; cada acción nueva en cualquier controller exige tocar la base | ✅ Resuelto | commit `a903f54` (2026-05-12) |
 | PA-011 | 🟡 Minor | `AdvanceLegalizationActionPolicy` modela bien el Policy pattern; Refund/PettyCash/Invoice/Novelty/PaymentScheduling siguen llamando `canOperate` inline → dos estilos coexistiendo | ⏳ Pendiente | — |
 | PA-012 | 🟢 Sugerencia | 6 services hacen `$pipelineAuth ?? new PipelineAuthorizationService()`; cada instancia tiene su propia cache si el DI falla | ⏳ Pendiente | — |
 | PA-013 | 🟢 Sugerencia | Cache de `private array $cache` depende del scope per-request del contenedor de DI; no documentado en el docblock | ⏳ Pendiente | — |
@@ -88,7 +88,11 @@ Cambiar `default => 'view'` por `default => throw new \LogicException("Action '$
 
 ---
 
-## PA-002 — 3 lugares sin chequeo para registrar una acción de pipeline 🔴
+## PA-002 — 3 lugares sin chequeo para registrar una acción de pipeline 🔴 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** commits `882718a` (DenialReason + `denialReasonForAdvance/Regress` en 5 services) → `3121ccc` (atributos `#[Permission]`/`#[PipelineAction]`/`#[NoAuthGate]`) → `9cb056c` (`_enforcePermission` lee atributos con fallback legacy) → `c354119` (anotar 22 controllers no-pipeline) → `dcf0710` (anotar 7 controllers de pipeline) → `a903f54` (punto de no retorno: eliminar `$pipelineActions`, `_actionToPermission`, rama legacy). Resultado: ahora cada acción nueva exige **un solo lugar** (`#[Permission(...)]` o `#[PipelineAction(...)]` sobre el método); olvidarlo lanza `LogicException 500` en el primer hit (loud-and-clear). Validación manual: `bin/cake routes` carga sin errores; sintaxis OK en todos los archivos editados.
+
+
 
 **Ubicación:** `src/Controller/AppController.php:73,197` + cada controller pipeline (`InvoicesController.php:48-51`, `RefundsController.php:34-45`, `PettyCashRecordsController.php:34-41`, `PaymentSchedulingsController.php:35-40`, `InvoicePaymentsController.php:21-28`, `LiquidationDocPaymentsController.php:21-26`, `AdvancesController.php:33-41`).
 
@@ -202,7 +206,11 @@ Una sola fachada inyectable que internamente delega a los dos services actuales.
 
 ---
 
-## PA-005 — `canAdvance`/`canRegress` mezclan motivos 🟠
+## PA-005 — `canAdvance`/`canRegress` mezclan motivos 🟠 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** commits `882718a` (enum `DenialReason` + métodos `denialReasonForAdvance/Regress` en `InvoicePipelineService`/`PettyCashService`/`PaymentSchedulingService`/`RefundService`/`NoveltyService`) → `e9551aa` (migrar callers externos + internos a `denialReasonFor*`) → `<commit_task8>` (eliminar métodos legacy `canAdvance`/`canRegress`/`canAdvanceFromStatus`/`canReject` de los 5 services). Resultado: el caller recibe `null` (puede operar) o un caso enum (`TERMINAL_STATE`/`UNAUTHORIZED`/`REJECTED`/`MISSING_FIELDS`) con `->message()` listo para Flash. Cero ambigüedad. `InvoicePipelineService::denialReasonForAdvance` detecta `REJECTED` en línea con la regla "facturas rechazadas no avanzan ni regresan". `PaymentSchedulingService::canReject` se inlineó en los 2 callers (chequeo trivial: status === STATUS_AUTORIZACION_PAGO && canOperate).
+
+
 
 **Ubicación:** `src/Service/InvoicePipelineService.php:121-189` (también `RefundService::canRegress:358`, `NoveltyService::canAdvanceFromStatus:457`, `PaymentSchedulingService::canRegress:84`).
 
@@ -239,7 +247,11 @@ public function denialReasonForAdvance(UserContext $u, Invoice $i): ?DenialReaso
 
 ---
 
-## PA-006 — `pipelineActions` repetido en cada controller 🟠
+## PA-006 — `pipelineActions` repetido en cada controller 🟠 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** efecto colateral del refactor PA-002. El commit `a903f54` eliminó la propiedad `protected array $pipelineActions` de los 7 controllers de pipeline (`InvoicesController`, `InvoicePaymentsController`, `LiquidationDocPaymentsController`, `PettyCashRecordsController`, `RefundsController`, `PaymentSchedulingsController`, `AdvancesController`) y la declaración base `$pipelineActions = []` en `AppController`. Sustituidos por `#[PipelineAction(pipeline: ..., step: ...)]` directamente sobre cada método.
+
+
 
 **Ubicación:** 8 controllers (ver PA-002).
 
@@ -333,7 +345,11 @@ Añadir método explícito `PipelineAuthorizationService::getEmptyMatrix(): arra
 
 ---
 
-## PA-010 — `_actionToPermission` lista plana de 35+ acciones 🟡
+## PA-010 — `_actionToPermission` lista plana de 35+ acciones 🟡 ✅ Resuelto (2026-05-12)
+
+> **Cierre:** efecto colateral del refactor PA-002. El commit `a903f54` eliminó el método `_actionToPermission` completo de `AppController`. El mapeo de acción → permiso CRUD ahora se declara por método con `#[Permission(action: 'view'|'add'|'edit'|'delete')]`, distribuyendo la decisión al sitio donde vive la acción (no en una tabla central de 35+ entradas).
+
+
 
 **Ubicación:** `src/Controller/AppController.php:112-121` (línea de `'edit'` tiene >30 acciones inline).
 

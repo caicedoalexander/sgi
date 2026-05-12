@@ -118,17 +118,6 @@ class InvoicePipelineService
         return $this->transitionValidator->filterErrorsForRole($errors, $rules, $roleId, $status);
     }
 
-    public function canAdvance(int $roleId, string $currentStatus, ?string $documentType = null): bool
-    {
-        $stub = new Invoice([
-            'pipeline_status' => $currentStatus,
-            'document_type' => $documentType,
-        ]);
-        $stub->setNew(false);
-
-        return $this->denialReasonForAdvance($stub, $roleId) === null;
-    }
-
     /**
      * Retorna el motivo por el que la factura no puede avanzar, o null si puede.
      */
@@ -195,14 +184,6 @@ class InvoicePipelineService
         }
 
         return $this->states->get($currentEnum)->getPreviousStatus()?->value;
-    }
-
-    public function canRegress(int $roleId, string $currentStatus): bool
-    {
-        $stub = new Invoice(['pipeline_status' => $currentStatus]);
-        $stub->setNew(false);
-
-        return $this->denialReasonForRegress($stub, $roleId) === null;
     }
 
     /**

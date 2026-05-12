@@ -230,14 +230,6 @@ class PettyCashService
      * @param string $currentStatus Current pipeline status.
      * @return bool
      */
-    public function canAdvance(int $roleId, string $currentStatus): bool
-    {
-        $stub = new PettyCashRecord(['status' => $currentStatus]);
-        $stub->setNew(false);
-
-        return $this->denialReasonForAdvance($stub, $roleId) === null;
-    }
-
     /**
      * Retorna el motivo por el que el registro no puede avanzar, o null si puede.
      */
@@ -726,14 +718,6 @@ class PettyCashService
     /**
      * Returns true if the role can regress the record from the current status.
      */
-    public function canRegress(int $roleId, string $currentStatus): bool
-    {
-        $stub = new PettyCashRecord(['status' => $currentStatus]);
-        $stub->setNew(false);
-
-        return $this->denialReasonForRegress($stub, $roleId) === null;
-    }
-
     /**
      * Retorna el motivo por el que el registro no puede regresar, o null si puede.
      */

@@ -53,35 +53,6 @@ class PaymentSchedulingService
         return PaymentSchedulingConstants::BACKWARD_TRANSITIONS[$currentStatus] ?? null;
     }
 
-    public function canAdvance(int $roleId, string $currentStatus): bool
-    {
-        $stub = new PaymentScheduling(['pipeline_status' => $currentStatus]);
-        $stub->setNew(false);
-
-        return $this->denialReasonForAdvance($stub, $roleId) === null;
-    }
-
-    public function canReject(int $roleId, string $currentStatus): bool
-    {
-        if ($currentStatus !== PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO) {
-            return false;
-        }
-
-        return $this->pipelineAuth->canOperate(
-            $roleId,
-            PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS,
-            $currentStatus,
-        );
-    }
-
-    public function canRegress(int $roleId, string $currentStatus): bool
-    {
-        $stub = new PaymentScheduling(['pipeline_status' => $currentStatus]);
-        $stub->setNew(false);
-
-        return $this->denialReasonForRegress($stub, $roleId) === null;
-    }
-
     /**
      * Retorna el motivo por el que la programación no puede avanzar, o null si puede.
      */
