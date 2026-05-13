@@ -4,6 +4,7 @@
  * @var \App\ViewModel\RefundEditViewModel $viewModel
  * @var \App\Model\Entity\User|null $currentUser
  */
+use App\Constants\RefundConstants;
 
 $this->assign('title', $viewModel->pageTitle);
 
