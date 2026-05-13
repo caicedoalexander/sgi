@@ -171,7 +171,7 @@ if (!empty($noveltyType->novelty_type_contract_templates)) {
             + buildOptions(temporaryOrgs, '-- Seleccione --') + '</select></td>'
             + '<td><select name="' + prefix + '[leave_document_template_id]" class="form-select form-select-sm">'
             + buildOptions(documentTemplates, '-- Seleccione --') + '</select></td>'
-            + '<td><button type="button" class="btn btn-sm btn-outline-danger ct-remove-row"><i class="bi bi-trash" aria-hidden="true"></i></button></td>';
+            + '<td><button type="button" class="btn btn-sm btn-outline-danger ct-remove-row" aria-label="Eliminar fila" title="Eliminar fila"><i class="bi bi-trash" aria-hidden="true"></i></button></td>';
 
         tbody.appendChild(tr);
 

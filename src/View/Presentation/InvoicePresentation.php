@@ -34,6 +34,18 @@ final class InvoicePresentation
         InvoiceConstants::STATUS_LEGALIZADA        => 'bi-cash-coin',
     ];
 
+    /** Mapping para el campo area_approval. Default no listado: 'bg-secondary'. */
+    public const APPROVAL_BADGES = [
+        InvoiceConstants::APPROVAL_APPROVED => 'bg-success',
+        InvoiceConstants::APPROVAL_REJECTED => 'bg-danger',
+    ];
+
+    /** Mapping para el campo dian_validation. Default no listado: 'bg-secondary'. */
+    public const DIAN_BADGES = [
+        InvoiceConstants::DIAN_APPROVED => 'bg-success',
+        InvoiceConstants::DIAN_REJECTED => 'bg-danger',
+    ];
+
     /**
      * Construye el DTO de fila para Invoices/index.
      * Encapsula todas las derivaciones de estado que antes vivían inline en el

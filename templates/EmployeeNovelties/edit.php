@@ -5,6 +5,9 @@
  * @var \App\Model\Entity\User|null $currentUser
  */
 
+use App\Constants\NoveltyConstants;
+use App\View\Presentation\NoveltyPresentation;
+
 $this->assign('title', $viewModel->pageTitle);
 
 // Alias locales para mantener el markup corto.
@@ -203,13 +206,7 @@ $totalDocs          = $viewModel->totalDocs;
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Estado Aprobación</div>
                 <div class="sgi-ledger-value">
-                    <?php
-                    $approvalBadge = match($novelty->area_approval) {
-                        NoveltyConstants::APPROVAL_APPROVED => 'bg-success',
-                        NoveltyConstants::APPROVAL_REJECTED => 'bg-danger',
-                        default => 'bg-warning text-dark',
-                    };
-                    ?>
+                    <?php $approvalBadge = NoveltyPresentation::APPROVAL_BADGES[$novelty->area_approval] ?? 'bg-warning text-dark'; ?>
                     <span class="badge <?= $approvalBadge ?>"><?= h($novelty->area_approval) ?></span>
                 </div>
             </div>

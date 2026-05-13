@@ -43,7 +43,7 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                 'value' => $email,
             ]) ?>
         </div>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i></button>
+        <button type="submit" class="btn btn-primary" aria-label="Buscar"><i class="bi bi-search" aria-hidden="true"></i></button>
         <button type="button" class="btn btn-outline-dark" data-bs-toggle="collapse"
                 data-bs-target="#emailLogFilters" title="Filtros avanzados">
             <i class="bi bi-funnel" aria-hidden="true"></i>

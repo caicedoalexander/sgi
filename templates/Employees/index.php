@@ -42,7 +42,7 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
                 'value' => $this->request->getQuery('search', ''),
             ]) ?>
         </div>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i></button>
+        <button type="submit" class="btn btn-primary" aria-label="Buscar"><i class="bi bi-search" aria-hidden="true"></i></button>
         <button type="button" class="btn btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#employeeFilters" title="Filtros avanzados">
             <i class="bi bi-funnel" aria-hidden="true"></i>
         </button>

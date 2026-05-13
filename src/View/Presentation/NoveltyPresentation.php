@@ -38,6 +38,12 @@ final class NoveltyPresentation
         NoveltyConstants::STATUS_PAGADA            => 'bi-cash-coin',
     ];
 
+    /** Mapping para el campo area_approval. Default no listado: 'bg-warning text-dark'. */
+    public const APPROVAL_BADGES = [
+        NoveltyConstants::APPROVAL_APPROVED => 'bg-success',
+        NoveltyConstants::APPROVAL_REJECTED => 'bg-danger',
+    ];
+
     /**
      * Paleta de colores para eventos del calendario de novedades, indexada por
      * ID del tipo de novedad (cycles modulo count cuando hay más tipos).

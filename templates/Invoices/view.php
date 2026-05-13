@@ -21,16 +21,8 @@ $ps = [
     InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-dark',
 ];
 
-$approvalClass = match($invoice->area_approval ?? '') {
-    InvoiceConstants::APPROVAL_APPROVED  => 'bg-success',
-    InvoiceConstants::APPROVAL_REJECTED => 'bg-danger',
-    default     => 'bg-secondary',
-};
-$dianClass = match($invoice->dian_validation ?? '') {
-    InvoiceConstants::DIAN_APPROVED  => 'bg-success',
-    InvoiceConstants::DIAN_REJECTED => 'bg-danger',
-    default     => 'bg-secondary',
-};
+$approvalClass = InvoicePresentation::APPROVAL_BADGES[$invoice->area_approval ?? ''] ?? 'bg-secondary';
+$dianClass = InvoicePresentation::DIAN_BADGES[$invoice->dian_validation ?? ''] ?? 'bg-secondary';
 ?>
 
 <?php if (($invoice->document_type ?? null) === \App\Constants\InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($invoice->advance_id)): ?>

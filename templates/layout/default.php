@@ -151,7 +151,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     <?= $this->Html->link(
                         '<i class="bi bi-box-arrow-right" aria-hidden="true"></i>',
                         ['controller' => 'Users', 'action' => 'logout'],
-                        ['class' => 'sgi-sidebar-logout', 'escape' => false],
+                        ['class' => 'sgi-sidebar-logout', 'escape' => false, 'aria-label' => 'Cerrar sesión', 'title' => 'Cerrar sesión'],
                     ) ?>
                 <?php endif; ?>
             </div>
