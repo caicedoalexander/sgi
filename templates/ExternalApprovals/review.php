@@ -23,13 +23,12 @@ $badgeMap = $entityType === 'employee_novelties'
 
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
+        <div class="sgi-icon-chip">
             <i class="bi bi-clipboard-check" aria-hidden="true"></i>
         </div>
         <div>
-            <div style="font-size:.95rem;font-weight:700;color:#111;">Solicitud de Aprobación</div>
-            <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+            <div class="sgi-card-title">Solicitud de Aprobación</div>
+            <div class="sgi-card-subtitle mt-1">
                 Enlace válido hasta <?= $tokenRecord->expires_at->format('d/m/Y H:i') ?>
             </div>
         </div>

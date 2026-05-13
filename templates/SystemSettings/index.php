@@ -14,13 +14,12 @@ $this->assign('title', 'Configuración del Sistema');
 
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
+        <div class="sgi-icon-chip">
             <i class="bi bi-envelope" aria-hidden="true"></i>
         </div>
         <div>
-            <div style="font-size:.95rem;font-weight:700;color:#111;">Configuración SMTP</div>
-            <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+            <div class="sgi-card-title">Configuración SMTP</div>
+            <div class="sgi-card-subtitle mt-1">
                 Servidor de correo para notificaciones del sistema
             </div>
         </div>
@@ -99,13 +98,12 @@ $this->assign('title', 'Configuración del Sistema');
 
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:36px;height:36px;background:var(--secondary-color);color:#fff;font-size:.9rem;">
+        <div class="sgi-icon-chip accent-secondary">
             <i class="bi bi-diagram-3" aria-hidden="true"></i>
         </div>
         <div>
-            <div style="font-size:.95rem;font-weight:700;color:#111;">Integración n8n</div>
-            <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+            <div class="sgi-card-title">Integración n8n</div>
+            <div class="sgi-card-subtitle mt-1">
                 URLs de webhooks para automatizaciones n8n
             </div>
         </div>
@@ -137,13 +135,12 @@ $this->assign('title', 'Configuración del Sistema');
 <?php $apiKey = $apiSettings['notifications_api_key'] ?? ''; ?>
 <div class="card card-primary mb-4">
     <div class="card-header d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:36px;height:36px;background:var(--bg-dark);color:#fff;font-size:.9rem;">
+        <div class="sgi-icon-chip accent-dark">
             <i class="bi bi-key" aria-hidden="true"></i>
         </div>
         <div>
-            <div style="font-size:.95rem;font-weight:700;color:#111;">API Key de Notificaciones</div>
-            <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+            <div class="sgi-card-title">API Key de Notificaciones</div>
+            <div class="sgi-card-subtitle mt-1">
                 Token usado por n8n para consultar <code>/api/notifications/pending</code> (header <code>X-Api-Key</code>)
             </div>
         </div>
@@ -174,7 +171,7 @@ $this->assign('title', 'Configuración del Sistema');
             <div class="d-flex gap-2 pt-3 mt-3" style="border-top:1px solid var(--border-color);">
                 <?= $this->Form->create(null, ['url' => ['action' => 'regenerateApiKey']]) ?>
                 <button type="submit" class="btn btn-outline-secondary"
-                        onclick="return confirm('¿Regenerar la API key? Tendrás que actualizar la credencial en n8n.');">
+                        data-sgi-confirm="¿Regenerar la API key? Tendrás que actualizar la credencial en n8n.">
                     <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Regenerar
                 </button>
                 <?= $this->Form->end() ?>

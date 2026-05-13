@@ -58,7 +58,7 @@ if ($isRejected) {
                 <div class="d-flex align-items-center gap-2 mt-2">
                     <button type="submit" form="sendApprovalLinksForm"
                             class="btn btn-primary btn-sm"
-                            onclick="return confirm('¿Enviar enlaces de aprobación a los aprobadores seleccionados?');">
+                            data-sgi-confirm="¿Enviar enlaces de aprobación a los aprobadores seleccionados?">
                         <i class="bi bi-send me-1" aria-hidden="true"></i>Enviar links
                     </button>
                     <span class="sgi-field-hint">Independiente del botón Guardar</span>

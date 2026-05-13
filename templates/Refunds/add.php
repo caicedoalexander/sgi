@@ -22,12 +22,11 @@ $this->assign('title', 'Nuevo Reintegro');
 
 <div class="card card-primary">
     <div class="card-header d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
+        <div class="sgi-icon-chip">
             <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
         </div>
         <div>
-            <div style="font-size:.95rem;font-weight:700;color:#111;">Crear Reintegro</div>
+            <div class="sgi-card-title">Crear Reintegro</div>
             <div style="font-size:.72rem;color:#aaa;">Seleccione el beneficiario del reintegro</div>
         </div>
     </div>

@@ -85,7 +85,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div class="sgi-pipeline-wrapper">
         <?= $this->element('pipeline_progress', [
             'pipelineStatuses' => $effectiveStatuses,
             'pipelineLabels' => $statusLabels,

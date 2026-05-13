@@ -55,15 +55,14 @@ $this->assign('title', h($viewModel->pageTitle));
     <!-- Cabecera: identificador + rol + estado -->
     <div class="card-header d-flex align-items-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
+            <div class="sgi-icon-chip">
                 <i class="bi bi-calendar2-check" aria-hidden="true"></i>
             </div>
             <div>
-                <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
+                <div class="sgi-card-title mono">
                     <?= h($viewModel->record->code) ?>
                 </div>
-                <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+                <div class="sgi-card-subtitle mt-1">
                     Rol: <strong style="color:#777;"><?= h($viewModel->roleName) ?></strong>
                 </div>
             </div>
@@ -72,7 +71,7 @@ $this->assign('title', h($viewModel->pageTitle));
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div class="sgi-pipeline-wrapper">
         <div class="d-flex align-items-center justify-content-between">
             <?php foreach (PaymentSchedulingConstants::PIPELINE_STATUSES as $i => $status): ?>
             <?php
@@ -106,7 +105,7 @@ $this->assign('title', h($viewModel->pageTitle));
     </div>
 
     <!-- Ficha resumen (ledger) -->
-    <div style="padding:1rem 1.5rem .75rem;">
+    <div class="sgi-ledger-wrapper">
         <div class="sgi-ledger">
             <div class="sgi-ledger-item" style="grid-column:span 2;">
                 <div class="sgi-ledger-label">Título</div>

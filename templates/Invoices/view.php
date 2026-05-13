@@ -134,7 +134,7 @@ $dianClass = match($invoice->dian_validation ?? '') {
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div class="sgi-pipeline-wrapper">
         <?= $this->element('pipeline_progress', [
             'currentStatus'    => $invoice->pipeline_status,
             'pipelineStatuses' => $pipelineStatuses,
@@ -233,6 +233,14 @@ $dianClass = match($invoice->dian_validation ?? '') {
                 } elseif ($isRegression) {
                     $avatarBg = '#CD6A15';
                 } else {
+                    $avatarBg = 'var(--primary-color)';
+                }
+                // Defensa contra CSS injection: aceptar solo tokens del whitelist.
+                // Hoy todos los valores son literales server-side, pero si un futuro
+                // cambio expone $avatarBg a datos de usuario, el style attribute se
+                // mantiene seguro.
+                $allowedAvatarBg = ['var(--danger-color)', '#469D61', '#CD6A15', 'var(--primary-color)'];
+                if (!in_array($avatarBg, $allowedAvatarBg, true)) {
                     $avatarBg = 'var(--primary-color)';
                 }
             ?>

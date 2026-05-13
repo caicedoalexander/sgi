@@ -64,7 +64,7 @@ $badgeLabel = $statusLabels[$doc->pipeline_status ?? ''] ?? ($doc->pipeline_stat
     </div>
     <div class="doc-actions sgi-doc-actions">
         <a class="btn btn-sm btn-outline-secondary" data-slot="open-link"
-           href="/<?= h($doc->file_path) ?>" target="_blank" title="Abrir">
+           href="/<?= h($doc->file_path) ?>" target="_blank" rel="noopener noreferrer" title="Abrir">
             <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
         </a>
         <?php if ($canDelete): ?>

@@ -2885,6 +2885,23 @@ input.currency-input:focus {
 .sgi-icon-chip.accent-secondary { background: var(--secondary-color); }
 .sgi-icon-chip.accent-dark { background: var(--bg-dark); }
 
+/* Wrapper gris del pipeline-progress dentro de las cards de detalle.
+   Sustituye el inline `style="background:var(--bg-muted);border-top:1px solid
+   var(--border-color);border-bottom:1px solid var(--border-color);
+   padding:1.25rem 1.5rem;"` repetido en 14 templates. */
+.sgi-pipeline-wrapper {
+    background: var(--bg-muted);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+}
+
+/* Wrapper del bloque ledger-summary dentro de cards de detalle.
+   Sustituye el inline `style="padding:1rem 1.5rem .75rem;"` repetido. */
+.sgi-ledger-wrapper {
+    padding: 1rem 1.5rem .75rem;
+}
+
 /* Título compacto de card (junto a sgi-icon-chip) */
 .sgi-card-title {
     font-size: .95rem;

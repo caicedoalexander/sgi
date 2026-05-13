@@ -87,15 +87,14 @@ $invoiceCount           = $viewModel->invoiceCount;
     <!-- Header -->
     <div class="card-header d-flex align-items-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
+            <div class="sgi-icon-chip">
                 <i class="bi bi-wallet2" aria-hidden="true"></i>
             </div>
             <div>
-                <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
+                <div class="sgi-card-title mono">
                     <?= h($record->code) ?>
                 </div>
-                <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+                <div class="sgi-card-subtitle mt-1">
                     Total: <strong style="color:var(--primary-color);">$ <?= $this->Number->format($record->total_amount, ['places' => 2]) ?></strong>
                 </div>
             </div>
@@ -106,12 +105,12 @@ $invoiceCount           = $viewModel->invoiceCount;
     </div>
 
     <!-- Progress -->
-    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div class="sgi-pipeline-wrapper">
         <?= $this->element('refund_progress', ['status' => $record->status]) ?>
     </div>
 
     <!-- ── Ficha resumen (ledger) ── -->
-    <div style="padding:1rem 1.5rem .75rem;">
+    <div class="sgi-ledger-wrapper">
         <div class="sgi-ledger">
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Código</div>

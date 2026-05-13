@@ -110,15 +110,14 @@ $totalDocs          = $viewModel->totalDocs;
     <!-- Card header -->
     <div class="card-header d-flex align-items-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
+            <div class="sgi-icon-chip">
                 <i class="bi bi-calendar-check" aria-hidden="true"></i>
             </div>
             <div>
-                <div style="font-size:.95rem;font-weight:700;color:#111;">
+                <div class="sgi-card-title">
                     <?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?>
                 </div>
-                <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+                <div class="sgi-card-subtitle mt-1">
                     <?= h($novelty->novelty_type->name ?? '') ?>
                 </div>
             </div>
@@ -127,7 +126,7 @@ $totalDocs          = $viewModel->totalDocs;
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div class="sgi-pipeline-wrapper">
         <?php
         $noveltyPipelineLabels = $statusLabels;
         $noveltyPipelineLabels[NoveltyConstants::STATUS_CONTABILIDAD] = 'Paso a Nómina';
@@ -142,7 +141,7 @@ $totalDocs          = $viewModel->totalDocs;
     </div>
 
     <!-- Ficha resumen (ledger) -->
-    <div style="padding:1rem 1.5rem .75rem;">
+    <div class="sgi-ledger-wrapper">
         <div class="sgi-ledger">
             <div class="sgi-ledger-item" style="grid-column:span 2;">
                 <div class="sgi-ledger-label">Empleado</div>

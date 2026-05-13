@@ -26,8 +26,7 @@ $this->assign('title', 'Nuevo Anticipo');
 <div class="card card-primary">
     <!-- Cabecera de la tarjeta -->
     <div class="card-header d-flex align-items-center gap-3">
-        <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.95rem;">
+        <div class="sgi-icon-chip" style="font-size:.95rem;">
             <i class="bi bi-cash-coin" aria-hidden="true"></i>
         </div>
         <span style="font-size:.875rem;font-weight:600;color:#333;">Información del Anticipo</span>

@@ -94,7 +94,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div class="sgi-pipeline-wrapper">
         <?php
         $noveltyPipelineLabels = $statusLabels;
         $noveltyPipelineLabels[NoveltyConstants::STATUS_CONTABILIDAD] = 'Paso a Nómina';

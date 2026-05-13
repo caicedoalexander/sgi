@@ -69,7 +69,7 @@ $ps = [
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div class="sgi-pipeline-wrapper">
         <div class="d-flex align-items-center justify-content-between">
             <?php foreach (PaymentSchedulingConstants::PIPELINE_STATUSES as $i => $status): ?>
             <?php

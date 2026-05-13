@@ -119,12 +119,12 @@ $btnClass    = $submitButtonClass;
     </div>
 
     <!-- Progress -->
-    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div class="sgi-pipeline-wrapper">
         <?= $this->element('petty_cash_progress', ['status' => $record->status]) ?>
     </div>
 
     <!-- ── Ficha resumen (ledger) ── -->
-    <div style="padding:1rem 1.5rem .75rem;">
+    <div class="sgi-ledger-wrapper">
         <div class="sgi-ledger">
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Código</div>

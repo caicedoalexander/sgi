@@ -111,7 +111,11 @@ $calendarColorCount = count($calendarColors);
                         <td><?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?></td>
                         <td><?php
                             $typeName = h($novelty->novelty_type->name ?? '—');
-                            $typeColor = $calendarColors[($novelty->novelty_type_id - 1) % $calendarColorCount];
+                            $rawColor = $calendarColors[($novelty->novelty_type_id - 1) % $calendarColorCount];
+                            // Defensa contra CSS injection: solo aceptar hex (#RGB|#RRGGBB|#RRGGBBAA).
+                            // $calendarColors es una paleta hardcoded por ahora; el guard protege
+                            // si en el futuro el color se persiste por tipo de novedad en BD.
+                            $typeColor = preg_match('/^#[0-9A-Fa-f]{3,8}$/', (string)$rawColor) ? $rawColor : '#6c757d';
                         ?><span class="badge" style="background-color:<?= $typeColor ?>"><?= $typeName ?></span></td>
                         <td><?= $novelty->permission_date?->format('d/m/Y') ?: '—' ?></td>
                         <td><?= $scheduleLabels[$novelty->schedule_type] ?? '—' ?></td>

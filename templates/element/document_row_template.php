@@ -32,7 +32,7 @@ $showBadge = $showBadge ?? false;
             </div>
         </div>
         <div class="doc-actions sgi-doc-actions">
-            <a class="btn btn-sm btn-outline-secondary" data-slot="open-link" href="" target="_blank" title="Abrir">
+            <a class="btn btn-sm btn-outline-secondary" data-slot="open-link" href="" target="_blank" rel="noopener noreferrer" title="Abrir">
                 <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
             </a>
             <button type="button" class="btn btn-sm btn-outline-danger doc-delete-btn"

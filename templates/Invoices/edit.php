@@ -73,15 +73,14 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
     <!-- Cabecera: identificador + rol + estado -->
     <div class="card-header d-flex align-items-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:36px;height:36px;background:var(--primary-color);color:#fff;font-size:.9rem;">
+            <div class="sgi-icon-chip">
                 <i class="bi <?= $isAdvance ? 'bi-cash-coin' : 'bi-receipt' ?>" aria-hidden="true"></i>
             </div>
             <div>
-                <div style="font-size:.95rem;font-weight:700;color:#111;font-family:monospace;letter-spacing:-.01em;">
+                <div class="sgi-card-title mono">
                     <?= h($viewModel->invoice->invoice_number ?? '#' . $viewModel->invoice->id) ?>
                 </div>
-                <div style="font-size:.72rem;color:#aaa;margin-top:.1rem;">
+                <div class="sgi-card-subtitle mt-1">
                     Rol: <strong style="color:#777;"><?= h($viewModel->roleName) ?></strong>
                 </div>
             </div>
@@ -90,7 +89,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
     </div>
 
     <!-- Pipeline progress -->
-    <div style="background:var(--bg-muted);border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);padding:1.25rem 1.5rem;">
+    <div class="sgi-pipeline-wrapper">
         <?= $this->element('pipeline_progress', [
             'currentStatus'    => $viewModel->currentStatus,
             'pipelineStatuses' => $viewModel->pipelineStatuses,
@@ -105,7 +104,7 @@ $totalDocs = array_sum(array_map('count', $documentsByStatus));
     <?php
     $costCentersArr = is_array($viewModel->costCenters) ? $viewModel->costCenters : (method_exists($viewModel->costCenters, 'toArray') ? $viewModel->costCenters->toArray() : []);
     ?>
-    <div style="padding:1rem 1.5rem .75rem;">
+    <div class="sgi-ledger-wrapper">
         <div class="sgi-ledger">
             <?php if ($isAdvance): ?>
             <!-- Fila 1: Beneficiario + Documento + Valor (Anticipo) -->

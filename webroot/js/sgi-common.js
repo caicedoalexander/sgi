@@ -36,6 +36,31 @@ document.addEventListener('submit', function (e) {
     }
 }, true);
 
+// Listener delegado para botones con `data-sgi-confirm="mensaje"`. Reemplazo
+// del patrón `onclick="return confirm(...)"` inline — usa el modal estilizado
+// de SgiDialogs cuando está disponible, con fallback al confirm() nativo.
+// capture:true para correr antes del submit del form. El flag dataset evita
+// recursión cuando re-disparamos el click tras confirmar.
+document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-sgi-confirm]');
+    if (!btn) return;
+    if (btn.dataset.sgiConfirmConfirmed === '1') {
+        delete btn.dataset.sgiConfirmConfirmed;
+        return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    var message = btn.getAttribute('data-sgi-confirm') || '¿Confirmar?';
+    var go = (window.SgiDialogs && window.SgiDialogs.confirm)
+        ? window.SgiDialogs.confirm(message)
+        : Promise.resolve(window.confirm(message));
+    go.then(function (ok) {
+        if (!ok) return;
+        btn.dataset.sgiConfirmConfirmed = '1';
+        btn.click();
+    });
+}, true);
+
 /**
  * Inicializa Flatpickr/AutoNumeric/Select2 dentro de un sub-árbol del DOM.
  * Llamado en DOMContentLoaded (root=document) y tras inyectar HTML por AJAX
