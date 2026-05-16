@@ -92,16 +92,16 @@ $pipelineStepsLeg  = [
     <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['dian_crosschecks']['can_create'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left-right me-1" aria-hidden="true"></i>Cruce',
+            '<i class="bi bi-arrow-left-right" aria-hidden="true"></i>Cruce',
             ['controller' => 'DianCrosschecks', 'action' => 'add'],
-            ['class' => 'btn btn-outline-warning', 'escape' => false]
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
         ) ?>
         <?php endif; ?>
         <?php if (!empty($userPermissions['dian_crosschecks']['can_view'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-clipboard-data me-1" aria-hidden="true"></i>Cruces',
+            '<i class="bi bi-arrow-clockwise" aria-hidden="true"></i>Cruces',
             ['controller' => 'DianCrosschecks', 'action' => 'index'],
-            ['class' => 'btn btn-outline-secondary', 'escape' => false]
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
         ) ?>
         <?php endif; ?>
         <?= $this->element('excel_wizard/buttons', [
@@ -131,7 +131,7 @@ $pipelineStepsLeg  = [
                    value="<?= h($this->request->getQuery('search', '')) ?>"
                    aria-label="Buscar facturas">
         </div>
-        <button type="button" class="btn btn-outline-dark btn-sm d-inline-flex align-items-center gap-1"
+        <button type="button" class="btn btn-ghost"
                 data-bs-toggle="collapse" data-bs-target="#invoiceFilters" aria-label="Filtros avanzados">
             <i class="bi bi-funnel" aria-hidden="true"></i>
             <span>Filtros<?= $hasFilters ? ' · activos' : '' ?></span>
@@ -140,7 +140,7 @@ $pipelineStepsLeg  = [
             <?= $this->Html->link(
                 '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
                 ['action' => $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index')],
-                ['class' => 'btn btn-outline-danger btn-sm', 'escape' => false]
+                ['class' => 'btn btn-ghost sgi-fg-danger', 'escape' => false]
             ) ?>
         <?php endif; ?>
     </div>

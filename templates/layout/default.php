@@ -90,17 +90,19 @@ $advancesMineCount = $advancesMineCount ?? 0;
 <body>
     <div class="d-flex">
         <!-- Sidebar -->
-        <nav class="sidebar d-flex flex-column flex-shrink-0 p-3 bg-dark">
+        <nav class="sidebar d-flex flex-column flex-shrink-0 py-3 bg-dark">
 
             <!-- Logo -->
-            <?= $this->element('sgi_logo') ?>
+            <div class="px-3">
+                <?= $this->element('sgi_logo') ?>
 
-            <!-- Buscador global -->
-            <form method="get" action="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'all']) ?>" class="sgi-sidebar-search mb-2" role="search">
-                <i class="bi bi-search" aria-hidden="true"></i>
-                <input type="text" name="search" placeholder="Buscar facturas, empleados…" aria-label="Buscar" autocomplete="off">
-                <kbd>⌘K</kbd>
-            </form>
+                <!-- Buscador global -->
+                <form method="get" action="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'all']) ?>" class="sgi-sidebar-search mb-2" role="search">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="text" name="search" placeholder="Buscar facturas, empleados…" aria-label="Buscar" autocomplete="off">
+                    <kbd>⌘K</kbd>
+                </form>
+            </div>
 
             <!-- Divisor -->
             <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:.75rem;"></div>
@@ -146,7 +148,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
             </div>
 
             <!-- Footer de usuario -->
-            <div class="sidebar-footer d-flex align-items-center justify-content-between">
+            <div class="sidebar-footer d-flex align-items-center justify-content-between px-3">
                 <?php if ($currentUser) :
                     $fullName = (string)($currentUser->full_name ?? '');
                     $initials = '';
@@ -187,20 +189,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
         <script>(function(){var s=document.querySelector('.sidebar');if(s)document.documentElement.style.setProperty('--sidebar-width',s.offsetWidth+'px');})();</script>
 
         <!-- Contenido -->
-        <?php
-        $meses = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-        $dias  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-        $now   = new DateTime();
-        $topbarDate = $dias[(int)$now->format('w')] . ', ' . $now->format('d') . ' de ' . $meses[(int)$now->format('n')] . ' del ' . $now->format('Y');
-        ?>
         <div class="content-wrapper flex-grow-1">
-            <nav class="sgi-topbar sticky-top d-flex align-items-center justify-content-between px-4">
-                <span class="sgi-topbar-title"><?= $this->fetch('title') ?></span>
-                <div class="sgi-topbar-date d-none d-md-flex align-items-center gap-2">
-                    <i class="bi bi-calendar3" style="font-size:.75rem" aria-hidden="true"></i>
-                    <?= $topbarDate ?>
-                </div>
-            </nav>
             <main class="p-4">
                 <?= $this->fetch('content') ?>
             </main>

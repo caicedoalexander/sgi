@@ -455,6 +455,22 @@ body {
     background: var(--bg-subtle);
     color: var(--text-default);
 }
+
+/* Acción secundaria sobre canvas gris: card blanca con outline fino.
+   Variante neutra para headers con varios botones (ej. Cruce/Cruces/Exportar). */
+.btn-ghost-card {
+    background: #fff;
+    color: var(--text-default);
+    border: 0;
+    outline: 1px solid var(--border-color);
+    outline-offset: -1px;
+}
+.btn-ghost-card:hover, .btn-ghost-card:focus {
+    background: var(--bg-subtle);
+    color: var(--text-strong);
+    outline-color: var(--border-faint);
+}
+.btn-ghost-card .bi { color: var(--text-faint); }
 .btn-dashed {
     background: transparent;
     color: var(--primary-color);
@@ -1155,9 +1171,11 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 /* ─── 10.1 SEARCH BAR + FILTERS ─────────────────────────────────── */
 .sgi-search-bar {
     background: #fff;
-    padding: .5rem .75rem;
+    padding: 0 .5rem 0 .25rem;
     border-radius: var(--radius-md);
 }
+.sgi-search-bar > form > .d-flex { min-height: 44px; }
+.sgi-search-bar .btn-ghost { border-left: 1px solid var(--rule); border-radius: 0; height: 32px; padding: 0 14px; }
 .sgi-filters-section {
     border-top: 1px solid var(--rule);
     padding-top: .75rem;
@@ -1187,16 +1205,14 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     font-size: .85rem;
     pointer-events: none;
 }
-.sgi-input-icon > .form-control {
+.sgi-input-icon > .form-control,
+.sgi-input-icon > .form-control:focus,
+.sgi-input-icon > .form-control:hover {
     padding-left: 2.25rem;
-    outline: 0;
+    outline: none;
+    border: 0;
     background: transparent;
     box-shadow: none;
-}
-.sgi-input-icon > .form-control:focus {
-    outline: 0;
-    box-shadow: none;
-    background: transparent;
 }
 
 
