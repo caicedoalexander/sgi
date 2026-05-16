@@ -1978,6 +1978,209 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .view-anim { animation: sgi-fade-in var(--t-view) ease; }
 
 
+/* ─── 13.5 INVOICE VIEW (detalle) ───────────────────────────────── */
+.sgi-invoice-view-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 14px;
+    align-items: start;
+}
+.sgi-invoice-view-left,
+.sgi-invoice-view-right {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+/* Hero summary card */
+.sgi-hero-icon {
+    width: 40px; height: 40px;
+    background: var(--primary-soft-strong);
+    color: var(--primary-color);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+}
+.sgi-hero-id {
+    font-family: var(--font-mono);
+    font-size: 16px; font-weight: 700;
+    color: var(--text-strong);
+    line-height: 1.1;
+    word-break: break-all;
+}
+.sgi-hero-display {
+    font-family: var(--font-mono);
+    font-size: 30px; font-weight: 800;
+    color: var(--primary-color);
+    letter-spacing: -1px;
+    line-height: 1;
+}
+.sgi-hero-decimals {
+    font-size: 13px;
+    color: var(--text-faint);
+    font-weight: 500;
+}
+.sgi-hero-divider {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+}
+
+/* Vertical pipeline */
+.sgi-pipeline-v { display: flex; flex-direction: column; }
+.sgi-pipeline-v-step {
+    display: flex; gap: 12px; position: relative;
+    padding-bottom: 16px;
+}
+.sgi-pipeline-v-step:last-child { padding-bottom: 0; }
+.sgi-pipeline-v-step::before {
+    content: '';
+    position: absolute;
+    left: 9px; top: 20px; bottom: 0;
+    width: 2px;
+    background: var(--rule);
+}
+.sgi-pipeline-v-step:last-child::before { display: none; }
+.sgi-pipeline-v-step.is-done::before { background: var(--primary-color); }
+.sgi-pipeline-v-marker {
+    width: 20px; height: 20px;
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #fff; color: #fff;
+    z-index: 1;
+    border-radius: 3px;
+    outline: 1.5px dashed var(--border-faint);
+    outline-offset: -1px;
+}
+.sgi-pipeline-v-step.is-done .sgi-pipeline-v-marker,
+.sgi-pipeline-v-step.is-current .sgi-pipeline-v-marker {
+    background: var(--primary-color);
+    outline: none;
+}
+.sgi-pipeline-v-step.is-rejected .sgi-pipeline-v-marker {
+    background: var(--danger-color);
+    outline: none;
+}
+.sgi-pipeline-v-marker .bi { font-size: 11px; font-weight: 900; }
+.sgi-pipeline-v-marker .dot {
+    width: 6px; height: 6px; background: #fff; border-radius: 50%;
+}
+.sgi-pipeline-v-content { flex: 1; min-width: 0; padding-top: 1px; }
+.sgi-pipeline-v-label {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--text-faint);
+}
+.sgi-pipeline-v-step.is-done .sgi-pipeline-v-label,
+.sgi-pipeline-v-step.is-current .sgi-pipeline-v-label {
+    color: var(--text-strong);
+}
+.sgi-pipeline-v-meta {
+    font-size: 10.5px;
+    color: var(--text-faint);
+    margin-top: 2px;
+    font-family: var(--font-mono);
+}
+
+/* Compact field row (inside cards) */
+.sgi-field-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0;
+    gap: 12px;
+    border-bottom: 1px solid var(--rule);
+}
+.sgi-field-row:last-child { border-bottom: none; }
+.sgi-field-row > .k {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+.sgi-field-row > .v {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--text-default);
+    text-align: right;
+    min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sgi-field-row > .v.mono { font-family: var(--font-mono); }
+.sgi-field-row > .v.dash { color: var(--text-disabled); font-weight: 500; }
+
+/* Section head inside a card */
+.sgi-section-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+}
+.sgi-section-head .sgi-label { margin: 0; }
+
+/* In-card column splits */
+.sgi-card-cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.sgi-card-cols-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+
+/* Grid-style "tables" used in detalle (Pagos / Historial) */
+.sgi-mini-table-head {
+    display: grid; padding: 10px 20px;
+    background: var(--bg-subtle);
+    font-size: 10px; font-weight: 700;
+    color: var(--text-faint); letter-spacing: 0.7px;
+    text-transform: uppercase;
+    gap: 12px;
+}
+.sgi-mini-table-row {
+    display: grid; padding: 14px 20px; align-items: center; gap: 12px;
+    border-top: 1px solid var(--rule);
+    font-size: 12.5px;
+}
+.sgi-mini-table-row + .sgi-mini-table-row { /* default visible separator */ }
+.sgi-mini-table-row.is-total {
+    background: var(--bg-subtle);
+    font-weight: 700;
+}
+.sgi-bank-chip {
+    width: 32px; height: 32px;
+    background: var(--primary-color); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+/* Dropzone empty (Soportes) */
+.sgi-dropzone-empty {
+    padding: 24px 20px;
+    text-align: center;
+    background: var(--bg-muted);
+    font-size: 12.5px;
+    color: var(--text-faint);
+}
+.sgi-dropzone-empty .bi {
+    font-size: 20px;
+    color: var(--text-disabled);
+    display: block; margin-bottom: 6px;
+}
+.sgi-dropzone-empty .accent {
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+
+/* Breadcrumb */
+.sgi-breadcrumb {
+    font-size: 11.5px; color: var(--text-faint);
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+}
+.sgi-breadcrumb a { color: inherit; text-decoration: none; }
+.sgi-breadcrumb a:hover { color: var(--text-strong); }
+.sgi-breadcrumb .current { color: var(--text-default); }
+
+/* Responsive */
+@media (max-width: 991.98px) {
+    .sgi-invoice-view-grid { grid-template-columns: 1fr; }
+    .sgi-card-cols-2,
+    .sgi-card-cols-3 { grid-template-columns: 1fr; gap: 14px; }
+    .sgi-mini-table-head,
+    .sgi-mini-table-row { padding-left: 14px; padding-right: 14px; }
+}
+
+
 /* ─── 14. RESPONSIVE — Invoice layout ───────────────────────────── */
 @media (max-width: 1199.98px) {
     .sgi-invoice-layout { flex-direction: column; }
