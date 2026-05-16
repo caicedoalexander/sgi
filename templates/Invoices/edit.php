@@ -290,13 +290,15 @@ $beneficiaryName = $viewModel->invoice->provider->name
 
         <?php
         // Las secciones general/dates/classification van a la card "Datos
-        // Generales" (siempre que sean visibles, editables o no). Las
-        // secciones revision/accounting/treasury/payment_authorization van a la
-        // card "Etapa actual · editable" con el header acentuado.
+        // Generales" SIEMPRE (los partials manejan el estado disabled cuando
+        // el rol/estado no permite edicion). visibleSections del policy nunca
+        // las incluye porque originalmente esos campos los pintaba el
+        // sgi-ledger; ahora la card los renderiza siempre como inputs read-only
+        // cuando aplica.
         $generalSectionKeys = ['general', 'dates', 'classification'];
         $stageSectionKeys = ['revision', 'accounting', 'treasury', 'payment_authorization'];
-        $visibleGeneralSections = array_values(array_intersect($generalSectionKeys, $viewModel->visibleSections));
-        $visibleStageSections   = array_values(array_intersect($stageSectionKeys, $viewModel->visibleSections));
+        $visibleGeneralSections = $generalSectionKeys;
+        $visibleStageSections = array_values(array_intersect($stageSectionKeys, $viewModel->visibleSections));
 
         $sharedPaymentParams = [
             'payments'           => $viewModel->invoice->invoice_payments ?? [],
