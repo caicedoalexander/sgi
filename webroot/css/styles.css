@@ -1163,13 +1163,11 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 /* ─── 10.1 SEARCH BAR + FILTERS ─────────────────────────────────── */
 .sgi-search-bar {
     background: #fff;
-    padding: .35rem .5rem;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
-    min-height: 44px;
 }
-.sgi-filters-trigger { padding: 9px 16px; }
+.sgi-filters-trigger { height: 36px; padding: 0 14px; font-size: 12.5px; }
 .sgi-filters-trigger .bi { color: var(--text-muted); }
 .sgi-filters-section {
     border-top: 1px solid var(--rule);
@@ -1190,24 +1188,30 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     position: relative;
     flex: 1;
     min-width: 0;
+    height: 36px;
+    display: flex;
+    align-items: center;
 }
 .sgi-input-icon > .bi {
     position: absolute;
-    left: .75rem;
+    left: 14px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-faint);
-    font-size: .85rem;
+    font-size: 14px;
     pointer-events: none;
 }
 .sgi-input-icon > .form-control,
 .sgi-input-icon > .form-control:focus,
 .sgi-input-icon > .form-control:hover {
-    padding-left: 2.25rem;
+    height: 36px;
+    padding: 0 12px 0 38px;
+    font-size: 13px;
     outline: none;
     border: 0;
     background: transparent;
     box-shadow: none;
+    line-height: 1;
 }
 
 
