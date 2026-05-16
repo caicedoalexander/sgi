@@ -19,7 +19,10 @@
       "Bash(tar -xf design)",
       "Bash(cp \"/tmp/design-fetch/sistema-de-gesti-n-interna/project/Sistema de Diseño.html\" /tmp/design-fetch/sistema.html)",
       "Bash(cp \"/tmp/design-fetch/sistema-de-gesti-n-interna/project/design-system.css\" /tmp/design-fetch/design-system.css)",
-      "Bash(cp \"/tmp/design-fetch/sistema-de-gesti-n-interna/project/colors_and_type.css\" /tmp/design-fetch/colors_and_type.css)"
+      "Bash(cp \"/tmp/design-fetch/sistema-de-gesti-n-interna/project/colors_and_type.css\" /tmp/design-fetch/colors_and_type.css)",
+      "Bash(mkdir -p /tmp/design-pkg)",
+      "Bash(tar -xzf \"/c/Users/sistema/.claude/projects/C--Users-sistema-Documents-sgi/8e39f893-1dd8-4fd8-9ee4-42a3fae1bd9d/tool-results/webfetch-1778943427848-clczjl.bin\" -C /tmp/design-pkg)",
+      "Read(//tmp/**)"
     ]
   }
 }
