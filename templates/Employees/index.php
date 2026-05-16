@@ -6,13 +6,52 @@
  * @var \Cake\ORM\ResultSet $operationCenters
  * @var \Cake\ORM\ResultSet $employeeStatuses
  */
+
+use App\Constants\EmployeeStatusConstants;
+
 $this->assign('title', 'Empleados');
 
 $query = $this->request->getQueryParams();
-$hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
+$activeStatus = $this->request->getQuery('status') ?: EmployeeStatusConstants::ACTIVO;
+$hasFilters = !empty(array_filter(
+    array_diff_key($query, ['status' => true]),
+    fn($v) => $v !== '' && $v !== null
+));
+$filterCount = count(array_filter(array_diff_key($query, ['status' => true, 'page' => true]), fn($v) => $v !== '' && $v !== null));
+
+$employeeList = $employees->toArray();
+$totalShown = count($employeeList);
+$withNovelty = 0;
+foreach ($employeeList as $e) {
+    if ($e->current_novelty) { $withNovelty++; }
+}
+
+$baseQuery = array_diff_key($query, ['status' => true, 'page' => true]);
+$tabUrl = function (string $status) use ($baseQuery) {
+    return ['action' => 'index', '?' => $baseQuery + ['status' => $status]];
+};
+$tabs = [
+    [EmployeeStatusConstants::ACTIVO,   'Activos'],
+    [EmployeeStatusConstants::RETIRADO, 'Retirados'],
+    ['all',                             'Todos'],
+];
+
+$statusPills = [
+    EmployeeStatusConstants::ACTIVO   => 'pill-info-soft',
+    EmployeeStatusConstants::RETIRADO => 'pill-danger-soft',
+];
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Empleados</span>
+
+<div class="sgi-page-header d-flex justify-content-between align-items-start">
+    <div>
+        <span class="sgi-page-title">Empleados</span>
+        <div class="sgi-body-faint mt-1" style="font-size:12px;">
+            <span class="sgi-fg-muted"><?= $this->Paginator->counter('{{count}} empleados') ?></span>
+            <?php if ($withNovelty > 0): ?>
+                · <span class="sgi-fg-secondary"><?= $withNovelty ?> con novedad activa</span>
+            <?php endif; ?>
+        </div>
+    </div>
     <div class="d-flex gap-2">
         <?= $this->element('excel_wizard/buttons', [
             'module' => 'Employees',
@@ -21,7 +60,7 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
         ]) ?>
         <?php if (!empty($userPermissions['employees']['can_create'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Empleado',
+            '<i class="bi bi-plus-lg" aria-hidden="true"></i>Nuevo Empleado',
             ['action' => 'add'],
             ['class' => 'btn btn-primary', 'escape' => false]
         ) ?>
@@ -30,177 +69,158 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
 </div>
 
 <!-- Search & Filters -->
-<div class="sgi-search-bar mb-3">
-    <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
-    <div class="d-flex gap-2">
-        <div class="flex-grow-1">
-            <?= $this->Form->control('search', [
-                'label' => false,
-                'type' => 'text',
-                'class' => 'form-control',
-                'placeholder' => 'Buscar por nombre, documento o correo…',
-                'value' => $this->request->getQuery('search', ''),
-            ]) ?>
+<?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
+<input type="hidden" name="status" value="<?= h($activeStatus) ?>">
+<div class="d-flex gap-2 align-items-stretch mb-3">
+    <div class="sgi-search-bar flex-grow-1">
+        <div class="sgi-input-icon w-100">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" name="search"
+                   class="form-control"
+                   placeholder="Buscar por nombre, documento o correo…"
+                   value="<?= h($this->request->getQuery('search', '')) ?>"
+                   aria-label="Buscar empleados">
         </div>
-        <button type="submit" class="btn btn-primary" aria-label="Buscar"><i class="bi bi-search" aria-hidden="true"></i></button>
-        <button type="button" class="btn btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#employeeFilters" title="Filtros avanzados">
-            <i class="bi bi-funnel" aria-hidden="true"></i>
-        </button>
-        <?php if ($hasFilters): ?>
-            <?= $this->Html->link(
-                '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
-                ['action' => 'index'],
-                ['class' => 'btn btn-outline-danger', 'escape' => false]
-            ) ?>
-        <?php endif; ?>
     </div>
+    <button type="button" class="btn btn-ghost-card sgi-filters-trigger"
+            data-bs-toggle="collapse" data-bs-target="#employeeFilters" aria-label="Filtros avanzados">
+        <i class="bi bi-funnel" aria-hidden="true"></i>
+        <span>Filtros<?php if ($filterCount > 0): ?> · <span class="sgi-fg-primary"><?= $filterCount ?></span><?php endif; ?></span>
+    </button>
+    <?php if ($hasFilters): ?>
+        <?= $this->Html->link(
+            '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
+            ['action' => 'index', '?' => ['status' => $activeStatus]],
+            ['class' => 'btn btn-ghost-card sgi-fg-danger', 'escape' => false]
+        ) ?>
+    <?php endif; ?>
+</div>
 
-    <div class="collapse <?= $hasFilters ? 'show' : '' ?>" id="employeeFilters">
-        <div class="sgi-filters-section mt-2">
-            <div class="row g-2">
-                <div class="col-md-4">
-                    <label class="sgi-filter-label" for="filter-position">Cargo</label>
-                    <?= $this->Form->select('position_id', $positions, [
-                        'empty' => 'Todos',
-                        'class' => 'form-select form-select-sm',
-                        'value' => $this->request->getQuery('position_id', ''),
-                        'id'    => 'filter-position',
-                    ]) ?>
-                </div>
-                <div class="col-md-4">
-                    <label class="sgi-filter-label" for="filter-opcenter">Centro de Operación</label>
-                    <?= $this->Form->select('operation_center_id', $operationCenters, [
-                        'empty' => 'Todos',
-                        'class' => 'form-select form-select-sm',
-                        'value' => $this->request->getQuery('operation_center_id', ''),
-                        'id'    => 'filter-opcenter',
-                    ]) ?>
-                </div>
-                <div class="col-md-4">
-                    <label class="sgi-filter-label" for="filter-status">Estado</label>
-                    <?= $this->Form->select('status', [
-                        \App\Constants\EmployeeStatusConstants::ACTIVO   => 'Activo',
-                        \App\Constants\EmployeeStatusConstants::RETIRADO => 'Retirado',
-                        'all'                                            => 'Todos',
-                    ], [
-                        'class' => 'form-select form-select-sm',
-                        'value' => $this->request->getQuery('status') ?: \App\Constants\EmployeeStatusConstants::ACTIVO,
-                        'id'    => 'filter-status',
-                    ]) ?>
-                </div>
+<div class="collapse <?= $hasFilters ? 'show' : '' ?> mb-3" id="employeeFilters">
+    <div class="card p-3">
+        <div class="row g-2">
+            <div class="col-md-6">
+                <label class="sgi-filter-label" for="filter-position">Cargo</label>
+                <?= $this->Form->select('position_id', $positions, [
+                    'empty' => 'Todos',
+                    'class' => 'form-select form-select-sm',
+                    'value' => $this->request->getQuery('position_id', ''),
+                    'id'    => 'filter-position',
+                ]) ?>
+            </div>
+            <div class="col-md-6">
+                <label class="sgi-filter-label" for="filter-opcenter">Centro de Operación</label>
+                <?= $this->Form->select('operation_center_id', $operationCenters, [
+                    'empty' => 'Todos',
+                    'class' => 'form-select form-select-sm',
+                    'value' => $this->request->getQuery('operation_center_id', ''),
+                    'id'    => 'filter-opcenter',
+                ]) ?>
             </div>
         </div>
     </div>
-    <?= $this->Form->end() ?>
 </div>
+<?= $this->Form->end() ?>
 
-<?php $employeeList = $employees->toArray(); ?>
+<!-- Tabs por estado -->
+<div class="sgi-status-tabs mb-3" role="tablist" aria-label="Filtrar por estado">
+    <?php foreach ($tabs as [$status, $label]):
+        $isActive = ($activeStatus === $status);
+        $color = match ($status) {
+            EmployeeStatusConstants::RETIRADO => 'var(--danger-color)',
+            EmployeeStatusConstants::ACTIVO   => 'var(--info-text)',
+            default                            => 'var(--primary-color)',
+        };
+    ?>
+        <?= $this->Html->link(
+            ($isActive ? '<span class="sgi-status-tab-dot" style="background:' . $color . ';"></span>' : '') . h($label),
+            $tabUrl($status),
+            [
+                'class' => 'sgi-status-tab' . ($isActive ? ' is-active' : ''),
+                'escape' => false,
+                'role' => 'tab',
+                'aria-selected' => $isActive ? 'true' : 'false',
+                'style' => $isActive ? 'color:' . $color : '',
+            ]
+        ) ?>
+    <?php endforeach; ?>
+</div>
 
 <?php if (empty($employeeList)): ?>
 <div class="card">
     <div class="sgi-doc-empty">
         <i class="bi bi-people sgi-doc-empty-icon" aria-hidden="true"></i>
-        <div style="font-size:.875rem;font-weight:500;color:#999">Sin empleados registrados</div>
-        <div style="font-size:.8rem;margin-top:.3rem">
-            <?= $this->Html->link('Crear el primer empleado', ['action' => 'add'], ['class' => 'text-decoration-none', 'style' => 'color:var(--primary-color)']) ?>
+        <div class="sgi-fg-muted">Sin empleados que coincidan con los filtros</div>
+        <?php if (!empty($userPermissions['employees']['can_create'])): ?>
+        <div class="mt-2">
+            <?= $this->Html->link('Crear un empleado', ['action' => 'add'], ['class' => 'sgi-fg-primary text-decoration-none fw-semibold']) ?>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 <?php else: ?>
 
-<div class="row g-3 mb-3">
-    <?php foreach ($employeeList as $employee):
-        $initials = mb_strtoupper(
-            mb_substr($employee->first_name ?? '', 0, 1) .
-            mb_substr($employee->last_name1  ?? '', 0, 1)
-        );
-    ?>
-    <div class="col-12 col-sm-6 col-md-4 col-xl-3">
-        <div class="card sgi-employee-card clickable-row h-100"
-             data-href="<?= $this->Url->build(['action' => 'view', $employee->id]) ?>">
-
-            <!-- Cabecera: avatar + nombre + documento -->
-            <div class="card-body d-flex align-items-start gap-3 pb-2">
-                <?php if ($employee->profile_image): ?>
-                    <img src="<?= $this->Url->build('/' . $employee->profile_image) ?>"
-                         alt="<?= h($employee->full_name) ?>"
-                         class="sgi-emp-avatar"
-                         style="object-fit:cover;">
-                <?php else: ?>
-                    <div class="sgi-emp-avatar" aria-hidden="true"><?= h($initials) ?></div>
-                <?php endif; ?>
-                <div style="min-width:0">
-                    <div class="sgi-emp-name"><?= h($employee->full_name) ?></div>
-                    <div class="sgi-emp-doc"><?= h($employee->document_type . ' ' . $employee->document_number) ?></div>
-                </div>
-            </div>
-
-            <!-- Meta: cargo + centro de operación + email -->
-            <div class="card-body pt-0 pb-2" style="border-top:1px solid var(--border-color)">
-                <?php if ($employee->has('position') && $employee->position): ?>
-                <div class="mb-2">
-                    <div class="sgi-label">Cargo</div>
-                    <div class="sgi-emp-meta-value"><?= h($employee->position->name) ?></div>
-                </div>
-                <?php endif; ?>
-                <?php if ($employee->has('operation_center') && $employee->operation_center): ?>
-                <div class="mb-2">
-                    <div class="sgi-label">Centro de Operación</div>
-                    <div class="sgi-emp-meta-value"><?= h($employee->operation_center->name) ?></div>
-                </div>
-                <?php endif; ?>
-                <?php if ($employee->email): ?>
-                <div>
-                    <div class="sgi-label">Correo</div>
-                    <div class="sgi-emp-meta-value"><?= h($employee->email) ?></div>
-                </div>
-                <?php endif; ?>
-            </div>
-
-            <!-- Footer: estado + acciones -->
-            <div class="card-footer d-flex justify-content-between align-items-center px-3 py-2">
-                <div class="d-flex gap-1 flex-wrap">
-                    <?php if (!empty($employee->status)): ?>
-                        <span class="badge <?= $employee->isRetired() ? 'bg-danger' : 'bg-info' ?>">
-                            <?= h(\App\Constants\EmployeeStatusConstants::STATUS_LABELS[$employee->status] ?? $employee->status) ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($employee->current_novelty): ?>
-                        <span class="badge bg-warning text-dark">
-                            <i class="bi bi-journal-text me-1" aria-hidden="true"></i><?= h($employee->current_novelty->novelty_type->name ?? '') ?>
-                        </span>
-                    <?php endif; ?>
-                </div>
-                <div class="d-flex gap-1">
-                    <?php if (!empty($userPermissions['employees']['can_edit'])): ?>
-                    <?= $this->Html->link(
-                        '<i class="bi bi-pencil" aria-hidden="true"></i>',
-                        ['action' => 'edit', $employee->id],
-                        ['class' => 'btn btn-sm btn-outline-dark', 'escape' => false, 'title' => 'Editar']
-                    ) ?>
-                    <?php endif; ?>
-                    <?php if (!empty($userPermissions['employees']['can_delete'])): ?>
-                    <?= $this->Form->postLink(
-                        '<i class="bi bi-trash" aria-hidden="true"></i>',
-                        ['action' => 'delete', $employee->id],
-                        ['confirm' => '¿Está seguro de eliminar este empleado?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']
-                    ) ?>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-        </div>
-    </div>
-    <?php endforeach; ?>
-</div>
-
 <div class="card">
+    <div class="sgi-emp-list">
+        <?php foreach ($employeeList as $employee):
+            $initials = mb_strtoupper(
+                mb_substr($employee->first_name ?? '', 0, 1) .
+                mb_substr($employee->last_name1  ?? '', 0, 1)
+            );
+            $pillClass = $statusPills[$employee->status] ?? 'pill-muted';
+        ?>
+        <a class="sgi-emp-row clickable-row"
+           href="<?= $this->Url->build(['action' => 'view', $employee->id]) ?>">
+
+            <?php if ($employee->profile_image): ?>
+                <img src="<?= $this->Url->build('/' . $employee->profile_image) ?>"
+                     alt=""
+                     class="sgi-emp-avatar"
+                     style="object-fit:cover;">
+            <?php else: ?>
+                <div class="sgi-emp-avatar" aria-hidden="true"><?= h($initials) ?></div>
+            <?php endif; ?>
+
+            <div class="sgi-emp-row-main">
+                <div class="sgi-emp-name"><?= h($employee->full_name) ?></div>
+                <div class="sgi-emp-row-sub">
+                    <span class="mono"><?= h($employee->document_type . ' ' . $employee->document_number) ?></span>
+                    <?php if ($employee->has('position') && $employee->position): ?>
+                        <span class="sgi-emp-sep">·</span>
+                        <span><?= h($employee->position->name) ?></span>
+                    <?php endif; ?>
+                    <?php if ($employee->has('operation_center') && $employee->operation_center): ?>
+                        <span class="sgi-emp-sep">·</span>
+                        <span class="d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-geo-alt" aria-hidden="true"></i><?= h($employee->operation_center->name) ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="sgi-emp-row-status">
+                <?php if (!empty($employee->status)): ?>
+                    <span class="pill <?= h($pillClass) ?>">
+                        <?= h(strtoupper(EmployeeStatusConstants::STATUS_LABELS[$employee->status] ?? $employee->status)) ?>
+                    </span>
+                <?php endif; ?>
+                <?php if ($employee->current_novelty): ?>
+                    <span class="pill pill-warning-soft" title="<?= h($employee->current_novelty->novelty_type->name ?? 'Novedad') ?>">
+                        <i class="bi bi-journal-text" aria-hidden="true"></i>
+                        <?= h(strtoupper($employee->current_novelty->novelty_type->name ?? 'NOVEDAD')) ?>
+                    </span>
+                <?php endif; ?>
+            </div>
+
+            <i class="bi bi-chevron-right sgi-fg-faint sgi-emp-row-chevron" aria-hidden="true"></i>
+        </a>
+        <?php endforeach; ?>
+    </div>
+
     <?= $this->element('pagination') ?>
 </div>
 
 <?php endif; ?>
-
-<?php $this->Html->script($this->Url->build('/vendor/sortablejs/Sortable.min.js'), ['block' => true]) ?>
 
 <?= $this->element('excel_wizard/modals', [
     'module' => 'Employees',
