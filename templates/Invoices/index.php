@@ -10,9 +10,8 @@
  */
 
 use App\Constants\InvoiceConstants;
-use App\Service\InvoicePipelineService;
 use App\View\Presentation\InvoicePresentation;
-use App\View\Presentation\SharedPresentation;
+
 $isAllView      = $this->request->getParam('action') === 'all';
 $isRejectedView = $this->request->getParam('action') === 'rejected';
 $pageTitle = $isRejectedView ? 'Facturas Rechazadas'
@@ -20,14 +19,76 @@ $pageTitle = $isRejectedView ? 'Facturas Rechazadas'
            :                   'Mis Facturas');
 $this->assign('title', $pageTitle);
 
-
 $query = $this->request->getQueryParams();
 $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
 $pipelineOptions = InvoiceConstants::STATUS_LABELS;
+
+// Pills soft por estado de pipeline (alineado al sistema de diseño v2).
+$statusPills = [
+    InvoiceConstants::STATUS_APROBACION        => 'pill-warning-soft',
+    InvoiceConstants::STATUS_CONTABILIDAD      => 'pill-secondary-soft',
+    InvoiceConstants::STATUS_TESORERIA         => 'pill-info-soft',
+    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'pill-warning-soft',
+    InvoiceConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
+    InvoiceConstants::STATUS_PAGADA            => 'pill-primary-soft',
+    InvoiceConstants::STATUS_LEGALIZADA        => 'pill-primary-soft',
+];
+
+// Materializar el ResultSet para poder sumar y luego iterar.
+$invoicesArr = is_array($invoices) ? $invoices : iterator_to_array($invoices, false);
+$pageTotal = 0.0;
+foreach ($invoicesArr as $inv) { $pageTotal += (float)$inv->amount; }
+$invoices = $invoicesArr;
+
+// Mes actual en español para la meta-línea del header.
+$mesesEs = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+$now = new \DateTimeImmutable('today');
+$periodLabel = $mesesEs[(int)$now->format('n')] . ' ' . $now->format('Y');
+
+// Tabs por estado de pipeline (filtros directos vía query string).
+$activeStatus = (string)$this->request->getQuery('pipeline_status', '');
+$tabAction = $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index');
+$baseQuery = array_diff_key($query, ['pipeline_status' => true, 'page' => true]);
+$tabUrl = function (?string $status) use ($tabAction, $baseQuery) {
+    $params = ['action' => $tabAction];
+    if ($status !== null) { $params['?'] = $baseQuery + ['pipeline_status' => $status]; }
+    elseif (!empty($baseQuery)) { $params['?'] = $baseQuery; }
+    return $params;
+};
+$tabs = [
+    [null,                                             'Todas'],
+    [InvoiceConstants::STATUS_APROBACION,              'En aprobación'],
+    [InvoiceConstants::STATUS_CONTABILIDAD,            'Contabilidad'],
+    [InvoiceConstants::STATUS_TESORERIA,               'Tesorería'],
+    [InvoiceConstants::STATUS_AUTORIZACION_PAGO,       'Autorización'],
+    [InvoiceConstants::STATUS_PAGADA,                  'Pagadas'],
+];
+
+// Pills para el flag ready_for_payment.
+$readyForPaymentPills = [
+    InvoiceConstants::READY_FOR_PAYMENT_SI          => 'pill-primary-soft',
+    InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'pill-danger-soft',
+    InvoiceConstants::READY_FOR_PAYMENT_PSE         => 'pill-dark',
+];
+
+// Steps para la mini-bar (legalización = pipeline reducido de 3 pasos).
+$pipelineStepsFull = InvoiceConstants::PIPELINE_STATUSES;
+$pipelineStepsLeg  = [
+    InvoiceConstants::STATUS_APROBACION,
+    InvoiceConstants::STATUS_CONTABILIDAD,
+    InvoiceConstants::STATUS_LEGALIZADA,
+];
 ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title"><?= $pageTitle ?></span>
+<div class="sgi-page-header d-flex justify-content-between align-items-start">
+    <div>
+        <span class="sgi-page-title"><?= $pageTitle ?></span>
+        <div class="sgi-body-faint mt-1" style="font-size:12px;">
+            Período: <?= h($periodLabel) ?> ·
+            <span class="sgi-fg-muted"><?= $this->Paginator->counter('{{count}} documentos') ?></span> ·
+            <span class="sgi-fg-muted mono">$ <?= number_format($pageTotal, 0, ',', '.') ?></span>
+        </div>
+    </div>
     <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['dian_crosschecks']['can_create'])): ?>
         <?= $this->Html->link(
@@ -61,25 +122,25 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
 <!-- Search & Filters -->
 <div class="sgi-search-bar mb-3">
     <?= $this->Form->create(null, ['type' => 'get', 'url' => ['action' => $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index')], 'valueSources' => ['query']]) ?>
-    <div class="d-flex gap-2">
-        <div class="flex-grow-1">
-            <?= $this->Form->control('search', [
-                'label' => false,
-                'type' => 'text',
-                'class' => 'form-control',
-                'placeholder' => 'Buscar por número, orden de compra, detalle o proveedor…',
-                'value' => $this->request->getQuery('search', ''),
-            ]) ?>
+    <div class="d-flex gap-2 align-items-center">
+        <div class="sgi-input-icon">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" name="search"
+                   class="form-control"
+                   placeholder="Buscar por número, orden de compra, detalle o proveedor…"
+                   value="<?= h($this->request->getQuery('search', '')) ?>"
+                   aria-label="Buscar facturas">
         </div>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i></button>
-        <button type="button" class="btn btn-outline-dark" data-bs-toggle="collapse" data-bs-target="#invoiceFilters" title="Filtros avanzados">
+        <button type="button" class="btn btn-outline-dark btn-sm d-inline-flex align-items-center gap-1"
+                data-bs-toggle="collapse" data-bs-target="#invoiceFilters" aria-label="Filtros avanzados">
             <i class="bi bi-funnel" aria-hidden="true"></i>
+            <span>Filtros<?= $hasFilters ? ' · activos' : '' ?></span>
         </button>
         <?php if ($hasFilters): ?>
             <?= $this->Html->link(
                 '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
                 ['action' => $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index')],
-                ['class' => 'btn btn-outline-danger', 'escape' => false]
+                ['class' => 'btn btn-outline-danger btn-sm', 'escape' => false]
             ) ?>
         <?php endif; ?>
     </div>
@@ -147,112 +208,163 @@ $pipelineOptions = InvoiceConstants::STATUS_LABELS;
     <?= $this->Form->end() ?>
 </div>
 
-<div class="card card-primary">
+<?php if (!$isRejectedView): ?>
+<!-- Tabs por estado de pipeline -->
+<div class="sgi-status-tabs mb-3" role="tablist" aria-label="Filtrar por estado">
+    <?php foreach ($tabs as [$status, $label]):
+        $isActive = ($activeStatus === ($status ?? ''));
+        $color = match ($status) {
+            InvoiceConstants::STATUS_APROBACION, InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'var(--warning-text)',
+            InvoiceConstants::STATUS_CONTABILIDAD => 'var(--secondary-color)',
+            InvoiceConstants::STATUS_TESORERIA    => 'var(--info-text)',
+            InvoiceConstants::STATUS_PAGADA       => 'var(--primary-color)',
+            default                               => 'var(--primary-color)',
+        };
+    ?>
+        <?= $this->Html->link(
+            ($isActive ? '<span class="sgi-status-tab-dot" style="background:' . $color . ';"></span>' : '') . h($label),
+            $tabUrl($status),
+            [
+                'class' => 'sgi-status-tab' . ($isActive ? ' is-active' : ''),
+                'escape' => false,
+                'role' => 'tab',
+                'aria-selected' => $isActive ? 'true' : 'false',
+                'style' => $isActive ? 'color:' . $color : '',
+            ]
+        ) ?>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
+
+<div class="card">
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 align-middle">
             <thead>
                 <tr>
-                    <th style="width:160px;">Factura</th>
+                    <th style="width:170px;">Factura</th>
                     <th>Proveedor</th>
                     <th style="width:110px;"><?= $this->Paginator->sort('issue_date', 'Emisión') ?></th>
                     <th style="width:120px;"><?= $this->Paginator->sort('due_date', 'Vencimiento') ?></th>
-                    <th style="width:140px;" class="text-end"><?= $this->Paginator->sort('amount', 'Valor') ?></th>
-                    <th style="width:180px;">Estado</th>
-                    <th style="width:1%;white-space:nowrap;"><i class="bi bi-chat-left-text" title="Observaciones" aria-hidden="true"></i></th>
+                    <th style="width:150px;" class="text-end"><?= $this->Paginator->sort('amount', 'Valor') ?></th>
+                    <th style="width:220px;">Estado · Pipeline</th>
+                    <th style="width:1%;white-space:nowrap;" aria-label="Observaciones"><i class="bi bi-chat-left-text" title="Observaciones" aria-hidden="true"></i></th>
                 </tr>
             </thead>
             <tbody>
-                <?php $rowCount = 0; $today = new \DateTimeImmutable('today'); foreach ($invoices as $invoice): $rowCount++;
+                <?php
+                $rowCount = 0;
+                $today = new \DateTimeImmutable('today');
+                foreach ($invoices as $invoice):
+                    $rowCount++;
                     $row = InvoicePresentation::forRow($invoice, $today);
+                    $isLegalization = $invoice->document_type === 'Legalización';
+                    $steps = $isLegalization ? $pipelineStepsLeg : $pipelineStepsFull;
+                    $stageIdx = array_search($invoice->pipeline_status, $steps, true);
+                    if ($stageIdx === false) {
+                        $stageIdx = -1;
+                    }
+                    $pillClass = $row->isRejected
+                        ? 'pill-danger-soft'
+                        : ($statusPills[$invoice->pipeline_status] ?? 'pill-muted');
                 ?>
                 <tr class="clickable-row<?= $row->isRejected ? ' table-danger' : '' ?>"
                     data-href="<?= $this->Url->build(['action' => $isAllView ? 'view' : 'edit', $invoice->id]) ?>">
 
-                    <!-- Número de factura + tipo -->
+                    <!-- Factura: número + tipo -->
                     <td>
-                        <div class="fw-semibold"
-                             style="font-family:monospace;font-size:.8rem;color:#111;letter-spacing:-.01em;">
+                        <div class="mono sgi-fg-strong" style="font-size:12.5px;font-weight:700;letter-spacing:-.01em;">
                             <?= h($invoice->invoice_number ?: '—') ?>
                         </div>
-                        <div style="font-size:.7rem;color:#bbb;margin-top:.1rem;text-transform:uppercase;letter-spacing:.04em;">
+                        <div class="sgi-label sgi-fg-faint" style="margin-top:2px;">
                             <?= h($invoice->document_type) ?>
                         </div>
                     </td>
 
                     <!-- Proveedor + centro de operación -->
                     <td>
-                        <div style="font-size:.8125rem;font-weight:500;color:#222;line-height:1.3;">
-                            <?= $invoice->hasValue('provider') ? h($invoice->provider->name) : '<span class="text-muted">—</span>' ?>
+                        <div class="sgi-fg-default" style="font-size:12.5px;font-weight:600;line-height:1.3;">
+                            <?= $invoice->hasValue('provider') ? h($invoice->provider->name) : '<span class="sgi-fg-faint">—</span>' ?>
                         </div>
                         <?php if ($invoice->hasValue('operation_center')): ?>
-                        <div style="font-size:.7rem;color:#bbb;margin-top:.1rem;">
-                            <?= h($invoice->operation_center->name) ?>
+                        <div class="sgi-fg-faint d-inline-flex align-items-center gap-1" style="font-size:10.5px;margin-top:2px;">
+                            <i class="bi bi-geo-alt" aria-hidden="true" style="font-size:10px;"></i>
+                            <span><?= h($invoice->operation_center->name) ?></span>
                         </div>
                         <?php endif; ?>
                     </td>
 
-                    <!-- Fecha de emisión -->
-                    <td style="font-size:.8125rem;color:#555;white-space:nowrap;">
+                    <!-- Emisión -->
+                    <td class="mono sgi-fg-muted" style="font-size:12px;white-space:nowrap;">
                         <?= $invoice->issue_date?->format('d/m/Y') ?: '—' ?>
                     </td>
 
-                    <!-- Fecha de vencimiento -->
+                    <!-- Vencimiento -->
                     <td style="white-space:nowrap;">
-                        <span style="font-size:.8125rem;<?= $row->isOverdue ? 'color:var(--danger-color);font-weight:600;' : 'color:#555;' ?>">
+                        <span class="mono <?= $row->isOverdue ? 'sgi-fg-danger fw-bold' : 'sgi-fg-muted' ?>" style="font-size:12px;">
                             <?= $invoice->due_date?->format('d/m/Y') ?: '—' ?>
                         </span>
                         <?php if ($row->isOverdue): ?>
-                            <i class="bi bi-exclamation-circle-fill text-danger ms-1" style="font-size:.7rem;"
+                            <i class="bi bi-exclamation-circle-fill sgi-fg-danger ms-1" style="font-size:.7rem;"
                                title="Vencida" aria-hidden="true"></i>
                         <?php endif; ?>
                     </td>
 
                     <!-- Valor -->
-                    <td class="text-end fw-semibold" style="white-space:nowrap;color:var(--primary-color);font-size:.875rem;">
+                    <td class="text-end mono" style="white-space:nowrap;font-weight:700;font-size:13.5px;color:<?= $row->isPaid ? 'var(--primary-color)' : 'var(--text-default)' ?>;">
                         $ <?= number_format((float)$invoice->amount, 0, ',', '.') ?>
                     </td>
 
-                    <!-- Estado pipeline + badges secundarios -->
+                    <!-- Estado pipeline + mini-bar + badges secundarios -->
                     <td>
+                        <?php if ($stageIdx >= 0): ?>
+                        <div class="sgi-pipeline-mini mb-1" aria-hidden="true">
+                            <?php for ($i = 0, $n = count($steps); $i < $n; $i++): ?>
+                                <div class="<?= $i <= $stageIdx ? 'on' : '' ?>"></div>
+                            <?php endfor; ?>
+                        </div>
+                        <?php endif; ?>
                         <div class="d-flex flex-wrap align-items-center gap-1">
                             <?php if ($row->isRejected): ?>
-                                <span class="badge bg-danger"><?= h($row->statusLabel) ?></span>
-                                <span class="badge bg-danger">Rechazada</span>
+                                <span class="pill pill-danger-soft"><?= h(strtoupper($row->statusLabel)) ?></span>
+                                <span class="pill pill-danger-soft">RECHAZADA</span>
                             <?php else: ?>
-                                <span class="badge <?= h($row->statusBadgeClass) ?>"><?= h($row->statusLabel) ?></span>
+                                <span class="pill <?= h($pillClass) ?>">
+                                    <?php if ($row->isPaid): ?><i class="bi bi-check2" aria-hidden="true"></i><?php endif; ?>
+                                    <?= h(strtoupper($row->statusLabel)) ?>
+                                </span>
                                 <?php if (isset($approvalSummaries[$invoice->id]) && $approvalSummaries[$invoice->id]['total'] > 0):
                                     $s = $approvalSummaries[$invoice->id];
                                 ?>
                                     <?php if ($s['rejected'] > 0): ?>
-                                        <span class="badge bg-danger">Rechazada</span>
+                                        <span class="pill pill-danger-soft">RECHAZADA</span>
                                     <?php elseif ($s['approved'] === $s['total']): ?>
-                                        <span class="badge bg-success">Aprobada</span>
+                                        <span class="pill pill-primary-soft">APROBADA</span>
                                     <?php else: ?>
-                                        <span class="badge bg-secondary"><?= $s['approved'] ?>/<?= $s['total'] ?> aprobados</span>
+                                        <span class="pill pill-muted"><?= $s['approved'] ?>/<?= $s['total'] ?> APROBADOS</span>
                                     <?php endif; ?>
                                 <?php elseif ($row->isApproved): ?>
-                                    <span class="badge bg-success">Aprobada</span>
+                                    <span class="pill pill-primary-soft">APROBADA</span>
                                 <?php endif; ?>
                                 <?php if ($row->isPartialPay): ?>
-                                    <span class="badge bg-warning text-dark">Pago Parcial</span>
+                                    <span class="pill pill-warning-soft">PAGO PARCIAL</span>
                                 <?php endif; ?>
                                 <?php if ($row->isReadyForPay): ?>
-                                    <span class="badge <?= h(SharedPresentation::READY_FOR_PAYMENT_BADGES[$invoice->ready_for_payment] ?? 'bg-secondary') ?>"><?= h($invoice->ready_for_payment) ?></span>
+                                    <span class="pill <?= h($readyForPaymentPills[$invoice->ready_for_payment] ?? 'pill-muted') ?>"><?= h(strtoupper($invoice->ready_for_payment)) ?></span>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </td>
 
-                    <!-- Observaciones sin leer -->
+                    <!-- Observaciones sin leer / chevron -->
                     <?php $unread = (int)($invoice->unread_observations ?? 0); ?>
-                    <td class="text-center" style="white-space:nowrap;">
+                    <td class="text-end" style="white-space:nowrap;">
                         <?php if ($unread > 0): ?>
-                            <span class="badge bg-danger"
+                            <span class="pill pill-danger-soft"
                                   title="<?= $unread ?> observación<?= $unread > 1 ? 'es' : '' ?> sin leer">
-                                <i class="bi bi-chat-left-text-fill me-1" style="font-size:.65rem;" aria-hidden="true"></i><?= $unread ?>
+                                <i class="bi bi-chat-left-text-fill" style="font-size:.65rem;" aria-hidden="true"></i><?= $unread ?>
                             </span>
                         <?php else: ?>
-                            <i class="bi bi-chat-left-text" style="color:#dee2e6;font-size:.85rem;" title="Sin observaciones nuevas" aria-hidden="true"></i>
+                            <i class="bi bi-chevron-right sgi-fg-faint" aria-hidden="true"></i>
                         <?php endif; ?>
                     </td>
                 </tr>

@@ -95,6 +95,13 @@ $advancesMineCount = $advancesMineCount ?? 0;
             <!-- Logo -->
             <?= $this->element('sgi_logo') ?>
 
+            <!-- Buscador global -->
+            <form method="get" action="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'all']) ?>" class="sgi-sidebar-search mb-2" role="search">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="text" name="search" placeholder="Buscar facturas, empleados…" aria-label="Buscar" autocomplete="off">
+                <kbd>⌘K</kbd>
+            </form>
+
             <!-- Divisor -->
             <div style="height:1px;background:rgba(255,255,255,.07);margin-bottom:.75rem;"></div>
 
@@ -140,11 +147,20 @@ $advancesMineCount = $advancesMineCount ?? 0;
 
             <!-- Footer de usuario -->
             <div class="sidebar-footer d-flex align-items-center justify-content-between">
-                <?php if ($currentUser) : ?>
+                <?php if ($currentUser) :
+                    $fullName = (string)($currentUser->full_name ?? '');
+                    $initials = '';
+                    foreach (preg_split('/\s+/', trim($fullName)) ?: [] as $part) {
+                        if ($part !== '' && strlen($initials) < 2) {
+                            $initials .= mb_strtoupper(mb_substr($part, 0, 1));
+                        }
+                    }
+                    if ($initials === '') { $initials = '·'; }
+                ?>
                     <div class="d-flex align-items-center" style="min-width:0;">
-                        <div class="d-flex align-items-center justify-content-center me-2"
-                             style="width:32px;height:32px;background-color:var(--primary-color);flex-shrink:0;">
-                            <i class="bi bi-person text-white" style="font-size:.95rem;" aria-hidden="true"></i>
+                        <div class="d-flex align-items-center justify-content-center me-2 sgi-mono"
+                             style="width:32px;height:32px;background-color:var(--primary-color);flex-shrink:0;color:#fff;font-weight:700;font-size:.78rem;letter-spacing:.02em;">
+                            <?= h($initials) ?>
                         </div>
                         <div class="overflow-hidden">
                             <div class="text-white fw-medium text-truncate" style="font-size:.82rem;"><?= h($currentUser->full_name) ?></div>
