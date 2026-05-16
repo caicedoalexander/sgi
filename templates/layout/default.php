@@ -148,7 +148,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
             </div>
 
             <!-- Footer de usuario -->
-            <div class="sidebar-footer d-flex align-items-center justify-content-between px-3">
+            <div class="sidebar-footer d-flex align-items-center justify-content-between">
                 <?php if ($currentUser) :
                     $fullName = (string)($currentUser->full_name ?? '');
                     $initials = '';
