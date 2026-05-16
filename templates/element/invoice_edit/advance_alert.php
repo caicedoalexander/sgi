@@ -1,8 +1,11 @@
 <?php
 /**
- * Alerta amarilla "Para avanzar al siguiente estado complete..."
- * con la lista de campos faltantes. Solo se muestra cuando el
- * usuario puede avanzar y hay errores de validación bloqueando.
+ * Banner "Para avanzar al siguiente estado complete..." con la lista
+ * de campos faltantes. Solo aparece cuando el usuario puede avanzar
+ * y hay errores de validación bloqueando.
+ *
+ * Estilo: soft warning bg + border-left 3px (sin border-radius).
+ * Alineado al spec del Sistema de Diseño v2.
  *
  * @var \App\View\AppView $this
  * @var \App\ViewModel\InvoiceEditViewModel $viewModel
@@ -10,17 +13,24 @@
 if (!$viewModel->canAdvance || $viewModel->isRejected || empty($viewModel->advanceErrors)) {
     return;
 }
+$nextLabel = $viewModel->nextStatus !== null
+    ? ($viewModel->pipelineLabels[$viewModel->nextStatus] ?? $viewModel->nextStatus)
+    : null;
 ?>
-<div class="alert alert-warning mb-4">
-    <div class="d-flex align-items-start gap-2">
-        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" aria-hidden="true"></i>
-        <div>
-            <strong>Para avanzar al siguiente estado complete:</strong>
-            <ul class="mb-0 mt-1 ps-3">
-                <?php foreach ($viewModel->advanceErrors as $err): ?>
-                    <li><?= h($err) ?></li>
-                <?php endforeach; ?>
-            </ul>
+<div class="sgi-edit-banner">
+    <i class="bi bi-exclamation-triangle-fill bi-banner" aria-hidden="true"></i>
+    <div style="flex:1;min-width:0;">
+        <div class="sgi-edit-banner-title">
+            <?php if ($nextLabel): ?>
+                Para avanzar a <span style="color:var(--warning-text);"><?= h($nextLabel) ?></span> debe completar:
+            <?php else: ?>
+                Para avanzar al siguiente estado debe completar:
+            <?php endif; ?>
         </div>
+        <ul>
+            <?php foreach ($viewModel->advanceErrors as $err): ?>
+                <li><?= h($err) ?></li>
+            <?php endforeach; ?>
+        </ul>
     </div>
 </div>

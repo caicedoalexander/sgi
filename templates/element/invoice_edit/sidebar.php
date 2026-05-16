@@ -1,6 +1,9 @@
 <?php
 /**
- * Columna derecha del Invoices/edit: soportes adjuntos + chat de observaciones.
+ * Soportes + Observaciones del Invoices/edit. Se renderiza dentro de
+ * la columna principal (sgi-edit-side-grid: 2 columnas), no como
+ * sidebar vertical. Alineado al spec del Sistema de Diseño v2:
+ * sin bordes, sin shadow, header con sgi-section-head + sgi-label.
  *
  * @var \App\View\AppView $this
  * @var \App\ViewModel\InvoiceEditViewModel $viewModel
@@ -14,30 +17,46 @@
 $obsCount = count($viewModel->invoice->invoice_observations ?? []);
 $multipleStatuses = count($documentsByStatus) > 1;
 ?>
-<div class="card card-primary">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" style="font-size:.85rem;" aria-hidden="true"></i>
-            <span style="font-size:.85rem;font-weight:600;">Soportes</span>
+<!-- Soportes -->
+<div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
+    <div class="sgi-section-head" style="margin-bottom:12px;">
+        <span class="sgi-label d-inline-flex align-items-center gap-2">
+            <i class="bi bi-paperclip" aria-hidden="true"></i>
+            Soportes
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
         <?php if ($showUploadSection): ?>
-        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadInvoiceDocModal">
-            <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
+        <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#uploadInvoiceDocModal">
+            <i class="bi bi-upload" aria-hidden="true"></i>Subir
         </button>
         <?php endif; ?>
     </div>
 
-    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
-        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
-        <span style="font-size:.8rem;">Sin soportes adjuntos</span>
+    <div id="docs-empty-state" class="sgi-dropzone-empty" <?= !empty($documentsByStatus) ? 'style="display:none;"' : '' ?>>
+        <i class="bi bi-paperclip" aria-hidden="true"></i>
+        <div>Sin soportes adjuntos</div>
+        <?php if ($showUploadSection): ?>
+        <div style="font-size:10.5px;margin-top:4px;">PDF, JPG, PNG · máximo 10 MB por archivo</div>
+        <?php endif; ?>
     </div>
     <div id="docs-list" style="max-height:420px;overflow-y:auto;">
         <?php foreach ($documentsByStatus as $status => $docs): ?>
         <?php if ($multipleStatuses): ?>
-        <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-            <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
-            <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
+        <div style="padding:.3rem .5rem;background:var(--bg-subtle);display:flex;align-items:center;gap:.4rem;margin-top:.5rem;">
+            <?php
+            $stageStatusPills = [
+                \App\Constants\InvoiceConstants::STATUS_APROBACION        => 'pill-warning-soft',
+                \App\Constants\InvoiceConstants::STATUS_CONTABILIDAD      => 'pill-secondary-soft',
+                \App\Constants\InvoiceConstants::STATUS_TESORERIA         => 'pill-info-soft',
+                \App\Constants\InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'pill-warning-soft',
+                \App\Constants\InvoiceConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
+                \App\Constants\InvoiceConstants::STATUS_PAGADA            => 'pill-primary-soft',
+                \App\Constants\InvoiceConstants::STATUS_LEGALIZADA        => 'pill-primary-soft',
+            ];
+            $pillKind = $stageStatusPills[$status] ?? 'pill-muted';
+            ?>
+            <span class="pill <?= $pillKind ?>"><?= $statusLabels[$status] ?? $status ?></span>
+            <span style="font-size:10.5px;color:var(--text-faint);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>
         <?php endif; ?>
         <?php foreach ($docs as $doc): ?>
@@ -54,12 +73,14 @@ $multipleStatuses = count($documentsByStatus) > 1;
     </div>
 </div>
 
-<!-- Observaciones: chat -->
-<div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
-    <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);" aria-hidden="true"></i>
-        <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
-        <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
+<!-- Observaciones -->
+<div class="card sgi-obs-card" style="padding:18px 20px;display:flex;flex-direction:column;">
+    <div class="sgi-section-head" style="margin-bottom:12px;">
+        <span class="sgi-label d-inline-flex align-items-center gap-2">
+            <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+            Observaciones
+            <span id="obs-count" class="sgi-folder-count" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
+        </span>
     </div>
 
     <div id="obs-chat-scroll" class="sgi-obs-list">
@@ -72,8 +93,8 @@ $multipleStatuses = count($documentsByStatus) > 1;
     </div>
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
-        <span style="font-size:.78rem;">Sin observaciones aún</span>
+        <i class="bi bi-chat-square-dots" aria-hidden="true" style="font-size:1.5rem;"></i>
+        <span style="font-size:11.5px;">Sin observaciones aún</span>
     </div>
 
     <div class="sgi-obs-input-bar">

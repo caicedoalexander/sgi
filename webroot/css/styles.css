@@ -2181,6 +2181,174 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 }
 
 
+/* ─── 13.6 INVOICE EDIT (formulario) ────────────────────────────── */
+
+/* Header chips next to the title */
+.sgi-edit-id-chip {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 3px 8px;
+    background: var(--bg-subtle);
+    border-radius: 3px;
+    font-weight: 600;
+}
+.sgi-edit-dirty {
+    font-size: 10.5px;
+    color: var(--secondary-color);
+    font-weight: 600;
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.sgi-edit-dirty::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--secondary-color);
+    border-radius: 50%;
+}
+
+/* Advance-to-next-stage banner */
+.sgi-edit-banner {
+    background: var(--warning-soft);
+    border-left: 3px solid var(--warning-color);
+    padding: 14px 18px;
+    display: flex; gap: 12px; align-items: flex-start;
+}
+.sgi-edit-banner .bi-banner {
+    color: var(--warning-color);
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.sgi-edit-banner-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-strong);
+    margin-bottom: 6px;
+}
+.sgi-edit-banner ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12px;
+    color: var(--text-default);
+    line-height: 1.7;
+}
+
+/* Stage card — "Etapa actual · editable" */
+.sgi-edit-stage-card {
+    background: #fff;
+    overflow: hidden;
+}
+.sgi-edit-stage-head {
+    padding: 14px 20px;
+    border-left: 3px solid var(--primary-color);
+    background: linear-gradient(90deg, var(--primary-soft) 0%, transparent 60%);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.sgi-edit-stage-head.is-warning {
+    border-left-color: var(--warning-color);
+    background: linear-gradient(90deg, var(--warning-soft) 0%, transparent 60%);
+}
+.sgi-edit-stage-head.is-secondary {
+    border-left-color: var(--secondary-color);
+    background: linear-gradient(90deg, var(--secondary-soft) 0%, transparent 60%);
+}
+.sgi-edit-stage-head.is-accent {
+    border-left-color: var(--accent-color);
+    background: linear-gradient(90deg, var(--accent-soft) 0%, transparent 60%);
+}
+.sgi-edit-stage-head.is-info {
+    border-left-color: var(--info-color);
+    background: linear-gradient(90deg, var(--info-soft) 0%, transparent 60%);
+}
+.sgi-edit-stage-head.is-danger {
+    border-left-color: var(--danger-color);
+    background: linear-gradient(90deg, var(--danger-soft) 0%, transparent 60%);
+}
+.sgi-edit-stage-eyebrow {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+.sgi-edit-stage-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-strong);
+    margin-top: 4px;
+    display: inline-flex; align-items: center; gap: 10px;
+}
+.sgi-edit-stage-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.sgi-edit-stage-hint::before {
+    content: '';
+    width: 7px; height: 7px;
+    background: var(--danger-color);
+    border-radius: 50%;
+}
+.sgi-edit-stage-body { padding: 20px; }
+
+/* Left column action list (Acciones card buttons) */
+.sgi-edit-actions-list { display: flex; flex-direction: column; gap: 4px; }
+.sgi-edit-actions-list .btn {
+    justify-content: flex-start;
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 12px;
+    background: transparent;
+    border: none;
+}
+.sgi-edit-actions-list .btn:hover,
+.sgi-edit-actions-list .btn:focus {
+    background: var(--bg-muted);
+    color: var(--text-strong);
+}
+.sgi-edit-actions-list .btn .bi {
+    color: var(--text-faint);
+    margin-right: 6px;
+}
+
+/* Sticky footer for cancel + save */
+.sgi-edit-footer {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    padding: 14px 0;
+    margin-top: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    border-top: 1px solid var(--rule);
+    z-index: 10;
+}
+.sgi-edit-footer-meta {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+}
+.sgi-edit-footer-meta .sep {
+    width: 1px; height: 14px; background: var(--rule);
+}
+.sgi-edit-footer-actions {
+    display: flex; gap: 8px; flex-shrink: 0;
+}
+
+/* Grid: Soportes + Observaciones side-by-side on the right column */
+.sgi-edit-side-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+
+@media (max-width: 1199.98px) {
+    .sgi-edit-side-grid { grid-template-columns: 1fr; }
+}
+
+
 /* ─── 14. RESPONSIVE — Invoice layout ───────────────────────────── */
 @media (max-width: 1199.98px) {
     .sgi-invoice-layout { flex-direction: column; }
@@ -2193,5 +2361,12 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     .sgi-sticky-actions {
         margin: 0 -1rem -1rem;
         padding: .75rem 1rem;
+    }
+    .sgi-edit-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .sgi-edit-footer-actions {
+        justify-content: flex-end;
     }
 }
