@@ -333,25 +333,7 @@ $beneficiaryName = $viewModel->invoice->provider->name
                 </div>
             </div>
             <div class="sgi-edit-stage-body">
-                <div class="sgi-form-sections">
-                    <?php foreach ($visibleGeneralSections as $sectionName): ?>
-
-                    <?php if ($sectionName === 'general' && $isAdvance): ?>
-                    <?= $this->element('invoice_edit/sections/general_advance', compact('viewModel', 'canEdit')) ?>
-                    <?php elseif ($sectionName === 'general'): ?>
-                    <?= $this->element('invoice_edit/sections/general', compact('viewModel', 'canEdit', 'isAdvance', 'documentTypes')) ?>
-                    <?php endif; ?>
-
-                    <?php if ($sectionName === 'dates'): ?>
-                    <?= $this->element('invoice_edit/sections/dates', compact('viewModel', 'canEdit', 'isAdvance')) ?>
-                    <?php endif; ?>
-
-                    <?php if ($sectionName === 'classification'): ?>
-                    <?= $this->element('invoice_edit/sections/classification', compact('viewModel', 'canEdit', 'isAdvance')) ?>
-                    <?php endif; ?>
-
-                    <?php endforeach; ?>
-                </div>
+                <?= $this->element('invoice_edit/sections/general_compact', compact('viewModel', 'canEdit', 'isAdvance', 'documentTypes')) ?>
             </div>
         </div>
         <?php endif; ?>

@@ -16,6 +16,12 @@ if (!$viewModel->canAdvance || $viewModel->isRejected || empty($viewModel->advan
 $nextLabel = $viewModel->nextStatus !== null
     ? ($viewModel->pipelineLabels[$viewModel->nextStatus] ?? $viewModel->nextStatus)
     : null;
+
+// Etapa N/total — alineado al spec editar-factura.jsx:495 (Pill "Etapa 1/6").
+$stagesAll = $viewModel->pipelineStatuses;
+$stageIdx = array_search($viewModel->currentStatus, $stagesAll, true);
+$stageNum = is_int($stageIdx) ? $stageIdx + 1 : null;
+$stageTotal = count($stagesAll);
 ?>
 <div class="sgi-edit-banner">
     <i class="bi bi-exclamation-triangle-fill bi-banner" aria-hidden="true"></i>
@@ -33,4 +39,7 @@ $nextLabel = $viewModel->nextStatus !== null
             <?php endforeach; ?>
         </ul>
     </div>
+    <?php if ($stageNum !== null): ?>
+        <span class="pill pill-warning-soft sgi-edit-banner-pill">Etapa <?= $stageNum ?>/<?= $stageTotal ?></span>
+    <?php endif; ?>
 </div>

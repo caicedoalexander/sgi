@@ -2029,6 +2029,12 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     color: var(--text-default);
     line-height: 1.7;
 }
+.sgi-edit-banner-pill {
+    flex-shrink: 0;
+    align-self: flex-start;
+    padding: 4px 10px;
+    font-size: 11px;
+}
 
 .sgi-edit-stage-card {
     background: #fff;
@@ -2088,6 +2094,31 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     border-radius: 50%;
 }
 .sgi-edit-stage-body { padding: 20px; }
+
+/* Grid compacto 4-col para "Datos Generales" y otras secciones del editar.
+   Alineado al spec editar-factura.jsx (sección Datos Generales). */
+.sgi-edit-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+.sgi-edit-field { min-width: 0; display: flex; flex-direction: column; }
+.sgi-edit-field--span2 { grid-column: span 2; }
+.sgi-edit-field--span3 { grid-column: span 3; }
+.sgi-edit-field--span4 { grid-column: 1 / -1; }
+.sgi-edit-field .form-label { margin-bottom: 6px; }
+.sgi-edit-field .form-control,
+.sgi-edit-field .form-select { width: 100%; }
+
+@media (max-width: 1199.98px) {
+    .sgi-edit-fields-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sgi-edit-field--span2,
+    .sgi-edit-field--span3,
+    .sgi-edit-field--span4 { grid-column: 1 / -1; }
+}
+@media (max-width: 575.98px) {
+    .sgi-edit-fields-grid { grid-template-columns: 1fr; }
+}
 
 .sgi-edit-actions-list { display: flex; flex-direction: column; gap: 4px; }
 .sgi-edit-actions-list .btn {
