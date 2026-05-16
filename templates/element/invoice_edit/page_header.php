@@ -61,6 +61,7 @@ $idLabel = $viewModel->invoice->invoice_number ?? ('#' . $viewModel->invoice->id
                       && $viewModel->invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL): ?>
                 <span class="pill pill-warning-soft">Pago Parcial</span>
             <?php endif; ?>
+            <span class="sgi-edit-dirty" data-dirty-indicator hidden>Cambios sin guardar</span>
         </div>
     </div>
     <div class="d-flex gap-2 flex-shrink-0">

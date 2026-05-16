@@ -1322,6 +1322,142 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 }
 
 
+/* ─── D.13.5 INVOICE ROW (grid · lista-facturas) ────────────────── */
+/* Fila grid del listado de facturas. 7 columnas:
+   factura · proveedor · emisión · vencimiento · valor · estado/pipeline · chevron.
+   Matches spec lista-facturas.jsx. */
+.sgi-row-fact-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 2.4fr 1fr 1fr 1.1fr 1.7fr 36px;
+    gap: 14px;
+    align-items: center;
+}
+.sgi-row-fact {
+    padding: 14px 18px;
+    background: #fff;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color var(--t-fast) ease;
+    border-top: 1px solid var(--rule);
+}
+.sgi-row-fact:first-child { border-top: none; }
+.sgi-row-fact:hover { background: var(--bg-muted); color: inherit; }
+.sgi-row-fact.is-rejected { background: var(--danger-soft); }
+.sgi-row-fact.is-rejected:hover { background: rgba(220, 53, 69, .18); }
+
+.sgi-row-fact-head {
+    padding: 12px 18px;
+    background: var(--bg-subtle);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-faint);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+.sgi-row-fact-head a {
+    color: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.sgi-row-fact-head a:hover { color: var(--text-strong); }
+.sgi-row-fact-head .text-end { text-align: right; }
+
+.sgi-row-fact-id {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-strong);
+    letter-spacing: -.01em;
+}
+.sgi-row-fact-type {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+.sgi-row-fact-provider {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-default);
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sgi-row-fact-center {
+    font-size: 10.5px;
+    color: var(--text-faint);
+    margin-top: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.sgi-row-fact-date {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-default);
+    white-space: nowrap;
+}
+.sgi-row-fact-date.is-overdue {
+    color: var(--danger-color);
+    font-weight: 700;
+}
+.sgi-row-fact-amount {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--text-default);
+    text-align: right;
+    white-space: nowrap;
+}
+.sgi-row-fact-amount.is-paid { color: var(--primary-color); }
+
+.sgi-row-fact-pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+.sgi-row-fact-pipeline .sgi-pipeline-mini {
+    min-width: 0;
+}
+.sgi-row-fact-pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+.sgi-row-fact-chevron {
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+.sgi-row-fact-empty {
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--text-disabled);
+    background: #fff;
+}
+
+/* Footer / pagination de la card de listado */
+.sgi-row-fact-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--bg-subtle);
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+
+
 /* ─── D.14 BANK CHIP ────────────────────────────────────────────── */
 .sgi-bank-chip {
     width: 32px; height: 32px;

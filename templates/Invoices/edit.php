@@ -462,6 +462,8 @@ $beneficiaryName = $viewModel->invoice->provider->name
                     Última modificación: <span class="mono"><?= $viewModel->invoice->modified->format('d/m/Y H:i') ?></span>
                 </span>
                 <?php endif; ?>
+                <span class="sep" data-dirty-indicator hidden></span>
+                <span class="sgi-edit-dirty" data-dirty-indicator hidden>Hay cambios sin guardar</span>
             </div>
             <div class="sgi-edit-footer-actions">
                 <?= $this->Html->link(

@@ -15,6 +15,31 @@ use App\Constants\InvoiceConstants;
 ?>
 <?php $this->append('script') ?>
 <script>
+(function () {
+    // ── Dirty form indicator (matches spec editar-factura.jsx) ──
+    // Revela los `[data-dirty-indicator]` cuando el usuario toca cualquier
+    // input/select/textarea del formulario principal.
+    var form = document.getElementById('invoiceEditForm');
+    if (!form) return;
+    var indicators = document.querySelectorAll('[data-dirty-indicator]');
+    if (!indicators.length) return;
+    var dirty = false;
+    function markDirty() {
+        if (dirty) return;
+        dirty = true;
+        indicators.forEach(function (el) { el.hidden = false; });
+    }
+    form.addEventListener('input',  markDirty, { once: false });
+    form.addEventListener('change', markDirty, { once: false });
+    form.addEventListener('submit', function () {
+        // Al enviar limpiamos para no advertir tras un guardado exitoso.
+        dirty = false;
+        indicators.forEach(function (el) { el.hidden = true; });
+    });
+})();
+</script>
+
+<script>
 (function(){
     // ── Documents (upload + delete) via shared helper ──
     SgiDocumentUploader.init({
