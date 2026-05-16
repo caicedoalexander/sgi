@@ -1189,6 +1189,108 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .sgi-doc-code.is-dim  { background: var(--rule);           color: var(--text-faint); }
 
 
+/* ─── D.8.5 APPROVERS WIDGET ────────────────────────────────────── */
+/* Lista de aprobadores como chips ricos. Cada chip muestra:
+   avatar con iniciales (color derivado del nombre) + nombre + cargo·timestamp
+   + pill de estado + X (opcional). Alineado al spec editar-factura.jsx
+   (FldAprobadores, líneas 222-276). */
+.sgi-approvers-widget {
+    background: #fff;
+    outline: 1px solid var(--border-color);
+    outline-offset: -1px;
+    border-radius: var(--radius-md);
+    padding: 10px;
+    min-height: 60px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-start;
+}
+.sgi-approver-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 4px 4px 8px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    max-width: 100%;
+    min-width: 0;
+}
+.sgi-approver-chip-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    max-width: 200px;
+}
+.sgi-approver-chip-name {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-strong);
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sgi-approver-chip-meta {
+    font-size: 9.5px;
+    color: var(--text-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sgi-approver-chip-remove {
+    background: transparent;
+    border: 0;
+    color: var(--text-faint);
+    padding: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color var(--t-fast) ease;
+    line-height: 1;
+}
+.sgi-approver-chip-remove:hover { color: var(--danger-color); }
+
+/* Botón "+ Agregar aprobador" inline — dashed primary */
+.sgi-approver-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--primary-soft);
+    color: var(--primary-color);
+    border: 0;
+    outline: 1px dashed var(--primary-color);
+    outline-offset: -1px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color var(--t-fast) ease;
+}
+.sgi-approver-add:hover { background: var(--primary-soft-strong); }
+.sgi-approver-add:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Empty state dentro del widget */
+.sgi-approvers-empty {
+    font-size: 11.5px;
+    color: var(--text-faint);
+    font-style: italic;
+    padding: 6px 4px;
+}
+
+/* Fila de acciones bajo el widget (botón enviar links + hint) */
+.sgi-approvers-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+
 /* ─── D.9 DROPZONE / EMPTY STATES ───────────────────────────────── */
 .sgi-dropzone-empty {
     padding: 24px 20px;

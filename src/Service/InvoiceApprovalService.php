@@ -166,7 +166,7 @@ class InvoiceApprovalService
                 'InvoiceApprovals.invoice_id' => $invoiceId,
                 'InvoiceApprovals.status IN' => InvoiceConstants::APPROVER_STATUSES_ACTIVE,
             ])
-            ->contain(['Users'])
+            ->contain(['Users' => ['Roles']])
             ->orderBy(['InvoiceApprovals.created' => 'ASC'])
             ->all()
             ->toArray();
