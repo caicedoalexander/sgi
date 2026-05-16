@@ -13,6 +13,7 @@
     <link href="<?= $this->Url->build('/vendor/bootstrap/bootstrap.min.css') ?>" rel="stylesheet">
     <link href="<?= $this->Url->build('/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>" rel="stylesheet">
     <?= $this->Html->css('styles') ?>
+    <?= $this->Html->css('components') ?>
     <style>
         body {
             background-color: var(--bg-dark);

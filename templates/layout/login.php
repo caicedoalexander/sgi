@@ -13,6 +13,7 @@
     <link href="<?= $this->Url->build('/vendor/bootstrap/bootstrap.min.css') ?>" rel="stylesheet">
     <link href="<?= $this->Url->build('/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>" rel="stylesheet">
     <?= $this->Html->css('styles') ?>
+    <?= $this->Html->css('components') ?>
 </head>
 <body style="background:var(--bg-dark);min-height:100vh;">
     <div class="d-flex" style="min-height:100vh;">

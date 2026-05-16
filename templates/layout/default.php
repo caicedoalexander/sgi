@@ -44,6 +44,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <?= $this->Html->css('sgi-flatpickr-overrides') ?>
     <!-- Select2 CSS se carga bajo demanda via element/cdn_select2.php -->
     <?= $this->Html->css('styles') ?>
+    <?= $this->Html->css('components') ?>
     <?php if ($this->request->getAttribute('csrfToken')) : ?>
     <meta name="csrfToken" content="<?= $this->request->getAttribute('csrfToken') ?>">
     <?php endif; ?>
