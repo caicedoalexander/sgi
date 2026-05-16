@@ -299,21 +299,6 @@ body {
 }
 
 
-/* ─── 6. TOPBAR ─────────────────────────────────────────────────── */
-.sgi-topbar { background: #fff; min-height: 56px; }
-.sgi-topbar-title {
-    font-size: .875rem; font-weight: 600;
-    letter-spacing: -.01em; color: var(--text-strong);
-    border-left: 2px solid var(--primary-color);
-    padding-left: .6rem;
-}
-.sgi-topbar-date {
-    font-size: .75rem; color: var(--text-disabled);
-    font-weight: 500; letter-spacing: -.01em;
-    font-family: var(--font-mono);
-}
-
-
 /* ─── 7. LAYOUT ─────────────────────────────────────────────────── */
 .content-wrapper { background-color: var(--background-color); }
 
@@ -774,7 +759,7 @@ textarea.form-control.auto-resize { min-height: 38px; overflow: hidden; resize: 
 .form-check-input.is-invalid:checked { background-color: var(--danger-color); }
 
 /* File input */
-.form-control[type="file"], .sgi-file-input {
+.form-control[type="file"] {
     padding: 0;
     border: 0;
     outline: 1px solid var(--border-color);
@@ -787,9 +772,9 @@ textarea.form-control.auto-resize { min-height: 38px; overflow: hidden; resize: 
     transition: outline-color var(--t-fast) ease;
     box-shadow: none;
 }
-.form-control[type="file"]:hover, .sgi-file-input:hover { outline-color: var(--primary-color); }
-.form-control[type="file"]:focus, .sgi-file-input:focus { outline: 2px solid var(--primary-color); outline-offset: -2px; box-shadow: none; }
-.form-control[type="file"]::file-selector-button, .sgi-file-input::file-selector-button {
+.form-control[type="file"]:hover:hover { outline-color: var(--primary-color); }
+.form-control[type="file"]:focus:focus { outline: 2px solid var(--primary-color); outline-offset: -2px; box-shadow: none; }
+.form-control[type="file"]::file-selector-button::file-selector-button {
     padding: .55rem .9rem; margin: 0;
     margin-inline-end: .75rem;
     background: var(--bg-muted);
@@ -802,17 +787,17 @@ textarea.form-control.auto-resize { min-height: 38px; overflow: hidden; resize: 
     cursor: pointer;
     transition: background-color var(--t-fast) ease, color var(--t-fast) ease;
 }
-.form-control[type="file"]:hover::file-selector-button, .sgi-file-input:hover::file-selector-button {
+.form-control[type="file"]:hover::file-selector-button:hover::file-selector-button {
     background: var(--primary-color); color: #fff;
 }
-.form-control[type="file"]:disabled, .sgi-file-input:disabled {
+.form-control[type="file"]:disabled:disabled {
     background: var(--background-color); color: #999; cursor: not-allowed;
     outline-color: var(--border-color);
 }
-.form-control[type="file"]:disabled::file-selector-button, .sgi-file-input:disabled::file-selector-button {
+.form-control[type="file"]:disabled::file-selector-button:disabled::file-selector-button {
     background: var(--rule); color: var(--text-disabled); cursor: not-allowed;
 }
-.form-control[type="file"], .sgi-file-input {
+.form-control[type="file"] {
     padding-block: .12rem;
     padding-inline-end: .75rem;
     line-height: 1.9;
@@ -877,7 +862,7 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .dropdown-divider { margin: .5rem 0; border-top: 1px solid var(--rule); }
 .dropdown-item-text { padding: .5rem 1rem; color: var(--text-muted); font-size: .875rem; }
 .dropdown-toggle::after { margin-left: .5rem; vertical-align: middle; }
-.navbar .dropdown-menu, .sgi-topbar .dropdown-menu { margin-top: .25rem; }
+.navbar .dropdown-menu { margin-top: .25rem; }
 .dropdown-item i, .dropdown-item .bi { margin-right: .5rem; opacity: .7; width: 1rem; text-align: center; }
 .dropdown-item:hover i, .dropdown-item:hover .bi,
 .dropdown-item.active i, .dropdown-item.active .bi { opacity: 1; }
@@ -987,26 +972,6 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 }
 
 
-/* ─── 9.3 QUICK TILE ────────────────────────────────────────────── */
-.sgi-quick-tile {
-    background: #fff;
-    position: relative;
-    transition: background-color var(--t-fast) ease;
-    color: inherit;
-    overflow: hidden;
-}
-.sgi-quick-tile::after {
-    content: '';
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    height: 2px;
-    background: transparent;
-    transition: background-color var(--t-fast) ease;
-}
-.sgi-quick-tile:hover { background: var(--bg-muted); color: inherit; }
-.sgi-quick-tile:hover::after { background: var(--primary-color); }
-
-
 /* ─── 9.4 PIPELINE STEPPER ──────────────────────────────────────── */
 .sgi-stepper { display: flex; align-items: center; justify-content: space-between; }
 .sgi-step { display: flex; align-items: center; gap: .5rem; }
@@ -1080,24 +1045,6 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .pill-orange,
 .pill-secondary      { background: var(--secondary-color); color: #fff; }
 .pill-dark           { background: var(--bg-dark);        color: #fff; }
-
-
-/* ─── 9.7 DOC CODES (catálogo de docs empleado) ─────────────────── */
-.sgi-doc-code {
-    display: inline-flex;
-    align-items: center; justify-content: center;
-    padding: 7px 9px;
-    font-size: 11px; font-weight: 700;
-    font-family: var(--font-mono);
-    letter-spacing: .5px;
-    color: #fff;
-    min-width: 42px;
-    border-radius: var(--radius-sm);
-}
-.sgi-doc-code.is-ok   { background: var(--primary-color); }
-.sgi-doc-code.is-warn { background: var(--warning-color); color: var(--warning-text); }
-.sgi-doc-code.is-miss { background: var(--danger-color); }
-.sgi-doc-code.is-dim  { background: var(--rule); color: var(--text-faint); }
 
 
 /* ─── 9.8 ICON CHIP ─────────────────────────────────────────────── */
@@ -1632,68 +1579,6 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 }
 
 
-/* ─── 10.6 COLLAPSIBLE SECTION ──────────────────────────────────── */
-.sgi-collapsible-section {
-    background: #fff;
-    border-left: 3px solid var(--rule);
-    padding: .75rem 1rem;
-    transition: border-left-color .2s ease, background-color .2s ease;
-}
-.sgi-collapsible-section > summary {
-    padding: .25rem 0;
-    cursor: pointer;
-}
-.sgi-collapsible-section > summary::-webkit-details-marker { display: none; }
-.sgi-collapsible-section[open] {
-    border-left-color: var(--primary-color);
-    background-color: #fdfffe;
-}
-.sgi-collapsible-section[open] .sgi-collapse-chevron {
-    transform: rotate(90deg);
-    color: var(--primary-color) !important;
-}
-.sgi-collapsible-section[open] > summary { margin-bottom: 0; }
-.sgi-collapsible-section .mb-4 > .d-flex.align-items-center.gap-3.mb-3:first-child {
-    display: none !important;
-}
-
-
-/* ─── 10.7 READONLY SECTION ─────────────────────────────────────── */
-.sgi-section-readonly {
-    background: var(--bg-muted);
-    margin-left: -1.5rem;
-    margin-right: -1.5rem;
-    padding: 1rem 1.5rem .5rem;
-    border-top: 1px solid var(--rule);
-}
-.sgi-section-readonly .form-control:disabled,
-.sgi-section-readonly .form-select:disabled {
-    background: var(--background-color);
-    color: var(--text-disabled);
-    border-color: #eee;
-}
-
-.sgi-readonly-separator {
-    display: flex; align-items: center; gap: .75rem;
-    margin: .5rem -1.5rem 0;
-    padding: .6rem 1.5rem 0;
-    border-top: 1px solid var(--rule);
-}
-.sgi-readonly-separator span {
-    font-size: var(--fs-meta);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-label);
-    color: var(--text-disabled);
-    font-weight: 700;
-    white-space: nowrap;
-}
-.sgi-readonly-separator::after {
-    content: '';
-    flex: 1; height: 1px;
-    background: var(--rule);
-}
-
-
 /* ─── 10.8 STICKY ACTIONS ───────────────────────────────────────── */
 .sgi-sticky-actions {
     position: sticky;
@@ -2062,11 +1947,6 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     .sgi-ledger { grid-template-columns: repeat(2, 1fr); }
     .sgi-ledger-item:nth-child(4n) { border-right: 1px solid var(--rule); }
     .sgi-ledger-item:nth-child(2n) { border-right: none; }
-    .sgi-section-readonly,
-    .sgi-readonly-separator {
-        margin-left: -1rem; margin-right: -1rem;
-        padding-left: 1rem; padding-right: 1rem;
-    }
     .sgi-sticky-actions {
         margin: 0 -1rem -1rem;
         padding: .75rem 1rem;
