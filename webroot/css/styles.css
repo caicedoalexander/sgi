@@ -671,21 +671,25 @@ body {
 
 
 /* ─── 8.7 FORMS (Bootstrap override) ────────────────────────────── */
+/* Spec del Sistema de Diseno: inputs compactos, 12.5px font, padding 9px 11px,
+   alto natural ~32px, labels 10.5px uppercase con gap 6px sobre el control. */
 .form-label {
     font-weight: 700;
     font-size: var(--fs-label);
     text-transform: uppercase;
     letter-spacing: var(--tracking-label);
     color: var(--text-faint);
-    margin-bottom: .35rem;
+    margin-bottom: 6px;
+    line-height: 1.2;
 }
 .form-control {
     border-radius: var(--radius-md);
     border: 0;
     outline: 1px solid var(--border-color);
     outline-offset: -1px;
-    font-size: .875rem;
-    padding: .5rem .75rem;
+    font-size: 12.5px;
+    line-height: 1.35;
+    padding: 8px 11px;
     background: #fff;
     transition: outline-color var(--t-fast) ease, background-color var(--t-fast) ease;
     box-shadow: none;
@@ -697,7 +701,7 @@ body {
     background-color: var(--bg-focus-tinge);
     box-shadow: none;
 }
-.form-control::placeholder { color: var(--text-disabled); opacity: 1; font-size: .82rem; }
+.form-control::placeholder { color: var(--text-disabled); opacity: 1; font-size: 12px; }
 .form-control:disabled, .form-control[readonly] {
     background-color: var(--bg-subtle);
     outline-color: var(--rule);
@@ -711,17 +715,18 @@ body {
     border: 0;
     outline: 1px solid var(--border-color);
     outline-offset: -1px;
-    font-size: .875rem;
+    font-size: 12.5px;
+    line-height: 1.35;
     font-family: var(--font-sans);
     color: var(--text-strong);
-    padding: .5rem 2.25rem .5rem .75rem;
-    height: 38px;
+    padding: 8px 28px 8px 11px;
+    height: auto;
     background-color: #fff;
     transition: outline-color var(--t-fast) ease, background-color var(--t-fast) ease;
     box-shadow: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right .75rem center;
+    background-position: right 10px center;
     background-size: 10px 6px;
     -webkit-appearance: none; -moz-appearance: none; appearance: none;
 }
@@ -739,10 +744,10 @@ body {
     color: var(--text-disabled);
     cursor: not-allowed;
 }
-.form-select option { font-size: .875rem; padding: .375rem .5rem; }
+.form-select option { font-size: 12.5px; padding: .375rem .5rem; }
 
-textarea.form-control { resize: vertical; min-height: 80px; line-height: 1.6; }
-textarea.form-control.auto-resize { min-height: 38px; overflow: hidden; resize: none; }
+textarea.form-control { resize: vertical; min-height: 72px; line-height: 1.5; padding: 9px 11px; }
+textarea.form-control.auto-resize { min-height: 34px; overflow: hidden; resize: none; }
 
 .form-text { font-size: .75rem; color: var(--text-muted); margin-top: .25rem; }
 
