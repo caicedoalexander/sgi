@@ -288,10 +288,75 @@ $beneficiaryName = $viewModel->invoice->provider->name
     <!-- ═══════════════════════════ COLUMNA DERECHA ═══════════════════════════ -->
     <main class="sgi-invoice-view-right">
 
-        <!-- Card de etapa actual con header acento -->
-        <?php $hasEditableSections = !empty(array_filter($renderOrder, fn($s) => !$isReadOnlySection($s))); ?>
-        <?php if ($hasEditableSections): ?>
-        <div class="sgi-edit-stage-card card">
+        <?php
+        // Las secciones general/dates/classification van a la card "Datos
+        // Generales" (siempre que sean visibles, editables o no). Las
+        // secciones revision/accounting/treasury/payment_authorization van a la
+        // card "Etapa actual · editable" con el header acentuado.
+        $generalSectionKeys = ['general', 'dates', 'classification'];
+        $stageSectionKeys = ['revision', 'accounting', 'treasury', 'payment_authorization'];
+        $visibleGeneralSections = array_values(array_intersect($generalSectionKeys, $viewModel->visibleSections));
+        $visibleStageSections   = array_values(array_intersect($stageSectionKeys, $viewModel->visibleSections));
+
+        $sharedPaymentParams = [
+            'payments'           => $viewModel->invoice->invoice_payments ?? [],
+            'bankingEntities'    => $viewModel->bankingEntities,
+            'addPaymentUrl'      => ['controller' => 'InvoicePayments', 'action' => 'addPayment', $viewModel->invoice->id],
+            'authorizeUrlFn'     => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'authorizePayment', $viewModel->invoice->id, $pId],
+            'rejectUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'rejectPayment', $viewModel->invoice->id, $pId],
+            'deleteUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'deletePayment', $viewModel->invoice->id, $pId],
+            'paymentStatus'      => $viewModel->invoice->payment_status ?? null,
+            'totalAmount'        => $viewModel->invoice->amount ?? null,
+            'rejectMessage'      => '¿Rechazar este pago? El registro volverá a Tesorería.',
+            'with_idempotency_key' => true,
+        ];
+
+        $isPaymentStage = in_array($viewModel->currentStatus, [
+            InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+            InvoiceConstants::STATUS_VERIFICACION_PAGO,
+            InvoiceConstants::STATUS_PAGADA,
+        ], true);
+        ?>
+
+        <!-- Datos Generales: datos invariantes a la etapa -->
+        <?php if (!empty($visibleGeneralSections)): ?>
+        <div class="card sgi-edit-stage-card">
+            <div class="sgi-edit-stage-head">
+                <div>
+                    <div class="sgi-edit-stage-eyebrow">Datos Generales</div>
+                    <div class="sgi-edit-stage-title">Información del documento</div>
+                </div>
+                <div style="font-size:11px;color:var(--text-faint);font-style:italic;">
+                    Estos campos no cambian con la etapa
+                </div>
+            </div>
+            <div class="sgi-edit-stage-body">
+                <div class="sgi-form-sections">
+                    <?php foreach ($visibleGeneralSections as $sectionName): ?>
+
+                    <?php if ($sectionName === 'general' && $isAdvance): ?>
+                    <?= $this->element('invoice_edit/sections/general_advance', compact('viewModel', 'canEdit')) ?>
+                    <?php elseif ($sectionName === 'general'): ?>
+                    <?= $this->element('invoice_edit/sections/general', compact('viewModel', 'canEdit', 'isAdvance', 'documentTypes')) ?>
+                    <?php endif; ?>
+
+                    <?php if ($sectionName === 'dates'): ?>
+                    <?= $this->element('invoice_edit/sections/dates', compact('viewModel', 'canEdit', 'isAdvance')) ?>
+                    <?php endif; ?>
+
+                    <?php if ($sectionName === 'classification'): ?>
+                    <?= $this->element('invoice_edit/sections/classification', compact('viewModel', 'canEdit', 'isAdvance')) ?>
+                    <?php endif; ?>
+
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Etapa actual: campos editables específicos del estado -->
+        <?php if (!empty($visibleStageSections)): ?>
+        <div class="card sgi-edit-stage-card">
             <div class="sgi-edit-stage-head <?= $stageAccent ?>">
                 <div>
                     <div class="sgi-edit-stage-eyebrow">Etapa actual · editable</div>
@@ -308,56 +373,17 @@ $beneficiaryName = $viewModel->invoice->provider->name
             </div>
             <div class="sgi-edit-stage-body">
                 <div class="sgi-form-sections">
-                    <?php
-                    foreach ($renderOrder as $sectionName):
-                        if ($isReadOnlySection($sectionName)) { continue; }
-                    ?>
+                    <?php foreach ($visibleStageSections as $sectionName): ?>
 
-                    <?php if ($sectionName === 'general' && in_array('general', $viewModel->visibleSections) && $isAdvance): ?>
-                    <?= $this->element('invoice_edit/sections/general_advance', compact('viewModel', 'canEdit')) ?>
-                    <?php endif; ?>
-
-                    <?php if ($sectionName === 'general' && in_array('general', $viewModel->visibleSections) && !$isAdvance): ?>
-                    <?= $this->element('invoice_edit/sections/general', compact('viewModel', 'canEdit', 'isAdvance', 'documentTypes')) ?>
-                    <?php endif; ?>
-
-                    <?php if ($sectionName === 'dates' && in_array('dates', $viewModel->visibleSections)): ?>
-                    <?= $this->element('invoice_edit/sections/dates', compact('viewModel', 'canEdit', 'isAdvance')) ?>
-                    <?php endif; ?>
-
-                    <?php if ($sectionName === 'classification' && in_array('classification', $viewModel->visibleSections)): ?>
-                    <?= $this->element('invoice_edit/sections/classification', compact('viewModel', 'canEdit', 'isAdvance')) ?>
-                    <?php endif; ?>
-
-                    <?php if ($sectionName === 'revision' && in_array('revision', $viewModel->visibleSections)): ?>
+                    <?php if ($sectionName === 'revision'): ?>
                     <?= $this->element('invoice_edit/sections/revision', compact('viewModel', 'canEdit', 'approvalOptions', 'dianOptions')) ?>
                     <?php endif; ?>
 
-                    <?php if ($sectionName === 'accounting' && in_array('accounting', $viewModel->visibleSections)): ?>
+                    <?php if ($sectionName === 'accounting'): ?>
                     <?= $this->element('invoice_edit/sections/accounting', compact('viewModel', 'canEdit', 'readyForPaymentOptions')) ?>
                     <?php endif; ?>
 
-                    <?php
-                        $sharedPaymentParams = [
-                            'payments'           => $viewModel->invoice->invoice_payments ?? [],
-                            'bankingEntities'    => $viewModel->bankingEntities,
-                            'addPaymentUrl'      => ['controller' => 'InvoicePayments', 'action' => 'addPayment', $viewModel->invoice->id],
-                            'authorizeUrlFn'     => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'authorizePayment', $viewModel->invoice->id, $pId],
-                            'rejectUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'rejectPayment', $viewModel->invoice->id, $pId],
-                            'deleteUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'deletePayment', $viewModel->invoice->id, $pId],
-                            'paymentStatus'      => $viewModel->invoice->payment_status ?? null,
-                            'totalAmount'        => $viewModel->invoice->amount ?? null,
-                            'rejectMessage'      => '¿Rechazar este pago? El registro volverá a Tesorería.',
-                            'with_idempotency_key' => true,
-                        ];
-                    ?>
-
-                    <?php if ($sectionName === 'treasury' && in_array('treasury', $viewModel->visibleSections)
-                              && !in_array($viewModel->currentStatus, [
-                                  InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-                                  InvoiceConstants::STATUS_VERIFICACION_PAGO,
-                                  InvoiceConstants::STATUS_PAGADA,
-                              ], true)): ?>
+                    <?php if ($sectionName === 'treasury' && !$isPaymentStage): ?>
                     <?php
                         $canRegisterPayment = $viewModel->canRegisterPayment;
                         $paymentMode = $canRegisterPayment ? 'tesoreria_register' : 'view';
@@ -370,12 +396,7 @@ $beneficiaryName = $viewModel->invoice->provider->name
                     ]) ?>
                     <?php endif; ?>
 
-                    <?php if ($sectionName === 'payment_authorization' && in_array('payment_authorization', $viewModel->visibleSections)
-                              && in_array($viewModel->currentStatus, [
-                                  InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-                                  InvoiceConstants::STATUS_VERIFICACION_PAGO,
-                                  InvoiceConstants::STATUS_PAGADA,
-                              ], true)): ?>
+                    <?php if ($sectionName === 'payment_authorization' && $isPaymentStage): ?>
                     <?php
                         $canAuthorizePayment = $viewModel->canAuthorizePayment;
                         $paymentMode = $canAuthorizePayment ? 'authorize' : 'view';
@@ -392,7 +413,9 @@ $beneficiaryName = $viewModel->invoice->provider->name
                 </div>
             </div>
         </div>
-        <?php else: ?>
+        <?php endif; ?>
+
+        <?php if (empty($visibleGeneralSections) && empty($visibleStageSections)): ?>
         <div class="sgi-edit-banner" style="background:var(--info-soft);border-left-color:var(--info-color);">
             <i class="bi bi-info-circle bi-banner" aria-hidden="true" style="color:var(--info-color);"></i>
             <div style="flex:1;min-width:0;">
