@@ -4,6 +4,9 @@
  * @var \App\Model\Entity\Employee $employee
  * @var iterable $folders
  * @var \App\Model\Entity\User|null $currentUser
+ * @var array<\App\Model\Entity\Employee> $navEmployees
+ * @var string $navStatus
+ * @var string $navSearch
  */
 
 use App\Constants\EmployeeStatusConstants;
@@ -42,7 +45,119 @@ $noveltyPills = [
     'rechazado'  => 'pill-danger-soft',
 ];
 $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
+
+// Tabs del navegador (mismo set que /employees/index).
+$navTabs = [
+    [EmployeeStatusConstants::ACTIVO,   'Activos'],
+    [EmployeeStatusConstants::RETIRADO, 'Retirados'],
+    ['all',                             'Todos'],
+];
+$navBaseQuery = $navSearch !== '' ? ['search' => $navSearch] : [];
+$navTabUrl = function (string $status) use ($employee, $navBaseQuery) {
+    return ['action' => 'view', $employee->id, '?' => $navBaseQuery + ['status' => $status]];
+};
+$navStatusPills = [
+    EmployeeStatusConstants::ACTIVO   => 'pill-info-soft',
+    EmployeeStatusConstants::RETIRADO => 'pill-danger-soft',
+];
 ?>
+
+<div class="sgi-master-detail">
+
+<!-- ═════════ LEFT NAV ═════════ -->
+<aside class="sgi-md-left">
+    <div class="sgi-md-left-head">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <div class="sgi-title-card">Empleados</div>
+                <div class="sgi-body-faint mt-1"><?= count($navEmployees) ?> mostrados</div>
+            </div>
+            <?php if (!empty($userPermissions['employees']['can_create'])): ?>
+            <?= $this->Html->link(
+                '<i class="bi bi-plus-lg" aria-hidden="true"></i>Nuevo',
+                ['action' => 'add'],
+                ['class' => 'btn btn-primary btn-sm', 'escape' => false]
+            ) ?>
+            <?php endif; ?>
+        </div>
+
+        <form method="get" class="sgi-md-search mb-2" role="search">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" name="search"
+                   value="<?= h($navSearch) ?>"
+                   placeholder="Buscar por nombre, CC o correo…"
+                   aria-label="Buscar empleados"
+                   autocomplete="off">
+            <input type="hidden" name="status" value="<?= h($navStatus) ?>">
+        </form>
+
+        <div class="sgi-status-tabs" role="tablist" aria-label="Filtrar por estado">
+            <?php foreach ($navTabs as [$status, $label]):
+                $isActive = ($navStatus === $status);
+                $color = match ($status) {
+                    EmployeeStatusConstants::RETIRADO => 'var(--danger-color)',
+                    EmployeeStatusConstants::ACTIVO   => 'var(--info-text)',
+                    default                            => 'var(--primary-color)',
+                };
+            ?>
+                <?= $this->Html->link(
+                    ($isActive ? '<span class="sgi-status-tab-dot" style="background:' . $color . ';"></span>' : '') . h($label),
+                    $navTabUrl($status),
+                    [
+                        'class' => 'sgi-status-tab' . ($isActive ? ' is-active' : ''),
+                        'escape' => false,
+                        'role' => 'tab',
+                        'aria-selected' => $isActive ? 'true' : 'false',
+                        'style' => $isActive ? 'color:' . $color : '',
+                    ]
+                ) ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
+    <div class="sgi-md-left-list">
+        <?php foreach ($navEmployees as $nav):
+            $navInitials = mb_strtoupper(
+                mb_substr($nav->first_name ?? '', 0, 1) .
+                mb_substr($nav->last_name1  ?? '', 0, 1)
+            );
+            $isSelected = $nav->id === $employee->id;
+            $navStatusClass = $navStatusPills[$nav->status] ?? 'pill-muted';
+        ?>
+        <a class="sgi-md-row<?= $isSelected ? ' is-selected' : '' ?>"
+           href="<?= $this->Url->build(['action' => 'view', $nav->id, '?' => array_filter(['search' => $navSearch, 'status' => $navStatus])]) ?>">
+            <?php if ($nav->profile_image): ?>
+                <img src="<?= $this->Url->build('/' . $nav->profile_image) ?>" alt="" class="sgi-emp-avatar" style="object-fit:cover;width:34px;height:34px;">
+            <?php else: ?>
+                <div class="sgi-emp-avatar" style="width:34px;height:34px;font-size:.8rem;" aria-hidden="true"><?= h($navInitials) ?></div>
+            <?php endif; ?>
+            <div class="sgi-md-row-main">
+                <div class="sgi-md-row-name"><?= h(strtoupper($nav->full_name)) ?></div>
+                <div class="sgi-md-row-sub">
+                    <span class="mono">CC <?= h($nav->document_number) ?></span>
+                    <?php if ($nav->has('operation_center') && $nav->operation_center): ?>
+                        <span class="sgi-emp-sep">·</span>
+                        <span><?= h(strtoupper($nav->operation_center->name)) ?></span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php if ($nav->current_novelty): ?>
+                <span class="sgi-md-row-flag" title="Con novedad activa">1</span>
+            <?php endif; ?>
+        </a>
+        <?php endforeach; ?>
+
+        <?php if (empty($navEmployees)): ?>
+        <div class="sgi-doc-empty">
+            <i class="bi bi-search sgi-doc-empty-icon" aria-hidden="true"></i>
+            <div class="sgi-fg-muted">Sin resultados</div>
+        </div>
+        <?php endif; ?>
+    </div>
+</aside>
+
+<!-- ═════════ RIGHT DETAIL ═════════ -->
+<section class="sgi-md-right">
 
 <!-- Profile header card -->
 <div class="sgi-profile-header card mb-3">
@@ -584,4 +699,21 @@ $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
     </div>
 </div>
 
+</section>
+</div>
+
 <?= $this->element('observation_chat_init') ?>
+
+<script>
+// Auto-submit search del navegador izquierdo con debounce
+(function(){
+    var form = document.querySelector('.sgi-md-search');
+    if (!form) return;
+    var input = form.querySelector('input[name="search"]');
+    var t;
+    input.addEventListener('input', function(){
+        clearTimeout(t);
+        t = setTimeout(function(){ form.submit(); }, 400);
+    });
+})();
+</script>

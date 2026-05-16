@@ -105,7 +105,18 @@ class EmployeesController extends AppController
         // sobre employee_novelties (CR-007 / CR-009).
         $currentNovelty = $employee->current_novelty;
 
-        $this->set(compact('employee', 'folders', 'currentNovelty'));
+        // Lista para el navegador izquierdo (master-detail). Aplica los mismos
+        // filtros del query string que index() para coherencia con el atajo
+        // /employees -> click en empleado -> /employees/view/{id}?search=...
+        $navQuery = $this->Employees->find('withCurrentNovelty')
+            ->contain(['Positions', 'OperationCenters'])
+            ->orderBy(['Employees.last_name1' => 'ASC', 'Employees.last_name2' => 'ASC']);
+        $this->filterService->apply($navQuery, $this->request->getQueryParams());
+        $navEmployees = $navQuery->limit(200)->all()->toArray();
+        $navStatus = $this->request->getQuery('status') ?: \App\Constants\EmployeeStatusConstants::ACTIVO;
+        $navSearch = (string)$this->request->getQuery('search', '');
+
+        $this->set(compact('employee', 'folders', 'currentNovelty', 'navEmployees', 'navStatus', 'navSearch'));
         $this->set('fieldLabels', EmployeeHistoryService::FIELD_LABELS);
     }
 
