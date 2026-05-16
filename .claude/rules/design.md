@@ -51,16 +51,40 @@ Definidos en `webroot/css/styles.css` `:root`. Cualquier valor "mágico" que apa
 --background-color: #f5f5f5;   /* canvas del content area */
 --bg-subtle:        #f8f9fa;   /* headers de tabla, chips */
 --bg-muted:         #fafafa;   /* hover de filas, level-2 */
+--bg-focus-tinge:   #fafffe;   /* tinge sutil de inputs en focus */
 --border-color:     #e0e0e0;   /* bordes legacy (forms, inputs) */
 --rule:             #ececec;   /* línea fina INTERIOR a una card */
 ```
 
 ### Semánticos (Bootstrap 5 aligned)
 
+Cada semántico tiene 3 variantes paralelas: `-color` (fondo/borde), `-color-hover` (hover de botón sólido), `-soft` (fondo soft con alpha) y `-text` (ink oscuro para texto sobre la soft).
+
 ```css
---danger-color:  #dc3545;
---warning-color: #ffc107;  --warning-text: #8a6d08;
---info-color:    #0dcaf0;  --info-text:    #087990;
+--primary-color:        #469D61;  --primary-color-hover: #3a8752;
+--primary-soft:         rgba(70,157,97,0.12);
+--primary-soft-strong:  rgba(70,157,97,0.18);
+--primary-text:         #2d6e42;  /* ink sobre primary-soft */
+
+--secondary-color:      #CD6A15;  --secondary-color-hover: #b85d11;
+--secondary-soft:       rgba(205,106,21,0.14);
+--secondary-text:       #9a5011;  /* ink sobre secondary-soft */
+
+--danger-color:  #dc3545;  --danger-color-hover:  #bb2d3b;
+--danger-soft:   rgba(220,53,69,0.12);
+--danger-text:   #842029;  /* ink sobre danger-soft */
+
+--warning-color: #ffc107;  --warning-color-hover: #e0a800;
+--warning-soft:  rgba(255,193,7,0.20);
+--warning-text:  #8a6d08;
+
+--info-color:    #0dcaf0;
+--info-soft:     rgba(13,202,240,0.16);
+--info-text:     #087990;
+
+/* Hovers para superficies neutras */
+--dark-color-hover:  #1a1e21;
+--light-color-hover: #e2e6ea;
 ```
 
 ### Escala de grises (5 niveles)
