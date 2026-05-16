@@ -123,7 +123,7 @@ $filterFormId = $modalId . 'Filter';
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn sgi-btn-primary"><i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Vincular seleccionadas</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Vincular seleccionadas</button>
             </div>
             <?= $this->Form->end() ?>
 <?php if (!$fragmentOnly): ?>

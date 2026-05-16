@@ -13,7 +13,13 @@
       "Bash(sed -n '3159,3259p' webroot/css/styles.css)",
       "Bash(sed -i '3159,3259d' webroot/css/styles.css)",
       "Bash(sed -i '2150,2336d' webroot/css/styles.css)",
-      "Bash(sed -i '1916,2149d' webroot/css/styles.css)"
+      "Bash(sed -i '1916,2149d' webroot/css/styles.css)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Read(//tmp/design-fetch/**)",
+      "Bash(tar -xf design)",
+      "Bash(cp \"/tmp/design-fetch/sistema-de-gesti-n-interna/project/Sistema de Diseño.html\" /tmp/design-fetch/sistema.html)",
+      "Bash(cp \"/tmp/design-fetch/sistema-de-gesti-n-interna/project/design-system.css\" /tmp/design-fetch/design-system.css)",
+      "Bash(cp \"/tmp/design-fetch/sistema-de-gesti-n-interna/project/colors_and_type.css\" /tmp/design-fetch/colors_and_type.css)"
     ]
   }
 }

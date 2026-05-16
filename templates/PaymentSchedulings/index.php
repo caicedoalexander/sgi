@@ -22,7 +22,7 @@ $params = $this->request->getQueryParams();
         <?= $this->Html->link(
             '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva Programación',
             ['action' => 'add'],
-            ['class' => 'sgi-btn-primary btn btn-sm', 'escape' => false]
+            ['class' => 'btn-primary btn btn-sm', 'escape' => false]
         ) ?>
     </div>
     <?php endif; ?>

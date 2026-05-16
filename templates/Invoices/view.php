@@ -140,7 +140,7 @@ $dianClass = InvoicePresentation::DIAN_BADGES[$invoice->dian_validation ?? ''] ?
     <!-- Sección: Documento + Clasificación (dos columnas) -->
     <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
         <div class="col-md-6" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-section-title">Documento</div>
+            <div class="sgi-label">Documento</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Fecha Registro</span>
                 <span class="sgi-data-value"><?= $invoice->registration_date?->format('d/m/Y') ?? '—' ?></span>
@@ -159,7 +159,7 @@ $dianClass = InvoicePresentation::DIAN_BADGES[$invoice->dian_validation ?? ''] ?
             </div>
         </div>
         <div class="col-md-6">
-            <div class="sgi-section-title">Clasificación</div>
+            <div class="sgi-label">Clasificación</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Titular</span>
                 <span class="sgi-data-value">
@@ -193,7 +193,7 @@ $dianClass = InvoicePresentation::DIAN_BADGES[$invoice->dian_validation ?? ''] ?
     <!-- Sección: Detalle -->
     <?php if ($invoice->detail): ?>
     <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-section-title">Detalle</div>
+        <div class="sgi-label">Detalle</div>
         <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:#333;line-height:1.65;">
             <?= nl2br(h($invoice->detail)) ?>
         </div>
@@ -204,7 +204,7 @@ $dianClass = InvoicePresentation::DIAN_BADGES[$invoice->dian_validation ?? ''] ?
     <?php if (!empty($invoice->invoice_observations)): ?>
     <?php $statusLabels = InvoiceConstants::STATUS_LABELS; ?>
     <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-section-title">Observaciones</div>
+        <div class="sgi-label">Observaciones</div>
         <div style="padding:.5rem 1.25rem .875rem;max-height:400px;overflow-y:auto;">
             <?php foreach ($invoice->invoice_observations as $obs): ?>
             <?php
@@ -280,7 +280,7 @@ $dianClass = InvoicePresentation::DIAN_BADGES[$invoice->dian_validation ?? ''] ?
     <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
         <!-- Revisión -->
         <div class="col-md-4" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-section-title">Revisión</div>
+            <div class="sgi-label">Revisión</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Aprobador</span>
                 <span class="sgi-data-value">
@@ -320,7 +320,7 @@ $dianClass = InvoicePresentation::DIAN_BADGES[$invoice->dian_validation ?? ''] ?
         </div>
         <!-- Contabilidad -->
         <div class="col-md-4" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-section-title">Contabilidad</div>
+            <div class="sgi-label">Contabilidad</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Causada</span>
                 <span class="sgi-data-value">
@@ -346,7 +346,7 @@ $dianClass = InvoicePresentation::DIAN_BADGES[$invoice->dian_validation ?? ''] ?
         </div>
         <!-- Tesorería -->
         <div class="col-md-4">
-            <div class="sgi-section-title">Tesorería</div>
+            <div class="sgi-label">Tesorería</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Estado Pago</span>
                 <span class="sgi-data-value">
@@ -370,7 +370,7 @@ $dianClass = InvoicePresentation::DIAN_BADGES[$invoice->dian_validation ?? ''] ?
     <div class="row g-3 mb-3">
         <?php if (!empty($invoice->invoice_payments)): ?>
         <div class="col-md-12">
-            <div class="sgi-section-title">Pagos Registrados</div>
+            <div class="sgi-label">Pagos Registrados</div>
             <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
                 <table class="table table-sm mb-0">
                     <thead class="table-light">

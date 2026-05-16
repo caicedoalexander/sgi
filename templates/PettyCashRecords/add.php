@@ -101,7 +101,7 @@ $groupFilters = $groupFilters ?? [];
 
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="sgi-micro-caps flex-shrink-0">
+                <span class="sgi-label flex-shrink-0">
                     <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Disponibles
                 </span>
                 <div class="sgi-flex-divider"></div>
@@ -132,7 +132,7 @@ $groupFilters = $groupFilters ?? [];
         </div>
 
         <div class="d-flex gap-2 pt-2" style="border-top:1px solid var(--border-color);">
-            <button type="submit" class="sgi-btn-primary btn">
+            <button type="submit" class="btn-primary btn">
                 <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear Registro
             </button>
             <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>

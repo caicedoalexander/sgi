@@ -36,7 +36,7 @@ $badgeMap = $entityType === 'employee_novelties'
 
     <div style="border-top:1px solid var(--border-color);">
         <?php if ($entityType === 'invoices'): ?>
-            <div class="sgi-section-title">Factura</div>
+            <div class="sgi-label">Factura</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Número</span>
                 <span class="sgi-data-value"><?= h($entity->invoice_number ?? '#' . $entity->id) ?></span>
@@ -56,7 +56,7 @@ $badgeMap = $entityType === 'employee_novelties'
                 <span class="sgi-data-value"><?= h(\App\Constants\InvoiceConstants::STATUS_LABELS[$entity->pipeline_status] ?? $entity->pipeline_status) ?></span>
             </div>
         <?php elseif ($entityType === 'employee_novelties'): ?>
-            <div class="sgi-section-title">Novedad</div>
+            <div class="sgi-label">Novedad</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Empleado</span>
                 <span class="sgi-data-value"><?= h($entity->employee->full_name ?? $entity->custom_name ?? '—') ?></span>
@@ -87,7 +87,7 @@ $badgeMap = $entityType === 'employee_novelties'
                 <span class="sgi-data-value"><?= h(\App\Constants\NoveltyConstants::STATUS_LABELS[$entity->pipeline_status] ?? $entity->pipeline_status) ?></span>
             </div>
         <?php elseif ($entityType === 'employee_leaves'): ?>
-            <div class="sgi-section-title">Permiso / Licencia</div>
+            <div class="sgi-label">Permiso / Licencia</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Empleado</span>
                 <span class="sgi-data-value"><?= h($entity->employee->full_name ?? '—') ?></span>
@@ -110,7 +110,7 @@ $badgeMap = $entityType === 'employee_novelties'
     $statusLabels = ['aprobacion' => 'Aprobación', 'contabilidad' => 'Contabilidad', 'tesoreria' => 'Tesorería', 'pagada' => 'Pagada'];
     ?>
     <div style="border-top:1px solid var(--border-color);">
-        <div class="sgi-section-title">Soportes</div>
+        <div class="sgi-label">Soportes</div>
         <div class="p-3">
             <div class="row row-cols-1 row-cols-md-3 g-3">
                 <?php foreach ($entity->invoice_documents as $doc): ?>

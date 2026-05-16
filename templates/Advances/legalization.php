@@ -178,7 +178,7 @@ $this->assign('title', $pageTitle);
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
                 <?php if ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
-                <button type="button" class="btn btn-sm sgi-btn-primary" data-bs-toggle="modal" data-bs-target="#advanceLinkModal">
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#advanceLinkModal">
                     <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Vincular
                 </button>
                 <?php endif; ?>
@@ -241,7 +241,7 @@ $this->assign('title', $pageTitle);
                 <?= $this->Form->postLink(
                     '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Pasar a Revisión y Firmas',
                     ['action' => 'moveToRevision', $leg->advance_invoice_id],
-                    ['class' => 'btn sgi-btn-primary', 'escape' => false, 'confirm' => '¿Pasar a Revisión y Firmas?']
+                    ['class' => 'btn btn-primary', 'escape' => false, 'confirm' => '¿Pasar a Revisión y Firmas?']
                 ) ?>
                 <small class="text-muted">Requiere ≥1 factura vinculada y la relación de facturas adjunta.</small>
             </div>
@@ -361,7 +361,7 @@ $this->assign('title', $pageTitle);
                 </div>
             </div>
             <div class="d-flex justify-content-end mt-3">
-                <button type="submit" id="confirm-shortage-btn" class="btn sgi-btn-primary">
+                <button type="submit" id="confirm-shortage-btn" class="btn btn-primary">
                     <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Confirmar consignación
                 </button>
             </div>

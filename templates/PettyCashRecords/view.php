@@ -69,7 +69,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
     <!-- Info -->
     <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
         <div class="col-md-6" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-section-title">Información</div>
+            <div class="sgi-label">Información</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Código</span>
                 <span class="sgi-data-value" style="font-family:monospace;"><?= h($record->code) ?></span>
@@ -92,7 +92,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
             </div>
         </div>
         <div class="col-md-6">
-            <div class="sgi-section-title">Notas</div>
+            <div class="sgi-label">Notas</div>
             <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:#333;line-height:1.65;">
                 <?= $record->notes ? nl2br(h($record->notes)) : '<span class="text-muted">Sin notas</span>' ?>
             </div>
@@ -109,7 +109,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
     </div>
     <div class="row g-0">
         <div class="col-md-6" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-section-title">Información de Pago</div>
+            <div class="sgi-label">Información de Pago</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Entidad Bancaria</span>
                 <span class="sgi-data-value"><?= $record->hasValue('banking_entity') ? h($record->banking_entity->name) : '—' ?></span>
@@ -128,7 +128,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
             </div>
         </div>
         <div class="col-md-6">
-            <div class="sgi-section-title">Autorización</div>
+            <div class="sgi-label">Autorización</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Estado</span>
                 <span class="sgi-data-value">

@@ -76,7 +76,7 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
     <!-- Info -->
     <div class="row g-0">
         <div class="col-md-6" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-section-title">Beneficiario</div>
+            <div class="sgi-label">Beneficiario</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Tipo</span>
                 <span class="sgi-data-value"><?= h($beneficiaryType) ?></span>
@@ -99,7 +99,7 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
             </div>
         </div>
         <div class="col-md-6">
-            <div class="sgi-section-title">Detalle</div>
+            <div class="sgi-label">Detalle</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Fecha de Emisión</span>
                 <span class="sgi-data-value"><?= $invoice->issue_date?->format('d/m/Y') ?? '—' ?></span>

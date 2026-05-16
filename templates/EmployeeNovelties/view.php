@@ -111,7 +111,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <!-- Two-column data: Información | Gestión -->
     <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
         <div class="col-md-6" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-section-title">Información de la Novedad</div>
+            <div class="sgi-label">Información de la Novedad</div>
             <?php if ($novelty->employee): ?>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Empleado</span>
@@ -186,7 +186,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
         </div>
 
         <div class="col-md-6">
-            <div class="sgi-section-title">Gestión</div>
+            <div class="sgi-label">Gestión</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Registrado por</span>
                 <span class="sgi-data-value"><?= h($novelty->registered_by_user->full_name ?? '—') ?></span>
@@ -240,7 +240,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <?php if ($novelty->employee_signature): ?>
     <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
         <div class="col-12">
-            <div class="sgi-section-title">Firma del Funcionario</div>
+            <div class="sgi-label">Firma del Funcionario</div>
             <div style="padding:.25rem 1.25rem .875rem;">
                 <img src="<?= $this->Url->build('/' . $novelty->employee_signature) ?>" alt="Firma Funcionario"
                      style="max-width:400px;max-height:150px;border:1px solid var(--border-color);">
@@ -252,7 +252,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <!-- Observations (read-only, like invoices/view) -->
     <?php if (!empty($novelty->novelty_observations)): ?>
     <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-section-title">Observaciones</div>
+        <div class="sgi-label">Observaciones</div>
         <div style="padding:.5rem 1.25rem .875rem;max-height:400px;overflow-y:auto;">
             <?php foreach ($novelty->novelty_observations as $obs): ?>
             <div class="d-flex align-items-start gap-2 mb-3">
@@ -285,7 +285,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <!-- General observations (legacy field) -->
     <?php if ($novelty->observations): ?>
     <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-section-title">Observaciones de Rechazo</div>
+        <div class="sgi-label">Observaciones de Rechazo</div>
         <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:#555;line-height:1.65;">
             <?= nl2br(h($novelty->observations)) ?>
         </div>

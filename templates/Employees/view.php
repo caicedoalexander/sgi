@@ -83,7 +83,7 @@ foreach ($folders as $folder) {
 
         <!-- Columna izquierda: información personal -->
         <div class="col-md-6" style="border-right:1px solid var(--border-color)">
-            <div class="sgi-section-title">Información Personal</div>
+            <div class="sgi-label">Información Personal</div>
 
             <?php if ($employee->birth_date): ?>
             <div class="sgi-data-row">
@@ -121,7 +121,7 @@ foreach ($folders as $folder) {
 
         <!-- Columna derecha: datos laborales -->
         <div class="col-md-6">
-            <div class="sgi-section-title">Datos Laborales</div>
+            <div class="sgi-label">Datos Laborales</div>
 
             <?php if ($employee->has('position') && $employee->position): ?>
             <div class="sgi-data-row">
@@ -225,7 +225,7 @@ foreach ($folders as $folder) {
     $currentUser = $this->getRequest()->getAttribute('identity');
     ?>
     <div class="sgi-obs-card" style="border-top:1px solid var(--border-color);display:flex;flex-direction:column;">
-        <div class="sgi-section-title d-flex align-items-center gap-2">
+        <div class="sgi-label d-flex align-items-center gap-2">
             <span>Observaciones</span>
             <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
         </div>

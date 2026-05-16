@@ -139,19 +139,19 @@ $hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
             <div class="card-body pt-0 pb-2" style="border-top:1px solid var(--border-color)">
                 <?php if ($employee->has('position') && $employee->position): ?>
                 <div class="mb-2">
-                    <div class="sgi-emp-meta-label">Cargo</div>
+                    <div class="sgi-label">Cargo</div>
                     <div class="sgi-emp-meta-value"><?= h($employee->position->name) ?></div>
                 </div>
                 <?php endif; ?>
                 <?php if ($employee->has('operation_center') && $employee->operation_center): ?>
                 <div class="mb-2">
-                    <div class="sgi-emp-meta-label">Centro de Operación</div>
+                    <div class="sgi-label">Centro de Operación</div>
                     <div class="sgi-emp-meta-value"><?= h($employee->operation_center->name) ?></div>
                 </div>
                 <?php endif; ?>
                 <?php if ($employee->email): ?>
                 <div>
-                    <div class="sgi-emp-meta-label">Correo</div>
+                    <div class="sgi-label">Correo</div>
                     <div class="sgi-emp-meta-value"><?= h($employee->email) ?></div>
                 </div>
                 <?php endif; ?>

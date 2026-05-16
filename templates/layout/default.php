@@ -29,11 +29,14 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <title><?= $this->fetch('title') ?> | SGI · COPCSA</title>
     <link rel="icon" type="image/png" href="<?= $this->Url->build('/img/copcsa.png') ?>">
     <?php /*
-        Preload de Inter Variable WOFF2 — la fuente del @font-face en styles.css.
-        as="font" + crossorigin son requeridos por la spec para evitar doble fetch.
-        El WOFF2 pesa 349 KB (60% menos que el TTF de 875 KB).
+        Preload de fuentes variables WOFF2 (Inter para UI, JetBrains Mono para
+        datos cuantitativos: códigos, fechas, montos, IDs). Las dos están
+        declaradas como @font-face en styles.css apuntando al WOFF2 sin
+        fallback TTF — todos los navegadores modernos soportan WOFF2 desde
+        2014. `as="font" crossorigin` son requeridos por la spec.
     */ ?>
     <link rel="preload" href="<?= $this->Url->build('/fonts/Inter-Variable.woff2') ?>" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="<?= $this->Url->build('/fonts/JetBrainsMono-Variable.woff2') ?>" as="font" type="font/woff2" crossorigin>
     <!-- Bootstrap primero, luego nuestros estilos para poder sobreescribir -->
     <link href="<?= $this->Url->build('/vendor/bootstrap/bootstrap.min.css') ?>" rel="stylesheet">
     <link href="<?= $this->Url->build('/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>" rel="stylesheet">

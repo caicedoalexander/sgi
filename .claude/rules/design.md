@@ -1,71 +1,133 @@
-# SGI — Sistema de Diseño
+# SGI — Sistema de Diseño v2
 
-Referencia de diseño del proyecto para mantener coherencia visual entre vistas y conversaciones futuras.
+Referencia de diseño del proyecto. Documento fuente para cualquier vista nueva o cambio visual. Mantiene coherencia entre conversaciones y entre vistas.
 
----
-
-## Fundamento visual
-
-El lenguaje de diseño del SGI usa **bordes en lugar de sombras** como elemento diferenciador. Sin `box-shadow`, sin `border-radius` notable. La jerarquía visual se construye con:
-
-- **Borde superior de 2px** en el color de acento → identifica tarjetas de datos (stat cards)
-- **`box-shadow: inset 2px 0 0`** → identifica el ítem activo en el sidebar
-- **Borde izquierdo 2px** en el título de la navbar → marca el contexto actual
-- **Borde izquierdo 2px** separando paneles (login) → divisor estructural de marca
-
-Todos los bordes de acento usan `var(--primary-color)` excepto cuando el módulo tiene su propio color asignado.
+> El sistema fue rediseñado en mayo 2026. La versión anterior usaba bordes 2px superiores como acento (`border-top: 2px solid`). v2 elimina los borders y usa **fondo + barras de acento + jerarquía tipográfica** como única señal visual.
 
 ---
 
-## Tipografía
+## Reglas duras (NO se rompen)
 
-**Fuente:** Inter Variable (local, `webroot/fonts/Inter-Variable.ttf`)
+1. **Sin `border`** en cards, stat-cards, quick-tiles, sidebar, navbar, modales, dropdowns. La separación con el canvas la hace el fondo (`#fff` sobre `var(--background-color)`).
+2. **Sin `box-shadow`.** Prohibido. Salvo la excepción documentada del signature overlay (ver "Excepciones permitidas").
+3. **Datos cuantitativos en mono.** Códigos, fechas, montos, IDs → `var(--font-mono)` (JetBrains Mono). Aplica con clase `.mono` o `.sgi-mono`.
+4. **Labels en uppercase + letter-spacing.** Etiquetas de sección, columnas de tabla, micro-caps → 10–11px / 700 / 0.6–0.8 letter-spacing.
+5. **Pills en variantes soft.** Nunca colores sólidos en tablas: usar `.pill-primary-soft`, `.pill-danger-soft`, etc. Los sólidos quedan para hero/destacado puntual.
+6. **Sin emoji.** Iconos de Bootstrap Icons o SVG inline. Caracteres especiales (✓, →) solo si refuerzan estado.
+7. **Sin admiraciones** en UI salvo errores críticos. Nunca "¡Bienvenido!".
+
+---
+
+## Tokens — fuente única
+
+Definidos en `webroot/css/styles.css` `:root`. Cualquier valor "mágico" que aparezca en un template debe primero verificarse contra estos tokens.
+
+### Color de marca
 
 ```css
-@font-face {
-    font-family: 'Inter';
-    src: url('../fonts/Inter-Variable.ttf') format('truetype');
-    font-weight: 100 900;
-}
-body { font-family: 'Inter', system-ui, sans-serif; }
+--bg-dark:          #212529;   /* sidebar, footers oscuros, hero ocasional */
+--primary-color:    #469D61;   /* acción primaria, éxito, marca */
+--primary-color-hover: #3a8752;
+--secondary-color:  #CD6A15;   /* edición, énfasis cálido, proveedores */
+--secondary-color-hover: #b85d11;
+--accent-color:     #83542B;   /* acento terciario, etapas avanzadas */
 ```
 
-### Escala tipográfica usada
+### Soft variants (badges, pills, fila seleccionada)
 
-| Uso | Tamaño | Peso | Notas |
-|-----|--------|------|-------|
-| Título principal (h1 dashboard) | `1.8rem` | 700 | `letter-spacing: -.03em` |
-| Número stat card | `2.4rem` | 700 | `letter-spacing: -.05em`, `line-height: 1` |
-| Título navbar / nav-link | `.875rem` | 600 | `letter-spacing: -.01em` |
-| Nav-link sidebar | `.875rem` | 400/500 (active) | — |
-| Etiqueta micro-caps | `.58–.65rem` | 600 | `text-transform: uppercase`, `letter-spacing: .12–.14em` |
-| Subtítulo usuario footer | `.7rem` | 400 | `rgba(255,255,255,.35)` |
-| Quick tile label | `.78rem` | 500 | `color: #444` |
+```css
+--primary-soft:        rgba(70, 157, 97, 0.12);
+--primary-soft-strong: rgba(70, 157, 97, 0.18);
+--secondary-soft:      rgba(205, 106, 21, 0.14);
+--accent-soft:         rgba(131, 84, 43, 0.14);
+--danger-soft:         rgba(220, 53, 69, 0.12);
+--warning-soft:        rgba(255, 193, 7, 0.20);
+--info-soft:           rgba(13, 202, 240, 0.16);
+```
+
+### Layout
+
+```css
+--background-color: #f5f5f5;   /* canvas del content area */
+--bg-subtle:        #f8f9fa;   /* headers de tabla, chips */
+--bg-muted:         #fafafa;   /* hover de filas, level-2 */
+--border-color:     #e0e0e0;   /* bordes legacy (forms, inputs) */
+--rule:             #ececec;   /* línea fina INTERIOR a una card */
+```
+
+### Semánticos (Bootstrap 5 aligned)
+
+```css
+--danger-color:  #dc3545;
+--warning-color: #ffc107;  --warning-text: #8a6d08;
+--info-color:    #0dcaf0;  --info-text:    #087990;
+```
+
+### Escala de grises (5 niveles)
+
+```css
+--text-strong:   #111;   /* Títulos, énfasis */
+--text-default:  #222;   /* Cuerpo */
+--text-muted:    #555;   /* Texto secundario */
+--text-faint:    #888;   /* Labels, metadatos, placeholders */
+--text-disabled: #aaa;   /* Deshabilitado */
+--border-faint:  #ccc;
+```
+
+### Tipografía
+
+```css
+--font-sans: 'Inter', system-ui, sans-serif;
+--font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+--fs-display:    30px;     /* moneda hero */
+--fs-title-page: 22px;     /* h1 de página */
+--fs-title-card: 14px;     /* h2/h3 dentro de cards */
+--fs-body-lg:    13px;
+--fs-body:       12.5px;   /* body por defecto */
+--fs-body-sm:    12px;
+--fs-label:      10.5px;   /* uppercase labels */
+--fs-meta:       10px;
+--fs-micro:      9.5px;    /* pills sm */
+```
+
+### Espaciado, radii y transiciones
+
+```css
+/* Espaciado (múltiplos de 4): 4, 8, 12, 16, 20, 24, 28, 32 */
+--space-1..8;
+
+--radius-none: 0;     /* cards, celdas de tabla */
+--radius-sm:   3px;   /* pills, badges, doc codes */
+--radius-md:   4px;   /* botones, inputs, chips */
+
+--t-fast: 0.12s;   /* hover de filas, botones, tabs */
+--t-view: 0.18s;   /* entrada de vistas (fadeIn) */
+```
 
 ---
 
-## Paleta de colores
+## Fuentes
 
-Definida en `:root` en `webroot/css/styles.css`:
+| Fuente | Archivo | Uso |
+|--------|---------|-----|
+| **Inter Variable** | `webroot/fonts/Inter-Variable.woff2` (+ TTF fallback) | UI general, títulos, labels, cuerpo |
+| **JetBrains Mono Variable** | `webroot/fonts/JetBrainsMono-Variable.woff2` (+ TTF fallback) | Datos cuantitativos: códigos, fechas, montos, IDs |
 
-```css
-:root {
-    --bg-dark:          #212529;   /* Fondo sidebar, fondo login */
-    --primary-color:    #469D61;   /* Verde corporativo — acento principal */
-    --secondary-color:  #CD6A15;   /* Naranja — módulo Proveedores */
-    --accent-color:     #83542B;   /* Marrón — sin uso activo aún */
-    --background-color: #f5f5f5;   /* Fondo del área de contenido */
-    --border-color:     #e0e0e0;   /* Bordes neutros en contexto claro */
-}
-```
+Ambas están preloadadas en `templates/layout/default.php` con `<link rel="preload">` para evitar FOIT en la primera carga.
 
-### Asignación de colores por módulo
+---
 
-| Módulo | Color | Variable |
-|--------|-------|----------|
-| Facturas, Empleados, Aprobadores | Verde | `--primary-color` |
-| Proveedores | Naranja | `--secondary-color` |
-| Usuarios, Roles, Catálogos | Oscuro | `--bg-dark` |
+## Lenguaje de identidad visual
+
+Sin border ni shadow, los elementos se identifican con:
+
+- **Barra de acento izquierda 3px** (`border-left: 3px solid var(--primary-color)`) → stat-cards, action-cards, cards variantes (`.card-primary`, `.card-danger`…), ledger summary.
+- **`box-shadow: inset 2px 0 0`** → ítem activo del sidebar (única regla de box-shadow permitida fuera de la excepción modal).
+- **Borde izquierdo 2px** en el título de la navbar → marca el contexto actual.
+- **Borde izquierdo 2px** separando paneles (login) → divisor estructural de marca.
+- **Border-top 3px** del modal → única afordancia visual ya que el modal flota sobre backdrop oscuro y se distingue por contraste.
+- **Líneas finas interiores `1px solid var(--rule)`** → separan rows de tabla, header/body/footer de card. Es un "rule" interior, NO un box border.
 
 ---
 
@@ -73,97 +135,151 @@ Definida en `:root` en `webroot/css/styles.css`:
 
 ### Stat Card (`.sgi-stat-card`)
 
-Tarjeta de contador en el dashboard. Borde superior de 2px como acento de color.
+Contador del Dashboard. Fondo blanco, barra de acento izquierda 3px verde por defecto. Hover → fondo `var(--bg-muted)`.
 
 ```css
 .sgi-stat-card {
     background: #fff;
-    border: 1px solid var(--border-color);
-    border-top: 2px solid var(--primary-color);
-    transition: border-color .2s ease;
+    border-left: 3px solid var(--primary-color);
 }
-.sgi-stat-card:hover { border-color: var(--primary-color); }
-/* Variantes: .accent-secondary  .accent-dark */
+.sgi-stat-card:hover { background: var(--bg-muted); }
+.sgi-stat-card.accent-secondary { border-left-color: var(--secondary-color); }
+.sgi-stat-card.accent-dark      { border-left-color: var(--bg-dark); }
 ```
 
-**Estructura interna:**
-- Etiqueta: `.6rem` micro-caps, `color: #aaa`
-- Ícono: alineado derecha, `opacity: .85`
-- Número: `2.4rem`, `fw-bold`, `letter-spacing: -.05em`, `color: #111`
+### Action Card (`.sgi-action-card`)
+
+Card horizontal con label + mensaje + CTA. Mismo lenguaje: barra izquierda 3px.
 
 ### Quick Tile (`.sgi-quick-tile`)
 
-Acceso rápido del dashboard. Borde superior neutral → verde al hover.
+Acceso rápido del Dashboard. Sin border. El hover revela una línea inferior verde de 2px como afordancia, sin afectar layout.
 
-```css
-.sgi-quick-tile {
-    background: #fff;
-    border: 1px solid var(--border-color);
-    border-top: 2px solid var(--border-color);
-    transition: border-top-color .15s ease, border-color .15s ease;
-}
-.sgi-quick-tile:hover {
-    border-top-color: var(--primary-color);
-    border-color: #ccc;
-}
+### Cards de Bootstrap (`.card`)
+
+`.card` base = sin border, sin shadow. Variantes con `border-left: 3px` según color:
+`.card-primary`, `.card-secondary`, `.card-success`, `.card-danger`, `.card-warning`, `.card-info`, `.card-dark`.
+
+`.card-hover` → `cursor: pointer` + hover bg-muted.
+
+### Botones
+
+Bootstrap `.btn` con `border-radius: 0`, sin shadow. Variantes sólidas (`btn-primary`, `btn-secondary`…) y outline (`btn-outline-*`). Sin cambios desde v1.
+
+### Pills / Badges
+
+Sistema nuevo. Para listados y tablas SIEMPRE usar variante soft:
+
+```html
+<span class="pill pill-primary-soft">VIGENTE</span>
+<span class="pill pill-danger-soft">FALTANTE</span>
+<span class="pill pill-warning-soft">POR VENCER</span>
+<span class="pill pill-info-soft">ACTIVO</span>
+<span class="pill pill-secondary-soft">EDICIÓN</span>
+<span class="pill pill-muted">SIN ESTADO</span>
 ```
 
-### Input Group (`.sgi-input-group`)
+Sólidos (`.pill-primary`, `.pill-secondary`, `.pill-dark`) reservados para hero o destacado puntual.
 
-Campos de formulario (login y otros). Borde verde al recibir foco.
+### Doc codes (`.sgi-doc-code`)
 
-```css
-.sgi-input-group {
-    border: 1px solid var(--border-color);
-    transition: border-color .15s ease;
-}
-.sgi-input-group:focus-within { border-color: var(--primary-color); }
+Catálogo de documentos de empleado: CC, HV, ARL, AFP… Cuadritos monoespaciados de color según estado.
+
+```html
+<span class="sgi-doc-code is-ok">CC</span>
+<span class="sgi-doc-code is-warn">HV</span>
+<span class="sgi-doc-code is-miss">ARL</span>
+<span class="sgi-doc-code is-dim">AFP</span>
 ```
 
-Inputs internos: `border-0 shadow-none` (Bootstrap), el borde lo maneja `.sgi-input-group`.
+### Pipeline mini-bar (`.sgi-pipeline-mini`)
 
-### Botón primario (`.sgi-btn-primary`)
+Barra horizontal compacta usada en listados de facturas para indicar el estado sin pipeline completo.
 
-```css
-.sgi-btn-primary {
-    background-color: var(--primary-color);
-    color: #fff;
-    border: 1px solid var(--primary-color);
-    border-radius: 0;
-    font-weight: 500;
-    font-size: .875rem;
-}
-.sgi-btn-primary:hover { background-color: #3a8752; }
+```html
+<div class="sgi-pipeline-mini">
+    <div class="on"></div>
+    <div class="on"></div>
+    <div></div>
+    <div></div>
+</div>
 ```
+
+### Inputs / Forms
+
+Mantienen `border: 1px solid var(--border-color)` por consistencia con el patrón de Bootstrap (los inputs sin border son confusos). Focus → `border-color: var(--primary-color)` + `box-shadow: inset 2px 0 0 var(--primary-color)`.
 
 ---
 
 ## Sidebar
 
-- **Fondo:** `bg-dark` Bootstrap (`#212529`)
-- **Logo:** cuadrado `36×36px`, fondo `--primary-color`, ícono `bi-building`
-- **Nav-link activo:** `box-shadow: inset 2px 0 0 var(--primary-color)` — sin fondo
-- **Nav-link hover:** `box-shadow: inset 2px 0 0 rgba(255,255,255,.18)` + fondo `rgba(255,255,255,.04)`
-- **Nav headings:** `.58rem`, `letter-spacing: .14em`, `rgba(255,255,255,.25)`
-- **Divisores:** `height:1px; background: rgba(255,255,255,.07)`
-- **Avatar:** cuadrado `32×32px`, fondo `--primary-color`
-- **Botón logout:** clase `.sgi-sidebar-logout`, borde `rgba(255,255,255,.1)`
-- **Active state:** detectado por `$currentController` en el layout
+Sin cambios estructurales desde v1. Lenguaje:
+
+- **Fondo:** `bg-dark` Bootstrap (`#212529`).
+- **Logo:** cuadrado 36×36px, fondo `--primary-color`, ícono `bi-building`.
+- **Nav-link activo:** `box-shadow: inset 2px 0 0 var(--primary-color)` — sin fondo (excepción box-shadow permitida).
+- **Nav-link hover:** `box-shadow: inset 2px 0 0 rgba(255,255,255,.18)` + fondo `rgba(255,255,255,.04)`.
+- **Nav headings:** `.58rem`, `letter-spacing: .14em`, `rgba(255,255,255,.25)`.
+- **Avatar:** cuadrado 32×32px, fondo `--primary-color`.
+- **Botón logout (`.sgi-sidebar-logout`):** sin border. Hover → fondo translúcido.
 
 ## Navbar superior (`.sgi-topbar`)
 
+Sin border-bottom. El contraste con el canvas viene del color de fondo (`#fff` vs `var(--background-color)`).
+
 ```css
-.sgi-topbar { background: #fff; border-bottom: 1px solid var(--border-color); min-height: 52px; }
+.sgi-topbar { background: #fff; min-height: 56px; }
 .sgi-topbar-title { border-left: 2px solid var(--primary-color); padding-left: .6rem; }
+.sgi-topbar-date  { font-family: var(--font-mono); }
+```
+
+## Tablas
+
+Sin borders externos. Separación entre filas con `border-bottom: 1px solid var(--rule)` (regla interior). Header con `background: var(--bg-subtle)`. Hover de fila → `var(--bg-muted)`.
+
+Datos cuantitativos en celdas (montos, fechas, códigos) deben llevar `.mono` o `.sgi-mono`.
+
+```html
+<table class="table table-hover">
+  <thead>
+    <tr><th>Código</th><th>Proveedor</th><th>Valor</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="mono">FACT-2026-0142</td>
+      <td>Acme S.A.</td>
+      <td class="mono">$ 1.250.000</td>
+    </tr>
+  </tbody>
+</table>
 ```
 
 ## Login
 
 Layout de dos paneles full-height:
-- **Panel izquierdo** (45%, `d-none d-lg-flex`): fondo `--bg-dark`, branding centrado
-- **Panel derecho** (flex-grow-1): fondo `#fff`, `border-left: 2px solid var(--primary-color)`, formulario centrado
+- **Panel izquierdo** (45%, `d-none d-lg-flex`): fondo `--bg-dark`, branding centrado.
+- **Panel derecho** (flex-grow-1): fondo `#fff`, `border-left: 2px solid var(--primary-color)`, formulario centrado.
 
-El borde verde que divide los dos paneles es la expresión más directa del lenguaje de bordes del sistema.
+El borde verde que divide los dos paneles es el "divisor estructural de marca".
+
+---
+
+## Utilidades semánticas
+
+Drop-in classes para usar en cualquier vista nueva. Definidas al final de `styles.css`.
+
+| Clase | Uso |
+|-------|-----|
+| `.sgi-display` | Moneda hero (`$ 120.000`) — 30px, 800, mono, letter-spacing -1px |
+| `.sgi-title-page` | h1 de página — 22px, 700 |
+| `.sgi-title-card` | h2/h3 de card — 14px, 700 |
+| `.sgi-label` | Label uppercase — 10.5px, 700, letter-spacing 0.8px |
+| `.sgi-body-muted` / `.sgi-body-faint` | Texto secundario / terciario |
+| `.mono` / `.sgi-mono` | JetBrains Mono — OBLIGATORIO para datos cuantitativos |
+| `.sgi-fg-primary` / `.sgi-fg-secondary` / `.sgi-fg-accent` / `.sgi-fg-danger` / `.sgi-fg-warning` / `.sgi-fg-info` | Color de texto semántico |
+| `.sgi-fg-strong` / `.sgi-fg-default` / `.sgi-fg-muted` / `.sgi-fg-faint` / `.sgi-fg-disabled` | Color de texto por jerarquía |
+| `.sgi-accent-strip` + `.sgi-accent-*` | Barra de 3px (para anclar identidad en cards/filas custom) |
+| `.sgi-rule` | Línea fina horizontal interior (no border, no shadow) |
 
 ---
 
@@ -171,18 +287,20 @@ El borde verde que divide los dos paneles es la expresión más directa del leng
 
 | ✅ Usar | ❌ Evitar |
 |---------|----------|
-| `border-radius: 0` o `2px` máximo | `rounded-3`, `rounded-circle` en contenedores |
-| Bordes como jerarquía visual | `box-shadow`, `shadow-sm`, `shadow-lg` |
-| Micro-caps para etiquetas de sección | Subtítulos en tamaño normal |
-| `--primary-color` para acentos | `btn-success`, `text-success`, `border-success` Bootstrap |
-| `letter-spacing` negativo en títulos grandes | Tipografía con tracking positivo en títulos |
-| Inter Variable local | Fuentes del sistema como fallback principal |
+| Fondo + barras de acento como jerarquía | `border: 1px solid` decorativo en cards/sidebar/navbar |
+| `var(--rule)` para líneas interiores | `border-color` para "dividir" cosas externamente |
+| `var(--font-mono)` para datos cuantitativos | `'Courier New', monospace` o fuentes mono ad-hoc |
+| Pills soft (`.pill-*-soft`) | Pills sólidos en tablas/listados |
+| Variables del `:root` | Valores hex inline en templates |
+| `letter-spacing` negativo en títulos grandes | Tracking positivo en títulos |
+| `border-radius: 0` o `3px–4px` máximo | `rounded-3`, `rounded-circle` en contenedores |
+| `--primary-color` para acentos | `btn-success`, `border-success` Bootstrap directos |
 
 ---
 
 ## Excepciones permitidas
 
-Las reglas generales aplican al 99% del sistema. Las excepciones documentadas a continuación reflejan casos UX donde apartarse del lenguaje "borde sin sombra, radio 0-2px" mejora la legibilidad o sigue convenciones bien establecidas. **Antes de introducir una nueva excepción, añadirla a esta lista** con el selector exacto y la justificación.
+Las reglas duras aplican al 99% del sistema. Las excepciones documentadas a continuación reflejan casos UX donde apartarse del lenguaje mejora la legibilidad o sigue convenciones bien establecidas. **Antes de introducir una nueva excepción, añadirla a esta lista** con el selector exacto y la justificación.
 
 ### Chat bubbles (`.sgi-obs-bubble-body`)
 
@@ -199,12 +317,11 @@ Las reglas generales aplican al 99% del sistema. Las excepciones documentadas a 
 .sgi-folder-count { border-radius: 10px; padding: .15em .5em; min-width: 1.5em; }
 ```
 
-**Justificación:** badges numéricos pequeños usados como contadores (carpetas, notificaciones). El 10px en un elemento de ~16-20px de alto produce efecto pill — convención visual estándar para contadores. Reducir a 2px convertiría el badge en un chip rectangular, perdiendo la asociación visual con "contador" y entrando en conflicto con la convención.
+**Justificación:** badges numéricos pequeños usados como contadores (carpetas, notificaciones). El 10px en un elemento de ~16-20px de alto produce efecto pill — convención visual estándar para contadores.
 
 ### Signature overlay (`webroot/js/sgi-signature.js` — card modal)
 
 ```js
-// Card del modal de firma
 'background:#fff', 'border-radius:10px', 'padding:1.5rem',
 'box-shadow:0 16px 48px rgba(0,0,0,.25)',
 ```
@@ -234,7 +351,8 @@ Las reglas generales aplican al 99% del sistema. Las excepciones documentadas a 
 | Archivo | Contenido |
 |---------|-----------|
 | `webroot/css/styles.css` | Variables, tipografía, todos los componentes SGI |
-| `webroot/fonts/Inter-Variable.ttf` | Fuente Inter (100–900) |
+| `webroot/fonts/Inter-Variable.{woff2,ttf}` | Inter (100–900) |
+| `webroot/fonts/JetBrainsMono-Variable.{woff2,ttf}` | JetBrains Mono (100–800) |
 | `webroot/js/sgi-common.js` | Clickable rows, Flatpickr, AutoNumeric |
 | `templates/layout/default.php` | Layout principal con sidebar + topbar |
 | `templates/layout/login.php` | Layout split-panel del login |

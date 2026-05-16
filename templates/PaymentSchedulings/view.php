@@ -102,7 +102,7 @@ $ps = [
     <!-- Sección: Información General -->
     <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
         <div class="col-md-6" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-section-title">Información</div>
+            <div class="sgi-label">Información</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Código</span>
                 <span class="sgi-data-value" style="font-family:monospace;"><?= h($record->code) ?></span>
@@ -119,7 +119,7 @@ $ps = [
             </div>
         </div>
         <div class="col-md-6">
-            <div class="sgi-section-title">Detalles</div>
+            <div class="sgi-label">Detalles</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Creado por</span>
                 <span class="sgi-data-value"><?= h($record->created_by_user->full_name ?? '—') ?></span>
@@ -138,7 +138,7 @@ $ps = [
     <!-- Facturas Vinculadas -->
     <?php if (!empty($record->payment_scheduling_items)): ?>
     <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-section-title">
+        <div class="sgi-label">
             Facturas Vinculadas
             <span class="sgi-folder-count ms-1"><?= count($record->payment_scheduling_items) ?></span>
         </div>

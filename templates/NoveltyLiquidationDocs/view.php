@@ -98,7 +98,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <!-- Two-column data: Información | Novedades -->
     <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
         <div class="col-md-6" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-section-title">Información del Documento</div>
+            <div class="sgi-label">Información del Documento</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">No. Liquidación</span>
                 <span class="sgi-data-value"><?= h($doc->liquidation_number) ?></span>
@@ -142,7 +142,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
         </div>
 
         <div class="col-md-6">
-            <div class="sgi-section-title">Novedades Asociadas (<?= count($doc->employee_novelties) ?>)</div>
+            <div class="sgi-label">Novedades Asociadas (<?= count($doc->employee_novelties) ?>)</div>
             <?php if (!empty($doc->employee_novelties)): ?>
             <div style="padding:0 1.25rem .875rem;max-height:300px;overflow-y:auto;">
                 <table class="table table-sm mb-0">
@@ -174,7 +174,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <!-- Signatures (read-only display) -->
     <?php if (!empty($doc->novelty_liquidation_signatures)): ?>
     <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-section-title">Firmas</div>
+        <div class="sgi-label">Firmas</div>
         <div style="padding:0 1.25rem .875rem;">
             <div class="row g-3">
                 <?php foreach ($doc->novelty_liquidation_signatures as $sig): ?>
@@ -206,7 +206,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <!-- Payments (read-only) -->
     <?php if (!empty($doc->liquidation_doc_payments)): ?>
     <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-section-title">Pagos Registrados</div>
+        <div class="sgi-label">Pagos Registrados</div>
         <div style="padding:0 1.25rem .875rem;">
             <table class="table table-sm mb-0">
                 <thead class="table-light">
@@ -246,7 +246,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <!-- Observations (read-only) -->
     <?php if (!empty($doc->novelty_observations)): ?>
     <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-section-title">Observaciones</div>
+        <div class="sgi-label">Observaciones</div>
         <div style="padding:.5rem 1.25rem .875rem;max-height:400px;overflow-y:auto;">
             <?php foreach ($doc->novelty_observations as $obs): ?>
             <div class="d-flex align-items-start gap-2 mb-3">

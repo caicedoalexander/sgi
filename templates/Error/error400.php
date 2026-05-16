@@ -17,7 +17,7 @@ if (isset($error) && $error instanceof ForbiddenException):
         <p><?= h($error->getMessage()) ?></p>
         <p>Si crees que es un error, contacta al administrador.</p>
         <a href="<?= $this->Url->build(['controller' => 'Dashboard', 'action' => 'index']) ?>"
-           class="sgi-btn-primary">Volver al inicio</a>
+           class="btn btn-primary">Volver al inicio</a>
     </div>
 <?php
     return;

@@ -190,7 +190,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                             Cancelar
                         </button>
                         <button type="button" data-btn-register-advance
-                                class="btn btn-sm sgi-btn-primary">
+                                class="btn btn-sm btn-primary">
                             <i class="bi bi-send-check me-1" aria-hidden="true"></i>Registrar y enviar a autorización
                         </button>
                     </div>

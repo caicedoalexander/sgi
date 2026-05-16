@@ -69,7 +69,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
     <!-- Info -->
     <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
         <div class="col-md-6" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-section-title">Información</div>
+            <div class="sgi-label">Información</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Código</span>
                 <span class="sgi-data-value" style="font-family:monospace;"><?= h($record->code) ?></span>
@@ -92,7 +92,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
             </div>
         </div>
         <div class="col-md-6">
-            <div class="sgi-section-title">Beneficiario</div>
+            <div class="sgi-label">Beneficiario</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Tipo</span>
                 <span class="sgi-data-value"><?= h(RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?? '—') ?></span>

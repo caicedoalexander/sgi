@@ -18,7 +18,7 @@ $params = $this->request->getQueryParams();
         <?= $this->Html->link(
             '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Registro',
             ['action' => 'add'],
-            ['class' => 'sgi-btn-primary btn btn-sm', 'escape' => false]
+            ['class' => 'btn-primary btn btn-sm', 'escape' => false]
         ) ?>
     </div>
     <?php endif; ?>

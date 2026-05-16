@@ -69,49 +69,49 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
 <div>
     <div class="d-flex align-items-center gap-2 mb-3">
         <i class="bi bi-receipt" style="color:var(--primary-color);font-size:1rem;" aria-hidden="true"></i>
-        <span class="sgi-block-title">Facturación</span>
+        <span class="sgi-label">Facturación</span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>
 
     <div class="row g-3 mb-3">
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100">
-                <div class="sgi-stat-label">Total</div>
+                <div class="sgi-label">Total</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['total'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Facturas</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--warning-color);">
-                <div class="sgi-stat-label">Aprobación</div>
+                <div class="sgi-label">Aprobación</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['aprobacion'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Pendientes</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--info-color);">
-                <div class="sgi-stat-label">Contabilidad</div>
+                <div class="sgi-label">Contabilidad</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['contabilidad'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En proceso</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:#0d6efd;">
-                <div class="sgi-stat-label">Tesorería</div>
+                <div class="sgi-label">Tesorería</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['tesoreria'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Por pagar</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100">
-                <div class="sgi-stat-label">Pagadas</div>
+                <div class="sgi-label">Pagadas</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--primary-color);"><?= $this->Number->format($invoiceStats['pagada'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Completadas</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--danger-color);">
-                <div class="sgi-stat-label">Rechazadas</div>
+                <div class="sgi-label">Rechazadas</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--danger-color);"><?= $this->Number->format($invoiceStats['rechazada'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Requieren atención</div>
             </div>
@@ -122,28 +122,28 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
     <div class="row g-3 mb-3">
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100">
-                <div class="sgi-stat-label">Monto Pagado</div>
+                <div class="sgi-label">Monto Pagado</div>
                 <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:var(--primary-color);">$<?= $this->Number->format($invoiceFinancialStats['total_paid'] ?? 0, ['places' => 0]) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En el período</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--info-color);">
-                <div class="sgi-stat-label">Monto en Proceso</div>
+                <div class="sgi-label">Monto en Proceso</div>
                 <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:#212529;">$<?= $this->Number->format($invoiceFinancialStats['total_in_process'] ?? 0, ['places' => 0]) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Sin pagar</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--secondary-color);">
-                <div class="sgi-stat-label">Promedio/Factura</div>
+                <div class="sgi-label">Promedio/Factura</div>
                 <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:#212529;">$<?= $this->Number->format($invoiceFinancialStats['avg_amount'] ?? 0, ['places' => 0]) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Media del período</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--danger-color);">
-                <div class="sgi-stat-label">Vencidas</div>
+                <div class="sgi-label">Vencidas</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--danger-color);"><?= $this->Number->format($invoiceFinancialStats['overdue'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Requieren atención</div>
             </div>
@@ -156,7 +156,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-md-5">
             <div class="card card-primary">
                 <div class="card-body">
-                    <div class="sgi-section-eyebrow mb-2">Distribución por estado</div>
+                    <div class="sgi-label mb-2">Distribución por estado</div>
                     <div id="invoiceDonutChart"
                          data-chart-donut="<?= h(json_encode($invoiceChartData['donut_status'] ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>"></div>
                 </div>
@@ -165,7 +165,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-md-7">
             <div class="card card-dark">
                 <div class="card-body">
-                    <div class="sgi-section-eyebrow mb-2">Facturas por mes</div>
+                    <div class="sgi-label mb-2">Facturas por mes</div>
                     <div id="invoiceBarChart"
                          data-chart-monthly="<?= h(json_encode($invoiceChartData['monthly'] ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>"></div>
                 </div>
@@ -177,17 +177,17 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
     <?php if (!empty($recentInvoices)): ?>
     <div class="card card-primary">
         <div class="card-header d-flex align-items-center justify-content-between">
-            <span class="sgi-section-eyebrow">Actividad reciente</span>
+            <span class="sgi-label">Actividad reciente</span>
             <?= $this->Html->link('Ver todas →', ['controller' => 'Invoices', 'action' => 'all'], ['style' => 'font-size:.75rem;color:var(--primary-color);text-decoration:none;font-weight:500;']) ?>
         </div>
         <div class="table-responsive">
             <table class="table table-sm mb-0" style="font-size:.82rem;">
                 <thead>
                     <tr style="background:var(--bg-muted);">
-                        <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Nº Factura</th>
-                        <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Proveedor</th>
-                        <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Estado</th>
-                        <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Modificado</th>
+                        <th class="px-3 py-2 sgi-label" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Nº Factura</th>
+                        <th class="px-3 py-2 sgi-label" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Proveedor</th>
+                        <th class="px-3 py-2 sgi-label" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Estado</th>
+                        <th class="px-3 py-2 sgi-label" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Modificado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -228,7 +228,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
 <div>
     <div class="d-flex align-items-center gap-2 mb-3">
         <i class="bi bi-people-fill" style="color:var(--primary-color);font-size:1rem;" aria-hidden="true"></i>
-        <span class="sgi-block-title">RRHH</span>
+        <span class="sgi-label">RRHH</span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>
 
@@ -237,7 +237,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <?php if (isset($rrhhStats['active_employees'])): ?>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100">
-                <div class="sgi-stat-label">Empleados</div>
+                <div class="sgi-label">Empleados</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($rrhhStats['active_employees']) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Activos</div>
             </div>
@@ -246,7 +246,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <?php if (isset($rrhhStats['novelties_month'])): ?>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--secondary-color);">
-                <div class="sgi-stat-label">Novedades</div>
+                <div class="sgi-label">Novedades</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($rrhhStats['novelties_month']) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Este mes</div>
             </div>
@@ -256,7 +256,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-2">
             <a href="<?= $this->Url->build(['controller' => 'EmployeeNovelties', 'action' => 'active']) ?>" class="text-decoration-none">
                 <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--primary-color);cursor:pointer;">
-                    <div class="sgi-stat-label">Vigentes</div>
+                    <div class="sgi-label">Vigentes</div>
                     <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--primary-color);"><?= $this->Number->format($rrhhStats['active_novelties']) ?></div>
                     <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Hoy</div>
                 </div>
@@ -270,28 +270,28 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
     <div class="row g-3 mb-3">
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100">
-                <div class="sgi-stat-label">Edad Media</div>
+                <div class="sgi-label">Edad Media</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $rrhhExtendedStats['avg_age'] ?? 0 ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Años</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--secondary-color);">
-                <div class="sgi-stat-label">Antigüedad Media</div>
+                <div class="sgi-label">Antigüedad Media</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $rrhhExtendedStats['avg_tenure'] ?? 0 ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Años</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--primary-color);">
-                <div class="sgi-stat-label">Nuevos Ingresos</div>
+                <div class="sgi-label">Nuevos Ingresos</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--primary-color);"><?= $this->Number->format($rrhhExtendedStats['new_hires'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En el período</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--danger-color);">
-                <div class="sgi-stat-label">Retiros</div>
+                <div class="sgi-label">Retiros</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--danger-color);"><?= $this->Number->format($rrhhExtendedStats['terminations'] ?? 0) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En el período</div>
             </div>
@@ -304,7 +304,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-md-5">
             <div class="card card-primary">
                 <div class="card-body">
-                    <div class="sgi-section-eyebrow mb-2">Distribución por contrato</div>
+                    <div class="sgi-label mb-2">Distribución por contrato</div>
                     <div id="employeeDonutChart"
                          data-chart-contract="<?= h(json_encode($rrhhChartData['donut_contract'] ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>"></div>
                 </div>
@@ -313,7 +313,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-md-7">
             <div class="card card-dark">
                 <div class="card-body">
-                    <div class="sgi-section-eyebrow mb-2">Novedades por mes</div>
+                    <div class="sgi-label mb-2">Novedades por mes</div>
                     <div id="noveltyBarChart"
                          data-chart-novelties="<?= h(json_encode($rrhhChartData['monthly_novelties'] ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>"></div>
                 </div>
@@ -325,16 +325,16 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
     <?php if (!empty($recentNovelties)): ?>
     <div class="card" style="border-top-color:var(--secondary-color);">
         <div class="card-header d-flex align-items-center justify-content-between">
-            <span class="sgi-section-eyebrow">Novedades recientes</span>
+            <span class="sgi-label">Novedades recientes</span>
             <?= $this->Html->link('Ver todas →', ['controller' => 'EmployeeNovelties', 'action' => 'index'], ['style' => 'font-size:.75rem;color:var(--primary-color);text-decoration:none;font-weight:500;']) ?>
         </div>
         <div class="table-responsive">
             <table class="table table-sm mb-0" style="font-size:.82rem;">
                 <thead>
                     <tr style="background:var(--bg-muted);">
-                        <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Empleado</th>
-                        <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Tipo</th>
-                        <th class="px-3 py-2 sgi-section-eyebrow" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Fecha</th>
+                        <th class="px-3 py-2 sgi-label" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Empleado</th>
+                        <th class="px-3 py-2 sgi-label" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Tipo</th>
+                        <th class="px-3 py-2 sgi-label" style="letter-spacing:.08em;border-bottom:1px solid var(--border-color);">Fecha</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -366,14 +366,14 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
 <div>
     <div class="d-flex align-items-center gap-2 mb-3">
         <i class="bi bi-collection" style="color:var(--primary-color);font-size:1rem;" aria-hidden="true"></i>
-        <span class="sgi-block-title">Catálogos</span>
+        <span class="sgi-label">Catálogos</span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>
     <div class="row g-3">
         <?php if (isset($catalogStats['providers'])): ?>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
-                <div class="sgi-stat-label">Proveedores</div>
+                <div class="sgi-label">Proveedores</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($catalogStats['providers']) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Activos</div>
             </div>
@@ -382,7 +382,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <?php if (isset($catalogStats['operation_centers'])): ?>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
-                <div class="sgi-stat-label">Ctros. Operación</div>
+                <div class="sgi-label">Ctros. Operación</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($catalogStats['operation_centers']) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Registrados</div>
             </div>
@@ -391,7 +391,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <?php if (isset($catalogStats['expense_types'])): ?>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
-                <div class="sgi-stat-label">Tipos de Gasto</div>
+                <div class="sgi-label">Tipos de Gasto</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($catalogStats['expense_types']) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Configurados</div>
             </div>
@@ -400,7 +400,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <?php if (isset($catalogStats['cost_centers'])): ?>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
-                <div class="sgi-stat-label">Ctros. de Costos</div>
+                <div class="sgi-label">Ctros. de Costos</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($catalogStats['cost_centers']) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Registrados</div>
             </div>
@@ -417,14 +417,14 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
 <div>
     <div class="d-flex align-items-center gap-2 mb-3">
         <i class="bi bi-shield-lock" style="color:var(--primary-color);font-size:1rem;" aria-hidden="true"></i>
-        <span class="sgi-block-title">Administración</span>
+        <span class="sgi-label">Administración</span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
     </div>
     <div class="row g-3">
         <?php if (isset($adminStats['users'])): ?>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
-                <div class="sgi-stat-label">Usuarios</div>
+                <div class="sgi-label">Usuarios</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($adminStats['users']) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Activos</div>
             </div>
@@ -433,7 +433,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <?php if (isset($adminStats['roles'])): ?>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
-                <div class="sgi-stat-label">Roles</div>
+                <div class="sgi-label">Roles</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($adminStats['roles']) ?></div>
                 <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Configurados</div>
             </div>

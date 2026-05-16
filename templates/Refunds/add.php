@@ -79,7 +79,7 @@ $this->assign('title', 'Nuevo Reintegro');
         </div>
 
         <div class="d-flex gap-2 pt-2" style="border-top:1px solid var(--border-color);">
-            <button type="submit" class="sgi-btn-primary btn">
+            <button type="submit" class="btn-primary btn">
                 <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear Reintegro
             </button>
             <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>

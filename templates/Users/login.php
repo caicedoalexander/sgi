@@ -53,7 +53,7 @@ $this->assign('title', 'Iniciar Sesión');
 
 <!-- Botón -->
 <?= $this->Form->button('Ingresar', [
-    'class' => 'btn sgi-btn-primary w-100 py-2',
+    'class' => 'btn btn-primary w-100 py-2',
 ]) ?>
 
 <?= $this->Form->end() ?>

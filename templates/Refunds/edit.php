@@ -300,7 +300,7 @@ $invoiceCount           = $viewModel->invoiceCount;
             <!-- Agregar más facturas (solo agrupación) — modal compartido -->
             <?php if ($record->isAgrupacion()): ?>
             <div class="mt-2">
-                <button type="button" class="btn btn-sm sgi-btn-primary"
+                <button type="button" class="btn btn-sm btn-primary"
                         data-bs-toggle="modal" data-bs-target="#linkRefundInvoicesModal">
                     <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Vincular facturas
                 </button>

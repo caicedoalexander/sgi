@@ -34,7 +34,7 @@ $this->assign('title', 'Nueva Programación');
             </div>
         </div>
         <div class="mt-4">
-            <button type="submit" class="sgi-btn-primary btn">
+            <button type="submit" class="btn-primary btn">
                 <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear Programación
             </button>
         </div>

@@ -201,7 +201,7 @@ $btnClass    = $submitButtonClass;
         <!-- Facturas agrupadas -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="sgi-micro-caps flex-shrink-0">
+                <span class="sgi-label flex-shrink-0">
                     <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Agrupadas
                 </span>
                 <div class="sgi-flex-divider"></div>
@@ -268,7 +268,7 @@ $btnClass    = $submitButtonClass;
             <!-- Agregar más facturas (solo agrupación) — modal compartido -->
             <?php if ($record->isAgrupacion()): ?>
             <div class="mt-2">
-                <button type="button" class="btn btn-sm sgi-btn-primary"
+                <button type="button" class="btn btn-sm btn-primary"
                         data-bs-toggle="modal" data-bs-target="#linkPettyCashInvoicesModal">
                     <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Vincular facturas
                 </button>
@@ -281,7 +281,7 @@ $btnClass    = $submitButtonClass;
         <!-- ── Sección: Contabilidad ── -->
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="sgi-micro-caps flex-shrink-0">
+                <span class="sgi-label flex-shrink-0">
                     <i class="bi bi-calculator me-1" aria-hidden="true"></i>Contabilidad
                 </span>
                 <div class="sgi-flex-divider"></div>
