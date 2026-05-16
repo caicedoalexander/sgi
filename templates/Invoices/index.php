@@ -120,10 +120,10 @@ $pipelineStepsLeg  = [
 </div>
 
 <!-- Search & Filters -->
-<div class="sgi-search-bar mb-3">
-    <?= $this->Form->create(null, ['type' => 'get', 'url' => ['action' => $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index')], 'valueSources' => ['query']]) ?>
-    <div class="d-flex gap-2 align-items-center">
-        <div class="sgi-input-icon">
+<?= $this->Form->create(null, ['type' => 'get', 'url' => ['action' => $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index')], 'valueSources' => ['query']]) ?>
+<div class="d-flex gap-2 align-items-stretch mb-3">
+    <div class="sgi-search-bar flex-grow-1">
+        <div class="sgi-input-icon w-100">
             <i class="bi bi-search" aria-hidden="true"></i>
             <input type="text" name="search"
                    class="form-control"
@@ -131,22 +131,23 @@ $pipelineStepsLeg  = [
                    value="<?= h($this->request->getQuery('search', '')) ?>"
                    aria-label="Buscar facturas">
         </div>
-        <button type="button" class="btn btn-ghost"
-                data-bs-toggle="collapse" data-bs-target="#invoiceFilters" aria-label="Filtros avanzados">
-            <i class="bi bi-funnel" aria-hidden="true"></i>
-            <span>Filtros<?= $hasFilters ? ' · activos' : '' ?></span>
-        </button>
-        <?php if ($hasFilters): ?>
-            <?= $this->Html->link(
-                '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
-                ['action' => $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index')],
-                ['class' => 'btn btn-ghost sgi-fg-danger', 'escape' => false]
-            ) ?>
-        <?php endif; ?>
     </div>
+    <button type="button" class="btn btn-ghost-card sgi-filters-trigger"
+            data-bs-toggle="collapse" data-bs-target="#invoiceFilters" aria-label="Filtros avanzados">
+        <i class="bi bi-funnel" aria-hidden="true"></i>
+        <span>Filtros<?php if ($hasFilters): ?> · <span class="sgi-fg-primary"><?= count(array_filter($query, fn($v) => $v !== '' && $v !== null)) ?></span><?php endif; ?></span>
+    </button>
+    <?php if ($hasFilters): ?>
+        <?= $this->Html->link(
+            '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
+            ['action' => $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index')],
+            ['class' => 'btn btn-ghost-card sgi-fg-danger', 'escape' => false]
+        ) ?>
+    <?php endif; ?>
+</div>
 
-    <div class="collapse <?= $hasFilters ? 'show' : '' ?>" id="invoiceFilters">
-        <div class="sgi-filters-section mt-2">
+<div class="collapse <?= $hasFilters ? 'show' : '' ?> mb-3" id="invoiceFilters">
+    <div class="card p-3">
             <div class="row g-2">
                 <div class="col-md-3">
                     <label class="sgi-filter-label" for="filter-provider">Proveedor</label>
@@ -202,11 +203,10 @@ $pipelineStepsLeg  = [
                         </div>
                     </div>
                 </div>
-            </div>
         </div>
     </div>
-    <?= $this->Form->end() ?>
 </div>
+<?= $this->Form->end() ?>
 
 <?php if (!$isRejectedView): ?>
 <!-- Tabs por estado de pipeline -->
@@ -348,7 +348,7 @@ $pipelineStepsLeg  = [
                                 <?php if ($row->isPartialPay): ?>
                                     <span class="pill pill-warning-soft">PAGO PARCIAL</span>
                                 <?php endif; ?>
-                                <?php if ($row->isReadyForPay): ?>
+                                <?php if ($row->isReadyForPay && !$row->isPaid): ?>
                                     <span class="pill <?= h($readyForPaymentPills[$invoice->ready_for_payment] ?? 'pill-muted') ?>"><?= h(strtoupper($invoice->ready_for_payment)) ?></span>
                                 <?php endif; ?>
                             <?php endif; ?>
