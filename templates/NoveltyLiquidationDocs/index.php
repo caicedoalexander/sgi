@@ -80,7 +80,7 @@ $showFilter = $action !== 'rejected';
                     <td><span class="pill <?= NoveltyPresentation::STATUS_BADGES[$doc->pipeline_status] ?? 'pill-muted' ?>"><?= h($statusLabels[$doc->pipeline_status] ?? ucfirst($doc->pipeline_status)) ?></span></td>
                     <td><span class="pill pill-muted"><?= count($doc->employee_novelties) ?></span></td>
                     <td style="font-size:.8125rem;"><?= h($doc->performed_by_user->full_name ?? '—') ?></td>
-                    <td style="font-size:.8125rem;color:#888"><?= $doc->document_date?->format('d/m/Y') ?: '—' ?></td>
+                    <td style="font-size:.8125rem;color:var(--text-faint)"><?= $doc->document_date?->format('d/m/Y') ?: '—' ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

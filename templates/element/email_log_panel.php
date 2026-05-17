@@ -56,7 +56,7 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
                     $lastAttempt = $log->last_attempt_at ?? $log->created;
                     ?>
                     <tr>
-                        <td style="color:#444;"><?= h($log->to_email) ?></td>
+                        <td style="color:var(--text-muted);"><?= h($log->to_email) ?></td>
                         <td>
                             <span class="pill <?= $statusBadge ?>">
                                 <i class="bi <?= $statusIcon ?> me-1" aria-hidden="true"></i><?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
@@ -67,10 +67,10 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
                                 </div>
                             <?php endif; ?>
                         </td>
-                        <td style="color:#555;white-space:nowrap;">
+                        <td style="color:var(--text-muted);white-space:nowrap;">
                             <?= $lastAttempt ? h($lastAttempt->i18nFormat('dd/MM/yyyy HH:mm')) : '—' ?>
                         </td>
-                        <td style="color:#555;text-align:center;"><?= (int)$log->attempts ?></td>
+                        <td style="color:var(--text-muted);text-align:center;"><?= (int)$log->attempts ?></td>
                         <td class="text-end">
                             <?php if ($showRetry): ?>
                                 <?= $this->Form->postLink(

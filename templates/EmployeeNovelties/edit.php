@@ -228,7 +228,7 @@ $totalDocs          = $viewModel->totalDocs;
         </div>
         <?php if (!empty($novelty->novelty_massive_employees)): ?>
         <div class="mt-2">
-            <span style="font-size:.55rem;text-transform:uppercase;letter-spacing:.14em;color:#aaa;font-weight:600;">Empleados (Masiva)</span>
+            <span style="font-size:.55rem;text-transform:uppercase;letter-spacing:.14em;color:var(--text-disabled);font-weight:600;">Empleados (Masiva)</span>
             <div class="mt-1">
                 <?php foreach ($novelty->novelty_massive_employees as $me): ?>
                     <span class="pill pill-muted me-1 mb-1"><?= h($me->employee->full_name ?? '—') ?></span>
@@ -247,7 +247,7 @@ $totalDocs          = $viewModel->totalDocs;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-gear me-1" aria-hidden="true"></i>Gestión
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -298,7 +298,7 @@ $totalDocs          = $viewModel->totalDocs;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -320,7 +320,7 @@ $totalDocs          = $viewModel->totalDocs;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-person-check me-1" aria-hidden="true"></i>Aprobación
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -375,7 +375,7 @@ $totalDocs          = $viewModel->totalDocs;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Asignar a Documento de Liquidación
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -462,7 +462,7 @@ $totalDocs          = $viewModel->totalDocs;
         <?php endif; ?>
     </div>
 
-    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
+    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:var(--text-disabled);<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
         <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
@@ -474,7 +474,7 @@ $totalDocs          = $viewModel->totalDocs;
         <?php if ($multipleStatuses): ?>
         <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
             <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
-            <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
+            <span style="font-size:.67rem;color:var(--text-disabled);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>
         <?php endif; ?>
         <?php foreach ($docs as $doc): ?>

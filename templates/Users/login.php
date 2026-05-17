@@ -10,11 +10,11 @@ $this->assign('title', 'Iniciar Sesión');
 <!-- Usuario -->
 <div class="mb-3">
     <label class="d-block text-uppercase fw-semibold mb-1"
-           style="font-size:.6rem;letter-spacing:.12em;color:#999;">
+           style="font-size:.6rem;letter-spacing:.12em;color:var(--text-faint);">
         Usuario
     </label>
     <div class="sgi-input-group d-flex align-items-center">
-        <span class="px-3" style="color:#bbb;flex-shrink:0;">
+        <span class="px-3" style="color:var(--text-disabled);flex-shrink:0;">
             <i class="bi bi-person" style="font-size:.95rem;" aria-hidden="true"></i>
         </span>
         <?= $this->Form->control('username', [
@@ -32,11 +32,11 @@ $this->assign('title', 'Iniciar Sesión');
 <!-- Contraseña -->
 <div class="mb-4">
     <label class="d-block text-uppercase fw-semibold mb-1"
-           style="font-size:.6rem;letter-spacing:.12em;color:#999;">
+           style="font-size:.6rem;letter-spacing:.12em;color:var(--text-faint);">
         Contraseña
     </label>
     <div class="sgi-input-group d-flex align-items-center">
-        <span class="px-3" style="color:#bbb;flex-shrink:0;">
+        <span class="px-3" style="color:var(--text-disabled);flex-shrink:0;">
             <i class="bi bi-lock" style="font-size:.95rem;" aria-hidden="true"></i>
         </span>
         <?= $this->Form->control('password', [

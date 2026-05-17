@@ -63,7 +63,7 @@ $this->assign('title', h($viewModel->pageTitle));
                     <?= h($viewModel->record->code) ?>
                 </div>
                 <div class="sgi-card-subtitle mt-1">
-                    Rol: <strong style="color:#777;"><?= h($viewModel->roleName) ?></strong>
+                    Rol: <strong style="color:var(--text-faint);"><?= h($viewModel->roleName) ?></strong>
                 </div>
             </div>
         </div>
@@ -83,7 +83,7 @@ $this->assign('title', h($viewModel->pageTitle));
             ?>
             <div class="d-flex align-items-center gap-2" style="<?= !$isCurrent && !$isPast ? 'opacity:.4;' : '' ?>">
                 <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:32px;height:32px;border:2px solid <?= $isPast || $isCurrent ? 'var(--primary-color)' : '#ddd' ?>;background:<?= $isPast || $isCurrent ? 'var(--primary-color)' : '#fff' ?>;color:<?= $isPast || $isCurrent ? '#fff' : '#bbb' ?>;font-size:.85rem;">
+                     style="width:32px;height:32px;border:2px solid <?= $isPast || $isCurrent ? 'var(--primary-color)' : 'var(--border-faint)' ?>;background:<?= $isPast || $isCurrent ? 'var(--primary-color)' : '#fff' ?>;color:<?= $isPast || $isCurrent ? '#fff' : '#bbb' ?>;font-size:.85rem;">
                     <?php if ($isPast): ?>
                         <i class="bi bi-check-lg" aria-hidden="true"></i>
                     <?php else: ?>
@@ -150,7 +150,7 @@ $this->assign('title', h($viewModel->pageTitle));
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Vinculadas
                     <span class="sgi-folder-count ms-1"><?= $viewModel->itemCount ?></span>
                 </span>
@@ -329,7 +329,7 @@ $totalDocs = count($documents);
         <?php endif; ?>
     </div>
 
-    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documents) ? 'display:none;' : '' ?>">
+    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:var(--text-disabled);<?= !empty($documents) ? 'display:none;' : '' ?>">
         <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>

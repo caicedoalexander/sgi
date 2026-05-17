@@ -27,7 +27,7 @@ $this->assign('title', 'Nuevo Reintegro');
         </div>
         <div>
             <div class="sgi-card-title">Crear Reintegro</div>
-            <div style="font-size:.72rem;color:#aaa;">Seleccione el beneficiario del reintegro</div>
+            <div style="font-size:.72rem;color:var(--text-disabled);">Seleccione el beneficiario del reintegro</div>
         </div>
     </div>
     <div class="card-body p-4">

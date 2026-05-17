@@ -19,7 +19,7 @@ $periods = [
 ];
 ?>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-4" id="period-selector">
-    <span style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#6c757d;">Período:</span>
+    <span style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);">Período:</span>
     <div class="btn-group btn-group-sm" role="group">
         <?php foreach ($periods as $key => $label): ?>
             <?php if ($key === 'custom') continue; ?>
@@ -34,7 +34,7 @@ $periods = [
         <input type="text" class="form-control form-control-sm flatpickr-date" id="period-from"
                placeholder="Desde" value="<?= h($dateFrom) ?>"
                style="width:110px;font-size:.75rem;">
-        <span style="font-size:.75rem;color:#6c757d;">—</span>
+        <span style="font-size:.75rem;color:var(--text-muted);">—</span>
         <input type="text" class="form-control form-control-sm flatpickr-date" id="period-to"
                placeholder="Hasta" value="<?= h($dateTo) ?>"
                style="width:110px;font-size:.75rem;">

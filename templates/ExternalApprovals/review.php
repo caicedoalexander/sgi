@@ -120,12 +120,12 @@ $badgeMap = $entityType === 'employee_novelties'
                         <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:var(--bg-muted);display:flex;align-items:center;gap:.5rem;min-width:0;">
                             <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> flex-shrink-0"
                                style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.1rem;"></i>
-                            <span style="font-size:.78rem;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;" title="<?= h($doc->file_name) ?>">
+                            <span style="font-size:.78rem;font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;" title="<?= h($doc->file_name) ?>">
                                 <?= h($doc->file_name) ?>
                             </span>
                         </div>
                         <!-- Body: badge estado + fecha + tamaño -->
-                        <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
+                        <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
                             <?php if (!empty($doc->pipeline_status)): ?>
                             <div>
                                 <span class="pill <?= $badgeMap[$doc->pipeline_status] ?? 'pill-muted' ?>" style="font-size:.65rem;">
@@ -133,12 +133,12 @@ $badgeMap = $entityType === 'employee_novelties'
                                 </span>
                             </div>
                             <?php endif; ?>
-                            <div style="display:flex;align-items:center;gap:.35rem;color:#888;">
+                            <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-faint);">
                                 <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
                                 <span><?= $doc->created?->format('d/m/Y H:i') ?></span>
                             </div>
                             <?php if ($doc->file_size): ?>
-                            <div style="color:#aaa;font-size:.72rem;"><?= $this->Number->toReadableSize($doc->file_size) ?></div>
+                            <div style="color:var(--text-disabled);font-size:.72rem;"><?= $this->Number->toReadableSize($doc->file_size) ?></div>
                             <?php endif; ?>
                         </div>
                         <!-- Footer: botón abrir -->

@@ -43,7 +43,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
                 <i class="bi bi-wallet2" aria-hidden="true"></i>
             </div>
             <div>
-                <div class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;">
+                <div class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:var(--text-strong);line-height:1.15;">
                     <?= h($record->code) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -54,7 +54,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
             </div>
         </div>
         <div class="text-end flex-shrink-0">
-            <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#bbb;margin-bottom:.2rem;">Total</div>
+            <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text-disabled);margin-bottom:.2rem;">Total</div>
             <div style="font-size:1.55rem;font-weight:700;letter-spacing:-.04em;color:var(--primary-color);line-height:1;white-space:nowrap;">
                 $ <?= $this->Number->format($record->total_amount, ['places' => 2]) ?>
             </div>
@@ -158,7 +158,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
         </span>
     </div>
     <?php if (empty($docs)): ?>
-        <div style="padding:2rem 1rem;text-align:center;color:#c8c8c8;">
+        <div style="padding:2rem 1rem;text-align:center;color:var(--text-disabled);">
             <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
             <span style="font-size:.8rem;">Sin soportes adjuntos</span>
         </div>
@@ -195,7 +195,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
         ?>
         <div class="d-flex align-items-start gap-2 mb-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:32px;height:32px;background:<?= $isRegression ? '#CD6A15' : 'var(--primary-color)' ?>;color:#fff;font-size:.7rem;font-weight:700;">
+                 style="width:32px;height:32px;background:<?= $isRegression ? 'var(--secondary-color)' : 'var(--primary-color)' ?>;color:#fff;font-size:.7rem;font-weight:700;">
                 <?php
                 $names = explode(' ', $obs->user->full_name ?? '');
                 echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
@@ -203,23 +203,23 @@ $statusLabels = RefundConstants::STATUS_LABELS;
             </div>
             <div style="flex:1;min-width:0;">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span style="font-size:.8rem;font-weight:600;color:#222;">
+                    <span style="font-size:.8rem;font-weight:600;color:var(--text-default);">
                         <?= h($obs->user->full_name ?? '') ?>
                     </span>
                     <?php if ($isRegression): ?>
                         <span class="pill pill-warning-soft" style="font-size:.65rem;">Regresión</span>
                     <?php endif; ?>
-                    <span style="font-size:.7rem;color:#aaa;">
+                    <span style="font-size:.7rem;color:var(--text-disabled);">
                         <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
                     </span>
                 </div>
                 <?php if ($isRegression && $fromLbl && $toLbl): ?>
-                    <div style="font-size:.74rem;color:#666;margin-top:.1rem;">
+                    <div style="font-size:.74rem;color:var(--text-muted);margin-top:.1rem;">
                         <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
                         <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
                     </div>
                 <?php endif; ?>
-                <div style="font-size:.84rem;color:#444;line-height:1.5;margin-top:.15rem;">
+                <div style="font-size:.84rem;color:var(--text-muted);line-height:1.5;margin-top:.15rem;">
                     <?= nl2br(h($obs->message)) ?>
                 </div>
             </div>

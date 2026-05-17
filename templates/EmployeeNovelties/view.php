@@ -72,7 +72,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                 <i class="bi bi-calendar-check" aria-hidden="true"></i>
             </div>
             <div>
-                <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;">
+                <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:var(--text-strong);line-height:1.15;">
                     <?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
@@ -85,7 +85,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                     <?php endif; ?>
                 </div>
                 <?php if (!empty($novelty->novelty_massive_employees)): ?>
-                <div class="mt-1" style="font-size:.8rem;color:#777;font-weight:500;">
+                <div class="mt-1" style="font-size:.8rem;color:var(--text-faint);font-weight:500;">
                     Masiva: <?= count($novelty->novelty_massive_employees) ?> empleados
                 </div>
                 <?php endif; ?>
@@ -265,14 +265,14 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                 </div>
                 <div style="flex:1;min-width:0;">
                     <div class="d-flex align-items-center gap-2">
-                        <span style="font-size:.8rem;font-weight:600;color:#222;">
+                        <span style="font-size:.8rem;font-weight:600;color:var(--text-default);">
                             <?= h($obs->user->full_name ?? '') ?>
                         </span>
-                        <span style="font-size:.7rem;color:#aaa;">
+                        <span style="font-size:.7rem;color:var(--text-disabled);">
                             <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
                         </span>
                     </div>
-                    <div style="font-size:.84rem;color:#444;line-height:1.5;margin-top:.15rem;">
+                    <div style="font-size:.84rem;color:var(--text-muted);line-height:1.5;margin-top:.15rem;">
                         <?= nl2br(h($obs->message)) ?>
                     </div>
                 </div>
@@ -286,7 +286,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <?php if ($novelty->observations): ?>
     <div style="border-bottom:1px solid var(--border-color);">
         <div class="sgi-label">Observaciones de Rechazo</div>
-        <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:#555;line-height:1.65;">
+        <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:var(--text-muted);line-height:1.65;">
             <?= nl2br(h($novelty->observations)) ?>
         </div>
     </div>
@@ -340,27 +340,27 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                                 <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> flex-shrink-0"
                                    style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.1rem;"></i>
                                 <div style="min-width:0;flex:1;overflow:hidden;">
-                                    <span style="font-size:.78rem;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($doc->file_name) ?>">
+                                    <span style="font-size:.78rem;font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($doc->file_name) ?>">
                                         <?= h($doc->file_name) ?>
                                     </span>
                                 </div>
                             </div>
-                            <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
+                            <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
                                 <div>
                                     <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:.65rem;">
                                         <?= $statusLabels[$status] ?? $status ?>
                                     </span>
                                 </div>
-                                <div style="display:flex;align-items:center;gap:.35rem;color:#666;">
+                                <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-muted);">
                                     <i class="bi bi-person" style="font-size:.8rem;" aria-hidden="true"></i>
                                     <span><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></span>
                                 </div>
-                                <div style="display:flex;align-items:center;gap:.35rem;color:#888;">
+                                <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-faint);">
                                     <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
                                     <span><?= $doc->created?->format('d/m/Y H:i') ?></span>
                                 </div>
                                 <?php if ($doc->file_size): ?>
-                                <div style="color:#aaa;font-size:.72rem;"><?= $this->Number->toReadableSize($doc->file_size) ?></div>
+                                <div style="color:var(--text-disabled);font-size:.72rem;"><?= $this->Number->toReadableSize($doc->file_size) ?></div>
                                 <?php endif; ?>
                             </div>
                             <div style="padding:.5rem .875rem;border-top:1px solid var(--border-color);text-align:right;">

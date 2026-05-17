@@ -41,11 +41,11 @@ $showHeader = $showHeader ?? true;
                     ) ?>
                 </td>
                 <td><span class="pill <?= h($this->DocumentIcon->badgeClass($type)) ?>"><?= h($type) ?></span></td>
-                <td style="color:#888;font-size:.8rem"><?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?></td>
-                <td style="color:#888;font-size:.8rem"><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></td>
-                <td style="color:#888;font-size:.8rem">
+                <td style="color:var(--text-faint);font-size:.8rem"><?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?></td>
+                <td style="color:var(--text-faint);font-size:.8rem"><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></td>
+                <td style="color:var(--text-faint);font-size:.8rem">
                     <?= $doc->created?->format('d/m/Y') ?>
-                    <span style="color:#bbb;font-size:.7rem;display:block"><?= $doc->created?->format('H:i') ?></span>
+                    <span style="color:var(--text-disabled);font-size:.7rem;display:block"><?= $doc->created?->format('H:i') ?></span>
                 </td>
                 <td class="text-end">
                     <div class="d-flex gap-1 justify-content-end">

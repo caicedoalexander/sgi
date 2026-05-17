@@ -127,8 +127,8 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                     $isFailed = $log->status === EmailLogConstants::STATUS_FAILED;
                     ?>
                     <tr>
-                        <td style="font-size:.8125rem;color:#999;"><?= (int)$log->id ?></td>
-                        <td style="font-size:.8125rem;color:#555;white-space:nowrap;">
+                        <td style="font-size:.8125rem;color:var(--text-faint);"><?= (int)$log->id ?></td>
+                        <td style="font-size:.8125rem;color:var(--text-muted);white-space:nowrap;">
                             <?= h($log->created->i18nFormat('dd/MM/yyyy HH:mm')) ?>
                         </td>
                         <td style="font-size:.8125rem;">
@@ -137,7 +137,7 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                         <td style="font-size:.8125rem;">
                             <?= h($log->to_email) ?>
                         </td>
-                        <td style="font-size:.8125rem;color:#444;">
+                        <td style="font-size:.8125rem;color:var(--text-muted);">
                             <?= h($log->subject) ?>
                         </td>
                         <td>

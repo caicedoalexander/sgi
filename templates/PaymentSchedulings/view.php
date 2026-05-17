@@ -48,20 +48,20 @@ $ps = [
             </div>
             <!-- Código, título y badges -->
             <div>
-                <div class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;">
+                <div class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:var(--text-strong);line-height:1.15;">
                     <?= h($record->code) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
                     <span class="pill <?= $ps[1] ?>"><?= $ps[0] ?></span>
                 </div>
-                <div class="mt-1" style="font-size:.8rem;color:#777;font-weight:500;">
+                <div class="mt-1" style="font-size:.8rem;color:var(--text-faint);font-weight:500;">
                     <?= h($record->title) ?: '<span class="text-muted">Sin título</span>' ?>
                 </div>
             </div>
         </div>
         <!-- Monto destacado -->
         <div class="text-end flex-shrink-0">
-            <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#bbb;margin-bottom:.2rem;">Total</div>
+            <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text-disabled);margin-bottom:.2rem;">Total</div>
             <div style="font-size:1.55rem;font-weight:700;letter-spacing:-.04em;color:var(--primary-color);line-height:1;white-space:nowrap;">
                 $ <?= $this->Number->format($total, ['places' => 0]) ?>
             </div>
@@ -81,7 +81,7 @@ $ps = [
             ?>
             <div class="d-flex align-items-center gap-2" style="<?= !$isCurrent && !$isPast ? 'opacity:.4;' : '' ?>">
                 <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:32px;height:32px;border:2px solid <?= $isPast || $isCurrent ? 'var(--primary-color)' : '#ddd' ?>;background:<?= $isPast || $isCurrent ? 'var(--primary-color)' : '#fff' ?>;color:<?= $isPast || $isCurrent ? '#fff' : '#bbb' ?>;font-size:.85rem;">
+                     style="width:32px;height:32px;border:2px solid <?= $isPast || $isCurrent ? 'var(--primary-color)' : 'var(--border-faint)' ?>;background:<?= $isPast || $isCurrent ? 'var(--primary-color)' : '#fff' ?>;color:<?= $isPast || $isCurrent ? '#fff' : '#bbb' ?>;font-size:.85rem;">
                     <?php if ($isPast): ?>
                         <i class="bi bi-check-lg" aria-hidden="true"></i>
                     <?php else: ?>
@@ -233,18 +233,18 @@ $totalDocs = count($documents);
                             <i class="bi <?= h($this->DocumentIcon->iconClassByName($att->file_name)) ?> flex-shrink-0"
                                style="color:<?= h($this->DocumentIcon->iconColorByName($att->file_name)) ?>;font-size:1.1rem;"></i>
                             <div style="min-width:0;flex:1;overflow:hidden;">
-                                <span style="font-size:.78rem;font-weight:600;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($att->file_name) ?>">
+                                <span style="font-size:.78rem;font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($att->file_name) ?>">
                                     <?= h($att->file_name) ?>
                                 </span>
                             </div>
                         </div>
                         <!-- Card body: usuario + fecha -->
-                        <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
-                            <div style="display:flex;align-items:center;gap:.35rem;color:#666;">
+                        <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
+                            <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-muted);">
                                 <i class="bi bi-person" style="font-size:.8rem;" aria-hidden="true"></i>
                                 <span><?= h($att->uploaded_by_user->full_name ?? '—') ?></span>
                             </div>
-                            <div style="display:flex;align-items:center;gap:.35rem;color:#888;">
+                            <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-faint);">
                                 <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
                                 <span><?= $att->created?->format('d/m/Y H:i') ?></span>
                             </div>
@@ -287,7 +287,7 @@ $totalDocs = count($documents);
         ?>
         <div class="d-flex align-items-start gap-2 mb-3">
             <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:32px;height:32px;background:<?= $isRegression ? '#CD6A15' : 'var(--primary-color)' ?>;color:#fff;font-size:.7rem;font-weight:700;">
+                 style="width:32px;height:32px;background:<?= $isRegression ? 'var(--secondary-color)' : 'var(--primary-color)' ?>;color:#fff;font-size:.7rem;font-weight:700;">
                 <?php
                 $names = explode(' ', $obs->user->full_name ?? '');
                 echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
@@ -295,23 +295,23 @@ $totalDocs = count($documents);
             </div>
             <div style="flex:1;min-width:0;">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span style="font-size:.8rem;font-weight:600;color:#222;">
+                    <span style="font-size:.8rem;font-weight:600;color:var(--text-default);">
                         <?= h($obs->user->full_name ?? '') ?>
                     </span>
                     <?php if ($isRegression): ?>
                         <span class="pill pill-warning-soft" style="font-size:.65rem;">Regresión</span>
                     <?php endif; ?>
-                    <span style="font-size:.7rem;color:#aaa;">
+                    <span style="font-size:.7rem;color:var(--text-disabled);">
                         <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
                     </span>
                 </div>
                 <?php if ($isRegression && $fromLbl && $toLbl): ?>
-                    <div style="font-size:.74rem;color:#666;margin-top:.1rem;">
+                    <div style="font-size:.74rem;color:var(--text-muted);margin-top:.1rem;">
                         <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
                         <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
                     </div>
                 <?php endif; ?>
-                <div style="font-size:.84rem;color:#444;line-height:1.5;margin-top:.15rem;">
+                <div style="font-size:.84rem;color:var(--text-muted);line-height:1.5;margin-top:.15rem;">
                     <?= nl2br(h($obs->message)) ?>
                 </div>
             </div>

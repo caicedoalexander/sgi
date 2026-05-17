@@ -70,7 +70,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
     <!-- Section header -->
     <div class="d-flex align-items-center gap-3 mb-3">
         <span class="text-uppercase fw-semibold flex-shrink-0"
-              style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+              style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
             <i class="bi <?= h($sectionIcon) ?> me-1" aria-hidden="true"></i><?= h($sectionTitle) ?>
         </span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -96,14 +96,14 @@ $addUrl = $this->Url->build($addPaymentUrl);
     <?php if ($totalAmount > 0): ?>
     <div class="d-flex gap-2 mb-3 flex-wrap">
         <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);padding:.45rem .8rem;background:#fff;min-width:140px;">
-            <div style="font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:.1rem;">Total pagado</div>
-            <div style="font-size:1.05rem;font-weight:700;letter-spacing:-.03em;color:#111;">
+            <div style="font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-disabled);margin-bottom:.1rem;">Total pagado</div>
+            <div style="font-size:1.05rem;font-weight:700;letter-spacing:-.03em;color:var(--text-strong);">
                 $ <?= number_format($paymentsTotal, 0, ',', '.') ?>
             </div>
         </div>
         <?php if ($remainingAmount > 0): ?>
         <div style="border:1px solid var(--border-color);border-top:2px solid var(--secondary-color);padding:.45rem .8rem;background:#fff;min-width:140px;">
-            <div style="font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:#aaa;margin-bottom:.1rem;">Saldo restante</div>
+            <div style="font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-disabled);margin-bottom:.1rem;">Saldo restante</div>
             <div style="font-size:1.05rem;font-weight:700;letter-spacing:-.03em;color:var(--secondary-color);">
                 $ <?= number_format($remainingAmount, 0, ',', '.') ?>
             </div>
@@ -115,7 +115,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
     <!-- Payments list sub-section -->
     <div class="mt-2">
         <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="text-uppercase fw-semibold" style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+            <span class="text-uppercase fw-semibold" style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                 <i class="bi bi-credit-card me-1" aria-hidden="true"></i>Pagos Registrados
             </span>
             <?php if ($showAddButton): ?>
@@ -134,7 +134,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label"
-                               style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#888;">
+                               style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);">
                             Entidad Bancaria
                         </label>
                         <select data-pay-bank class="form-select select2-enable" required>
@@ -147,7 +147,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                     <?php if ($forceFullAmount): ?>
                     <div class="col-md-3">
                         <label class="form-label"
-                               style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#888;">
+                               style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);">
                             Monto (COP)
                         </label>
                         <input type="text" data-pay-amount class="form-control currency-input"
@@ -157,7 +157,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                     <?php else: ?>
                     <div class="col-md-3">
                         <label class="form-label"
-                               style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#888;">
+                               style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);">
                             Monto (COP)
                         </label>
                         <input type="text" data-pay-amount class="form-control currency-input" required>
@@ -165,7 +165,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                     <?php endif; ?>
                     <div class="col-md-3">
                         <label class="form-label"
-                               style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#888;">
+                               style="font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);">
                             Fecha de Pago
                         </label>
                         <input type="text" data-pay-date class="form-control flatpickr-date" required>
@@ -205,15 +205,15 @@ $addUrl = $this->Url->build($addPaymentUrl);
             <table class="table table-sm mb-0">
                 <thead>
                     <tr style="background:var(--bg-muted);">
-                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#999;font-weight:600;border-bottom:1px solid var(--border-color);">Entidad Bancaria</th>
-                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#999;font-weight:600;border-bottom:1px solid var(--border-color);">Monto</th>
-                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#999;font-weight:600;border-bottom:1px solid var(--border-color);">Fecha</th>
-                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#999;font-weight:600;border-bottom:1px solid var(--border-color);">Estado</th>
-                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#999;font-weight:600;border-bottom:1px solid var(--border-color);">Registrado por</th>
-                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#999;font-weight:600;border-bottom:1px solid var(--border-color);">Origen</th>
+                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Entidad Bancaria</th>
+                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Monto</th>
+                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Fecha</th>
+                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Estado</th>
+                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Registrado por</th>
+                        <th style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Origen</th>
                         <?php if ($canAuthorize || $canDelete): ?>
                         <th class="text-end"
-                            style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#999;font-weight:600;border-bottom:1px solid var(--border-color);">
+                            style="font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">
                             Acciones
                         </th>
                         <?php endif; ?>
@@ -279,7 +279,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                                     ['class' => 'pill pill-muted text-decoration-none', 'style' => 'border-radius:0;font-size:.65rem;', 'escape' => false]
                                 ) ?>
                             <?php else: ?>
-                                <span style="font-size:.7rem;color:#bbb;text-transform:uppercase;letter-spacing:.08em;">Individual</span>
+                                <span style="font-size:.7rem;color:var(--text-disabled);text-transform:uppercase;letter-spacing:.08em;">Individual</span>
                             <?php endif; ?>
                         </td>
                         <?php $isInvoicePayment = isset($payment->invoice_id);
@@ -319,7 +319,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                 </tbody>
                 <tfoot>
                     <tr style="background:var(--bg-muted);border-top:2px solid var(--border-color);">
-                        <th style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#666;">Total Pagado</th>
+                        <th style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">Total Pagado</th>
                         <th colspan="<?= ($canAuthorize || $canDelete) ? 6 : 5 ?>"
                             style="font-size:.9rem;font-weight:700;letter-spacing:-.02em;">
                             $ <?= number_format($paymentsTotal, 0, ',', '.') ?>
@@ -330,8 +330,8 @@ $addUrl = $this->Url->build($addPaymentUrl);
         </div>
         <?php else: ?>
         <div class="text-center py-4" style="border:1px dashed var(--border-color);">
-            <i class="bi bi-credit-card d-block mb-1" style="font-size:1.4rem;color:#ccc;" aria-hidden="true"></i>
-            <span style="font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:#bbb;">
+            <i class="bi bi-credit-card d-block mb-1" style="font-size:1.4rem;color:var(--text-disabled);" aria-hidden="true"></i>
+            <span style="font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-disabled);">
                 No hay pagos registrados
             </span>
         </div>

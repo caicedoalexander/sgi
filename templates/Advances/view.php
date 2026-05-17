@@ -44,7 +44,7 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
                 <i class="bi bi-cash-coin" aria-hidden="true"></i>
             </div>
             <div>
-                <div class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;">
+                <div class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:var(--text-strong);line-height:1.15;">
                     <?= h($invoice->invoice_number ?? '#' . $invoice->id) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
@@ -55,7 +55,7 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
             </div>
         </div>
         <div class="text-end flex-shrink-0">
-            <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#bbb;margin-bottom:.2rem;">Monto</div>
+            <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text-disabled);margin-bottom:.2rem;">Monto</div>
             <div style="font-size:1.55rem;font-weight:700;letter-spacing:-.04em;color:var(--primary-color);line-height:1;white-space:nowrap;">
                 $ <?= $this->Number->format((float)$invoice->amount, ['places' => 2]) ?>
             </div>

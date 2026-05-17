@@ -132,17 +132,17 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                         </span>
                     </td>
                     <td>
-                        <span class="mono" style="font-weight:600;font-size:.8rem;color:#111;letter-spacing:-.01em;">
+                        <span class="mono" style="font-weight:600;font-size:.8rem;color:var(--text-strong);letter-spacing:-.01em;">
                             <?= h($p['reference']) ?>
                         </span>
                     </td>
-                    <td style="font-size:.8125rem;color:#555;">
+                    <td style="font-size:.8125rem;color:var(--text-muted);">
                         <?= h($p['banking_entity']) ?>
                     </td>
                     <td class="text-end fw-semibold" style="white-space:nowrap;color:var(--primary-color);font-size:.875rem;">
                         $ <?= number_format($p['amount'], 0, ',', '.') ?>
                     </td>
-                    <td style="font-size:.8125rem;color:#555;white-space:nowrap;">
+                    <td style="font-size:.8125rem;color:var(--text-muted);white-space:nowrap;">
                         <?= $p['payment_date'] ? date('d/m/Y', strtotime($p['payment_date'])) : '—' ?>
                     </td>
                     <td>
@@ -158,11 +158,11 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                     </td>
                     <td>
                         <?php if ($p['authorized_by']): ?>
-                        <div style="font-size:.8125rem;font-weight:500;color:#222;line-height:1.3;">
+                        <div style="font-size:.8125rem;font-weight:500;color:var(--text-default);line-height:1.3;">
                             <?= h($p['authorized_by']) ?>
                         </div>
                         <?php if ($p['authorized_date']): ?>
-                        <div style="font-size:.7rem;color:#bbb;margin-top:.1rem;">
+                        <div style="font-size:.7rem;color:var(--text-disabled);margin-top:.1rem;">
                             <?= date('d/m/Y', strtotime($p['authorized_date'])) ?>
                         </div>
                         <?php endif; ?>
@@ -170,7 +170,7 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                         <span style="color:#ddd;">—</span>
                         <?php endif; ?>
                     </td>
-                    <td style="font-size:.8125rem;color:#555;">
+                    <td style="font-size:.8125rem;color:var(--text-muted);">
                         <?= h($p['created_by']) ?>
                     </td>
                     <td>
@@ -188,7 +188,7 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                         <span style="color:#ddd;">—</span>
                         <?php endif; ?>
                     </td>
-                    <td style="font-size:.8125rem;color:#555;white-space:nowrap;">
+                    <td style="font-size:.8125rem;color:var(--text-muted);white-space:nowrap;">
                         <?= $p['created'] ? date('d/m/Y H:i', strtotime($p['created'])) : '—' ?>
                     </td>
                 </tr>

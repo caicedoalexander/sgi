@@ -77,43 +77,43 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100">
                 <div class="sgi-label">Total</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['total'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Facturas</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($invoiceStats['total'] ?? 0) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Facturas</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--warning-color);">
                 <div class="sgi-label">Aprobación</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['aprobacion'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Pendientes</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($invoiceStats['aprobacion'] ?? 0) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Pendientes</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--info-color);">
                 <div class="sgi-label">Contabilidad</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['contabilidad'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En proceso</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($invoiceStats['contabilidad'] ?? 0) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">En proceso</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
-            <div class="sgi-stat-card p-3 h-100" style="border-top-color:#0d6efd;">
+            <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--info-color);">
                 <div class="sgi-label">Tesorería</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($invoiceStats['tesoreria'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Por pagar</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($invoiceStats['tesoreria'] ?? 0) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Por pagar</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100">
                 <div class="sgi-label">Pagadas</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--primary-color);"><?= $this->Number->format($invoiceStats['pagada'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Completadas</div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Completadas</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--danger-color);">
                 <div class="sgi-label">Rechazadas</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--danger-color);"><?= $this->Number->format($invoiceStats['rechazada'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Requieren atención</div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Requieren atención</div>
             </div>
         </div>
     </div>
@@ -124,28 +124,28 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
             <div class="sgi-stat-card p-3 h-100">
                 <div class="sgi-label">Monto Pagado</div>
                 <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:var(--primary-color);">$<?= $this->Number->format($invoiceFinancialStats['total_paid'] ?? 0, ['places' => 0]) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En el período</div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">En el período</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--info-color);">
                 <div class="sgi-label">Monto en Proceso</div>
-                <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:#212529;">$<?= $this->Number->format($invoiceFinancialStats['total_in_process'] ?? 0, ['places' => 0]) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Sin pagar</div>
+                <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:var(--text-strong);">$<?= $this->Number->format($invoiceFinancialStats['total_in_process'] ?? 0, ['places' => 0]) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Sin pagar</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--secondary-color);">
                 <div class="sgi-label">Promedio/Factura</div>
-                <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:#212529;">$<?= $this->Number->format($invoiceFinancialStats['avg_amount'] ?? 0, ['places' => 0]) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Media del período</div>
+                <div style="font-size:1.5rem;font-weight:700;line-height:1.1;color:var(--text-strong);">$<?= $this->Number->format($invoiceFinancialStats['avg_amount'] ?? 0, ['places' => 0]) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Media del período</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--danger-color);">
                 <div class="sgi-label">Vencidas</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--danger-color);"><?= $this->Number->format($invoiceFinancialStats['overdue'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Requieren atención</div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Requieren atención</div>
             </div>
         </div>
     </div>
@@ -196,7 +196,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
                         <td class="px-3 py-2" style="border-color:var(--border-color);font-weight:500;">
                             <?= h($invoice->invoice_number ?: '#' . $invoice->id) ?>
                         </td>
-                        <td class="px-3 py-2" style="border-color:var(--border-color);color:#495057;">
+                        <td class="px-3 py-2" style="border-color:var(--border-color);color:var(--text-muted);">
                             <?= h($invoice->provider->name ?? '—') ?>
                         </td>
                         <td class="px-3 py-2" style="border-color:var(--border-color);">
@@ -208,7 +208,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
                                 </span>
                             <?php endif; ?>
                         </td>
-                        <td class="px-3 py-2" style="border-color:var(--border-color);color:#6c757d;">
+                        <td class="px-3 py-2" style="border-color:var(--border-color);color:var(--text-muted);">
                             <?= $invoice->modified ? $invoice->modified->format('d/m/Y H:i') : '—' ?>
                         </td>
                     </tr>
@@ -238,8 +238,8 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100">
                 <div class="sgi-label">Empleados</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($rrhhStats['active_employees']) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Activos</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($rrhhStats['active_employees']) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Activos</div>
             </div>
         </div>
         <?php endif; ?>
@@ -247,8 +247,8 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--secondary-color);">
                 <div class="sgi-label">Novedades</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($rrhhStats['novelties_month']) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Este mes</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($rrhhStats['novelties_month']) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Este mes</div>
             </div>
         </div>
         <?php endif; ?>
@@ -258,7 +258,7 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
                 <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--primary-color);cursor:pointer;">
                     <div class="sgi-label">Vigentes</div>
                     <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--primary-color);"><?= $this->Number->format($rrhhStats['active_novelties']) ?></div>
-                    <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Hoy</div>
+                    <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Hoy</div>
                 </div>
             </a>
         </div>
@@ -271,29 +271,29 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100">
                 <div class="sgi-label">Edad Media</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $rrhhExtendedStats['avg_age'] ?? 0 ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Años</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $rrhhExtendedStats['avg_age'] ?? 0 ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Años</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--secondary-color);">
                 <div class="sgi-label">Antigüedad Media</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $rrhhExtendedStats['avg_tenure'] ?? 0 ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Años</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $rrhhExtendedStats['avg_tenure'] ?? 0 ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Años</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--primary-color);">
                 <div class="sgi-label">Nuevos Ingresos</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--primary-color);"><?= $this->Number->format($rrhhExtendedStats['new_hires'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En el período</div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">En el período</div>
             </div>
         </div>
         <div class="col-6 col-sm-4 col-xl-3">
             <div class="sgi-stat-card p-3 h-100" style="border-top-color:var(--danger-color);">
                 <div class="sgi-label">Retiros</div>
                 <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--danger-color);"><?= $this->Number->format($rrhhExtendedStats['terminations'] ?? 0) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">En el período</div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">En el período</div>
             </div>
         </div>
     </div>
@@ -343,10 +343,10 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
                         <td class="px-3 py-2" style="border-color:var(--border-color);font-weight:500;">
                             <?= h($novelty->employee->full_name ?? '') ?>
                         </td>
-                        <td class="px-3 py-2" style="border-color:var(--border-color);color:#495057;">
+                        <td class="px-3 py-2" style="border-color:var(--border-color);color:var(--text-muted);">
                             <?= h($novelty->novelty_type->name ?? '—') ?>
                         </td>
-                        <td class="px-3 py-2" style="border-color:var(--border-color);color:#6c757d;">
+                        <td class="px-3 py-2" style="border-color:var(--border-color);color:var(--text-muted);">
                             <?= $novelty->created ? $novelty->created->format('d/m/Y') : '—' ?>
                         </td>
                     </tr>
@@ -374,8 +374,8 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
                 <div class="sgi-label">Proveedores</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($catalogStats['providers']) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Activos</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($catalogStats['providers']) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Activos</div>
             </div>
         </div>
         <?php endif; ?>
@@ -383,8 +383,8 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
                 <div class="sgi-label">Ctros. Operación</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($catalogStats['operation_centers']) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Registrados</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($catalogStats['operation_centers']) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Registrados</div>
             </div>
         </div>
         <?php endif; ?>
@@ -392,8 +392,8 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
                 <div class="sgi-label">Tipos de Gasto</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($catalogStats['expense_types']) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Configurados</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($catalogStats['expense_types']) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Configurados</div>
             </div>
         </div>
         <?php endif; ?>
@@ -401,8 +401,8 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
                 <div class="sgi-label">Ctros. de Costos</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($catalogStats['cost_centers']) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Registrados</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($catalogStats['cost_centers']) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Registrados</div>
             </div>
         </div>
         <?php endif; ?>
@@ -425,8 +425,8 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
                 <div class="sgi-label">Usuarios</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($adminStats['users']) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Activos</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($adminStats['users']) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Activos</div>
             </div>
         </div>
         <?php endif; ?>
@@ -434,8 +434,8 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
         <div class="col-6 col-sm-4 col-xl-2">
             <div class="sgi-stat-card accent-dark p-3 h-100">
                 <div class="sgi-label">Roles</div>
-                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:#212529;"><?= $this->Number->format($adminStats['roles']) ?></div>
-                <div style="font-size:.72rem;color:#6c757d;margin-top:2px;">Configurados</div>
+                <div style="font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text-strong);"><?= $this->Number->format($adminStats['roles']) ?></div>
+                <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">Configurados</div>
             </div>
         </div>
         <?php endif; ?>

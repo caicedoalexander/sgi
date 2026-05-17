@@ -149,7 +149,7 @@ $btnClass    = $submitButtonClass;
             <?php if ($record->notes && !$record->isAgrupacion() && !$record->isContabilidad()): ?>
             <div class="sgi-ledger-item" style="grid-column:span 4;">
                 <div class="sgi-ledger-label">Notas</div>
-                <div class="sgi-ledger-value" style="white-space:normal;font-weight:400;font-size:.8rem;color:#555;"><?= nl2br(h($record->notes)) ?></div>
+                <div class="sgi-ledger-value" style="white-space:normal;font-weight:400;font-size:.8rem;color:var(--text-muted);"><?= nl2br(h($record->notes)) ?></div>
             </div>
             <?php endif; ?>
         </div>
@@ -446,7 +446,7 @@ $btnClass    = $submitButtonClass;
         <?php endif; ?>
     </div>
 
-    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($docs) ? 'display:none;' : '' ?>">
+    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:var(--text-disabled);<?= !empty($docs) ? 'display:none;' : '' ?>">
         <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>

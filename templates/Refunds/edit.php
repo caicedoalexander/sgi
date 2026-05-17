@@ -187,7 +187,7 @@ $invoiceCount           = $viewModel->invoiceCount;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-person-badge me-1" aria-hidden="true"></i>Beneficiario
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -233,7 +233,7 @@ $invoiceCount           = $viewModel->invoiceCount;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Agrupadas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -314,7 +314,7 @@ $invoiceCount           = $viewModel->invoiceCount;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-calculator me-1" aria-hidden="true"></i>Contabilidad
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -478,7 +478,7 @@ $invoiceCount           = $viewModel->invoiceCount;
         <?php endif; ?>
     </div>
 
-    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($docs) ? 'display:none;' : '' ?>">
+    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:var(--text-disabled);<?= !empty($docs) ? 'display:none;' : '' ?>">
         <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>

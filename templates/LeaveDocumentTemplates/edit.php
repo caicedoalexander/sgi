@@ -149,7 +149,7 @@ $groupIcons = [
         </div>
 
         <!-- Info at bottom -->
-        <div class="template-sidebar-section" style="padding:.5rem .75rem;font-size:.7rem;color:#999;">
+        <div class="template-sidebar-section" style="padding:.5rem .75rem;font-size:.7rem;color:var(--text-faint);">
             Página: <?= number_format((float)$template->page_width, 1) ?> x <?= number_format((float)$template->page_height, 1) ?> mm
             (<?= ($template->orientation ?? 'P') === 'L' ? 'Horizontal' : 'Vertical' ?>)
         </div>

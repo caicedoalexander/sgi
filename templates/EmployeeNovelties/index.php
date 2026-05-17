@@ -127,7 +127,7 @@ $calendarColorCount = count($calendarColors);
                             <?php endif; ?>
                         </td>
                         <td><span class="pill <?= NoveltyPresentation::STATUS_BADGES[$novelty->pipeline_status] ?? 'pill-muted' ?>"><?= h($statusLabels[$novelty->pipeline_status] ?? ucfirst($novelty->pipeline_status)) ?></span></td>
-                        <td style="font-size:.8125rem;color:#888"><?= h($novelty->registered_by_user->full_name ?? '—') ?></td>
+                        <td style="font-size:.8125rem;color:var(--text-faint)"><?= h($novelty->registered_by_user->full_name ?? '—') ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

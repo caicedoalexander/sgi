@@ -46,21 +46,21 @@ $filterFormId = $modalId . 'Filter';
                 <?php endif; ?>
 
                 <?php if ($filterUrl !== null): ?>
-                <div class="p-2 mb-3" style="background:#f9fafb;border:1px solid var(--border-color);">
+                <div class="p-2 mb-3" style="background:var(--bg-muted);border:1px solid var(--border-color);">
                     <div class="row g-2 align-items-end">
                         <div class="col-md-3">
-                            <label class="form-label mb-1" style="font-size:.7rem;color:#888;">Desde</label>
+                            <label class="form-label mb-1" style="font-size:.7rem;color:var(--text-faint);">Desde</label>
                             <input type="text" form="<?= h($filterFormId) ?>" name="date_from" class="form-control form-control-sm flatpickr-date"
                                    value="<?= h($filters['date_from'] ?? '') ?>">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label mb-1" style="font-size:.7rem;color:#888;">Hasta</label>
+                            <label class="form-label mb-1" style="font-size:.7rem;color:var(--text-faint);">Hasta</label>
                             <input type="text" form="<?= h($filterFormId) ?>" name="date_to" class="form-control form-control-sm flatpickr-date"
                                    value="<?= h($filters['date_to'] ?? '') ?>">
                         </div>
                         <?php if (!empty($operationCenters)): ?>
                         <div class="col-md-3">
-                            <label class="form-label mb-1" style="font-size:.7rem;color:#888;">Centro Op.</label>
+                            <label class="form-label mb-1" style="font-size:.7rem;color:var(--text-faint);">Centro Op.</label>
                             <select form="<?= h($filterFormId) ?>" name="operation_center_id" class="form-select form-select-sm">
                                 <option value="">Todos</option>
                                 <?php foreach ($operationCenters as $ocId => $ocName): ?>
@@ -71,7 +71,7 @@ $filterFormId = $modalId . 'Filter';
                         <?php endif; ?>
                         <?php if (!empty($providers)): ?>
                         <div class="col-md-3">
-                            <label class="form-label mb-1" style="font-size:.7rem;color:#888;">Proveedor</label>
+                            <label class="form-label mb-1" style="font-size:.7rem;color:var(--text-faint);">Proveedor</label>
                             <select form="<?= h($filterFormId) ?>" name="provider_id" class="form-select form-select-sm">
                                 <option value="">Todos</option>
                                 <?php foreach ($providers as $pId => $pName): ?>

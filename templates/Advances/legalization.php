@@ -81,7 +81,7 @@ $this->assign('title', $pageTitle);
                     Legalización <?= h($invoice->invoice_number ?? '#' . $invoice->id) ?>
                 </div>
                 <div class="sgi-card-subtitle mt-1">
-                    Beneficiario: <strong style="color:#777;"><?= h($beneficiary) ?></strong>
+                    Beneficiario: <strong style="color:var(--text-faint);"><?= h($beneficiary) ?></strong>
                 </div>
             </div>
         </div>
@@ -173,7 +173,7 @@ $this->assign('title', $pageTitle);
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Facturas vinculadas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -222,7 +222,7 @@ $this->assign('title', $pageTitle);
                     </tbody>
                     <tfoot>
                         <tr style="background:var(--bg-muted);">
-                            <td colspan="3" class="text-end" style="font-weight:600;color:#666;">Total vinculado</td>
+                            <td colspan="3" class="text-end" style="font-weight:600;color:var(--text-muted);">Total vinculado</td>
                             <td class="text-end" style="font-weight:700;color:var(--primary-color);">
                                 $ <?= $this->Number->format($linkedTotal, ['places' => 2]) ?>
                             </td>
@@ -327,7 +327,7 @@ $this->assign('title', $pageTitle);
             <div class="d-flex flex-column gap-1 mb-3">
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-uppercase fw-semibold flex-shrink-0"
-                          style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                          style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                         <i class="bi bi-bank me-1" aria-hidden="true"></i>Confirmar consignación
                     </span>
                     <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -336,8 +336,8 @@ $this->assign('title', $pageTitle);
                      style="border-left:2px solid var(--secondary-color);padding:.35rem .7rem;">
                     <i class="bi bi-info-circle-fill flex-shrink-0"
                        style="color:var(--secondary-color);font-size:.85rem;" aria-hidden="true"></i>
-                    <span style="font-size:.75rem;color:#666;">Monto pendiente:</span>
-                    <strong style="color:#222;font-size:.85rem;letter-spacing:-.01em;">
+                    <span style="font-size:.75rem;color:var(--text-muted);">Monto pendiente:</span>
+                    <strong style="color:var(--text-default);font-size:.85rem;letter-spacing:-.01em;">
                         $ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?>
                     </strong>
                 </div>
@@ -453,12 +453,12 @@ $this->assign('title', $pageTitle);
     </div>
     <?php if ($relationDocument): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
             <i class="bi <?= h($this->DocumentIcon->iconClass($relationDocument->mime_type ?? null)) ?>"
                style="color:<?= h($this->DocumentIcon->iconColor($relationDocument->mime_type ?? null)) ?>;font-size:1rem;"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
+            <div style="font-size:.79rem;font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
                  title="<?= h($relationDocument->file_name ?? '') ?>">
                 <?= h($relationDocument->file_name ?? 'Documento') ?>
             </div>
@@ -476,7 +476,7 @@ $this->assign('title', $pageTitle);
                 </span>
                 <?php endif; ?>
                 <?php if ($relationDocument->created): ?>
-                <span style="font-size:.65rem;color:#bbb;">
+                <span style="font-size:.65rem;color:var(--text-disabled);">
                     <i class="bi bi-clock" style="font-size:.6rem;" aria-hidden="true"></i>
                     <?= $relationDocument->created->format('d/m/Y H:i') ?>
                 </span>
@@ -508,11 +508,11 @@ $this->assign('title', $pageTitle);
     <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php elseif ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;" aria-hidden="true"></i>
+        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:1rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <span style="font-size:.76rem;color:#999;">Sin documento adjunto</span>
+            <span style="font-size:.76rem;color:var(--text-faint);">Sin documento adjunto</span>
         </div>
         <form id="rel-doc-upload-form" class="d-inline flex-shrink-0"
               data-upload-url="<?= $this->Url->build(['action' => 'uploadRelationDocument', $leg->advance_invoice_id]) ?>">
@@ -528,28 +528,28 @@ $this->assign('title', $pageTitle);
     <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php else: ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;" aria-hidden="true"></i>
+        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:1rem;" aria-hidden="true"></i>
         </div>
-        <span style="font-size:.76rem;color:#c8c8c8;">Sin documento</span>
+        <span style="font-size:.76rem;color:var(--text-disabled);">Sin documento</span>
     </div>
     <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php endif; ?>
 
     <!-- Comprobante de consignación (caso faltante) -->
     <?php if ($leg->case_type === AdvanceConstants::CASE_FALTANTE && $leg->shortage_receipt_path): ?>
-    <div style="padding:.3rem .875rem;background:#fff8e6;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-        <span class="pill" style="font-size:.6rem;background:#cd6a15;color:#fff;">Comprobante de consignación</span>
+    <div style="padding:.3rem .875rem;background:var(--warning-soft);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
+        <span class="pill" style="font-size:.6rem;background:var(--secondary-color);color:#fff;">Comprobante de consignación</span>
     </div>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
             <i class="bi bi-file-earmark-pdf" style="color:var(--danger-color);font-size:1rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;">
+            <div style="font-size:.79rem;font-weight:600;color:var(--text-strong);">
                 <?= h($leg->shortage_receipt_number ?: 'Comprobante') ?>
             </div>
-            <div style="font-size:.65rem;color:#bbb;margin-top:.25rem;">
+            <div style="font-size:.65rem;color:var(--text-disabled);margin-top:.25rem;">
                 <?php if ($leg->shortage_received_at): ?>
                 <i class="bi bi-clock" aria-hidden="true"></i> <?= h(date('d/m/Y', strtotime((string)$leg->shortage_received_at))) ?>
                 <?php endif; ?>
@@ -566,18 +566,18 @@ $this->assign('title', $pageTitle);
     <!-- Historial de firmas (rechazadas) -->
     <?php if (!empty($signatureHistory)): ?>
     <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);">
-        <span style="font-size:.65rem;color:#888;text-transform:uppercase;letter-spacing:.1em;font-weight:600;">Historial</span>
+        <span style="font-size:.65rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:.1em;font-weight:600;">Historial</span>
     </div>
     <?php foreach ($signatureHistory as $sig): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .875rem;border-bottom:1px solid var(--border-color);opacity:.7;">
-        <div style="width:30px;height:30px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi <?= h($this->DocumentIcon->iconClass($sig->mime_type ?? null)) ?>" style="color:#999;font-size:.9rem;" aria-hidden="true"></i>
+        <div style="width:30px;height:30px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+            <i class="bi <?= h($this->DocumentIcon->iconClass($sig->mime_type ?? null)) ?>" style="color:var(--text-faint);font-size:.9rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <div style="font-size:.74rem;font-weight:600;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <div style="font-size:.74rem;font-weight:600;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                 <?= h($sig->file_name ?? '—') ?>
             </div>
-            <div style="font-size:.62rem;color:#aaa;margin-top:.2rem;">
+            <div style="font-size:.62rem;color:var(--text-disabled);margin-top:.2rem;">
                 <span class="pill pill-danger-soft" style="font-size:.55rem;">Rechazado</span>
                 <?php if ($sig->rejection_reason): ?>
                 — <?= h($sig->rejection_reason) ?>
@@ -596,7 +596,7 @@ $this->assign('title', $pageTitle);
     <?php endif; ?>
 
     <?php if (!$relationDocument && empty($signatureHistory) && !$leg->shortage_receipt_path): ?>
-    <div style="padding:1.5rem 1rem;text-align:center;color:#c8c8c8;">
+    <div style="padding:1.5rem 1rem;text-align:center;color:var(--text-disabled);">
         <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>

@@ -140,7 +140,7 @@ $noveltyCount      = $viewModel->noveltyCount;
                     <?php if ($doc->passes_for_payment === true): ?>
                         <span style="color:var(--primary-color);font-weight:600;">Sí</span>
                     <?php elseif ($doc->passes_for_payment === false): ?>
-                        <span style="color:#aaa;">No</span>
+                        <span style="color:var(--text-disabled);">No</span>
                     <?php else: ?>
                         <span class="--muted">—</span>
                     <?php endif; ?>
@@ -167,7 +167,7 @@ $noveltyCount      = $viewModel->noveltyCount;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-people me-1" aria-hidden="true"></i>Novedades Asociadas (<?= $noveltyCount ?>)
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -210,7 +210,7 @@ $noveltyCount      = $viewModel->noveltyCount;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:#bbb;">
+                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -393,22 +393,22 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
     </div>
     <?php if ($liquidationDocument): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
             <i class="bi <?= h($this->DocumentIcon->iconClass($liquidationDocument->mime_type)) ?>"
                style="color:<?= h($this->DocumentIcon->iconColor($liquidationDocument->mime_type)) ?>;font-size:1rem;"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <div style="font-size:.79rem;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
+            <div style="font-size:.79rem;font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
                  title="<?= h($liquidationDocument->file_name) ?>">
                 <?= h($liquidationDocument->file_name) ?>
             </div>
             <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
-                <span style="font-size:.65rem;color:#bbb;">
+                <span style="font-size:.65rem;color:var(--text-disabled);">
                     <i class="bi bi-clock" style="font-size:.6rem;" aria-hidden="true"></i>
                     <?= $liquidationDocument->created?->format('d/m/Y H:i') ?>
                 </span>
                 <?php if ($liquidationDocument->file_size): ?>
-                <span style="font-size:.63rem;color:#ccc;"><?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
+                <span style="font-size:.63rem;color:var(--text-disabled);"><?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
                 <?php endif; ?>
             </div>
         </div>
@@ -439,11 +439,11 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
     <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php elseif ($canUploadLiqDoc): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;" aria-hidden="true"></i>
+        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:1rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <span style="font-size:.76rem;color:#999;">Sin documento</span>
+            <span style="font-size:.76rem;color:var(--text-faint);">Sin documento</span>
         </div>
         <?= $this->Form->create(null, [
             'url' => ['action' => 'uploadLiquidationDocument', $doc->id],
@@ -463,15 +463,15 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
     <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php else: ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-x" style="color:#ccc;font-size:1rem;" aria-hidden="true"></i>
+        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:1rem;" aria-hidden="true"></i>
         </div>
-        <span style="font-size:.76rem;color:#c8c8c8;">Sin documento</span>
+        <span style="font-size:.76rem;color:var(--text-disabled);">Sin documento</span>
     </div>
     <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php endif; ?>
 
-    <div id="docs-empty-state" style="padding:1.5rem 1rem;text-align:center;color:#c8c8c8;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
+    <div id="docs-empty-state" style="padding:1.5rem 1rem;text-align:center;color:var(--text-disabled);<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
         <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
         <span style="font-size:.8rem;">Sin soportes adjuntos</span>
     </div>
@@ -483,7 +483,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
         <?php if ($multipleStatuses): ?>
         <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
             <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
-            <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
+            <span style="font-size:.67rem;color:var(--text-disabled);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>
         <?php endif; ?>
         <?php foreach ($docs as $docFile): ?>

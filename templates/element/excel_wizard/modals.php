@@ -51,10 +51,10 @@ $importable = $importable ?? true;
             </div>
             <div class="modal-body">
                 <div id="importStep1">
-                    <p style="font-size:.85rem;color:#666;">
+                    <p style="font-size:.85rem;color:var(--text-muted);">
                         Seleccione un archivo <code>.xlsx</code> para importar. El sistema detectará las columnas automáticamente y le permitirá configurar el mapeo.
                     </p>
-                    <p style="font-size:.8rem;color:#999;">
+                    <p style="font-size:.8rem;color:var(--text-faint);">
                         <i class="bi bi-info-circle me-1" aria-hidden="true"></i>Tip: Exporte primero para obtener la plantilla con las columnas correctas.
                     </p>
                     <input type="file" id="importFileInput" class="form-control" accept=".xlsx">
@@ -62,7 +62,7 @@ $importable = $importable ?? true;
                 </div>
 
                 <div id="importStep2" style="display:none">
-                    <p style="font-size:.85rem;color:#666;margin-bottom:.75rem">
+                    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem">
                         Configure el mapeo de columnas. Las columnas reconocidas se asignan automáticamente.
                     </p>
                     <div style="max-height:400px;overflow-y:auto">
