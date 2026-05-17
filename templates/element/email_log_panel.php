@@ -36,10 +36,10 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
                 <?php foreach ($emailLogs as $log): ?>
                     <?php
                     $statusBadge = match ($log->status) {
-                        EmailLogConstants::STATUS_SENT    => 'bg-success',
-                        EmailLogConstants::STATUS_FAILED  => 'bg-danger',
-                        EmailLogConstants::STATUS_PENDING => 'bg-warning text-dark',
-                        default => 'bg-secondary',
+                        EmailLogConstants::STATUS_SENT    => 'pill-primary-soft',
+                        EmailLogConstants::STATUS_FAILED  => 'pill-danger-soft',
+                        EmailLogConstants::STATUS_PENDING => 'pill-warning-soft',
+                        default => 'pill-secondary-soft',
                     };
                     $statusIcon = match ($log->status) {
                         EmailLogConstants::STATUS_SENT    => 'bi-check-circle',
@@ -58,7 +58,7 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
                     <tr>
                         <td style="color:#444;"><?= h($log->to_email) ?></td>
                         <td>
-                            <span class="badge <?= $statusBadge ?>">
+                            <span class="pill <?= $statusBadge ?>">
                                 <i class="bi <?= $statusIcon ?> me-1" aria-hidden="true"></i><?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
                             </span>
                             <?php if ($log->status === EmailLogConstants::STATUS_FAILED && !empty($log->last_error)): ?>

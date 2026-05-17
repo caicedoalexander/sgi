@@ -74,7 +74,7 @@ final class EmployeeNoveltyEditViewModel implements EditViewModelInterface
         $this->statusBadgeMap = NoveltyPresentation::STATUS_BADGES;
         $this->currentStatusBadge = [
             $this->statusLabels[$this->currentStatus]   ?? 'Desconocido',
-            $this->statusBadgeMap[$this->currentStatus] ?? 'bg-dark',
+            $this->statusBadgeMap[$this->currentStatus] ?? 'pill-muted',
         ];
 
         $this->showUploadSection = !$this->isRejected && !$novelty->isPaid();

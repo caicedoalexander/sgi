@@ -146,7 +146,7 @@ final class InvoiceEditViewModel implements EditViewModelInterface
         // ── Badge del estado actual del pipeline ─────────────────────────
         $this->currentStatusBadge = [
             $pipelineLabels[$currentStatus] ?? 'Desconocido',
-            InvoicePresentation::STATUS_BADGES[$currentStatus] ?? 'bg-dark',
+            InvoicePresentation::STATUS_BADGES[$currentStatus] ?? 'pill-muted',
         ];
 
         // ── Render order de las secciones del formulario ─────────────────

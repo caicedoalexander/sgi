@@ -78,11 +78,11 @@ class DocumentIconHelper extends Helper
     public function badgeClass(string $type): string
     {
         return match ($type) {
-            'PDF' => 'badge-outline-danger',
-            'JPG', 'PNG', 'IMG' => 'badge-outline-info',
-            'WORD' => 'badge-outline-dark',
-            'EXCEL' => 'badge-outline-success',
-            default => 'badge-outline-dark',
+            'PDF' => 'pill-danger-soft',
+            'JPG', 'PNG', 'IMG' => 'pill-info-soft',
+            'WORD' => 'pill-muted',
+            'EXCEL' => 'pill-primary-soft',
+            default => 'pill-muted',
         };
     }
 

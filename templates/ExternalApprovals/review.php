@@ -128,7 +128,7 @@ $badgeMap = $entityType === 'employee_novelties'
                         <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
                             <?php if (!empty($doc->pipeline_status)): ?>
                             <div>
-                                <span class="badge <?= $badgeMap[$doc->pipeline_status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
+                                <span class="pill <?= $badgeMap[$doc->pipeline_status] ?? 'pill-muted' ?>" style="font-size:.65rem;">
                                     <?= $statusLabels[$doc->pipeline_status] ?? $doc->pipeline_status ?>
                                 </span>
                             </div>

@@ -67,7 +67,7 @@ $this->assign('title', h($viewModel->pageTitle));
                 </div>
             </div>
         </div>
-        <span class="badge <?= $viewModel->currentStatusBadge[1] ?>"><?= $viewModel->currentStatusBadge[0] ?></span>
+        <span class="pill <?= $viewModel->currentStatusBadge[1] ?>"><?= $viewModel->currentStatusBadge[0] ?></span>
     </div>
 
     <!-- Pipeline progress -->
@@ -135,7 +135,7 @@ $this->assign('title', h($viewModel->pageTitle));
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Estado</div>
-                <div class="sgi-ledger-value"><span class="badge <?= $viewModel->currentStatusBadge[1] ?>" style="font-size:.7rem;"><?= $viewModel->currentStatusBadge[0] ?></span></div>
+                <div class="sgi-ledger-value"><span class="pill <?= $viewModel->currentStatusBadge[1] ?>" style="font-size:.7rem;"><?= $viewModel->currentStatusBadge[0] ?></span></div>
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Última Modificación</div>

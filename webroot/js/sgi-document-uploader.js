@@ -175,8 +175,8 @@
         var badgeEl = clone.querySelector('[data-slot="badge"]');
         if (badgeEl) {
             if (doc.pipeline_status && doc.badge_class && doc.badge_label) {
-                // badge_class puede traer varias clases ("bg-warning text-dark");
-                // classList.add() rechaza strings con espacios → split previo.
+                // badge_class viene como clase pill del Sistema de Diseño (e.g. "pill-warning-soft");
+                // split por si llegan varias clases separadas por espacios.
                 doc.badge_class.split(/\s+/).filter(Boolean).forEach(function (c) {
                     badgeEl.classList.add(c);
                 });

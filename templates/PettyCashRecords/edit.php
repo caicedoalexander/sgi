@@ -113,7 +113,7 @@ $btnClass    = $submitButtonClass;
                 </div>
             </div>
         </div>
-        <span class="badge <?= $statusBadge[$record->status] ?? 'bg-dark' ?>">
+        <span class="pill <?= $statusBadge[$record->status] ?? 'pill-muted' ?>">
             <?= $statusLabels[$record->status] ?? $record->status ?>
         </span>
     </div>

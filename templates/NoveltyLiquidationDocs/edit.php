@@ -95,7 +95,7 @@ $noveltyCount      = $viewModel->noveltyCount;
                 </div>
             </div>
         </div>
-        <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
+        <span class="pill <?= $ps[1] ?>"><?= $ps[0] ?></span>
     </div>
 
     <!-- Pipeline progress -->
@@ -221,7 +221,7 @@ $noveltyCount      = $viewModel->noveltyCount;
                     <div class="border p-3 text-center h-100" style="border-radius:2px;">
                         <div class="fw-bold small mb-2"><?= $signerLabels[$sig->signer_type] ?? h($sig->signer_type) ?></div>
                         <?php if ($sig->signature_path): ?>
-                            <span class="badge bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Firmado</span>
+                            <span class="pill pill-primary-soft"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Firmado</span>
                             <div class="mt-1 small text-muted">
                                 <?= h($sig->signed_by_user->full_name ?? '') ?>
                                 <?php if ($sig->approved_at): ?>
@@ -229,7 +229,7 @@ $noveltyCount      = $viewModel->noveltyCount;
                                 <?php endif; ?>
                             </div>
                         <?php else: ?>
-                            <span class="badge bg-secondary">Pendiente</span>
+                            <span class="pill pill-secondary-soft">Pendiente</span>
                         <?php endif; ?>
 
                         <?php
@@ -389,7 +389,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
 
     <!-- Liquidation document row (inline, compact) -->
     <div style="padding:.3rem .875rem;background:rgba(70,157,97,.06);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-        <span class="badge" style="font-size:.6rem;background:var(--primary-color);color:#fff;">D. Liquidación</span>
+        <span class="pill" style="font-size:.6rem;background:var(--primary-color);color:#fff;">D. Liquidación</span>
     </div>
     <?php if ($liquidationDocument): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
@@ -482,7 +482,7 @@ $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
         ?>
         <?php if ($multipleStatuses): ?>
         <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-            <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
+            <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
             <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>
         <?php endif; ?>

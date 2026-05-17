@@ -119,10 +119,10 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                 <?php foreach ($emailLogs as $log): ?>
                     <?php
                     $statusBadge = match ($log->status) {
-                        EmailLogConstants::STATUS_SENT    => 'bg-success',
-                        EmailLogConstants::STATUS_FAILED  => 'bg-danger',
-                        EmailLogConstants::STATUS_PENDING => 'bg-warning text-dark',
-                        default => 'bg-secondary',
+                        EmailLogConstants::STATUS_SENT    => 'pill-primary-soft',
+                        EmailLogConstants::STATUS_FAILED  => 'pill-danger-soft',
+                        EmailLogConstants::STATUS_PENDING => 'pill-warning-soft',
+                        default => 'pill-secondary-soft',
                     };
                     $isFailed = $log->status === EmailLogConstants::STATUS_FAILED;
                     ?>
@@ -141,7 +141,7 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                             <?= h($log->subject) ?>
                         </td>
                         <td>
-                            <span class="badge <?= $statusBadge ?>">
+                            <span class="pill <?= $statusBadge ?>">
                                 <?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
                             </span>
                             <?php if ($isFailed && !empty($log->last_error)): ?>

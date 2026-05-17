@@ -77,8 +77,8 @@ $showFilter = $action !== 'rejected';
                 <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'edit', $doc->id]) ?>">
                     <td><strong><?= h($doc->liquidation_number) ?></strong></td>
                     <td><?= $periodLabels[$doc->period] ?? h($doc->period) ?></td>
-                    <td><span class="badge <?= NoveltyPresentation::STATUS_BADGES[$doc->pipeline_status] ?? 'bg-secondary' ?>"><?= h($statusLabels[$doc->pipeline_status] ?? ucfirst($doc->pipeline_status)) ?></span></td>
-                    <td><span class="badge bg-light text-dark"><?= count($doc->employee_novelties) ?></span></td>
+                    <td><span class="pill <?= NoveltyPresentation::STATUS_BADGES[$doc->pipeline_status] ?? 'pill-muted' ?>"><?= h($statusLabels[$doc->pipeline_status] ?? ucfirst($doc->pipeline_status)) ?></span></td>
+                    <td><span class="pill pill-muted"><?= count($doc->employee_novelties) ?></span></td>
                     <td style="font-size:.8125rem;"><?= h($doc->performed_by_user->full_name ?? '—') ?></td>
                     <td style="font-size:.8125rem;color:#888"><?= $doc->document_date?->format('d/m/Y') ?: '—' ?></td>
                 </tr>

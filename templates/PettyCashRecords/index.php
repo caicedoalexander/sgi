@@ -90,7 +90,7 @@ $params = $this->request->getQueryParams();
                         </span>
                     </td>
                     <td>
-                        <span class="badge <?= $statusBadge[$record->status] ?? 'bg-dark' ?>">
+                        <span class="pill <?= $statusBadge[$record->status] ?? 'pill-muted' ?>">
                             <?= $statusLabels[$record->status] ?? $record->status ?>
                         </span>
                     </td>

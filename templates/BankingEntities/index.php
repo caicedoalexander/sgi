@@ -35,9 +35,9 @@ $this->assign('title', 'Entidades Bancarias');
                     <td><?= h($entity->name) ?></td>
                     <td>
                         <?php if ($entity->active): ?>
-                            <span class="badge bg-success">Activo</span>
+                            <span class="pill pill-primary-soft">Activo</span>
                         <?php else: ?>
-                            <span class="badge bg-secondary">Inactivo</span>
+                            <span class="pill pill-secondary-soft">Inactivo</span>
                         <?php endif; ?>
                     </td>
                     <td><?= $entity->created?->format('d/m/Y H:i') ?></td>

@@ -6,23 +6,24 @@ namespace App\View\Presentation;
 use App\Constants\NoveltyConstants;
 
 /**
- * Configuración de presentación (badges Bootstrap, iconos, colores de calendario)
- * para el pipeline de novedades. Datos puros de UI — no contiene reglas de dominio.
+ * Configuración de presentación (clases pill del Sistema de Diseño, iconos,
+ * colores de calendario) para el pipeline de novedades. Datos puros de UI —
+ * no contiene reglas de dominio.
  */
 final class NoveltyPresentation
 {
     public const STATUS_BADGES = [
-        NoveltyConstants::STATUS_REGISTRO         => 'bg-light text-dark',
-        NoveltyConstants::STATUS_APROBACION       => 'bg-warning text-dark',
-        NoveltyConstants::STATUS_RRHH             => 'bg-purple',
-        NoveltyConstants::STATUS_CONTABILIDAD     => 'bg-primary',
-        NoveltyConstants::STATUS_REVISION_FIRMAS  => 'bg-warning text-dark',
-        NoveltyConstants::STATUS_GDP              => 'bg-dark',
-        NoveltyConstants::STATUS_TESORERIA        => 'bg-info',
-        NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
-        NoveltyConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
-        NoveltyConstants::STATUS_PAGADA           => 'bg-success',
-        NoveltyConstants::STATUS_RECHAZADA        => 'bg-danger',
+        NoveltyConstants::STATUS_REGISTRO         => 'pill-muted',
+        NoveltyConstants::STATUS_APROBACION       => 'pill-warning-soft',
+        NoveltyConstants::STATUS_RRHH             => 'pill-accent-soft',
+        NoveltyConstants::STATUS_CONTABILIDAD     => 'pill-primary-soft',
+        NoveltyConstants::STATUS_REVISION_FIRMAS  => 'pill-warning-soft',
+        NoveltyConstants::STATUS_GDP              => 'pill-muted',
+        NoveltyConstants::STATUS_TESORERIA        => 'pill-info-soft',
+        NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'pill-info-soft',
+        NoveltyConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
+        NoveltyConstants::STATUS_PAGADA           => 'pill-primary-soft',
+        NoveltyConstants::STATUS_RECHAZADA        => 'pill-danger-soft',
     ];
 
     public const STATUS_ICONS = [
@@ -38,10 +39,10 @@ final class NoveltyPresentation
         NoveltyConstants::STATUS_PAGADA            => 'bi-cash-coin',
     ];
 
-    /** Mapping para el campo area_approval. Default no listado: 'bg-warning text-dark'. */
+    /** Mapping para el campo area_approval. Default no listado: 'pill-warning-soft'. */
     public const APPROVAL_BADGES = [
-        NoveltyConstants::APPROVAL_APPROVED => 'bg-success',
-        NoveltyConstants::APPROVAL_REJECTED => 'bg-danger',
+        NoveltyConstants::APPROVAL_APPROVED => 'pill-primary-soft',
+        NoveltyConstants::APPROVAL_REJECTED => 'pill-danger-soft',
     ];
 
     /**

@@ -22,7 +22,7 @@ $showBadge = $showBadge ?? false;
             <div class="doc-filename sgi-doc-filename" data-slot="filename" style="display:none;"></div>
             <div class="doc-meta sgi-doc-meta">
                 <?php if ($showBadge): ?>
-                <span class="badge" data-slot="badge" style="display:none;"></span>
+                <span class="pill" data-slot="badge" style="display:none;"></span>
                 <?php endif; ?>
                 <span class="doc-created sgi-doc-created">
                     <i class="bi bi-clock" aria-hidden="true"></i>

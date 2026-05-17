@@ -201,9 +201,9 @@ $fecha = $dias[$hoy->format('w')] . ', ' . $hoy->format('j') . ' de ' . $meses[(
                         </td>
                         <td class="px-3 py-2" style="border-color:var(--border-color);">
                             <?php if (($invoice->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED): ?>
-                                <span class="badge bg-danger">Rechazada</span>
+                                <span class="pill pill-danger-soft">Rechazada</span>
                             <?php else: ?>
-                                <span class="badge <?= InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-secondary' ?>">
+                                <span class="pill <?= InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'pill-muted' ?>">
                                     <?= h(InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? $invoice->pipeline_status) ?>
                                 </span>
                             <?php endif; ?>

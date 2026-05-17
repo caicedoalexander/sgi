@@ -34,7 +34,7 @@ $this->assign('title', 'Usuarios');
                     <td><?= h($user->full_name) ?></td>
                     <td><?= h($user->email) ?></td>
                     <td><?= $user->hasValue('role') ? h($user->role->name) : '' ?></td>
-                    <td><?= $user->active ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>' ?></td>
+                    <td><?= $user->active ? '<span class="pill pill-primary-soft">Activo</span>' : '<span class="pill pill-secondary-soft">Inactivo</span>' ?></td>
                     <td class="text-end">
                         <?= $this->Html->link('<i class="bi bi-eye" aria-hidden="true"></i>', ['action' => 'view', $user->id], ['class' => 'btn btn-sm btn-outline-info', 'escape' => false, 'title' => 'Ver']) ?>
                         <?php if (!empty($userPermissions['users']['can_edit'])): ?>

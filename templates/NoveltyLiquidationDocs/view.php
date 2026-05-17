@@ -25,15 +25,15 @@ $isPaid = $doc->pipeline_status === NoveltyConstants::STATUS_PAGADA;
 $currentStatus = $doc->pipeline_status;
 
 $statusBadgeMap = [
-    'aprobacion' => 'bg-warning text-dark',
-    'rrhh' => 'bg-secondary',
-    'contabilidad' => 'bg-primary',
-    'revision_firmas' => 'bg-warning text-dark',
-    'gdp' => 'bg-dark',
-    'tesoreria' => 'bg-info',
-    'autorizacion_pago' => 'bg-info',
-    'pagada' => 'bg-success',
-    'rechazada' => 'bg-danger',
+    'aprobacion' => 'pill-warning-soft',
+    'rrhh' => 'pill-secondary-soft',
+    'contabilidad' => 'pill-primary-soft',
+    'revision_firmas' => 'pill-warning-soft',
+    'gdp' => 'pill-muted',
+    'tesoreria' => 'pill-info-soft',
+    'autorizacion_pago' => 'pill-info-soft',
+    'pagada' => 'pill-primary-soft',
+    'rechazada' => 'pill-danger-soft',
 ];
 
 // Documents prep
@@ -75,8 +75,8 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                     <?= h($doc->liquidation_number) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
-                    <span class="badge bg-secondary"><?= $periodLabels[$doc->period] ?? h($doc->period) ?></span>
-                    <span class="badge <?= $statusBadgeMap[$currentStatus] ?? 'bg-dark' ?>">
+                    <span class="pill pill-secondary-soft"><?= $periodLabels[$doc->period] ?? h($doc->period) ?></span>
+                    <span class="pill <?= $statusBadgeMap[$currentStatus] ?? 'pill-muted' ?>">
                         <?= $statusLabels[$currentStatus] ?? ucfirst($currentStatus) ?>
                     </span>
                 </div>
@@ -123,7 +123,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Pasa para Pago</span>
                 <span class="sgi-data-value">
-                    <span class="badge bg-<?= $doc->passes_for_payment ? 'success' : 'secondary' ?>"><?= $doc->passes_for_payment ? 'Sí' : 'No' ?></span>
+                    <span class="pill pill-<?= $doc->passes_for_payment ? 'primary-soft' : 'muted' ?>"><?= $doc->passes_for_payment ? 'Sí' : 'No' ?></span>
                 </span>
             </div>
             <?php endif; ?>
@@ -190,9 +190,9 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                                 <br><?= $sig->approved_at->format('d/m/Y H:i') ?>
                                 <?php endif; ?>
                             </div>
-                            <span class="badge bg-success mt-1">Firmado</span>
+                            <span class="pill pill-primary-soft mt-1">Firmado</span>
                         <?php else: ?>
-                            <span class="badge bg-secondary mt-2">Pendiente</span>
+                            <span class="pill pill-secondary-soft mt-2">Pendiente</span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -226,12 +226,12 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                         <td><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
                         <td>
                             <?php if ($payment->authorized): ?>
-                                <span class="badge bg-success"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Autorizado</span>
+                                <span class="pill pill-primary-soft"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Autorizado</span>
                                 <?php if ($payment->authorized_by_user): ?>
                                 <br><small class="text-muted"><?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?> - <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></small>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente</span>
+                                <span class="pill pill-warning-soft"><i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente</span>
                             <?php endif; ?>
                         </td>
                         <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
@@ -311,7 +311,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 
     <!-- Liquidation document row (inline, compact) -->
     <div style="padding:.3rem .875rem;background:rgba(70,157,97,.06);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-        <span class="badge" style="font-size:.6rem;background:var(--primary-color);color:#fff;">D. Liquidación</span>
+        <span class="pill" style="font-size:.6rem;background:var(--primary-color);color:#fff;">D. Liquidación</span>
     </div>
     <?php if ($liquidationDocument ?? null): ?>
     <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
@@ -370,7 +370,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                             </div>
                             <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
                                 <div>
-                                    <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
+                                    <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:.65rem;">
                                         <?= $statusLabels[$status] ?? $status ?>
                                     </span>
                                 </div>

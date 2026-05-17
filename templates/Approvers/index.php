@@ -31,9 +31,9 @@ $this->assign('title', 'Aprobadores');
                     <td><?= $approver->hasValue('operation_center') ? h($approver->operation_center->name) : '<span class="text-muted">Todos</span>' ?></td>
                     <td>
                         <?php if ($approver->active): ?>
-                            <span class="badge bg-success">Activo</span>
+                            <span class="pill pill-primary-soft">Activo</span>
                         <?php else: ?>
-                            <span class="badge bg-secondary">Inactivo</span>
+                            <span class="pill pill-secondary-soft">Inactivo</span>
                         <?php endif; ?>
                     </td>
                     <td class="text-end">

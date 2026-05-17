@@ -47,7 +47,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
                     <?= h($record->code) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2">
-                    <span class="badge <?= $statusBadge[$record->status] ?? 'bg-dark' ?>">
+                    <span class="pill <?= $statusBadge[$record->status] ?? 'pill-muted' ?>">
                         <?= $statusLabels[$record->status] ?? $record->status ?>
                     </span>
                 </div>
@@ -77,7 +77,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Estado</span>
                 <span class="sgi-data-value">
-                    <span class="badge <?= $statusBadge[$record->status] ?? 'bg-dark' ?>">
+                    <span class="pill <?= $statusBadge[$record->status] ?? 'pill-muted' ?>">
                         <?= $statusLabels[$record->status] ?? $record->status ?>
                     </span>
                 </span>
@@ -133,11 +133,11 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
                 <span class="sgi-data-label">Estado</span>
                 <span class="sgi-data-value">
                     <?php if ($record->isPagada()): ?>
-                        <span class="badge bg-success">Autorizado</span>
+                        <span class="pill pill-primary-soft">Autorizado</span>
                     <?php elseif (!empty($record->payment_rejection_reason)): ?>
-                        <span class="badge bg-danger">Rechazado</span>
+                        <span class="pill pill-danger-soft">Rechazado</span>
                     <?php else: ?>
-                        <span class="badge bg-warning text-dark">Pendiente</span>
+                        <span class="pill pill-warning-soft">Pendiente</span>
                     <?php endif; ?>
                 </span>
             </div>
@@ -195,8 +195,8 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
                     <td class="text-end">$ <?= $this->Number->format($inv->amount, ['places' => 2]) ?></td>
                     <td><?= $inv->issue_date?->format('d/m/Y') ?? '—' ?></td>
                     <td>
-                        <?php $pBadge = InvoicePresentation::STATUS_BADGES[$inv->pipeline_status] ?? 'bg-dark'; ?>
-                        <span class="badge <?= $pBadge ?>"><?= InvoiceConstants::STATUS_LABELS[$inv->pipeline_status] ?? h($inv->pipeline_status) ?></span>
+                        <?php $pBadge = InvoicePresentation::STATUS_BADGES[$inv->pipeline_status] ?? 'pill-muted'; ?>
+                        <span class="pill <?= $pBadge ?>"><?= InvoiceConstants::STATUS_LABELS[$inv->pipeline_status] ?? h($inv->pipeline_status) ?></span>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -297,7 +297,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
                         <?= h($obs->user->full_name ?? '') ?>
                     </span>
                     <?php if ($isRegression): ?>
-                        <span class="badge bg-warning text-dark" style="font-size:.65rem;">Regresión</span>
+                        <span class="pill pill-warning-soft" style="font-size:.65rem;">Regresión</span>
                     <?php endif; ?>
                     <span style="font-size:.7rem;color:#aaa;">
                         <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>

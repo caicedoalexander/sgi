@@ -45,7 +45,7 @@ final class PaymentSchedulingEditViewModel implements EditViewModelInterface
 
         $this->currentStatusBadge = [
             $pipelineLabels[$currentStatus] ?? 'Desconocido',
-            PaymentSchedulingPresentation::STATUS_BADGES[$currentStatus] ?? 'bg-dark',
+            PaymentSchedulingPresentation::STATUS_BADGES[$currentStatus] ?? 'pill-muted',
         ];
 
         $this->itemCount  = count($record->payment_scheduling_items ?? []);

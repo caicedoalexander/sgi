@@ -6,11 +6,11 @@
 $this->assign('title', 'Reintegros');
 
 $statusBadge = [
-    'agrupacion' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'tesoreria' => 'bg-warning text-dark',
-    'autorizacion_pago' => 'bg-secondary',
-    'pagada' => 'bg-success',
+    'agrupacion' => 'pill-info-soft',
+    'contabilidad' => 'pill-primary-soft',
+    'tesoreria' => 'pill-warning-soft',
+    'autorizacion_pago' => 'pill-secondary-soft',
+    'pagada' => 'pill-primary-soft',
 ];
 $statusLabels = \App\Constants\RefundConstants::STATUS_LABELS;
 
@@ -97,7 +97,7 @@ $params = $this->request->getQueryParams();
                         </span>
                     </td>
                     <td>
-                        <span class="badge <?= $statusBadge[$record->status] ?? 'bg-dark' ?>">
+                        <span class="pill <?= $statusBadge[$record->status] ?? 'pill-muted' ?>">
                             <?= $statusLabels[$record->status] ?? $record->status ?>
                         </span>
                     </td>

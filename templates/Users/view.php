@@ -24,7 +24,7 @@ $this->assign('title', 'Usuario: ' . $user->full_name);
             <dt class="col-sm-3">Rol</dt>
             <dd class="col-sm-9"><?= $user->hasValue('role') ? h($user->role->name) : '' ?></dd>
             <dt class="col-sm-3">Estado</dt>
-            <dd class="col-sm-9"><?= $user->active ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>' ?></dd>
+            <dd class="col-sm-9"><?= $user->active ? '<span class="pill pill-primary-soft">Activo</span>' : '<span class="pill pill-secondary-soft">Inactivo</span>' ?></dd>
             <dt class="col-sm-3">Creado</dt>
             <dd class="col-sm-9"><?= $user->created?->format('d/m/Y H:i') ?></dd>
             <dt class="col-sm-3">Modificado</dt>

@@ -6,17 +6,17 @@ namespace App\View\Presentation;
 use App\Constants\PaymentSchedulingConstants;
 
 /**
- * Configuración de presentación (badges Bootstrap, iconos) para el pipeline
- * de programación de pagos.
+ * Configuración de presentación (clases pill del Sistema de Diseño, iconos)
+ * para el pipeline de programación de pagos.
  */
 final class PaymentSchedulingPresentation
 {
     public const STATUS_BADGES = [
-        PaymentSchedulingConstants::STATUS_BORRADOR          => 'bg-secondary',
-        PaymentSchedulingConstants::STATUS_TESORERIA         => 'bg-info',
-        PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
-        PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
-        PaymentSchedulingConstants::STATUS_PAGADA            => 'bg-success',
+        PaymentSchedulingConstants::STATUS_BORRADOR          => 'pill-muted',
+        PaymentSchedulingConstants::STATUS_TESORERIA         => 'pill-info-soft',
+        PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => 'pill-info-soft',
+        PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
+        PaymentSchedulingConstants::STATUS_PAGADA            => 'pill-primary-soft',
     ];
 
     public const STATUS_ICONS = [

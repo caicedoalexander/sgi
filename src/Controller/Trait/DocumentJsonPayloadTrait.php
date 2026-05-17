@@ -46,7 +46,7 @@ trait DocumentJsonPayloadTrait
             'pipeline_status' => $status,
             'created' => $document->created->format('d/m/Y H:i'),
             'can_delete' => $canDelete,
-            'badge_class' => $status !== null ? ($badgeColors[$status] ?? 'bg-secondary') : null,
+            'badge_class' => $status !== null ? ($badgeColors[$status] ?? 'pill-muted') : null,
             'badge_label' => $status !== null ? ($statusLabels[$status] ?? $status) : null,
             'delete_url' => $canDelete ? $deleteUrl : null,
         ];

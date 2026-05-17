@@ -35,9 +35,9 @@ $this->assign('title', 'Organizaciones Temporales');
                     <td><code><?= h($org->nit) ?></code></td>
                     <td>
                         <?php if ($org->active): ?>
-                            <span class="badge bg-success">Activa</span>
+                            <span class="pill pill-primary-soft">Activa</span>
                         <?php else: ?>
-                            <span class="badge bg-secondary">Inactiva</span>
+                            <span class="pill pill-secondary-soft">Inactiva</span>
                         <?php endif; ?>
                     </td>
                     <td class="text-end">

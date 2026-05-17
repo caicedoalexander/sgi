@@ -13,7 +13,7 @@
  * @var string                $currentStatus   Estado actual.
  * @var bool                  $isRejected      (opcional) true → flujo terminado/rechazado.
  * @var array<string,array{label:string,class:string}> $extraBadges
- *     (opcional) status_slug → ['label' => 'Pago Parcial', 'class' => 'bg-warning text-dark']
+ *     (opcional) status_slug → ['label' => 'Pago Parcial', 'class' => 'pill-warning-soft']
  *     Se renderiza debajo del label cuando $status coincide con el currentStatus.
  */
 
@@ -49,7 +49,7 @@ if ($currentIndex === false) {
             <div>
                 <span class="sgi-step-label"><?= h($labels[$s] ?? $s) ?></span>
                 <?php if ($badge) : ?>
-                    <br><span class="badge <?= h($badge['class']) ?>" style="font-size:.55rem;">
+                    <br><span class="pill <?= h($badge['class']) ?>" style="font-size:.55rem;">
                         <?= h($badge['label']) ?>
                     </span>
                 <?php endif; ?>

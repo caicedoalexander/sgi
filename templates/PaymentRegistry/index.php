@@ -12,14 +12,14 @@
 $this->assign('title', 'Registro de Pagos');
 
 $typeBadge = [
-    'invoice'       => 'bg-primary',
-    'advance'       => 'bg-warning text-dark',
-    'refund'        => 'bg-danger',
-    'debit_note'    => 'bg-primary',
-    'receipt'       => 'bg-primary',
-    'credit_card'   => 'bg-primary',
-    'reintegro_doc' => 'bg-danger',
-    'liquidation'   => 'bg-info text-dark',
+    'invoice'       => 'pill-primary-soft',
+    'advance'       => 'pill-warning-soft',
+    'refund'        => 'pill-danger-soft',
+    'debit_note'    => 'pill-primary-soft',
+    'receipt'       => 'pill-primary-soft',
+    'credit_card'   => 'pill-primary-soft',
+    'reintegro_doc' => 'pill-danger-soft',
+    'liquidation'   => 'pill-info-soft',
 ];
 
 $hasFilters = !empty(array_filter($filters, fn($v) => $v !== null && $v !== ''));
@@ -127,7 +127,7 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                 <?php foreach ($payments as $p): ?>
                 <tr>
                     <td>
-                        <span class="badge <?= $typeBadge[$p['type']] ?? 'bg-dark' ?>">
+                        <span class="pill <?= $typeBadge[$p['type']] ?? 'pill-muted' ?>">
                             <?= h($p['type_label']) ?>
                         </span>
                     </td>
@@ -147,11 +147,11 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                     </td>
                     <td>
                         <?php if ($p['authorized']): ?>
-                        <span class="badge bg-success">
+                        <span class="pill pill-primary-soft">
                             <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Autorizado
                         </span>
                         <?php else: ?>
-                        <span class="badge bg-warning text-dark">
+                        <span class="pill pill-warning-soft">
                             <i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente
                         </span>
                         <?php endif; ?>
@@ -182,7 +182,7 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                                     default => 'box-arrow-up-right',
                                 }) . ' me-1" aria-hidden="true"></i>' . h($p['source_label']),
                                 $p['source_url'],
-                                ['class' => 'badge badge-outline-dark text-decoration-none', 'escape' => false]
+                                ['class' => 'pill pill-muted text-decoration-none', 'escape' => false]
                             ) ?>
                         <?php else: ?>
                         <span style="color:#ddd;">—</span>

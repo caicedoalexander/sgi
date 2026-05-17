@@ -48,7 +48,7 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
                     <?= h($invoice->invoice_number ?? '#' . $invoice->id) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
-                    <span class="badge <?= $pipelineBadge[$invoice->pipeline_status] ?? 'bg-dark' ?>">
+                    <span class="pill <?= $pipelineBadge[$invoice->pipeline_status] ?? 'pill-muted' ?>">
                         <?= $pipelineLabels[$invoice->pipeline_status] ?? h($invoice->pipeline_status) ?>
                     </span>
                 </div>

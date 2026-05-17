@@ -40,7 +40,7 @@ $showHeader = $showHeader ?? true;
                         ['target' => '_blank', 'class' => 'text-decoration-none']
                     ) ?>
                 </td>
-                <td><span class="badge <?= h($this->DocumentIcon->badgeClass($type)) ?>"><?= h($type) ?></span></td>
+                <td><span class="pill <?= h($this->DocumentIcon->badgeClass($type)) ?>"><?= h($type) ?></span></td>
                 <td style="color:#888;font-size:.8rem"><?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?></td>
                 <td style="color:#888;font-size:.8rem"><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></td>
                 <td style="color:#888;font-size:.8rem">

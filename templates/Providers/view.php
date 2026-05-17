@@ -20,13 +20,13 @@ $this->assign('title', 'Proveedor: ' . $provider->name);
             <dt class="col-sm-3">ID</dt>
             <dd class="col-sm-9"><?= $this->Number->format($provider->id) ?></dd>
             <dt class="col-sm-3">Tipo Documento</dt>
-            <dd class="col-sm-9"><span class="badge bg-secondary"><?= h($provider->document_type) ?></span></dd>
+            <dd class="col-sm-9"><span class="pill pill-secondary-soft"><?= h($provider->document_type) ?></span></dd>
             <dt class="col-sm-3">Número Documento</dt>
             <dd class="col-sm-9"><code><?= h($provider->document_number) ?></code></dd>
             <dt class="col-sm-3">Nombre</dt>
             <dd class="col-sm-9"><?= h($provider->name) ?></dd>
             <dt class="col-sm-3">Estado</dt>
-            <dd class="col-sm-9"><?= $provider->active ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>' ?></dd>
+            <dd class="col-sm-9"><?= $provider->active ? '<span class="pill pill-primary-soft">Activo</span>' : '<span class="pill pill-secondary-soft">Inactivo</span>' ?></dd>
             <dt class="col-sm-3">Creado</dt>
             <dd class="col-sm-9"><?= $provider->created?->format('d/m/Y H:i') ?></dd>
             <dt class="col-sm-3">Modificado</dt>
@@ -64,7 +64,7 @@ $this->assign('title', 'Proveedor: ' . $provider->name);
                     <td><?= h($invoice->document_type) ?></td>
                     <td><?= $invoice->issue_date?->format('d/m/Y') ?></td>
                     <td class="text-end">$ <?= $this->Number->format($invoice->amount, ['places' => 2]) ?></td>
-                    <td><span class="badge <?= InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'bg-dark' ?>"><?= h(InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? $invoice->pipeline_status) ?></span></td>
+                    <td><span class="pill <?= InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'pill-muted' ?>"><?= h(InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? $invoice->pipeline_status) ?></span></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

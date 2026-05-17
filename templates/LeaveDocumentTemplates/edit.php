@@ -60,7 +60,7 @@ $groupIcons = [
                         <button type="button" class="btn btn-sm btn-outline-dark w-100 text-start add-field-btn" title="Agregar <?= h($info['label']) ?>">
                             <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>
                             <span class="flex-grow-1"><?= h($info['label']) ?></span>
-                            <span class="badge bg-light text-muted ms-1" style="font-size:.6rem;"><?= h($info['type']) ?></span>
+                            <span class="pill pill-muted ms-1" style="font-size:.6rem;"><?= h($info['type']) ?></span>
                         </button>
                     </div>
                     <?php endforeach; ?>

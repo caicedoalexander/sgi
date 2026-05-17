@@ -125,7 +125,7 @@ $totalDocs          = $viewModel->totalDocs;
                 </div>
             </div>
         </div>
-        <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
+        <span class="pill <?= $ps[1] ?>"><?= $ps[0] ?></span>
     </div>
 
     <!-- Pipeline progress -->
@@ -193,7 +193,7 @@ $totalDocs          = $viewModel->totalDocs;
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Remunerado</div>
                 <div class="sgi-ledger-value">
-                    <span class="badge bg-<?= $novelty->is_paid ? 'success' : 'secondary' ?>"><?= $novelty->is_paid ? 'Sí' : 'No' ?></span>
+                    <span class="pill pill-<?= $novelty->is_paid ? 'primary-soft' : 'muted' ?>"><?= $novelty->is_paid ? 'Sí' : 'No' ?></span>
                 </div>
             </div>
             <?php if ($novelty->approved_by_user): ?>
@@ -206,8 +206,8 @@ $totalDocs          = $viewModel->totalDocs;
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Estado Aprobación</div>
                 <div class="sgi-ledger-value">
-                    <?php $approvalBadge = NoveltyPresentation::APPROVAL_BADGES[$novelty->area_approval] ?? 'bg-warning text-dark'; ?>
-                    <span class="badge <?= $approvalBadge ?>"><?= h($novelty->area_approval) ?></span>
+                    <?php $approvalBadge = NoveltyPresentation::APPROVAL_BADGES[$novelty->area_approval] ?? 'pill-warning-soft'; ?>
+                    <span class="pill <?= $approvalBadge ?>"><?= h($novelty->area_approval) ?></span>
                 </div>
             </div>
             <?php endif; ?>
@@ -231,7 +231,7 @@ $totalDocs          = $viewModel->totalDocs;
             <span style="font-size:.55rem;text-transform:uppercase;letter-spacing:.14em;color:#aaa;font-weight:600;">Empleados (Masiva)</span>
             <div class="mt-1">
                 <?php foreach ($novelty->novelty_massive_employees as $me): ?>
-                    <span class="badge bg-light text-dark me-1 mb-1"><?= h($me->employee->full_name ?? '—') ?></span>
+                    <span class="pill pill-muted me-1 mb-1"><?= h($me->employee->full_name ?? '—') ?></span>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -269,7 +269,7 @@ $totalDocs          = $viewModel->totalDocs;
                 <div class="col-md-4">
                     <label class="form-label">Pasa a Nómina</label>
                     <div class="pt-1">
-                        <span class="badge bg-<?= $novelty->passes_payroll ? 'success' : 'secondary' ?>">
+                        <span class="pill pill-<?= $novelty->passes_payroll ? 'primary-soft' : 'muted' ?>">
                             <?= $novelty->passes_payroll ? 'Sí' : 'No' ?>
                         </span>
                     </div>
@@ -473,7 +473,7 @@ $totalDocs          = $viewModel->totalDocs;
         ?>
         <?php if ($multipleStatuses): ?>
         <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-            <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
+            <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
             <span style="font-size:.67rem;color:#aaa;"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>
         <?php endif; ?>

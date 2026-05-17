@@ -20,14 +20,14 @@ $isRejected = $novelty->isRejected();
 $currentStatus = $novelty->pipeline_status;
 
 $statusBadgeMap = [
-    'aprobacion' => 'bg-warning text-dark',
-    'rrhh' => 'bg-info text-dark',
-    'contabilidad' => 'bg-primary',
-    'revision_firmas' => 'bg-warning text-dark',
-    'gdp' => 'bg-dark',
-    'tesoreria' => 'bg-info',
-    'pagada' => 'bg-success',
-    'rechazada' => 'bg-danger',
+    'aprobacion' => 'pill-warning-soft',
+    'rrhh' => 'pill-info-soft',
+    'contabilidad' => 'pill-primary-soft',
+    'revision_firmas' => 'pill-warning-soft',
+    'gdp' => 'pill-muted',
+    'tesoreria' => 'pill-info-soft',
+    'pagada' => 'pill-primary-soft',
+    'rechazada' => 'pill-danger-soft',
 ];
 
 // Documents prep
@@ -76,12 +76,12 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                     <?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
-                    <span class="badge bg-secondary"><?= h($novelty->novelty_type->name ?? '') ?></span>
-                    <span class="badge <?= $statusBadgeMap[$currentStatus] ?? 'bg-dark' ?>">
+                    <span class="pill pill-secondary-soft"><?= h($novelty->novelty_type->name ?? '') ?></span>
+                    <span class="pill <?= $statusBadgeMap[$currentStatus] ?? 'pill-muted' ?>">
                         <?= $statusLabels[$currentStatus] ?? ucfirst($currentStatus) ?>
                     </span>
                     <?php if ($isRejected): ?>
-                        <span class="badge bg-danger">Rechazada</span>
+                        <span class="pill pill-danger-soft">Rechazada</span>
                     <?php endif; ?>
                 </div>
                 <?php if (!empty($novelty->novelty_massive_employees)): ?>
@@ -129,7 +129,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                 <span class="sgi-data-label">Empleados (Masiva)</span>
                 <span class="sgi-data-value">
                     <?php foreach ($novelty->novelty_massive_employees as $me): ?>
-                        <span class="badge bg-light text-dark me-1 mb-1"><?= h($me->employee->full_name ?? '—') ?></span>
+                        <span class="pill pill-muted me-1 mb-1"><?= h($me->employee->full_name ?? '—') ?></span>
                     <?php endforeach; ?>
                 </span>
             </div>
@@ -174,7 +174,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Remunerado</span>
                 <span class="sgi-data-value">
-                    <span class="badge bg-<?= $novelty->is_paid ? 'success' : 'secondary' ?>"><?= $novelty->is_paid ? 'Sí' : 'No' ?></span>
+                    <span class="pill pill-<?= $novelty->is_paid ? 'primary-soft' : 'muted' ?>"><?= $novelty->is_paid ? 'Sí' : 'No' ?></span>
                 </span>
             </div>
             <?php if ($novelty->reason): ?>
@@ -201,7 +201,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Pasa a Nómina</span>
                 <span class="sgi-data-value">
-                    <span class="badge bg-<?= $novelty->passes_payroll ? 'success' : 'secondary' ?>"><?= $novelty->passes_payroll ? 'Sí' : 'No' ?></span>
+                    <span class="pill pill-<?= $novelty->passes_payroll ? 'primary-soft' : 'muted' ?>"><?= $novelty->passes_payroll ? 'Sí' : 'No' ?></span>
                 </span>
             </div>
             <?php endif; ?>
@@ -347,7 +347,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                             </div>
                             <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:#555;display:flex;flex-direction:column;gap:.3rem;">
                                 <div>
-                                    <span class="badge <?= $badgeColors[$status] ?? 'bg-secondary' ?>" style="font-size:.65rem;">
+                                    <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:.65rem;">
                                         <?= $statusLabels[$status] ?? $status ?>
                                     </span>
                                 </div>

@@ -37,10 +37,10 @@ $this->assign('title', 'Proveedores');
                 <?php foreach ($providers as $provider): ?>
                 <tr>
                     <td><?= $this->Number->format($provider->id) ?></td>
-                    <td><span class="badge bg-secondary"><?= h($provider->document_type) ?></span></td>
+                    <td><span class="pill pill-secondary-soft"><?= h($provider->document_type) ?></span></td>
                     <td><code><?= h($provider->document_number) ?></code></td>
                     <td><?= h($provider->name) ?></td>
-                    <td><?= $provider->active ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>' ?></td>
+                    <td><?= $provider->active ? '<span class="pill pill-primary-soft">Activo</span>' : '<span class="pill pill-secondary-soft">Inactivo</span>' ?></td>
                     <td><?= $provider->created?->format('d/m/Y H:i') ?></td>
                     <td class="text-end">
                         <?= $this->Html->link('<i class="bi bi-eye" aria-hidden="true"></i>', ['action' => 'view', $provider->id], ['class' => 'btn btn-sm btn-outline-info', 'escape' => false, 'title' => 'Ver']) ?>

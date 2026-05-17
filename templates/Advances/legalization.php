@@ -85,7 +85,7 @@ $this->assign('title', $pageTitle);
                 </div>
             </div>
         </div>
-        <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
+        <span class="pill <?= $ps[1] ?>"><?= $ps[0] ?></span>
     </div>
 
     <!-- Pipeline progress: filtrado por caso para no mostrar pasos que no aplican.
@@ -140,7 +140,7 @@ $this->assign('title', $pageTitle);
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Diferencia</div>
                 <div class="sgi-ledger-value">
-                    <span class="badge <?= $diffBadgeClass ?>">
+                    <span class="pill <?= $diffBadgeClass ?>">
                         $ <?= number_format($diff, 0, ',', '.') ?>
                     </span>
                 </div>
@@ -207,7 +207,7 @@ $this->assign('title', $pageTitle);
                             <td><?= h($li->provider->name ?? ($li->employee->full_name ?? '—')) ?></td>
                             <td><?= $li->issue_date?->format('d/m/Y') ?? '—' ?></td>
                             <td class="text-end" style="font-weight:600;">$ <?= $this->Number->format((float)$li->amount, ['places' => 2]) ?></td>
-                            <td><span class="badge <?= InvoicePresentation::STATUS_BADGES[$li->pipeline_status] ?? 'bg-dark' ?>"><?= h(InvoiceConstants::STATUS_LABELS[$li->pipeline_status] ?? $li->pipeline_status) ?></span></td>
+                            <td><span class="pill <?= InvoicePresentation::STATUS_BADGES[$li->pipeline_status] ?? 'pill-muted' ?>"><?= h(InvoiceConstants::STATUS_LABELS[$li->pipeline_status] ?? $li->pipeline_status) ?></span></td>
                             <td class="text-end">
                                 <?php if ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
                                 <?= $this->Form->postLink(
@@ -449,7 +449,7 @@ $this->assign('title', $pageTitle);
 
     <!-- Documento Especial: Relación de facturas -->
     <div style="padding:.3rem .875rem;background:rgba(70,157,97,.06);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-        <span class="badge" style="font-size:.6rem;background:var(--primary-color);color:#fff;">Relación de facturas</span>
+        <span class="pill" style="font-size:.6rem;background:var(--primary-color);color:#fff;">Relación de facturas</span>
     </div>
     <?php if ($relationDocument): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
@@ -464,14 +464,14 @@ $this->assign('title', $pageTitle);
             </div>
             <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
                 <?php if ($relationDocument->isSigned()): ?>
-                <span class="badge bg-success" style="font-size:.6rem;">
+                <span class="pill pill-primary-soft" style="font-size:.6rem;">
                     <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Firmado
                     <?php if ($relationDocument->signed_by_user): ?>
                         — <?= h($relationDocument->signed_by_user->full_name ?? '') ?>
                     <?php endif; ?>
                 </span>
                 <?php else: ?>
-                <span class="badge bg-warning text-dark" style="font-size:.6rem;">
+                <span class="pill pill-warning-soft" style="font-size:.6rem;">
                     <i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente de firma
                 </span>
                 <?php endif; ?>
@@ -539,7 +539,7 @@ $this->assign('title', $pageTitle);
     <!-- Comprobante de consignación (caso faltante) -->
     <?php if ($leg->case_type === AdvanceConstants::CASE_FALTANTE && $leg->shortage_receipt_path): ?>
     <div style="padding:.3rem .875rem;background:#fff8e6;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-        <span class="badge" style="font-size:.6rem;background:#cd6a15;color:#fff;">Comprobante de consignación</span>
+        <span class="pill" style="font-size:.6rem;background:#cd6a15;color:#fff;">Comprobante de consignación</span>
     </div>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
         <div style="width:34px;height:34px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
@@ -578,7 +578,7 @@ $this->assign('title', $pageTitle);
                 <?= h($sig->file_name ?? '—') ?>
             </div>
             <div style="font-size:.62rem;color:#aaa;margin-top:.2rem;">
-                <span class="badge bg-danger" style="font-size:.55rem;">Rechazado</span>
+                <span class="pill pill-danger-soft" style="font-size:.55rem;">Rechazado</span>
                 <?php if ($sig->rejection_reason): ?>
                 — <?= h($sig->rejection_reason) ?>
                 <?php endif; ?>

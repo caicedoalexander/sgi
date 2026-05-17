@@ -9,19 +9,19 @@ use DateTimeImmutable;
 use DateTimeInterface;
 
 /**
- * Configuración de presentación (badges Bootstrap, iconos) para el pipeline
- * de facturas. Datos puros de UI — no contiene reglas de dominio.
+ * Configuración de presentación (clases pill del Sistema de Diseño, iconos)
+ * para el pipeline de facturas. Datos puros de UI — no contiene reglas de dominio.
  */
 final class InvoicePresentation
 {
     public const STATUS_BADGES = [
-        InvoiceConstants::STATUS_APROBACION        => 'bg-warning text-dark',
-        InvoiceConstants::STATUS_CONTABILIDAD      => 'bg-secondary',
-        InvoiceConstants::STATUS_TESORERIA         => 'bg-info',
-        InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bg-warning text-dark',
-        InvoiceConstants::STATUS_VERIFICACION_PAGO => 'bg-warning',
-        InvoiceConstants::STATUS_PAGADA            => 'bg-success',
-        InvoiceConstants::STATUS_LEGALIZADA        => 'bg-success',
+        InvoiceConstants::STATUS_APROBACION        => 'pill-warning-soft',
+        InvoiceConstants::STATUS_CONTABILIDAD      => 'pill-secondary-soft',
+        InvoiceConstants::STATUS_TESORERIA         => 'pill-info-soft',
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'pill-warning-soft',
+        InvoiceConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
+        InvoiceConstants::STATUS_PAGADA            => 'pill-primary-soft',
+        InvoiceConstants::STATUS_LEGALIZADA        => 'pill-primary-soft',
     ];
 
     public const STATUS_ICONS = [
@@ -34,16 +34,16 @@ final class InvoicePresentation
         InvoiceConstants::STATUS_LEGALIZADA        => 'bi-cash-coin',
     ];
 
-    /** Mapping para el campo area_approval. Default no listado: 'bg-secondary'. */
+    /** Mapping para el campo area_approval. Default no listado: 'pill-muted'. */
     public const APPROVAL_BADGES = [
-        InvoiceConstants::APPROVAL_APPROVED => 'bg-success',
-        InvoiceConstants::APPROVAL_REJECTED => 'bg-danger',
+        InvoiceConstants::APPROVAL_APPROVED => 'pill-primary-soft',
+        InvoiceConstants::APPROVAL_REJECTED => 'pill-danger-soft',
     ];
 
-    /** Mapping para el campo dian_validation. Default no listado: 'bg-secondary'. */
+    /** Mapping para el campo dian_validation. Default no listado: 'pill-muted'. */
     public const DIAN_BADGES = [
-        InvoiceConstants::DIAN_APPROVED => 'bg-success',
-        InvoiceConstants::DIAN_REJECTED => 'bg-danger',
+        InvoiceConstants::DIAN_APPROVED => 'pill-primary-soft',
+        InvoiceConstants::DIAN_REJECTED => 'pill-danger-soft',
     ];
 
     /**
@@ -69,7 +69,7 @@ final class InvoicePresentation
 
         return new InvoiceRowView(
             statusLabel:      InvoiceConstants::STATUS_LABELS[$status] ?? 'Desconocido',
-            statusBadgeClass: self::STATUS_BADGES[$status] ?? 'bg-dark',
+            statusBadgeClass: self::STATUS_BADGES[$status] ?? 'pill-muted',
             isRejected:       $isRejected,
             isApproved:       $isApproved,
             isPartialPay:     $isPartialPay,

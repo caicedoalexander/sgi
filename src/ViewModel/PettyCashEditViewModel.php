@@ -73,7 +73,7 @@ final class PettyCashEditViewModel implements EditViewModelInterface
         $this->statusBadgeMap = PettyCashPresentation::STATUS_BADGES;
         $this->currentStatusBadge = [
             $this->statusLabels[$currentStatus]  ?? 'Desconocido',
-            $this->statusBadgeMap[$currentStatus] ?? 'bg-dark',
+            $this->statusBadgeMap[$currentStatus] ?? 'pill-muted',
         ];
 
         $this->readyForPaymentOptions = PaymentOptions::readyForPayment();

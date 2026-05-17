@@ -116,17 +116,17 @@ $calendarColorCount = count($calendarColors);
                             // $calendarColors es una paleta hardcoded por ahora; el guard protege
                             // si en el futuro el color se persiste por tipo de novedad en BD.
                             $typeColor = preg_match('/^#[0-9A-Fa-f]{3,8}$/', (string)$rawColor) ? $rawColor : '#6c757d';
-                        ?><span class="badge" style="background-color:<?= $typeColor ?>"><?= $typeName ?></span></td>
+                        ?><span class="pill" style="background-color:<?= $typeColor ?>"><?= $typeName ?></span></td>
                         <td><?= $novelty->permission_date?->format('d/m/Y') ?: '—' ?></td>
                         <td><?= $scheduleLabels[$novelty->schedule_type] ?? '—' ?></td>
                         <td>
                             <?php if ($novelty->is_paid): ?>
-                                <span class="badge bg-success">Sí</span>
+                                <span class="pill pill-primary-soft">Sí</span>
                             <?php else: ?>
-                                <span class="badge bg-secondary">No</span>
+                                <span class="pill pill-secondary-soft">No</span>
                             <?php endif; ?>
                         </td>
-                        <td><span class="badge <?= NoveltyPresentation::STATUS_BADGES[$novelty->pipeline_status] ?? 'bg-secondary' ?>"><?= h($statusLabels[$novelty->pipeline_status] ?? ucfirst($novelty->pipeline_status)) ?></span></td>
+                        <td><span class="pill <?= NoveltyPresentation::STATUS_BADGES[$novelty->pipeline_status] ?? 'pill-muted' ?>"><?= h($statusLabels[$novelty->pipeline_status] ?? ucfirst($novelty->pipeline_status)) ?></span></td>
                         <td style="font-size:.8125rem;color:#888"><?= h($novelty->registered_by_user->full_name ?? '—') ?></td>
                     </tr>
                     <?php endforeach; ?>

@@ -13,7 +13,7 @@ $this->assign('title', 'Programación ' . h($record->code));
 
 $ps = [
     PaymentSchedulingConstants::STATUS_LABELS[$record->pipeline_status] ?? 'Desconocido',
-    PaymentSchedulingPresentation::STATUS_BADGES[$record->pipeline_status] ?? 'bg-dark',
+    PaymentSchedulingPresentation::STATUS_BADGES[$record->pipeline_status] ?? 'pill-muted',
 ];
 ?>
 
@@ -52,7 +52,7 @@ $ps = [
                     <?= h($record->code) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
-                    <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
+                    <span class="pill <?= $ps[1] ?>"><?= $ps[0] ?></span>
                 </div>
                 <div class="mt-1" style="font-size:.8rem;color:#777;font-weight:500;">
                     <?= h($record->title) ?: '<span class="text-muted">Sin título</span>' ?>
@@ -114,7 +114,7 @@ $ps = [
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Estado</span>
                 <span class="sgi-data-value">
-                    <span class="badge <?= $ps[1] ?>"><?= $ps[0] ?></span>
+                    <span class="pill <?= $ps[1] ?>"><?= $ps[0] ?></span>
                 </span>
             </div>
         </div>
@@ -299,7 +299,7 @@ $totalDocs = count($documents);
                         <?= h($obs->user->full_name ?? '') ?>
                     </span>
                     <?php if ($isRegression): ?>
-                        <span class="badge bg-warning text-dark" style="font-size:.65rem;">Regresión</span>
+                        <span class="pill pill-warning-soft" style="font-size:.65rem;">Regresión</span>
                     <?php endif; ?>
                     <span style="font-size:.7rem;color:#aaa;">
                         <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>

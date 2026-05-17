@@ -77,7 +77,7 @@ $this->assign('title', 'Rol: ' . $role->name);
                     <td><?= $this->Html->link(h($user->username), ['controller' => 'Users', 'action' => 'view', $user->id]) ?></td>
                     <td><?= h($user->full_name) ?></td>
                     <td><?= h($user->email) ?></td>
-                    <td><?= $user->active ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>' ?></td>
+                    <td><?= $user->active ? '<span class="pill pill-primary-soft">Sí</span>' : '<span class="pill pill-secondary-soft">No</span>' ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

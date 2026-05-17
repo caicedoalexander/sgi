@@ -17,7 +17,7 @@ if ($currentIndex === false) {
     <?php foreach ($statuses as $i => $s): ?>
         <?php $isDone = $i < $currentIndex; $isCurrent = $i === $currentIndex; ?>
         <div class="d-flex align-items-center">
-            <span class="badge <?= $isCurrent ? 'bg-primary' : ($isDone ? 'bg-success' : 'bg-light text-muted') ?>">
+            <span class="pill <?= $isCurrent ? 'pill-primary-soft' : ($isDone ? 'pill-primary-soft' : 'pill-muted') ?>">
                 <i class="bi <?= h($icons[$s] ?? 'bi-circle') ?> me-1" aria-hidden="true"></i>
                 <?= h($labels[$s] ?? $s) ?>
             </span>

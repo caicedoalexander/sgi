@@ -6,18 +6,18 @@ namespace App\View\Presentation;
 use App\Constants\RefundConstants;
 
 /**
- * Configuración de presentación (badges Bootstrap, iconos) para el pipeline
- * de reintegros.
+ * Configuración de presentación (clases pill del Sistema de Diseño, iconos)
+ * para el pipeline de reintegros.
  */
 final class RefundPresentation
 {
     public const STATUS_BADGES = [
-        RefundConstants::STATUS_AGRUPACION        => 'bg-secondary',
-        RefundConstants::STATUS_CONTABILIDAD      => 'bg-primary',
-        RefundConstants::STATUS_TESORERIA         => 'bg-info',
-        RefundConstants::STATUS_AUTORIZACION_PAGO => 'bg-info',
-        RefundConstants::STATUS_VERIFICACION_PAGO => 'bg-warning text-dark',
-        RefundConstants::STATUS_PAGADA            => 'bg-success',
+        RefundConstants::STATUS_AGRUPACION        => 'pill-muted',
+        RefundConstants::STATUS_CONTABILIDAD      => 'pill-primary-soft',
+        RefundConstants::STATUS_TESORERIA         => 'pill-info-soft',
+        RefundConstants::STATUS_AUTORIZACION_PAGO => 'pill-info-soft',
+        RefundConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
+        RefundConstants::STATUS_PAGADA            => 'pill-primary-soft',
     ];
 
     public const STATUS_ICONS = [

@@ -37,7 +37,7 @@ $icon = $this->DocumentIcon->iconClass($mime);
 $iconColor = $this->DocumentIcon->iconColor($mime);
 
 $label = $doc->document_type ?: $doc->file_name;
-$badgeClass = $badgeColors[$doc->pipeline_status ?? ''] ?? 'bg-secondary';
+$badgeClass = $badgeColors[$doc->pipeline_status ?? ''] ?? 'pill-secondary-soft';
 $badgeLabel = $statusLabels[$doc->pipeline_status ?? ''] ?? ($doc->pipeline_status ?? '');
 ?>
 <div class="doc-row sgi-doc-row" data-doc-id="<?= h($doc->id) ?>">
@@ -51,7 +51,7 @@ $badgeLabel = $statusLabels[$doc->pipeline_status ?? ''] ?? ($doc->pipeline_stat
         <?php endif; ?>
         <div class="doc-meta sgi-doc-meta">
             <?php if ($showBadge && ($doc->pipeline_status ?? null)): ?>
-            <span class="badge <?= h($badgeClass) ?>" data-slot="badge"><?= h($badgeLabel) ?></span>
+            <span class="pill <?= h($badgeClass) ?>" data-slot="badge"><?= h($badgeLabel) ?></span>
             <?php endif; ?>
             <span class="doc-created sgi-doc-created">
                 <i class="bi bi-clock" aria-hidden="true"></i>

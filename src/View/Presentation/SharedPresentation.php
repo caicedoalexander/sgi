@@ -14,8 +14,8 @@ final class SharedPresentation
     public const DATE_FORMAT = 'd/m/Y H:i';
 
     public const READY_FOR_PAYMENT_BADGES = [
-        InvoiceConstants::READY_FOR_PAYMENT_SI          => 'bg-success',
-        InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'bg-danger',
-        InvoiceConstants::READY_FOR_PAYMENT_PSE         => 'bg-dark',
+        InvoiceConstants::READY_FOR_PAYMENT_SI          => 'pill-primary-soft',
+        InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'pill-danger-soft',
+        InvoiceConstants::READY_FOR_PAYMENT_PSE         => 'pill-muted',
     ];
 }

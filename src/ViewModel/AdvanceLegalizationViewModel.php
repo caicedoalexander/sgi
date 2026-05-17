@@ -90,7 +90,7 @@ final readonly class AdvanceLegalizationViewModel
 
         $ps = [
             AdvanceConstants::STATUS_LABELS[$this->leg->status]        ?? 'Desconocido',
-            AdvancePresentation::STATUS_BADGES[$this->leg->status]     ?? 'bg-dark',
+            AdvancePresentation::STATUS_BADGES[$this->leg->status]     ?? 'pill-muted',
         ];
 
         $linkedCount = is_countable($this->linkedInvoices)
@@ -98,8 +98,8 @@ final readonly class AdvanceLegalizationViewModel
             : iterator_count($this->linkedInvoices);
 
         $diffBadgeClass = abs($diff) < 0.005
-            ? 'bg-success'
-            : ($diff > 0 ? 'bg-warning text-dark' : 'bg-danger');
+            ? 'pill-primary-soft'
+            : ($diff > 0 ? 'pill-warning-soft' : 'pill-danger-soft');
 
         $caseLabels = [
             AdvanceConstants::CASE_EXACTO   => 'Exacto',

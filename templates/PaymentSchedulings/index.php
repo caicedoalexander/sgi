@@ -85,7 +85,7 @@ $params = $this->request->getQueryParams();
                     </td>
                     <td><?= h($record->title) ?></td>
                     <td>
-                        <span class="badge <?= $statusBadge[$record->pipeline_status] ?? 'bg-dark' ?>">
+                        <span class="pill <?= $statusBadge[$record->pipeline_status] ?? 'pill-muted' ?>">
                             <?= $statusLabels[$record->pipeline_status] ?? $record->pipeline_status ?>
                         </span>
                     </td>

@@ -7,10 +7,10 @@
 $this->assign('title', 'Cruce DIAN');
 
 $statusBadges = [
-    'enviado' => 'bg-info text-dark',
-    'procesando' => 'bg-warning text-dark',
-    'completado' => 'bg-success',
-    'error' => 'bg-danger',
+    'enviado' => 'pill-info-soft',
+    'procesando' => 'pill-warning-soft',
+    'completado' => 'pill-primary-soft',
+    'error' => 'pill-danger-soft',
 ];
 ?>
 
@@ -67,7 +67,7 @@ $statusBadges = [
                     <td><?= h($crosscheck->file_name) ?></td>
                     <td><?= h($crosscheck->uploaded_by_user->full_name ?? '—') ?></td>
                     <td>
-                        <span class="badge <?= $statusBadges[$crosscheck->status] ?? 'bg-secondary' ?>">
+                        <span class="pill <?= $statusBadges[$crosscheck->status] ?? 'pill-muted' ?>">
                             <?= h(ucfirst($crosscheck->status)) ?>
                         </span>
                     </td>

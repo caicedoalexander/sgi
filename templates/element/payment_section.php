@@ -76,17 +76,17 @@ $addUrl = $this->Url->build($addPaymentUrl);
         <div style="flex:1;height:1px;background:var(--border-color);"></div>
         <?php if ($paymentStatus !== null): ?>
             <?php if ($paymentStatus === 'Pago total'): ?>
-                <span class="badge flex-shrink-0"
+                <span class="pill flex-shrink-0"
                       style="background:var(--primary-color);border-radius:0;font-size:.58rem;letter-spacing:.08em;">
                     <i class="bi bi-check-circle me-1" aria-hidden="true"></i>PAGO TOTAL
                 </span>
             <?php elseif ($paymentStatus === 'Pago Parcial'): ?>
-                <span class="badge bg-warning text-dark flex-shrink-0"
+                <span class="pill pill-warning-soft flex-shrink-0"
                       style="border-radius:0;font-size:.58rem;letter-spacing:.08em;">
                     <i class="bi bi-clock me-1" aria-hidden="true"></i>PAGO PARCIAL
                 </span>
             <?php else: ?>
-                <span class="badge bg-secondary flex-shrink-0"
+                <span class="pill pill-secondary-soft flex-shrink-0"
                       style="border-radius:0;font-size:.58rem;letter-spacing:.08em;">SIN PAGOS</span>
             <?php endif; ?>
         <?php endif; ?>
@@ -237,7 +237,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                         <td style="font-size:.82rem;"><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
                         <td>
                             <?php if ($pStatus === 'authorized'): ?>
-                                <span class="badge"
+                                <span class="pill"
                                       style="background:var(--primary-color);border-radius:0;font-size:.6rem;letter-spacing:.06em;">
                                     <i class="bi bi-check-circle me-1" aria-hidden="true"></i>AUTORIZADO
                                 </span>
@@ -248,7 +248,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                                 </small>
                                 <?php endif; ?>
                             <?php elseif ($pStatus === 'rejected'): ?>
-                                <span class="badge bg-danger"
+                                <span class="pill pill-danger-soft"
                                       style="border-radius:0;font-size:.6rem;letter-spacing:.06em;">
                                     <i class="bi bi-x-circle me-1" aria-hidden="true"></i>RECHAZADO
                                 </span>
@@ -256,7 +256,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                                 <br><small class="text-muted" style="font-size:.7rem;"><?= h($payment->rejection_reason) ?></small>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <span class="badge bg-warning text-dark"
+                                <span class="pill pill-warning-soft"
                                       style="border-radius:0;font-size:.6rem;letter-spacing:.06em;">
                                     <i class="bi bi-clock me-1" aria-hidden="true"></i>PENDIENTE
                                 </span>
@@ -270,13 +270,13 @@ $addUrl = $this->Url->build($addPaymentUrl);
                                 <?= $this->Html->link(
                                     '<i class="bi bi-calendar-check me-1" aria-hidden="true"></i>' . h($payment->payment_scheduling->code ?? '#' . $payment->payment_scheduling_id),
                                     ['controller' => 'PaymentSchedulings', 'action' => 'view', $payment->payment_scheduling_id],
-                                    ['class' => 'badge bg-light text-dark text-decoration-none border', 'style' => 'border-radius:0;font-size:.65rem;', 'escape' => false]
+                                    ['class' => 'pill pill-muted text-decoration-none', 'style' => 'border-radius:0;font-size:.65rem;', 'escape' => false]
                                 ) ?>
                             <?php elseif (!empty($payment->petty_cash_record_id)): ?>
                                 <?= $this->Html->link(
                                     '<i class="bi bi-wallet2 me-1" aria-hidden="true"></i>' . h($payment->petty_cash_record->code ?? '#' . $payment->petty_cash_record_id),
                                     ['controller' => 'PettyCashRecords', 'action' => 'view', $payment->petty_cash_record_id],
-                                    ['class' => 'badge bg-light text-dark text-decoration-none border', 'style' => 'border-radius:0;font-size:.65rem;', 'escape' => false]
+                                    ['class' => 'pill pill-muted text-decoration-none', 'style' => 'border-radius:0;font-size:.65rem;', 'escape' => false]
                                 ) ?>
                             <?php else: ?>
                                 <span style="font-size:.7rem;color:#bbb;text-transform:uppercase;letter-spacing:.08em;">Individual</span>

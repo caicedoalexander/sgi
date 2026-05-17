@@ -64,13 +64,13 @@ $legalizationBadge = AdvancePresentation::STATUS_BADGES;
                         $ <?= $this->Number->format((float)$a->amount, ['places' => 2]) ?>
                     </td>
                     <td>
-                        <span class="badge <?= $pipelineBadge[$a->pipeline_status] ?? 'bg-dark' ?>">
+                        <span class="pill <?= $pipelineBadge[$a->pipeline_status] ?? 'pill-muted' ?>">
                             <?= $pipelineLabels[$a->pipeline_status] ?? h($a->pipeline_status) ?>
                         </span>
                     </td>
                     <td>
                         <?php if ($a->advance_legalization): ?>
-                            <span class="badge <?= $legalizationBadge[$a->advance_legalization->status] ?? 'bg-dark' ?>">
+                            <span class="pill <?= $legalizationBadge[$a->advance_legalization->status] ?? 'pill-muted' ?>">
                                 <?= h(AdvanceConstants::STATUS_LABELS[$a->advance_legalization->status] ?? $a->advance_legalization->status) ?>
                             </span>
                         <?php else: ?>

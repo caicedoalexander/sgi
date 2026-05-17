@@ -22,11 +22,11 @@ $statusIcons   = $statusIcons ?? InvoicePresentation::STATUS_ICONS;
 $extraBadges = [];
 $current = $currentStatus ?? '';
 if ($isRejected) {
-    $extraBadges[$current] = ['label' => 'Rechazada', 'class' => 'bg-danger'];
+    $extraBadges[$current] = ['label' => 'Rechazada', 'class' => 'pill-danger-soft'];
 } elseif ($isApproved) {
-    $extraBadges[$current] = ['label' => 'Aprobada', 'class' => 'bg-success'];
+    $extraBadges[$current] = ['label' => 'Aprobada', 'class' => 'pill-primary-soft'];
 } elseif ($current === InvoiceConstants::STATUS_TESORERIA && $paymentStatus === InvoiceConstants::PAYMENT_PARTIAL) {
-    $extraBadges[InvoiceConstants::STATUS_TESORERIA] = ['label' => 'Pago Parcial', 'class' => 'bg-warning text-dark'];
+    $extraBadges[InvoiceConstants::STATUS_TESORERIA] = ['label' => 'Pago Parcial', 'class' => 'pill-warning-soft'];
 }
 
 echo $this->element('progress_stepper', [

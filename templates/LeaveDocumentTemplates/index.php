@@ -41,18 +41,18 @@ $this->assign('title', 'Plantillas de Documento');
                     </td>
                     <td>
                         <?php if ($template->is_active): ?>
-                            <span class="badge bg-success">Activa</span>
+                            <span class="pill pill-primary-soft">Activa</span>
                         <?php else: ?>
-                            <span class="badge bg-secondary">Inactiva</span>
+                            <span class="pill pill-secondary-soft">Inactiva</span>
                         <?php endif; ?>
                     </td>
                     <td>
-                        <span class="badge bg-info"><?= count($template->leave_template_fields) ?> campos</span>
+                        <span class="pill pill-info-soft"><?= count($template->leave_template_fields) ?> campos</span>
                     </td>
                     <td>
                         <span style="font-size:.8rem;">
                             <?= number_format((float)$template->page_width, 1) ?> x <?= number_format((float)$template->page_height, 1) ?> mm
-                            <span class="badge bg-light text-dark"><?= ($template->orientation ?? 'P') === 'L' ? 'Horizontal' : 'Vertical' ?></span>
+                            <span class="pill pill-muted"><?= ($template->orientation ?? 'P') === 'L' ? 'Horizontal' : 'Vertical' ?></span>
                         </span>
                     </td>
                     <td style="font-size:.8rem;">
