@@ -214,7 +214,7 @@ $this->assign('title', h($viewModel->pageTitle));
                     <tbody>
                         <?php foreach ($viewModel->record->payment_scheduling_items as $item): ?>
                         <tr>
-                            <td style="font-family:monospace;">
+                            <td class="mono">
                                 <?= $this->Html->link(
                                     h($item->invoice->invoice_number ?? 'ID:' . $item->invoice_id),
                                     ['controller' => 'Invoices', 'action' => 'view', $item->invoice_id],

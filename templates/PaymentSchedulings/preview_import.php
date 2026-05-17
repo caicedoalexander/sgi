@@ -58,7 +58,7 @@ $errors = $result['errors'] ?? [];
                 <?php foreach ($validItems as $item): ?>
                 <tr>
                     <td><?= $item['row'] ?></td>
-                    <td style="font-family:monospace;"><?= h($item['invoice_number']) ?></td>
+                    <td class="mono"><?= h($item['invoice_number']) ?></td>
                     <td><?= h($item['provider_name']) ?></td>
                     <td><?= h($item['bank_name']) ?></td>
                     <td class="text-end fw-bold">$ <?= number_format((float)$item['amount'], 0, ',', '.') ?></td>

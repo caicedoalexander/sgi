@@ -54,7 +54,7 @@ $legalizationBadge = AdvancePresentation::STATUS_BADGES;
                 <?php foreach ($advancesArr as $a): ?>
                 <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'view', $a->id]) ?>">
                     <td>
-                        <span style="font-family:monospace;font-weight:600;font-size:.85rem;">
+                        <span class="mono" style="font-weight:600;font-size:.85rem;">
                             <?= h($a->invoice_number ?? '#' . $a->id) ?>
                         </span>
                     </td>

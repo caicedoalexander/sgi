@@ -203,7 +203,7 @@ $this->assign('title', $pageTitle);
                     <tbody>
                         <?php foreach ($linkedInvoices as $li): ?>
                         <tr class="clickable-row" data-href="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'view', $li->id]) ?>">
-                            <td style="font-family:monospace;font-weight:600;"><?= h($li->invoice_number ?: '#' . $li->id) ?></td>
+                            <td class="mono" style="font-weight:600;"><?= h($li->invoice_number ?: '#' . $li->id) ?></td>
                             <td><?= h($li->provider->name ?? ($li->employee->full_name ?? '—')) ?></td>
                             <td><?= $li->issue_date?->format('d/m/Y') ?? '—' ?></td>
                             <td class="text-end" style="font-weight:600;">$ <?= $this->Number->format((float)$li->amount, ['places' => 2]) ?></td>

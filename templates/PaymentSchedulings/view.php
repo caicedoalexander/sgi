@@ -48,7 +48,7 @@ $ps = [
             </div>
             <!-- Código, título y badges -->
             <div>
-                <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;font-family:monospace;">
+                <div class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;">
                     <?= h($record->code) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
@@ -105,7 +105,7 @@ $ps = [
             <div class="sgi-label">Información</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Código</span>
-                <span class="sgi-data-value" style="font-family:monospace;"><?= h($record->code) ?></span>
+                <span class="sgi-data-value mono"><?= h($record->code) ?></span>
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Título</span>
@@ -155,7 +155,7 @@ $ps = [
                 <tbody>
                     <?php foreach ($record->payment_scheduling_items as $item): ?>
                     <tr>
-                        <td style="padding-left:1.25rem;font-family:monospace;">
+                        <td class="mono" style="padding-left:1.25rem;">
                             <?= $this->Html->link(
                                 h($item->invoice->invoice_number ?? 'ID:' . $item->invoice_id),
                                 ['controller' => 'Invoices', 'action' => 'view', $item->invoice_id],

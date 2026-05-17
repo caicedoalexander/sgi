@@ -85,7 +85,7 @@ $params = $this->request->getQueryParams();
                 <?php foreach ($records as $record): ?>
                 <tr class="clickable-row" data-href="<?= $this->Url->build(['action' => 'edit', $record->id]) ?>">
                     <td>
-                        <span style="font-family:monospace;font-weight:600;font-size:.85rem;">
+                        <span class="mono" style="font-weight:600;font-size:.85rem;">
                             <?= h($record->code) ?>
                         </span>
                     </td>

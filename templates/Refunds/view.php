@@ -43,7 +43,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
                 <i class="bi bi-wallet2" aria-hidden="true"></i>
             </div>
             <div>
-                <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;font-family:monospace;">
+                <div class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;">
                     <?= h($record->code) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2">
@@ -72,7 +72,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
             <div class="sgi-label">Información</div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Código</span>
-                <span class="sgi-data-value" style="font-family:monospace;"><?= h($record->code) ?></span>
+                <span class="sgi-data-value mono"><?= h($record->code) ?></span>
             </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Estado</span>
@@ -132,7 +132,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
             <tbody>
                 <?php foreach ($record->invoices as $inv): ?>
                 <tr class="clickable-row" data-href="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'view', $inv->id]) ?>">
-                    <td style="font-family:monospace;font-weight:600;"><?= h($inv->invoice_number ?? '#' . $inv->id) ?></td>
+                    <td class="mono" style="font-weight:600;"><?= h($inv->invoice_number ?? '#' . $inv->id) ?></td>
                     <td><?= $inv->hasValue('provider') ? h($inv->provider->name) : '—' ?></td>
                     <td class="text-end">$ <?= $this->Number->format($inv->amount, ['places' => 2]) ?></td>
                     <td><?= $inv->issue_date?->format('d/m/Y') ?? '—' ?></td>

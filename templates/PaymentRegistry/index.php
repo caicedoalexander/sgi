@@ -132,7 +132,7 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
                         </span>
                     </td>
                     <td>
-                        <span style="font-family:monospace;font-weight:600;font-size:.8rem;color:#111;letter-spacing:-.01em;">
+                        <span class="mono" style="font-weight:600;font-size:.8rem;color:#111;letter-spacing:-.01em;">
                             <?= h($p['reference']) ?>
                         </span>
                     </td>

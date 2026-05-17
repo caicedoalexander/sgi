@@ -158,7 +158,7 @@ $this->assign('title', 'Configuración del Sistema');
             <div class="sgi-input-group d-flex">
                 <input type="text" id="api-key-value" class="form-control border-0 shadow-none"
                        value="<?= h($apiKey) ?>" readonly
-                       style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85rem;">
+                       class="mono" style="font-size:.85rem;">
                 <button type="button" class="btn btn-light border-0" id="btn-copy-api-key"
                         title="Copiar al portapapeles">
                     <i class="bi bi-clipboard" aria-hidden="true"></i>

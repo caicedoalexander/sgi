@@ -105,7 +105,7 @@ $filterFormId = $modalId . 'Filter';
                         <?php $hasAny = false; foreach ($candidates as $c): $hasAny = true; ?>
                             <tr>
                                 <td><?= $this->Form->checkbox('invoice_ids[]', ['value' => $c->id, 'hiddenField' => false]) ?></td>
-                                <td style="font-family:monospace;font-weight:600;"><?= h($c->invoice_number ?: '#' . $c->id) ?></td>
+                                <td class="mono" style="font-weight:600;"><?= h($c->invoice_number ?: '#' . $c->id) ?></td>
                                 <td><?= h($c->provider->name ?? ($c->employee->full_name ?? '—')) ?></td>
                                 <td><?= h($c->operation_center->name ?? '—') ?></td>
                                 <td><?= $c->issue_date ? $c->issue_date->format('d/m/Y') : '—' ?></td>

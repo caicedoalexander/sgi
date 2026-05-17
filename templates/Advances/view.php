@@ -44,7 +44,7 @@ $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id 
                 <i class="bi bi-cash-coin" aria-hidden="true"></i>
             </div>
             <div>
-                <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;font-family:monospace;">
+                <div class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:#111;line-height:1.15;">
                     <?= h($invoice->invoice_number ?? '#' . $invoice->id) ?>
                 </div>
                 <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">

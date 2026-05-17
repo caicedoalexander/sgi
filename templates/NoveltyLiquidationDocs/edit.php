@@ -115,7 +115,7 @@ $noveltyCount      = $viewModel->noveltyCount;
             <!-- Fila 1: No. Liquidación + Período + Novedades -->
             <div class="sgi-ledger-item" style="grid-column:span 2;">
                 <div class="sgi-ledger-label">No. Liquidación</div>
-                <div class="sgi-ledger-value" style="font-family:monospace;"><?= h($doc->liquidation_number) ?></div>
+                <div class="sgi-ledger-value mono"><?= h($doc->liquidation_number) ?></div>
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Período</div>

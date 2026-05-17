@@ -128,7 +128,7 @@ $btnClass    = $submitButtonClass;
         <div class="sgi-ledger">
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Código</div>
-                <div class="sgi-ledger-value" style="font-family:monospace;"><?= h($record->code ?? '—') ?></div>
+                <div class="sgi-ledger-value mono"><?= h($record->code ?? '—') ?></div>
             </div>
             <div class="sgi-ledger-item">
                 <div class="sgi-ledger-label">Centro de Operación</div>
@@ -228,7 +228,7 @@ $btnClass    = $submitButtonClass;
                                 <?= $this->Html->link(
                                     $inv->invoice_number ?? '#' . $inv->id,
                                     ['controller' => 'Invoices', 'action' => 'view', $inv->id],
-                                    ['style' => 'font-family:monospace;font-weight:600;']
+                                    ['class' => 'mono', 'style' => 'font-weight:600;']
                                 ) ?>
                             </td>
                             <td><?= $inv->hasValue('provider') ? h($inv->provider->name) : '—' ?></td>
