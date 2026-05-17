@@ -34,12 +34,12 @@ $params = $this->request->getQueryParams();
         <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
         <div class="row g-2 align-items-end">
             <div class="col-md-3">
-                <label class="form-label mb-1" style="font-size:.75rem;">Código</label>
+                <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Código</label>
                 <input type="text" name="code" class="form-control form-control-sm"
                        value="<?= h($params['code'] ?? '') ?>" placeholder="PRO-...">
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1" style="font-size:.75rem;">Estado</label>
+                <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Estado</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">Todos</option>
                     <?php foreach ($statusLabels as $val => $label): ?>

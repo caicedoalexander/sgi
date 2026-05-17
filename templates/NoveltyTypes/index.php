@@ -39,7 +39,7 @@ $this->assign('title', 'Tipos de Novedad');
                             <?php foreach ($noveltyType->child_novelty_types as $child): ?>
                                 <?php if (!empty($userPermissions['novelty_types']['can_edit'])): ?>
                                     <?= $this->Html->link(
-                                        h($child->name) . ' <i class="bi bi-pencil-fill" style="font-size:0.65em;" aria-hidden="true"></i>',
+                                        h($child->name) . ' <i class="bi bi-pencil-fill" style="font-size:var(--fs-label);" aria-hidden="true"></i>',
                                         ['action' => 'edit', $child->id],
                                         ['class' => 'pill pill-muted me-1 text-decoration-none', 'escape' => false, 'title' => 'Editar subtipo']
                                     ) ?>

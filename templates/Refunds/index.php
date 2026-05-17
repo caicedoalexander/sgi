@@ -36,12 +36,12 @@ $params = $this->request->getQueryParams();
         <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
         <div class="row g-2 align-items-end">
             <div class="col-md-3">
-                <label class="form-label mb-1" style="font-size:.75rem;">Código</label>
+                <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Código</label>
                 <input type="text" name="code" class="form-control form-control-sm"
                        value="<?= h($params['code'] ?? '') ?>" placeholder="CM-2026-...">
             </div>
             <div class="col-md-2">
-                <label class="form-label mb-1" style="font-size:.75rem;">Estado</label>
+                <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Estado</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">Todos</option>
                     <?php foreach ($statusLabels as $val => $label): ?>
@@ -50,12 +50,12 @@ $params = $this->request->getQueryParams();
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label mb-1" style="font-size:.75rem;">Desde</label>
+                <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Desde</label>
                 <input type="text" name="date_from" class="form-control form-control-sm flatpickr-date"
                        value="<?= h($params['date_from'] ?? '') ?>">
             </div>
             <div class="col-md-2">
-                <label class="form-label mb-1" style="font-size:.75rem;">Hasta</label>
+                <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Hasta</label>
                 <input type="text" name="date_to" class="form-control form-control-sm flatpickr-date"
                        value="<?= h($params['date_to'] ?? '') ?>">
             </div>

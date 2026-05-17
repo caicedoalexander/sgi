@@ -114,7 +114,7 @@ $statusLabels = RefundConstants::STATUS_LABELS;
         <span class="sgi-folder-count"><?= count($record->invoices ?? []) ?></span>
     </div>
     <?php if (empty($record->invoices)): ?>
-    <div class="p-3 text-center text-muted" style="font-size:.875rem;">
+    <div class="p-3 text-center text-muted" style="font-size:var(--fs-title-card);">
         <i class="bi bi-inbox me-1" aria-hidden="true"></i>No hay facturas agrupadas
     </div>
     <?php else: ?>
@@ -207,14 +207,14 @@ $statusLabels = RefundConstants::STATUS_LABELS;
                         <?= h($obs->user->full_name ?? '') ?>
                     </span>
                     <?php if ($isRegression): ?>
-                        <span class="pill pill-warning-soft" style="font-size:.65rem;">Regresión</span>
+                        <span class="pill pill-warning-soft" style="font-size:var(--fs-label);">Regresión</span>
                     <?php endif; ?>
                     <span style="font-size:.7rem;color:var(--text-disabled);">
                         <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
                     </span>
                 </div>
                 <?php if ($isRegression && $fromLbl && $toLbl): ?>
-                    <div style="font-size:.74rem;color:var(--text-muted);margin-top:.1rem;">
+                    <div style="font-size:var(--fs-body-sm);color:var(--text-muted);margin-top:.1rem;">
                         <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
                         <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
                     </div>

@@ -45,7 +45,7 @@ $statusPills = [
 <div class="sgi-page-header d-flex justify-content-between align-items-start">
     <div>
         <span class="sgi-page-title">Empleados</span>
-        <div class="sgi-body-faint mt-1" style="font-size:12px;">
+        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
             <span class="sgi-fg-muted"><?= $this->Paginator->counter('{{count}} empleados') ?></span>
             <?php if ($withNovelty > 0): ?>
                 · <span class="sgi-fg-secondary"><?= $withNovelty ?> con novedad activa</span>

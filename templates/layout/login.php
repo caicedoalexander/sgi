@@ -27,20 +27,20 @@
             <!-- Tagline central -->
             <div>
                 <p class="mb-2 text-uppercase fw-semibold"
-                   style="font-size:.6rem;letter-spacing:.16em;color:var(--primary-color);">
+                   style="font-size:var(--fs-micro);letter-spacing:.16em;color:var(--primary-color);">
                     Sistema de Gestión Interna
                 </p>
                 <h2 class="fw-bold text-white mb-3" style="font-size:2rem;letter-spacing:-.04em;line-height:1.15;">
                     Compañía Operadora<br>Portuaria Cafetera
                 </h2>
-                <p style="font-size:.82rem;color:rgba(255,255,255,.35);line-height:1.6;">
+                <p style="font-size:var(--fs-body-lg);color:rgba(255,255,255,.35);line-height:1.6;">
                     Plataforma interna para la gestión de facturas,<br>
                     empleados y operaciones portuarias.
                 </p>
             </div>
 
             <!-- Footer del panel -->
-            <div style="font-size:.65rem;color:rgba(255,255,255,.2);letter-spacing:.04em;">
+            <div style="font-size:var(--fs-label);color:rgba(255,255,255,.2);letter-spacing:.04em;">
                 Compañía Operadora Portuaria Cafetera S.A. · Todos los derechos reservados
             </div>
         </div>
@@ -53,7 +53,7 @@
                 <!-- Encabezado del formulario -->
                 <div class="mb-4">
                     <p class="mb-1 text-uppercase fw-semibold"
-                       style="font-size:.6rem;letter-spacing:.14em;color:var(--primary-color);">
+                       style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--primary-color);">
                         Acceso al sistema
                     </p>
                     <span class="sgi-page-title">

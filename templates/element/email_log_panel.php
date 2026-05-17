@@ -19,10 +19,10 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
 <div class="card card-primary mt-3">
     <div class="card-header d-flex align-items-center gap-2" style="background:#fff;border-bottom:1px solid var(--border-color);padding:.6rem 1rem;">
         <i class="bi bi-envelope-paper" style="color:var(--primary-color);" aria-hidden="true"></i>
-        <span style="font-size:.875rem;font-weight:600;letter-spacing:-.01em;">Notificaciones de correo</span>
+        <span style="font-size:var(--fs-title-card);font-weight:600;letter-spacing:-.01em;">Notificaciones de correo</span>
     </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0" style="font-size:.8125rem;">
+        <table class="table table-hover mb-0" style="font-size:var(--fs-body-lg);">
             <thead>
                 <tr>
                     <th>Destinatario</th>

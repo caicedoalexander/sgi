@@ -19,13 +19,13 @@ $periods = [
 ];
 ?>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-4" id="period-selector">
-    <span style="font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);">Período:</span>
+    <span style="font-size:var(--fs-label);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);">Período:</span>
     <div class="btn-group btn-group-sm" role="group">
         <?php foreach ($periods as $key => $label): ?>
             <?php if ($key === 'custom') continue; ?>
             <a href="<?= $this->Url->build(['?' => ['period' => $key]]) ?>"
                class="btn <?= $currentPeriod === $key ? 'btn-dark' : 'btn-outline-secondary' ?>"
-               style="font-size:.75rem;font-weight:500;">
+               style="font-size:var(--fs-body-sm);font-weight:500;">
                 <?= $label ?>
             </a>
         <?php endforeach; ?>
@@ -33,13 +33,13 @@ $periods = [
     <div class="d-flex align-items-center gap-1">
         <input type="text" class="form-control form-control-sm flatpickr-date" id="period-from"
                placeholder="Desde" value="<?= h($dateFrom) ?>"
-               style="width:110px;font-size:.75rem;">
-        <span style="font-size:.75rem;color:var(--text-muted);">—</span>
+               style="width:110px;font-size:var(--fs-body-sm);">
+        <span style="font-size:var(--fs-body-sm);color:var(--text-muted);">—</span>
         <input type="text" class="form-control form-control-sm flatpickr-date" id="period-to"
                placeholder="Hasta" value="<?= h($dateTo) ?>"
-               style="width:110px;font-size:.75rem;">
+               style="width:110px;font-size:var(--fs-body-sm);">
         <button type="button" class="btn btn-sm btn-outline-dark" id="period-custom-btn"
-                style="font-size:.75rem;font-weight:500;">
+                style="font-size:var(--fs-body-sm);font-weight:500;">
             <i class="bi bi-funnel" aria-hidden="true"></i>
         </button>
     </div>

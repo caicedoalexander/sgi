@@ -157,7 +157,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                                     ['class' => 'text-decoration-none']
                                 ) ?>
                             </td>
-                            <td style="font-size:.8125rem;"><?= h($novelty->novelty_type->name ?? '—') ?></td>
+                            <td style="font-size:var(--fs-body-lg);"><?= h($novelty->novelty_type->name ?? '—') ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -311,7 +311,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 
     <!-- Liquidation document row (inline, compact) -->
     <div style="padding:.3rem .875rem;background:rgba(70,157,97,.06);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-        <span class="pill" style="font-size:.6rem;background:var(--primary-color);color:#fff;">D. Liquidación</span>
+        <span class="pill" style="font-size:var(--fs-micro);background:var(--primary-color);color:#fff;">D. Liquidación</span>
     </div>
     <?php if ($liquidationDocument ?? null): ?>
     <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
@@ -320,17 +320,17 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                style="color:<?= h($this->DocumentIcon->iconColor($liquidationDocument->mime_type)) ?>;font-size:1rem;"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <div style="font-size:.79rem;font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
+            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
                  title="<?= h($liquidationDocument->file_name) ?>">
                 <?= h($liquidationDocument->file_name) ?>
             </div>
             <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
-                <span style="font-size:.65rem;color:var(--text-disabled);">
-                    <i class="bi bi-clock" style="font-size:.6rem;" aria-hidden="true"></i>
+                <span style="font-size:var(--fs-label);color:var(--text-disabled);">
+                    <i class="bi bi-clock" style="font-size:var(--fs-micro);" aria-hidden="true"></i>
                     <?= $liquidationDocument->created?->format('d/m/Y H:i') ?>
                 </span>
                 <?php if ($liquidationDocument->file_size): ?>
-                <span style="font-size:.63rem;color:var(--text-disabled);"><?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
+                <span style="font-size:var(--fs-meta);color:var(--text-disabled);"><?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
                 <?php endif; ?>
             </div>
         </div>
@@ -344,12 +344,12 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     </div>
     <?php else: ?>
     <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);text-align:center;color:var(--text-disabled);background:rgba(70,157,97,.03);">
-        <span style="font-size:.73rem;"><i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin documento</span>
+        <span style="font-size:var(--fs-body-sm);"><i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin documento</span>
     </div>
     <?php endif; ?>
 
     <?php if (empty($documentsByStatus)): ?>
-        <div class="p-3 text-center text-muted" style="font-size:.875rem">
+        <div class="p-3 text-center text-muted" style="font-size:var(--fs-title-card)">
             <i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin soportes adjuntos
         </div>
     <?php else: ?>
@@ -363,14 +363,14 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                                 <i class="bi <?= h($this->DocumentIcon->iconClass($docFile->mime_type)) ?> flex-shrink-0"
                                    style="color:<?= h($this->DocumentIcon->iconColor($docFile->mime_type)) ?>;font-size:1.1rem;"></i>
                                 <div style="min-width:0;flex:1;overflow:hidden;">
-                                    <span style="font-size:.78rem;font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($docFile->file_name) ?>">
+                                    <span style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($docFile->file_name) ?>">
                                         <?= h($docFile->file_name) ?>
                                     </span>
                                 </div>
                             </div>
-                            <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
+                            <div style="padding:.6rem .875rem;flex:1;font-size:var(--fs-body);color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
                                 <div>
-                                    <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:.65rem;">
+                                    <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:var(--fs-label);">
                                         <?= $statusLabels[$status] ?? $status ?>
                                     </span>
                                 </div>
@@ -379,7 +379,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                                     <span><?= $docFile->has('uploaded_by_user') ? h($docFile->uploaded_by_user->full_name) : '—' ?></span>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-faint);">
-                                    <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
+                                    <i class="bi bi-clock" style="font-size:var(--fs-body-sm);" aria-hidden="true"></i>
                                     <span><?= $docFile->created?->format('d/m/Y H:i') ?></span>
                                 </div>
                                 <?php if ($docFile->file_size): ?>
@@ -422,7 +422,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                 <?php foreach ($groupHistories as $history): ?>
                 <tr>
                     <td><?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?></td>
-                    <td style="font-size:.8125rem;">
+                    <td style="font-size:var(--fs-body-lg);">
                         <?php if ($history->has('employee_novelty')): ?>
                             <?= $this->Html->link(
                                 '#' . $history->employee_novelty->id,

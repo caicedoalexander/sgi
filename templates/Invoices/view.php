@@ -109,7 +109,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
     <div>
         <div class="sgi-breadcrumb">
             <?= $this->Html->link('Todas las Facturas', ['action' => 'index']) ?>
-            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:10px;"></i>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span class="current">Ver Factura</span>
         </div>
         <span class="sgi-page-title">Ver Factura</span>
@@ -162,7 +162,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
             </div>
 
             <div class="sgi-label">Proveedor</div>
-            <div style="font-size:12.5px;font-weight:600;color:var(--text-default);margin-top:4px;line-height:1.3;">
+            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);margin-top:4px;line-height:1.3;">
                 <?php $isReciboDeCaja = ($invoice->document_type ?? '') === InvoiceConstants::DOCTYPE_RECIBO_CAJA; ?>
                 <?php if ($isReciboDeCaja && ($invoice->equivalent_holder_type ?? '') === 'employee'): ?>
                     <?= $invoice->hasValue('employee') ? h($invoice->employee->full_name) : '—' ?>
@@ -254,19 +254,19 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                 <span class="sgi-label">Registro</span>
             </div>
             <?php if ($invoice->hasValue('registered_by_user')): ?>
-            <div style="font-size:12px;color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-2">
+            <div style="font-size:var(--fs-body-sm);color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-2">
                 <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
                 <span><?= h($invoice->registered_by_user->full_name) ?></span>
             </div>
             <?php endif; ?>
             <?php if ($invoice->created): ?>
-            <div style="font-size:11.5px;color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-1">
+            <div style="font-size:var(--fs-body-sm);color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-1">
                 <i class="bi bi-calendar3 sgi-fg-faint" aria-hidden="true"></i>
                 <span>Creado · <span class="mono"><?= $invoice->created->format('d/m/Y') ?></span></span>
             </div>
             <?php endif; ?>
             <?php if ($invoice->modified): ?>
-            <div style="font-size:11.5px;color:var(--text-muted);" class="d-flex align-items-center gap-2">
+            <div style="font-size:var(--fs-body-sm);color:var(--text-muted);" class="d-flex align-items-center gap-2">
                 <i class="bi bi-pencil-square sgi-fg-faint" aria-hidden="true"></i>
                 <span>Modificado · <span class="mono"><?= $invoice->modified->format('d/m/Y') ?></span></span>
             </div>
@@ -348,7 +348,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
             <?php if ($invoice->detail): ?>
             <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--rule);">
                 <div class="sgi-section-head" style="margin-bottom:8px;"><span class="sgi-label">Detalle</span></div>
-                <div style="font-size:13px;color:var(--text-default);line-height:1.5;">
+                <div style="font-size:var(--fs-body-lg);color:var(--text-default);line-height:1.5;">
                     <?= nl2br(h($invoice->detail)) ?>
                 </div>
             </div>
@@ -517,7 +517,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                 </div>
                 <div style="flex:1;min-width:0;">
                     <div class="d-flex align-items-center flex-wrap" style="gap:8px;margin-bottom:4px;">
-                        <span style="font-size:12.5px;font-weight:600;color:var(--text-strong);"><?= h($obs->user->full_name ?? '') ?></span>
+                        <span style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);"><?= h($obs->user->full_name ?? '') ?></span>
                         <?php if ($isRegression): ?>
                             <span class="pill pill-warning-soft">Regresión</span>
                         <?php elseif ($isExternalApproval): ?>
@@ -525,7 +525,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                                 Aprobación Externa<?= $extActionLabel ? ': ' . h($extActionLabel) : '' ?>
                             </span>
                         <?php endif; ?>
-                        <span style="margin-left:auto;font-size:10.5px;color:var(--text-faint);font-family:var(--font-mono);">
+                        <span style="margin-left:auto;font-size:var(--fs-label);color:var(--text-faint);font-family:var(--font-mono);">
                             <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
                         </span>
                     </div>
@@ -535,7 +535,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                             <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
                         </div>
                     <?php endif; ?>
-                    <div style="font-size:12.5px;color:var(--text-default);line-height:1.5;">
+                    <div style="font-size:var(--fs-body);color:var(--text-default);line-height:1.5;">
                         <?= nl2br(h($obs->message)) ?>
                     </div>
                 </div>
@@ -588,7 +588,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                             <i class="bi bi-check2" aria-hidden="true" style="font-size:9px;"></i>Autorizado
                         </span>
                         <?php if ($payment->authorized_by_user): ?>
-                        <div style="font-size:10px;color:var(--text-faint);margin-top:3px;">
+                        <div style="font-size:var(--fs-meta);color:var(--text-faint);margin-top:3px;">
                             <?= h($payment->authorized_by_user->full_name ?? '') ?> · <span class="mono"><?= $payment->authorized_date?->format('d/m/Y') ?? '' ?></span>
                         </div>
                         <?php endif; ?>
@@ -597,7 +597,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                             <i class="bi bi-x" aria-hidden="true" style="font-size:9px;"></i>Rechazado
                         </span>
                         <?php if (!empty($payment->rejection_reason)): ?>
-                        <div style="font-size:10px;color:var(--text-faint);margin-top:3px;line-height:1.3;">
+                        <div style="font-size:var(--fs-meta);color:var(--text-faint);margin-top:3px;line-height:1.3;">
                             <?= h($payment->rejection_reason) ?>
                         </div>
                         <?php endif; ?>
@@ -608,16 +608,16 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                     <?php endif; ?>
                 </span>
                 <div style="min-width:0;">
-                    <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    <div style="font-size:var(--fs-body-sm);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                         <?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?>
                     </div>
                     <?php if ($payment->created): ?>
-                    <div style="font-size:10.5px;color:var(--text-faint);font-family:var(--font-mono);">
+                    <div style="font-size:var(--fs-label);color:var(--text-faint);font-family:var(--font-mono);">
                         <?= $payment->created->format('d/m/Y') ?>
                     </div>
                     <?php endif; ?>
                 </div>
-                <span style="color:var(--text-muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <span style="color:var(--text-muted);font-size:var(--fs-body-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                     <?php if (!empty($payment->payment_scheduling_id)): ?>
                         <?= $this->Html->link(
                             '<i class="bi bi-calendar-check me-1" aria-hidden="true"></i>' . h($payment->payment_scheduling->code ?? '#' . $payment->payment_scheduling_id),
@@ -638,8 +638,8 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
             <?php endforeach; ?>
 
             <div class="sgi-mini-table-row is-total" style="grid-template-columns:1.4fr 1fr 1fr 1.2fr 1.3fr 0.8fr;">
-                <span style="font-weight:700;color:var(--text-strong);font-size:13px;">Total Pagado</span>
-                <span style="font-weight:700;color:var(--primary-color);font-family:var(--font-mono);font-size:14px;">
+                <span style="font-weight:700;color:var(--text-strong);font-size:var(--fs-body-lg);">Total Pagado</span>
+                <span style="font-weight:700;color:var(--primary-color);font-family:var(--font-mono);font-size:var(--fs-title-card);">
                     $ <?= number_format($pagosTotal, 0, ',', '.') ?>
                 </span>
                 <span></span><span></span><span></span><span></span>
@@ -661,7 +661,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                 <div class="sgi-dropzone-empty">
                     <i class="bi bi-paperclip" aria-hidden="true"></i>
                     <div>Arrastra archivos aquí o <span class="accent">examina</span></div>
-                    <div style="font-size:10.5px;margin-top:4px;">PDF, JPG, PNG · máximo 10 MB por archivo</div>
+                    <div style="font-size:var(--fs-label);margin-top:4px;">PDF, JPG, PNG · máximo 10 MB por archivo</div>
                 </div>
             <?php else: ?>
                 <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
@@ -673,17 +673,17 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                                     <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> flex-shrink-0"
                                        style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.1rem;"></i>
                                     <div style="min-width:0;flex:1;overflow:hidden;">
-                                        <span style="font-size:12px;font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($doc->document_type ?: $doc->file_name) ?>">
+                                        <span style="font-size:var(--fs-body-sm);font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($doc->document_type ?: $doc->file_name) ?>">
                                             <?= h($doc->document_type ?: $doc->file_name) ?>
                                         </span>
                                         <?php if ($doc->document_type): ?>
-                                        <span style="font-size:10.5px;color:var(--text-faint);font-family:var(--font-mono);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?= h($doc->file_name) ?>">
+                                        <span style="font-size:var(--fs-label);color:var(--text-faint);font-family:var(--font-mono);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?= h($doc->file_name) ?>">
                                             <?= h($doc->file_name) ?>
                                         </span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                                <div style="padding:.6rem .875rem;flex:1;font-size:11.5px;color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
+                                <div style="padding:.6rem .875rem;flex:1;font-size:var(--fs-body-sm);color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
                                     <?php
                                     $statusKey = $status;
                                     $docStatusPill = $statusPills[$statusKey] ?? 'pill-muted';
@@ -696,12 +696,12 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                                         <i class="bi bi-person sgi-fg-faint" aria-hidden="true" style="font-size:.8rem;"></i>
                                         <span><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></span>
                                     </div>
-                                    <div class="d-flex align-items-center gap-1" style="color:var(--text-faint);font-family:var(--font-mono);font-size:10.5px;">
-                                        <i class="bi bi-clock sgi-fg-faint" aria-hidden="true" style="font-size:.75rem;font-family:'bootstrap-icons';"></i>
+                                    <div class="d-flex align-items-center gap-1" style="color:var(--text-faint);font-family:var(--font-mono);font-size:var(--fs-label);">
+                                        <i class="bi bi-clock sgi-fg-faint" aria-hidden="true" style="font-size:var(--fs-body-sm);font-family:'bootstrap-icons';"></i>
                                         <span><?= $doc->created?->format('d/m/Y H:i') ?></span>
                                     </div>
                                     <?php if ($doc->file_size): ?>
-                                    <div style="color:var(--text-disabled);font-size:10.5px;font-family:var(--font-mono);">
+                                    <div style="color:var(--text-disabled);font-size:var(--fs-label);font-family:var(--font-mono);">
                                         <?= $this->Number->toReadableSize($doc->file_size) ?>
                                     </div>
                                     <?php endif; ?>
@@ -739,7 +739,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
                 <span>Valor Nuevo</span>
             </div>
             <?php foreach ($invoice->invoice_histories as $history): ?>
-            <div class="sgi-mini-table-row" style="grid-template-columns:1.3fr 1.3fr 1.6fr 1.4fr 1.4fr;font-size:12px;">
+            <div class="sgi-mini-table-row" style="grid-template-columns:1.3fr 1.3fr 1.6fr 1.4fr 1.4fr;font-size:var(--fs-body-sm);">
                 <span style="font-family:var(--font-mono);color:var(--text-muted);">
                     <?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?>
                 </span>
@@ -758,7 +758,7 @@ foreach ($invoice->invoice_approvals ?? [] as $a) {
             </div>
             <?php endforeach; ?>
             <?php else: ?>
-            <div style="padding:20px;text-align:center;color:var(--text-faint);font-size:12.5px;background:var(--bg-muted);">
+            <div style="padding:20px;text-align:center;color:var(--text-faint);font-size:var(--fs-body);background:var(--bg-muted);">
                 Sin eventos registrados aún
             </div>
             <?php endif; ?>

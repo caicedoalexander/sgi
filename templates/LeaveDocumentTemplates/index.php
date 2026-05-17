@@ -36,7 +36,7 @@ $this->assign('title', 'Plantillas de Documento');
                     <td>
                         <div class="fw-medium"><?= h($template->name) ?></div>
                         <?php if ($template->description): ?>
-                        <div class="text-muted" style="font-size:.75rem;"><?= h(\Cake\Utility\Text::truncate($template->description, 60)) ?></div>
+                        <div class="text-muted" style="font-size:var(--fs-body-sm);"><?= h(\Cake\Utility\Text::truncate($template->description, 60)) ?></div>
                         <?php endif; ?>
                     </td>
                     <td>

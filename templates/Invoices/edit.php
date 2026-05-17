@@ -153,7 +153,7 @@ $beneficiaryName = $viewModel->invoice->provider->name
             </div>
 
             <div class="sgi-label"><?= $isAdvance ? 'Beneficiario' : 'Proveedor' ?></div>
-            <div style="font-size:12.5px;font-weight:600;color:var(--text-default);margin-top:4px;line-height:1.3;">
+            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);margin-top:4px;line-height:1.3;">
                 <?= h($beneficiaryName) ?>
             </div>
             <?php if ($viewModel->invoice->hasValue('operation_center')): ?>
@@ -177,14 +177,14 @@ $beneficiaryName = $viewModel->invoice->provider->name
                 <?php if ($totalPagado > 0 || $invoiceAmount > 0): ?>
                 <div style="margin-top:14px;display:flex;gap:18px;">
                     <div>
-                        <div class="sgi-label" style="font-size:9.5px;">Pagado</div>
-                        <div style="font-size:13px;font-weight:700;color:var(--primary-color);font-family:var(--font-mono);margin-top:2px;">
+                        <div class="sgi-label" style="font-size:var(--fs-micro);">Pagado</div>
+                        <div style="font-size:var(--fs-body-lg);font-weight:700;color:var(--primary-color);font-family:var(--font-mono);margin-top:2px;">
                             $ <?= number_format($totalPagado, 0, ',', '.') ?>
                         </div>
                     </div>
                     <div>
-                        <div class="sgi-label" style="font-size:9.5px;">Saldo</div>
-                        <div style="font-size:13px;font-weight:700;color:<?= $saldo > 0 ? 'var(--secondary-color)' : 'var(--primary-color)' ?>;font-family:var(--font-mono);margin-top:2px;">
+                        <div class="sgi-label" style="font-size:var(--fs-micro);">Saldo</div>
+                        <div style="font-size:var(--fs-body-lg);font-weight:700;color:<?= $saldo > 0 ? 'var(--secondary-color)' : 'var(--primary-color)' ?>;font-family:var(--font-mono);margin-top:2px;">
                             $ <?= number_format(max(0, $saldo), 0, ',', '.') ?>
                         </div>
                     </div>
@@ -265,18 +265,18 @@ $beneficiaryName = $viewModel->invoice->provider->name
             <div class="sgi-section-head" style="margin-bottom:10px;">
                 <span class="sgi-label">Registro</span>
             </div>
-            <div style="font-size:12px;color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-2">
+            <div style="font-size:var(--fs-body-sm);color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-2">
                 <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
                 <span>Rol: <strong style="color:var(--text-default);"><?= h($viewModel->roleName) ?></strong></span>
             </div>
             <?php if ($viewModel->invoice->created): ?>
-            <div style="font-size:11.5px;color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-1">
+            <div style="font-size:var(--fs-body-sm);color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-1">
                 <i class="bi bi-calendar3 sgi-fg-faint" aria-hidden="true"></i>
                 <span>Creado · <span class="mono"><?= $viewModel->invoice->created->format('d/m/Y') ?></span></span>
             </div>
             <?php endif; ?>
             <?php if ($viewModel->invoice->modified): ?>
-            <div style="font-size:11.5px;color:var(--text-muted);" class="d-flex align-items-center gap-2">
+            <div style="font-size:var(--fs-body-sm);color:var(--text-muted);" class="d-flex align-items-center gap-2">
                 <i class="bi bi-pencil-square sgi-fg-faint" aria-hidden="true"></i>
                 <span>Modificado · <span class="mono"><?= $viewModel->invoice->modified->format('d/m/Y') ?></span></span>
             </div>

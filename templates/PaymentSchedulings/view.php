@@ -88,7 +88,7 @@ $ps = [
                         <i class="bi <?= $icon ?>" aria-hidden="true"></i>
                     <?php endif; ?>
                 </div>
-                <span style="font-size:.75rem;font-weight:<?= $isCurrent ? '700' : '500' ?>;color:<?= $isCurrent ? '#111' : ($isPast ? 'var(--primary-color)' : '#aaa') ?>;">
+                <span style="font-size:var(--fs-body-sm);font-weight:<?= $isCurrent ? '700' : '500' ?>;color:<?= $isCurrent ? '#111' : ($isPast ? 'var(--primary-color)' : '#aaa') ?>;">
                     <?= $pipelineLabels[$status] ?? $status ?>
                 </span>
             </div>
@@ -219,7 +219,7 @@ $totalDocs = count($documents);
     </div>
 
     <?php if (empty($documents)): ?>
-        <div class="p-3 text-center text-muted" style="font-size:.875rem">
+        <div class="p-3 text-center text-muted" style="font-size:var(--fs-title-card)">
             <i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin soportes adjuntos
         </div>
     <?php else: ?>
@@ -233,19 +233,19 @@ $totalDocs = count($documents);
                             <i class="bi <?= h($this->DocumentIcon->iconClassByName($att->file_name)) ?> flex-shrink-0"
                                style="color:<?= h($this->DocumentIcon->iconColorByName($att->file_name)) ?>;font-size:1.1rem;"></i>
                             <div style="min-width:0;flex:1;overflow:hidden;">
-                                <span style="font-size:.78rem;font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($att->file_name) ?>">
+                                <span style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($att->file_name) ?>">
                                     <?= h($att->file_name) ?>
                                 </span>
                             </div>
                         </div>
                         <!-- Card body: usuario + fecha -->
-                        <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
+                        <div style="padding:.6rem .875rem;flex:1;font-size:var(--fs-body);color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
                             <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-muted);">
                                 <i class="bi bi-person" style="font-size:.8rem;" aria-hidden="true"></i>
                                 <span><?= h($att->uploaded_by_user->full_name ?? '—') ?></span>
                             </div>
                             <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-faint);">
-                                <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
+                                <i class="bi bi-clock" style="font-size:var(--fs-body-sm);" aria-hidden="true"></i>
                                 <span><?= $att->created?->format('d/m/Y H:i') ?></span>
                             </div>
                         </div>
@@ -299,14 +299,14 @@ $totalDocs = count($documents);
                         <?= h($obs->user->full_name ?? '') ?>
                     </span>
                     <?php if ($isRegression): ?>
-                        <span class="pill pill-warning-soft" style="font-size:.65rem;">Regresión</span>
+                        <span class="pill pill-warning-soft" style="font-size:var(--fs-label);">Regresión</span>
                     <?php endif; ?>
                     <span style="font-size:.7rem;color:var(--text-disabled);">
                         <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
                     </span>
                 </div>
                 <?php if ($isRegression && $fromLbl && $toLbl): ?>
-                    <div style="font-size:.74rem;color:var(--text-muted);margin-top:.1rem;">
+                    <div style="font-size:var(--fs-body-sm);color:var(--text-muted);margin-top:.1rem;">
                         <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
                         <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
                     </div>

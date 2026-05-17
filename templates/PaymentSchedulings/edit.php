@@ -90,11 +90,11 @@ $this->assign('title', h($viewModel->pageTitle));
                         <i class="bi <?= $icon ?>" aria-hidden="true"></i>
                     <?php endif; ?>
                 </div>
-                <span style="font-size:.75rem;font-weight:<?= $isCurrent ? '700' : '500' ?>;color:<?= $isCurrent ? '#111' : ($isPast ? 'var(--primary-color)' : '#aaa') ?>;">
+                <span style="font-size:var(--fs-body-sm);font-weight:<?= $isCurrent ? '700' : '500' ?>;color:<?= $isCurrent ? '#111' : ($isPast ? 'var(--primary-color)' : '#aaa') ?>;">
                     <?= $viewModel->pipelineLabels[$status] ?? $status ?>
                 </span>
                 <?php if ($isCurrent): ?>
-                <i class="bi bi-caret-left-fill" style="font-size:.6rem;color:var(--primary-color);" aria-hidden="true"></i>
+                <i class="bi bi-caret-left-fill" style="font-size:var(--fs-micro);color:var(--primary-color);" aria-hidden="true"></i>
                 <?php endif; ?>
             </div>
             <?php if ($i < count(PaymentSchedulingConstants::PIPELINE_STATUSES) - 1): ?>
@@ -150,7 +150,7 @@ $this->assign('title', h($viewModel->pageTitle));
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
+                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Vinculadas
                     <span class="sgi-folder-count ms-1"><?= $viewModel->itemCount ?></span>
                 </span>
@@ -174,11 +174,11 @@ $this->assign('title', h($viewModel->pageTitle));
                     <?= $this->Form->create(null, ['url' => ['action' => 'addItem', $viewModel->record->id]]) ?>
                     <div class="row g-2 align-items-end">
                         <div class="col-md-4">
-                            <label class="form-label mb-1" style="font-size:.75rem;">Factura (ID)</label>
+                            <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Factura (ID)</label>
                             <input type="number" name="invoice_id" class="form-control form-control-sm" required placeholder="ID de factura">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label mb-1" style="font-size:.75rem;">Banco</label>
+                            <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Banco</label>
                             <select name="banking_entity_id" class="form-select form-select-sm" required>
                                 <option value="">-- Seleccione --</option>
                                 <?php foreach ($viewModel->bankingEntities as $beId => $beName): ?>
@@ -187,7 +187,7 @@ $this->assign('title', h($viewModel->pageTitle));
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label mb-1" style="font-size:.75rem;">Monto (COP)</label>
+                            <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Monto (COP)</label>
                             <input type="text" name="amount" class="form-control form-control-sm currency-input" required>
                         </div>
                         <div class="col-md-2">
@@ -365,7 +365,7 @@ $totalDocs = count($documents);
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
         <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
-        <span style="font-size:.78rem;">Sin observaciones aún</span>
+        <span style="font-size:var(--fs-body);">Sin observaciones aún</span>
     </div>
 
     <div class="sgi-obs-input-bar">

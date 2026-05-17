@@ -11,7 +11,7 @@
 <div class="mb-4 ">
     <div class="d-flex align-items-center gap-3 mb-3">
         <span class="text-uppercase fw-semibold flex-shrink-0"
-              style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
+              style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
             <i class="bi bi-calculator me-1" aria-hidden="true"></i>Contabilidad
         </span>
         <div style="flex:1;height:1px;background:var(--border-color);"></div>

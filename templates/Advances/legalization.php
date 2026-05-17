@@ -173,7 +173,7 @@ $this->assign('title', $pageTitle);
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
+                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Facturas vinculadas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -327,7 +327,7 @@ $this->assign('title', $pageTitle);
             <div class="d-flex flex-column gap-1 mb-3">
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-uppercase fw-semibold flex-shrink-0"
-                          style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
+                          style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
                         <i class="bi bi-bank me-1" aria-hidden="true"></i>Confirmar consignación
                     </span>
                     <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -336,7 +336,7 @@ $this->assign('title', $pageTitle);
                      style="border-left:2px solid var(--secondary-color);padding:.35rem .7rem;">
                     <i class="bi bi-info-circle-fill flex-shrink-0"
                        style="color:var(--secondary-color);font-size:.85rem;" aria-hidden="true"></i>
-                    <span style="font-size:.75rem;color:var(--text-muted);">Monto pendiente:</span>
+                    <span style="font-size:var(--fs-body-sm);color:var(--text-muted);">Monto pendiente:</span>
                     <strong style="color:var(--text-default);font-size:.85rem;letter-spacing:-.01em;">
                         $ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?>
                     </strong>
@@ -449,7 +449,7 @@ $this->assign('title', $pageTitle);
 
     <!-- Documento Especial: Relación de facturas -->
     <div style="padding:.3rem .875rem;background:rgba(70,157,97,.06);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-        <span class="pill" style="font-size:.6rem;background:var(--primary-color);color:#fff;">Relación de facturas</span>
+        <span class="pill" style="font-size:var(--fs-micro);background:var(--primary-color);color:#fff;">Relación de facturas</span>
     </div>
     <?php if ($relationDocument): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
@@ -458,26 +458,26 @@ $this->assign('title', $pageTitle);
                style="color:<?= h($this->DocumentIcon->iconColor($relationDocument->mime_type ?? null)) ?>;font-size:1rem;"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <div style="font-size:.79rem;font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
+            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
                  title="<?= h($relationDocument->file_name ?? '') ?>">
                 <?= h($relationDocument->file_name ?? 'Documento') ?>
             </div>
             <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
                 <?php if ($relationDocument->isSigned()): ?>
-                <span class="pill pill-primary-soft" style="font-size:.6rem;">
+                <span class="pill pill-primary-soft" style="font-size:var(--fs-micro);">
                     <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Firmado
                     <?php if ($relationDocument->signed_by_user): ?>
                         — <?= h($relationDocument->signed_by_user->full_name ?? '') ?>
                     <?php endif; ?>
                 </span>
                 <?php else: ?>
-                <span class="pill pill-warning-soft" style="font-size:.6rem;">
+                <span class="pill pill-warning-soft" style="font-size:var(--fs-micro);">
                     <i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente de firma
                 </span>
                 <?php endif; ?>
                 <?php if ($relationDocument->created): ?>
-                <span style="font-size:.65rem;color:var(--text-disabled);">
-                    <i class="bi bi-clock" style="font-size:.6rem;" aria-hidden="true"></i>
+                <span style="font-size:var(--fs-label);color:var(--text-disabled);">
+                    <i class="bi bi-clock" style="font-size:var(--fs-micro);" aria-hidden="true"></i>
                     <?= $relationDocument->created->format('d/m/Y H:i') ?>
                 </span>
                 <?php endif; ?>
@@ -491,7 +491,7 @@ $this->assign('title', $pageTitle);
                    accept=".pdf,.jpg,.jpeg,.png"
                    style="display:none;" data-rel-doc-trigger>
             <label for="rel-doc-file-update" class="btn btn-sm btn-outline-primary"
-                   style="width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;cursor:pointer;" title="Reemplazar">
+                   style="width:28px;height:28px;padding:0;font-size:var(--fs-body-sm);line-height:28px;text-align:center;cursor:pointer;" title="Reemplazar">
                 <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
             </label>
             </form>
@@ -500,7 +500,7 @@ $this->assign('title', $pageTitle);
             <?= $this->Html->link(
                 '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
                 '/' . $relationDocument->file_path,
-                ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
+                ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:28px;height:28px;padding:0;font-size:var(--fs-body-sm);line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
             ) ?>
             <?php endif; ?>
         </div>
@@ -512,7 +512,7 @@ $this->assign('title', $pageTitle);
             <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:1rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <span style="font-size:.76rem;color:var(--text-faint);">Sin documento adjunto</span>
+            <span style="font-size:var(--fs-body-sm);color:var(--text-faint);">Sin documento adjunto</span>
         </div>
         <form id="rel-doc-upload-form" class="d-inline flex-shrink-0"
               data-upload-url="<?= $this->Url->build(['action' => 'uploadRelationDocument', $leg->advance_invoice_id]) ?>">
@@ -531,7 +531,7 @@ $this->assign('title', $pageTitle);
         <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
             <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:1rem;" aria-hidden="true"></i>
         </div>
-        <span style="font-size:.76rem;color:var(--text-disabled);">Sin documento</span>
+        <span style="font-size:var(--fs-body-sm);color:var(--text-disabled);">Sin documento</span>
     </div>
     <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
     <?php endif; ?>
@@ -539,17 +539,17 @@ $this->assign('title', $pageTitle);
     <!-- Comprobante de consignación (caso faltante) -->
     <?php if ($leg->case_type === AdvanceConstants::CASE_FALTANTE && $leg->shortage_receipt_path): ?>
     <div style="padding:.3rem .875rem;background:var(--warning-soft);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-        <span class="pill" style="font-size:.6rem;background:var(--secondary-color);color:#fff;">Comprobante de consignación</span>
+        <span class="pill" style="font-size:var(--fs-micro);background:var(--secondary-color);color:#fff;">Comprobante de consignación</span>
     </div>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
         <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
             <i class="bi bi-file-earmark-pdf" style="color:var(--danger-color);font-size:1rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <div style="font-size:.79rem;font-weight:600;color:var(--text-strong);">
+            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);">
                 <?= h($leg->shortage_receipt_number ?: 'Comprobante') ?>
             </div>
-            <div style="font-size:.65rem;color:var(--text-disabled);margin-top:.25rem;">
+            <div style="font-size:var(--fs-label);color:var(--text-disabled);margin-top:.25rem;">
                 <?php if ($leg->shortage_received_at): ?>
                 <i class="bi bi-clock" aria-hidden="true"></i> <?= h(date('d/m/Y', strtotime((string)$leg->shortage_received_at))) ?>
                 <?php endif; ?>
@@ -558,7 +558,7 @@ $this->assign('title', $pageTitle);
         <?= $this->Html->link(
             '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
             '/' . $leg->shortage_receipt_path,
-            ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:28px;height:28px;padding:0;font-size:.75rem;line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
+            ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:28px;height:28px;padding:0;font-size:var(--fs-body-sm);line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
         ) ?>
     </div>
     <?php endif; ?>
@@ -566,7 +566,7 @@ $this->assign('title', $pageTitle);
     <!-- Historial de firmas (rechazadas) -->
     <?php if (!empty($signatureHistory)): ?>
     <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);">
-        <span style="font-size:.65rem;color:var(--text-faint);text-transform:uppercase;letter-spacing:.1em;font-weight:600;">Historial</span>
+        <span style="font-size:var(--fs-label);color:var(--text-faint);text-transform:uppercase;letter-spacing:.1em;font-weight:600;">Historial</span>
     </div>
     <?php foreach ($signatureHistory as $sig): ?>
     <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .875rem;border-bottom:1px solid var(--border-color);opacity:.7;">
@@ -574,10 +574,10 @@ $this->assign('title', $pageTitle);
             <i class="bi <?= h($this->DocumentIcon->iconClass($sig->mime_type ?? null)) ?>" style="color:var(--text-faint);font-size:.9rem;" aria-hidden="true"></i>
         </div>
         <div style="flex:1;min-width:0;">
-            <div style="font-size:.74rem;font-weight:600;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <div style="font-size:var(--fs-body-sm);font-weight:600;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                 <?= h($sig->file_name ?? '—') ?>
             </div>
-            <div style="font-size:.62rem;color:var(--text-disabled);margin-top:.2rem;">
+            <div style="font-size:var(--fs-meta);color:var(--text-disabled);margin-top:.2rem;">
                 <span class="pill pill-danger-soft" style="font-size:.55rem;">Rechazado</span>
                 <?php if ($sig->rejection_reason): ?>
                 — <?= h($sig->rejection_reason) ?>
@@ -623,7 +623,7 @@ $this->assign('title', $pageTitle);
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
         <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
-        <span style="font-size:.78rem;">Sin observaciones aún</span>
+        <span style="font-size:var(--fs-body);">Sin observaciones aún</span>
     </div>
 
     <div class="sgi-obs-input-bar">

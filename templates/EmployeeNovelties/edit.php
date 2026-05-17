@@ -247,7 +247,7 @@ $totalDocs          = $viewModel->totalDocs;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
+                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-gear me-1" aria-hidden="true"></i>Gestión
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -298,7 +298,7 @@ $totalDocs          = $viewModel->totalDocs;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
+                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -320,7 +320,7 @@ $totalDocs          = $viewModel->totalDocs;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
+                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-person-check me-1" aria-hidden="true"></i>Aprobación
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -375,7 +375,7 @@ $totalDocs          = $viewModel->totalDocs;
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">
+                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
                     <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Asignar a Documento de Liquidación
                 </span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
@@ -473,8 +473,8 @@ $totalDocs          = $viewModel->totalDocs;
         ?>
         <?php if ($multipleStatuses): ?>
         <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-            <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:.6rem;"><?= $statusLabels[$status] ?? $status ?></span>
-            <span style="font-size:.67rem;color:var(--text-disabled);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
+            <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:var(--fs-micro);"><?= $statusLabels[$status] ?? $status ?></span>
+            <span style="font-size:var(--fs-label);color:var(--text-disabled);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>
         <?php endif; ?>
         <?php foreach ($docs as $doc): ?>
@@ -511,7 +511,7 @@ $totalDocs          = $viewModel->totalDocs;
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
         <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
-        <span style="font-size:.78rem;">Sin observaciones aún</span>
+        <span style="font-size:var(--fs-body);">Sin observaciones aún</span>
     </div>
 
     <?php if (!$isRejected && !$novelty->isPaid()): ?>

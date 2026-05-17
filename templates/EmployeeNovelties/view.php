@@ -286,7 +286,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     <?php if ($novelty->observations): ?>
     <div style="border-bottom:1px solid var(--border-color);">
         <div class="sgi-label">Observaciones de Rechazo</div>
-        <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:var(--text-muted);line-height:1.65;">
+        <div style="padding:.25rem 1.25rem .875rem;font-size:var(--fs-title-card);color:var(--text-muted);line-height:1.65;">
             <?= nl2br(h($novelty->observations)) ?>
         </div>
     </div>
@@ -326,7 +326,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     </div>
 
     <?php if (empty($documentsByStatus)): ?>
-        <div class="p-3 text-center text-muted" style="font-size:.875rem">
+        <div class="p-3 text-center text-muted" style="font-size:var(--fs-title-card)">
             <i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin soportes adjuntos
         </div>
     <?php else: ?>
@@ -340,14 +340,14 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                                 <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> flex-shrink-0"
                                    style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.1rem;"></i>
                                 <div style="min-width:0;flex:1;overflow:hidden;">
-                                    <span style="font-size:.78rem;font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($doc->file_name) ?>">
+                                    <span style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($doc->file_name) ?>">
                                         <?= h($doc->file_name) ?>
                                     </span>
                                 </div>
                             </div>
-                            <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
+                            <div style="padding:.6rem .875rem;flex:1;font-size:var(--fs-body);color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
                                 <div>
-                                    <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:.65rem;">
+                                    <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:var(--fs-label);">
                                         <?= $statusLabels[$status] ?? $status ?>
                                     </span>
                                 </div>
@@ -356,7 +356,7 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
                                     <span><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></span>
                                 </div>
                                 <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-faint);">
-                                    <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
+                                    <i class="bi bi-clock" style="font-size:var(--fs-body-sm);" aria-hidden="true"></i>
                                     <span><?= $doc->created?->format('d/m/Y H:i') ?></span>
                                 </div>
                                 <?php if ($doc->file_size): ?>

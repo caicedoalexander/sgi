@@ -75,7 +75,7 @@ $code = isset($error) && method_exists($error, 'getCode') ? (int)$error->getCode
     margin: 0;
 ">
     La dirección <code style="
-        font-size: .75rem;
+        font-size: var(--fs-body-sm);
         color: var(--primary-color);
         background: rgba(70,157,97,.1);
         padding: .1rem .4rem;

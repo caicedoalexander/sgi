@@ -28,7 +28,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
         <div class="sgi-icon-chip" style="font-size:.95rem;">
             <i class="bi bi-receipt" aria-hidden="true"></i>
         </div>
-        <span style="font-size:.875rem;font-weight:600;color:var(--text-default);">Información de la Factura</span>
+        <span style="font-size:var(--fs-title-card);font-weight:600;color:var(--text-default);">Información de la Factura</span>
     </div>
 
     <div class="card-body p-4">
@@ -38,7 +38,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">Documento</span>
+                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Documento</span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
             <div class="row g-3">
@@ -106,7 +106,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">Fechas</span>
+                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Fechas</span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
             <div class="row g-3">
@@ -131,7 +131,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">Clasificación y Valor</span>
+                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Clasificación y Valor</span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
             <div class="row g-3">
@@ -171,7 +171,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:.58rem;letter-spacing:.14em;color:var(--text-disabled);">Descripción</span>
+                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Descripción</span>
                 <div style="flex:1;height:1px;background:var(--border-color);"></div>
             </div>
             <div>

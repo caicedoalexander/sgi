@@ -162,11 +162,11 @@ $advancesMineCount = $advancesMineCount ?? 0;
                 ?>
                     <div class="d-flex align-items-center" style="min-width:0;">
                         <div class="d-flex align-items-center justify-content-center me-2 sgi-mono"
-                             style="width:32px;height:32px;background-color:var(--primary-color);flex-shrink:0;color:#fff;font-weight:700;font-size:.78rem;letter-spacing:.02em;">
+                             style="width:32px;height:32px;background-color:var(--primary-color);flex-shrink:0;color:#fff;font-weight:700;font-size:var(--fs-body);letter-spacing:.02em;">
                             <?= h($initials) ?>
                         </div>
                         <div class="overflow-hidden">
-                            <div class="text-white fw-medium text-truncate" style="font-size:.82rem;"><?= h($currentUser->full_name) ?></div>
+                            <div class="text-white fw-medium text-truncate" style="font-size:var(--fs-body-lg);"><?= h($currentUser->full_name) ?></div>
                             <div style="font-size:.7rem;color:rgba(255,255,255,.35);"><?= h($currentUser->role->name ?? '') ?></div>
                         </div>
                     </div>

@@ -22,13 +22,13 @@ $importable = $importable ?? true;
             <div class="modal-body">
                 <div class="d-flex align-items-center mb-2">
                     <input type="checkbox" class="form-check-input me-2" id="exportSelectAll" checked>
-                    <label class="form-check-label" for="exportSelectAll" style="font-size:.875rem;font-weight:600">Seleccionar todos</label>
+                    <label class="form-check-label" for="exportSelectAll" style="font-size:var(--fs-title-card);font-weight:600">Seleccionar todos</label>
                 </div>
                 <div id="exportLoading" style="display:none" class="text-center py-3">
                     <span class="spinner-border spinner-border-sm me-1"></span>Cargando campos...
                 </div>
                 <div id="exportFieldList" style="max-height:400px;overflow-y:auto;border:1px solid var(--border-color);border-radius:4px"></div>
-                <div id="exportError" class="text-danger mt-2" style="display:none;font-size:.825rem"></div>
+                <div id="exportError" class="text-danger mt-2" style="display:none;font-size:var(--fs-body-lg)"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -58,7 +58,7 @@ $importable = $importable ?? true;
                         <i class="bi bi-info-circle me-1" aria-hidden="true"></i>Tip: Exporte primero para obtener la plantilla con las columnas correctas.
                     </p>
                     <input type="file" id="importFileInput" class="form-control" accept=".xlsx">
-                    <div id="importStep1Error" class="alert alert-danger py-2 px-3 mt-2" style="display:none;font-size:.825rem"></div>
+                    <div id="importStep1Error" class="alert alert-danger py-2 px-3 mt-2" style="display:none;font-size:var(--fs-body-lg)"></div>
                 </div>
 
                 <div id="importStep2" style="display:none">
@@ -79,7 +79,7 @@ $importable = $importable ?? true;
                         </table>
                     </div>
                     <div id="importRequiredIndicator" style="display:none"></div>
-                    <div id="importMappingError" class="alert alert-danger py-2 px-3 mt-2" style="display:none;font-size:.825rem"></div>
+                    <div id="importMappingError" class="alert alert-danger py-2 px-3 mt-2" style="display:none;font-size:var(--fs-body-lg)"></div>
                 </div>
 
                 <div id="importStep3" style="display:none">

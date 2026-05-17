@@ -55,7 +55,7 @@
             padding: .625rem 1.25rem;
             background-color: var(--primary-color);
             color: #fff;
-            font-size: .875rem;
+            font-size: var(--fs-title-card);
             font-weight: 600;
             text-decoration: none;
             border: none;
@@ -68,7 +68,7 @@
         }
         .sgi-error-footer {
             margin-top: 3rem;
-            font-size: .6rem;
+            font-size: var(--fs-micro);
             letter-spacing: .08em;
             color: rgba(255,255,255,.15);
             text-transform: uppercase;

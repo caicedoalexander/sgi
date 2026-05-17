@@ -83,7 +83,7 @@ $pipelineStepsLeg  = [
 <div class="sgi-page-header d-flex justify-content-between align-items-start">
     <div>
         <span class="sgi-page-title"><?= $pageTitle ?></span>
-        <div class="sgi-body-faint mt-1" style="font-size:12px;">
+        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
             Período: <?= h($periodLabel) ?> ·
             <span class="sgi-fg-muted"><?= $this->Paginator->counter('{{count}} documentos') ?></span> ·
             <span class="sgi-fg-muted mono">$ <?= number_format($pageTotal, 0, ',', '.') ?></span>
@@ -283,7 +283,7 @@ $pipelineStepsLeg  = [
                 </div>
                 <?php if ($invoice->hasValue('operation_center')): ?>
                 <div class="sgi-row-fact-center">
-                    <i class="bi bi-geo-alt" aria-hidden="true" style="font-size:10px;"></i>
+                    <i class="bi bi-geo-alt" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
                     <span><?= h($invoice->operation_center->name) ?></span>
                 </div>
                 <?php endif; ?>
@@ -354,7 +354,7 @@ $pipelineStepsLeg  = [
                 <?php if ($unread > 0): ?>
                     <span class="pill pill-danger-soft"
                           title="<?= $unread ?> observación<?= $unread > 1 ? 'es' : '' ?> sin leer">
-                        <i class="bi bi-chat-left-text-fill" style="font-size:.65rem;" aria-hidden="true"></i><?= $unread ?>
+                        <i class="bi bi-chat-left-text-fill" style="font-size:var(--fs-label);" aria-hidden="true"></i><?= $unread ?>
                     </span>
                 <?php else: ?>
                     <i class="bi bi-chevron-right" aria-hidden="true"></i>

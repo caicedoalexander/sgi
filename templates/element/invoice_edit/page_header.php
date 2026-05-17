@@ -40,9 +40,9 @@ $idLabel = $viewModel->invoice->invoice_number ?? ('#' . $viewModel->invoice->id
     <div style="min-width:0;">
         <div class="sgi-breadcrumb">
             <?= $this->Html->link($listLabel, $indexUrl) ?>
-            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:10px;"></i>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <?= $this->Html->link(h($idLabel), $viewUrl) ?>
-            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:10px;"></i>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span class="current">Editar</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">

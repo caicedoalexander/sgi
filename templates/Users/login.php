@@ -10,7 +10,7 @@ $this->assign('title', 'Iniciar Sesión');
 <!-- Usuario -->
 <div class="mb-3">
     <label class="d-block text-uppercase fw-semibold mb-1"
-           style="font-size:.6rem;letter-spacing:.12em;color:var(--text-faint);">
+           style="font-size:var(--fs-micro);letter-spacing:.12em;color:var(--text-faint);">
         Usuario
     </label>
     <div class="sgi-input-group d-flex align-items-center">
@@ -23,7 +23,7 @@ $this->assign('title', 'Iniciar Sesión');
             'id'        => 'username',
             'placeholder' => 'Ingrese su usuario',
             'autofocus' => true,
-            'style'     => 'border-radius:0;font-size:.875rem;',
+            'style'     => 'border-radius:0;font-size:var(--fs-title-card);',
             'templates'  => ['inputContainer' => '{{content}}'],
         ]) ?>
     </div>
@@ -32,7 +32,7 @@ $this->assign('title', 'Iniciar Sesión');
 <!-- Contraseña -->
 <div class="mb-4">
     <label class="d-block text-uppercase fw-semibold mb-1"
-           style="font-size:.6rem;letter-spacing:.12em;color:var(--text-faint);">
+           style="font-size:var(--fs-micro);letter-spacing:.12em;color:var(--text-faint);">
         Contraseña
     </label>
     <div class="sgi-input-group d-flex align-items-center">
@@ -45,7 +45,7 @@ $this->assign('title', 'Iniciar Sesión');
             'class'     => 'form-control border-0 shadow-none',
             'id'        => 'password',
             'placeholder' => '••••••••',
-            'style'     => 'border-radius:0;font-size:.875rem;',
+            'style'     => 'border-radius:0;font-size:var(--fs-title-card);',
             'templates'  => ['inputContainer' => '{{content}}'],
         ]) ?>
     </div>

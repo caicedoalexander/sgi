@@ -93,7 +93,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
         </div>
         <div class="col-md-6">
             <div class="sgi-label">Notas</div>
-            <div style="padding:.25rem 1.25rem .875rem;font-size:.875rem;color:var(--text-default);line-height:1.65;">
+            <div style="padding:.25rem 1.25rem .875rem;font-size:var(--fs-title-card);color:var(--text-default);line-height:1.65;">
                 <?= $record->notes ? nl2br(h($record->notes)) : '<span class="text-muted">Sin notas</span>' ?>
             </div>
         </div>
@@ -172,7 +172,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
         <span class="sgi-folder-count"><?= count($record->invoices ?? []) ?></span>
     </div>
     <?php if (empty($record->invoices)): ?>
-    <div class="p-3 text-center text-muted" style="font-size:.875rem;">
+    <div class="p-3 text-center text-muted" style="font-size:var(--fs-title-card);">
         <i class="bi bi-inbox me-1" aria-hidden="true"></i>No hay facturas agrupadas
     </div>
     <?php else: ?>
@@ -215,7 +215,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
         <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
     </div>
     <?php if (empty($docs)): ?>
-    <div class="p-3 text-center text-muted" style="font-size:.875rem;">
+    <div class="p-3 text-center text-muted" style="font-size:var(--fs-title-card);">
         <i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin soportes adjuntos
     </div>
     <?php else: ?>
@@ -228,7 +228,7 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
                         <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> flex-shrink-0"
                            style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.1rem;"></i>
                         <div style="min-width:0;flex:1;overflow:hidden;">
-                            <span style="font-size:.78rem;font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($doc->document_type ?: $doc->file_name) ?>">
+                            <span style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($doc->document_type ?: $doc->file_name) ?>">
                                 <?= h($doc->document_type ?: $doc->file_name) ?>
                             </span>
                             <?php if ($doc->document_type): ?>
@@ -238,13 +238,13 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
                             <?php endif; ?>
                         </div>
                     </div>
-                    <div style="padding:.6rem .875rem;flex:1;font-size:.78rem;color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
+                    <div style="padding:.6rem .875rem;flex:1;font-size:var(--fs-body);color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
                         <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-muted);">
                             <i class="bi bi-person" style="font-size:.8rem;" aria-hidden="true"></i>
                             <span><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></span>
                         </div>
                         <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-faint);">
-                            <i class="bi bi-clock" style="font-size:.75rem;" aria-hidden="true"></i>
+                            <i class="bi bi-clock" style="font-size:var(--fs-body-sm);" aria-hidden="true"></i>
                             <span><?= $doc->created?->format('d/m/Y H:i') ?></span>
                         </div>
                         <?php if ($doc->file_size): ?>
@@ -297,14 +297,14 @@ $statusLabels = PettyCashConstants::STATUS_LABELS;
                         <?= h($obs->user->full_name ?? '') ?>
                     </span>
                     <?php if ($isRegression): ?>
-                        <span class="pill pill-warning-soft" style="font-size:.65rem;">Regresión</span>
+                        <span class="pill pill-warning-soft" style="font-size:var(--fs-label);">Regresión</span>
                     <?php endif; ?>
                     <span style="font-size:.7rem;color:var(--text-disabled);">
                         <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
                     </span>
                 </div>
                 <?php if ($isRegression && $fromLbl && $toLbl): ?>
-                    <div style="font-size:.74rem;color:var(--text-muted);margin-top:.1rem;">
+                    <div style="font-size:var(--fs-body-sm);color:var(--text-muted);margin-top:.1rem;">
                         <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
                         <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
                     </div>

@@ -482,7 +482,7 @@ $btnClass    = $submitButtonClass;
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
         <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
-        <span style="font-size:.78rem;">Sin observaciones aún</span>
+        <span style="font-size:var(--fs-body);">Sin observaciones aún</span>
     </div>
 
     <div class="sgi-obs-input-bar">

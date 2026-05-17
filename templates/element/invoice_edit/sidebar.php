@@ -36,7 +36,7 @@ $multipleStatuses = count($documentsByStatus) > 1;
         <i class="bi bi-paperclip" aria-hidden="true"></i>
         <div>Sin soportes adjuntos</div>
         <?php if ($showUploadSection): ?>
-        <div style="font-size:10.5px;margin-top:4px;">PDF, JPG, PNG · máximo 10 MB por archivo</div>
+        <div style="font-size:var(--fs-label);margin-top:4px;">PDF, JPG, PNG · máximo 10 MB por archivo</div>
         <?php endif; ?>
     </div>
     <div id="docs-list" style="max-height:420px;overflow-y:auto;">
@@ -56,7 +56,7 @@ $multipleStatuses = count($documentsByStatus) > 1;
             $pillKind = $stageStatusPills[$status] ?? 'pill-muted';
             ?>
             <span class="pill <?= $pillKind ?>"><?= $statusLabels[$status] ?? $status ?></span>
-            <span style="font-size:10.5px;color:var(--text-faint);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
+            <span style="font-size:var(--fs-label);color:var(--text-faint);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>
         <?php endif; ?>
         <?php foreach ($docs as $doc): ?>
@@ -94,7 +94,7 @@ $multipleStatuses = count($documentsByStatus) > 1;
 
     <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
         <i class="bi bi-chat-square-dots" aria-hidden="true" style="font-size:1.5rem;"></i>
-        <span style="font-size:11.5px;">Sin observaciones aún</span>
+        <span style="font-size:var(--fs-body-sm);">Sin observaciones aún</span>
     </div>
 
     <div class="sgi-obs-input-bar">

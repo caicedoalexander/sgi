@@ -127,17 +127,17 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                     $isFailed = $log->status === EmailLogConstants::STATUS_FAILED;
                     ?>
                     <tr>
-                        <td style="font-size:.8125rem;color:var(--text-faint);"><?= (int)$log->id ?></td>
-                        <td style="font-size:.8125rem;color:var(--text-muted);white-space:nowrap;">
+                        <td style="font-size:var(--fs-body-lg);color:var(--text-faint);"><?= (int)$log->id ?></td>
+                        <td style="font-size:var(--fs-body-lg);color:var(--text-muted);white-space:nowrap;">
                             <?= h($log->created->i18nFormat('dd/MM/yyyy HH:mm')) ?>
                         </td>
-                        <td style="font-size:.8125rem;">
+                        <td style="font-size:var(--fs-body-lg);">
                             <?= h(EmailLogConstants::EVENT_LABELS[$log->event_type] ?? $log->event_type) ?>
                         </td>
-                        <td style="font-size:.8125rem;">
+                        <td style="font-size:var(--fs-body-lg);">
                             <?= h($log->to_email) ?>
                         </td>
-                        <td style="font-size:.8125rem;color:var(--text-muted);">
+                        <td style="font-size:var(--fs-body-lg);color:var(--text-muted);">
                             <?= h($log->subject) ?>
                         </td>
                         <td>
@@ -150,7 +150,7 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                                 </div>
                             <?php endif; ?>
                         </td>
-                        <td style="font-size:.8125rem;text-align:center;">
+                        <td style="font-size:var(--fs-body-lg);text-align:center;">
                             <?= (int)$log->attempts ?>
                         </td>
                         <td class="text-end">
