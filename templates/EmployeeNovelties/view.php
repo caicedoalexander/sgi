@@ -36,82 +36,107 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 ?>
 
 <!-- Page header -->
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Ver Novedad</span>
-    <div class="d-flex gap-2">
+<?php
+$novViewId = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
+$novViewStatusLabel = $statusLabels[$novelty->pipeline_status] ?? $novelty->pipeline_status;
+$novViewStatusPill = $statusBadgeMap[$novelty->pipeline_status] ?? 'pill-muted';
+?>
+<div class="sgi-page-header d-flex justify-content-between align-items-start">
+    <div style="min-width:0;">
+        <div class="sgi-breadcrumb">
+            <?= $this->Html->link('Novedades', ['action' => 'index']) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <span class="current"><?= h($novViewId) ?></span>
+        </div>
+        <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
+            <span class="sgi-page-title">Ver Novedad</span>
+            <span class="sgi-edit-id-chip">#<?= h((string)$novelty->id) ?></span>
+            <?php if ($isRejected): ?>
+                <span class="pill pill-danger-soft">Rechazada</span>
+            <?php else: ?>
+                <span class="pill <?= h($novViewStatusPill) ?>"><?= h($novViewStatusLabel) ?></span>
+            <?php endif; ?>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0">
         <?php if (!empty($hasActiveTemplate)): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>Exportar PDF',
+            '<i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>Exportar PDF',
             ['action' => 'exportPdf', $novelty->id],
-            ['class' => 'btn btn-outline-danger btn-sm', 'escape' => false, 'target' => '_blank']
+            ['class' => 'btn btn-ghost-card sgi-fg-danger', 'escape' => false, 'target' => '_blank']
         ) ?>
         <?php endif; ?>
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
+            '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
-            ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
         ) ?>
         <?php if (!empty($userPermissions['employee_novelties']['can_edit'])): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
+            '<i class="bi bi-pencil" aria-hidden="true"></i>Editar',
             ['action' => 'edit', $novelty->id],
-            ['class' => 'btn btn-warning btn-sm', 'escape' => false]
+            ['class' => 'btn btn-secondary', 'escape' => false]
         ) ?>
         <?php endif; ?>
     </div>
 </div>
 
-<!-- Main card -->
-<div class="card card-primary mb-4">
+<?php
+$noveltyPipelineLabels = $statusLabels;
+$noveltyPipelineLabels[NoveltyConstants::STATUS_CONTABILIDAD] = 'Paso a Nómina';
+$pipelineStepsToShow = $noveltyStatuses ?? $effectiveStatuses;
+$isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
+$noveltyName = $novelty->custom_name ?: ($novelty->employee->full_name ?? ('Novedad #' . $novelty->id));
+?>
+<div class="sgi-invoice-view-grid view-anim">
 
-    <!-- Header -->
-    <div class="card-header d-flex align-items-start justify-content-between gap-3" style="padding:1rem 1.25rem;">
-        <div class="d-flex align-items-start gap-3">
-            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:52px;height:52px;background:var(--primary-color);color:#fff;font-size:1.35rem;">
-                <i class="bi bi-calendar-check" aria-hidden="true"></i>
-            </div>
-            <div>
-                <div style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:var(--text-strong);line-height:1.15;">
-                    <?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?>
-                </div>
-                <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
-                    <span class="pill pill-secondary-soft"><?= h($novelty->novelty_type->name ?? '') ?></span>
-                    <span class="pill <?= $statusBadgeMap[$currentStatus] ?? 'pill-muted' ?>">
-                        <?= $statusLabels[$currentStatus] ?? ucfirst($currentStatus) ?>
-                    </span>
-                    <?php if ($isRejected): ?>
-                        <span class="pill pill-danger-soft">Rechazada</span>
-                    <?php endif; ?>
-                </div>
-                <?php if (!empty($novelty->novelty_massive_employees)): ?>
-                <div class="mt-1" style="font-size:.8rem;color:var(--text-faint);font-weight:500;">
-                    Masiva: <?= count($novelty->novelty_massive_employees) ?> empleados
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pipeline progress -->
-    <div class="sgi-pipeline-wrapper">
+    <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+    <aside class="sgi-invoice-view-left">
         <?php
-        $noveltyPipelineLabels = $statusLabels;
-        $noveltyPipelineLabels[NoveltyConstants::STATUS_CONTABILIDAD] = 'Paso a Nómina';
-        ?>
-        <?= $this->element('pipeline_progress', [
-            'pipelineStatuses' => $noveltyStatuses ?? $effectiveStatuses,
-            'pipelineLabels' => $noveltyPipelineLabels,
-            'currentStatus' => $currentStatus,
-            'isRejected' => $isRejected,
-            'statusIcons' => $statusIcons,
-        ]) ?>
-    </div>
+        $registryLines = [];
+        if ($novelty->registered_by_user) {
+            $registryLines[] = ['icon' => 'bi-person', 'html' => 'Registrado por ' . h($novelty->registered_by_user->full_name)];
+        }
+        if ($novelty->filing_date) {
+            $registryLines[] = ['icon' => 'bi-calendar3', 'html' => 'Diligenciada · <span class="mono">' . $novelty->filing_date->format('d/m/Y') . '</span>'];
+        }
+        if ($novelty->modified) {
+            $registryLines[] = ['icon' => 'bi-pencil-square', 'html' => 'Modificada · <span class="mono">' . $novelty->modified->format('d/m/Y') . '</span>'];
+        }
 
-    <!-- Two-column data: Información | Gestión -->
-    <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
-        <div class="col-md-6" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-label">Información de la Novedad</div>
+        echo $this->element('pipeline_sidebar', [
+            'icon'           => 'calendar-check',
+            'idLabel'        => $noveltyName,
+            'typeLabel'      => $novelty->novelty_type->name ?? null,
+            'statusPill'     => $statusBadgeMap[$currentStatus] ?? 'pill-muted',
+            'statusLabel'    => $statusLabels[$currentStatus] ?? ucfirst($currentStatus),
+            'isRejected'     => $isRejected,
+            'entityLabel'    => 'Fecha del Permiso',
+            'entityValue'    => $novelty->permission_date?->format('d/m/Y') ?? '—',
+            'entitySubLabel' => $scheduleLabels[$novelty->schedule_type] ?? null,
+            'entitySubIcon'  => 'bi-clock',
+            'amountLabel'    => null,
+            'amount'         => null,
+            'pipelineSteps'  => $pipelineStepsToShow,
+            'pipelineLabels' => $noveltyPipelineLabels,
+            'currentStatus'  => $currentStatus,
+            'isTerminal'     => $isNovTerminal,
+            'modifiedAt'     => $novelty->modified ?? null,
+            'registryLines'  => $registryLines,
+        ]);
+        ?>
+    </aside>
+
+    <!-- ═══════════════════ CONTENIDO ═══════════════════ -->
+    <main class="sgi-invoice-view-right">
+
+    <!-- Información + Gestión -->
+    <div class="card">
+    <div class="row g-0">
+        <div class="col-md-6" style="border-right:1px solid var(--rule);">
+            <div class="sgi-section-head" style="padding:14px 18px 0;">
+                <span class="sgi-label">Información de la Novedad</span>
+            </div>
             <?php if ($novelty->employee): ?>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Empleado</span>
@@ -186,7 +211,9 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
         </div>
 
         <div class="col-md-6">
-            <div class="sgi-label">Gestión</div>
+            <div class="sgi-section-head" style="padding:14px 18px 0;">
+                <span class="sgi-label">Gestión</span>
+            </div>
             <div class="sgi-data-row">
                 <span class="sgi-data-label">Registrado por</span>
                 <span class="sgi-data-value"><?= h($novelty->registered_by_user->full_name ?? '—') ?></span>
@@ -284,41 +311,21 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 
     <!-- General observations (legacy field) -->
     <?php if ($novelty->observations): ?>
-    <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-label">Observaciones de Rechazo</div>
-        <div style="padding:.25rem 1.25rem .875rem;font-size:var(--fs-title-card);color:var(--text-muted);line-height:1.65;">
+    <div style="border-top:1px solid var(--rule);">
+        <div class="sgi-section-head" style="padding:14px 18px 0;">
+            <span class="sgi-label">Observaciones de Rechazo</span>
+        </div>
+        <div style="padding:.25rem 18px 14px;font-size:var(--fs-body);color:var(--text-muted);line-height:1.55;">
             <?= nl2br(h($novelty->observations)) ?>
         </div>
     </div>
     <?php endif; ?>
-
-    <!-- Contact bar -->
-    <div class="sgi-contact-bar">
-        <?php if ($novelty->registered_by_user): ?>
-        <div class="sgi-contact-item">
-            <i class="bi bi-person" aria-hidden="true"></i>
-            <span>Registrado por <?= h($novelty->registered_by_user->full_name) ?></span>
-        </div>
-        <?php endif; ?>
-        <?php if ($novelty->created): ?>
-        <div class="sgi-contact-item">
-            <i class="bi bi-calendar3" aria-hidden="true"></i>
-            <span>Creado: <?= $novelty->created->format('d/m/Y') ?></span>
-        </div>
-        <?php endif; ?>
-        <?php if ($novelty->modified): ?>
-        <div class="sgi-contact-item">
-            <i class="bi bi-pencil-square" aria-hidden="true"></i>
-            <span>Modificado: <?= $novelty->modified->format('d/m/Y') ?></span>
-        </div>
-        <?php endif; ?>
-    </div>
-</div>
+    </div><!-- /card Información + Gestión -->
 
 <!-- Documents (read-only, grid layout like invoices/view) -->
-<div class="card card-primary mb-4">
-    <div class="card-header">
-        <span class="d-flex align-items-center gap-2">
+<div class="card" style="padding:18px 20px;">
+    <div class="sgi-section-head" style="margin-bottom:12px;">
+        <span class="sgi-label d-inline-flex align-items-center gap-2">
             <i class="bi bi-paperclip" aria-hidden="true"></i>
             Soportes
             <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
@@ -381,8 +388,13 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 
 <!-- Change History -->
 <?php if (!empty($novelty->novelty_histories)): ?>
-<div class="card">
-    <div class="card-header">Historial de Cambios</div>
+<div class="card" style="padding:18px 20px;">
+    <div class="sgi-section-head" style="margin-bottom:12px;">
+        <span class="sgi-label d-inline-flex align-items-center gap-2">
+            <i class="bi bi-clock-history" aria-hidden="true"></i>
+            Historial de Cambios
+        </span>
+    </div>
     <div class="table-responsive">
         <table class="table table-sm table-hover mb-0">
             <thead>
@@ -409,3 +421,6 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
     </div>
 </div>
 <?php endif; ?>
+
+    </main>
+</div><!-- /sgi-invoice-view-grid -->

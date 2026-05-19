@@ -292,8 +292,8 @@ $beneficiaryName = $viewModel->invoice->provider->name
         // Las secciones general/dates/classification van a la card "Datos
         // Generales" SIEMPRE (los partials manejan el estado disabled cuando
         // el rol/estado no permite edicion). visibleSections del policy nunca
-        // las incluye porque originalmente esos campos los pintaba el
-        // sgi-ledger; ahora la card los renderiza siempre como inputs read-only
+        // las incluye porque originalmente esos campos vivían en otro lugar;
+        // ahora la card los renderiza siempre como inputs read-only
         // cuando aplica.
         $generalSectionKeys = ['general', 'dates', 'classification'];
         $stageSectionKeys = ['revision', 'accounting', 'treasury', 'payment_authorization'];
@@ -356,7 +356,7 @@ $beneficiaryName = $viewModel->invoice->provider->name
                 </div>
             </div>
             <div class="sgi-edit-stage-body">
-                <div class="sgi-form-sections">
+                <div>
                     <?php foreach ($visibleStageSections as $sectionName): ?>
 
                     <?php if ($sectionName === 'revision'): ?>

@@ -179,7 +179,7 @@ La validación se hace de forma manual: levantar `php bin/cake server` y ejercit
 - Colors: dark (#212529), green (#469D61), orange (#CD6A15).
 - JS common: `webroot/js/sgi-common.js` auto-initializes Flatpickr, AutoNumeric, Select2.
 - PDF: TCPDF + FPDI. Excel: PhpSpreadsheet.
-- Pipeline elements: `pipeline_progress.php` (facturas), `advance_legalization_progress.php` (legalizaciones de anticipo), `petty_cash_progress.php`, `refund_progress.php`. Todos aceptan `isRejected` (bool).
+- Pipeline elements: `pipeline_progress.php` (stepper horizontal, usado en NoveltyLiquidationDocs), `progress_stepper.php` (stepper genérico parametrizable). El resto de módulos usan el sidebar vertical via `element/pipeline_sidebar.php` (hero + pipeline vertical + registro + acciones), dentro del layout `sgi-invoice-view-grid > sgi-invoice-view-left + sgi-invoice-view-right`.
 
 ## New Module Checklist
 

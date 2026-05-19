@@ -51,123 +51,107 @@ $this->assign('title', $pageTitle);
 // audit SU-008.
 ?>
 
+<?php
+$legIdLabel = $invoice->invoice_number ?? ('#' . $invoice->id);
+?>
 <!-- Encabezado de página -->
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Legalización del Anticipo</span>
-    <div class="d-flex gap-2">
+<div class="sgi-page-header d-flex justify-content-between align-items-start">
+    <div style="min-width:0;">
+        <div class="sgi-breadcrumb">
+            <?= $this->Html->link('Anticipos', ['action' => 'index']) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <?= $this->Html->link(h($legIdLabel), ['action' => 'view', $invoice->id]) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <span class="current">Legalización</span>
+        </div>
+        <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
+            <span class="sgi-page-title">Legalización del Anticipo</span>
+            <span class="sgi-edit-id-chip"><?= h($legIdLabel) ?></span>
+            <span class="pill <?= h($ps[1]) ?>"><?= h($ps[0]) ?></span>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
+            '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
-            ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
         ) ?>
     </div>
 </div>
 
-<!-- Layout: formulario izquierda + soportes derecha -->
-<div class="sgi-invoice-layout">
+<?php
+$casePipelineStatuses = AdvanceConstants::PIPELINE_STATUSES_BY_CASE[$leg->case_type ?? '']
+    ?? AdvanceConstants::PIPELINE_STATUSES_EXACTO;
+$isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
+?>
+<div class="sgi-invoice-view-grid view-anim">
 
-<!-- ── Columna izquierda ── -->
-<div class="sgi-invoice-form">
-<div class="card card-primary mb-4">
+    <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
+    <aside class="sgi-invoice-view-left">
+        <?php
+        $registryLines = [];
+        $registryLines[] = ['icon' => 'bi-person', 'html' => 'Rol: <strong style="color:var(--text-default);">' . h($roleName) . '</strong>'];
+        if ($leg->created) {
+            $registryLines[] = ['icon' => 'bi-calendar3', 'html' => 'Iniciada · <span class="mono">' . $leg->created->format('d/m/Y') . '</span>'];
+        }
+        if ($leg->legalized_at) {
+            $registryLines[] = ['icon' => 'bi-check-circle', 'html' => 'Legalizada · <span class="mono">' . date('d/m/Y H:i', strtotime((string)$leg->legalized_at)) . '</span>'];
+        }
 
-    <!-- Cabecera: identificador + estado -->
-    <div class="card-header d-flex align-items-center justify-content-between gap-3">
-        <div class="d-flex align-items-center gap-3">
-            <div class="sgi-icon-chip">
-                <i class="bi bi-clipboard-check" aria-hidden="true"></i>
-            </div>
+        // Extra info bajo el monto: diferencia + caso
+        ob_start();
+        ?>
+        <div style="margin-top:14px;display:flex;gap:18px;">
             <div>
-                <div class="sgi-card-title mono">
-                    Legalización <?= h($invoice->invoice_number ?? '#' . $invoice->id) ?>
-                </div>
-                <div class="sgi-card-subtitle mt-1">
-                    Beneficiario: <strong style="color:var(--text-faint);"><?= h($beneficiary) ?></strong>
-                </div>
-            </div>
-        </div>
-        <span class="pill <?= $ps[1] ?>"><?= $ps[0] ?></span>
-    </div>
-
-    <!-- Pipeline progress: filtrado por caso para no mostrar pasos que no aplican.
-         Mientras no se decide el caso (case_type=null), se asume el flujo más
-         corto (EXACTO); el pipeline crecerá automáticamente cuando Contabilidad
-         declare faltante o sobrante. -->
-    <?php
-    $casePipelineStatuses = AdvanceConstants::PIPELINE_STATUSES_BY_CASE[$leg->case_type ?? '']
-        ?? AdvanceConstants::PIPELINE_STATUSES_EXACTO;
-    ?>
-    <div class="sgi-pipeline-wrapper">
-        <?= $this->element('pipeline_progress', [
-            'currentStatus' => $leg->status,
-            'pipelineStatuses' => $casePipelineStatuses,
-            'pipelineLabels' => $legPipelineLabels,
-            'isRejected' => false,
-            'statusIcons' => AdvancePresentation::STATUS_ICONS,
-        ]) ?>
-    </div>
-
-    <!-- Ledger -->
-    <div class="sgi-ledger-wrapper">
-        <div class="sgi-ledger">
-            <!-- Fila 1: Beneficiario + Documento + Anticipo -->
-            <div class="sgi-ledger-item" style="grid-column:span 2;">
-                <div class="sgi-ledger-label">Beneficiario (<?= h($beneficiaryKind) ?>)</div>
-                <div class="sgi-ledger-value" title="<?= h($beneficiary) ?>">
-                    <?= h($beneficiary) ?>
-                </div>
-            </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Documento</div>
-                <div class="sgi-ledger-value"><?= h(trim($beneficiaryDocType . ' ' . ($beneficiaryDoc ?? '—'))) ?></div>
-            </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Anticipo</div>
-                <div class="sgi-ledger-value --amount">
-                    $ <?= number_format($advanceTotal, 0, ',', '.') ?>
-                </div>
-            </div>
-            <!-- Fila 2: Vinculadas + Total Vinculado + Diferencia + Caso -->
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Facturas Vinculadas</div>
-                <div class="sgi-ledger-value"><?= $linkedCount ?></div>
-            </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Total Vinculado</div>
-                <div class="sgi-ledger-value --amount">
+                <div class="sgi-label" style="font-size:var(--fs-micro);">Vinculado</div>
+                <div style="font-size:var(--fs-body-lg);font-weight:700;color:var(--text-default);font-family:var(--font-mono);margin-top:2px;">
                     $ <?= number_format($linkedTotal, 0, ',', '.') ?>
                 </div>
             </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Diferencia</div>
-                <div class="sgi-ledger-value">
-                    <span class="pill <?= $diffBadgeClass ?>">
+            <div>
+                <div class="sgi-label" style="font-size:var(--fs-micro);">Diferencia</div>
+                <div style="margin-top:2px;">
+                    <span class="pill <?= $diffBadgeClass ?>" style="font-family:var(--font-mono);">
                         $ <?= number_format($diff, 0, ',', '.') ?>
                     </span>
                 </div>
             </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Caso</div>
-                <div class="sgi-ledger-value">
-                    <?php if ($leg->case_type): ?>
-                        <?= h($caseLabels[$leg->case_type] ?? $leg->case_type) ?>
-                    <?php else: ?>
-                        <span class="--muted">—</span>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <!-- Fila 3: Fechas -->
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Iniciada</div>
-                <div class="sgi-ledger-value"><?= $leg->created?->format('d/m/Y') ?? '—' ?></div>
-            </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Legalizada</div>
-                <div class="sgi-ledger-value"><?= $leg->legalized_at ? h(date('d/m/Y H:i', strtotime((string)$leg->legalized_at))) : '—' ?></div>
-            </div>
         </div>
-    </div>
+        <?php if ($leg->case_type): ?>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-muted);">
+            <i class="bi bi-tag" aria-hidden="true"></i>
+            Caso: <strong style="color:var(--text-default);"><?= h($caseLabels[$leg->case_type] ?? $leg->case_type) ?></strong>
+        </div>
+        <?php endif; ?>
+        <?php
+        $amountExtraHtml = ob_get_clean();
 
-    <div class="card-body p-4" style="padding-top:0 !important;">
+        echo $this->element('pipeline_sidebar', [
+            'icon'           => 'clipboard-check',
+            'idLabel'        => 'Legalización ' . ($invoice->invoice_number ?? ('#' . $invoice->id)),
+            'typeLabel'      => 'Legalización',
+            'statusPill'     => $ps[1],
+            'statusLabel'    => $ps[0],
+            'entityLabel'    => 'Beneficiario (' . $beneficiaryKind . ')',
+            'entityValue'    => $beneficiary,
+            'entitySubLabel' => trim($beneficiaryDocType . ' ' . ($beneficiaryDoc ?? '')),
+            'entitySubIcon'  => 'bi-card-text',
+            'amountLabel'    => 'Anticipo',
+            'amount'         => (float)$advanceTotal,
+            'amountExtraHtml' => $amountExtraHtml,
+            'pipelineSteps'  => $casePipelineStatuses,
+            'pipelineLabels' => $legPipelineLabels,
+            'currentStatus'  => $leg->status,
+            'isTerminal'     => $isLegTerminal,
+            'modifiedAt'     => $leg->modified ?? null,
+            'registryLines'  => $registryLines,
+        ]);
+        ?>
+    </aside>
+
+    <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
+    <main class="sgi-invoice-view-right">
+    <div class="card" style="padding:20px;">
 
         <!-- Sección: Facturas vinculadas -->
         <div class="mb-4">
@@ -236,7 +220,12 @@ $this->assign('title', $pageTitle);
 
         <!-- Sección: Acciones del estado -->
         <?php if ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
-        <div class="sgi-sticky-actions">
+        <div class="sgi-stage-actions">
+            <div class="sgi-stage-actions-head">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>Acción del paso actual
+                </span>
+            </div>
             <div class="d-flex flex-wrap gap-2 align-items-center">
                 <?= $this->Form->postLink(
                     '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Pasar a Revisión y Firmas',
@@ -247,15 +236,20 @@ $this->assign('title', $pageTitle);
             </div>
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_REVISION_FIRMAS): ?>
-        <div class="sgi-sticky-actions">
+        <div class="sgi-stage-actions">
+            <div class="sgi-stage-actions-head">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-pen" aria-hidden="true"></i>Acción del paso actual
+                </span>
+            </div>
             <div class="d-flex flex-wrap gap-2">
                 <?= $this->Form->postLink(
                     '<i class="bi bi-check-circle me-1" aria-hidden="true"></i>Marcar como firmado',
                     ['action' => 'markSigned', $leg->advance_invoice_id],
                     ['class' => 'btn btn-primary', 'escape' => false]
                 ) ?>
-                <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#advReturnModal">
-                    <i class="bi bi-arrow-return-left me-1" aria-hidden="true"></i>Devolver a Validación
+                <button type="button" class="btn btn-ghost-card sgi-fg-warning" data-bs-toggle="modal" data-bs-target="#advReturnModal">
+                    <i class="bi bi-arrow-return-left" aria-hidden="true"></i>Devolver a Validación
                 </button>
             </div>
         </div>
@@ -281,7 +275,12 @@ $this->assign('title', $pageTitle);
             </div>
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_CONTABILIDAD): ?>
-        <div class="sgi-sticky-actions">
+        <div class="sgi-stage-actions">
+            <div class="sgi-stage-actions-head">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-calculator" aria-hidden="true"></i>Acción del paso actual
+                </span>
+            </div>
             <?php if (abs($diff) < 0.005): ?>
             <?= $this->Form->postLink(
                 '<i class="bi bi-check-circle me-1" aria-hidden="true"></i>Marcar legalizada (caso exacto)',
@@ -323,7 +322,12 @@ $this->assign('title', $pageTitle);
             <?php endif; ?>
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_TESORERIA && $leg->case_type === AdvanceConstants::CASE_FALTANTE): ?>
-        <div class="sgi-sticky-actions">
+        <div class="sgi-stage-actions">
+            <div class="sgi-stage-actions-head">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-bank" aria-hidden="true"></i>Acción del paso actual
+                </span>
+            </div>
             <div class="d-flex flex-column gap-1 mb-3">
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-uppercase fw-semibold flex-shrink-0"
@@ -431,21 +435,18 @@ $this->assign('title', $pageTitle);
         </div>
         <?php endif; ?>
 
-    </div>
-</div>
-</div><!-- /columna izquierda -->
+    </div><!-- /card interior -->
 
-<!-- ── Columna derecha: soportes + observaciones ── -->
-<div class="sgi-invoice-sidebar">
-
-<!-- Soportes -->
-<div class="card card-primary mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" style="font-size:.85rem;" aria-hidden="true"></i>
-            <span style="font-size:.85rem;font-weight:600;">Soportes</span>
-        </span>
-    </div>
+    <!-- Soportes + Observaciones -->
+    <div class="sgi-edit-side-grid">
+    <!-- Soportes -->
+    <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
+        <div class="sgi-section-head" style="margin-bottom:12px;">
+            <span class="sgi-label d-inline-flex align-items-center gap-2">
+                <i class="bi bi-paperclip" aria-hidden="true"></i>
+                Soportes
+            </span>
+        </div>
 
     <!-- Documento Especial: Relación de facturas -->
     <div style="padding:.3rem .875rem;background:rgba(70,157,97,.06);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
@@ -605,11 +606,13 @@ $this->assign('title', $pageTitle);
 
 <!-- Observaciones -->
 <?php $obsCount = count($invoice->invoice_observations ?? []); ?>
-<div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
-    <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);" aria-hidden="true"></i>
-        <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
-        <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
+<div class="card sgi-obs-card" style="padding:18px 20px;display:flex;flex-direction:column;">
+    <div class="sgi-section-head" style="margin-bottom:12px;">
+        <span class="sgi-label d-inline-flex align-items-center gap-2">
+            <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+            Observaciones
+            <span id="obs-count" class="sgi-folder-count" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
+        </span>
     </div>
 
     <div id="obs-chat-scroll" class="sgi-obs-list">
@@ -639,9 +642,9 @@ $this->assign('title', $pageTitle);
     </div>
 </div>
 
-</div><!-- /columna derecha -->
-
-</div><!-- /layout -->
+    </div><!-- /sgi-edit-side-grid -->
+    </main>
+</div><!-- /sgi-invoice-view-grid -->
 
 <?php if ($leg && $leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
 <?php

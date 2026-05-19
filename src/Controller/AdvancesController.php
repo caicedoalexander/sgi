@@ -93,6 +93,11 @@ class AdvancesController extends AppController
 
         $query->where($this->_visibleStatusConditions('Invoices.pipeline_status', $visibleStatuses));
 
+        $pipelineStatus = (string)$this->request->getQuery('pipeline_status', '');
+        if ($pipelineStatus !== '') {
+            $query->where(['Invoices.pipeline_status' => $pipelineStatus]);
+        }
+
         $advances = $this->paginate($query);
 
         $this->set(compact('advances', 'visibleStatuses'));
@@ -115,6 +120,11 @@ class AdvancesController extends AppController
                 'AdvanceLegalization',
             ])
             ->orderBy(['Invoices.created' => 'DESC']);
+
+        $pipelineStatus = (string)$this->request->getQuery('pipeline_status', '');
+        if ($pipelineStatus !== '') {
+            $query->where(['Invoices.pipeline_status' => $pipelineStatus]);
+        }
 
         $advances = $this->paginate($query);
         $visibleStatuses = [];

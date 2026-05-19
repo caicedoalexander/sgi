@@ -10,13 +10,27 @@ $validItems = $result['valid'] ?? [];
 $errors = $result['errors'] ?? [];
 ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Previsualización de Importación — <?= h($record->code) ?></span>
-    <?= $this->Html->link(
-        '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Cancelar',
-        ['action' => 'edit', $record->id],
-        ['class' => 'btn btn-sm btn-outline-secondary', 'escape' => false]
-    ) ?>
+<div class="sgi-page-header d-flex justify-content-between align-items-start">
+    <div style="min-width:0;">
+        <div class="sgi-breadcrumb">
+            <?= $this->Html->link('Programación de Pagos', ['action' => 'index']) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <?= $this->Html->link(h($record->code), ['action' => 'edit', $record->id]) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <span class="current">Previsualización</span>
+        </div>
+        <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
+            <span class="sgi-page-title">Previsualización de Importación</span>
+            <span class="sgi-edit-id-chip"><?= h($record->code) ?></span>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0">
+        <?= $this->Html->link(
+            '<i class="bi bi-arrow-left" aria-hidden="true"></i>Cancelar',
+            ['action' => 'edit', $record->id],
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
+        ) ?>
+    </div>
 </div>
 
 <?php if (!empty($errors)): ?>

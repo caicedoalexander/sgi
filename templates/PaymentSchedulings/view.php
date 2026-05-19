@@ -11,312 +11,235 @@ use App\View\Presentation\PaymentSchedulingPresentation;
 
 $this->assign('title', 'Programación ' . h($record->code));
 
-$ps = [
-    PaymentSchedulingConstants::STATUS_LABELS[$record->pipeline_status] ?? 'Desconocido',
-    PaymentSchedulingPresentation::STATUS_BADGES[$record->pipeline_status] ?? 'pill-muted',
-];
-?>
+$statusLabels = PaymentSchedulingConstants::STATUS_LABELS;
+$psStatusPills = PaymentSchedulingPresentation::STATUS_BADGES;
+$psStatusPill = $psStatusPills[$record->pipeline_status] ?? 'pill-muted';
+$psStatusLabel = $statusLabels[$record->pipeline_status] ?? $record->pipeline_status;
 
-<!-- Encabezado de página -->
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Ver Programación</span>
-    <div class="d-flex gap-2">
-        <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
-            ['action' => 'index'],
-            ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
-        ) ?>
-        <?= $this->Html->link(
-            '<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
-            ['action' => 'edit', $record->id],
-            ['class' => 'btn btn-warning btn-sm', 'escape' => false]
-        ) ?>
-    </div>
-</div>
-
-<!-- Tarjeta principal del documento -->
-<div class="card card-primary mb-4">
-
-    <!-- Cabecera: código + monto -->
-    <div class="card-header d-flex align-items-start justify-content-between gap-3"
-         style="padding:1rem 1.25rem;">
-        <div class="d-flex align-items-start gap-3">
-            <!-- Ícono -->
-            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:52px;height:52px;background:var(--primary-color);color:#fff;font-size:1.35rem;">
-                <i class="bi bi-calendar2-check" aria-hidden="true"></i>
-            </div>
-            <!-- Código, título y badges -->
-            <div>
-                <div class="mono" style="font-size:1.25rem;font-weight:700;letter-spacing:-.03em;color:var(--text-strong);line-height:1.15;">
-                    <?= h($record->code) ?>
-                </div>
-                <div class="mt-1 d-flex align-items-center gap-2 flex-wrap">
-                    <span class="pill <?= $ps[1] ?>"><?= $ps[0] ?></span>
-                </div>
-                <div class="mt-1" style="font-size:.8rem;color:var(--text-faint);font-weight:500;">
-                    <?= h($record->title) ?: '<span class="text-muted">Sin título</span>' ?>
-                </div>
-            </div>
-        </div>
-        <!-- Monto destacado -->
-        <div class="text-end flex-shrink-0">
-            <div style="font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text-disabled);margin-bottom:.2rem;">Total</div>
-            <div style="font-size:1.55rem;font-weight:700;letter-spacing:-.04em;color:var(--primary-color);line-height:1;white-space:nowrap;">
-                $ <?= $this->Number->format($total, ['places' => 0]) ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pipeline progress -->
-    <div class="sgi-pipeline-wrapper">
-        <div class="d-flex align-items-center justify-content-between">
-            <?php foreach (PaymentSchedulingConstants::PIPELINE_STATUSES as $i => $status): ?>
-            <?php
-                $currentIdx = array_search($record->pipeline_status, PaymentSchedulingConstants::PIPELINE_STATUSES);
-                $thisIdx = array_search($status, PaymentSchedulingConstants::PIPELINE_STATUSES);
-                $isCurrent = $status === $record->pipeline_status;
-                $isPast = $thisIdx < $currentIdx;
-                $icon = PaymentSchedulingPresentation::STATUS_ICONS[$status] ?? 'bi-circle';
-            ?>
-            <div class="d-flex align-items-center gap-2" style="<?= !$isCurrent && !$isPast ? 'opacity:.4;' : '' ?>">
-                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:32px;height:32px;border:2px solid <?= $isPast || $isCurrent ? 'var(--primary-color)' : 'var(--border-faint)' ?>;background:<?= $isPast || $isCurrent ? 'var(--primary-color)' : '#fff' ?>;color:<?= $isPast || $isCurrent ? '#fff' : '#bbb' ?>;font-size:.85rem;">
-                    <?php if ($isPast): ?>
-                        <i class="bi bi-check-lg" aria-hidden="true"></i>
-                    <?php else: ?>
-                        <i class="bi <?= $icon ?>" aria-hidden="true"></i>
-                    <?php endif; ?>
-                </div>
-                <span style="font-size:var(--fs-body-sm);font-weight:<?= $isCurrent ? '700' : '500' ?>;color:<?= $isCurrent ? '#111' : ($isPast ? 'var(--primary-color)' : '#aaa') ?>;">
-                    <?= $pipelineLabels[$status] ?? $status ?>
-                </span>
-            </div>
-            <?php if ($i < count(PaymentSchedulingConstants::PIPELINE_STATUSES) - 1): ?>
-            <div style="flex:1;height:2px;margin:0 .75rem;background:<?= $isPast ? 'var(--primary-color)' : '#e0e0e0' ?>;"></div>
-            <?php endif; ?>
-            <?php endforeach; ?>
-        </div>
-    </div>
-
-    <!-- Sección: Información General -->
-    <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
-        <div class="col-md-6" style="border-right:1px solid var(--border-color);">
-            <div class="sgi-label">Información</div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Código</span>
-                <span class="sgi-data-value mono"><?= h($record->code) ?></span>
-            </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Título</span>
-                <span class="sgi-data-value"><?= h($record->title) ?: '—' ?></span>
-            </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Estado</span>
-                <span class="sgi-data-value">
-                    <span class="pill <?= $ps[1] ?>"><?= $ps[0] ?></span>
-                </span>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="sgi-label">Detalles</div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Creado por</span>
-                <span class="sgi-data-value"><?= h($record->created_by_user->full_name ?? '—') ?></span>
-            </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Facturas</span>
-                <span class="sgi-data-value"><?= count($record->payment_scheduling_items ?? []) ?></span>
-            </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Monto Total</span>
-                <span class="sgi-data-value fw-bold" style="color:var(--primary-color);">$ <?= number_format($total, 0, ',', '.') ?></span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Facturas Vinculadas -->
-    <?php if (!empty($record->payment_scheduling_items)): ?>
-    <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-label">
-            Facturas Vinculadas
-            <span class="sgi-folder-count ms-1"><?= count($record->payment_scheduling_items) ?></span>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-sm mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th style="padding-left:1.25rem;">N. Factura</th>
-                        <th>Proveedor</th>
-                        <th>Banco</th>
-                        <th class="text-end" style="padding-right:1.25rem;">Monto</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($record->payment_scheduling_items as $item): ?>
-                    <tr>
-                        <td class="mono" style="padding-left:1.25rem;">
-                            <?= $this->Html->link(
-                                h($item->invoice->invoice_number ?? 'ID:' . $item->invoice_id),
-                                ['controller' => 'Invoices', 'action' => 'view', $item->invoice_id],
-                                ['class' => 'text-decoration-none']
-                            ) ?>
-                        </td>
-                        <td><?= h($item->invoice->provider->name ?? '—') ?></td>
-                        <td><?= h($item->banking_entity->name ?? '—') ?></td>
-                        <td class="text-end fw-bold" style="padding-right:1.25rem;">$ <?= number_format((float)$item->amount, 0, ',', '.') ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-                <tfoot class="table-light">
-                    <tr>
-                        <th colspan="3" style="padding-left:1.25rem;">Total</th>
-                        <th class="text-end" style="padding-right:1.25rem;">$ <?= number_format($total, 0, ',', '.') ?></th>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-    </div>
-    <?php endif; ?>
-
-
-    <!-- Barra de registro -->
-    <div class="sgi-contact-bar">
-        <?php if (!empty($record->created_by_user)): ?>
-        <div class="sgi-contact-item">
-            <i class="bi bi-person" aria-hidden="true"></i>
-            <span>Creado por <?= h($record->created_by_user->full_name) ?></span>
-        </div>
-        <?php endif; ?>
-        <?php if ($record->created): ?>
-        <div class="sgi-contact-item">
-            <i class="bi bi-calendar3" aria-hidden="true"></i>
-            <span>Creado: <?= $record->created?->format('d/m/Y') ?? '' ?></span>
-        </div>
-        <?php endif; ?>
-        <?php if ($record->modified): ?>
-        <div class="sgi-contact-item">
-            <i class="bi bi-pencil-square" aria-hidden="true"></i>
-            <span>Modificado: <?= $record->modified?->format('d/m/Y') ?? '' ?></span>
-        </div>
-        <?php endif; ?>
-    </div>
-
-</div>
-
-<!-- Soportes -->
-<?php
+$isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PAGADA;
+$itemCount = count($record->payment_scheduling_items ?? []);
 $documents = $record->payment_scheduling_documents ?? [];
-$totalDocs = count($documents);
+$observations = $record->payment_scheduling_observations ?? [];
 ?>
-<div class="card card-primary mb-4">
-    <div class="card-header">
-        <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" aria-hidden="true"></i>
-            Soportes
-            <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
-        </span>
-    </div>
 
-    <?php if (empty($documents)): ?>
-        <div class="p-3 text-center text-muted" style="font-size:var(--fs-title-card)">
-            <i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin soportes adjuntos
+<!-- Page header -->
+<div class="sgi-page-header d-flex justify-content-between align-items-start">
+    <div style="min-width:0;">
+        <div class="sgi-breadcrumb">
+            <?= $this->Html->link('Programación de Pagos', ['action' => 'index']) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <span class="current"><?= h($record->code) ?></span>
         </div>
-    <?php else: ?>
-        <div class="p-3">
-            <div class="row row-cols-1 row-cols-md-3 g-3">
-                <?php foreach ($documents as $att): ?>
-                <div class="col">
-                    <div style="border:1px solid var(--border-color);height:100%;display:flex;flex-direction:column;">
-                        <!-- Card header: icono + nombre -->
-                        <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:var(--bg-muted);display:flex;align-items:center;gap:.5rem;min-width:0;">
-                            <i class="bi <?= h($this->DocumentIcon->iconClassByName($att->file_name)) ?> flex-shrink-0"
-                               style="color:<?= h($this->DocumentIcon->iconColorByName($att->file_name)) ?>;font-size:1.1rem;"></i>
-                            <div style="min-width:0;flex:1;overflow:hidden;">
-                                <span style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($att->file_name) ?>">
-                                    <?= h($att->file_name) ?>
-                                </span>
-                            </div>
-                        </div>
-                        <!-- Card body: usuario + fecha -->
-                        <div style="padding:.6rem .875rem;flex:1;font-size:var(--fs-body);color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
-                            <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-muted);">
-                                <i class="bi bi-person" style="font-size:.8rem;" aria-hidden="true"></i>
-                                <span><?= h($att->uploaded_by_user->full_name ?? '—') ?></span>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-faint);">
-                                <i class="bi bi-clock" style="font-size:var(--fs-body-sm);" aria-hidden="true"></i>
-                                <span><?= $att->created?->format('d/m/Y H:i') ?></span>
-                            </div>
-                        </div>
-                        <!-- Card footer: botón abrir -->
-                        <div style="padding:.5rem .875rem;border-top:1px solid var(--border-color);text-align:right;">
-                            <?= $this->Html->link(
-                                '<i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Abrir',
-                                '/' . $att->file_path,
-                                ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank']
-                            ) ?>
-                        </div>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
+        <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
+            <span class="sgi-page-title">Ver Programación</span>
+            <span class="sgi-edit-id-chip"><?= h($record->code) ?></span>
+            <span class="pill <?= $psStatusPill ?>"><?= h($psStatusLabel) ?></span>
         </div>
-    <?php endif; ?>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0">
+        <?= $this->Html->link(
+            '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
+            ['action' => 'index'],
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
+        ) ?>
+        <?php if (!$isTerminal): ?>
+        <?= $this->Html->link(
+            '<i class="bi bi-pencil" aria-hidden="true"></i>Editar',
+            ['action' => 'edit', $record->id],
+            ['class' => 'btn btn-secondary', 'escape' => false]
+        ) ?>
+        <?php endif; ?>
+    </div>
 </div>
 
-<!-- Observaciones -->
-<?php $observations = $record->payment_scheduling_observations ?? []; ?>
-<?php if (!empty($observations)): ?>
-<?php $statusLabels = \App\Constants\PaymentSchedulingConstants::STATUS_LABELS; ?>
-<div class="card card-primary mb-4">
-    <div class="card-header">
-        <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-            Observaciones
-            <span class="sgi-folder-count"><?= count($observations) ?></span>
-        </span>
-    </div>
-    <div style="padding:.5rem 1.25rem .875rem;max-height:400px;overflow-y:auto;">
-        <?php foreach ($observations as $obs): ?>
+<div class="sgi-invoice-view-grid view-anim">
+
+    <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+    <aside class="sgi-invoice-view-left">
         <?php
-            $isRegression = ($obs->type ?? null) === \App\Constants\PaymentSchedulingConstants::OBSERVATION_TYPE_REGRESSION;
-            $meta = $obs->metadata ?? [];
-            $fromLbl = $statusLabels[$meta['from_status'] ?? ''] ?? null;
-            $toLbl = $statusLabels[$meta['to_status'] ?? ''] ?? null;
+        $registryLines = [];
+        if ($record->hasValue('created_by_user')) {
+            $registryLines[] = ['icon' => 'bi-person', 'html' => 'Creado por ' . h($record->created_by_user->full_name)];
+        }
+        if ($record->created) {
+            $registryLines[] = ['icon' => 'bi-calendar3', 'html' => 'Creado · <span class="mono">' . $record->created->format('d/m/Y H:i') . '</span>'];
+        }
+        if ($record->modified) {
+            $registryLines[] = ['icon' => 'bi-pencil-square', 'html' => 'Modificado · <span class="mono">' . $record->modified->format('d/m/Y') . '</span>'];
+        }
+
+        echo $this->element('pipeline_sidebar', [
+            'icon'           => 'calendar2-check',
+            'idLabel'        => $record->code,
+            'typeLabel'      => 'Programación',
+            'statusPill'     => $psStatusPill,
+            'statusLabel'    => $psStatusLabel,
+            'entityLabel'    => 'Título',
+            'entityValue'    => $record->title ?: '—',
+            'entitySubLabel' => $itemCount . ' factura' . ($itemCount !== 1 ? 's' : ''),
+            'entitySubIcon'  => 'bi-receipt',
+            'amountLabel'    => 'Monto Total',
+            'amount'         => (float)$total,
+            'pipelineSteps'  => PaymentSchedulingConstants::PIPELINE_STATUSES,
+            'pipelineLabels' => $pipelineLabels,
+            'currentStatus'  => $record->pipeline_status,
+            'isTerminal'     => $isTerminal,
+            'modifiedAt'     => $record->modified,
+            'registryLines'  => $registryLines,
+        ]);
         ?>
-        <div class="d-flex align-items-start gap-2 mb-3">
-            <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:32px;height:32px;background:<?= $isRegression ? 'var(--secondary-color)' : 'var(--primary-color)' ?>;color:#fff;font-size:.7rem;font-weight:700;">
-                <?php
-                $names = explode(' ', $obs->user->full_name ?? '');
-                echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
-                ?>
-            </div>
-            <div style="flex:1;min-width:0;">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span style="font-size:.8rem;font-weight:600;color:var(--text-default);">
-                        <?= h($obs->user->full_name ?? '') ?>
-                    </span>
-                    <?php if ($isRegression): ?>
-                        <span class="pill pill-warning-soft" style="font-size:var(--fs-label);">Regresión</span>
-                    <?php endif; ?>
-                    <span style="font-size:.7rem;color:var(--text-disabled);">
-                        <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
-                    </span>
-                </div>
-                <?php if ($isRegression && $fromLbl && $toLbl): ?>
-                    <div style="font-size:var(--fs-body-sm);color:var(--text-muted);margin-top:.1rem;">
-                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>
-                        <?= h($fromLbl) ?> &rarr; <?= h($toLbl) ?>
+    </aside>
+
+    <!-- ═══════════════════ CONTENIDO ═══════════════════ -->
+    <main class="sgi-invoice-view-right">
+
+        <!-- Información general -->
+        <div class="card">
+            <div class="row g-0">
+                <div class="col-md-6" style="border-right:1px solid var(--rule);">
+                    <div class="sgi-section-head" style="padding:14px 18px 0;">
+                        <span class="sgi-label">Información</span>
                     </div>
-                <?php endif; ?>
-                <div style="font-size:.84rem;color:var(--text-muted);line-height:1.5;margin-top:.15rem;">
-                    <?= nl2br(h($obs->message)) ?>
+                    <div class="sgi-data-row">
+                        <span class="sgi-data-label">Código</span>
+                        <span class="sgi-data-value mono"><?= h($record->code) ?></span>
+                    </div>
+                    <div class="sgi-data-row">
+                        <span class="sgi-data-label">Título</span>
+                        <span class="sgi-data-value"><?= h($record->title) ?: '—' ?></span>
+                    </div>
+                    <div class="sgi-data-row">
+                        <span class="sgi-data-label">Estado</span>
+                        <span class="sgi-data-value">
+                            <span class="pill <?= $psStatusPill ?>"><?= h($psStatusLabel) ?></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="sgi-section-head" style="padding:14px 18px 0;">
+                        <span class="sgi-label">Detalles</span>
+                    </div>
+                    <div class="sgi-data-row">
+                        <span class="sgi-data-label">Creado por</span>
+                        <span class="sgi-data-value"><?= h($record->created_by_user->full_name ?? '—') ?></span>
+                    </div>
+                    <div class="sgi-data-row">
+                        <span class="sgi-data-label">Facturas</span>
+                        <span class="sgi-data-value"><?= $itemCount ?></span>
+                    </div>
+                    <div class="sgi-data-row">
+                        <span class="sgi-data-label">Monto Total</span>
+                        <span class="sgi-data-value mono" style="color:var(--primary-color);font-weight:700;">$ <?= number_format((float)$total, 0, ',', '.') ?></span>
+                    </div>
                 </div>
             </div>
         </div>
-        <?php endforeach; ?>
-    </div>
+
+        <!-- Facturas Vinculadas -->
+        <?php if ($itemCount > 0): ?>
+        <div class="card" style="padding:18px 20px;">
+            <div class="sgi-section-head" style="margin-bottom:12px;">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-receipt" aria-hidden="true"></i>
+                    Facturas Vinculadas
+                    <span class="sgi-folder-count"><?= $itemCount ?></span>
+                </span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>N. Factura</th>
+                            <th>Proveedor</th>
+                            <th>Banco</th>
+                            <th class="text-end">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($record->payment_scheduling_items as $item): ?>
+                        <tr>
+                            <td>
+                                <?= $this->Html->link(
+                                    h($item->invoice->invoice_number ?? 'ID:' . $item->invoice_id),
+                                    ['controller' => 'Invoices', 'action' => 'view', $item->invoice_id],
+                                    ['class' => 'mono', 'style' => 'font-weight:600;']
+                                ) ?>
+                            </td>
+                            <td><?= h($item->invoice->provider->name ?? '—') ?></td>
+                            <td><?= h($item->banking_entity->name ?? '—') ?></td>
+                            <td class="text-end mono">$ <?= number_format((float)$item->amount, 0, ',', '.') ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold">Total</td>
+                            <td class="text-end fw-bold mono" style="color:var(--primary-color);">$ <?= number_format((float)$total, 0, ',', '.') ?></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Soportes + Observaciones -->
+        <div class="sgi-edit-side-grid">
+            <!-- Soportes -->
+            <div class="card" style="padding:18px 20px;">
+                <div class="sgi-section-head" style="margin-bottom:12px;">
+                    <span class="sgi-label d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-paperclip" aria-hidden="true"></i>
+                        Soportes
+                        <span class="sgi-folder-count"><?= count($documents) ?> doc<?= count($documents) !== 1 ? 's' : '' ?></span>
+                    </span>
+                </div>
+
+                <?php if (empty($documents)): ?>
+                <div class="sgi-dropzone-empty">
+                    <i class="bi bi-paperclip" aria-hidden="true"></i>
+                    <div>Sin soportes adjuntos</div>
+                </div>
+                <?php else: ?>
+                <div style="max-height:420px;overflow-y:auto;">
+                    <?php foreach ($documents as $att): ?>
+                        <?= $this->element('document_row', [
+                            'doc'       => $att,
+                            'canDelete' => false,
+                            'deleteUrl' => null,
+                            'showBadge' => false,
+                        ]) ?>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="card sgi-obs-card" style="padding:18px 20px;">
+                <div class="sgi-section-head" style="margin-bottom:12px;">
+                    <span class="sgi-label d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+                        Observaciones
+                        <span class="sgi-folder-count"><?= count($observations) ?></span>
+                    </span>
+                </div>
+
+                <?php if (empty($observations)): ?>
+                <div class="sgi-obs-empty">
+                    <i class="bi bi-chat-square-dots" aria-hidden="true" style="font-size:1.5rem;"></i>
+                    <span style="font-size:var(--fs-body-sm);">Sin observaciones</span>
+                </div>
+                <?php else: ?>
+                <div class="sgi-obs-list" style="max-height:400px;">
+                    <?php foreach ($observations as $obs): ?>
+                        <?= $this->element('observation_bubble', [
+                            'observation' => $obs,
+                            'isMine' => false,
+                        ]) ?>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+    </main>
 </div>
-<?php endif; ?>

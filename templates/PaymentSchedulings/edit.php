@@ -8,22 +8,43 @@ use App\Constants\PaymentSchedulingConstants;
 use App\View\Presentation\PaymentSchedulingPresentation;
 
 $this->assign('title', h($viewModel->pageTitle));
+
+$record = $viewModel->record;
+$psStatusPills  = PaymentSchedulingPresentation::STATUS_BADGES;
+$psStatusPill   = $psStatusPills[$record->pipeline_status] ?? 'pill-muted';
+$psStatusLabels = PaymentSchedulingConstants::STATUS_LABELS;
+$psStatusLabel  = $psStatusLabels[$record->pipeline_status] ?? $record->pipeline_status;
+
+$isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PAGADA;
 ?>
 <?= $this->element('cdn_autonumeric') ?>
 
-<!-- Encabezado de página -->
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Editar Programación</span>
-    <div class="d-flex gap-2">
+<!-- Page header -->
+<div class="sgi-page-header d-flex justify-content-between align-items-start">
+    <div style="min-width:0;">
+        <div class="sgi-breadcrumb">
+            <?= $this->Html->link('Programación de Pagos', ['action' => 'index']) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <?= $this->Html->link(h($record->code), ['action' => 'view', $record->id]) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <span class="current">Editar</span>
+        </div>
+        <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
+            <span class="sgi-page-title">Editar Programación</span>
+            <span class="sgi-edit-id-chip"><?= h($record->code) ?></span>
+            <span class="pill <?= $psStatusPill ?>"><?= h($psStatusLabel) ?></span>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0">
         <?= $this->Html->link(
-            '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
+            '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
-            ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
         ) ?>
         <?= $this->Html->link(
-            '<i class="bi bi-eye me-1" aria-hidden="true"></i>Ver',
-            ['action' => 'view', $viewModel->record->id],
-            ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
+            '<i class="bi bi-eye" aria-hidden="true"></i>Ver',
+            ['action' => 'view', $record->id],
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
         ) ?>
     </div>
 </div>
@@ -45,133 +66,90 @@ $this->assign('title', h($viewModel->pageTitle));
 </div>
 <?php endif; ?>
 
-<!-- Layout: formulario izquierda + soportes derecha -->
-<div class="sgi-invoice-layout">
+<div class="sgi-invoice-view-grid view-anim">
 
-<!-- ── Columna izquierda: ficha principal ── -->
-<div class="sgi-invoice-form">
-<div class="card card-primary mb-4">
+    <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
+    <aside class="sgi-invoice-view-left">
+        <?php
+        $actionsHtml = null;
+        if (!empty($viewModel->canRegress)):
+            $prevLabel = $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus;
+            $isLocked = !empty($viewModel->regressLockMessage);
+            ob_start();
+            if ($isLocked): ?>
+                <button type="button" class="btn" disabled title="<?= h($viewModel->regressLockMessage) ?>">
+                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar al paso anterior
+                </button>
+            <?php else: ?>
+                <button type="button" class="btn"
+                        data-bs-toggle="modal" data-bs-target="#regressStatusModal">
+                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
+                </button>
+            <?php endif;
+            $actionsHtml = ob_get_clean();
+        endif;
 
-    <!-- Cabecera: identificador + rol + estado -->
-    <div class="card-header d-flex align-items-center justify-content-between gap-3">
-        <div class="d-flex align-items-center gap-3">
-            <div class="sgi-icon-chip">
-                <i class="bi bi-calendar2-check" aria-hidden="true"></i>
-            </div>
-            <div>
-                <div class="sgi-card-title mono">
-                    <?= h($viewModel->record->code) ?>
-                </div>
-                <div class="sgi-card-subtitle mt-1">
-                    Rol: <strong style="color:var(--text-faint);"><?= h($viewModel->roleName) ?></strong>
-                </div>
-            </div>
-        </div>
-        <span class="pill <?= $viewModel->currentStatusBadge[1] ?>"><?= $viewModel->currentStatusBadge[0] ?></span>
-    </div>
+        $registryLines = [
+            ['icon' => 'bi-person', 'html' => 'Rol: <strong style="color:var(--text-default);">' . h($viewModel->roleName) . '</strong>'],
+        ];
+        if ($record->hasValue('created_by_user')) {
+            $registryLines[] = ['icon' => 'bi-person-badge', 'html' => 'Creado por ' . h($record->created_by_user->full_name)];
+        }
+        if ($record->created) {
+            $registryLines[] = ['icon' => 'bi-calendar3', 'html' => 'Creado · <span class="mono">' . $record->created->format('d/m/Y') . '</span>'];
+        }
 
-    <!-- Pipeline progress -->
-    <div class="sgi-pipeline-wrapper">
-        <div class="d-flex align-items-center justify-content-between">
-            <?php foreach (PaymentSchedulingConstants::PIPELINE_STATUSES as $i => $status): ?>
-            <?php
-                $currentIdx = array_search($viewModel->currentStatus, PaymentSchedulingConstants::PIPELINE_STATUSES);
-                $thisIdx = array_search($status, PaymentSchedulingConstants::PIPELINE_STATUSES);
-                $isCurrent = $status === $viewModel->currentStatus;
-                $isPast = $thisIdx < $currentIdx;
-                $icon = PaymentSchedulingPresentation::STATUS_ICONS[$status] ?? 'bi-circle';
-            ?>
-            <div class="d-flex align-items-center gap-2" style="<?= !$isCurrent && !$isPast ? 'opacity:.4;' : '' ?>">
-                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:32px;height:32px;border:2px solid <?= $isPast || $isCurrent ? 'var(--primary-color)' : 'var(--border-faint)' ?>;background:<?= $isPast || $isCurrent ? 'var(--primary-color)' : '#fff' ?>;color:<?= $isPast || $isCurrent ? '#fff' : '#bbb' ?>;font-size:.85rem;">
-                    <?php if ($isPast): ?>
-                        <i class="bi bi-check-lg" aria-hidden="true"></i>
-                    <?php else: ?>
-                        <i class="bi <?= $icon ?>" aria-hidden="true"></i>
-                    <?php endif; ?>
-                </div>
-                <span style="font-size:var(--fs-body-sm);font-weight:<?= $isCurrent ? '700' : '500' ?>;color:<?= $isCurrent ? '#111' : ($isPast ? 'var(--primary-color)' : '#aaa') ?>;">
-                    <?= $viewModel->pipelineLabels[$status] ?? $status ?>
+        echo $this->element('pipeline_sidebar', [
+            'icon'           => 'calendar2-check',
+            'idLabel'        => $record->code,
+            'typeLabel'      => 'Programación',
+            'statusPill'     => $psStatusPill,
+            'statusLabel'    => $psStatusLabel,
+            'entityLabel'    => 'Título',
+            'entityValue'    => $record->title ?: '—',
+            'entitySubLabel' => $viewModel->itemCount . ' factura' . ($viewModel->itemCount !== 1 ? 's' : ''),
+            'entitySubIcon'  => 'bi-receipt',
+            'amountLabel'    => 'Monto Total',
+            'amount'         => (float)$viewModel->total,
+            'pipelineSteps'  => PaymentSchedulingConstants::PIPELINE_STATUSES,
+            'pipelineLabels' => $viewModel->pipelineLabels,
+            'currentStatus'  => $record->pipeline_status,
+            'isTerminal'     => $isTerminal,
+            'modifiedAt'     => $record->modified,
+            'registryLines'  => $registryLines,
+            'actionsHtml'    => $actionsHtml,
+        ]);
+        ?>
+    </aside>
+
+    <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
+    <main class="sgi-invoice-view-right">
+
+        <!-- Facturas Vinculadas -->
+        <div class="card" style="padding:18px 20px;">
+            <div class="sgi-section-head" style="margin-bottom:12px;">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-receipt" aria-hidden="true"></i>
+                    Facturas Vinculadas
+                    <span class="sgi-folder-count"><?= $viewModel->itemCount ?></span>
                 </span>
-                <?php if ($isCurrent): ?>
-                <i class="bi bi-caret-left-fill" style="font-size:var(--fs-micro);color:var(--primary-color);" aria-hidden="true"></i>
-                <?php endif; ?>
-            </div>
-            <?php if ($i < count(PaymentSchedulingConstants::PIPELINE_STATUSES) - 1): ?>
-            <div style="flex:1;height:2px;margin:0 .75rem;background:<?= $isPast ? 'var(--primary-color)' : '#e0e0e0' ?>;"></div>
-            <?php endif; ?>
-            <?php endforeach; ?>
-        </div>
-    </div>
-
-    <!-- Ficha resumen (ledger) -->
-    <div class="sgi-ledger-wrapper">
-        <div class="sgi-ledger">
-            <div class="sgi-ledger-item" style="grid-column:span 2;">
-                <div class="sgi-ledger-label">Título</div>
-                <div class="sgi-ledger-value"><?= h($viewModel->record->title) ?: '—' ?></div>
-            </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Facturas</div>
-                <div class="sgi-ledger-value"><?= $viewModel->itemCount ?></div>
-            </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Monto Total</div>
-                <div class="sgi-ledger-value --amount">
-                    <?php if ($viewModel->total > 0): ?>
-                        $ <?= number_format($viewModel->total, 0, ',', '.') ?>
-                    <?php else: ?>
-                        <span class="--muted">—</span>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Creado por</div>
-                <div class="sgi-ledger-value"><?= h($viewModel->record->created_by_user->full_name ?? '—') ?></div>
-            </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Fecha Creación</div>
-                <div class="sgi-ledger-value"><?= $viewModel->record->created?->format('d/m/Y H:i') ?? '—' ?></div>
-            </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Estado</div>
-                <div class="sgi-ledger-value"><span class="pill <?= $viewModel->currentStatusBadge[1] ?>" style="font-size:.7rem;"><?= $viewModel->currentStatusBadge[0] ?></span></div>
-            </div>
-            <div class="sgi-ledger-item">
-                <div class="sgi-ledger-label">Última Modificación</div>
-                <div class="sgi-ledger-value"><?= $viewModel->record->modified?->format('d/m/Y H:i') ?? '—' ?></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card-body p-4" style="padding-top:0 !important;">
-
-        <!-- ── Sección: Facturas Vinculadas ── -->
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
-                    <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Vinculadas
-                    <span class="sgi-folder-count ms-1"><?= $viewModel->itemCount ?></span>
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
                 <?php if ($viewModel->isBorrador): ?>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#add-item-form">
-                        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Manual
+                <div class="d-flex gap-2 ms-auto">
+                    <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="collapse" data-bs-target="#add-item-form">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>Manual
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#importExcelModal">
-                        <i class="bi bi-file-earmark-excel me-1" aria-hidden="true"></i>Excel
+                    <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#importExcelModal">
+                        <i class="bi bi-file-earmark-excel" aria-hidden="true"></i>Excel
                     </button>
                 </div>
                 <?php endif; ?>
             </div>
 
             <?php if ($viewModel->isBorrador): ?>
-            <!-- Formulario agregar item manual -->
+            <!-- Form agregar item manual -->
             <div class="collapse mb-3" id="add-item-form">
-                <div class="card card-body" style="border-top:2px solid var(--primary-color);">
-                    <?= $this->Form->create(null, ['url' => ['action' => 'addItem', $viewModel->record->id]]) ?>
+                <div class="card" style="padding:12px;background:var(--bg-subtle);">
+                    <?= $this->Form->create(null, ['url' => ['action' => 'addItem', $record->id]]) ?>
                     <div class="row g-2 align-items-end">
                         <div class="col-md-4">
                             <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Factura (ID)</label>
@@ -199,198 +177,190 @@ $this->assign('title', h($viewModel->pageTitle));
             </div>
             <?php endif; ?>
 
-            <?php if (!empty($viewModel->record->payment_scheduling_items)): ?>
-            <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
-                <table class="table table-sm mb-0">
-                    <thead class="table-light">
+            <?php if (!empty($record->payment_scheduling_items)): ?>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
                         <tr>
                             <th>N. Factura</th>
                             <th>Proveedor</th>
                             <th>Banco</th>
                             <th class="text-end">Monto</th>
-                            <?php if ($viewModel->isBorrador): ?><th class="text-end">Acciones</th><?php endif; ?>
+                            <?php if ($viewModel->isBorrador): ?><th class="text-end" style="width:60px;"></th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($viewModel->record->payment_scheduling_items as $item): ?>
+                        <?php foreach ($record->payment_scheduling_items as $item): ?>
                         <tr>
-                            <td class="mono">
+                            <td>
                                 <?= $this->Html->link(
                                     h($item->invoice->invoice_number ?? 'ID:' . $item->invoice_id),
                                     ['controller' => 'Invoices', 'action' => 'view', $item->invoice_id],
-                                    ['class' => 'text-decoration-none']
+                                    ['class' => 'mono', 'style' => 'font-weight:600;']
                                 ) ?>
                             </td>
                             <td><?= h($item->invoice->provider->name ?? '—') ?></td>
                             <td><?= h($item->banking_entity->name ?? '—') ?></td>
-                            <td class="text-end fw-bold">$ <?= number_format((float)$item->amount, 0, ',', '.') ?></td>
+                            <td class="text-end mono">$ <?= number_format((float)$item->amount, 0, ',', '.') ?></td>
                             <?php if ($viewModel->isBorrador): ?>
                             <td class="text-end">
                                 <?= $this->Form->postLink(
-                                    '<i class="bi bi-trash" aria-hidden="true"></i>',
-                                    ['action' => 'removeItem', $viewModel->record->id, $item->id],
-                                    ['confirm' => '¿Desvincular esta factura?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false]
+                                    '<i class="bi bi-x-lg" aria-hidden="true"></i>',
+                                    ['action' => 'removeItem', $record->id, $item->id],
+                                    ['confirm' => '¿Desvincular esta factura?', 'class' => 'btn btn-sm btn-outline-danger', 'style' => 'padding:.15rem .4rem;font-size:.7rem;line-height:1;', 'escape' => false]
                                 ) ?>
                             </td>
                             <?php endif; ?>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
-                    <tfoot class="table-light">
+                    <tfoot>
                         <tr>
-                            <th colspan="3">Total</th>
-                            <th class="text-end">$ <?= number_format($viewModel->total, 0, ',', '.') ?></th>
-                            <?php if ($viewModel->isBorrador): ?><th></th><?php endif; ?>
+                            <td colspan="3" class="text-end fw-bold">Total</td>
+                            <td class="text-end fw-bold mono" style="color:var(--primary-color);">
+                                $ <?= number_format((float)$viewModel->total, 0, ',', '.') ?>
+                            </td>
+                            <?php if ($viewModel->isBorrador): ?><td></td><?php endif; ?>
                         </tr>
                     </tfoot>
                 </table>
             </div>
             <?php else: ?>
-            <div class="text-muted text-center py-3" style="font-size:.85rem;border:1px dashed var(--border-color);">
+            <div class="text-center sgi-fg-faint py-3" style="font-size:var(--fs-body);">
                 <i class="bi bi-receipt me-1" aria-hidden="true"></i>No hay facturas vinculadas
             </div>
             <?php endif; ?>
         </div>
 
         <?= $this->element('confirm_payment_card', [
-            'isVerificacionPago' => $viewModel->currentStatus === PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
+            'isVerificacionPago' => $record->pipeline_status === PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
             'canConfirm' => $viewModel->canConfirmPayment,
-            'confirmUrl' => ['action' => 'confirmPayment', $viewModel->record->id],
+            'confirmUrl' => ['action' => 'confirmPayment', $record->id],
             'message' => 'Los pagos fueron autorizados por el Contador. Confirme cuando el dinero haya salido del banco.',
         ]) ?>
 
-        <!-- Acciones pipeline -->
+        <!-- Soportes + Observaciones -->
+        <?php $documents = $record->payment_scheduling_documents ?? []; ?>
+        <div class="sgi-edit-side-grid">
+            <!-- Soportes -->
+            <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
+                <div class="sgi-section-head" style="margin-bottom:12px;">
+                    <span class="sgi-label d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-paperclip" aria-hidden="true"></i>
+                        Soportes
+                        <span class="sgi-folder-count"><?= count($documents) ?> doc<?= count($documents) !== 1 ? 's' : '' ?></span>
+                    </span>
+                    <?php if (!$viewModel->isPagada): ?>
+                    <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                        <i class="bi bi-upload" aria-hidden="true"></i>Subir
+                    </button>
+                    <?php endif; ?>
+                </div>
+
+                <div id="docs-empty-state" class="sgi-dropzone-empty" <?= !empty($documents) ? 'style="display:none;"' : '' ?>>
+                    <i class="bi bi-paperclip" aria-hidden="true"></i>
+                    <div>Sin soportes adjuntos</div>
+                </div>
+                <div id="docs-list" style="max-height:420px;overflow-y:auto;">
+                    <?php foreach ($documents as $att): ?>
+                        <?= $this->element('document_row', [
+                            'doc'       => $att,
+                            'canDelete' => !$viewModel->isPagada,
+                            'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $att->id]),
+                            'showBadge' => false,
+                        ]) ?>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <?php $obsCount = count($record->payment_scheduling_observations ?? []); ?>
+            <div class="card sgi-obs-card" style="padding:18px 20px;display:flex;flex-direction:column;">
+                <div class="sgi-section-head" style="margin-bottom:12px;">
+                    <span class="sgi-label d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+                        Observaciones
+                        <span id="obs-count" class="sgi-folder-count" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
+                    </span>
+                </div>
+
+                <div id="obs-chat-scroll" class="sgi-obs-list">
+                    <?php foreach ($record->payment_scheduling_observations ?? [] as $obs): ?>
+                        <?= $this->element('observation_bubble', [
+                            'observation' => $obs,
+                            'isMine' => $currentUser && $obs->user_id === $currentUser->id,
+                        ]) ?>
+                    <?php endforeach; ?>
+                </div>
+
+                <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
+                    <i class="bi bi-chat-square-dots" aria-hidden="true" style="font-size:1.5rem;"></i>
+                    <span style="font-size:var(--fs-body-sm);">Sin observaciones aún</span>
+                </div>
+
+                <div class="sgi-obs-input-bar">
+                    <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $record->id], 'id' => 'obs-form']) ?>
+                    <div class="sgi-obs-compose">
+                        <textarea id="obs-message" name="message" class="auto-resize" rows="1"
+                                  placeholder="Escriba una observación..."></textarea>
+                        <button type="submit" class="sgi-obs-compose-send" title="Enviar">
+                            <i class="bi bi-send" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <?= $this->Form->end() ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sticky footer con acciones del pipeline -->
         <?php if ($viewModel->canAdvance || $viewModel->canReject || !empty($viewModel->canRegress)): ?>
-        <div class="sgi-sticky-actions">
-            <?php if ($viewModel->canAdvance && empty($viewModel->advanceErrors) && $viewModel->nextStatus): ?>
-            <?= $this->Form->postLink(
-                '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Avanzar a ' . h($viewModel->pipelineLabels[$viewModel->nextStatus] ?? ''),
-                ['action' => 'advance', $viewModel->record->id],
-                [
-                    'confirm' => '¿Avanzar la programación?',
-                    'class' => 'btn btn-primary',
-                    'escape' => false,
-                    'data' => ['expected_status' => $viewModel->record->pipeline_status],
-                ]
-            ) ?>
-            <?php endif; ?>
-
-            <?php if ($viewModel->canReject): ?>
-            <?= $this->Form->postLink(
-                '<i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Devolver a Tesorería',
-                ['action' => 'reject', $viewModel->record->id],
-                ['confirm' => '¿Devolver la programación a Tesorería?', 'class' => 'btn btn-outline-warning', 'escape' => false]
-            ) ?>
-            <?php endif; ?>
-
-            <?php if (!empty($viewModel->canRegress)):
-                $prevLabel = $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus;
-                $isLocked = !empty($viewModel->regressLockMessage);
-            ?>
-                <?php if ($isLocked): ?>
-                    <button type="button" class="btn btn-outline-secondary"
-                            disabled title="<?= h($viewModel->regressLockMessage) ?>">
-                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Regresar al paso anterior
-                    </button>
-                <?php else: ?>
-                    <button type="button" class="btn btn-outline-secondary"
-                            data-bs-toggle="modal" data-bs-target="#regressStatusModal">
-                        <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
-                    </button>
+        <div class="sgi-edit-footer">
+            <div class="sgi-edit-footer-meta">
+                <span class="d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+                    Rol: <strong style="color:var(--text-default);"><?= h($viewModel->roleName) ?></strong>
+                </span>
+                <?php if ($record->modified): ?>
+                <span class="sep"></span>
+                <span class="d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+                    Última modificación: <span class="mono"><?= $record->modified->format('d/m/Y H:i') ?></span>
+                </span>
                 <?php endif; ?>
-            <?php endif; ?>
+            </div>
+            <div class="sgi-edit-footer-actions">
+                <?php if ($viewModel->canReject): ?>
+                <?= $this->Form->postLink(
+                    '<i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Devolver a Tesorería',
+                    ['action' => 'reject', $record->id],
+                    ['confirm' => '¿Devolver la programación a Tesorería?', 'class' => 'btn btn-ghost-card sgi-fg-warning', 'escape' => false]
+                ) ?>
+                <?php endif; ?>
+                <?php if ($viewModel->canAdvance && empty($viewModel->advanceErrors) && $viewModel->nextStatus): ?>
+                <?= $this->Form->postLink(
+                    '<i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Avanzar a ' . h($viewModel->pipelineLabels[$viewModel->nextStatus] ?? ''),
+                    ['action' => 'advance', $record->id],
+                    [
+                        'confirm' => '¿Avanzar la programación?',
+                        'class' => 'btn btn-primary',
+                        'escape' => false,
+                        'data' => ['expected_status' => $record->pipeline_status],
+                    ]
+                ) ?>
+                <?php endif; ?>
+            </div>
         </div>
         <?php endif; ?>
 
-    </div>
+    </main>
 </div>
-</div><!-- /columna izquierda -->
-
-<!-- ── Columna derecha: soportes + observaciones ── -->
-<div class="sgi-invoice-sidebar">
-
-<?php
-$documents = $viewModel->record->payment_scheduling_documents ?? [];
-$totalDocs = count($documents);
-?>
-
-<!-- Soportes -->
-<div class="card card-primary">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" style="font-size:.85rem;" aria-hidden="true"></i>
-            <span style="font-size:.85rem;font-weight:600;">Soportes</span>
-            <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
-        </span>
-        <?php if (!$viewModel->isPagada): ?>
-        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
-            <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
-        </button>
-        <?php endif; ?>
-    </div>
-
-    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:var(--text-disabled);<?= !empty($documents) ? 'display:none;' : '' ?>">
-        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
-        <span style="font-size:.8rem;">Sin soportes adjuntos</span>
-    </div>
-    <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-        <?php foreach ($documents as $att): ?>
-            <?= $this->element('document_row', [
-                'doc'       => $att,
-                'canDelete' => !$viewModel->isPagada,
-                'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $viewModel->record->id, $att->id]),
-                'showBadge' => false,
-            ]) ?>
-        <?php endforeach; ?>
-    </div>
-</div>
-
-<!-- Observaciones: chat -->
-<?php $obsCount = count($viewModel->record->payment_scheduling_observations ?? []); ?>
-<div class="card card-primary sgi-obs-card" style="display:flex;flex-direction:column;">
-    <div class="card-header d-flex align-items-center gap-2">
-        <i class="bi bi-chat-left-text" style="font-size:.85rem;color:var(--primary-color);" aria-hidden="true"></i>
-        <span style="font-size:.85rem;font-weight:600;">Observaciones</span>
-        <span id="obs-count" class="sgi-folder-count ms-auto" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
-    </div>
-
-    <div id="obs-chat-scroll" class="sgi-obs-list">
-        <?php foreach ($viewModel->record->payment_scheduling_observations ?? [] as $obs): ?>
-            <?= $this->element('observation_bubble', [
-                'observation' => $obs,
-                'isMine' => $currentUser && $obs->user_id === $currentUser->id,
-            ]) ?>
-        <?php endforeach; ?>
-    </div>
-
-    <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
-        <span style="font-size:var(--fs-body);">Sin observaciones aún</span>
-    </div>
-
-    <div class="sgi-obs-input-bar">
-        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $viewModel->record->id], 'id' => 'obs-form']) ?>
-        <div class="sgi-obs-compose">
-            <textarea id="obs-message" name="message" class="auto-resize" rows="1"
-                      placeholder="Escriba una observación..."></textarea>
-            <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                <i class="bi bi-send" aria-hidden="true"></i>
-            </button>
-        </div>
-        <?= $this->Form->end() ?>
-    </div>
-</div>
-
-</div><!-- /columna derecha -->
-
-</div><!-- /layout dos columnas -->
 
 <?php if ($viewModel->isBorrador): ?>
 <!-- Modal: Importar Excel -->
 <div class="modal fade" id="importExcelModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <?= $this->Form->create(null, ['url' => ['action' => 'importExcel', $viewModel->record->id], 'type' => 'file']) ?>
+            <?= $this->Form->create(null, ['url' => ['action' => 'importExcel', $record->id], 'type' => 'file']) ?>
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-file-earmark-excel me-2" aria-hidden="true"></i>Importar Excel</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -410,7 +380,7 @@ $totalDocs = count($documents);
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-ghost-card" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Importar</button>
             </div>
             <?= $this->Form->end() ?>
@@ -425,7 +395,7 @@ $totalDocs = count($documents);
     <div class="modal-dialog">
         <div class="modal-content">
             <form id="upload-doc-form"
-                  data-url="<?= $this->Url->build(['action' => 'uploadDocument', $viewModel->record->id]) ?>"
+                  data-url="<?= $this->Url->build(['action' => 'uploadDocument', $record->id]) ?>"
                   enctype="multipart/form-data">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-upload me-2" aria-hidden="true"></i>Subir Soporte</h5>
@@ -440,7 +410,7 @@ $totalDocs = count($documents);
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-ghost-card" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Subir</button>
                 </div>
             </form>
@@ -455,13 +425,14 @@ $totalDocs = count($documents);
 
 <?php if (!empty($viewModel->canRegress) && empty($viewModel->regressLockMessage)): ?>
 <?= $this->element('regress_status_modal', [
-    'actionUrl'  => $this->Url->build(['action' => 'regressStatus', $viewModel->record->id]),
+    'actionUrl'  => $this->Url->build(['action' => 'regressStatus', $record->id]),
     'entityNoun' => 'programación',
     'currLabel'  => $viewModel->pipelineLabels[$viewModel->currentStatus] ?? $viewModel->currentStatus,
     'prevLabel'  => $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus,
 ]) ?>
 <?php endif; ?>
 
+<?php $this->append('script') ?>
 <script>
 (function () {
     SgiDocumentUploader.init({

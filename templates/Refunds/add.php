@@ -11,13 +11,24 @@ $this->assign('title', 'Nuevo Reintegro');
 ?>
 <?= $this->element('cdn_select2') ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Nuevo Reintegro</span>
-    <?= $this->Html->link(
-        '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
-        ['action' => 'index'],
-        ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]
-    ) ?>
+<div class="sgi-page-header d-flex justify-content-between align-items-start">
+    <div style="min-width:0;">
+        <div class="sgi-breadcrumb">
+            <?= $this->Html->link('Reintegros', ['action' => 'index']) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <span class="current">Nuevo Reintegro</span>
+        </div>
+        <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
+            <span class="sgi-page-title">Nuevo Reintegro</span>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0">
+        <?= $this->Html->link(
+            '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
+            ['action' => 'index'],
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
+        ) ?>
+    </div>
 </div>
 
 <div class="card card-primary">
