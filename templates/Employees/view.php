@@ -183,7 +183,7 @@ $navStatusPills = [
             $navStatusClass = $navStatusPills[$nav->status] ?? 'pill-muted';
         ?>
         <a class="sgi-md-row<?= $isSelected ? ' is-selected' : '' ?>"
-           href="<?= $this->Url->build(['action' => 'view', $nav->id, '?' => array_filter(['search' => $navSearch, 'status' => $navStatus])]) ?>">
+           href="<?= $this->Url->build(['action' => 'view', $nav->id, '?' => $navBaseQuery + ['status' => $navStatus]]) ?>">
             <?php if ($nav->profile_image): ?>
                 <img src="<?= $this->Url->build('/' . $nav->profile_image) ?>" alt="" class="sgi-emp-avatar" style="object-fit:cover;width:34px;height:34px;">
             <?php else: ?>
