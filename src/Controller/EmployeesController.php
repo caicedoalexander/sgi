@@ -118,15 +118,36 @@ class EmployeesController extends AppController
         // Lista para el navegador izquierdo (master-detail). Aplica los mismos
         // filtros del query string que index() para coherencia con el atajo
         // /employees -> click en empleado -> /employees/view/{id}?search=...
+        //
+        // El orderBy debe ser IDENTICO al de index() para que la autoseleccion
+        // del primer empleado coincida con la primera fila visible aqui.
         $navQuery = $this->Employees->find('withCurrentNovelty')
             ->contain(['Positions', 'OperationCenters'])
             ->orderBy(['Employees.last_name1' => 'ASC', 'Employees.last_name2' => 'ASC']);
         $this->filterService->apply($navQuery, $this->request->getQueryParams());
-        $navEmployees = $navQuery->limit(200)->all()->toArray();
+
+        $navEmployees = $this->paginate($navQuery, ['scope' => 'nav']);
         $navStatus = $this->request->getQuery('status') ?: \App\Constants\EmployeeStatusConstants::ACTIVO;
         $navSearch = (string)$this->request->getQuery('search', '');
+        $navPositionId = (string)$this->request->getQuery('position_id', '');
+        $navOperationCenterId = (string)$this->request->getQuery('operation_center_id', '');
 
-        $this->set(compact('employee', 'folders', 'currentNovelty', 'navEmployees', 'navStatus', 'navSearch'));
+        // Catalogos para los filtros avanzados del panel lateral.
+        $positions = $this->Employees->Positions->find('codeList')->all();
+        $operationCenters = $this->Employees->OperationCenters->find('codeList')->all();
+
+        $this->set(compact(
+            'employee',
+            'folders',
+            'currentNovelty',
+            'navEmployees',
+            'navStatus',
+            'navSearch',
+            'navPositionId',
+            'navOperationCenterId',
+            'positions',
+            'operationCenters',
+        ));
         $this->set('fieldLabels', EmployeeHistoryService::FIELD_LABELS);
     }
 

@@ -147,7 +147,7 @@ $navStatusPills = [
         </a>
         <?php endforeach; ?>
 
-        <?php if (empty($navEmployees)): ?>
+        <?php if (count($navEmployees) === 0): ?>
         <div class="sgi-doc-empty">
             <i class="bi bi-search sgi-doc-empty-icon" aria-hidden="true"></i>
             <div class="sgi-fg-muted">Sin resultados</div>
