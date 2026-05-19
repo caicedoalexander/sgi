@@ -212,6 +212,33 @@ $navStatusPills = [
         </div>
         <?php endif; ?>
     </div>
+
+    <?php if (count($navEmployees) > 0): ?>
+    <div class="sgi-md-pagination">
+        <?= $this->Paginator->counter([
+            'model' => 'nav',
+            'format' => '{{start}}–{{end}} de {{count}}',
+        ]) ?>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <?= $this->Paginator->prev('‹', [
+                    'model' => 'nav',
+                    'templates' => [
+                        'prevActive'   => '<li class="page-item"><a class="page-link" rel="prev" href="{{url}}">{{text}}</a></li>',
+                        'prevDisabled' => '<li class="page-item disabled"><span class="page-link">{{text}}</span></li>',
+                    ],
+                ]) ?>
+                <?= $this->Paginator->next('›', [
+                    'model' => 'nav',
+                    'templates' => [
+                        'nextActive'   => '<li class="page-item"><a class="page-link" rel="next" href="{{url}}">{{text}}</a></li>',
+                        'nextDisabled' => '<li class="page-item disabled"><span class="page-link">{{text}}</span></li>',
+                    ],
+                ]) ?>
+            </ul>
+        </nav>
+    </div>
+    <?php endif; ?>
 </aside>
 
 <!-- ═════════ RIGHT DETAIL ═════════ -->
