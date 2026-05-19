@@ -1730,19 +1730,23 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     font-family: var(--font-mono);
 }
 
-/* Profile header (vista de detalle) */
+/* Profile header (vista de detalle).
+   IMPORTANTE: la clase .card de Bootstrap aplica flex-direction:column al
+   contenedor padre, asi que aqui forzamos row explicitamente para que
+   avatar | identity | actions queden alineados en horizontal. */
 .sgi-profile-header {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 18px;
-    padding: 18px 22px;
+    gap: 16px;
+    padding: 14px 18px;
 }
 .sgi-profile-avatar-lg {
-    width: 64px; height: 64px; min-width: 64px;
+    width: 56px; height: 56px; min-width: 56px;
     background-color: var(--bg-dark);
     color: #fff;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.5rem; font-weight: 700;
+    font-size: 1.25rem; font-weight: 700;
     letter-spacing: -.02em;
     border-radius: var(--radius-sm);
 }
@@ -1752,32 +1756,37 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 .sgi-profile-name {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
-    letter-spacing: -.3px;
+    letter-spacing: -.2px;
     color: var(--text-strong);
-    line-height: 1.15;
+    line-height: 1.2;
     margin: 0;
     text-transform: uppercase;
 }
 .sgi-profile-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    font-size: var(--fs-body);
+    align-items: center;
+    gap: 0;
+    font-size: var(--fs-body-sm);
     color: var(--text-muted);
-    line-height: 1.4;
+    line-height: 1.35;
 }
 .sgi-profile-meta > span {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+    padding: 0 10px;
+    border-right: 1px solid var(--rule);
 }
+.sgi-profile-meta > span:first-child { padding-left: 0; }
+.sgi-profile-meta > span:last-child  { border-right: none; }
 .sgi-profile-meta .bi { color: var(--text-faint); font-size: .8rem; }
-.sgi-profile-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.sgi-profile-actions { display: flex; gap: 6px; flex-shrink: 0; align-self: center; }
 
 .sgi-data-row {
     display: flex;
@@ -2545,3 +2554,16 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     --bs-pagination-font-size: var(--fs-meta);
     --bs-pagination-border-radius: var(--radius-sm);
 }
+.sgi-md-pagination-info { white-space: nowrap; }
+.sgi-md-pagination-action {
+    padding: .15rem .35rem;
+    color: var(--text-faint);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    line-height: 1;
+}
+.sgi-md-pagination-action:hover {
+    color: var(--text-default);
+    background: var(--bg-muted);
+}
+.sgi-md-pagination-action .bi { font-size: .9rem; }

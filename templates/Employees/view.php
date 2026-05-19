@@ -83,26 +83,19 @@ $navStatusPills = [
 <aside class="sgi-md-left">
     <div class="sgi-md-left-head">
         <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
-            <div>
+            <div class="min-w-0">
                 <div class="sgi-title-card">Empleados</div>
                 <div class="sgi-body-faint mt-1">
                     <?= $this->Paginator->counter('{{count}} mostrados', ['model' => 'nav']) ?>
                 </div>
             </div>
-            <div class="d-flex flex-wrap gap-1 justify-content-end">
-                <?= $this->element('excel_wizard/buttons', [
-                    'module' => 'Employees',
-                    'importable' => true,
-                    'canCreate' => !empty($userPermissions['employees']['can_create']),
-                ]) ?>
-                <?php if (!empty($userPermissions['employees']['can_create'])): ?>
-                <?= $this->Html->link(
-                    '<i class="bi bi-plus-lg" aria-hidden="true"></i>Nuevo',
-                    ['action' => 'add'],
-                    ['class' => 'btn btn-primary btn-sm', 'escape' => false]
-                ) ?>
-                <?php endif; ?>
-            </div>
+            <?php if (!empty($userPermissions['employees']['can_create'])): ?>
+            <?= $this->Html->link(
+                '<i class="bi bi-plus-lg" aria-hidden="true"></i>Nuevo',
+                ['action' => 'add'],
+                ['class' => 'btn btn-primary btn-sm', 'escape' => false]
+            ) ?>
+            <?php endif; ?>
         </div>
 
         <form method="get" class="sgi-md-search mb-2" role="search">
@@ -224,8 +217,10 @@ $navStatusPills = [
 
     <?php if (count($navEmployees) > 0): ?>
     <div class="sgi-md-pagination">
-        <?= $this->Paginator->counter('{{start}}–{{end}} de {{count}}', ['model' => 'nav']) ?>
-        <nav>
+        <div class="sgi-md-pagination-info">
+            <?= $this->Paginator->counter('{{start}}–{{end}} de {{count}}', ['model' => 'nav']) ?>
+        </div>
+        <nav class="d-flex align-items-center gap-1">
             <ul class="pagination pagination-sm mb-0">
                 <?= $this->Paginator->prev('‹', [
                     'model' => 'nav',
@@ -242,6 +237,20 @@ $navStatusPills = [
                     ],
                 ]) ?>
             </ul>
+            <button type="button"
+                    class="btn btn-link btn-sm sgi-md-pagination-action"
+                    data-bs-toggle="modal" data-bs-target="#exportExcelModal"
+                    title="Exportar a Excel">
+                <i class="bi bi-upload" aria-hidden="true"></i>
+            </button>
+            <?php if (!empty($userPermissions['employees']['can_create'])): ?>
+            <button type="button"
+                    class="btn btn-link btn-sm sgi-md-pagination-action"
+                    data-bs-toggle="modal" data-bs-target="#importExcelModal"
+                    title="Importar desde Excel">
+                <i class="bi bi-download" aria-hidden="true"></i>
+            </button>
+            <?php endif; ?>
         </nav>
     </div>
     <?php endif; ?>
