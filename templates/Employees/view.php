@@ -7,6 +7,10 @@
  * @var array<\App\Model\Entity\Employee> $navEmployees
  * @var string $navStatus
  * @var string $navSearch
+ * @var string $navPositionId
+ * @var string $navOperationCenterId
+ * @var iterable $positions
+ * @var iterable $operationCenters
  */
 
 use App\Constants\EmployeeStatusConstants;
@@ -52,7 +56,18 @@ $navTabs = [
     [EmployeeStatusConstants::RETIRADO, 'Retirados'],
     ['all',                             'Todos'],
 ];
-$navBaseQuery = $navSearch !== '' ? ['search' => $navSearch] : [];
+// Query string base preservado al cambiar tabs/filtros/seleccionar empleado.
+$navBaseQuery = array_filter([
+    'search' => $navSearch,
+    'position_id' => $navPositionId,
+    'operation_center_id' => $navOperationCenterId,
+], fn($v) => $v !== '' && $v !== null);
+
+// Count de filtros avanzados activos (para el badge del trigger).
+$navAdvancedFilterCount = ($navPositionId !== '' ? 1 : 0)
+    + ($navOperationCenterId !== '' ? 1 : 0);
+$navAdvancedFiltersOpen = $navAdvancedFilterCount > 0;
+
 $navTabUrl = function (string $status) use ($employee, $navBaseQuery) {
     return ['action' => 'view', $employee->id, '?' => $navBaseQuery + ['status' => $status]];
 };
@@ -89,6 +104,49 @@ $navStatusPills = [
                    aria-label="Buscar empleados"
                    autocomplete="off">
             <input type="hidden" name="status" value="<?= h($navStatus) ?>">
+        </form>
+
+        <form method="get" class="mb-2">
+            <input type="hidden" name="search" value="<?= h($navSearch) ?>">
+            <input type="hidden" name="status" value="<?= h($navStatus) ?>">
+
+            <button type="button"
+                    class="btn btn-ghost-card btn-sm w-100 d-flex justify-content-between align-items-center"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#empNavFilters"
+                    aria-expanded="<?= $navAdvancedFiltersOpen ? 'true' : 'false' ?>"
+                    aria-controls="empNavFilters">
+                <span>
+                    <i class="bi bi-funnel me-1" aria-hidden="true"></i>Filtros
+                    <?php if ($navAdvancedFilterCount > 0): ?>
+                        · <span class="sgi-fg-primary"><?= $navAdvancedFilterCount ?></span>
+                    <?php endif; ?>
+                </span>
+                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+            </button>
+
+            <div class="collapse <?= $navAdvancedFiltersOpen ? 'show' : '' ?> mt-2" id="empNavFilters">
+                <div class="mb-2">
+                    <label class="sgi-label" for="emp-nav-position">Cargo</label>
+                    <?= $this->Form->select('position_id', $positions, [
+                        'empty' => 'Todos',
+                        'class' => 'form-select form-select-sm',
+                        'value' => $navPositionId,
+                        'id' => 'emp-nav-position',
+                        'onchange' => 'this.form.submit()',
+                    ]) ?>
+                </div>
+                <div class="mb-1">
+                    <label class="sgi-label" for="emp-nav-opcenter">Centro de Operación</label>
+                    <?= $this->Form->select('operation_center_id', $operationCenters, [
+                        'empty' => 'Todos',
+                        'class' => 'form-select form-select-sm',
+                        'value' => $navOperationCenterId,
+                        'id' => 'emp-nav-opcenter',
+                        'onchange' => 'this.form.submit()',
+                    ]) ?>
+                </div>
+            </div>
         </form>
 
         <div class="sgi-status-tabs" role="tablist" aria-label="Filtrar por estado">
