@@ -82,18 +82,30 @@ $navStatusPills = [
 <!-- ═════════ LEFT NAV ═════════ -->
 <aside class="sgi-md-left">
     <div class="sgi-md-left-head">
-        <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
             <div>
                 <div class="sgi-title-card">Empleados</div>
-                <div class="sgi-body-faint mt-1"><?= count($navEmployees) ?> mostrados</div>
+                <div class="sgi-body-faint mt-1">
+                    <?= $this->Paginator->counter([
+                        'model' => 'nav',
+                        'format' => '{{count}} mostrados',
+                    ]) ?>
+                </div>
             </div>
-            <?php if (!empty($userPermissions['employees']['can_create'])): ?>
-            <?= $this->Html->link(
-                '<i class="bi bi-plus-lg" aria-hidden="true"></i>Nuevo',
-                ['action' => 'add'],
-                ['class' => 'btn btn-primary btn-sm', 'escape' => false]
-            ) ?>
-            <?php endif; ?>
+            <div class="d-flex flex-wrap gap-1 justify-content-end">
+                <?= $this->element('excel_wizard/buttons', [
+                    'module' => 'Employees',
+                    'importable' => true,
+                    'canCreate' => !empty($userPermissions['employees']['can_create']),
+                ]) ?>
+                <?php if (!empty($userPermissions['employees']['can_create'])): ?>
+                <?= $this->Html->link(
+                    '<i class="bi bi-plus-lg" aria-hidden="true"></i>Nuevo',
+                    ['action' => 'add'],
+                    ['class' => 'btn btn-primary btn-sm', 'escape' => false]
+                ) ?>
+                <?php endif; ?>
+            </div>
         </div>
 
         <form method="get" class="sgi-md-search mb-2" role="search">
@@ -786,6 +798,13 @@ $navStatusPills = [
 
 </section>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'Employees',
+    'entityName' => 'Empleados',
+    'downloadSlug' => 'empleados',
+    'importable' => true,
+]) ?>
 
 <?= $this->element('observation_chat_init') ?>
 
