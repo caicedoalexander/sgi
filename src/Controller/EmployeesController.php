@@ -44,19 +44,29 @@ class EmployeesController extends AppController
     #[Permission(action: 'view')]
     public function index()
     {
-        $query = $this->Employees->find('withCurrentNovelty')
-            ->contain(['Positions', 'OperationCenters'])
+        // El orderBy debe ser IDENTICO al de view()::navQuery para que el primer
+        // empleado seleccionado coincida con la primera fila visible del panel lateral.
+        $query = $this->Employees->find()
+            ->select(['Employees.id'])
             ->orderBy(['Employees.last_name1' => 'ASC', 'Employees.last_name2' => 'ASC']);
 
         $this->filterService->apply($query, $this->request->getQueryParams());
 
-        $employees = $this->paginate($query);
+        $firstId = $query->first()?->id;
 
-        $positions = $this->Employees->Positions->find('codeList')->all();
-        $operationCenters = $this->Employees->OperationCenters->find('codeList')->all();
-        $employeeStatuses = \App\Constants\EmployeeStatusConstants::STATUS_LABELS;
+        if ($firstId === null) {
+            // Distingue "BD vacia" (no hay un solo empleado) de "filtros sin matches".
+            $hasAnyEmployee = $this->Employees->exists([]);
+            $this->set(compact('hasAnyEmployee'));
 
-        $this->set(compact('employees', 'positions', 'operationCenters', 'employeeStatuses'));
+            return null; // renderiza templates/Employees/index.php (empty-state)
+        }
+
+        return $this->redirect([
+            'action' => 'view',
+            $firstId,
+            '?' => $this->request->getQueryParams() ?: null,
+        ]);
     }
 
     #[Permission(action: 'view')]
