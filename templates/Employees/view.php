@@ -86,10 +86,7 @@ $navStatusPills = [
             <div>
                 <div class="sgi-title-card">Empleados</div>
                 <div class="sgi-body-faint mt-1">
-                    <?= $this->Paginator->counter([
-                        'model' => 'nav',
-                        'format' => '{{count}} mostrados',
-                    ]) ?>
+                    <?= $this->Paginator->counter('{{count}} mostrados', ['model' => 'nav']) ?>
                 </div>
             </div>
             <div class="d-flex flex-wrap gap-1 justify-content-end">
@@ -227,10 +224,7 @@ $navStatusPills = [
 
     <?php if (count($navEmployees) > 0): ?>
     <div class="sgi-md-pagination">
-        <?= $this->Paginator->counter([
-            'model' => 'nav',
-            'format' => '{{start}}–{{end}} de {{count}}',
-        ]) ?>
+        <?= $this->Paginator->counter('{{start}}–{{end}} de {{count}}', ['model' => 'nav']) ?>
         <nav>
             <ul class="pagination pagination-sm mb-0">
                 <?= $this->Paginator->prev('‹', [
