@@ -2,7 +2,7 @@
 /**
  * Emits <template id="doc-row-template"> for sgi-document-uploader.js to clone.
  *
- * Visual pattern (design.md §15 · Gestión documental — "Fila de documento").
+ * Visual pattern (docs/design/ §15 · Gestión documental — "Fila de documento").
  *
  * IMPORTANT: structural twin of `templates/element/document_row.php` —
  * any change to data-slot keys, CSS classes (`.doc-row`, `.doc-icon`,

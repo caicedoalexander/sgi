@@ -54,7 +54,7 @@
         ].join(';');
 
         // Card — excepción documentada al lenguaje "radio 0-2px + sin box-shadow"
-        // (ver .claude/rules/design.md sección "Excepciones permitidas").
+        // (ver docs/design/reglas-copy.md sección "Excepciones permitidas").
         // Modal temporal que flota sobre fondo desenfocado (backdrop-filter:blur);
         // los bordes serían insuficientes contra el blur — la sombra da la separación.
         var card = document.createElement('div');

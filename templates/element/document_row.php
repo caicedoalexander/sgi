@@ -5,7 +5,7 @@
  * twin of `templates/element/document_row_template.php` (consumed by
  * `webroot/js/sgi-document-uploader.js`).
  *
- * Visual pattern (design.md §15 · Gestión documental — "Fila de documento"):
+ * Visual pattern (docs/design/ §15 · Gestión documental — "Fila de documento"):
  *   icono bi-file-earmark-* + nombre/archivo + pill de estado + btn-icon (28×28).
  *   Mantener IDÉNTICO a document_row_template.php.
  *

@@ -12,7 +12,7 @@ Sistema interno de gestión administrativa y financiera construido sobre CakePHP
 - **Resiliencia** — `CircuitBreaker` y `Retryer` para integraciones externas (webhooks, SMTP).
 - **Observabilidad** — `StructuredLogger` con `X-Correlation-ID`, health checks (DB, cache, email, circuit breaker).
 - **Integraciones** — DIAN crosscheck, n8n workflows, webhooks salientes, importación/exportación Excel, generación PDF (TCPDF + FPDI).
-- **UI consistente** — Sistema de diseño basado en bordes (sin sombras), Inter Variable, paleta verde corporativo. Ver `.claude/rules/design.md`.
+- **UI consistente** — Sistema de diseño basado en bordes (sin sombras), Inter Variable, paleta verde corporativo. Ver `docs/design/` (índice en `CLAUDE.md`).
 
 ## Requisitos
 
@@ -106,7 +106,7 @@ src/
 templates/              # Vistas PHP por controlador + layouts
 config/                 # app.php, routes.php, Migrations/
 webroot/                # Assets públicos (css, js, fonts)
-.claude/rules/design.md # Sistema de diseño visual
+docs/design/            # Sistema de diseño visual
 ```
 
 Detalle completo de servicios y convenciones en [`CLAUDE.md`](CLAUDE.md).
@@ -152,7 +152,7 @@ Permisos resueltos por `AuthorizationService` (CRUD por módulo) y `PipelineAuth
 - **Slugs** — Estados visibles en español sin acentos (`aprobacion`, `pagada`); estados técnicos internos en inglés (`pending`, `authorized`).
 - **Migraciones** — Heredan de `Migrations\BaseMigration` (NO `AbstractMigration`).
 
-Ver [`CLAUDE.md`](CLAUDE.md) y [`.claude/rules/design.md`](.claude/rules/design.md) para la guía completa.
+Ver [`CLAUDE.md`](CLAUDE.md) y [`docs/design/`](docs/design/) para la guía completa.
 
 ## Stack
 

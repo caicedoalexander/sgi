@@ -2,7 +2,7 @@
 /**
  * Shared payment section element.
  *
- * Visual pattern (design.md §09 "Card compleja" — fila de pago: sub-superficie
+ * Visual pattern (docs/design/ §09 "Card compleja" — fila de pago: sub-superficie
  * bg-subtle + .bank-chip + pill soft + monto mono; §16 empty-state cuando no
  * hay pagos; §06 pills soft para estado del pago).
  *

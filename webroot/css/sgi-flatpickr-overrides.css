@@ -5,7 +5,7 @@
    usan !important porque Flatpickr aplica estilos con selectores específicos
    (.flatpickr-prev-month, .flatpickr-input) más reglas inline en hover. !important
    es el camino canónico para overrides de vendor CSS — no son specificity wars
-   internas. Ver .claude/rules/design.md y MN-005 en AUDIT-BACKLOG.md.
+   internas. Ver docs/design/ y MN-005 en AUDIT-BACKLOG.md.
    ============================================= */
 
 /* Contenedor principal */

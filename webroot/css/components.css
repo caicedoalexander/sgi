@@ -2,7 +2,7 @@
    SGI · COPCSA — Sistema de Diseño · components.css
 
    Catálogo completo de componentes alineado con el Sistema de Diseño
-   (ver .claude/rules/design.md). `styles.css` aporta tokens + base;
+   (ver docs/design/). `styles.css` aporta tokens + base;
    este archivo define TODOS los componentes:
 
      A. Bootstrap overrides — para que cualquier vista nueva con clases
