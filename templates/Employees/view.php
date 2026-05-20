@@ -84,7 +84,7 @@ $navTabColor = fn(string $status) => match ($status) {
 };
 ?>
 
-<div style="height:calc(100vh - 3rem);min-width:0;display:grid;grid-template-columns:320px 1fr;gap:0;overflow:hidden;align-items:stretch;">
+<div style="height:100vh;margin:-1.5rem;min-width:0;display:grid;grid-template-columns:320px 1fr;gap:0;overflow:hidden;align-items:stretch;">
 
 <!-- ═════════ COLUMNA IZQUIERDA · DIRECTORIO ═════════ -->
 <aside style="display:flex;flex-direction:column;overflow:hidden;background:#fff;">
