@@ -124,7 +124,7 @@ use App\Constants\InvoiceConstants;
         formSelector:        '#upload-doc-form',
         listSelector:        '#docs-list',
         emptySelector:       '#docs-empty-state',
-        counterSelector:     '.card.card-primary .card-header .sgi-folder-count',
+        counterSelector:     '#docs-folder-count',
         rowTemplateSelector: '#doc-row-template',
         modalSelector:       '#uploadInvoiceDocModal',
         csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>

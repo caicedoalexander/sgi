@@ -729,7 +729,7 @@ $canRegress = !empty($viewModel->canRegress);
                             <?php endif; ?>
 
                             <?php if ($viewModel->canSendLinks): ?>
-                                <span class="sgi-approver-picker" style="width:100%;">
+                                <span style="width:100%;">
                                     <select name="approver_ids[]" id="approver-ids" class="select2-rich-approvers" multiple
                                             form="sendApprovalLinksForm"
                                             data-placeholder="+ Agregar aprobador"
@@ -912,7 +912,7 @@ $canRegress = !empty($viewModel->canRegress);
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-paperclip" aria-hidden="true"></i>
                     Soportes
-                    <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
+                    <span id="docs-folder-count" class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
                 </span>
                 <?php if ($showUploadSection): ?>
                 <button type="button" class="btn btn-default btn-sm"
