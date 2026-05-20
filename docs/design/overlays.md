@@ -326,3 +326,228 @@ Variante de `.menu` con una cabecera de identidad (`.user-head`). Reemplaza el b
 ```
 
 El avatar de la cabecera usa la clase canónica `.av av-md` (ver `layout-tablas.md` · sección "10 · Avatares").
+
+---
+
+## Modal / Dialog
+
+Diálogo centrado para confirmaciones destructivas y formularios cortos. Ancho 480px (640px para formularios largos). Backdrop semitransparente sobre `--bg-dark`. Franja lateral de 3px en color semántico.
+
+```css
+.modal-stage { background: rgba(33,37,41,0.55); padding: 36px; min-height: 360px; display: flex; align-items: center; justify-content: center; }
+.modal { background: #fff; width: 100%; max-width: 480px; border-left: 3px solid var(--primary-color); }
+.modal.danger { border-left-color: var(--danger-color); }
+.modal-head { padding: 18px 22px 0; display: flex; gap: 14px; align-items: flex-start; }
+.modal-icon { width: 36px; height: 36px; flex-shrink: 0; border-radius: 3px; display: flex; align-items: center; justify-content: center; background: var(--danger-soft); color: var(--danger-color); }
+.modal-body { padding: 6px 22px 18px; }
+.modal-title { font-size: 16px; font-weight: 700; color: var(--text-strong); margin-bottom: 6px; }
+.modal-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
+.modal-foot { padding: 14px 22px; background: var(--bg-muted); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+```
+
+```html
+<div class="modal-stage">
+  <div class="modal danger">
+    <div class="modal-head">
+      <div class="modal-icon"><i class="bi bi-exclamation-triangle"></i></div>
+      <div style="flex:1">
+        <div class="modal-title">¿Rechazar esta factura?</div>
+        <div class="modal-desc">El proveedor recibirá una notificación automática con el motivo y la factura quedará archivada. Esta acción no se puede deshacer.</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <span class="input-label">Motivo del rechazo</span>
+      <div class="input" style="height:auto; padding:10px 12px; align-items:flex-start">
+        <textarea placeholder="Explica brevemente al proveedor…" style="border:none;outline:none;width:100%;font-family:inherit;font-size:12.5px;color:var(--text-default);resize:vertical;min-height:64px;background:transparent"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="mono" style="font-size:11px; color:var(--text-faint)">FCTG218810</span>
+      <div style="display:flex; gap:8px">
+        <button class="btn btn-ghost btn-sm">Cancelar</button>
+        <button class="btn btn-danger btn-sm">Sí, rechazar factura</button>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+Variante `danger` para decisiones destructivas (franja e icono rojos); sin clase, la franja es primary y el `.modal-icon` se sobrescribe al color que aplique. El `.modal-body` es opcional (confirmaciones simples solo llevan head + foot). Cierra con Esc, click fuera o ✕.
+
+---
+
+## Side drawer
+
+Panel lateral para vista previa rápida sin perder el contexto de la lista. Ancho 440px desde la derecha, backdrop más sutil que el modal (45%).
+
+```css
+.drawer-stage { background: rgba(33,37,41,0.45); padding: 0; min-height: 460px; display: flex; justify-content: flex-end; position: relative; overflow: hidden; }
+.drawer { width: 440px; background: #fff; display: flex; flex-direction: column; border-left: 3px solid var(--primary-color); }
+.drawer-head { padding: 16px 20px; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--rule); }
+.drawer-head-eyebrow { font-size: 9.5px; font-weight: 700; color: var(--primary-color); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 4px; }
+.drawer-head-title { font-size: 16px; font-weight: 700; color: var(--text-strong); }
+.drawer-head-sub { font-size: 11px; color: var(--text-faint); font-family: var(--font-mono); margin-top: 3px; }
+.drawer-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--rule); font-size: 12px; }
+.drawer-row span:first-child { color: var(--text-muted); }
+.drawer-row span:last-child { color: var(--text-default); font-weight: 600; text-align: right; }
+```
+
+```html
+<div class="drawer">
+  <div class="drawer-head">
+    <div>
+      <div class="drawer-head-eyebrow">Vista previa · Factura</div>
+      <div class="drawer-head-title">Comercializadora Andina S.A.S</div>
+      <div class="drawer-head-sub">FCTG218810 · 13/05/2026</div>
+    </div>
+    <button class="btn-icon"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div style="padding:14px 20px; display:flex; gap:6px; flex-wrap:wrap">
+    <span class="pill pill-primary-soft">Aprobada</span>
+    <span class="pill pill-muted">Operaciones</span>
+  </div>
+  <div style="padding:6px 20px 12px">
+    <div class="drawer-row"><span>Valor total</span><span class="mono">$ 4.250.000</span></div>
+    <div class="drawer-row"><span>Vence</span><span style="color:var(--danger-color)">20/05/2026 · en 7 días</span></div>
+    <div class="drawer-row"><span>Responsable</span><span>Carolina Mejía</span></div>
+  </div>
+  <div style="padding:14px 20px; background:var(--bg-muted); margin-top:auto; display:flex; gap:8px; border-top:1px solid var(--rule)">
+    <button class="btn btn-ghost btn-sm" style="flex:1">Abrir detalle completo</button>
+    <button class="btn btn-primary btn-sm">Editar</button>
+  </div>
+</div>
+```
+
+Slide-in 220ms desde la derecha; la lista detrás permanece visible y atenuada. `.drawer-row` es el patrón `FieldRow` aplicado al drawer. Cierra con Esc o click fuera.
+
+---
+
+## Tooltip
+
+Texto explicativo en hover, fondo oscuro con flecha de 5px. Aparece a 400ms de hover, máximo 240px. La variante `rich` admite título + cuerpo y franja lateral primary para ayuda contextual.
+
+```css
+.tt-stage { background: var(--bg-muted); padding: 32px; display: flex; gap: 40px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.tt-anchor { position: relative; display: inline-flex; }
+.tip { background: var(--bg-dark); color: #fff; padding: 6px 10px; font-size: 11.5px; font-weight: 500; position: relative; max-width: 240px; line-height: 1.4; }
+.tip::after { content: ''; position: absolute; width: 0; height: 0; border: 5px solid transparent; }
+.tip.top::after    { border-top-color: var(--bg-dark);    top: 100%; left: 50%; transform: translateX(-50%); }
+.tip.bottom::after { border-bottom-color: var(--bg-dark); bottom: 100%; left: 50%; transform: translateX(-50%); }
+.tip.left::after   { border-left-color: var(--bg-dark);   left: 100%; top: 50%;  transform: translateY(-50%); }
+.tip.right::after  { border-right-color: var(--bg-dark);  right: 100%; top: 50%; transform: translateY(-50%); }
+.tip-kw { font-family: var(--font-mono); color: var(--text-disabled); margin-left: 6px; }
+.tip-rich { background: var(--bg-dark); color: #fff; padding: 10px 12px; max-width: 280px; border-left: 2px solid var(--primary-color); }
+.tip-rich-title { font-size: 11.5px; font-weight: 700; margin-bottom: 4px; }
+.tip-rich-body  { font-size: 10.5px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+```
+
+```html
+<!-- Simple, con 4 posiciones (top / bottom / left / right) -->
+<div class="tt-anchor">
+  <button class="btn btn-ghost btn-sm">Aprobar</button>
+  <div class="tip top" style="position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%)">
+    Aprobar factura<span class="tip-kw">⌘↵</span>
+  </div>
+</div>
+
+<!-- Variante rich · ayuda contextual -->
+<div class="tt-anchor">
+  <span style="display:inline-flex; align-items:center; gap:4px; font-size:12.5px">
+    Vía Enlace Externo <i class="bi bi-info-circle" style="color:var(--text-faint)"></i>
+  </span>
+  <div class="tip-rich" style="position:absolute; top:calc(100% + 8px); left:0">
+    <div class="tip-rich-title">¿Qué hace esta opción?</div>
+    <div class="tip-rich-body">Permite que aprobadores externos respondan al correo sin iniciar sesión en el sistema.</div>
+  </div>
+</div>
+```
+
+La flecha (`::after`) se posiciona según la clase `top` / `bottom` / `left` / `right`. Sustituye los `title` nativos del navegador.
+
+---
+
+## Banner inline
+
+Aviso a nivel de página o sección. A diferencia del toast **no es flotante**: ocupa todo el ancho del contenedor y permanece hasta que el usuario actúe. Mismo lenguaje semántico (franja lateral + icono soft).
+
+```css
+.banner { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; background: #fff; border-left: 3px solid var(--primary-color); }
+.banner.warning { background: rgba(255,193,7,0.10); border-left-color: var(--warning-color); }
+.banner.danger  { background: rgba(220,53,69,0.06); border-left-color: var(--danger-color); }
+.banner.info    { background: rgba(13,202,240,0.08); border-left-color: var(--info-color); }
+.banner-icon { width: 24px; height: 24px; flex-shrink: 0; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+.banner.warning .banner-icon { background: var(--warning-soft); color: var(--warning-text); }
+.banner.danger .banner-icon  { background: var(--danger-soft); color: var(--danger-color); }
+.banner.info .banner-icon    { background: var(--info-soft); color: var(--info-text); }
+.banner-body { flex: 1; min-width: 0; }
+.banner-title { font-size: 12.5px; font-weight: 700; color: var(--text-strong); }
+.banner-msg { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+```
+
+```html
+<div class="banner danger">
+  <div class="banner-icon"><i class="bi bi-exclamation-triangle"></i></div>
+  <div class="banner-body">
+    <div class="banner-title">3 facturas están vencidas hace más de 5 días</div>
+    <div class="banner-msg">Requieren respuesta inmediata. <a style="color:var(--danger-color); font-weight:600; text-decoration:none">Ver lista →</a></div>
+  </div>
+</div>
+```
+
+4 niveles: sin clase (success, franja primary) · `warning` · `danger` · `info`. Posición: arriba del contenido principal, debajo de la TopBar. Si hay varios, apilar con gap 8px en orden de severidad. El cierre (×) solo se muestra para warnings e infos no críticos.
+
+---
+
+## Command palette (⌘K)
+
+Panel central de búsqueda + acciones, activado con ⌘K. Busca simultáneamente facturas, empleados, novedades y acciones; resultados agrupados por tipo. Ancho 560px, anclado al tercio superior de la pantalla (no centrado verticalmente).
+
+```css
+.cmdk-stage { background: rgba(33,37,41,0.55); padding: 32px; min-height: 420px; display: flex; justify-content: center; align-items: flex-start; }
+.cmdk { background: #fff; width: 100%; max-width: 560px; display: flex; flex-direction: column; }
+.cmdk-input { padding: 14px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--rule); }
+.cmdk-input input { flex: 1; border: none; outline: none; font-size: 15px; color: var(--text-strong); font-family: inherit; background: transparent; }
+.cmdk-input input::placeholder { color: var(--text-disabled); }
+.cmdk-list { padding: 4px 0; max-height: 320px; overflow-y: auto; }
+.cmdk-section { font-size: 9.5px; font-weight: 700; color: var(--text-faint); letter-spacing: 1px; text-transform: uppercase; padding: 10px 16px 4px; }
+.cmdk-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; font-size: 12.5px; color: var(--text-default); cursor: pointer; }
+.cmdk-item.active { background: rgba(70,157,97,0.08); }
+.cmdk-item.active .cmdk-item-label { color: var(--primary-color); font-weight: 600; }
+.cmdk-item-icon { color: var(--text-faint); display: flex; flex-shrink: 0; }
+.cmdk-item.active .cmdk-item-icon { color: var(--primary-color); }
+.cmdk-item-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmdk-item-meta { font-size: 10.5px; color: var(--text-faint); font-family: var(--font-mono); }
+.cmdk-foot { padding: 8px 16px; border-top: 1px solid var(--rule); display: flex; gap: 14px; font-size: 10.5px; color: var(--text-faint); font-family: var(--font-mono); }
+.cmdk-foot kbd { display: inline-block; padding: 1px 5px; background: var(--bg-subtle); color: var(--text-muted); font-family: var(--font-mono); font-size: 10px; border-radius: 2px; margin-right: 4px; }
+```
+
+```html
+<div class="cmdk">
+  <div class="cmdk-input">
+    <i class="bi bi-search" style="color:var(--text-faint)"></i>
+    <input value="carolina" placeholder="Buscar facturas, empleados, acciones…">
+    <span class="mono" style="font-size:10.5px; color:var(--text-faint); padding:3px 6px; background:var(--bg-subtle); border-radius:2px">esc</span>
+  </div>
+  <div class="cmdk-list">
+    <div class="cmdk-section">Empleados · 1</div>
+    <div class="cmdk-item active">
+      <span class="cmdk-item-icon"><span class="av av-sm" style="background-color:var(--primary-color)">CM</span></span>
+      <span class="cmdk-item-label">Carolina Mejía</span>
+      <span class="cmdk-item-meta">Jefe Contable</span>
+    </div>
+    <div class="cmdk-section">Facturas · 1</div>
+    <div class="cmdk-item">
+      <span class="cmdk-item-icon"><i class="bi bi-file-earmark-text"></i></span>
+      <span class="cmdk-item-label">FCTG218810 · aprobada por <b>Carolina</b></span>
+      <span class="cmdk-item-meta">$ 4.250.000</span>
+    </div>
+  </div>
+  <div class="cmdk-foot">
+    <span><kbd>↑↓</kbd>navegar</span>
+    <span><kbd>↵</kbd>abrir</span>
+    <span style="margin-left:auto"><kbd>esc</kbd>cerrar</span>
+  </div>
+</div>
+```
+
+Búsqueda fuzzy en nombres, números de factura, NIT y cédula. Sin resultados muestra un empty state sugerido por tipo.
