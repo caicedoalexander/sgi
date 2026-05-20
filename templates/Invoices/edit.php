@@ -152,6 +152,16 @@ $canRegress = !empty($viewModel->canRegress);
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
 
+<?php if ($viewModel->isRejected): ?>
+<div class="banner danger view-anim" style="margin-bottom:14px">
+    <div class="banner-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div>
+    <div class="banner-body">
+        <div class="banner-title">Esta factura fue rechazada en la aprobación de área</div>
+        <div class="banner-msg">Revisa las observaciones de los aprobadores. El flujo puede reiniciarse para reenviar los enlaces de aprobación.</div>
+    </div>
+</div>
+<?php endif; ?>
+
 <?php /* ═══════════════════ HEADER DE PÁGINA ═══════════════════ */ ?>
 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 view-anim"
      style="padding:4px 0 16px;">
