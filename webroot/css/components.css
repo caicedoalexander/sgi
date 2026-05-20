@@ -2418,15 +2418,16 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     border-left: 3px solid var(--primary-color);
     box-shadow: none;
 }
+/* Header del drawer = `.chat-head` del sistema de diseño. */
 .sgi-obs-drawer .offcanvas-header {
-    padding: 16px 20px;
+    padding: 14px 18px;
     border-bottom: 1px solid var(--rule);
 }
 .sgi-obs-drawer .offcanvas-title {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-strong);
 }
@@ -2435,95 +2436,17 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     display: flex;
     flex-direction: column;
 }
+/* Adaptaciones del componente `.chat` (definido arriba, §"Chat de
+   observaciones") al drawer de Invoices/edit. */
 /* El timeline ocupa el alto disponible del panel y scrollea. */
 .sgi-obs-drawer .chat-list {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
 }
-
-
-/* ─── Chat de observaciones · componente .chat ────────────────────────
-   Timeline de comentarios del sistema de diseño (docs/design/layout-tablas.md
-   §"Chat de observaciones"). Se porta el subconjunto usado por el drawer de
-   Invoices/edit: lista + item + composer. Las features sin dato en el backend
-   (eventos del sistema, respuestas, etiquetas, adjuntos, menciones, filtros y
-   los tools del composer) no se portan. */
-.chat-list {
-    padding: 16px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-.chat-item { display: flex; gap: 10px; }
-.chat-av {
-    width: 28px;
-    height: 28px;
-    border-radius: var(--radius-sm);
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 11px;
-    color: #fff;
-    text-transform: uppercase;
-}
-.chat-body { flex: 1; min-width: 0; }
-.chat-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    font-size: 11px;
-    color: var(--text-faint);
-}
-.chat-meta-author { color: var(--text-strong); font-weight: 700; font-size: 12px; }
-.chat-meta-time { font-family: var(--font-mono); font-size: 10.5px; }
-.chat-text {
-    font-size: 12.5px;
-    color: var(--text-default);
-    line-height: 1.55;
-    margin-top: 5px;
-    word-wrap: break-word;
-}
-.chat-composer {
-    border-top: 1px solid var(--rule);
-    padding: 12px 14px;
-    background: var(--bg-muted);
-}
-.chat-composer-box {
-    background: #fff;
-    padding: 8px 10px;
-    outline: 1px solid var(--border-color);
-    outline-offset: -1px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.chat-composer-box.focus {
-    outline: 2px solid var(--primary-color);
-    outline-offset: -2px;
-}
-.chat-composer-input {
-    border: none;
-    outline: none;
-    resize: none;
-    background: transparent;
-    font-family: inherit;
-    font-size: 12.5px;
-    color: var(--text-default);
-    min-height: 36px;
-    line-height: 1.55;
-    width: 100%;
-}
-.chat-composer-input::placeholder { color: var(--text-disabled); }
-/* El componente del doc usa space-between (grupo de tools a la izquierda +
-   botón a la derecha). El subconjunto portado solo lleva el botón Publicar. */
-.chat-composer-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-}
+/* El composer solo lleva el botón Publicar (los tools del componente quedan
+   fuera de alcance): alinear a la derecha en vez del space-between base. */
+.sgi-obs-drawer .chat-composer-toolbar { justify-content: flex-end; }
+/* Cadenas largas (URLs) no deben desbordar el panel de 440px. */
+.sgi-obs-drawer .chat-text { overflow-wrap: anywhere; }
+.sgi-obs-drawer .chat-composer-input::placeholder { color: var(--text-disabled); }

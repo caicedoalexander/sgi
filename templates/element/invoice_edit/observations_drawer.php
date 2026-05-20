@@ -39,7 +39,9 @@ $currentUserName = $currentUser->full_name
      aria-labelledby="obsDrawerTitle">
     <div class="offcanvas-header">
         <h2 class="offcanvas-title" id="obsDrawerTitle">
-            <i class="bi bi-chat-left-text" aria-hidden="true"></i>Observaciones
+            <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+            Observaciones
+            <span id="obs-head-count" class="chat-head-count"><?= $obsCount ?></span>
         </h2>
         <button type="button" class="btn-icon" data-bs-dismiss="offcanvas" aria-label="Cerrar">
             <i class="bi bi-x-lg" aria-hidden="true"></i>
@@ -111,6 +113,17 @@ $currentUserName = $currentUser->full_name
     if (box && ta) {
         ta.addEventListener('focus', function () { box.classList.add('focus'); });
         ta.addEventListener('blur', function () { box.classList.remove('focus'); });
+    }
+
+    // SgiObservationChat actualiza #obs-count (badge del disparador); reflejamos
+    // su valor en el contador del header del drawer (.chat-head-count).
+    var triggerCount = document.getElementById('obs-count');
+    var headCount = document.getElementById('obs-head-count');
+    if (triggerCount && headCount && window.MutationObserver) {
+        new MutationObserver(function () {
+            var m = triggerCount.textContent.match(/(\d+)/);
+            headCount.textContent = m ? m[1] : '0';
+        }).observe(triggerCount, { childList: true, characterData: true, subtree: true });
     }
 
     if (window.SgiObservationChat) {
