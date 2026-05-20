@@ -8,52 +8,54 @@ $this->assign('title', 'Iniciar Sesión');
 <?= $this->Form->create(null, ['url' => ['action' => 'login', '?' => ['redirect' => $this->request->getQuery('redirect')]]]) ?>
 
 <!-- Usuario -->
-<div class="mb-3">
-    <label class="d-block text-uppercase fw-semibold mb-1"
-           style="font-size:var(--fs-micro);letter-spacing:.12em;color:var(--text-faint);">
-        Usuario
-    </label>
-    <div class="sgi-input-group d-flex align-items-center">
-        <span class="px-3" style="color:var(--text-disabled);flex-shrink:0;">
-            <i class="bi bi-person" style="font-size:.95rem;" aria-hidden="true"></i>
-        </span>
+<div class="sgi-login-fieldset">
+    <label class="sgi-label" for="username">Usuario</label>
+    <div class="sgi-login-input">
+        <i class="bi bi-person sgi-login-input-icon" aria-hidden="true"></i>
         <?= $this->Form->control('username', [
-            'label'     => false,
-            'class'     => 'form-control border-0 shadow-none',
-            'id'        => 'username',
-            'placeholder' => 'Ingrese su usuario',
-            'autofocus' => true,
-            'style'     => 'border-radius:0;font-size:var(--fs-title-card);',
-            'templates'  => ['inputContainer' => '{{content}}'],
+            'label'       => false,
+            'class'       => 'form-control',
+            'id'          => 'username',
+            'placeholder' => 'Ingresa tu usuario',
+            'autofocus'   => true,
+            'autocomplete' => 'username',
+            'templates'   => ['inputContainer' => '{{content}}'],
         ]) ?>
     </div>
 </div>
 
 <!-- Contraseña -->
-<div class="mb-4">
-    <label class="d-block text-uppercase fw-semibold mb-1"
-           style="font-size:var(--fs-micro);letter-spacing:.12em;color:var(--text-faint);">
-        Contraseña
-    </label>
-    <div class="sgi-input-group d-flex align-items-center">
-        <span class="px-3" style="color:var(--text-disabled);flex-shrink:0;">
-            <i class="bi bi-lock" style="font-size:.95rem;" aria-hidden="true"></i>
-        </span>
+<div class="sgi-login-fieldset">
+    <div class="sgi-login-field-head">
+        <label class="sgi-label" for="password">Contraseña</label>
+        <a href="#" class="sgi-login-forgot">¿Olvidaste?</a>
+    </div>
+    <div class="sgi-login-input">
+        <i class="bi bi-shield-lock sgi-login-input-icon" aria-hidden="true"></i>
         <?= $this->Form->control('password', [
-            'label'     => false,
-            'type'      => 'password',
-            'class'     => 'form-control border-0 shadow-none',
-            'id'        => 'password',
-            'placeholder' => '••••••••',
-            'style'     => 'border-radius:0;font-size:var(--fs-title-card);',
-            'templates'  => ['inputContainer' => '{{content}}'],
+            'label'       => false,
+            'type'        => 'password',
+            'class'       => 'form-control has-suffix',
+            'id'          => 'password',
+            'placeholder' => 'Ingresa tu contraseña',
+            'autocomplete' => 'current-password',
+            'templates'   => ['inputContainer' => '{{content}}'],
         ]) ?>
+        <button type="button" id="sgi-login-toggle" class="sgi-login-toggle" aria-label="Mostrar contraseña">
+            <i class="bi bi-eye" aria-hidden="true"></i>
+        </button>
     </div>
 </div>
 
+<!-- Mantener sesión -->
+<label class="form-check sgi-login-remember">
+    <input type="checkbox" class="form-check-input" name="remember" checked>
+    <span class="form-check-label">Mantener sesión iniciada</span>
+</label>
+
 <!-- Botón -->
 <?= $this->Form->button('Ingresar', [
-    'class' => 'btn btn-primary w-100 py-2',
+    'class' => 'btn btn-primary btn-lg w-100',
 ]) ?>
 
 <?= $this->Form->end() ?>
