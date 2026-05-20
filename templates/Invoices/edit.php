@@ -775,10 +775,10 @@ $canRegress = !empty($viewModel->canRegress);
                             && !empty($viewModel->editableFields)
                             && $currentStatus === InvoiceConstants::STATUS_APROBACION): ?>
                         <form method="post" class="mt-2"
-                              action="<?= $this->Url->build(['action' => 'resetFlow', $invoice->id]) ?>"
-                              onsubmit="return confirm('¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.');">
+                              action="<?= $this->Url->build(['action' => 'resetFlow', $invoice->id]) ?>">
                             <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
-                            <button type="submit" class="btn btn-sm btn-outline-dark">
+                            <button type="submit" class="btn btn-sm btn-outline-dark"
+                                    data-sgi-confirm="¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.">
                                 <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reiniciar flujo
                             </button>
                         </form>
