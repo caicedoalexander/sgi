@@ -2184,3 +2184,17 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .step-label-sub { font-size: 10px; color: var(--text-disabled); font-weight: 500; margin-top: 2px; }
 .step-line { flex: 1; height: 1.5px; background: var(--border-color); min-width: 24px; }
 .step-line.done { background: var(--primary-color); }
+
+/* --- Skeleton loaders --- */
+@keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+.sk {
+    background: linear-gradient(90deg, var(--rule) 0%, #f6f6f6 50%, var(--rule) 100%);
+    background-size: 200px 100%;
+    background-repeat: no-repeat;
+    border-radius: 2px;
+    display: block;
+    animation: shimmer 1.4s infinite linear;
+}

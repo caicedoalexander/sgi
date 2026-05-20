@@ -162,3 +162,38 @@ Aceptados:
 
 ---
 
+## Skeleton loaders
+
+Barras grises animadas que ocupan el lugar del contenido mientras carga una tabla, card o lista. Indica carga progresiva sin spinner central — las barras `.sk` imitan la forma del contenido final.
+
+```css
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+.sk {
+  background: linear-gradient(90deg, var(--rule) 0%, #f6f6f6 50%, var(--rule) 100%);
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  border-radius: 2px;
+  display: block;
+  animation: shimmer 1.4s infinite linear;
+}
+```
+
+```html
+<!-- Barras sueltas: imitan texto y bloques -->
+<span class="sk" style="height:11px; width:90%"></span>
+<span class="sk" style="width:28px; height:28px; flex-shrink:0; border-radius:3px"></span>
+
+<!-- Patrón de card en carga -->
+<div style="padding:18px">
+  <span class="sk" style="height:14px; width:60%; margin-bottom:14px"></span>
+  <span class="sk" style="height:9px; width:100%; margin-bottom:6px"></span>
+  <span class="sk" style="height:9px; width:95%; margin-bottom:6px"></span>
+  <span class="sk" style="height:9px; width:70%"></span>
+</div>
+```
+
+Componer varias barras `.sk` con grid o flex para imitar el patrón final (tabla de filas, detalle de card, lista con avatar). El shimmer recorre la barra en bucle de 1.4s.
+
