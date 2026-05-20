@@ -1,5 +1,5 @@
 /* =================================================================
-   SGI · COPCSA — Sistema de Diseño v2 · styles.css
+   SGI · COPCSA — Sistema de Diseño · styles.css
 
    Foundation: tokens + tipografía + base + utilidades + animaciones.
    Los componentes viven en `components.css` (cargado después).
@@ -19,60 +19,54 @@
      2. @font-face (Inter Variable + JetBrains Mono Variable)
      3. Base
      4. Tipografía / utilidades de texto
-     5. Animaciones
-     6. Scrollbar global
+     5. Utilidades de color
+     6. Utilidades de layout
+     7. Separadores y accent strips
+     8. Animaciones
+     9. Scrollbar global
    ================================================================= */
 
 
 /* ─── 1. TOKENS ─────────────────────────────────────────────────── */
 :root {
     /* Brand */
-    --bg-dark: #212529;
-    --primary-color: #469D61;
-    --primary-color-hover: #3a8752;
-    --secondary-color: #CD6A15;
+    --bg-dark:               #212529;
+    --primary-color:         #469D61;
+    --primary-color-hover:   #3a8752;
+    --secondary-color:       #CD6A15;
     --secondary-color-hover: #b85d11;
-    --accent-color: #83542B;
+    --accent-color:          #83542B;
 
     /* Soft variants (badges, pills, fila seleccionada) */
-    --primary-soft: rgba(70, 157, 97, 0.12);
-    --primary-soft-strong: rgba(70, 157, 97, 0.20);
-    --secondary-soft: rgba(205, 106, 21, 0.14);
-    --accent-soft: rgba(131, 84, 43, 0.14);
+    --primary-soft:        rgba(70, 157, 97, 0.12);
+    --primary-soft-strong: rgba(70, 157, 97, 0.18);
+    --secondary-soft:      rgba(205, 106, 21, 0.14);
+    --accent-soft:         rgba(131, 84, 43, 0.14);
 
     /* Layout */
     --background-color: #f5f5f5;
-    --bg-subtle: #f8f9fa;
-    --bg-muted: #fafafa;
-    --bg-focus-tinge: #fafffe;
-    --border-color: #e0e0e0;
-    --rule: #ececec;
+    --bg-subtle:        #f8f9fa;
+    --bg-muted:         #fafafa;
+    --border-color:     #e0e0e0;
+    --rule:             #ececec;
 
     /* Semantic */
-    --danger-color: #dc3545;
-    --danger-color-hover: #bb2d3b;
-    --danger-soft: rgba(220, 53, 69, 0.12);
-    --danger-text: #842029;
+    --danger-color:  #dc3545;
+    --danger-soft:   rgba(220, 53, 69, 0.12);
     --warning-color: #ffc107;
-    --warning-color-hover: #e0a800;
-    --warning-soft: rgba(255, 193, 7, 0.20);
-    --warning-text: #8a6d08;
-    --info-color: #0dcaf0;
-    --info-soft: rgba(13, 202, 240, 0.16);
-    --info-text: #087990;
-    --dark-color-hover: #1a1e21;
-    --light-color-hover: #e2e6ea;
-    /* Ink (texto oscuro sobre superficies -soft) — espejo de --warning-text/--info-text */
-    --primary-text: #2d6e42;
-    --secondary-text: #9a5011;
+    --warning-soft:  rgba(255, 193, 7, 0.20);
+    --warning-text:  #8a6d08;
+    --info-color:    #0dcaf0;
+    --info-soft:     rgba(13, 202, 240, 0.16);
+    --info-text:     #087990;
 
     /* Texto (5 niveles + faint border) */
-    --text-strong: #111;
-    --text-default: #222;
-    --text-muted: #555;
-    --text-faint: #888;
+    --text-strong:   #111;
+    --text-default:  #222;
+    --text-muted:    #555;
+    --text-faint:    #888;
     --text-disabled: #aaa;
-    --border-faint: #ccc;
+    --border-faint:  #ccc;
 
     /* Familias */
     --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -88,14 +82,23 @@
     --fs-label:      10.5px;
     --fs-meta:       10px;
     --fs-micro:      9.5px;
+
+    /* Letter-spacing */
     --tracking-label: 0.8px;
     --tracking-pill:  0.4px;
 
-    /* Espaciado / radii / transiciones */
-    --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
-    --space-5:20px; --space-6:24px; --space-7:28px; --space-8:32px;
-    --radius-none:0; --radius-sm:3px; --radius-md:4px;
-    --t-fast:0.12s; --t-view:0.18s;
+    /* Espaciado (múltiplos de 4) */
+    --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+    --space-5: 20px;  --space-6: 24px;  --space-7: 28px;  --space-8: 32px;
+
+    /* Radii */
+    --radius-none: 0;
+    --radius-sm:   3px;
+    --radius-md:   4px;
+
+    /* Transiciones */
+    --t-fast: 0.12s;
+    --t-view: 0.18s;
 }
 
 
@@ -117,47 +120,64 @@
 
 
 /* ─── 3. BASE ───────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
 body {
     font-family: var(--font-sans);
+    font-size: var(--fs-body-lg);
+    line-height: 1.5;
     background: var(--background-color);
     color: var(--text-default);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 
 /* ─── 4. TIPOGRAFÍA / UTILIDADES DE TEXTO ───────────────────────── */
 .sgi-display {
-    font-size: var(--fs-display); font-weight: 800;
-    letter-spacing: -1px; line-height: 1.05;
-    font-family: var(--font-mono); color: var(--text-strong);
+    font-family: var(--font-mono);
+    font-size: var(--fs-display);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.05;
+    color: var(--text-strong);
 }
-.sgi-title-page { font-size: var(--fs-title-page); font-weight: 700; letter-spacing: -.2px; color: var(--text-strong); margin: 0; }
-.sgi-title-card,
-.sgi-card-title { font-size: var(--fs-title-card); font-weight: 700; color: var(--text-strong); letter-spacing: -.01em; }
-.sgi-card-title.mono { font-family: var(--font-mono); }
-.sgi-card-subtitle { font-size: .72rem; color: var(--text-disabled); }
 
-.sgi-label {
+.sgi-title-page {
+    font-size: var(--fs-title-page);
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    color: var(--text-strong);
+    margin: 0;
+    line-height: 1.15;
+}
+
+.sgi-title-card {
+    font-size: var(--fs-title-card);
+    font-weight: 700;
+    color: var(--text-strong);
+    letter-spacing: -0.01em;
+}
+.sgi-title-card.mono { font-family: var(--font-mono); }
+
+.sgi-label,
+.label-up {
     font-size: var(--fs-label);
     font-weight: 700;
     color: var(--text-faint);
     text-transform: uppercase;
     letter-spacing: var(--tracking-label);
+    line-height: 1.2;
 }
 
-.sgi-section-label {
-    font-size: .75rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .08em;
-    color: var(--text-muted); margin-bottom: .5rem;
-    display: block;
-}
-
-.sgi-body-muted { font-size: var(--fs-body); color: var(--text-muted); }
+.sgi-body-muted { font-size: var(--fs-body);    color: var(--text-muted); }
 .sgi-body-faint { font-size: var(--fs-body-sm); color: var(--text-faint); }
-.sgi-hint, .sgi-field-hint { font-size: .7rem; color: var(--text-faint); line-height: 1.4; }
+.sgi-hint       { font-size: 0.7rem;            color: var(--text-faint); line-height: 1.4; }
 
 .mono, .sgi-mono { font-family: var(--font-mono); }
 
+
+/* ─── 5. UTILIDADES DE COLOR (texto) ────────────────────────────── */
 .sgi-fg-primary   { color: var(--primary-color); }
 .sgi-fg-secondary { color: var(--secondary-color); }
 .sgi-fg-accent    { color: var(--accent-color); }
@@ -171,7 +191,49 @@ body {
 .sgi-fg-disabled  { color: var(--text-disabled); }
 
 
-/* ─── 5. ANIMACIONES ────────────────────────────────────────────── */
+/* ─── 6. UTILIDADES DE LAYOUT ───────────────────────────────────── */
+.row-flex { display: flex; align-items: center; }
+.col-flex { display: flex; flex-direction: column; }
+.grow     { flex: 1; min-width: 0; }
+.wrap     { flex-wrap: wrap; }
+
+.gap-2  { gap: 2px; }
+.gap-4  { gap: 4px; }
+.gap-6  { gap: 6px; }
+.gap-8  { gap: 8px; }
+.gap-10 { gap: 10px; }
+.gap-12 { gap: 12px; }
+.gap-14 { gap: 14px; }
+.gap-16 { gap: 16px; }
+.gap-20 { gap: 20px; }
+.gap-24 { gap: 24px; }
+
+
+/* ─── 7. SEPARADORES Y ACCENT STRIPS ────────────────────────────── */
+/* Línea fina interior — usar SOLO dentro de cards. NO es border externo. */
+.hr {
+    height: 1px;
+    background: var(--rule);
+    margin: 14px 0;
+    border: 0;
+}
+
+/* Barra de acento 3px sobre el lado izquierdo (KPI cards, fila seleccionada). */
+.accent-strip {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    align-self: stretch;
+}
+.accent-green   { background: var(--primary-color); }
+.accent-orange  { background: var(--secondary-color); }
+.accent-warning { background: var(--warning-color); }
+.accent-danger  { background: var(--danger-color); }
+.accent-info    { background: var(--info-color); }
+.accent-dark    { background: var(--bg-dark); }
+
+
+/* ─── 8. ANIMACIONES ────────────────────────────────────────────── */
 @keyframes sgi-fade-in {
     from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: none; }
@@ -179,13 +241,13 @@ body {
 .view-anim { animation: sgi-fade-in var(--t-view) ease; }
 
 
-/* ─── 6. SCROLLBAR GLOBAL ───────────────────────────────────────── */
+/* ─── 9. SCROLLBAR GLOBAL ───────────────────────────────────────── */
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(150,150,150,.4) transparent;
+    scrollbar-color: rgba(150, 150, 150, 0.4) transparent;
 }
-*::-webkit-scrollbar { width: 4px; height: 4px; }
-*::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background-color: rgba(150,150,150,.4); border-radius: 0; border: none; }
-*::-webkit-scrollbar-thumb:hover { background-color: rgba(150,150,150,.7); }
-*::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar         { width: 4px; height: 4px; }
+*::-webkit-scrollbar-track   { background: transparent; }
+*::-webkit-scrollbar-thumb   { background-color: rgba(150, 150, 150, 0.4); border-radius: 0; }
+*::-webkit-scrollbar-thumb:hover { background-color: rgba(150, 150, 150, 0.7); }
+*::-webkit-scrollbar-corner  { background: transparent; }

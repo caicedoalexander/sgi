@@ -1,5 +1,19 @@
 <?php
 /**
+ * Invoices/edit — formulario de edición de factura.
+ *
+ * Reescrito (mayo 2026) para el Sistema de Diseño v2: sin bordes ni
+ * box-shadow, identidad por fondo + accent-strip + jerarquía tipográfica.
+ * Replica el rediseño `editar-factura.jsx` de Claude Design usando
+ * exclusivamente clases canónicas de components.css / styles.css.
+ *
+ * La lógica de negocio se preserva intacta respecto a la versión legacy:
+ * permisos por rol/estado (`canEdit`), secciones condicionales
+ * (`visibleSections`), hidden inputs, CSRF, IDs requeridos por el JS
+ * (`scripts.php` espera #provider-wrapper, #employee-wrapper,
+ * #equivalent-doc-row, #equivalent-holder-type, #manual-doc-wrapper,
+ * #beneficiary-type, #invoiceEditForm, [data-dirty-indicator]).
+ *
  * @var \App\View\AppView $this
  * @var \App\ViewModel\InvoiceEditViewModel $viewModel
  * @var \App\Model\Entity\User|null $currentUser
@@ -10,20 +24,14 @@ use App\View\Presentation\InvoicePresentation;
 
 $this->assign('title', $viewModel->pageTitle);
 
-// Alias locales: convenientes para mantener el markup corto.
+// ── Alias locales ────────────────────────────────────────────────
+$invoice                = $viewModel->invoice;
 $isAdvance              = $viewModel->isAdvance;
 $documentTypes          = $viewModel->documentTypes;
 $approvalOptions        = $viewModel->approvalOptions;
 $dianOptions            = $viewModel->dianOptions;
 $readyForPaymentOptions = $viewModel->readyForPaymentOptions;
-$paymentStatusOptions   = $viewModel->paymentStatusOptions;
-$renderOrder            = $viewModel->renderOrder;
-$readOnlySectionKeys    = $viewModel->readOnlySectionKeys;
 $canEdit                = fn(string $field): bool => $viewModel->canEditField($field);
-$isReadOnlySection      = fn(string $s): bool      => $viewModel->isReadOnlySection($s);
-
-$btnLabel = $viewModel->submitButtonHtml;
-$btnClass = $viewModel->submitButtonClass;
 
 $currentStatus = $viewModel->currentStatus;
 $currentLabel  = $viewModel->pipelineLabels[$currentStatus] ?? $currentStatus;
@@ -31,114 +39,213 @@ $nextLabel     = $viewModel->nextStatus !== null
     ? ($viewModel->pipelineLabels[$viewModel->nextStatus] ?? $viewModel->nextStatus)
     : null;
 
-// Mapeo etapa → acento (encabezado de la card de etapa actual).
+// ── Mapa estado → accent-strip de la card de etapa actual ────────
 $stageAccentMap = [
-    InvoiceConstants::STATUS_APROBACION        => 'is-warning',
-    InvoiceConstants::STATUS_CONTABILIDAD      => 'is-secondary',
-    InvoiceConstants::STATUS_TESORERIA         => 'is-accent',
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'is-warning',
-    InvoiceConstants::STATUS_VERIFICACION_PAGO => 'is-info',
-    InvoiceConstants::STATUS_PAGADA            => '',
-    InvoiceConstants::STATUS_LEGALIZADA        => '',
+    InvoiceConstants::STATUS_APROBACION        => 'accent-warning',
+    InvoiceConstants::STATUS_CONTABILIDAD      => 'accent-orange',
+    InvoiceConstants::STATUS_TESORERIA         => 'accent-info',
+    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'accent-warning',
+    InvoiceConstants::STATUS_VERIFICACION_PAGO => 'accent-info',
+    InvoiceConstants::STATUS_PAGADA            => 'accent-green',
+    InvoiceConstants::STATUS_LEGALIZADA        => 'accent-green',
 ];
-$stageAccent = $viewModel->isRejected ? 'is-danger' : ($stageAccentMap[$currentStatus] ?? '');
+$stageAccent = $viewModel->isRejected ? 'accent-danger' : ($stageAccentMap[$currentStatus] ?? 'accent-green');
 
-// Pill kind del estado para el resumen / sticky footer.
+// ── Pill kind del estado del pipeline (soft variants) ────────────
 $statusPills = [
     InvoiceConstants::STATUS_APROBACION        => 'pill-warning-soft',
     InvoiceConstants::STATUS_CONTABILIDAD      => 'pill-secondary-soft',
     InvoiceConstants::STATUS_TESORERIA         => 'pill-info-soft',
     InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'pill-warning-soft',
-    InvoiceConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
+    InvoiceConstants::STATUS_VERIFICACION_PAGO => 'pill-info-soft',
     InvoiceConstants::STATUS_PAGADA            => 'pill-primary-soft',
     InvoiceConstants::STATUS_LEGALIZADA        => 'pill-primary-soft',
 ];
 $statusPill = $statusPills[$currentStatus] ?? 'pill-muted';
 
-// ── Ledger lookup arrays (ResultSet → array para acceso por índice) ──
-$expenseTypesArr = is_array($viewModel->expenseTypes)
-    ? $viewModel->expenseTypes
-    : (method_exists($viewModel->expenseTypes, 'toArray') ? $viewModel->expenseTypes->toArray() : []);
-$costCentersArr = is_array($viewModel->costCenters)
-    ? $viewModel->costCenters
-    : (method_exists($viewModel->costCenters, 'toArray') ? $viewModel->costCenters->toArray() : []);
+// ── URLs (Factura vs Anticipo) ───────────────────────────────────
+$indexUrl = $isAdvance
+    ? ['controller' => 'Advances', 'action' => 'index']
+    : ['action' => 'index'];
+$viewUrl = $isAdvance
+    ? ['controller' => 'Advances', 'action' => 'view', $invoice->id]
+    : ['action' => 'view', $invoice->id];
+$listLabel  = $isAdvance ? 'Todos los Anticipos' : 'Todas las Facturas';
+$titleLabel = $isAdvance ? 'Editar Anticipo' : 'Editar Factura';
+$idLabel    = $invoice->invoice_number ?? ('#' . $invoice->id);
+
+// ── Resumen monetario ────────────────────────────────────────────
+$invoiceAmount = (float)($invoice->amount ?? 0);
+$totalPagado   = (float)$viewModel->paymentsTotal;
+$saldo         = $invoiceAmount - $totalPagado;
 
 // ── Soportes ─────────────────────────────────────────────────────
-$showUploadSection = !$viewModel->invoice->isInFinalState();
+$showUploadSection = !$invoice->isInFinalState();
 $documentsByStatus = [];
-if (!empty($viewModel->invoice->invoice_documents)) {
-    foreach ($viewModel->invoice->invoice_documents as $doc) {
+if (!empty($invoice->invoice_documents)) {
+    foreach ($invoice->invoice_documents as $doc) {
         $documentsByStatus[$doc->pipeline_status][] = $doc;
     }
 }
 $statusLabels = InvoiceConstants::STATUS_LABELS;
-$badgeColors = InvoicePresentation::STATUS_BADGES;
-$totalDocs = array_sum(array_map('count', $documentsByStatus));
-
-// ── Resumen monetario ────────────────────────────────────────────
-$invoiceAmount = (float)($viewModel->invoice->amount ?? 0);
-$totalPagado = (float)$viewModel->paymentsTotal;
-$saldo = $invoiceAmount - $totalPagado;
-$amountInt = number_format(floor($invoiceAmount), 0, ',', '.');
-$amountDec = sprintf(',%02d', (int)round(($invoiceAmount - floor($invoiceAmount)) * 100));
+$badgeColors  = InvoicePresentation::STATUS_BADGES;
+$totalDocs    = array_sum(array_map('count', $documentsByStatus));
+$multipleDocStatuses = count($documentsByStatus) > 1;
 
 // ── Pipeline vertical ────────────────────────────────────────────
 $pipelineSteps = $viewModel->pipelineStatuses;
-$currentIdx = array_search($currentStatus, $pipelineSteps, true);
+$currentIdx    = array_search($currentStatus, $pipelineSteps, true);
 if ($currentIdx === false) {
     $currentIdx = count($pipelineSteps);
 }
-$isTerminal = in_array($currentStatus, [InvoiceConstants::STATUS_PAGADA, InvoiceConstants::STATUS_LEGALIZADA], true);
+$isTerminal = in_array($currentStatus, [
+    InvoiceConstants::STATUS_PAGADA,
+    InvoiceConstants::STATUS_LEGALIZADA,
+], true);
+
+// ── Etapa N/total (banner) ───────────────────────────────────────
+$stageNum   = is_int($currentIdx) ? $currentIdx + 1 : null;
+$stageTotal = count($pipelineSteps);
 
 // ── Beneficiario (Anticipo vs Factura) ───────────────────────────
-$beneficiaryName = $viewModel->invoice->provider->name
-    ?? ($viewModel->invoice->employee->full_name ?? '—');
-?>
+$beneficiaryName = $invoice->provider->name
+    ?? ($invoice->employee->full_name ?? '—');
 
-<?php if (($viewModel->invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($viewModel->invoice->advance_id)): ?>
-    <div class="alert alert-info d-flex justify-content-between align-items-center">
-        <div>
-            <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
-            Esta factura es una <strong>Legalización</strong> vinculada al
-            <?= $this->Html->link('Anticipo #' . h($viewModel->invoice->advance_id), ['controller' => 'Advances', 'action' => 'view', $viewModel->invoice->advance_id]) ?>.
-        </div>
-    </div>
-<?php endif; ?>
+// ── Secciones a renderizar ───────────────────────────────────────
+$stageSectionKeys     = ['revision', 'accounting', 'treasury', 'payment_authorization'];
+$visibleStageSections = array_values(array_intersect($stageSectionKeys, $viewModel->visibleSections));
+
+$isPaymentStage = in_array($currentStatus, [
+    InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+    InvoiceConstants::STATUS_VERIFICACION_PAGO,
+    InvoiceConstants::STATUS_PAGADA,
+], true);
+
+$sharedPaymentParams = [
+    'payments'             => $invoice->invoice_payments ?? [],
+    'bankingEntities'      => $viewModel->bankingEntities,
+    'addPaymentUrl'        => ['controller' => 'InvoicePayments', 'action' => 'addPayment', $invoice->id],
+    'authorizeUrlFn'       => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'authorizePayment', $invoice->id, $pId],
+    'rejectUrlFn'          => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'rejectPayment', $invoice->id, $pId],
+    'deleteUrlFn'          => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'deletePayment', $invoice->id, $pId],
+    'paymentStatus'        => $invoice->payment_status ?? null,
+    'totalAmount'          => $invoice->amount ?? null,
+    'rejectMessage'        => '¿Rechazar este pago? El registro volverá a Tesorería.',
+    'with_idempotency_key' => true,
+];
+
+// ── Datos de Recibo de Caja (titular del documento) ──────────────
+$isReciboDeCaja    = ($invoice->document_type ?? '') === InvoiceConstants::DOCTYPE_RECIBO_CAJA;
+$currentHolderType = $invoice->equivalent_holder_type ?? '';
+$currentBeneficiary = $invoice->provider_id
+    ? 'provider'
+    : ($invoice->employee_id ? 'employee' : '');
+
+// ── Banner: requisitos para avanzar ──────────────────────────────
+$showAdvanceBanner = $viewModel->canAdvance
+    && !$viewModel->isRejected
+    && !empty($viewModel->advanceErrors);
+
+$canRegress = !empty($viewModel->canRegress);
+?>
 
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
 
-<?= $this->element('invoice_edit/page_header', ['isAdvance' => $isAdvance]) ?>
+<?php /* ═══════════════════ HEADER DE PÁGINA ═══════════════════ */ ?>
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 view-anim"
+     style="padding:4px 0 16px;">
+    <div style="min-width:0;">
+        <div class="d-flex align-items-center flex-wrap gap-1"
+             style="font-size:var(--fs-body-sm);color:var(--text-faint);margin-bottom:6px;">
+            <?= $this->Html->link(h($listLabel), $indexUrl, ['class' => 'sgi-fg-faint', 'style' => 'text-decoration:none;']) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <?= $this->Html->link(h($idLabel), $viewUrl, ['class' => 'sgi-fg-faint', 'style' => 'text-decoration:none;']) ?>
+            <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
+            <span style="color:var(--text-default);">Editar</span>
+        </div>
+        <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
+            <span class="sgi-title-page"><?= h($titleLabel) ?></span>
+            <span class="mono" style="font-size:var(--fs-body-lg);color:var(--text-muted);padding:3px 8px;background:var(--bg-subtle);border-radius:var(--radius-sm);">
+                <?= h($idLabel) ?>
+            </span>
+            <?php if ($viewModel->isRejected): ?>
+                <span class="pill pill-danger-soft">Rechazada</span>
+            <?php elseif ($viewModel->isApproved): ?>
+                <span class="pill pill-primary-soft">
+                    <i class="bi bi-check2" aria-hidden="true" style="font-size:9px;"></i>Aprobada
+                </span>
+            <?php else: ?>
+                <span class="pill <?= $statusPill ?>"><?= h($currentLabel) ?></span>
+            <?php endif; ?>
+            <?php if ($currentStatus === InvoiceConstants::STATUS_TESORERIA
+                      && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL): ?>
+                <span class="pill pill-warning-soft">Pago Parcial</span>
+            <?php endif; ?>
+            <span class="d-inline-flex align-items-center gap-1 sgi-fg-secondary"
+                  data-dirty-indicator hidden
+                  style="font-size:var(--fs-label);font-weight:600;">
+                <span style="width:6px;height:6px;background:var(--secondary-color);border-radius:50%;"></span>
+                Cambios sin guardar
+            </span>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-shrink-0">
+        <?= $this->Html->link(
+            '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
+            $indexUrl,
+            ['class' => 'btn btn-default', 'escape' => false]
+        ) ?>
+        <?= $this->Html->link(
+            '<i class="bi bi-eye" aria-hidden="true"></i>Ver detalle',
+            $viewUrl,
+            ['class' => 'btn btn-default', 'escape' => false]
+        ) ?>
+    </div>
+</div>
 
-<?= $this->element('invoice_edit/advance_alert') ?>
+<?php /* ── Alerta: legalización vinculada a un anticipo ───────── */ ?>
+<?php if (($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($invoice->advance_id)): ?>
+<div class="alert alert-info d-flex justify-content-between align-items-center">
+    <div>
+        <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
+        Esta factura es una <strong>Legalización</strong> vinculada al
+        <?= $this->Html->link('Anticipo #' . h($invoice->advance_id), ['controller' => 'Advances', 'action' => 'view', $invoice->advance_id]) ?>.
+    </div>
+</div>
+<?php endif; ?>
 
+<?php /* ── Formulario oculto para "Enviar links de aprobación" ── */ ?>
 <?php if ($viewModel->canSendLinks): ?>
 <?= $this->Form->create(null, [
-    'url' => ['action' => 'sendApprovalLinks', $viewModel->invoice->id],
+    'url' => ['action' => 'sendApprovalLinks', $invoice->id],
     'id' => 'sendApprovalLinksForm',
     'style' => 'display:none',
 ]) ?>
 <?= $this->Form->end() ?>
 <?php endif; ?>
 
-<?= $this->Form->create($viewModel->invoice, ['id' => 'invoiceEditForm']) ?>
-<?= $this->Form->hidden('expected_status', ['value' => $viewModel->invoice->pipeline_status]) ?>
+<?= $this->Form->create($invoice, ['id' => 'invoiceEditForm']) ?>
+<?= $this->Form->hidden('expected_status', ['value' => $invoice->pipeline_status]) ?>
 
-<div class="sgi-invoice-view-grid view-anim">
+<div class="row g-3 view-anim">
 
-    <!-- ═══════════════════════════ COLUMNA IZQUIERDA ═══════════════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <?php /* ═══════════════════ COLUMNA IZQUIERDA ═══════════════════ */ ?>
+    <aside class="col-lg-4 d-flex flex-column gap-3">
 
-        <!-- Hero summary -->
-        <div class="card" style="padding:20px;">
+        <?php /* ── Hero: resumen de la factura ─────────────────── */ ?>
+        <div class="sgi-card" style="position:relative;">
+            <span class="accent-strip <?= $stageAccent ?>"></span>
             <div class="d-flex align-items-start" style="gap:12px;margin-bottom:16px;">
-                <div class="sgi-hero-icon">
-                    <i class="bi <?= $isAdvance ? 'bi-cash-coin' : 'bi-file-earmark-text' ?>" aria-hidden="true"></i>
+                <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--primary-soft);color:var(--primary-color);border-radius:var(--radius-sm);">
+                    <i class="bi <?= $isAdvance ? 'bi-cash-coin' : 'bi-file-earmark-text' ?>" aria-hidden="true" style="font-size:18px;"></i>
                 </div>
                 <div style="min-width:0;flex:1;">
-                    <div class="sgi-hero-id"><?= h($viewModel->invoice->invoice_number ?? ('#' . $viewModel->invoice->id)) ?></div>
+                    <div class="mono" style="font-size:16px;font-weight:700;color:var(--text-strong);line-height:1.15;">
+                        <?= h($idLabel) ?>
+                    </div>
                     <div class="d-flex flex-wrap" style="gap:4px;margin-top:6px;">
-                        <span class="pill pill-secondary"><?= h($viewModel->invoice->document_type) ?></span>
+                        <span class="pill pill-secondary"><?= h($invoice->document_type) ?></span>
                         <?php if ($viewModel->isRejected): ?>
                             <span class="pill pill-danger-soft">Rechazada</span>
                         <?php elseif ($viewModel->isApproved): ?>
@@ -156,65 +263,71 @@ $beneficiaryName = $viewModel->invoice->provider->name
             <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);margin-top:4px;line-height:1.3;">
                 <?= h($beneficiaryName) ?>
             </div>
-            <?php if ($viewModel->invoice->hasValue('operation_center')): ?>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" class="d-flex align-items-center gap-1">
+            <?php if ($invoice->hasValue('operation_center')): ?>
+            <div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:4px;">
                 <i class="bi bi-geo-alt" aria-hidden="true" style="font-size:11px;"></i>
-                <span><?= h($viewModel->invoice->operation_center->name) ?></span>
+                <span><?= h($invoice->operation_center->name) ?></span>
             </div>
             <?php endif; ?>
 
-            <div class="sgi-hero-divider">
-                <div class="sgi-label"><?= $isAdvance ? 'Valor Anticipo' : 'Valor Factura' ?></div>
-                <div class="d-flex align-items-baseline" style="gap:4px;margin-top:4px;">
-                    <?php if ($invoiceAmount > 0): ?>
-                        <span class="sgi-hero-display">$ <?= $amountInt ?></span>
-                        <span class="sgi-hero-decimals"><?= $amountDec ?></span>
-                    <?php else: ?>
-                        <span class="sgi-hero-display" style="color:var(--text-disabled);">$ —</span>
-                    <?php endif; ?>
-                </div>
+            <div class="hr" style="margin:16px 0 14px;"></div>
 
-                <?php if ($totalPagado > 0 || $invoiceAmount > 0): ?>
-                <div style="margin-top:14px;display:flex;gap:18px;">
-                    <div>
-                        <div class="sgi-label" style="font-size:var(--fs-micro);">Pagado</div>
-                        <div style="font-size:var(--fs-body-lg);font-weight:700;color:var(--primary-color);font-family:var(--font-mono);margin-top:2px;">
-                            $ <?= number_format($totalPagado, 0, ',', '.') ?>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="sgi-label" style="font-size:var(--fs-micro);">Saldo</div>
-                        <div style="font-size:var(--fs-body-lg);font-weight:700;color:<?= $saldo > 0 ? 'var(--secondary-color)' : 'var(--primary-color)' ?>;font-family:var(--font-mono);margin-top:2px;">
-                            $ <?= number_format(max(0, $saldo), 0, ',', '.') ?>
-                        </div>
-                    </div>
-                </div>
+            <div class="sgi-label"><?= $isAdvance ? 'Valor Anticipo' : 'Valor Factura' ?></div>
+            <div style="margin-top:4px;">
+                <?php if ($invoiceAmount > 0): ?>
+                    <span class="sgi-display">$ <?= number_format($invoiceAmount, 0, ',', '.') ?></span>
+                <?php else: ?>
+                    <span class="sgi-display" style="color:var(--text-disabled);">$ —</span>
                 <?php endif; ?>
             </div>
+
+            <?php if ($totalPagado > 0 || $invoiceAmount > 0): ?>
+            <div class="d-flex" style="gap:18px;margin-top:12px;">
+                <div>
+                    <div class="sgi-label" style="font-size:var(--fs-micro);">Pagado</div>
+                    <div class="mono" style="font-size:var(--fs-body-lg);font-weight:700;color:var(--primary-color);margin-top:2px;">
+                        $ <?= number_format($totalPagado, 0, ',', '.') ?>
+                    </div>
+                </div>
+                <div>
+                    <div class="sgi-label" style="font-size:var(--fs-micro);">Saldo</div>
+                    <div class="mono" style="font-size:var(--fs-body-lg);font-weight:700;margin-top:2px;color:<?= $saldo > 0 ? 'var(--secondary-color)' : 'var(--primary-color)' ?>;">
+                        $ <?= number_format(max(0, $saldo), 0, ',', '.') ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
 
-        <!-- Pipeline vertical -->
-        <div class="card" style="padding:20px;">
-            <div class="sgi-section-head"><span class="sgi-label">Pipeline</span></div>
-            <div class="sgi-pipeline-v">
+        <?php /* ── Pipeline vertical ───────────────────────────── */ ?>
+        <div class="sgi-card compact">
+            <span class="sgi-label">Pipeline</span>
+            <div class="pipeline-v" style="margin-top:8px;">
                 <?php foreach ($pipelineSteps as $idx => $stepKey):
-                    $isDone = $idx < $currentIdx || ($isTerminal && $idx === $currentIdx);
+                    $isDone    = $idx < $currentIdx || ($isTerminal && $idx === $currentIdx);
                     $isCurrent = !$isTerminal && $idx === $currentIdx;
                     $stepLabel = $viewModel->pipelineLabels[$stepKey] ?? $stepKey;
-                    $stepClasses = 'sgi-pipeline-v-step';
-                    if ($isDone) { $stepClasses .= ' is-done'; }
-                    if ($isCurrent) { $stepClasses .= ' is-current'; }
-                    if ($isCurrent && $viewModel->isRejected) { $stepClasses .= ' is-rejected'; }
+
+                    $stepClasses = 'pv-step';
+                    if ($isDone) {
+                        $stepClasses .= ' is-done';
+                    } elseif ($isCurrent && $viewModel->isRejected) {
+                        $stepClasses .= ' is-rejected';
+                    } elseif ($isCurrent) {
+                        $stepClasses .= ' is-current';
+                    } else {
+                        $stepClasses .= ' is-pending';
+                    }
 
                     $stepMeta = null;
                     if ($isCurrent || ($isTerminal && $idx === $currentIdx)) {
-                        $stepMeta = $viewModel->invoice->modified?->format('d/m H:i') ?? null;
+                        $stepMeta = $invoice->modified?->format('d/m H:i');
                     } elseif (!$isDone) {
                         $stepMeta = 'Pendiente';
                     }
                 ?>
                 <div class="<?= $stepClasses ?>">
-                    <div class="sgi-pipeline-v-marker">
+                    <div class="pv-marker">
                         <?php if ($isCurrent && $viewModel->isRejected): ?>
                             <i class="bi bi-x" aria-hidden="true"></i>
                         <?php elseif ($isDone): ?>
@@ -223,10 +336,10 @@ $beneficiaryName = $viewModel->invoice->provider->name
                             <span class="dot"></span>
                         <?php endif; ?>
                     </div>
-                    <div class="sgi-pipeline-v-content">
-                        <div class="sgi-pipeline-v-label"><?= h($stepLabel) ?></div>
+                    <div style="min-width:0;">
+                        <div class="pv-label"><?= h($stepLabel) ?></div>
                         <?php if ($stepMeta): ?>
-                            <div class="sgi-pipeline-v-meta"><?= h($stepMeta) ?></div>
+                            <div class="pv-meta"><?= h($stepMeta) ?></div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -234,24 +347,22 @@ $beneficiaryName = $viewModel->invoice->provider->name
             </div>
         </div>
 
-        <!-- Acciones -->
-        <?php $canRegress = !empty($viewModel->canRegress); ?>
+        <?php /* ── Acciones de etapa ───────────────────────────── */ ?>
         <?php if ($canRegress): ?>
         <?php
-            $prevLabel = $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus;
+            $prevLabel     = $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus;
             $regressLocked = !empty($viewModel->regressLockMessage);
         ?>
-        <div class="card" style="padding:16px 20px;">
-            <div class="sgi-section-head" style="margin-bottom:10px;">
-                <span class="sgi-label">Acciones</span>
-            </div>
-            <div class="sgi-edit-actions-list">
+        <div class="sgi-card compact">
+            <span class="sgi-label">Acciones</span>
+            <div class="d-flex flex-column gap-1" style="margin-top:10px;">
                 <?php if ($regressLocked): ?>
-                    <button type="button" class="btn" disabled title="<?= h($viewModel->regressLockMessage) ?>">
+                    <button type="button" class="btn btn-ghost btn-sm w-100 justify-content-start"
+                            disabled title="<?= h($viewModel->regressLockMessage) ?>">
                         <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar al paso anterior
                     </button>
                 <?php else: ?>
-                    <button type="button" class="btn"
+                    <button type="button" class="btn btn-ghost btn-sm w-100 justify-content-start"
                             data-bs-toggle="modal" data-bs-target="#regressStatusModal">
                         <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
                     </button>
@@ -260,202 +371,669 @@ $beneficiaryName = $viewModel->invoice->provider->name
         </div>
         <?php endif; ?>
 
-        <!-- Auditoría / registro -->
-        <div class="card" style="padding:16px 20px;">
-            <div class="sgi-section-head" style="margin-bottom:10px;">
-                <span class="sgi-label">Registro</span>
-            </div>
-            <div style="font-size:var(--fs-body-sm);color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-2">
+        <?php /* ── Registro / auditoría ────────────────────────── */ ?>
+        <div class="sgi-card compact">
+            <span class="sgi-label">Registro</span>
+            <div class="d-flex align-items-center gap-2 mt-2" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
                 <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
                 <span>Rol: <strong style="color:var(--text-default);"><?= h($viewModel->roleName) ?></strong></span>
             </div>
-            <?php if ($viewModel->invoice->created): ?>
-            <div style="font-size:var(--fs-body-sm);color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-1">
+            <?php if ($invoice->created): ?>
+            <div class="d-flex align-items-center gap-2 mt-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
                 <i class="bi bi-calendar3 sgi-fg-faint" aria-hidden="true"></i>
-                <span>Creado · <span class="mono"><?= $viewModel->invoice->created->format('d/m/Y') ?></span></span>
+                <span>Creado · <span class="mono"><?= $invoice->created->format('d/m/Y') ?></span></span>
             </div>
             <?php endif; ?>
-            <?php if ($viewModel->invoice->modified): ?>
-            <div style="font-size:var(--fs-body-sm);color:var(--text-muted);" class="d-flex align-items-center gap-2">
-                <i class="bi bi-pencil-square sgi-fg-faint" aria-hidden="true"></i>
-                <span>Modificado · <span class="mono"><?= $viewModel->invoice->modified->format('d/m/Y') ?></span></span>
+            <?php if ($invoice->modified): ?>
+            <div class="d-flex align-items-center gap-2 mt-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
+                <i class="bi bi-pencil sgi-fg-faint" aria-hidden="true"></i>
+                <span>Modificado · <span class="mono"><?= $invoice->modified->format('d/m/Y') ?></span></span>
             </div>
             <?php endif; ?>
         </div>
 
     </aside>
 
-    <!-- ═══════════════════════════ COLUMNA DERECHA ═══════════════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <?php /* ═══════════════════ COLUMNA DERECHA ═══════════════════ */ ?>
+    <main class="col-lg-8 d-flex flex-column gap-3">
 
-        <?php
-        // Las secciones general/dates/classification van a la card "Datos
-        // Generales" SIEMPRE (los partials manejan el estado disabled cuando
-        // el rol/estado no permite edicion). visibleSections del policy nunca
-        // las incluye porque originalmente esos campos vivían en otro lugar;
-        // ahora la card los renderiza siempre como inputs read-only
-        // cuando aplica.
-        $generalSectionKeys = ['general', 'dates', 'classification'];
-        $stageSectionKeys = ['revision', 'accounting', 'treasury', 'payment_authorization'];
-        $visibleGeneralSections = $generalSectionKeys;
-        $visibleStageSections = array_values(array_intersect($stageSectionKeys, $viewModel->visibleSections));
-
-        $sharedPaymentParams = [
-            'payments'           => $viewModel->invoice->invoice_payments ?? [],
-            'bankingEntities'    => $viewModel->bankingEntities,
-            'addPaymentUrl'      => ['controller' => 'InvoicePayments', 'action' => 'addPayment', $viewModel->invoice->id],
-            'authorizeUrlFn'     => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'authorizePayment', $viewModel->invoice->id, $pId],
-            'rejectUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'rejectPayment', $viewModel->invoice->id, $pId],
-            'deleteUrlFn'        => fn($pId) => ['controller' => 'InvoicePayments', 'action' => 'deletePayment', $viewModel->invoice->id, $pId],
-            'paymentStatus'      => $viewModel->invoice->payment_status ?? null,
-            'totalAmount'        => $viewModel->invoice->amount ?? null,
-            'rejectMessage'      => '¿Rechazar este pago? El registro volverá a Tesorería.',
-            'with_idempotency_key' => true,
-        ];
-
-        $isPaymentStage = in_array($viewModel->currentStatus, [
-            InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-            InvoiceConstants::STATUS_VERIFICACION_PAGO,
-            InvoiceConstants::STATUS_PAGADA,
-        ], true);
-        ?>
-
-        <!-- Datos Generales: datos invariantes a la etapa -->
-        <?php if (!empty($visibleGeneralSections)): ?>
-        <div class="card sgi-edit-stage-card">
-            <div class="sgi-edit-stage-head">
-                <div>
-                    <div class="sgi-edit-stage-eyebrow">Datos Generales</div>
-                    <div class="sgi-edit-stage-title">Información del documento</div>
+        <?php /* ── Banner: requisitos para avanzar ─────────────── */ ?>
+        <?php if ($showAdvanceBanner): ?>
+        <div class="alert alert-warning d-flex align-items-start gap-3 mb-0">
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"
+               style="font-size:16px;flex-shrink:0;margin-top:1px;color:var(--warning-color);"></i>
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;color:var(--text-strong);margin-bottom:6px;">
+                    <?php if ($nextLabel): ?>
+                        Para avanzar a <span style="color:var(--warning-text);"><?= h($nextLabel) ?></span> debe completar:
+                    <?php else: ?>
+                        Para avanzar al siguiente estado debe completar:
+                    <?php endif; ?>
                 </div>
-                <div style="font-size:11px;color:var(--text-faint);font-style:italic;">
-                    Estos campos no cambian con la etapa
-                </div>
+                <ul style="margin:0;padding-left:18px;line-height:1.7;">
+                    <?php foreach ($viewModel->advanceErrors as $err): ?>
+                        <li><?= h($err) ?></li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
-            <div class="sgi-edit-stage-body">
-                <?= $this->element('invoice_edit/sections/general_compact', compact('viewModel', 'canEdit', 'isAdvance', 'documentTypes')) ?>
-            </div>
+            <?php if ($stageNum !== null): ?>
+                <span class="pill pill-warning-soft pill-lg flex-shrink-0">Etapa <?= $stageNum ?>/<?= $stageTotal ?></span>
+            <?php endif; ?>
         </div>
         <?php endif; ?>
 
-        <!-- Etapa actual: campos editables específicos del estado -->
+        <?php /* ── Datos Generales (siempre visible) ───────────── */ ?>
+        <div class="sgi-card">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2" style="margin-bottom:14px;">
+                <span class="sgi-label">Datos Generales</span>
+                <span style="font-size:11px;color:var(--text-faint);font-style:italic;">
+                    Estos campos no cambian con la etapa
+                </span>
+            </div>
+            <div class="hr" style="margin-bottom:16px;"></div>
+
+            <div class="row g-2 g-md-3">
+
+                <?php /* ── Fila 1 ─────────────────────────────── */ ?>
+                <?php if ($isAdvance): ?>
+                    <div class="col-md-3">
+                        <label class="input-label" for="beneficiary-type">Tipo de Beneficiario</label>
+                        <select id="beneficiary-type" class="form-select"
+                                <?= ($canEdit('provider_id') || $canEdit('employee_id')) ? '' : 'disabled' ?>>
+                            <option value="">-- Seleccione --</option>
+                            <option value="provider" <?= $currentBeneficiary === 'provider' ? 'selected' : '' ?>>Proveedor</option>
+                            <option value="employee" <?= $currentBeneficiary === 'employee' ? 'selected' : '' ?>>Empleado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 <?= $currentBeneficiary === 'provider' ? '' : 'd-none' ?>" id="provider-wrapper">
+                        <label class="input-label">Proveedor</label>
+                        <?= $this->Form->control('provider_id', [
+                            'label' => false,
+                            'options' => $viewModel->providers,
+                            'empty' => '-- Seleccione --',
+                            'class' => 'form-select select2-enable',
+                            'disabled' => !$canEdit('provider_id'),
+                        ]) ?>
+                    </div>
+                    <div class="col-md-6 <?= $currentBeneficiary === 'employee' ? '' : 'd-none' ?>" id="employee-wrapper">
+                        <label class="input-label">Empleado</label>
+                        <?= $this->Form->control('employee_id', [
+                            'label' => false,
+                            'options' => $viewModel->employees ?? [],
+                            'empty' => '-- Seleccione --',
+                            'class' => 'form-select select2-enable',
+                            'disabled' => !$canEdit('employee_id'),
+                        ]) ?>
+                    </div>
+                    <?= $this->Form->hidden('document_type', ['value' => InvoiceConstants::DOCTYPE_ANTICIPO]) ?>
+                <?php else: ?>
+                    <div class="col-md-6" id="provider-wrapper">
+                        <label class="input-label">Proveedor</label>
+                        <?= $this->Form->control('provider_id', [
+                            'label' => false,
+                            'options' => $viewModel->providers,
+                            'empty' => '-- Seleccione --',
+                            'class' => 'form-select select2-enable',
+                            'disabled' => !$canEdit('provider_id'),
+                        ]) ?>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="input-label">No. Factura</label>
+                        <?= $this->Form->control('invoice_number', [
+                            'label' => false,
+                            'placeholder' => 'Ej: FV-001234',
+                            'class' => 'form-control mono',
+                            'disabled' => !$canEdit('invoice_number'),
+                        ]) ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="col-md-3">
+                    <label class="input-label">Valor (COP)</label>
+                    <?php if ($canEdit('amount')): ?>
+                        <input type="text" name="amount" class="form-control currency-input"
+                               value="<?= h($invoice->amount ?? '') ?>">
+                    <?php else: ?>
+                        <input type="text" class="form-control mono" disabled
+                               value="$ <?= number_format($invoiceAmount, 0, ',', '.') ?>">
+                    <?php endif; ?>
+                </div>
+
+                <?php /* ── Fila 2 ─────────────────────────────── */ ?>
+                <?php if (!$isAdvance): ?>
+                <div class="col-md-3">
+                    <label class="input-label">Tipo Documento</label>
+                    <?= $this->Form->control('document_type', [
+                        'label' => false,
+                        'options' => $documentTypes,
+                        'class' => 'form-select',
+                        'disabled' => !$canEdit('document_type'),
+                    ]) ?>
+                </div>
+                <?php endif; ?>
+                <div class="col-md-3">
+                    <label class="input-label">Centro de Operación</label>
+                    <?= $this->Form->control('operation_center_id', [
+                        'label' => false,
+                        'options' => $viewModel->operationCenters,
+                        'empty' => '-- Seleccione --',
+                        'class' => 'form-select',
+                        'disabled' => !($canEdit('operation_center_id') && !$isAdvance),
+                    ]) ?>
+                </div>
+                <div class="col-md-3">
+                    <label class="input-label">Tipo de Gasto</label>
+                    <?= $this->Form->control('expense_type_id', [
+                        'label' => false,
+                        'options' => $viewModel->expenseTypes,
+                        'empty' => '-- Seleccione --',
+                        'class' => 'form-select',
+                        'disabled' => !$canEdit('expense_type_id'),
+                    ]) ?>
+                </div>
+                <div class="col-md-3">
+                    <label class="input-label">Centro de Costos</label>
+                    <?= $this->Form->control('cost_center_id', [
+                        'label' => false,
+                        'options' => $viewModel->costCenters,
+                        'empty' => '-- Seleccione --',
+                        'class' => 'form-select',
+                        'disabled' => !$canEdit('cost_center_id'),
+                    ]) ?>
+                </div>
+
+                <?php /* ── Fila 3 ─────────────────────────────── */ ?>
+                <div class="col-md-3">
+                    <label class="input-label">Fecha de Emisión</label>
+                    <?php if ($canEdit('issue_date')): ?>
+                        <input type="text" name="issue_date" class="form-control flatpickr-date"
+                               value="<?= h($invoice->issue_date?->format('Y-m-d') ?? '') ?>">
+                    <?php else: ?>
+                        <input type="text" class="form-control mono" disabled
+                               value="<?= h($invoice->issue_date?->format('d/m/Y') ?? '') ?>">
+                        <input type="hidden" name="issue_date"
+                               value="<?= h($invoice->issue_date?->format('Y-m-d') ?? '') ?>">
+                    <?php endif; ?>
+                </div>
+
+                <?php if (!$isAdvance): ?>
+                <div class="col-md-3" id="due-date-wrapper">
+                    <label class="input-label">Fecha de Vencimiento</label>
+                    <?php if ($canEdit('due_date')): ?>
+                        <input type="text" name="due_date" class="form-control flatpickr-date"
+                               value="<?= h($invoice->due_date?->format('Y-m-d') ?? '') ?>"
+                               <?= $isReciboDeCaja ? 'disabled' : '' ?>>
+                    <?php else: ?>
+                        <input type="text" class="form-control mono" disabled
+                               value="<?= h($invoice->due_date?->format('d/m/Y') ?? '') ?>">
+                        <input type="hidden" name="due_date"
+                               value="<?= h($invoice->due_date?->format('Y-m-d') ?? '') ?>">
+                    <?php endif; ?>
+                </div>
+                <?php else: ?>
+                    <?= $this->Form->hidden('due_date', ['value' => $invoice->due_date?->format('Y-m-d') ?? '']) ?>
+                <?php endif; ?>
+
+                <div class="col-md-3">
+                    <label class="input-label">Fecha de Registro</label>
+                    <input type="text" class="form-control mono" disabled
+                           value="<?= h($invoice->registration_date?->format('d/m/Y') ?? '') ?>">
+                    <input type="hidden" name="registration_date"
+                           value="<?= h($invoice->registration_date?->format('Y-m-d') ?? '') ?>">
+                </div>
+
+                <?php if (!$isAdvance): ?>
+                <div class="col-md-3" id="purchase-order-wrapper">
+                    <label class="input-label">Orden de Compra</label>
+                    <?= $this->Form->control('purchase_order', [
+                        'label' => false,
+                        'placeholder' => '—',
+                        'class' => 'form-control mono',
+                        'disabled' => !$canEdit('purchase_order'),
+                    ]) ?>
+                </div>
+                <?php endif; ?>
+
+                <?php /* ── Detalle (full width) ───────────────── */ ?>
+                <div class="col-12">
+                    <label class="input-label">Detalle</label>
+                    <?= $this->Form->control('detail', [
+                        'label' => false,
+                        'type' => 'textarea',
+                        'rows' => 2,
+                        'class' => 'form-control auto-resize',
+                        'disabled' => !$canEdit('detail'),
+                    ]) ?>
+                </div>
+
+                <?php /* ── Sub-form Recibo de Caja ────────────── */ ?>
+                <?php if (!$isAdvance): ?>
+                <div class="col-12 <?= $isReciboDeCaja ? '' : 'd-none' ?>" id="equivalent-doc-row">
+                    <div class="row g-2 g-md-3">
+                        <div class="col-md-4" id="holder-type-wrapper">
+                            <label class="input-label">Titular del Documento</label>
+                            <?= $this->Form->control('equivalent_holder_type', [
+                                'label' => false,
+                                'options' => ['provider' => 'Proveedor', 'employee' => 'Empleado', 'manual' => 'Cédula Manual'],
+                                'empty' => '-- Seleccione --',
+                                'id' => 'equivalent-holder-type',
+                                'class' => 'form-select',
+                                'disabled' => !$canEdit('document_type'),
+                            ]) ?>
+                        </div>
+                        <div class="col-md-4 <?= $currentHolderType !== 'employee' ? 'd-none' : '' ?>" id="employee-wrapper">
+                            <label class="input-label">Empleado</label>
+                            <?= $this->Form->control('employee_id', [
+                                'label' => false,
+                                'options' => $viewModel->employees ?? [],
+                                'empty' => '-- Seleccione --',
+                                'class' => 'form-select select2-enable',
+                                'disabled' => !$canEdit('document_type'),
+                            ]) ?>
+                        </div>
+                        <div class="col-md-4 <?= $currentHolderType !== 'manual' ? 'd-none' : '' ?>" id="manual-doc-wrapper">
+                            <label class="input-label">Cédula</label>
+                            <?= $this->Form->control('manual_document_number', [
+                                'label' => false,
+                                'placeholder' => 'Número de cédula',
+                                'class' => 'form-control mono',
+                                'disabled' => !$canEdit('document_type'),
+                            ]) ?>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+            </div>
+        </div>
+
+        <?php /* ── Etapa actual: campos editables por estado ───── */ ?>
         <?php if (!empty($visibleStageSections)): ?>
-        <div class="card sgi-edit-stage-card">
-            <div class="sgi-edit-stage-head <?= $stageAccent ?>">
+        <div class="sgi-card" style="position:relative;">
+            <span class="accent-strip <?= $stageAccent ?>"></span>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2" style="margin-bottom:14px;">
                 <div>
-                    <div class="sgi-edit-stage-eyebrow">Etapa actual · editable</div>
-                    <div class="sgi-edit-stage-title">
+                    <div class="sgi-label" style="color:var(--text-faint);">Etapa actual · editable</div>
+                    <div class="sgi-title-card d-inline-flex align-items-center gap-2" style="margin-top:4px;">
                         <?= h($currentLabel) ?>
                         <?php if ($nextLabel && !$viewModel->isRejected): ?>
-                            <span style="font-size:11px;color:var(--text-faint);font-weight:500;">→ próximo: <?= h($nextLabel) ?></span>
+                            <span style="font-size:11px;color:var(--text-faint);font-weight:500;">
+                                <i class="bi bi-arrow-right" aria-hidden="true" style="font-size:10px;"></i>
+                                próximo: <?= h($nextLabel) ?>
+                            </span>
                         <?php endif; ?>
                     </div>
                 </div>
-                <div class="sgi-edit-stage-hint">
+                <div class="d-inline-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);">
+                    <span style="width:7px;height:7px;background:var(--danger-color);border-radius:50%;"></span>
                     Campos con * son obligatorios para avanzar
                 </div>
             </div>
-            <div class="sgi-edit-stage-body">
-                <div>
-                    <?php foreach ($visibleStageSections as $sectionName): ?>
+            <div class="hr" style="margin-bottom:16px;"></div>
 
-                    <?php if ($sectionName === 'revision'): ?>
-                    <?= $this->element('invoice_edit/sections/revision', compact('viewModel', 'canEdit', 'approvalOptions', 'dianOptions')) ?>
-                    <?php endif; ?>
+            <?php foreach ($visibleStageSections as $sectionName): ?>
 
-                    <?php if ($sectionName === 'accounting'): ?>
-                    <?= $this->element('invoice_edit/sections/accounting', compact('viewModel', 'canEdit', 'readyForPaymentOptions')) ?>
-                    <?php endif; ?>
+                <?php /* ── Revisión / Aprobación ──────────────── */ ?>
+                <?php if ($sectionName === 'revision'):
+                    $isRejected = ($invoice->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED;
+                    $rejector = null;
+                    if ($isRejected) {
+                        foreach ($viewModel->currentApprovals as $a) {
+                            if ($a->status === InvoiceConstants::APPROVER_STATUS_REJECTED) {
+                                $rejector = $a;
+                                break;
+                            }
+                        }
+                    }
+                    $statusSlugMap = [
+                        InvoiceConstants::APPROVER_STATUS_APPROVED => 'approved',
+                        InvoiceConstants::APPROVER_STATUS_REJECTED => 'rejected',
+                    ];
+                    $existingIds = array_map(static fn($a) => $a->user_id, $viewModel->currentApprovals);
+                ?>
+                <div class="row g-2 g-md-3">
+                    <div class="col-12">
+                        <label class="input-label">Aprobadores</label>
 
-                    <?php if ($sectionName === 'treasury' && !$isPaymentStage): ?>
-                    <?php
-                        $canRegisterPayment = $viewModel->canRegisterPayment;
-                        $paymentMode = $canRegisterPayment ? 'tesoreria_register' : 'view';
-                    ?>
-                    <?= $this->element('payment_section', $sharedPaymentParams + [
-                        'canRegisterPayment' => $canRegisterPayment,
-                        'canAuthorize'       => false,
-                        'canDelete'          => $canRegisterPayment,
-                        'mode'               => $paymentMode,
-                    ]) ?>
-                    <?php endif; ?>
+                        <?php if ($isRejected && $rejector): ?>
+                        <div class="alert alert-warning mb-2">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"
+                                   style="font-size:1.1rem;margin-top:1px;color:var(--secondary-color);"></i>
+                                <div>
+                                    <strong>Rechazada por <?= h($rejector->user->full_name ?? $rejector->user->username ?? 'Aprobador') ?></strong>
+                                    <?php if ($rejector->observations): ?>
+                                        <div class="mt-1 sgi-fg-muted" style="font-size:.85rem;"><?= h($rejector->observations) ?></div>
+                                    <?php endif; ?>
+                                    <div class="mt-1 sgi-fg-faint" style="font-size:.8rem;">
+                                        Corrija los datos y re-asigne aprobadores para reiniciar el flujo.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
-                    <?php if ($sectionName === 'payment_authorization' && $isPaymentStage): ?>
-                    <?php
-                        $canAuthorizePayment = $viewModel->canAuthorizePayment;
-                        $paymentMode = $canAuthorizePayment ? 'authorize' : 'view';
-                    ?>
-                    <?= $this->element('payment_section', $sharedPaymentParams + [
-                        'canRegisterPayment' => false,
-                        'canAuthorize'       => $canAuthorizePayment,
-                        'canDelete'          => false,
-                        'mode'               => $paymentMode,
-                    ]) ?>
-                    <?php endif; ?>
+                        <div class="sgi-approvers-widget d-flex flex-wrap gap-2" id="approvers-widget">
+                            <?php if (!empty($viewModel->currentApprovals)): ?>
+                                <?php foreach ($viewModel->currentApprovals as $a):
+                                    echo $this->element('invoice_edit/_approver_chip', [
+                                        'name' => $a->user->full_name ?? $a->user->username ?? ('Usuario #' . $a->user_id),
+                                        'role' => $a->user->role->name ?? '',
+                                        'status' => $statusSlugMap[$a->status] ?? 'pending',
+                                        'timestamp' => $a->responded_at?->format('d/m H:i'),
+                                        'removable' => false,
+                                        'userId' => $a->user_id,
+                                    ]);
+                                endforeach; ?>
+                            <?php elseif (!$viewModel->canSendLinks): ?>
+                                <span style="font-size:var(--fs-body-sm);color:var(--text-faint);">Sin aprobadores asignados</span>
+                            <?php endif; ?>
 
-                    <?php endforeach; ?>
+                            <?php if ($viewModel->canSendLinks): ?>
+                                <span class="sgi-approver-picker" style="display:inline-flex;align-items:center;">
+                                    <select name="approver_ids[]" id="approver-ids" class="select2-rich-approvers" multiple
+                                            form="sendApprovalLinksForm"
+                                            data-placeholder="Buscar aprobador…"
+                                            data-existing-ids="<?= h(json_encode($existingIds)) ?>">
+                                        <?php foreach ($viewModel->approvers as $appId => $appName): ?>
+                                            <option value="<?= $appId ?>"><?= h($appName) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+
+                        <?php if ($viewModel->canSendLinks): ?>
+                        <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                            <button type="submit" form="sendApprovalLinksForm" class="btn btn-primary btn-sm"
+                                    data-sgi-confirm="¿Enviar enlaces de aprobación a los aprobadores seleccionados?">
+                                <i class="bi bi-send" aria-hidden="true"></i>Enviar links de aprobación
+                            </button>
+                            <span class="input-help">Se envía independiente del botón Guardar</span>
+                        </div>
+                        <?php elseif ($viewModel->canModifyApprovers): ?>
+                        <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
+                            <?php if ($viewModel->hasPendingApprovals): ?>
+                                <span class="pill pill-warning-soft">
+                                    <span class="spinner-border" role="status" style="width:.65rem;height:.65rem;border-width:1.5px;"></span>
+                                    Aprobaciones en curso
+                                </span>
+                            <?php else: ?>
+                                <span class="pill pill-primary-soft">
+                                    <i class="bi bi-check2-circle" aria-hidden="true"></i> Aprobaciones registradas
+                                </span>
+                            <?php endif; ?>
+                            <button type="button" class="btn btn-sm btn-outline-dark"
+                                    data-bs-toggle="modal" data-bs-target="#modifyApproversModal">
+                                <i class="bi bi-pencil" aria-hidden="true"></i>Modificar aprobadores
+                            </button>
+                            <span class="input-help">Reemplaza el conjunto y reinicia la aprobación</span>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ($isRejected
+                            && !empty($viewModel->editableFields)
+                            && $currentStatus === InvoiceConstants::STATUS_APROBACION): ?>
+                        <form method="post" class="mt-2"
+                              action="<?= $this->Url->build(['action' => 'resetFlow', $invoice->id]) ?>"
+                              onsubmit="return confirm('¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.');">
+                            <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
+                            <button type="submit" class="btn btn-sm btn-outline-dark">
+                                <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reiniciar flujo
+                            </button>
+                        </form>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="input-label">Aprobación Área</label>
+                        <?= $this->Form->control('area_approval', [
+                            'label' => false,
+                            'options' => $approvalOptions,
+                            'class' => 'form-select',
+                            'disabled' => true,
+                        ]) ?>
+                        <span class="input-help">Se actualiza vía enlace externo</span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="input-label">Validación DIAN</label>
+                        <?= $this->Form->control('dian_validation', [
+                            'label' => false,
+                            'options' => $dianOptions,
+                            'class' => 'form-select',
+                            'disabled' => !$canEdit('dian_validation'),
+                        ]) ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php /* ── Contabilidad ───────────────────────── */ ?>
+                <?php if ($sectionName === 'accounting'): ?>
+                <div class="row g-2 g-md-3">
+                    <div class="col-md-4">
+                        <label class="input-label">Causada</label>
+                        <div class="form-check">
+                            <?= $this->Form->checkbox('accrued', array_merge(
+                                ['class' => 'form-check-input'],
+                                $canEdit('accrued') ? [] : ['disabled' => true]
+                            )) ?>
+                            <?= $this->Form->label('accrued', 'Marcar como causada', ['class' => 'form-check-label']) ?>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="input-label">Fecha de Causación</label>
+                        <?php if ($canEdit('accrual_date')): ?>
+                            <input type="text" name="accrual_date" class="form-control flatpickr-date"
+                                   value="<?= h($invoice->accrual_date?->format('Y-m-d') ?? '') ?>">
+                        <?php else: ?>
+                            <input type="text" class="form-control mono" disabled
+                                   value="<?= h($invoice->accrual_date?->format('d/m/Y') ?? '') ?>">
+                            <input type="hidden" name="accrual_date"
+                                   value="<?= h($invoice->accrual_date?->format('Y-m-d') ?? '') ?>">
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="input-label">Lista para Pago</label>
+                        <?= $this->Form->control('ready_for_payment', [
+                            'label' => false,
+                            'options' => $readyForPaymentOptions,
+                            'class' => 'form-select',
+                            'disabled' => !$canEdit('ready_for_payment'),
+                        ]) ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <?php /* ── Tesorería: registro de pagos ───────── */ ?>
+                <?php if ($sectionName === 'treasury' && !$isPaymentStage):
+                    $canRegisterPayment = $viewModel->canRegisterPayment;
+                ?>
+                <?= $this->element('payment_section', $sharedPaymentParams + [
+                    'canRegisterPayment' => $canRegisterPayment,
+                    'canAuthorize'       => false,
+                    'canDelete'          => $canRegisterPayment,
+                    'mode'               => $canRegisterPayment ? 'tesoreria_register' : 'view',
+                ]) ?>
+                <?php endif; ?>
+
+                <?php /* ── Autorización / verificación de pago ── */ ?>
+                <?php if ($sectionName === 'payment_authorization' && $isPaymentStage):
+                    $canAuthorizePayment = $viewModel->canAuthorizePayment;
+                ?>
+                <?= $this->element('payment_section', $sharedPaymentParams + [
+                    'canRegisterPayment' => false,
+                    'canAuthorize'       => $canAuthorizePayment,
+                    'canDelete'          => false,
+                    'mode'               => $canAuthorizePayment ? 'authorize' : 'view',
+                ]) ?>
+                <?php endif; ?>
+
+            <?php endforeach; ?>
+        </div>
+        <?php elseif (empty($viewModel->editableFields)): ?>
+        <div class="alert alert-info d-flex align-items-start gap-2 mb-0">
+            <i class="bi bi-info-circle" aria-hidden="true" style="font-size:16px;flex-shrink:0;margin-top:1px;"></i>
+            <div>No tiene permisos de edición para esta factura en el estado actual.</div>
+        </div>
+        <?php endif; ?>
+
+        <?php /* ── Cierre de flujo (Verificación de pago) ──────── */ ?>
+        <?php if ($viewModel->canConfirmPayment
+                  && $currentStatus === InvoiceConstants::STATUS_VERIFICACION_PAGO): ?>
+        <div class="sgi-card" style="position:relative;">
+            <span class="accent-strip accent-green"></span>
+            <span class="sgi-label">Cierre de flujo</span>
+            <p style="font-size:var(--fs-body);color:var(--text-muted);margin:8px 0 12px;">
+                El pago fue autorizado por el Contador. Verifique que todos los soportes estén
+                cargados y cierre el flujo.
+            </p>
+            <?= $this->Form->postLink(
+                '<i class="bi bi-check2-circle" aria-hidden="true"></i>Cerrar flujo',
+                ['controller' => 'InvoicePayments', 'action' => 'confirmPayment', $invoice->id],
+                [
+                    'class' => 'btn btn-primary',
+                    'escape' => false,
+                    'confirm' => '¿Confirmar que los soportes están completos y desea cerrar el flujo?',
+                ]
+            ) ?>
+        </div>
+        <?php endif; ?>
+
+        <?php /* ── Soportes + Observaciones (grid 2 columnas) ──── */ ?>
+        <div class="row g-3">
+
+            <?php /* ── Soportes ───────────────────────────────── */ ?>
+            <div class="col-md-6">
+                <div class="sgi-card h-100 d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
+                        <span class="sgi-label d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-paperclip" aria-hidden="true"></i>
+                            Soportes
+                            <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
+                        </span>
+                        <?php if ($showUploadSection): ?>
+                        <button type="button" class="btn btn-default btn-sm"
+                                data-bs-toggle="modal" data-bs-target="#uploadInvoiceDocModal">
+                            <i class="bi bi-upload" aria-hidden="true"></i>Subir
+                        </button>
+                        <?php endif; ?>
+                    </div>
+
+                    <div id="docs-empty-state" class="empty-state"
+                         <?= !empty($documentsByStatus) ? 'style="display:none;"' : '' ?>>
+                        <div class="es-icon es-icon-neutral">
+                            <i class="bi bi-paperclip" aria-hidden="true"></i>
+                        </div>
+                        <div class="es-title">Sin soportes adjuntos</div>
+                        <?php if ($showUploadSection): ?>
+                        <div class="es-msg">PDF, JPG, PNG · máximo 10 MB por archivo</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div id="docs-list" style="max-height:420px;overflow-y:auto;">
+                        <?php foreach ($documentsByStatus as $status => $docs): ?>
+                            <?php if ($multipleDocStatuses):
+                                $docPillKind = $statusPills[$status] ?? 'pill-muted';
+                            ?>
+                            <div class="d-flex align-items-center gap-2"
+                                 style="padding:.3rem .5rem;background:var(--bg-subtle);margin-top:.5rem;">
+                                <span class="pill <?= $docPillKind ?>"><?= h($statusLabels[$status] ?? $status) ?></span>
+                                <span style="font-size:var(--fs-label);color:var(--text-faint);">
+                                    <?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?>
+                                </span>
+                            </div>
+                            <?php endif; ?>
+                            <?php foreach ($docs as $doc): ?>
+                                <?= $this->element('document_row', [
+                                    'doc'          => $doc,
+                                    'canDelete'    => $viewModel->canDeleteDocuments && $doc->pipeline_status === $currentStatus,
+                                    'deleteUrl'    => $this->Url->build(['action' => 'deleteDocument', $invoice->id, $doc->id]),
+                                    'showBadge'    => !$multipleDocStatuses,
+                                    'badgeColors'  => $badgeColors,
+                                    'statusLabels' => $statusLabels,
+                                ]) ?>
+                            <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
-        </div>
-        <?php endif; ?>
 
-        <?php if (empty($visibleGeneralSections) && empty($visibleStageSections)): ?>
-        <div class="sgi-edit-banner" style="background:var(--info-soft);border-left-color:var(--info-color);">
-            <i class="bi bi-info-circle bi-banner" aria-hidden="true" style="color:var(--info-color);"></i>
-            <div style="flex:1;min-width:0;">
-                <div class="sgi-edit-banner-title">No tiene permisos de edición para esta factura en el estado actual.</div>
+            <?php /* ── Observaciones ──────────────────────────── */ ?>
+            <?php $obsCount = count($invoice->invoice_observations ?? []); ?>
+            <div class="col-md-6">
+                <div class="sgi-card sgi-obs-card h-100 d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
+                        <span class="sgi-label d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+                            Observaciones
+                            <span id="obs-count" class="sgi-folder-count"
+                                  <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
+                        </span>
+                    </div>
+
+                    <div id="obs-chat-scroll" class="sgi-obs-list">
+                        <?php foreach ($invoice->invoice_observations ?? [] as $obs): ?>
+                            <?= $this->element('observation_bubble', [
+                                'observation' => $obs,
+                                'isMine' => $currentUser && $obs->user_id === $currentUser->id,
+                            ]) ?>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <div id="obs-empty-state" class="empty-state" <?= $obsCount > 0 ? 'hidden' : '' ?>>
+                        <div class="es-icon es-icon-neutral">
+                            <i class="bi bi-chat-square-dots" aria-hidden="true"></i>
+                        </div>
+                        <div class="es-msg">Sin observaciones aún</div>
+                    </div>
+
+                    <div class="sgi-obs-input-bar">
+                        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $invoice->id], 'id' => 'obs-form']) ?>
+                        <div class="sgi-obs-compose">
+                            <textarea id="obs-message" name="message" class="auto-resize" rows="1"
+                                      placeholder="Escriba una observación..."></textarea>
+                            <button type="submit" class="sgi-obs-compose-send" title="Enviar">
+                                <i class="bi bi-send" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <?= $this->Form->end() ?>
+                    </div>
+                </div>
             </div>
-        </div>
-        <?php endif; ?>
 
-        <!-- Confirmación de pago (Verificación) -->
-        <?= $this->element('confirm_payment_card', [
-            'isVerificacionPago' => $viewModel->currentStatus === InvoiceConstants::STATUS_VERIFICACION_PAGO,
-            'canConfirm' => $viewModel->canConfirmPayment,
-            'confirmUrl' => ['controller' => 'InvoicePayments', 'action' => 'confirmPayment', $viewModel->invoice->id],
-        ]) ?>
-
-        <!-- Soportes + Observaciones (grid 2 columnas) -->
-        <div class="sgi-edit-side-grid">
-            <?= $this->element('invoice_edit/sidebar', [
-                'documentsByStatus' => $documentsByStatus,
-                'totalDocs'         => $totalDocs,
-                'showUploadSection' => $showUploadSection,
-                'statusLabels'      => $statusLabels,
-                'badgeColors'       => $badgeColors,
-            ]) ?>
         </div>
 
-        <!-- Email log (cuando aplica) -->
+        <?php /* ── Log de correos (cuando aplica) ──────────────── */ ?>
         <?= $this->element('email_log_panel', ['emailLogs' => $viewModel->emailLogs ?? []]) ?>
 
-        <!-- Sticky footer: meta + acciones -->
+        <?php /* ── Footer de acciones ──────────────────────────── */ ?>
         <?php if (!empty($viewModel->editableFields) || $canRegress): ?>
-        <div class="sgi-edit-footer">
-            <div class="sgi-edit-footer-meta">
+        <div class="sgi-card d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center flex-wrap gap-3"
+                 style="font-size:var(--fs-body-sm);color:var(--text-muted);">
                 <span class="d-inline-flex align-items-center gap-1">
                     <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
                     Rol: <strong style="color:var(--text-default);"><?= h($viewModel->roleName) ?></strong>
                 </span>
-                <?php if ($viewModel->invoice->modified): ?>
-                <span class="sep"></span>
+                <?php if ($invoice->modified): ?>
+                <span style="width:1px;height:14px;background:var(--rule);"></span>
                 <span class="d-inline-flex align-items-center gap-1">
                     <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
-                    Última modificación: <span class="mono"><?= $viewModel->invoice->modified->format('d/m/Y H:i') ?></span>
+                    Última modificación: <span class="mono"><?= $invoice->modified->format('d/m/Y H:i') ?></span>
                 </span>
                 <?php endif; ?>
-                <span class="sep" data-dirty-indicator hidden></span>
-                <span class="sgi-edit-dirty" data-dirty-indicator hidden>Hay cambios sin guardar</span>
+                <span style="width:1px;height:14px;background:var(--rule);" data-dirty-indicator hidden></span>
+                <span class="d-inline-flex align-items-center gap-1 sgi-fg-secondary"
+                      data-dirty-indicator hidden style="font-weight:600;">
+                    <span style="width:6px;height:6px;background:var(--secondary-color);border-radius:50%;"></span>
+                    Hay cambios sin guardar
+                </span>
             </div>
-            <div class="sgi-edit-footer-actions">
-                <?= $this->Html->link(
-                    'Cancelar',
-                    ['action' => 'view', $viewModel->invoice->id],
-                    ['class' => 'btn btn-ghost-card']
-                ) ?>
+            <div class="d-flex gap-2 flex-shrink-0">
+                <?= $this->Html->link('Cancelar', $viewUrl, ['class' => 'btn btn-ghost']) ?>
                 <?php if (!empty($viewModel->editableFields)): ?>
-                    <button type="submit" class="<?= $btnClass ?>">
-                        <?= $btnLabel ?>
+                    <button type="submit" class="<?= h($viewModel->submitButtonClass) ?>">
+                        <?= $viewModel->submitButtonHtml ?>
                     </button>
                 <?php endif; ?>
             </div>
@@ -467,21 +1045,25 @@ $beneficiaryName = $viewModel->invoice->provider->name
 
 <?= $this->Form->end() ?>
 
+<?php /* ═══════════════════ MODALES ═══════════════════ */ ?>
 <?php if ($canRegress && empty($viewModel->regressLockMessage)): ?>
 <?= $this->element('regress_status_modal', [
-    'actionUrl'  => $this->Url->build(['action' => 'regressStatus', $viewModel->invoice->id]),
+    'actionUrl'  => $this->Url->build(['action' => 'regressStatus', $invoice->id]),
     'entityNoun' => 'factura',
     'currLabel'  => $currentLabel,
     'prevLabel'  => $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus,
 ]) ?>
 <?php endif; ?>
 
-<?php if ($viewModel->currentStatus === InvoiceConstants::STATUS_APROBACION && !empty($viewModel->editableFields)): ?>
-<?= $this->element('invoice_edit/modify_approvers_modal', ['invoice' => $viewModel->invoice, 'approvers' => $viewModel->approvers]) ?>
+<?php if ($currentStatus === InvoiceConstants::STATUS_APROBACION && !empty($viewModel->editableFields)): ?>
+<?= $this->element('invoice_edit/modify_approvers_modal', [
+    'invoice' => $invoice,
+    'approvers' => $viewModel->approvers,
+]) ?>
 <?php endif; ?>
 
 <?php if ($showUploadSection): ?>
-<?= $this->element('invoice_edit/upload_doc_modal', ['invoice' => $viewModel->invoice]) ?>
+<?= $this->element('invoice_edit/upload_doc_modal', ['invoice' => $invoice]) ?>
 <?php endif; ?>
 
 <?= $this->element('document_row_template', ['showBadge' => true]) ?>

@@ -2,6 +2,17 @@
 /**
  * Shared payment section element.
  *
+ * Visual pattern (design.md §09 "Card compleja" — fila de pago: sub-superficie
+ * bg-subtle + .bank-chip + pill soft + monto mono; §16 empty-state cuando no
+ * hay pagos; §06 pills soft para estado del pago).
+ *
+ * JS contract — `webroot/js/sgi-payment.js` depends on (must be preserved):
+ *   container: [data-payment-section], data-add-url, data-remaining-amount,
+ *              data-force-full-amount
+ *   inputs:    [data-pay-bank], [data-pay-amount], [data-pay-date], [data-pay-full]
+ *   buttons:   [data-btn-register-advance], .btn-post-action, .btn-reject-payment,
+ *              data-url, data-confirm
+ *
  * Variables:
  * @var array  $payments           List of payment entities (with banking_entity, created_by_user, authorized_by_user)
  * @var array  $bankingEntities    Banking entities [id => name]
@@ -68,44 +79,42 @@ $addUrl = $this->Url->build($addPaymentUrl);
      data-force-full-amount="<?= $forceFullAmount ? '1' : '0' ?>">
 
     <!-- Section header -->
-    <div class="d-flex align-items-center gap-3 mb-3">
-        <span class="text-uppercase fw-semibold flex-shrink-0"
-              style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
-            <i class="bi <?= h($sectionIcon) ?> me-1" aria-hidden="true"></i><?= h($sectionTitle) ?>
+    <div class="row-flex gap-12 mb-3">
+        <span class="sgi-label row-flex gap-4 grow">
+            <i class="bi <?= h($sectionIcon) ?>" aria-hidden="true"></i><?= h($sectionTitle) ?>
         </span>
-        <div style="flex:1;height:1px;background:var(--border-color);"></div>
         <?php if ($paymentStatus !== null): ?>
             <?php if ($paymentStatus === 'Pago total'): ?>
-                <span class="pill flex-shrink-0"
-                      style="background:var(--primary-color);border-radius:0;font-size:var(--fs-micro);letter-spacing:.08em;">
-                    <i class="bi bi-check-circle me-1" aria-hidden="true"></i>PAGO TOTAL
+                <span class="pill pill-primary-soft">
+                    <i class="bi bi-check" aria-hidden="true"></i>PAGO TOTAL
                 </span>
             <?php elseif ($paymentStatus === 'Pago Parcial'): ?>
-                <span class="pill pill-warning-soft flex-shrink-0"
-                      style="border-radius:0;font-size:var(--fs-micro);letter-spacing:.08em;">
-                    <i class="bi bi-clock me-1" aria-hidden="true"></i>PAGO PARCIAL
+                <span class="pill pill-warning-soft">
+                    <i class="bi bi-clock" aria-hidden="true"></i>PAGO PARCIAL
                 </span>
             <?php else: ?>
-                <span class="pill pill-secondary-soft flex-shrink-0"
-                      style="border-radius:0;font-size:var(--fs-micro);letter-spacing:.08em;">SIN PAGOS</span>
+                <span class="pill pill-muted">SIN PAGOS</span>
             <?php endif; ?>
         <?php endif; ?>
     </div>
 
-    <!-- Mini stat callouts: total pagado + saldo restante -->
+    <!-- Resumen: total pagado + saldo restante -->
     <?php if ($totalAmount > 0): ?>
-    <div class="d-flex gap-2 mb-3 flex-wrap">
-        <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);padding:.45rem .8rem;background:#fff;min-width:140px;">
-            <div style="font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-disabled);margin-bottom:.1rem;">Total pagado</div>
-            <div style="font-size:1.05rem;font-weight:700;letter-spacing:-.03em;color:var(--text-strong);">
+    <div class="row-flex gap-12 mb-3" style="flex-wrap:wrap;">
+        <div style="background:var(--bg-subtle);padding:10px 14px;min-width:150px;">
+            <div class="sgi-label">Total pagado</div>
+            <div class="mono sgi-fg-strong" style="font-size:15px;font-weight:700;margin-top:3px;">
                 $ <?= number_format($paymentsTotal, 0, ',', '.') ?>
             </div>
         </div>
         <?php if ($remainingAmount > 0): ?>
-        <div style="border:1px solid var(--border-color);border-top:2px solid var(--secondary-color);padding:.45rem .8rem;background:#fff;min-width:140px;">
-            <div style="font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-disabled);margin-bottom:.1rem;">Saldo restante</div>
-            <div style="font-size:1.05rem;font-weight:700;letter-spacing:-.03em;color:var(--secondary-color);">
-                $ <?= number_format($remainingAmount, 0, ',', '.') ?>
+        <div style="background:var(--bg-subtle);padding:10px 14px;min-width:150px;position:relative;">
+            <span class="accent-strip accent-orange"></span>
+            <div style="padding-left:8px;">
+                <div class="sgi-label">Saldo restante</div>
+                <div class="mono sgi-fg-secondary" style="font-size:15px;font-weight:700;margin-top:3px;">
+                    $ <?= number_format($remainingAmount, 0, ',', '.') ?>
+                </div>
             </div>
         </div>
         <?php endif; ?>
@@ -114,15 +123,14 @@ $addUrl = $this->Url->build($addPaymentUrl);
 
     <!-- Payments list sub-section -->
     <div class="mt-2">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-            <span class="text-uppercase fw-semibold" style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
-                <i class="bi bi-credit-card me-1" aria-hidden="true"></i>Pagos Registrados
+        <div class="row-flex gap-12 mb-2">
+            <span class="sgi-label row-flex gap-4 grow">
+                <i class="bi bi-credit-card" aria-hidden="true"></i>Pagos Registrados
             </span>
             <?php if ($showAddButton): ?>
-            <button type="button" class="btn btn-sm btn-outline-primary"
-                    style="border-radius:0;font-size:var(--fs-body-sm);"
+            <button type="button" class="btn btn-secondary btn-sm"
                     data-bs-toggle="collapse" data-bs-target="#add-payment-form">
-                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Agregar Pago
+                <i class="bi bi-plus-lg" aria-hidden="true"></i>Agregar Pago
             </button>
             <?php endif; ?>
         </div>
@@ -130,13 +138,10 @@ $addUrl = $this->Url->build($addPaymentUrl);
         <!-- Add payment form (collapsible) -->
         <?php if ($showAddButton): ?>
         <div class="collapse mb-3" id="add-payment-form">
-            <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);background:#fff;padding:1rem 1rem .75rem;">
+            <div style="background:var(--bg-subtle);padding:16px;">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label"
-                               style="font-size:var(--fs-label);font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);">
-                            Entidad Bancaria
-                        </label>
+                        <label class="sgi-label d-block mb-1">Entidad Bancaria</label>
                         <select data-pay-bank class="form-select select2-enable" required>
                             <option value="">— Seleccione —</option>
                             <?php foreach ($bankingEntities as $beId => $beName): ?>
@@ -146,29 +151,20 @@ $addUrl = $this->Url->build($addPaymentUrl);
                     </div>
                     <?php if ($forceFullAmount): ?>
                     <div class="col-md-3">
-                        <label class="form-label"
-                               style="font-size:var(--fs-label);font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);">
-                            Monto (COP)
-                        </label>
-                        <input type="text" data-pay-amount class="form-control currency-input"
+                        <label class="sgi-label d-block mb-1">Monto (COP)</label>
+                        <input type="text" data-pay-amount class="form-control currency-input mono"
                                value="<?= $totalAmount ?>" readonly>
-                        <div class="form-text" style="font-size:.7rem;">Pago total del registro.</div>
+                        <div class="sgi-body-faint" style="margin-top:4px;">Pago total del registro.</div>
                     </div>
                     <?php else: ?>
                     <div class="col-md-3">
-                        <label class="form-label"
-                               style="font-size:var(--fs-label);font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);">
-                            Monto (COP)
-                        </label>
-                        <input type="text" data-pay-amount class="form-control currency-input" required>
+                        <label class="sgi-label d-block mb-1">Monto (COP)</label>
+                        <input type="text" data-pay-amount class="form-control currency-input mono" required>
                     </div>
                     <?php endif; ?>
                     <div class="col-md-3">
-                        <label class="form-label"
-                               style="font-size:var(--fs-label);font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);">
-                            Fecha de Pago
-                        </label>
-                        <input type="text" data-pay-date class="form-control flatpickr-date" required>
+                        <label class="sgi-label d-block mb-1">Fecha de Pago</label>
+                        <input type="text" data-pay-date class="form-control flatpickr-date mono" required>
                     </div>
                     <?php if (!$forceFullAmount && $remainingAmount > 0): ?>
                     <div class="col-md-12">
@@ -176,22 +172,18 @@ $addUrl = $this->Url->build($addPaymentUrl);
                             <input type="checkbox" class="form-check-input" id="pay-full-check" data-pay-full>
                             <label class="form-check-label" for="pay-full-check" style="font-size:var(--fs-body-lg);">
                                 Pago total — usar saldo restante
-                                <strong>$ <?= number_format($remainingAmount, 0, ',', '.') ?></strong>
+                                <strong class="mono">$ <?= number_format($remainingAmount, 0, ',', '.') ?></strong>
                             </label>
                         </div>
                     </div>
                     <?php endif; ?>
-                    <div class="col-12 d-flex gap-2 justify-content-end"
-                         style="border-top:1px solid var(--border-color);padding-top:.75rem;margin-top:.1rem;">
-                        <button type="button"
-                                class="btn btn-sm btn-outline-secondary"
-                                style="border-radius:0;font-size:var(--fs-body);"
+                    <div class="col-12 row-flex gap-8" style="justify-content:flex-end;">
+                        <button type="button" class="btn btn-ghost btn-sm"
                                 data-bs-toggle="collapse" data-bs-target="#add-payment-form">
                             Cancelar
                         </button>
-                        <button type="button" data-btn-register-advance
-                                class="btn btn-sm btn-primary">
-                            <i class="bi bi-send-check me-1" aria-hidden="true"></i>Registrar y enviar a autorización
+                        <button type="button" data-btn-register-advance class="btn btn-primary btn-sm">
+                            <i class="bi bi-check2" aria-hidden="true"></i>Registrar y enviar a autorización
                         </button>
                     </div>
                 </div>
@@ -199,141 +191,119 @@ $addUrl = $this->Url->build($addPaymentUrl);
         </div>
         <?php endif; ?>
 
-        <!-- Payments table -->
+        <!-- Payments list -->
         <?php if (!empty($payments)): ?>
-        <div style="border:1px solid var(--border-color);border-top:2px solid var(--primary-color);">
-            <table class="table table-sm mb-0">
-                <thead>
-                    <tr style="background:var(--bg-muted);">
-                        <th style="font-size:var(--fs-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Entidad Bancaria</th>
-                        <th style="font-size:var(--fs-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Monto</th>
-                        <th style="font-size:var(--fs-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Fecha</th>
-                        <th style="font-size:var(--fs-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Estado</th>
-                        <th style="font-size:var(--fs-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Registrado por</th>
-                        <th style="font-size:var(--fs-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">Origen</th>
-                        <?php if ($canAuthorize || $canDelete): ?>
-                        <th class="text-end"
-                            style="font-size:var(--fs-micro);letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:600;border-bottom:1px solid var(--border-color);">
-                            Acciones
-                        </th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($payments as $payment): ?>
-                    <?php
-                        $pStatus = $payment->status ?? ($payment->authorized ? 'authorized' : 'pending');
-                        $rowAccent = match($pStatus) {
-                            'authorized' => 'var(--primary-color)',
-                            'rejected'   => 'var(--danger-color)',
-                            default      => 'var(--secondary-color)',
-                        };
-                    ?>
-                    <tr style="border-left:3px solid <?= $rowAccent ?>;">
-                        <td style="font-size:var(--fs-body-lg);"><?= h($payment->banking_entity->name ?? '—') ?></td>
-                        <td style="font-size:var(--fs-body-lg);font-weight:600;letter-spacing:-.02em;">
-                            $ <?= number_format((float)$payment->amount, 0, ',', '.') ?>
-                        </td>
-                        <td style="font-size:var(--fs-body-lg);"><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
-                        <td>
-                            <?php if ($pStatus === 'authorized'): ?>
-                                <span class="pill"
-                                      style="background:var(--primary-color);border-radius:0;font-size:var(--fs-micro);letter-spacing:.06em;">
-                                    <i class="bi bi-check-circle me-1" aria-hidden="true"></i>AUTORIZADO
-                                </span>
-                                <?php if ($payment->authorized_by_user): ?>
-                                <br><small class="text-muted" style="font-size:.7rem;">
-                                    <?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?>
-                                    · <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?>
-                                </small>
-                                <?php endif; ?>
-                            <?php elseif ($pStatus === 'rejected'): ?>
-                                <span class="pill pill-danger-soft"
-                                      style="border-radius:0;font-size:var(--fs-micro);letter-spacing:.06em;">
-                                    <i class="bi bi-x-circle me-1" aria-hidden="true"></i>RECHAZADO
-                                </span>
-                                <?php if (!empty($payment->rejection_reason)): ?>
-                                <br><small class="text-muted" style="font-size:.7rem;"><?= h($payment->rejection_reason) ?></small>
-                                <?php endif; ?>
-                            <?php else: ?>
-                                <span class="pill pill-warning-soft"
-                                      style="border-radius:0;font-size:var(--fs-micro);letter-spacing:.06em;">
-                                    <i class="bi bi-clock me-1" aria-hidden="true"></i>PENDIENTE
-                                </span>
-                            <?php endif; ?>
-                        </td>
-                        <td style="font-size:var(--fs-body-lg);">
-                            <?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?>
-                        </td>
-                        <td>
-                            <?php if (!empty($payment->payment_scheduling_id)): ?>
-                                <?= $this->Html->link(
-                                    '<i class="bi bi-calendar-check me-1" aria-hidden="true"></i>' . h($payment->payment_scheduling->code ?? '#' . $payment->payment_scheduling_id),
-                                    ['controller' => 'PaymentSchedulings', 'action' => 'view', $payment->payment_scheduling_id],
-                                    ['class' => 'pill pill-muted text-decoration-none', 'style' => 'border-radius:0;font-size:var(--fs-label);', 'escape' => false]
-                                ) ?>
-                            <?php elseif (!empty($payment->petty_cash_record_id)): ?>
-                                <?= $this->Html->link(
-                                    '<i class="bi bi-wallet2 me-1" aria-hidden="true"></i>' . h($payment->petty_cash_record->code ?? '#' . $payment->petty_cash_record_id),
-                                    ['controller' => 'PettyCashRecords', 'action' => 'view', $payment->petty_cash_record_id],
-                                    ['class' => 'pill pill-muted text-decoration-none', 'style' => 'border-radius:0;font-size:var(--fs-label);', 'escape' => false]
-                                ) ?>
-                            <?php else: ?>
-                                <span style="font-size:.7rem;color:var(--text-disabled);text-transform:uppercase;letter-spacing:.08em;">Individual</span>
-                            <?php endif; ?>
-                        </td>
-                        <?php $isInvoicePayment = isset($payment->invoice_id);
-                        $isFromModule = $isInvoicePayment && (
-                            !empty($payment->payment_scheduling_id)
-                            || !empty($payment->petty_cash_record_id)
-                        ); ?>
-                        <?php if ($canAuthorize || $canDelete): ?>
-                        <td class="text-end">
-                            <?php if ($canAuthorize && !$payment->authorized && !$isFromModule && $authorizeUrlFn): ?>
-                            <button type="button" class="btn btn-sm btn-outline-success btn-post-action"
-                                    style="border-radius:0;font-size:var(--fs-body-sm);"
-                                    data-url="<?= $this->Url->build($authorizeUrlFn($payment->id)) ?>"
-                                    data-confirm="¿Autorizar este pago?">
-                                <i class="bi bi-shield-check me-1" aria-hidden="true"></i>Autorizar
-                            </button>
-                            <?php endif; ?>
-                            <?php if ($canAuthorize && !$payment->authorized && !$isFromModule && $rejectUrlFn): ?>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-reject-payment"
-                                    style="border-radius:0;font-size:var(--fs-body-sm);"
-                                    data-url="<?= $this->Url->build($rejectUrlFn($payment->id)) ?>">
-                                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Rechazar
-                            </button>
-                            <?php endif; ?>
-                            <?php if ($canDelete && !$payment->authorized && !$isFromModule && $deleteUrlFn): ?>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-post-action"
-                                    style="border-radius:0;font-size:var(--fs-body-sm);"
-                                    data-url="<?= $this->Url->build($deleteUrlFn($payment->id)) ?>"
-                                    data-confirm="¿Eliminar este pago?">
-                                <i class="bi bi-trash" aria-hidden="true"></i>
-                            </button>
-                            <?php endif; ?>
-                        </td>
-                        <?php endif; ?>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-                <tfoot>
-                    <tr style="background:var(--bg-muted);border-top:2px solid var(--border-color);">
-                        <th style="font-size:var(--fs-label);text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">Total Pagado</th>
-                        <th colspan="<?= ($canAuthorize || $canDelete) ? 6 : 5 ?>"
-                            style="font-size:.9rem;font-weight:700;letter-spacing:-.02em;">
-                            $ <?= number_format($paymentsTotal, 0, ',', '.') ?>
-                        </th>
-                    </tr>
-                </tfoot>
-            </table>
+        <div class="col-flex gap-2">
+            <?php foreach ($payments as $payment): ?>
+            <?php
+                $pStatus = $payment->status ?? ($payment->authorized ? 'authorized' : 'pending');
+                $isInvoicePayment = isset($payment->invoice_id);
+                $isFromModule = $isInvoicePayment && (
+                    !empty($payment->payment_scheduling_id)
+                    || !empty($payment->petty_cash_record_id)
+                );
+            ?>
+            <div class="row-flex gap-12" style="background:var(--bg-subtle);padding:12px 14px;flex-wrap:wrap;">
+                <div class="bank-chip">
+                    <i class="bi bi-bank" aria-hidden="true"></i>
+                </div>
+                <div class="grow">
+                    <div style="font-size:var(--fs-body-lg);font-weight:600;color:var(--text-strong);">
+                        <?= h($payment->banking_entity->name ?? '—') ?>
+                    </div>
+                    <div class="mono sgi-body-faint" style="margin-top:2px;">
+                        <?= $payment->payment_date?->format('d/m/Y') ?? '—' ?>
+                        · por <?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?>
+                    </div>
+                    <?php if (!empty($payment->payment_scheduling_id)): ?>
+                    <div style="margin-top:6px;">
+                        <?= $this->Html->link(
+                            '<i class="bi bi-calendar3" aria-hidden="true"></i> ' . h($payment->payment_scheduling->code ?? '#' . $payment->payment_scheduling_id),
+                            ['controller' => 'PaymentSchedulings', 'action' => 'view', $payment->payment_scheduling_id],
+                            ['class' => 'pill pill-muted text-decoration-none', 'escape' => false]
+                        ) ?>
+                    </div>
+                    <?php elseif (!empty($payment->petty_cash_record_id)): ?>
+                    <div style="margin-top:6px;">
+                        <?= $this->Html->link(
+                            '<i class="bi bi-credit-card" aria-hidden="true"></i> ' . h($payment->petty_cash_record->code ?? '#' . $payment->petty_cash_record_id),
+                            ['controller' => 'PettyCashRecords', 'action' => 'view', $payment->petty_cash_record_id],
+                            ['class' => 'pill pill-muted text-decoration-none', 'escape' => false]
+                        ) ?>
+                    </div>
+                    <?php endif; ?>
+                    <?php if ($pStatus === 'authorized' && $payment->authorized_by_user): ?>
+                    <div class="mono sgi-body-faint" style="margin-top:4px;">
+                        Autorizado por <?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?>
+                        · <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?>
+                    </div>
+                    <?php elseif ($pStatus === 'rejected' && !empty($payment->rejection_reason)): ?>
+                    <div class="sgi-body-faint" style="margin-top:4px;">
+                        <i class="bi bi-exclamation-triangle sgi-fg-danger" aria-hidden="true"></i>
+                        <?= h($payment->rejection_reason) ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <div class="col-flex gap-4" style="align-items:flex-end;flex-shrink:0;">
+                    <?php if ($pStatus === 'authorized'): ?>
+                        <span class="pill pill-primary-soft">
+                            <i class="bi bi-check" aria-hidden="true"></i>AUTORIZADO
+                        </span>
+                    <?php elseif ($pStatus === 'rejected'): ?>
+                        <span class="pill pill-danger-soft">
+                            <i class="bi bi-x" aria-hidden="true"></i>RECHAZADO
+                        </span>
+                    <?php else: ?>
+                        <span class="pill pill-warning-soft">
+                            <i class="bi bi-clock" aria-hidden="true"></i>PENDIENTE
+                        </span>
+                    <?php endif; ?>
+                    <div class="mono sgi-fg-strong" style="font-size:14px;font-weight:700;">
+                        $ <?= number_format((float)$payment->amount, 0, ',', '.') ?>
+                    </div>
+                </div>
+                <?php if (($canAuthorize || $canDelete) && !$payment->authorized && !$isFromModule): ?>
+                <div class="row-flex gap-4" style="width:100%;justify-content:flex-end;border-top:1px solid var(--rule);padding-top:8px;">
+                    <?php if ($canAuthorize && $authorizeUrlFn): ?>
+                    <button type="button" class="btn btn-secondary btn-sm btn-post-action"
+                            data-url="<?= $this->Url->build($authorizeUrlFn($payment->id)) ?>"
+                            data-confirm="¿Autorizar este pago?">
+                        <i class="bi bi-check" aria-hidden="true"></i>Autorizar
+                    </button>
+                    <?php endif; ?>
+                    <?php if ($canAuthorize && $rejectUrlFn): ?>
+                    <button type="button" class="btn btn-danger btn-sm btn-reject-payment"
+                            data-url="<?= $this->Url->build($rejectUrlFn($payment->id)) ?>">
+                        <i class="bi bi-x" aria-hidden="true"></i>Rechazar
+                    </button>
+                    <?php endif; ?>
+                    <?php if ($canDelete && $deleteUrlFn): ?>
+                    <button type="button" class="btn btn-default btn-sm btn-post-action"
+                            data-url="<?= $this->Url->build($deleteUrlFn($payment->id)) ?>"
+                            data-confirm="¿Eliminar este pago?">
+                        <i class="bi bi-trash" aria-hidden="true"></i>
+                    </button>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+
+            <!-- Total -->
+            <div class="row-flex gap-12" style="background:var(--bg-muted);padding:10px 14px;">
+                <span class="sgi-label grow">Total Pagado</span>
+                <span class="mono sgi-fg-strong" style="font-size:14px;font-weight:700;">
+                    $ <?= number_format($paymentsTotal, 0, ',', '.') ?>
+                </span>
+            </div>
         </div>
         <?php else: ?>
-        <div class="text-center py-4" style="border:1px dashed var(--border-color);">
-            <i class="bi bi-credit-card d-block mb-1" style="font-size:1.4rem;color:var(--text-disabled);" aria-hidden="true"></i>
-            <span style="font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-disabled);">
-                No hay pagos registrados
-            </span>
+        <div class="empty-state">
+            <div class="es-icon es-icon-neutral"><i class="bi bi-credit-card" aria-hidden="true"></i></div>
+            <div class="es-title">Sin pagos registrados</div>
+            <?php if ($showAddButton): ?>
+            <div class="es-msg">Registra un pago para avanzar el registro.</div>
+            <?php endif; ?>
         </div>
         <?php endif; ?>
     </div>

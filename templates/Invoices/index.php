@@ -1,9 +1,20 @@
 <?php
 /**
+ * Listado de Facturas — Sistema de Diseño v2 (lista-facturas spec).
+ *
+ * Vista única reutilizada por las acciones `index`, `all`, `rejected` y `overdue`
+ * del InvoicesController. Replica el rediseño de `lista-facturas.jsx`:
+ *   · Header: título + meta (período · documentos · total) + acciones a la derecha.
+ *   · Search bar + botón "Filtros" (collapsible con filtros avanzados).
+ *   · Chips por estado del pipeline (.chip / .chip.is-active).
+ *   · Tabla densa con grid 7-col, .pipeline-mini horizontal y pills soft.
+ *   · Footer con paginación.
+ *
  * @var \App\View\AppView $this
  * @var iterable<\App\Model\Entity\Invoice> $invoices
  * @var string $roleName
  * @var string[] $visibleStatuses
+ * @var array<int,array{total:int,approved:int,rejected:int}> $approvalSummaries
  * @var \Cake\ORM\ResultSet $providers
  * @var \Cake\ORM\ResultSet $operationCenters
  * @var \Cake\ORM\ResultSet $expenseTypes
@@ -12,370 +23,436 @@
 use App\Constants\InvoiceConstants;
 use App\View\Presentation\InvoicePresentation;
 
-$isAllView      = $this->request->getParam('action') === 'all';
-$isRejectedView = $this->request->getParam('action') === 'rejected';
-$pageTitle = $isRejectedView ? 'Facturas Rechazadas'
-           : ($isAllView     ? 'Todas las Facturas'
-           :                   'Mis Facturas');
+/* ─────────── Contexto de la vista ─────────── */
+$action = $this->request->getParam('action');
+$isAllView      = $action === 'all';
+$isRejectedView = $action === 'rejected';
+$isOverdueView  = $action === 'overdue';
+
+$pageTitle = match (true) {
+    $isRejectedView => 'Facturas Rechazadas',
+    $isOverdueView  => 'Facturas Vencidas',
+    $isAllView      => 'Todas las Facturas',
+    default         => 'Mis Facturas',
+};
 $this->assign('title', $pageTitle);
 
-$query = $this->request->getQueryParams();
-$hasFilters = !empty(array_filter($query, fn($v) => $v !== '' && $v !== null));
+$query           = $this->request->getQueryParams();
+$activeStatus    = (string)$this->request->getQuery('pipeline_status', '');
+$searchValue     = (string)$this->request->getQuery('search', '');
+$activeFilters   = array_filter(
+    $query,
+    fn ($v, $k) => $k !== 'page' && $v !== '' && $v !== null,
+    ARRAY_FILTER_USE_BOTH
+);
+$filterCount     = count($activeFilters);
 $pipelineOptions = InvoiceConstants::STATUS_LABELS;
 
-// Pills soft por estado de pipeline (alineado al sistema de diseño v2).
-$statusPills = [
-    InvoiceConstants::STATUS_APROBACION        => 'pill-warning-soft',
-    InvoiceConstants::STATUS_CONTABILIDAD      => 'pill-secondary-soft',
-    InvoiceConstants::STATUS_TESORERIA         => 'pill-info-soft',
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'pill-warning-soft',
-    InvoiceConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
-    InvoiceConstants::STATUS_PAGADA            => 'pill-primary-soft',
-    InvoiceConstants::STATUS_LEGALIZADA        => 'pill-primary-soft',
-];
-
-// Materializar el ResultSet para poder sumar y luego iterar.
+/* Materializar el ResultSet para sumar y luego iterar. */
 $invoicesArr = is_array($invoices) ? $invoices : iterator_to_array($invoices, false);
-$pageTotal = 0.0;
-foreach ($invoicesArr as $inv) { $pageTotal += (float)$inv->amount; }
-$invoices = $invoicesArr;
+$pageTotal   = 0.0;
+foreach ($invoicesArr as $inv) {
+    $pageTotal += (float)$inv->amount;
+}
+$totalCount = $this->Paginator->counter('{{count}}');
 
-// Mes actual en español para la meta-línea del header.
-$mesesEs = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-$now = new \DateTimeImmutable('today');
+/* Meta-línea: período actual en español. */
+$mesesEs = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+$now         = new \DateTimeImmutable('today');
 $periodLabel = $mesesEs[(int)$now->format('n')] . ' ' . $now->format('Y');
 
-// Tabs por estado de pipeline (filtros directos vía query string).
-$activeStatus = (string)$this->request->getQuery('pipeline_status', '');
-$tabAction = $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index');
-$baseQuery = array_diff_key($query, ['pipeline_status' => true, 'page' => true]);
-$tabUrl = function (?string $status) use ($tabAction, $baseQuery) {
+/* ─────────── Chips por estado (no aplica para rejected/overdue) ─────────── */
+$tabAction    = $isRejectedView ? 'rejected' : ($isOverdueView ? 'overdue' : ($isAllView ? 'all' : 'index'));
+$baseQuery    = array_diff_key($query, ['pipeline_status' => true, 'page' => true]);
+$tabUrl = function (?string $status) use ($tabAction, $baseQuery): array {
     $params = ['action' => $tabAction];
-    if ($status !== null) { $params['?'] = $baseQuery + ['pipeline_status' => $status]; }
-    elseif (!empty($baseQuery)) { $params['?'] = $baseQuery; }
+    if ($status !== null) {
+        $params['?'] = $baseQuery + ['pipeline_status' => $status];
+    } elseif (!empty($baseQuery)) {
+        $params['?'] = $baseQuery;
+    }
     return $params;
 };
+/* [slug, label, color-css] */
 $tabs = [
-    [null,                                             'Todas'],
-    [InvoiceConstants::STATUS_APROBACION,              'En aprobación'],
-    [InvoiceConstants::STATUS_CONTABILIDAD,            'Contabilidad'],
-    [InvoiceConstants::STATUS_TESORERIA,               'Tesorería'],
-    [InvoiceConstants::STATUS_AUTORIZACION_PAGO,       'Autorización'],
-    [InvoiceConstants::STATUS_PAGADA,                  'Pagadas'],
+    [null,                                       'Todas',         'var(--primary-color)'],
+    [InvoiceConstants::STATUS_APROBACION,        'En aprobación', 'var(--warning-text)'],
+    [InvoiceConstants::STATUS_CONTABILIDAD,      'Contabilidad',  'var(--secondary-color)'],
+    [InvoiceConstants::STATUS_TESORERIA,         'Tesorería',     'var(--accent-color)'],
+    [InvoiceConstants::STATUS_AUTORIZACION_PAGO, 'Autorización',  'var(--warning-text)'],
+    [InvoiceConstants::STATUS_PAGADA,            'Pagadas',       'var(--primary-color)'],
 ];
 
-// Pills para el flag ready_for_payment.
-$readyForPaymentPills = [
-    InvoiceConstants::READY_FOR_PAYMENT_SI          => 'pill-primary-soft',
-    InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'pill-danger-soft',
-    InvoiceConstants::READY_FOR_PAYMENT_PSE         => 'pill-dark',
-];
-
-// Steps para la mini-bar (legalización = pipeline reducido de 3 pasos).
+/* ─────────── Pipeline mini: pasos por tipo de documento ─────────── */
 $pipelineStepsFull = InvoiceConstants::PIPELINE_STATUSES;
 $pipelineStepsLeg  = [
     InvoiceConstants::STATUS_APROBACION,
     InvoiceConstants::STATUS_CONTABILIDAD,
     InvoiceConstants::STATUS_LEGALIZADA,
 ];
+
+/* Variante de color para .pipeline-mini según estado actual. */
+$pipelineVariant = function (string $status): string {
+    return match ($status) {
+        InvoiceConstants::STATUS_APROBACION,
+        InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+        InvoiceConstants::STATUS_VERIFICACION_PAGO,
+        InvoiceConstants::STATUS_LEGALIZADA           => 'is-warning',
+        InvoiceConstants::STATUS_CONTABILIDAD,
+        InvoiceConstants::STATUS_TESORERIA            => 'is-orange',
+        default                                       => '', // primary (PAGADA)
+    };
+};
+
+/* Pills para ready_for_payment. */
+$readyForPaymentPills = [
+    InvoiceConstants::READY_FOR_PAYMENT_SI          => 'pill-primary-soft',
+    InvoiceConstants::READY_FOR_PAYMENT_PRIORITARIO => 'pill-danger-soft',
+    InvoiceConstants::READY_FOR_PAYMENT_PSE         => 'pill-dark',
+];
 ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<?php /* ════════════════════════ HEADER ════════════════════════ */ ?>
+<div class="d-flex justify-content-between align-items-start" style="padding:4px 0 16px;">
     <div>
-        <span class="sgi-page-title"><?= $pageTitle ?></span>
-        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
+        <div style="font-size:22px;font-weight:700;color:var(--text-strong);letter-spacing:-0.2px;">
+            <?= h($pageTitle) ?>
+        </div>
+        <div style="font-size:12px;color:var(--text-faint);margin-top:4px;">
             Período: <?= h($periodLabel) ?> ·
-            <span class="sgi-fg-muted"><?= $this->Paginator->counter('{{count}} documentos') ?></span> ·
-            <span class="sgi-fg-muted mono">$ <?= number_format($pageTotal, 0, ',', '.') ?></span>
+            <span style="color:var(--text-muted);"><?= $totalCount ?> documentos</span> ·
+            <span class="mono" style="color:var(--text-muted);">$ <?= number_format($pageTotal, 0, ',', '.') ?></span>
         </div>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex" style="gap:8px;">
         <?php if (!empty($userPermissions['dian_crosschecks']['can_create'])): ?>
-        <?= $this->Html->link(
-            '<i class="bi bi-arrow-left-right" aria-hidden="true"></i>Cruce',
-            ['controller' => 'DianCrosschecks', 'action' => 'add'],
-            ['class' => 'btn btn-ghost-card', 'escape' => false]
-        ) ?>
+            <?= $this->Html->link(
+                '<i class="bi bi-arrow-left-right" aria-hidden="true"></i><span>Cruce</span>',
+                ['controller' => 'DianCrosschecks', 'action' => 'add'],
+                ['class' => 'btn btn-default', 'escape' => false]
+            ) ?>
         <?php endif; ?>
         <?php if (!empty($userPermissions['dian_crosschecks']['can_view'])): ?>
-        <?= $this->Html->link(
-            '<i class="bi bi-arrow-clockwise" aria-hidden="true"></i>Cruces',
-            ['controller' => 'DianCrosschecks', 'action' => 'index'],
-            ['class' => 'btn btn-ghost-card', 'escape' => false]
-        ) ?>
+            <?= $this->Html->link(
+                '<i class="bi bi-arrow-clockwise" aria-hidden="true"></i><span>Cruces</span>',
+                ['controller' => 'DianCrosschecks', 'action' => 'index'],
+                ['class' => 'btn btn-default', 'escape' => false]
+            ) ?>
         <?php endif; ?>
         <?= $this->element('excel_wizard/buttons', [
-            'module' => 'Invoices',
+            'module'     => 'Invoices',
             'importable' => false,
-            'canCreate' => !empty($userPermissions['invoices']['can_create']),
+            'canCreate'  => !empty($userPermissions['invoices']['can_create']),
         ]) ?>
         <?php if (!empty($userPermissions['invoices']['can_create'])): ?>
-        <?= $this->Html->link(
-            '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva Factura',
-            ['action' => 'add'],
-            ['class' => 'btn btn-primary', 'escape' => false]
-        ) ?>
+            <?= $this->Html->link(
+                '<i class="bi bi-plus-lg" aria-hidden="true"></i><span>Nueva Factura</span>',
+                ['action' => 'add'],
+                ['class' => 'btn btn-primary', 'escape' => false]
+            ) ?>
         <?php endif; ?>
     </div>
 </div>
 
-<!-- Search & Filters -->
-<?= $this->Form->create(null, ['type' => 'get', 'url' => ['action' => $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index')], 'valueSources' => ['query']]) ?>
-<div class="d-flex gap-2 align-items-stretch mb-3">
-    <div class="sgi-search-bar flex-grow-1">
-        <div class="sgi-input-icon w-100">
-            <i class="bi bi-search" aria-hidden="true"></i>
-            <input type="text" name="search"
-                   class="form-control"
-                   placeholder="Buscar por número, orden de compra, detalle o proveedor…"
-                   value="<?= h($this->request->getQuery('search', '')) ?>"
-                   aria-label="Buscar facturas">
-        </div>
-    </div>
-    <button type="button" class="btn btn-ghost-card sgi-filters-trigger"
-            data-bs-toggle="collapse" data-bs-target="#invoiceFilters" aria-label="Filtros avanzados">
+<?php /* ════════════════════════ SEARCH + FILTROS ════════════════════════ */ ?>
+<?= $this->Form->create(null, [
+    'type'         => 'get',
+    'url'          => ['action' => $tabAction],
+    'valueSources' => ['query'],
+]) ?>
+<div class="d-flex align-items-stretch" style="gap:8px;margin-bottom:14px;">
+    <label class="input flex-grow-1" style="margin:0;">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input type="text" name="search"
+               value="<?= h($searchValue) ?>"
+               placeholder="Buscar por número, orden de compra, detalle o proveedor…"
+               aria-label="Buscar facturas">
+        <?php if ($searchValue !== ''): ?>
+            <?= $this->Html->link(
+                '<i class="bi bi-x" aria-hidden="true"></i>',
+                ['action' => $tabAction],
+                [
+                    'escape' => false,
+                    'style'  => 'background:transparent;border:0;color:var(--text-faint);padding:4px;display:inline-flex;',
+                    'title'  => 'Limpiar búsqueda',
+                ]
+            ) ?>
+        <?php endif; ?>
+    </label>
+
+    <button type="button" class="btn btn-default"
+            data-bs-toggle="collapse" data-bs-target="#invoiceFilters"
+            aria-expanded="<?= $filterCount > 0 ? 'true' : 'false' ?>"
+            aria-label="Filtros avanzados">
         <i class="bi bi-funnel" aria-hidden="true"></i>
-        <span>Filtros<?php if ($hasFilters): ?> · <span class="sgi-fg-primary"><?= count(array_filter($query, fn($v) => $v !== '' && $v !== null)) ?></span><?php endif; ?></span>
+        <span>Filtros<?php if ($filterCount > 0): ?> · <span style="color:var(--primary-color);font-weight:700;"><?= $filterCount ?></span><?php endif; ?></span>
     </button>
-    <?php if ($hasFilters): ?>
+
+    <?php if ($filterCount > 0): ?>
         <?= $this->Html->link(
-            '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
-            ['action' => $isRejectedView ? 'rejected' : ($isAllView ? 'all' : 'index')],
-            ['class' => 'btn btn-ghost-card sgi-fg-danger', 'escape' => false]
+            '<i class="bi bi-x-lg" aria-hidden="true"></i><span>Limpiar</span>',
+            ['action' => $tabAction],
+            ['class' => 'btn btn-ghost', 'escape' => false, 'style' => 'color:var(--danger-color);']
         ) ?>
     <?php endif; ?>
 </div>
 
-<div class="collapse <?= $hasFilters ? 'show' : '' ?> mb-3" id="invoiceFilters">
-    <div class="card p-3">
-            <div class="row g-2">
-                <div class="col-md-3">
-                    <label class="sgi-filter-label" for="filter-provider">Proveedor</label>
-                    <?= $this->Form->select('provider_id', $providers, [
-                        'empty' => 'Todos',
-                        'class' => 'form-select form-select-sm',
-                        'value' => $this->request->getQuery('provider_id', ''),
-                        'id'    => 'filter-provider',
-                    ]) ?>
-                </div>
-                <div class="col-md-2">
-                    <label class="sgi-filter-label" for="filter-opcenter">Centro Op.</label>
-                    <?= $this->Form->select('operation_center_id', $operationCenters, [
-                        'empty' => 'Todos',
-                        'class' => 'form-select form-select-sm',
-                        'value' => $this->request->getQuery('operation_center_id', ''),
-                        'id'    => 'filter-opcenter',
-                    ]) ?>
-                </div>
-                <div class="col-md-2">
-                    <label class="sgi-filter-label" for="filter-expense">Tipo Gasto</label>
-                    <?= $this->Form->select('expense_type_id', $expenseTypes, [
-                        'empty' => 'Todos',
-                        'class' => 'form-select form-select-sm',
-                        'value' => $this->request->getQuery('expense_type_id', ''),
-                        'id'    => 'filter-expense',
-                    ]) ?>
-                </div>
-                <div class="col-md-2">
-                    <label class="sgi-filter-label" for="filter-status">Estado</label>
-                    <?= $this->Form->select('pipeline_status', $pipelineOptions, [
-                        'empty' => 'Todos',
-                        'class' => 'form-select form-select-sm',
-                        'value' => $this->request->getQuery('pipeline_status', ''),
-                        'id'    => 'filter-status',
-                    ]) ?>
-                </div>
-                <div class="col-md-3">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label class="sgi-filter-label" for="filter-date-from">Desde</label>
-                            <input type="text" name="date_from" id="filter-date-from"
-                                   class="form-control form-control-sm flatpickr-date"
-                                   value="<?= h($this->request->getQuery('date_from', '')) ?>"
-                                   placeholder="Fecha desde">
-                        </div>
-                        <div class="col-6">
-                            <label class="sgi-filter-label" for="filter-date-to">Hasta</label>
-                            <input type="text" name="date_to" id="filter-date-to"
-                                   class="form-control form-control-sm flatpickr-date"
-                                   value="<?= h($this->request->getQuery('date_to', '')) ?>"
-                                   placeholder="Fecha hasta">
-                        </div>
+<div class="collapse <?= $filterCount > 0 ? 'show' : '' ?>" id="invoiceFilters" style="margin-bottom:14px;">
+    <div class="sgi-card compact">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label class="input-label" for="filter-provider">Proveedor</label>
+                <?= $this->Form->select('provider_id', $providers, [
+                    'empty' => 'Todos',
+                    'class' => 'form-select form-select-sm',
+                    'value' => $this->request->getQuery('provider_id', ''),
+                    'id'    => 'filter-provider',
+                ]) ?>
+            </div>
+            <div class="col-md-2">
+                <label class="input-label" for="filter-opcenter">Centro Op.</label>
+                <?= $this->Form->select('operation_center_id', $operationCenters, [
+                    'empty' => 'Todos',
+                    'class' => 'form-select form-select-sm',
+                    'value' => $this->request->getQuery('operation_center_id', ''),
+                    'id'    => 'filter-opcenter',
+                ]) ?>
+            </div>
+            <div class="col-md-2">
+                <label class="input-label" for="filter-expense">Tipo Gasto</label>
+                <?= $this->Form->select('expense_type_id', $expenseTypes, [
+                    'empty' => 'Todos',
+                    'class' => 'form-select form-select-sm',
+                    'value' => $this->request->getQuery('expense_type_id', ''),
+                    'id'    => 'filter-expense',
+                ]) ?>
+            </div>
+            <div class="col-md-2">
+                <label class="input-label" for="filter-status">Estado</label>
+                <?= $this->Form->select('pipeline_status', $pipelineOptions, [
+                    'empty' => 'Todos',
+                    'class' => 'form-select form-select-sm',
+                    'value' => $activeStatus,
+                    'id'    => 'filter-status',
+                ]) ?>
+            </div>
+            <div class="col-md-3">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="input-label" for="filter-date-from">Desde</label>
+                        <input type="text" name="date_from" id="filter-date-from"
+                               class="form-control form-control-sm flatpickr-date"
+                               value="<?= h($this->request->getQuery('date_from', '')) ?>"
+                               placeholder="Fecha desde">
+                    </div>
+                    <div class="col-6">
+                        <label class="input-label" for="filter-date-to">Hasta</label>
+                        <input type="text" name="date_to" id="filter-date-to"
+                               class="form-control form-control-sm flatpickr-date"
+                               value="<?= h($this->request->getQuery('date_to', '')) ?>"
+                               placeholder="Fecha hasta">
                     </div>
                 </div>
+            </div>
+            <div class="col-12 d-flex justify-content-end" style="margin-top:6px;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-check2" aria-hidden="true"></i><span>Aplicar filtros</span>
+                </button>
+            </div>
         </div>
     </div>
 </div>
 <?= $this->Form->end() ?>
 
-<?php if (!$isRejectedView): ?>
-<!-- Tabs por estado de pipeline -->
-<div class="sgi-status-tabs mb-3" role="tablist" aria-label="Filtrar por estado">
-    <?php foreach ($tabs as [$status, $label]):
+<?php /* ════════════════════════ CHIPS POR ESTADO ════════════════════════ */ ?>
+<?php if (!$isRejectedView && !$isOverdueView): ?>
+<div class="d-flex" style="gap:4px;margin-bottom:14px;" role="tablist" aria-label="Filtrar por estado">
+    <?php foreach ($tabs as [$status, $label, $color]):
         $isActive = ($activeStatus === ($status ?? ''));
-        $color = match ($status) {
-            InvoiceConstants::STATUS_APROBACION, InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'var(--warning-text)',
-            InvoiceConstants::STATUS_CONTABILIDAD => 'var(--secondary-color)',
-            InvoiceConstants::STATUS_TESORERIA    => 'var(--info-text)',
-            InvoiceConstants::STATUS_PAGADA       => 'var(--primary-color)',
-            default                               => 'var(--primary-color)',
-        };
     ?>
         <?= $this->Html->link(
-            ($isActive ? '<span class="sgi-status-tab-dot" style="background:' . $color . ';"></span>' : '') . h($label),
+            ($isActive ? '<span class="dot" style="background:' . $color . ';"></span>' : '') . h($label),
             $tabUrl($status),
             [
-                'class' => 'sgi-status-tab' . ($isActive ? ' is-active' : ''),
-                'escape' => false,
-                'role' => 'tab',
+                'class'         => 'chip' . ($isActive ? ' is-active' : ''),
+                'escape'        => false,
+                'role'          => 'tab',
                 'aria-selected' => $isActive ? 'true' : 'false',
-                'style' => $isActive ? 'color:' . $color : '',
+                'style'         => $isActive ? 'color:' . $color . ';' : '',
             ]
         ) ?>
     <?php endforeach; ?>
 </div>
 <?php endif; ?>
 
-<div class="card">
-    <!-- Header de columnas (grid · spec lista-facturas) -->
-    <div class="sgi-row-fact-grid sgi-row-fact-head" role="row">
+<?php /* ════════════════════════ TABLA DE FACTURAS ════════════════════════ */ ?>
+<?php
+/* Grid 7-col compartido entre header y filas (alineado al spec lista-facturas). */
+$gridStyle = 'display:grid;grid-template-columns:1.3fr 2.4fr 1fr 1fr 1.1fr 1.7fr 36px;gap:14px;align-items:center;';
+?>
+<div class="sgi-card" style="padding:0;">
+    <?php /* — Header de columnas — */ ?>
+    <div style="<?= $gridStyle ?>padding:12px 18px;background:var(--bg-subtle);font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:0.8px;text-transform:uppercase;" role="row">
         <span>Factura</span>
         <span>Proveedor</span>
-        <?= $this->Paginator->sort('issue_date', 'Emisión') ?>
-        <?= $this->Paginator->sort('due_date', 'Vencimiento') ?>
-        <span class="text-end"><?= $this->Paginator->sort('amount', 'Valor') ?></span>
+        <span><?= $this->Paginator->sort('issue_date', 'Emisión') ?></span>
+        <span><?= $this->Paginator->sort('due_date', 'Vencimiento') ?></span>
+        <span style="text-align:right;"><?= $this->Paginator->sort('amount', 'Valor') ?></span>
         <span>Estado · Pipeline</span>
-        <span aria-label="Observaciones"><i class="bi bi-chat-left-text" title="Observaciones" aria-hidden="true"></i></span>
+        <span aria-hidden="true"></span>
     </div>
 
-    <!-- Filas -->
+    <?php /* — Filas — */ ?>
     <?php
     $rowCount = 0;
-    $today = new \DateTimeImmutable('today');
-    foreach ($invoices as $invoice):
+    $today    = new \DateTimeImmutable('today');
+    foreach ($invoicesArr as $i => $invoice):
         $rowCount++;
-        $row = InvoicePresentation::forRow($invoice, $today);
+        $row            = InvoicePresentation::forRow($invoice, $today);
         $isLegalization = $invoice->document_type === 'Legalización';
-        $steps = $isLegalization ? $pipelineStepsLeg : $pipelineStepsFull;
-        $stageIdx = array_search($invoice->pipeline_status, $steps, true);
+        $steps          = $isLegalization ? $pipelineStepsLeg : $pipelineStepsFull;
+        $stageIdx       = array_search($invoice->pipeline_status, $steps, true);
         if ($stageIdx === false) {
             $stageIdx = -1;
         }
-        $pillClass = $row->isRejected
+        $pipeVariant = $row->isRejected ? 'is-danger' : $pipelineVariant($invoice->pipeline_status ?? '');
+        $pillClass   = $row->isRejected
             ? 'pill-danger-soft'
-            : ($statusPills[$invoice->pipeline_status] ?? 'pill-muted');
-        $unread = (int)($invoice->unread_observations ?? 0);
+            : (InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'pill-muted');
+        $href = $this->Url->build(['action' => $isAllView ? 'view' : 'edit', $invoice->id]);
     ?>
-        <a class="sgi-row-fact sgi-row-fact-grid<?= $row->isRejected ? ' is-rejected' : '' ?>"
-           href="<?= $this->Url->build(['action' => $isAllView ? 'view' : 'edit', $invoice->id]) ?>"
-           role="row">
+        <a href="<?= h($href) ?>" role="row"
+           style="<?= $gridStyle ?>padding:14px 18px;background:#fff;color:inherit;text-decoration:none;cursor:pointer;transition:background-color var(--t-fast) ease;<?= $i > 0 ? 'border-top:1px solid var(--rule);' : '' ?>"
+           onmouseenter="this.style.background='var(--bg-muted)'"
+           onmouseleave="this.style.background='#fff'">
 
-            <!-- Factura: número + tipo -->
-            <div>
-                <div class="sgi-row-fact-id"><?= h($invoice->invoice_number ?: '—') ?></div>
-                <div class="sgi-row-fact-type"><?= h($invoice->document_type) ?></div>
+            <?php /* 1. Factura: código + tipo */ ?>
+            <div style="min-width:0;">
+                <div class="mono" style="font-size:12.5px;font-weight:700;color:var(--text-strong);">
+                    <?= h($invoice->invoice_number ?: '—') ?>
+                </div>
+                <div style="font-size:9.5px;color:var(--text-faint);letter-spacing:0.5px;font-weight:600;margin-top:2px;text-transform:uppercase;">
+                    <?= h($invoice->document_type) ?>
+                </div>
             </div>
 
-            <!-- Proveedor + centro de operación -->
+            <?php /* 2. Proveedor + centro */ ?>
             <div style="min-width:0;">
-                <div class="sgi-row-fact-provider">
-                    <?= $invoice->hasValue('provider') ? h($invoice->provider->name) : '<span class="sgi-fg-faint">—</span>' ?>
+                <div style="font-size:12.5px;font-weight:600;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    <?= $invoice->hasValue('provider')
+                        ? h($invoice->provider->name)
+                        : '<span style="color:var(--text-faint);">—</span>' ?>
                 </div>
                 <?php if ($invoice->hasValue('operation_center')): ?>
-                <div class="sgi-row-fact-center">
-                    <i class="bi bi-geo-alt" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
-                    <span><?= h($invoice->operation_center->name) ?></span>
-                </div>
+                    <div style="font-size:10.5px;color:var(--text-faint);margin-top:2px;display:inline-flex;align-items:center;gap:4px;">
+                        <i class="bi bi-geo-alt" style="font-size:10px;" aria-hidden="true"></i>
+                        <span><?= h($invoice->operation_center->name) ?></span>
+                    </div>
                 <?php endif; ?>
             </div>
 
-            <!-- Emisión -->
-            <div class="sgi-row-fact-date sgi-fg-muted">
+            <?php /* 3. Emisión */ ?>
+            <div class="mono" style="font-size:12px;color:var(--text-default);">
                 <?= $invoice->issue_date?->format('d/m/Y') ?: '—' ?>
             </div>
 
-            <!-- Vencimiento -->
-            <div class="sgi-row-fact-date<?= $row->isOverdue ? ' is-overdue' : ' sgi-fg-muted' ?>">
+            <?php /* 4. Vencimiento */ ?>
+            <div class="mono" style="font-size:12px;<?= $row->isOverdue
+                ? 'color:var(--danger-color);font-weight:700;'
+                : 'color:var(--text-default);' ?>">
                 <?= $invoice->due_date?->format('d/m/Y') ?: '—' ?>
-                <?php if ($row->isOverdue): ?>
-                    <i class="bi bi-exclamation-circle-fill sgi-fg-danger" style="font-size:.7rem;"
-                       title="Vencida" aria-hidden="true"></i>
-                <?php endif; ?>
             </div>
 
-            <!-- Valor -->
-            <div class="sgi-row-fact-amount<?= $row->isPaid ? ' is-paid' : '' ?>">
+            <?php /* 5. Valor */ ?>
+            <div class="mono" style="text-align:right;font-size:13.5px;font-weight:700;<?= $row->isPaid
+                ? 'color:var(--primary-color);'
+                : 'color:var(--text-default);' ?>">
                 $ <?= number_format((float)$invoice->amount, 0, ',', '.') ?>
             </div>
 
-            <!-- Pipeline mini + pills -->
-            <div class="sgi-row-fact-pipeline">
+            <?php /* 6. Estado · Pipeline */ ?>
+            <div style="min-width:0;">
                 <?php if ($stageIdx >= 0): ?>
-                <div class="sgi-pipeline-mini" aria-hidden="true">
-                    <?php for ($i = 0, $n = count($steps); $i < $n; $i++): ?>
-                        <div class="<?= $i <= $stageIdx ? 'on' : '' ?>"></div>
-                    <?php endfor; ?>
-                </div>
+                    <div class="pipeline-mini <?= h($pipeVariant) ?>" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
+                        <?php for ($s = 0, $n = count($steps); $s < $n; $s++): ?>
+                            <div class="<?= $s <= $stageIdx ? 'on' : '' ?>"></div>
+                        <?php endfor; ?>
+                    </div>
                 <?php endif; ?>
-                <div class="sgi-row-fact-pills">
+                <div style="display:flex;flex-wrap:wrap;gap:4px;">
                     <?php if ($row->isRejected): ?>
-                        <span class="pill pill-danger-soft"><?= h(strtoupper($row->statusLabel)) ?></span>
-                        <span class="pill pill-danger-soft">RECHAZADA</span>
+                        <span class="pill pill-danger-soft pill-sm">RECHAZADA</span>
                     <?php else: ?>
-                        <span class="pill <?= h($pillClass) ?>">
-                            <?php if ($row->isPaid): ?><i class="bi bi-check2" aria-hidden="true"></i><?php endif; ?>
+                        <span class="pill <?= h($pillClass) ?> pill-sm">
+                            <?php if ($row->isPaid): ?><i class="bi bi-check" style="font-size:9px;" aria-hidden="true"></i><?php endif; ?>
                             <?= h(strtoupper($row->statusLabel)) ?>
                         </span>
                         <?php if (isset($approvalSummaries[$invoice->id]) && $approvalSummaries[$invoice->id]['total'] > 0):
-                            $s = $approvalSummaries[$invoice->id];
-                        ?>
+                            $s = $approvalSummaries[$invoice->id]; ?>
                             <?php if ($s['rejected'] > 0): ?>
-                                <span class="pill pill-danger-soft">RECHAZADA</span>
+                                <span class="pill pill-danger-soft pill-sm">RECHAZADA</span>
                             <?php elseif ($s['approved'] === $s['total']): ?>
-                                <span class="pill pill-primary-soft">APROBADA</span>
+                                <span class="pill pill-primary-soft pill-sm">APROBADA</span>
                             <?php else: ?>
-                                <span class="pill pill-muted"><?= $s['approved'] ?>/<?= $s['total'] ?> APROBADOS</span>
+                                <span class="pill pill-muted pill-sm"><?= $s['approved'] ?>/<?= $s['total'] ?></span>
                             <?php endif; ?>
                         <?php elseif ($row->isApproved): ?>
-                            <span class="pill pill-primary-soft">APROBADA</span>
+                            <span class="pill pill-primary-soft pill-sm">APROBADA</span>
                         <?php endif; ?>
                         <?php if ($row->isPartialPay): ?>
-                            <span class="pill pill-warning-soft">PAGO PARCIAL</span>
+                            <span class="pill pill-warning-soft pill-sm">PARCIAL</span>
                         <?php endif; ?>
                         <?php if ($row->isReadyForPay && !$row->isPaid): ?>
-                            <span class="pill <?= h($readyForPaymentPills[$invoice->ready_for_payment] ?? 'pill-muted') ?>"><?= h(strtoupper($invoice->ready_for_payment)) ?></span>
+                            <span class="pill <?= h($readyForPaymentPills[$invoice->ready_for_payment] ?? 'pill-muted') ?> pill-sm">
+                                <?= h(strtoupper((string)$invoice->ready_for_payment)) ?>
+                            </span>
                         <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
 
-            <!-- Observaciones sin leer / chevron -->
-            <div class="sgi-row-fact-chevron">
+            <?php /* 7. Chevron */ ?>
+            <div style="display:flex;justify-content:flex-end;align-items:center;color:var(--text-faint);">
+                <?php $unread = (int)($invoice->unread_observations ?? 0); ?>
                 <?php if ($unread > 0): ?>
-                    <span class="pill pill-danger-soft"
+                    <span class="pill pill-danger-soft pill-sm"
                           title="<?= $unread ?> observación<?= $unread > 1 ? 'es' : '' ?> sin leer">
-                        <i class="bi bi-chat-left-text-fill" style="font-size:var(--fs-label);" aria-hidden="true"></i><?= $unread ?>
+                        <i class="bi bi-chat-left-text-fill" style="font-size:9px;" aria-hidden="true"></i><?= $unread ?>
                     </span>
                 <?php else: ?>
-                    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    <i class="bi bi-chevron-right" style="font-size:14px;" aria-hidden="true"></i>
                 <?php endif; ?>
             </div>
         </a>
     <?php endforeach; ?>
 
+    <?php /* — Empty state — */ ?>
     <?php if ($rowCount === 0): ?>
-        <div class="sgi-row-fact-empty">
-            <i class="bi bi-inbox sgi-doc-empty-icon" aria-hidden="true"></i>
-            No hay facturas en tu bandeja actual.
+        <div class="empty-state" style="padding:48px 16px;">
+            <div class="es-icon es-icon-neutral">
+                <i class="bi bi-inbox" aria-hidden="true"></i>
+            </div>
+            <div class="es-title">Sin facturas en este filtro</div>
+            <div class="es-msg">Cambia el filtro o crea una nueva factura.</div>
+            <?php if (!empty($userPermissions['invoices']['can_create'])): ?>
+                <?= $this->Html->link(
+                    '<i class="bi bi-plus-lg" aria-hidden="true"></i><span>Nueva Factura</span>',
+                    ['action' => 'add'],
+                    ['class' => 'btn btn-primary btn-sm', 'escape' => false]
+                ) ?>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 
-    <?= $this->element('pagination') ?>
+    <?php /* — Footer / paginación — */ ?>
+    <?php if ($rowCount > 0): ?>
+        <?= $this->element('pagination') ?>
+    <?php endif; ?>
 </div>
 
 <?= $this->element('excel_wizard/modals', [
-    'module' => 'Invoices',
-    'entityName' => 'Facturas',
+    'module'       => 'Invoices',
+    'entityName'   => 'Facturas',
     'downloadSlug' => 'facturas',
-    'importable' => false,
+    'importable'   => false,
 ]) ?>
