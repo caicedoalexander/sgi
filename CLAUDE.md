@@ -44,7 +44,7 @@ The dotenv loader is enabled in `config/bootstrap.php` (~line 69) pointing to `R
 
 ## Architecture
 
-Sistema de diseño: ver `.claude/rules/design.md`.
+Sistema de diseño: ver la sección [Sistema de Diseño](#sistema-de-diseño) más abajo.
 
 ### Layer Summary
 
@@ -171,6 +171,22 @@ La validación se hace de forma manual: levantar `php bin/cake server` y ejercit
 - Base class is `Migrations\BaseMigration` (NOT `AbstractMigration`).
 - Use `$this->hasTable()` before create/drop to handle partial failures.
 - FK column types must match exactly (signed/unsigned) with referenced tables.
+
+## Sistema de Diseño
+
+Tokens, componentes y patrones en `docs/design/`. **Lee solo los archivos relevantes a la tarea** — no cargues todo.
+
+| Archivo | Contenido |
+|---------|-----------|
+| `docs/design/reglas-copy.md` | Reglas duras, tono/copy, excepciones, orden de carga CSS, archivos clave, prefijos |
+| `docs/design/fundamentos.md` | Colores, tipografía, espaciado, iconografía (tokens base) |
+| `docs/design/botones-badges.md` | Botones, badges, pills |
+| `docs/design/formularios.md` | Inputs, tabs, filtros, date/time pickers |
+| `docs/design/layout-tablas.md` | Cards y superficies, avatares, tablas |
+| `docs/design/navegacion.md` | TopBar, sidebar, pipeline |
+| `docs/design/documental-vacios.md` | Gestión documental, empty states |
+
+Antes de crear o editar cualquier vista, lee siempre `reglas-copy.md` + `fundamentos.md`, luego el archivo del componente concreto.
 
 ## Frontend
 
