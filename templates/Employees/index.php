@@ -21,80 +21,107 @@ $navTabs = [
 ];
 $navSearch = (string)$this->request->getQuery('search', '');
 $tabBaseQuery = $navSearch !== '' ? ['search' => $navSearch] : [];
-?>
-<div class="sgi-master-detail">
-    <aside class="sgi-md-left">
-        <div class="sgi-md-left-head">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <div>
-                    <div class="sgi-title-card">Empleados</div>
-                    <div class="sgi-body-faint mt-1">0 mostrados</div>
-                </div>
-                <?php if ($canCreate) : ?>
-                    <?= $this->Html->link(
-                        '<i class="bi bi-plus-lg" aria-hidden="true"></i>Nuevo',
-                        ['action' => 'add'],
-                        ['class' => 'btn btn-primary btn-sm', 'escape' => false],
-                    ) ?>
-                <?php endif; ?>
-            </div>
-            <form method="get" class="sgi-md-search mb-2" role="search">
-                <i class="bi bi-search" aria-hidden="true"></i>
-                <input type="text" name="search"
-                       value="<?= h($navSearch) ?>"
-                       placeholder="Buscar por nombre, CC o correo…"
-                       aria-label="Buscar empleados"
-                       autocomplete="off">
-                <input type="hidden" name="status" value="<?= h($activeStatus) ?>">
-            </form>
-            <div class="sgi-status-tabs" role="tablist" aria-label="Filtrar por estado">
-                <?php foreach ($navTabs as [$status, $label]) :
-                    $isActive = ($activeStatus === $status);
-                    ?>
-                    <?= $this->Html->link(
-                        h($label),
-                        ['action' => 'index', '?' => $tabBaseQuery + ['status' => $status]],
-                        [
-                            'class' => 'sgi-status-tab' . ($isActive ? ' is-active' : ''),
-                            'escape' => false,
-                            'role' => 'tab',
-                            'aria-selected' => $isActive ? 'true' : 'false',
-                        ],
-                    ) ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <div class="sgi-md-left-list">
-            <div class="sgi-doc-empty">
-                <i class="bi bi-search sgi-doc-empty-icon" aria-hidden="true"></i>
-                <div class="sgi-fg-muted">Sin resultados</div>
-            </div>
-        </div>
-    </aside>
 
-    <section class="sgi-md-right">
-        <div class="card">
-            <div class="sgi-doc-empty" style="padding:4rem 2rem;text-align:center;">
-                <i class="bi bi-people sgi-doc-empty-icon" aria-hidden="true" style="font-size:3rem;"></i>
-                <?php if ($hasAnyEmployee) : ?>
-                    <h2 class="sgi-title-card mt-3">Sin empleados que coincidan con los filtros</h2>
-                    <p class="sgi-body-muted mt-2">
-                        Prueba a limpiar la búsqueda o cambiar el estado en el panel izquierdo.
-                    </p>
-                <?php else : ?>
-                    <h2 class="sgi-title-card mt-3">Aún no hay empleados registrados</h2>
-                    <p class="sgi-body-muted mt-2">Comienza creando el primer empleado del sistema.</p>
-                <?php endif; ?>
-                <?php if ($canCreate) : ?>
-                <div class="mt-3">
-                    <?= $this->Html->link(
-                        '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear empleado',
-                        ['action' => 'add'],
-                        ['class' => 'btn btn-primary', 'escape' => false],
-                    ) ?>
-                </div>
-                <?php endif; ?>
+$navTabColor = fn(string $status) => match ($status) {
+    EmployeeStatusConstants::RETIRADO => 'var(--danger-color)',
+    EmployeeStatusConstants::ACTIVO   => 'var(--info-text)',
+    default                           => 'var(--primary-color)',
+};
+?>
+
+<div style="flex:1;min-width:0;display:grid;grid-template-columns:320px 1fr;gap:0;overflow:hidden;align-items:stretch;">
+
+<!-- ═════════ COLUMNA IZQUIERDA · DIRECTORIO ═════════ -->
+<aside style="display:flex;flex-direction:column;overflow:hidden;background:#fff;">
+
+    <div style="padding:16px 16px 10px;">
+        <div class="d-flex justify-content-between align-items-start gap-2" style="margin-bottom:12px;">
+            <div class="min-w-0">
+                <div style="font-size:15px;font-weight:700;color:var(--text-strong);">Empleados</div>
+                <div style="font-size:10.5px;color:var(--text-faint);margin-top:2px;">0 en el directorio</div>
             </div>
+            <?php if ($canCreate) : ?>
+                <?= $this->Html->link(
+                    '<i class="bi bi-plus-lg" aria-hidden="true"></i>Nuevo',
+                    ['action' => 'add'],
+                    ['class' => 'btn btn-primary btn-sm', 'escape' => false],
+                ) ?>
+            <?php endif; ?>
         </div>
-    </section>
+
+        <form method="get" class="emp-nav-search input" role="search"
+              style="height:34px;padding:0 12px;background:var(--bg-subtle);outline:none;">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="text" name="search"
+                   value="<?= h($navSearch) ?>"
+                   placeholder="Buscar por nombre, CC o correo…"
+                   aria-label="Buscar empleados"
+                   autocomplete="off">
+            <?php if ($navSearch !== '') : ?>
+            <a href="<?= $this->Url->build(['action' => 'index', '?' => ['status' => $activeStatus]]) ?>"
+               style="display:flex;color:var(--text-faint);" title="Limpiar búsqueda">
+                <i class="bi bi-x" aria-hidden="true"></i>
+            </a>
+            <?php endif; ?>
+            <input type="hidden" name="status" value="<?= h($activeStatus) ?>">
+        </form>
+    </div>
+
+    <!-- Chips de estado -->
+    <div style="display:flex;gap:4px;padding:0 16px 8px;">
+        <?php foreach ($navTabs as [$status, $label]) :
+            $isActive = ($activeStatus === $status);
+            ?>
+            <?= $this->Html->link(
+                ($isActive ? '<span class="dot" style="background:' . $navTabColor($status) . ';"></span>' : '') . h($label),
+                ['action' => 'index', '?' => $tabBaseQuery + ['status' => $status]],
+                [
+                    'class' => 'chip' . ($isActive ? ' is-active' : ''),
+                    'escape' => false,
+                    'role' => 'tab',
+                    'aria-selected' => $isActive ? 'true' : 'false',
+                    'style' => 'padding:4px 10px;font-size:10.5px;'
+                        . ($isActive ? 'color:' . $navTabColor($status) . ';' : ''),
+                ],
+            ) ?>
+        <?php endforeach; ?>
+    </div>
+
+    <!-- Lista vacía -->
+    <div style="flex:1;min-height:0;overflow:auto;border-top:1px solid var(--rule);">
+        <div class="empty-state" style="padding:48px 16px;">
+            <div class="es-icon es-icon-neutral">
+                <i class="bi bi-search" aria-hidden="true"></i>
+            </div>
+            <div class="es-title">Sin resultados</div>
+            <div class="es-msg">Ajusta la búsqueda o los filtros del directorio.</div>
+        </div>
+    </div>
+</aside>
+
+<!-- ═════════ COLUMNA DERECHA · DETALLE ═════════ -->
+<section style="overflow:auto;padding:20px 24px;background:var(--background-color);
+                display:flex;flex-direction:column;">
+    <div class="sgi-card">
+        <div class="empty-state" style="padding:64px 32px;">
+            <div class="es-icon es-icon-primary">
+                <i class="bi bi-person" aria-hidden="true"></i>
+            </div>
+            <?php if ($hasAnyEmployee) : ?>
+                <div class="es-title">Sin empleados que coincidan con los filtros</div>
+                <div class="es-msg">Prueba a limpiar la búsqueda o cambiar el estado en el panel izquierdo.</div>
+            <?php else : ?>
+                <div class="es-title">Aún no hay empleados registrados</div>
+                <div class="es-msg">Comienza creando el primer empleado del sistema.</div>
+            <?php endif; ?>
+            <?php if ($canCreate) : ?>
+                <?= $this->Html->link(
+                    '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear empleado',
+                    ['action' => 'add'],
+                    ['class' => 'btn btn-primary', 'escape' => false],
+                ) ?>
+            <?php endif; ?>
+        </div>
+    </div>
+</section>
 </div>
