@@ -2371,3 +2371,74 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     }
     .content-wrapper:has(.sgi-edit-shell) { padding-bottom: 0; }
 }
+
+
+/* ─── Observaciones · drawer flotante (Invoices/edit) ─────────────────
+   El chat de observaciones vive en un Bootstrap Offcanvas restilizado como
+   el `.drawer` del sistema de diseño (overlays.md), abierto desde una
+   pestaña flotante fija al borde derecho del viewport. */
+
+/* Disparador: pestaña fija al borde derecho, centrada verticalmente. */
+.sgi-obs-trigger {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1030; /* bajo el backdrop del offcanvas (1040) */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 0;
+    background: var(--primary-color);
+    color: #fff;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    cursor: pointer;
+    transition: padding-right var(--t-fast) ease;
+}
+.sgi-obs-trigger:hover { padding-right: 18px; }
+.sgi-obs-trigger > .bi { font-size: 16px; }
+.sgi-obs-trigger-badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    color: var(--primary-color);
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 10px;
+}
+
+/* Drawer: Bootstrap Offcanvas restilizado como `.drawer` del sistema. */
+.sgi-obs-drawer.offcanvas {
+    --bs-offcanvas-width: 440px;
+    border-left: 3px solid var(--primary-color);
+    box-shadow: none;
+}
+.sgi-obs-drawer .offcanvas-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--rule);
+}
+.sgi-obs-drawer .offcanvas-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-strong);
+}
+.sgi-obs-drawer .offcanvas-body {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+/* La lista de burbujas ocupa el alto disponible del panel (anula el
+   max-height:340px que usa la variante inline en tarjeta). */
+.sgi-obs-drawer .sgi-obs-list {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+}
