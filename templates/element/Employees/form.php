@@ -100,18 +100,18 @@ $genderOptions = ['' => '-- Seleccione --'] + GenderConstants::LABELS;
                 <?= $this->Form->control('status', ['type' => 'select', 'options' => $employeeStatuses, 'class' => 'form-select', 'label' => ['text' => 'Estado Empleado', 'class' => 'form-label']]) ?>
             </div>
             <div class="col-md-3 mb-3">
-                <?= $this->Form->control('position_id', ['class' => 'form-select', 'label' => ['text' => 'Cargo', 'class' => 'form-label'], 'empty' => '-- Seleccione --']) ?>
+                <?= $this->Form->control('position_id', ['class' => 'form-select select2-enable', 'label' => ['text' => 'Cargo', 'class' => 'form-label'], 'empty' => '-- Seleccione --']) ?>
             </div>
             <div class="col-md-3 mb-3">
-                <?= $this->Form->control('supervisor_position_id', ['class' => 'form-select', 'label' => ['text' => 'Cargo Jefe Inmediato', 'class' => 'form-label'], 'empty' => '-- Seleccione --', 'options' => $positions]) ?>
+                <?= $this->Form->control('supervisor_position_id', ['class' => 'form-select select2-enable', 'label' => ['text' => 'Cargo Jefe Inmediato', 'class' => 'form-label'], 'empty' => '-- Seleccione --', 'options' => $positions]) ?>
             </div>
             <div class="col-md-3 mb-3">
-                <?= $this->Form->control('operation_center_id', ['class' => 'form-select', 'label' => ['text' => 'Centro de Operación', 'class' => 'form-label'], 'empty' => '-- Seleccione --']) ?>
+                <?= $this->Form->control('operation_center_id', ['class' => 'form-select select2-enable', 'label' => ['text' => 'Centro de Operación', 'class' => 'form-label'], 'empty' => '-- Seleccione --']) ?>
             </div>
         </div>
         <div class="row">
             <div class="col-md-3 mb-3">
-                <?= $this->Form->control('cost_center_id', ['class' => 'form-select', 'label' => ['text' => 'Centro de Costos', 'class' => 'form-label'], 'empty' => '-- Seleccione --']) ?>
+                <?= $this->Form->control('cost_center_id', ['class' => 'form-select select2-enable', 'label' => ['text' => 'Centro de Costos', 'class' => 'form-label'], 'empty' => '-- Seleccione --']) ?>
             </div>
             <div class="col-md-3 mb-3">
                 <?= $this->Form->control('hire_date', [
@@ -145,7 +145,7 @@ $genderOptions = ['' => '-- Seleccione --'] + GenderConstants::LABELS;
                 ]) ?>
             </div>
             <div class="col-md-3 mb-3" id="org-temporal-wrapper" style="<?= !$employee->requiresTemporaryOrg() ? 'display:none' : '' ?>">
-                <?= $this->Form->control('temporary_organization_id', ['class' => 'form-select', 'label' => ['text' => 'Organización Temporal', 'class' => 'form-label'], 'empty' => '-- Seleccione --', 'options' => $temporaryOrganizations]) ?>
+                <?= $this->Form->control('temporary_organization_id', ['class' => 'form-select select2-enable', 'label' => ['text' => 'Organización Temporal', 'class' => 'form-label'], 'empty' => '-- Seleccione --', 'options' => $temporaryOrganizations]) ?>
             </div>
             <div class="col-md-3 mb-3">
                 <?= $this->Form->control('vest_number', ['class' => 'form-control', 'label' => ['text' => 'N. Chaleco', 'class' => 'form-label'], 'maxlength' => 20]) ?>
