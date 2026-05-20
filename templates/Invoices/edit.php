@@ -906,118 +906,68 @@ $canRegress = !empty($viewModel->canRegress);
         </div>
         <?php endif; ?>
 
-        <?php /* ── Soportes + Observaciones (grid 2 columnas) ──── */ ?>
-        <div class="row g-3">
+        <?php /* ── Soportes (ancho completo; Observaciones vive en el drawer) ── */ ?>
+        <div class="sgi-card d-flex flex-column">
+            <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-paperclip" aria-hidden="true"></i>
+                    Soportes
+                    <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
+                </span>
+                <?php if ($showUploadSection): ?>
+                <button type="button" class="btn btn-default btn-sm"
+                        data-bs-toggle="modal" data-bs-target="#uploadInvoiceDocModal">
+                    <i class="bi bi-upload" aria-hidden="true"></i>Subir
+                </button>
+                <?php endif; ?>
+            </div>
 
-            <?php /* ── Soportes ───────────────────────────────── */ ?>
-            <div class="col-md-6">
-                <div class="sgi-card h-100 d-flex flex-column">
-                    <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
-                        <span class="sgi-label d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-paperclip" aria-hidden="true"></i>
-                            Soportes
-                            <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
+            <?php if ($showUploadSection): ?>
+            <?php /* Empty state = dropzone del sistema de diseño. Toda la
+                      zona abre el modal de subida (el JS solo alterna su
+                      display, no depende de la clase). */ ?>
+            <div id="docs-empty-state" class="dropzone"
+                 data-bs-toggle="modal" data-bs-target="#uploadInvoiceDocModal"
+                 style="cursor:pointer;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
+                <i class="bi bi-paperclip" aria-hidden="true"></i>
+                <div>Arrastra archivos o <a class="dz-link">examina</a></div>
+                <div class="dz-hint">PDF, JPG, PNG · máximo 10 MB por archivo</div>
+            </div>
+            <?php else: ?>
+            <div id="docs-empty-state" class="empty-state"
+                 <?= !empty($documentsByStatus) ? 'style="display:none;"' : '' ?>>
+                <div class="es-icon es-icon-neutral">
+                    <i class="bi bi-paperclip" aria-hidden="true"></i>
+                </div>
+                <div class="es-title">Sin soportes adjuntos</div>
+            </div>
+            <?php endif; ?>
+
+            <div id="docs-list" style="max-height:420px;overflow-y:auto;">
+                <?php foreach ($documentsByStatus as $status => $docs): ?>
+                    <?php if ($multipleDocStatuses):
+                        $docPillKind = $statusPills[$status] ?? 'pill-muted';
+                    ?>
+                    <div class="d-flex align-items-center gap-2"
+                         style="padding:.3rem .5rem;background:var(--bg-subtle);margin-top:.5rem;">
+                        <span class="pill <?= $docPillKind ?>"><?= h($statusLabels[$status] ?? $status) ?></span>
+                        <span style="font-size:var(--fs-label);color:var(--text-faint);">
+                            <?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?>
                         </span>
-                        <?php if ($showUploadSection): ?>
-                        <button type="button" class="btn btn-default btn-sm"
-                                data-bs-toggle="modal" data-bs-target="#uploadInvoiceDocModal">
-                            <i class="bi bi-upload" aria-hidden="true"></i>Subir
-                        </button>
-                        <?php endif; ?>
-                    </div>
-
-                    <?php if ($showUploadSection): ?>
-                    <?php /* Empty state = dropzone del sistema de diseño. Toda la
-                              zona abre el modal de subida (el JS solo alterna su
-                              display, no depende de la clase). */ ?>
-                    <div id="docs-empty-state" class="dropzone"
-                         data-bs-toggle="modal" data-bs-target="#uploadInvoiceDocModal"
-                         style="cursor:pointer;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
-                        <i class="bi bi-paperclip" aria-hidden="true"></i>
-                        <div>Arrastra archivos o <a class="dz-link">examina</a></div>
-                        <div class="dz-hint">PDF, JPG, PNG · máximo 10 MB por archivo</div>
-                    </div>
-                    <?php else: ?>
-                    <div id="docs-empty-state" class="empty-state"
-                         <?= !empty($documentsByStatus) ? 'style="display:none;"' : '' ?>>
-                        <div class="es-icon es-icon-neutral">
-                            <i class="bi bi-paperclip" aria-hidden="true"></i>
-                        </div>
-                        <div class="es-title">Sin soportes adjuntos</div>
                     </div>
                     <?php endif; ?>
-
-                    <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-                        <?php foreach ($documentsByStatus as $status => $docs): ?>
-                            <?php if ($multipleDocStatuses):
-                                $docPillKind = $statusPills[$status] ?? 'pill-muted';
-                            ?>
-                            <div class="d-flex align-items-center gap-2"
-                                 style="padding:.3rem .5rem;background:var(--bg-subtle);margin-top:.5rem;">
-                                <span class="pill <?= $docPillKind ?>"><?= h($statusLabels[$status] ?? $status) ?></span>
-                                <span style="font-size:var(--fs-label);color:var(--text-faint);">
-                                    <?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?>
-                                </span>
-                            </div>
-                            <?php endif; ?>
-                            <?php foreach ($docs as $doc): ?>
-                                <?= $this->element('document_row', [
-                                    'doc'          => $doc,
-                                    'canDelete'    => $viewModel->canDeleteDocuments && $doc->pipeline_status === $currentStatus,
-                                    'deleteUrl'    => $this->Url->build(['action' => 'deleteDocument', $invoice->id, $doc->id]),
-                                    'showBadge'    => !$multipleDocStatuses,
-                                    'badgeColors'  => $badgeColors,
-                                    'statusLabels' => $statusLabels,
-                                ]) ?>
-                            <?php endforeach; ?>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+                    <?php foreach ($docs as $doc): ?>
+                        <?= $this->element('document_row', [
+                            'doc'          => $doc,
+                            'canDelete'    => $viewModel->canDeleteDocuments && $doc->pipeline_status === $currentStatus,
+                            'deleteUrl'    => $this->Url->build(['action' => 'deleteDocument', $invoice->id, $doc->id]),
+                            'showBadge'    => !$multipleDocStatuses,
+                            'badgeColors'  => $badgeColors,
+                            'statusLabels' => $statusLabels,
+                        ]) ?>
+                    <?php endforeach; ?>
+                <?php endforeach; ?>
             </div>
-
-            <?php /* ── Observaciones ──────────────────────────── */ ?>
-            <?php $obsCount = count($invoice->invoice_observations ?? []); ?>
-            <div class="col-md-6">
-                <div class="sgi-card sgi-obs-card h-100 d-flex flex-column">
-                    <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
-                        <span class="sgi-label d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-                            Observaciones
-                            <span id="obs-count" class="sgi-folder-count"
-                                  <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
-                        </span>
-                    </div>
-
-                    <div id="obs-chat-scroll" class="sgi-obs-list">
-                        <?php foreach ($invoice->invoice_observations ?? [] as $obs): ?>
-                            <?= $this->element('observation_bubble', [
-                                'observation' => $obs,
-                                'isMine' => $currentUser && $obs->user_id === $currentUser->id,
-                            ]) ?>
-                        <?php endforeach; ?>
-                    </div>
-
-                    <div id="obs-empty-state" class="empty-state" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-                        <div class="es-icon es-icon-neutral">
-                            <i class="bi bi-chat-square-dots" aria-hidden="true"></i>
-                        </div>
-                        <div class="es-msg">Sin observaciones aún</div>
-                    </div>
-
-                    <div class="sgi-obs-input-bar">
-                        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $invoice->id], 'id' => 'obs-form']) ?>
-                        <div class="sgi-obs-compose">
-                            <textarea id="obs-message" name="message" class="auto-resize" rows="1"
-                                      placeholder="Escriba una observación..."></textarea>
-                            <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                                <i class="bi bi-send" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                        <?= $this->Form->end() ?>
-                    </div>
-                </div>
-            </div>
-
         </div>
 
         <?php /* ── Log de correos (cuando aplica) ──────────────── */ ?>
@@ -1085,6 +1035,11 @@ $canRegress = !empty($viewModel->canRegress);
 <?php if ($showUploadSection): ?>
 <?= $this->element('invoice_edit/upload_doc_modal', ['invoice' => $invoice]) ?>
 <?php endif; ?>
+
+<?= $this->element('invoice_edit/observations_drawer', [
+    'invoice' => $invoice,
+    'currentUser' => $currentUser,
+]) ?>
 
 <?= $this->element('document_row_template', ['showBadge' => true]) ?>
 <?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
