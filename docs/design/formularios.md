@@ -370,3 +370,14 @@ El punto seleccionado (`.radio-dot.on`) usa outline primary + relleno interior.
 
 Para alternar entre 2–4 opciones cortas mutuamente excluyentes, usar el componente `.segmented` / `.seg` ya documentado en este archivo (sección **08 · Tabs y filtros**). El "Segmented" de la propuesta v1.1 es funcionalmente idéntico — no se introduce una clase nueva.
 
+---
+
+## Select2 — convención de clases de init
+
+El proyecto inicializa Select2 con dos clases distintas, según quién dispara el init:
+
+- **`.select2-enable`** — auto-inicializada globalmente por `webroot/js/sgi-common.js` (función `sgiInit`, en `DOMContentLoaded` y tras inyecciones AJAX). Es la convención por defecto para cualquier `<select>` que deba tener búsqueda. Config: `width:100%`, locale `es`, `minimumResultsForSearch:7`.
+- **`.select2`** (sin `-enable`) — usada por los filtros del calendario de Novedades; la inicializa `webroot/js/sgi-calendar.js` con su propia configuración.
+
+Para un select nuevo, usar **`.select2-enable`**. Opciones por select vía atributos del `<select>`: `data-placeholder`, `data-allow-clear`. No re-inicializar Select2 manualmente con `.select2()` — la convivencia de inits causa doble inicialización.
+

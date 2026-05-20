@@ -56,7 +56,7 @@ $this->assign('title', 'Nueva Novedad');
             <!-- Employee multi-select (massive) -->
             <div class="col-md-6" id="employee-massive-group" style="display:none;">
                 <label class="form-label">Empleados (Masiva)</label>
-                <select name="massive_employee_ids[]" id="massive-employees" class="form-select select2-enable" multiple>
+                <select name="massive_employee_ids[]" id="massive-employees" class="form-select select2-enable" data-placeholder="Seleccione empleados..." data-allow-clear="true" multiple>
                     <?php foreach ($employees as $empId => $empName): ?>
                     <option value="<?= $empId ?>"><?= h($empName) ?></option>
                     <?php endforeach; ?>
@@ -238,15 +238,6 @@ $this->assign('title', 'Nueva Novedad');
                 var sigField = document.getElementById('signature-field');
                 if (sigField) {
                     sigField.style.display = flags.requires_employee_signature_creation ? '' : 'none';
-                }
-
-                // Re-init Select2 for massive if shown
-                if (flags.is_massive && typeof jQuery !== 'undefined') {
-                    jQuery('#massive-employees').select2({
-                        placeholder: 'Seleccione empleados...',
-                        allowClear: true,
-                        width: '100%'
-                    });
                 }
             });
     });
