@@ -18,7 +18,7 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
 ?>
 <div class="sgi-card">
     <div class="d-flex align-items-center" style="margin-bottom:12px;">
-        <span class="sgi-title-card d-inline-flex align-items-center gap-2">
+        <span class="sgi-label d-inline-flex align-items-center gap-2">
             <i class="bi bi-envelope-paper" aria-hidden="true"></i>
             Notificaciones de correo
             <span class="sgi-folder-count"><?= count($emailLogs) ?></span>
