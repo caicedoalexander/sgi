@@ -25,119 +25,119 @@ if (empty($catalogoItems)) {
     return;
 }
 ?>
-<li class="nav-heading">Catálogos</li>
+<li class="sb-section-head">Catálogos</li>
     <?php if ($canView('approvers')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-person-check me-2" aria-hidden="true"></i>Aprobadores',
+            '<span class="ic"><i class="bi bi-person-check" aria-hidden="true"></i></span><span class="grow">Aprobadores</span>',
             ['controller' => 'Approvers', 'action' => 'index'],
             ['class' => $navLink('Approvers'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('providers')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-truck me-2" aria-hidden="true"></i>Proveedores',
+            '<span class="ic"><i class="bi bi-truck" aria-hidden="true"></i></span><span class="grow">Proveedores</span>',
             ['controller' => 'Providers', 'action' => 'index'],
             ['class' => $navLink('Providers'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('banking_entities')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-bank me-2" aria-hidden="true"></i>Entidades Bancarias',
+            '<span class="ic"><i class="bi bi-bank" aria-hidden="true"></i></span><span class="grow">Entidades Bancarias</span>',
             ['controller' => 'BankingEntities', 'action' => 'index'],
             ['class' => $navLink('BankingEntities'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('operation_centers')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-geo-alt me-2" aria-hidden="true"></i>Centros de Operación',
+            '<span class="ic"><i class="bi bi-geo-alt" aria-hidden="true"></i></span><span class="grow">Centros de Operación</span>',
             ['controller' => 'OperationCenters', 'action' => 'index'],
             ['class' => $navLink('OperationCenters'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('expense_types')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-tags me-2" aria-hidden="true"></i>Tipos de Gasto',
+            '<span class="ic"><i class="bi bi-tags" aria-hidden="true"></i></span><span class="grow">Tipos de Gasto</span>',
             ['controller' => 'ExpenseTypes', 'action' => 'index'],
             ['class' => $navLink('ExpenseTypes'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('cost_centers')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-diagram-3 me-2" aria-hidden="true"></i>Centros de Costos',
+            '<span class="ic"><i class="bi bi-diagram-3" aria-hidden="true"></i></span><span class="grow">Centros de Costos</span>',
             ['controller' => 'CostCenters', 'action' => 'index'],
             ['class' => $navLink('CostCenters'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('positions')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-briefcase me-2" aria-hidden="true"></i>Cargos',
+            '<span class="ic"><i class="bi bi-briefcase" aria-hidden="true"></i></span><span class="grow">Cargos</span>',
             ['controller' => 'Positions', 'action' => 'index'],
             ['class' => $navLink('Positions'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('marital_statuses')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-heart me-2" aria-hidden="true"></i>Estados Civiles',
+            '<span class="ic"><i class="bi bi-heart" aria-hidden="true"></i></span><span class="grow">Estados Civiles</span>',
             ['controller' => 'MaritalStatuses', 'action' => 'index'],
             ['class' => $navLink('MaritalStatuses'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('education_levels')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-mortarboard me-2" aria-hidden="true"></i>Niveles Educativos',
+            '<span class="ic"><i class="bi bi-mortarboard" aria-hidden="true"></i></span><span class="grow">Niveles Educativos</span>',
             ['controller' => 'EducationLevels', 'action' => 'index'],
             ['class' => $navLink('EducationLevels'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('default_folders')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-folder me-2" aria-hidden="true"></i>Carpetas por Defecto',
+            '<span class="ic"><i class="bi bi-folder" aria-hidden="true"></i></span><span class="grow">Carpetas por Defecto</span>',
             ['controller' => 'DefaultFolders', 'action' => 'index'],
             ['class' => $navLink('DefaultFolders'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('novelty_types')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-list-check me-2" aria-hidden="true"></i>Tipos de Novedad',
+            '<span class="ic"><i class="bi bi-list-check" aria-hidden="true"></i></span><span class="grow">Tipos de Novedad</span>',
             ['controller' => 'NoveltyTypes', 'action' => 'index'],
             ['class' => $navLink('NoveltyTypes'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('temporary_organizations')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-building-gear me-2" aria-hidden="true"></i>Org. Temporales',
+            '<span class="ic"><i class="bi bi-building-gear" aria-hidden="true"></i></span><span class="grow">Org. Temporales</span>',
             ['controller' => 'TemporaryOrganizations', 'action' => 'index'],
             ['class' => $navLink('TemporaryOrganizations'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('leave_document_templates')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-file-earmark-ruled me-2" aria-hidden="true"></i>Plantillas Documento',
+            '<span class="ic"><i class="bi bi-file-earmark-ruled" aria-hidden="true"></i></span><span class="grow">Plantillas Documento</span>',
             ['controller' => 'LeaveDocumentTemplates', 'action' => 'index'],
             ['class' => $navLink('LeaveDocumentTemplates'), 'escape' => false],
         ) ?>

@@ -1355,10 +1355,91 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     text-align: center;
     border-radius: 2px;
     line-height: 1.4;
+    margin-left: auto;
 }
 .sb-badge.is-danger  { background-color: var(--danger-color);  color: #fff; }
 .sb-badge.is-warning { background-color: var(--warning-color); color: #5c4a08; }
 .sb-badge.is-primary { background-color: var(--primary-color); color: #fff; }
+
+/* Item colapsable: header (item + chevron) + submenú */
+.sb-collapsible-header { display: flex; align-items: stretch; }
+.sb-collapsible-header > .sb-item { flex: 1 1 0; min-width: 0; }
+.sb-chevron {
+    flex-shrink: 0;
+    width: 32px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.35);
+    transition: color var(--t-fast) ease;
+}
+.sb-chevron:hover { color: rgba(255, 255, 255, 0.75); }
+.sb-chevron .bi {
+    font-size: 11px;
+    transition: transform 0.2s ease;
+}
+.sb-chevron[aria-expanded="true"] .bi { transform: rotate(180deg); }
+
+.sb-submenu {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+.sb-submenu .sb-item {
+    padding-left: 38px;
+    font-size: var(--fs-body-sm);
+    color: rgba(255, 255, 255, 0.55);
+}
+.sb-submenu .sb-item .ic { color: rgba(255, 255, 255, 0.4); }
+.sb-submenu .sb-item:hover,
+.sb-submenu .sb-item.hover { color: rgba(255, 255, 255, 0.9); }
+.sb-submenu .sb-item.active { color: #fff; }
+.sb-submenu .sb-item.active .ic { color: var(--primary-color); }
+
+/* Footer de usuario */
+.sb-footer {
+    margin-top: auto;
+    padding: 12px 16px;
+    background-color: rgba(255, 255, 255, 0.04);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sb-footer-identity { flex: 1; min-width: 0; }
+.sb-footer-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.sb-footer-role { font-size: 10px; color: rgba(255, 255, 255, 0.5); }
+
+/* Botón logout */
+.sb-logout {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.5);
+    background: transparent;
+    border: 0;
+    text-decoration: none;
+    transition: color var(--t-fast) ease, background-color var(--t-fast) ease;
+}
+.sb-logout:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.08);
+}
 
 
 /* ─── B.16 CAL / CALENDAR ───────────────────────────────────────── */

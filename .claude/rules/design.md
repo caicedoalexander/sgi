@@ -1086,7 +1086,121 @@ Fondo `--bg-dark`. Logo `IconLogo` cuadrado 32×32 fondo `--primary-color`. Busc
 </div>
 ```
 
-Color del badge según el tipo de alerta: rojo (vencidas), amarillo (atención), verde (positivo).
+Color del badge según el tipo de alerta: `.sb-badge.is-danger` rojo (vencidas), `.sb-badge.is-warning` amarillo (atención), `.sb-badge.is-primary` verde (positivo). El badge tiene `margin-left: auto`, por lo que se ancla solo a la derecha — va como hermano del `.grow`, sin clases extra.
+
+```css
+.sb-badge {
+  font-size: 9.5px; font-weight: 700;
+  padding: 1px 6px; min-width: 18px; text-align: center;
+  border-radius: 2px; line-height: 1.4;
+  margin-left: auto;
+}
+.sb-badge.is-danger  { background: var(--danger-color);  color: #fff; }
+.sb-badge.is-warning { background: var(--warning-color); color: #5c4a08; }
+.sb-badge.is-primary { background: var(--primary-color); color: #fff; }
+```
+
+### Módulos colapsables
+
+Un módulo con submenú se compone de `.sb-collapsible-header` (fila que envuelve el `.sb-item` y el botón chevron) más un `<div class="collapse">` que contiene el `<ul class="sb-submenu">`. El colapso lo maneja Bootstrap collapse vía `data-bs-toggle`/`data-bs-target` y los `id` deben coincidir con `aria-controls`.
+
+```css
+.sb-collapsible-header { display: flex; align-items: stretch; }
+.sb-collapsible-header > .sb-item { flex: 1 1 0; min-width: 0; }
+
+.sb-chevron {
+  flex-shrink: 0; width: 32px; padding: 0;
+  background: transparent; border: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.35);
+}
+.sb-chevron:hover { color: rgba(255,255,255,0.75); }
+.sb-chevron .bi { font-size: 11px; transition: transform 0.2s ease; }
+.sb-chevron[aria-expanded="true"] .bi { transform: rotate(180deg); }
+
+.sb-submenu {
+  display: flex; flex-direction: column;
+  padding: 0; margin: 0; list-style: none;
+}
+.sb-submenu .sb-item {
+  padding-left: 38px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+}
+.sb-submenu .sb-item .ic { color: rgba(255,255,255,0.4); }
+.sb-submenu .sb-item.hover  { color: rgba(255,255,255,0.9); }
+.sb-submenu .sb-item.active { color: #fff; }
+.sb-submenu .sb-item.active .ic { color: var(--primary-color); }
+```
+
+El chevron rota 180° cuando `aria-expanded="true"`. Los `.sb-item` dentro de `.sb-submenu` reciben indentación (38px) y fuente/color más tenues automáticamente — no llevan clases extra.
+
+```html
+<li>
+  <div class="sb-collapsible-header">
+    <a href="/invoices/all" class="sb-item active">
+      <span class="ic"><i class="bi bi-receipt-cutoff"></i></span>
+      <span class="grow">Todas las Facturas</span>
+    </a>
+    <button class="sb-chevron" data-bs-toggle="collapse" data-bs-target="#facturacion-submenu"
+            aria-expanded="true" aria-controls="facturacion-submenu">
+      <i class="bi bi-chevron-down"></i>
+    </button>
+  </div>
+  <div class="collapse show" id="facturacion-submenu">
+    <ul class="sb-submenu">
+      <li>
+        <a href="/invoices" class="sb-item">
+          <span class="ic"><i class="bi bi-receipt"></i></span>
+          <span class="grow">Mis Facturas</span>
+          <span class="sb-badge is-primary">5</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</li>
+```
+
+### Footer de usuario
+
+Ancla al fondo del sidebar (`margin-top: auto`). Avatar de iniciales con la clase canónica `.av av-sm` (24×24), identidad recortada con ellipsis y botón de logout.
+
+```css
+.sb-footer {
+  margin-top: auto;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.04);
+  display: flex; align-items: center; gap: 10px;
+}
+.sb-footer-identity { flex: 1; min-width: 0; }
+.sb-footer-name {
+  font-size: 12px; font-weight: 600; color: #fff;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sb-footer-role { font-size: 10px; color: rgba(255,255,255,0.5); }
+
+.sb-logout {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 4px; line-height: 1;
+  color: rgba(255,255,255,0.5);
+  background: transparent; border: 0;
+}
+.sb-logout:hover { color: #fff; background: rgba(255,255,255,0.08); }
+```
+
+```html
+<div class="sb-footer">
+  <div class="av av-sm" style="background-color:var(--primary-color)">AC</div>
+  <div class="sb-footer-identity">
+    <div class="sb-footer-name">Alexander Caicedo</div>
+    <div class="sb-footer-role">Administrador</div>
+  </div>
+  <a href="/users/logout" class="sb-logout" aria-label="Cerrar sesión">
+    <i class="bi bi-box-arrow-right"></i>
+  </a>
+</div>
+```
 
 ### Branding — logo en el sidebar
 

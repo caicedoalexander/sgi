@@ -17,38 +17,38 @@ if (empty($adminItems)) {
     return;
 }
 ?>
-<li class="nav-heading">Administración</li>
+<li class="sb-section-head">Administración</li>
     <?php if ($canView('users')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-people me-2" aria-hidden="true"></i>Usuarios',
+            '<span class="ic"><i class="bi bi-people" aria-hidden="true"></i></span><span class="grow">Usuarios</span>',
             ['controller' => 'Users', 'action' => 'index'],
             ['class' => $navLink('Users'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('roles')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-shield-lock me-2" aria-hidden="true"></i>Roles',
+            '<span class="ic"><i class="bi bi-shield-lock" aria-hidden="true"></i></span><span class="grow">Roles</span>',
             ['controller' => 'Roles', 'action' => 'index'],
             ['class' => $navLink('Roles'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('system_settings')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-gear me-2" aria-hidden="true"></i>Configuración',
+            '<span class="ic"><i class="bi bi-gear" aria-hidden="true"></i></span><span class="grow">Configuración</span>',
             ['controller' => 'SystemSettings', 'action' => 'index'],
             ['class' => $navLink('SystemSettings'), 'escape' => false],
         ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('email_logs')) : ?>
-<li class="nav-item">
+<li>
         <?= $this->Html->link(
-            '<i class="bi bi-envelope-exclamation me-2" aria-hidden="true"></i>Logs de correo',
+            '<span class="ic"><i class="bi bi-envelope-exclamation" aria-hidden="true"></i></span><span class="grow">Logs de correo</span>',
             ['controller' => 'EmailLogs', 'action' => 'index'],
             ['class' => $navLink('EmailLogs'), 'escape' => false],
         ) ?>

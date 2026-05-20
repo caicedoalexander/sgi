@@ -98,10 +98,10 @@ $advancesMineCount = $advancesMineCount ?? 0;
                 <?= $this->element('sgi_logo') ?>
 
                 <!-- Buscador global -->
-                <form method="get" action="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'all']) ?>" class="sgi-sidebar-search mb-2" role="search">
+                <form method="get" action="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'all']) ?>" class="sb-search mb-2" role="search">
                     <i class="bi bi-search" aria-hidden="true"></i>
                     <input type="text" name="search" placeholder="Buscar facturas, empleados…" aria-label="Buscar" autocomplete="off">
-                    <kbd>⌘K</kbd>
+                    <span class="kbd">⌘K</span>
                 </form>
             </div>
 
@@ -119,15 +119,15 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     $match = $match && $currentAction === $action;
                 }
 
-                return 'nav-link' . ($match ? ' active' : '');
+                return 'sb-item' . ($match ? ' active' : '');
             };
             ?>
 
             <div class="sidebar-nav">
-            <ul class="nav nav-pills flex-column mb-3">
-                <li class="nav-item">
+            <ul class="nav flex-column" style="margin:0;">
+                <li>
                     <?= $this->Html->link(
-                        '<i class="bi bi-house-door me-2" aria-hidden="true"></i>Inicio',
+                        '<span class="ic"><i class="bi bi-house-door" aria-hidden="true"></i></span><span class="grow">Inicio</span>',
                         ['controller' => 'Dashboard', 'action' => 'index'],
                         ['class' => $navLink('Dashboard'), 'escape' => false],
                     ) ?>
@@ -149,34 +149,29 @@ $advancesMineCount = $advancesMineCount ?? 0;
             </div>
 
             <!-- Footer de usuario -->
-            <div class="sidebar-footer d-flex align-items-center justify-content-between">
-                <?php if ($currentUser) :
-                    $fullName = (string)($currentUser->full_name ?? '');
-                    $initials = '';
-                    foreach (preg_split('/\s+/', trim($fullName)) ?: [] as $part) {
-                        if ($part !== '' && strlen($initials) < 2) {
-                            $initials .= mb_strtoupper(mb_substr($part, 0, 1));
-                        }
+            <?php if ($currentUser) :
+                $fullName = (string)($currentUser->full_name ?? '');
+                $initials = '';
+                foreach (preg_split('/\s+/', trim($fullName)) ?: [] as $part) {
+                    if ($part !== '' && strlen($initials) < 2) {
+                        $initials .= mb_strtoupper(mb_substr($part, 0, 1));
                     }
-                    if ($initials === '') { $initials = '·'; }
-                ?>
-                    <div class="d-flex align-items-center" style="min-width:0;">
-                        <div class="d-flex align-items-center justify-content-center me-2 sgi-mono"
-                             style="width:32px;height:32px;background-color:var(--primary-color);flex-shrink:0;color:#fff;font-weight:700;font-size:var(--fs-body);letter-spacing:.02em;">
-                            <?= h($initials) ?>
-                        </div>
-                        <div class="overflow-hidden">
-                            <div class="text-white fw-medium text-truncate" style="font-size:var(--fs-body-lg);"><?= h($currentUser->full_name) ?></div>
-                            <div style="font-size:.7rem;color:rgba(255,255,255,.35);"><?= h($currentUser->role->name ?? '') ?></div>
-                        </div>
-                    </div>
-                    <?= $this->Html->link(
-                        '<i class="bi bi-box-arrow-right" aria-hidden="true"></i>',
-                        ['controller' => 'Users', 'action' => 'logout'],
-                        ['class' => 'sgi-sidebar-logout', 'escape' => false, 'aria-label' => 'Cerrar sesión', 'title' => 'Cerrar sesión'],
-                    ) ?>
-                <?php endif; ?>
+                }
+                if ($initials === '') { $initials = '·'; }
+            ?>
+            <div class="sb-footer">
+                <div class="av av-sm" style="background-color:var(--primary-color);"><?= h($initials) ?></div>
+                <div class="sb-footer-identity">
+                    <div class="sb-footer-name"><?= h($currentUser->full_name) ?></div>
+                    <div class="sb-footer-role"><?= h($currentUser->role->name ?? '') ?></div>
+                </div>
+                <?= $this->Html->link(
+                    '<i class="bi bi-box-arrow-right" aria-hidden="true"></i>',
+                    ['controller' => 'Users', 'action' => 'logout'],
+                    ['class' => 'sb-logout', 'escape' => false, 'aria-label' => 'Cerrar sesión', 'title' => 'Cerrar sesión'],
+                ) ?>
             </div>
+            <?php endif; ?>
         </nav>
         <?php /*
             Sync síncrono de --sidebar-width al parsear el body, antes de que .content-wrapper
