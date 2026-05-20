@@ -107,7 +107,67 @@ class EmployeeNoveltiesController extends AppController
             ->orderBy(['name' => 'ASC'])
             ->toArray();
 
-        $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes', 'visibleStatuses'));
+        [$upcomingNovelties, $typeDistribution] = $this->_buildSideRailData(clone $query);
+
+        $this->set(compact(
+            'novelties',
+            'statusFilter',
+            'typeFilter',
+            'noveltyTypes',
+            'visibleStatuses',
+            'upcomingNovelties',
+            'typeDistribution',
+        ));
+    }
+
+    /**
+     * Build the side-rail data for the index template: upcoming novelties
+     * and per-type distribution over the visible set.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $visibleQuery Query already filtered to the visible novelties.
+     * @return array{0: array<\App\Model\Entity\EmployeeNovelty>, 1: array<string, int>}
+     */
+    private function _buildSideRailData($visibleQuery): array
+    {
+        $today = date('Y-m-d');
+
+        // Próximas ~6 novedades por fecha de inicio desde hoy en adelante.
+        $upcoming = (clone $visibleQuery)
+            ->contain(['Employees', 'NoveltyTypes'])
+            ->where(function ($exp) use ($today) {
+                return $exp->or([
+                    'EmployeeNovelties.start_date >=' => $today,
+                    'EmployeeNovelties.permission_date >=' => $today,
+                ]);
+            })
+            ->orderBy([
+                'EmployeeNovelties.start_date' => 'ASC',
+                'EmployeeNovelties.permission_date' => 'ASC',
+            ], true)
+            ->limit(6)
+            ->all()
+            ->toArray();
+
+        // Distribución por tipo sobre el conjunto visible completo.
+        $distQuery = (clone $visibleQuery);
+        $distRows = $distQuery
+            ->select([
+                'name' => 'NoveltyTypes.name',
+                'count' => $distQuery->func()->count('EmployeeNovelties.id'),
+            ])
+            ->contain([])
+            ->innerJoinWith('NoveltyTypes')
+            ->groupBy(['NoveltyTypes.name'])
+            ->orderBy(['count' => 'DESC'], true)
+            ->disableHydration()
+            ->all();
+
+        $distribution = [];
+        foreach ($distRows as $row) {
+            $distribution[(string)($row['name'] ?? 'Sin tipo')] = (int)$row['count'];
+        }
+
+        return [$upcoming, $distribution];
     }
 
     /**
@@ -145,7 +205,18 @@ class EmployeeNoveltiesController extends AppController
 
         $visibleStatuses = [];
 
-        $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes', 'employees', 'visibleStatuses'));
+        [$upcomingNovelties, $typeDistribution] = $this->_buildSideRailData(clone $query);
+
+        $this->set(compact(
+            'novelties',
+            'statusFilter',
+            'typeFilter',
+            'noveltyTypes',
+            'employees',
+            'visibleStatuses',
+            'upcomingNovelties',
+            'typeDistribution',
+        ));
         $this->render('index');
     }
 
@@ -176,7 +247,17 @@ class EmployeeNoveltiesController extends AppController
         $statusFilter = null;
         $visibleStatuses = [];
 
-        $this->set(compact('novelties', 'statusFilter', 'typeFilter', 'noveltyTypes', 'visibleStatuses'));
+        [$upcomingNovelties, $typeDistribution] = $this->_buildSideRailData(clone $query);
+
+        $this->set(compact(
+            'novelties',
+            'statusFilter',
+            'typeFilter',
+            'noveltyTypes',
+            'visibleStatuses',
+            'upcomingNovelties',
+            'typeDistribution',
+        ));
         $this->render('index');
     }
 
