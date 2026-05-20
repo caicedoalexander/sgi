@@ -19,8 +19,10 @@ use App\Constants\InvoiceConstants;
     // ── Rich approver chips para Select2 (matches spec FldAprobadores) ──
     // Cada item picked se renderiza como avatar + name + pill Pendiente.
     // Color del avatar deriva del nombre (hash → paleta de 7 tonos).
-    if (typeof $ === 'undefined' || !$.fn || !$.fn.select2) return;
-
+    //
+    // jQuery + Select2 se cargan con `defer` (element/cdn_select2.php); este
+    // <script> es inline y no se difiere, así que la init debe esperar a
+    // DOMContentLoaded — los scripts diferidos ya corrieron para entonces.
     var palette = ['#469D61', '#CD6A15', '#83542B', '#212529', '#5a4a2a', '#4a6f5c', '#7a4c1e'];
     function colorFromName(name) {
         var h = 0;
@@ -33,35 +35,60 @@ use App\Constants\InvoiceConstants;
             .join('') || '·';
     }
 
-    $('select.select2-rich-approvers').each(function () {
-        var $sel = $(this);
-        if ($sel.hasClass('select2-hidden-accessible')) return;
-        var $modal = $sel.closest('.modal');
+    function initRichApprovers() {
+        if (typeof $ === 'undefined' || !$.fn || !$.fn.select2) return;
 
-        $sel.select2({
-            width: 'auto',
-            language: 'es',
-            placeholder: $sel.data('placeholder') || 'Buscar aprobador…',
-            minimumResultsForSearch: 0,
-            dropdownParent: $modal.length ? $modal : $(document.body),
-            templateSelection: function (item) {
-                if (!item.id) return item.text;
-                var name = item.text;
-                var $chip = $(
-                    '<span class="sgi-approver-chip-inner">' +
-                    '<span class="sgi-av sgi-av-sm" style="background:' + colorFromName(name) + ';">' + initials(name) + '</span>' +
-                    '<span class="sgi-approver-chip-info">' +
-                    '<span class="sgi-approver-chip-name"></span>' +
-                    '<span class="sgi-approver-chip-meta">sin enviar</span>' +
-                    '</span>' +
-                    '<span class="pill pill-warning-soft"><i class="bi bi-clock" aria-hidden="true" style="font-size:9px;"></i>Pendiente</span>' +
-                    '</span>'
-                );
-                $chip.find('.sgi-approver-chip-name').text(name);
-                return $chip;
-            },
+        $('select.select2-rich-approvers').each(function () {
+            var $sel = $(this);
+            if ($sel.hasClass('select2-hidden-accessible')) return;
+            var $modal = $sel.closest('.modal');
+
+            var addLabel = $sel.data('placeholder') || '+ Agregar aprobador';
+
+            $sel.select2({
+                width: '100%',
+                language: 'es',
+                placeholder: addLabel,
+                minimumResultsForSearch: 0,
+                dropdownParent: $modal.length ? $modal : $(document.body),
+                templateSelection: function (item) {
+                    if (!item.id) return item.text;
+                    var name = item.text;
+                    var $chip = $(
+                        '<span class="sgi-approver-chip-inner">' +
+                        '<span class="av av-sm" style="background:' + colorFromName(name) + ';">' + initials(name) + '</span>' +
+                        '<span class="sgi-approver-chip-info">' +
+                        '<span class="sgi-approver-chip-name"></span>' +
+                        '<span class="sgi-approver-chip-meta">sin enviar</span>' +
+                        '</span>' +
+                        '<span class="pill pill-warning-soft"><i class="bi bi-clock" aria-hidden="true" style="font-size:9px;"></i>Pendiente</span>' +
+                        '</span>'
+                    );
+                    $chip.find('.sgi-approver-chip-name').text(name);
+                    return $chip;
+                },
+            });
+
+            // Select2 limpia el placeholder del buscador inline tras cada
+            // selección; lo re-asentamos para que "+ Agregar aprobador" siga
+            // visible como disparador aun con chips seleccionados.
+            function keepAddLabel() {
+                $sel.next('.select2-container')
+                    .find('.select2-search__field')
+                    .attr('placeholder', addLabel);
+            }
+            keepAddLabel();
+            $sel.on('select2:select select2:unselect', function () {
+                window.setTimeout(keepAddLabel, 0);
+            });
         });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initRichApprovers);
+    } else {
+        initRichApprovers();
+    }
 })();
 </script>
 

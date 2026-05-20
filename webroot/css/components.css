@@ -548,6 +548,10 @@ textarea.form-control.auto-resize {
 
 /* Checkbox / radio */
 .form-check { display: flex; align-items: center; gap: 8px; padding: 0; min-height: auto; }
+/* Bootstrap aplica float:left + margin-left:-1.5em a `.form-check .form-check-input`
+   (especificidad 0,2,0). El layout SGI es flex con gap — se neutraliza igualando
+   la especificidad para que el checkbox no se desplace fuera de su columna. */
+.form-check .form-check-input { margin: 0; float: none; }
 .form-check-input {
     width: 16px; height: 16px;
     margin: 0;
@@ -928,9 +932,9 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     outline-color: var(--rule);
     cursor: not-allowed;
 }
-.input input,
-.input select,
-.input textarea {
+.input input:not(.form-control),
+.input select:not(.form-select),
+.input textarea:not(.form-control) {
     flex: 1;
     min-width: 0;
     border: 0;
@@ -942,6 +946,27 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     font-family: inherit;
 }
 .input > .bi { color: var(--text-faint); font-size: 14px; flex-shrink: 0; }
+
+/* ── Fix: colisión wrapper FormHelper × componente .input ──────────
+   CakePHP FormHelper envuelve cada Form->control() en <div class="input">.
+   Esa clase colisiona con el componente de diseño .input: el wrapper dibuja
+   su outline y el .form-control interno dibuja el suyo → "campo dentro de
+   campo". Cuando el wrapper contiene un control Bootstrap-style se neutraliza
+   por completo — el .form-control / .form-select ya aporta su propio campo. */
+.input:has(> .form-control),
+.input:has(> .form-select) {
+    display: block;
+    height: auto;
+    padding: 0;
+    background: none;
+    outline: 0;
+    border-radius: 0;
+}
+/* El estado de error del wrapper se transfiere al outline del control. */
+.input.error > .form-control,
+.input.error > .form-select {
+    outline-color: var(--danger-color);
+}
 
 .input-label {
     display: block;
@@ -994,6 +1019,69 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .av-lg { width: 48px; height: 48px; font-size: 16px; }
 .av-xl { width: 64px; height: 64px; font-size: 22px; }
 .av.is-circle { border-radius: 50%; }
+
+
+/* ─── B.6b WIDGET DE APROBADORES ──────────────────────────────────────
+   Campo token-input para asignar aprobadores. Contenedor outlined que
+   agrupa los chips. Cuando contiene el picker de Select2 el contenedor lo
+   aporta Select2 (.select2-selection--multiple) y este se neutraliza —
+   ver `.sgi-approvers-widget:has(.select2-container)` en
+   sgi-select2-overrides.css. */
+.sgi-approvers-widget {
+    align-items: center;
+    min-height: 48px;
+    padding: 5px;
+    background: #fff;
+    outline: 1px solid var(--border-color);
+    outline-offset: -1px;
+    border-radius: var(--radius-md);
+}
+
+/* Chip de aprobador (render server-side: element invoice_edit/_approver_chip).
+   El picker rico de Select2 reutiliza .sgi-approver-chip-info/-name/-meta
+   dentro de .sgi-approver-chip-inner (estilado en sgi-select2-overrides.css);
+   ambos chips comparten métricas para verse idénticos. */
+.sgi-approver-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 5px 8px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+}
+.sgi-approver-chip-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+.sgi-approver-chip-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-default);
+}
+.sgi-approver-chip-meta {
+    font-size: 11px;
+    color: var(--text-faint);
+}
+.sgi-approver-chip-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-faint);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+.sgi-approver-chip-remove:hover {
+    color: var(--danger-color);
+    background: var(--danger-soft);
+}
 
 
 /* ─── B.7 DOC CODES (gestión documental) ────────────────────────── */
@@ -2230,3 +2318,56 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     .sgi-edit-footer-actions { justify-content: flex-end; }
 }
 .content-wrapper:has(.sgi-edit-footer) { padding-bottom: 88px; }
+
+/* --- Shell de edición: header fijo + paneles con scroll independiente --- */
+/* Desde lg (>=992px) la edición de factura ocupa el viewport: header y footer
+   fijos, y las dos columnas scrollean de forma independiente. Por debajo de lg
+   degrada al scroll de página normal (footer fixed como en el resto de vistas). */
+.sgi-edit-shell-head { padding-bottom: 8px; }
+
+@media (min-width: 992px) {
+    .sgi-edit-shell {
+        position: fixed;
+        top: 0;
+        left: var(--sidebar-width, 260px);
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--background-color);
+    }
+    .sgi-edit-shell-head {
+        flex-shrink: 0;
+        padding: 16px 24px 12px;
+        border-bottom: 1px solid var(--rule);
+    }
+    .sgi-edit-shell-form {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .sgi-edit-shell-body {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 16px 24px 0;
+    }
+    .sgi-edit-shell-body > .row {
+        flex: 1;
+        min-height: 0;
+        flex-wrap: nowrap;
+    }
+    .sgi-edit-col {
+        min-height: 0;
+        height: 100%;
+        overflow-y: auto;
+        padding-bottom: 24px;
+    }
+    .sgi-edit-shell .sgi-edit-footer {
+        position: static;
+        flex-shrink: 0;
+    }
+    .content-wrapper:has(.sgi-edit-shell) { padding-bottom: 0; }
+}

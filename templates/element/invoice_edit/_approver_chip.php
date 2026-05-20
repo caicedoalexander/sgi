@@ -41,7 +41,7 @@ $metaParts[] = $timestamp ?? 'sin respuesta';
 $meta = implode(' · ', $metaParts);
 ?>
 <div class="sgi-approver-chip" <?= $userId !== null ? 'data-user-id="' . (int)$userId . '"' : '' ?>>
-    <span class="sgi-av sgi-av-sm" style="background:<?= $bg ?>;"><?= h($initials) ?></span>
+    <span class="av av-sm" style="background:<?= $bg ?>;"><?= h($initials) ?></span>
     <div class="sgi-approver-chip-info">
         <span class="sgi-approver-chip-name"><?= h($name) ?></span>
         <?php if ($meta !== ''): ?>

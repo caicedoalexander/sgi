@@ -152,19 +152,11 @@ $canRegress = !empty($viewModel->canRegress);
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
 
-<?php if ($viewModel->isRejected): ?>
-<div class="banner danger view-anim" style="margin-bottom:14px">
-    <div class="banner-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div>
-    <div class="banner-body">
-        <div class="banner-title">Esta factura fue rechazada en la aprobación de área</div>
-        <div class="banner-msg">Revisa las observaciones de los aprobadores. El flujo puede reiniciarse para reenviar los enlaces de aprobación.</div>
-    </div>
-</div>
-<?php endif; ?>
+<div class="sgi-edit-shell">
 
-<?php /* ═══════════════════ HEADER DE PÁGINA ═══════════════════ */ ?>
-<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 view-anim"
-     style="padding:4px 0 16px;">
+<?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
+<div class="sgi-edit-shell-head">
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 view-anim">
     <div style="min-width:0;">
         <div class="d-flex align-items-center flex-wrap gap-1"
              style="font-size:var(--fs-body-sm);color:var(--text-faint);margin-bottom:6px;">
@@ -214,16 +206,7 @@ $canRegress = !empty($viewModel->canRegress);
     </div>
 </div>
 
-<?php /* ── Alerta: legalización vinculada a un anticipo ───────── */ ?>
-<?php if (($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($invoice->advance_id)): ?>
-<div class="alert alert-info d-flex justify-content-between align-items-center">
-    <div>
-        <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
-        Esta factura es una <strong>Legalización</strong> vinculada al
-        <?= $this->Html->link('Anticipo #' . h($invoice->advance_id), ['controller' => 'Advances', 'action' => 'view', $invoice->advance_id]) ?>.
-    </div>
-</div>
-<?php endif; ?>
+</div><?php /* fin .sgi-edit-shell-head */ ?>
 
 <?php /* ── Formulario oculto para "Enviar links de aprobación" ── */ ?>
 <?php if ($viewModel->canSendLinks): ?>
@@ -235,13 +218,37 @@ $canRegress = !empty($viewModel->canRegress);
 <?= $this->Form->end() ?>
 <?php endif; ?>
 
-<?= $this->Form->create($invoice, ['id' => 'invoiceEditForm']) ?>
+<?= $this->Form->create($invoice, ['id' => 'invoiceEditForm', 'class' => 'sgi-edit-shell-form']) ?>
 <?= $this->Form->hidden('expected_status', ['value' => $invoice->pipeline_status]) ?>
 
-<div class="row g-3 view-anim align-items-start">
+<div class="sgi-edit-shell-body view-anim">
+
+<?php /* ── Banner: factura rechazada en aprobación de área ────── */ ?>
+<?php if ($viewModel->isRejected): ?>
+<div class="banner danger" style="margin-bottom:14px">
+    <div class="banner-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div>
+    <div class="banner-body">
+        <div class="banner-title">Esta factura fue rechazada en la aprobación de área</div>
+        <div class="banner-msg">Revisa las observaciones de los aprobadores. El flujo puede reiniciarse para reenviar los enlaces de aprobación.</div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php /* ── Alerta: legalización vinculada a un anticipo ───────── */ ?>
+<?php if (($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($invoice->advance_id)): ?>
+<div class="alert alert-info d-flex justify-content-between align-items-center">
+    <div>
+        <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
+        Esta factura es una <strong>Legalización</strong> vinculada al
+        <?= $this->Html->link('Anticipo #' . h($invoice->advance_id), ['controller' => 'Advances', 'action' => 'view', $invoice->advance_id]) ?>.
+    </div>
+</div>
+<?php endif; ?>
+
+<div class="row gx-3">
 
     <?php /* ═══════════════════ COLUMNA IZQUIERDA ═══════════════════ */ ?>
-    <aside class="col-lg-4 d-flex flex-column gap-3">
+    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
 
         <?php /* ── Hero: resumen de la factura ─────────────────── */ ?>
         <div class="sgi-card" style="position:relative;">
@@ -379,32 +386,10 @@ $canRegress = !empty($viewModel->canRegress);
             </div>
         </div>
         <?php endif; ?>
-
-        <?php /* ── Registro / auditoría ────────────────────────── */ ?>
-        <div class="sgi-card compact">
-            <span class="sgi-label">Registro</span>
-            <div class="d-flex align-items-center gap-2 mt-2" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-                <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
-                <span>Rol: <strong style="color:var(--text-default);"><?= h($viewModel->roleName) ?></strong></span>
-            </div>
-            <?php if ($invoice->created): ?>
-            <div class="d-flex align-items-center gap-2 mt-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-                <i class="bi bi-calendar3 sgi-fg-faint" aria-hidden="true"></i>
-                <span>Creado · <span class="mono"><?= $invoice->created->format('d/m/Y') ?></span></span>
-            </div>
-            <?php endif; ?>
-            <?php if ($invoice->modified): ?>
-            <div class="d-flex align-items-center gap-2 mt-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-                <i class="bi bi-pencil sgi-fg-faint" aria-hidden="true"></i>
-                <span>Modificado · <span class="mono"><?= $invoice->modified->format('d/m/Y') ?></span></span>
-            </div>
-            <?php endif; ?>
-        </div>
-
     </aside>
 
     <?php /* ═══════════════════ COLUMNA DERECHA ═══════════════════ */ ?>
-    <main class="col-lg-8 d-flex flex-column gap-3">
+    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
 
         <?php /* ── Banner: requisitos para avanzar ─────────────── */ ?>
         <?php if ($showAdvanceBanner): ?>
@@ -659,6 +644,7 @@ $canRegress = !empty($viewModel->canRegress);
         <?php /* ── Etapa actual: campos editables por estado ───── */ ?>
         <?php if (!empty($visibleStageSections)): ?>
         <div class="sgi-card" style="position:relative;">
+            <span class="accent-strip <?= $stageAccent ?>"></span>
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2" style="margin-bottom:14px;">
                 <div>
                     <div class="sgi-label" style="color:var(--text-faint);">Etapa actual · editable</div>
@@ -682,7 +668,12 @@ $canRegress = !empty($viewModel->canRegress);
             <?php foreach ($visibleStageSections as $sectionName): ?>
 
                 <?php /* ── Revisión / Aprobación ──────────────── */ ?>
-                <?php if ($sectionName === 'revision'):
+                <?php /* Cada sección de etapa se renderiza solo en su estado
+                          del pipeline. `revision` (aprobadores + DIAN) pertenece
+                          a `aprobacion`; no debe aparecer en estados posteriores
+                          aunque el rol Admin tenga `revision` en sus secciones
+                          visibles (unión de todos los pasos operables). */ ?>
+                <?php if ($sectionName === 'revision' && $currentStatus === InvoiceConstants::STATUS_APROBACION):
                     $isRejected = ($invoice->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED;
                     $rejector = null;
                     if ($isRejected) {
@@ -738,10 +729,10 @@ $canRegress = !empty($viewModel->canRegress);
                             <?php endif; ?>
 
                             <?php if ($viewModel->canSendLinks): ?>
-                                <span class="sgi-approver-picker" style="display:inline-flex;align-items:center;">
+                                <span class="sgi-approver-picker" style="width:100%;">
                                     <select name="approver_ids[]" id="approver-ids" class="select2-rich-approvers" multiple
                                             form="sendApprovalLinksForm"
-                                            data-placeholder="Buscar aprobador…"
+                                            data-placeholder="+ Agregar aprobador"
                                             data-existing-ids="<?= h(json_encode($existingIds)) ?>">
                                         <?php foreach ($viewModel->approvers as $appId => $appName): ?>
                                             <option value="<?= $appId ?>"><?= h($appName) ?></option>
@@ -759,6 +750,7 @@ $canRegress = !empty($viewModel->canRegress);
                             </button>
                             <span class="input-help">Se envía independiente del botón Guardar</span>
                         </div>
+                        <div class="input-help mt-1">Seleccione una o más personas que deben aprobar este documento.</div>
                         <?php elseif ($viewModel->canModifyApprovers): ?>
                         <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
                             <?php if ($viewModel->hasPendingApprovals): ?>
@@ -816,7 +808,9 @@ $canRegress = !empty($viewModel->canRegress);
                 <?php endif; ?>
 
                 <?php /* ── Contabilidad ───────────────────────── */ ?>
-                <?php if ($sectionName === 'accounting'): ?>
+                <?php /* `accounting` pertenece al estado `contabilidad` — misma
+                          regla que `revision`: no se muestra fuera de su etapa. */ ?>
+                <?php if ($sectionName === 'accounting' && $currentStatus === InvoiceConstants::STATUS_CONTABILIDAD): ?>
                 <div class="row g-2 g-md-3">
                     <div class="col-md-4">
                         <label class="input-label">Causada</label>
@@ -853,7 +847,13 @@ $canRegress = !empty($viewModel->canRegress);
                 <?php endif; ?>
 
                 <?php /* ── Tesorería: registro de pagos ───────── */ ?>
-                <?php if ($sectionName === 'treasury' && !$isPaymentStage):
+                <?php /* El área de pagos solo aplica desde Tesorería en adelante:
+                          en `tesoreria` se registran los pagos; en
+                          `autorizacion_pago`/`verificacion_pago` se autorizan
+                          (sección `payment_authorization`). En `aprobacion` y
+                          `contabilidad` no debe mostrarse, aunque el rol Admin
+                          tenga `treasury` en sus secciones visibles. */ ?>
+                <?php if ($sectionName === 'treasury' && $currentStatus === InvoiceConstants::STATUS_TESORERIA):
                     $canRegisterPayment = $viewModel->canRegisterPayment;
                 ?>
                 <?= $this->element('payment_section', $sharedPaymentParams + [
@@ -1015,7 +1015,8 @@ $canRegress = !empty($viewModel->canRegress);
 
 
     </main>
-</div>
+</div><?php /* fin .row */ ?>
+</div><?php /* fin .sgi-edit-shell-body */ ?>
 
 <?php /* ── Footer de acciones ──────────────────────────── */ ?>
 <?php if (!empty($viewModel->editableFields) || $canRegress): ?>
@@ -1051,6 +1052,8 @@ $canRegress = !empty($viewModel->canRegress);
 <?php endif; ?>
 
 <?= $this->Form->end() ?>
+
+</div><?php /* fin .sgi-edit-shell */ ?>
 
 <?php /* ═══════════════════ MODALES ═══════════════════ */ ?>
 <?php if ($canRegress && empty($viewModel->regressLockMessage)): ?>
