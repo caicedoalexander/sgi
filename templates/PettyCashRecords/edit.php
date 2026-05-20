@@ -159,7 +159,6 @@ $obsCount  = count($record->petty_cash_observations ?? []);
 
         <?php /* ── Hero: resumen del registro ─────────────────── */ ?>
         <div class="sgi-card" style="position:relative;">
-            <span class="accent-strip <?= $stageAccent ?>"></span>
             <div class="d-flex align-items-start" style="gap:12px;margin-bottom:16px;">
                 <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--primary-soft);color:var(--primary-color);border-radius:var(--radius-sm);">
                     <i class="bi bi-wallet2" aria-hidden="true" style="font-size:18px;"></i>
@@ -329,7 +328,6 @@ $obsCount  = count($record->petty_cash_observations ?? []);
         <?php /* ── Información del registro: secciones del pipeline ── */ ?>
         <?php if (!empty($sections)): ?>
         <div class="sgi-card" style="position:relative;">
-            <span class="accent-strip <?= $stageAccent ?>"></span>
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2" style="margin-bottom:14px;">
                 <div>
                     <div class="sgi-label" style="color:var(--text-faint);">Etapa actual</div>

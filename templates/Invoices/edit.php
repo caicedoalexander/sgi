@@ -245,7 +245,6 @@ $canRegress = !empty($viewModel->canRegress);
 
         <?php /* ── Hero: resumen de la factura ─────────────────── */ ?>
         <div class="sgi-card" style="position:relative;">
-            <span class="accent-strip <?= $stageAccent ?>"></span>
             <div class="d-flex align-items-start" style="gap:12px;margin-bottom:16px;">
                 <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--primary-soft);color:var(--primary-color);border-radius:var(--radius-sm);">
                     <i class="bi <?= $isAdvance ? 'bi-cash-coin' : 'bi-file-earmark-text' ?>" aria-hidden="true" style="font-size:18px;"></i>
@@ -660,7 +659,6 @@ $canRegress = !empty($viewModel->canRegress);
         <?php /* ── Etapa actual: campos editables por estado ───── */ ?>
         <?php if (!empty($visibleStageSections)): ?>
         <div class="sgi-card" style="position:relative;">
-            <span class="accent-strip <?= $stageAccent ?>"></span>
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2" style="margin-bottom:14px;">
                 <div>
                     <div class="sgi-label" style="color:var(--text-faint);">Etapa actual · editable</div>
@@ -891,7 +889,6 @@ $canRegress = !empty($viewModel->canRegress);
         <?php if ($viewModel->canConfirmPayment
                   && $currentStatus === InvoiceConstants::STATUS_VERIFICACION_PAGO): ?>
         <div class="sgi-card" style="position:relative;">
-            <span class="accent-strip accent-green"></span>
             <span class="sgi-label">Cierre de flujo</span>
             <p style="font-size:var(--fs-body);color:var(--text-muted);margin:8px 0 12px;">
                 El pago fue autorizado por el Contador. Verifique que todos los soportes estén
