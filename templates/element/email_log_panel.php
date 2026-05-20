@@ -16,19 +16,22 @@ if (empty($emailLogs)) {
 $now = new DateTime();
 $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
 ?>
-<div class="card card-primary mt-3">
-    <div class="card-header d-flex align-items-center gap-2" style="background:#fff;border-bottom:1px solid var(--border-color);padding:.6rem 1rem;">
-        <i class="bi bi-envelope-paper" style="color:var(--primary-color);" aria-hidden="true"></i>
-        <span style="font-size:var(--fs-title-card);font-weight:600;letter-spacing:-.01em;">Notificaciones de correo</span>
+<div class="sgi-card">
+    <div class="d-flex align-items-center" style="margin-bottom:12px;">
+        <span class="sgi-label d-inline-flex align-items-center gap-2">
+            <i class="bi bi-envelope-paper" aria-hidden="true"></i>
+            Notificaciones de correo
+            <span class="sgi-folder-count"><?= count($emailLogs) ?></span>
+        </span>
     </div>
     <div class="table-responsive">
-        <table class="table table-hover mb-0" style="font-size:var(--fs-body-lg);">
+        <table class="table table-hover mb-0">
             <thead>
                 <tr>
                     <th>Destinatario</th>
                     <th style="width:120px;">Estado</th>
                     <th style="width:140px;white-space:nowrap;">Último intento</th>
-                    <th style="width:80px;">Intentos</th>
+                    <th style="width:80px;text-align:center;">Intentos</th>
                     <th style="width:110px;" class="text-end">Acción</th>
                 </tr>
             </thead>
@@ -56,21 +59,21 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
                     $lastAttempt = $log->last_attempt_at ?? $log->created;
                     ?>
                     <tr>
-                        <td style="color:var(--text-muted);"><?= h($log->to_email) ?></td>
+                        <td><?= h($log->to_email) ?></td>
                         <td>
                             <span class="pill <?= $statusBadge ?>">
                                 <i class="bi <?= $statusIcon ?> me-1" aria-hidden="true"></i><?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
                             </span>
                             <?php if ($log->status === EmailLogConstants::STATUS_FAILED && !empty($log->last_error)): ?>
-                                <div class="text-danger mt-1" style="font-size:.7rem;line-height:1.3;">
+                                <div class="sgi-fg-danger mt-1" style="font-size:var(--fs-meta);line-height:1.3;">
                                     <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i><?= h($log->last_error) ?>
                                 </div>
                             <?php endif; ?>
                         </td>
-                        <td style="color:var(--text-muted);white-space:nowrap;">
+                        <td class="mono" style="white-space:nowrap;color:var(--text-muted);">
                             <?= $lastAttempt ? h($lastAttempt->i18nFormat('dd/MM/yyyy HH:mm')) : '—' ?>
                         </td>
-                        <td style="color:var(--text-muted);text-align:center;"><?= (int)$log->attempts ?></td>
+                        <td class="mono" style="text-align:center;color:var(--text-muted);"><?= (int)$log->attempts ?></td>
                         <td class="text-end">
                             <?php if ($showRetry): ?>
                                 <?= $this->Form->postLink(
