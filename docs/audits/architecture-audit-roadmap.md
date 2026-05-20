@@ -356,4 +356,4 @@ o dev nuevo tenga que reconstruir el "por qué" de cada elección desde specs/co
 - Auditoría origen: [`./architecture-audit-2026-04-30.md`](./architecture-audit-2026-04-30.md)
 - Convenciones del proyecto: `CLAUDE.md` (raíz)
 - Arquitectura actual: `ARCHITECTURE.md` (raíz)
-- Estilo: `STYLES.md` (raíz)
+- Estilo: `docs/design/` (índice en `CLAUDE.md`)

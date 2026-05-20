@@ -2,7 +2,7 @@
 
 Practical guide for building and extending the SGI (Sistema de Gestión Interna). This document covers **how** to work on the project: layer responsibilities, patterns, conventions, and step-by-step instructions for common tasks.
 
-For quick reference and commands, see `CLAUDE.md`. For visual design rules, see `STYLES.md`.
+For quick reference and commands, see `CLAUDE.md`. For visual design rules, see `docs/design/`.
 
 ---
 
@@ -188,7 +188,7 @@ Public assets. Custom CSS and JS live here — no build step.
 
 ```
 webroot/
-├── css/styles.css                 # Complete design system (see STYLES.md)
+├── css/styles.css                 # Complete design system (see docs/design/)
 ├── js/sgi-common.js               # Plugin initialization (Flatpickr, AutoNumeric, Select2)
 ├── fonts/Inter-Variable.ttf       # Inter font (weights 100–900)
 └── uploads/{entity}/{id}/         # User-uploaded files
@@ -420,7 +420,7 @@ VALUES
 
 ### 3.7 Create Templates
 
-Follow `STYLES.md` for visual consistency. Use standard elements:
+Follow `docs/design/` for visual consistency. Use standard elements:
 
 - `templates/element/pagination.php` for paginated lists
 - `.flatpickr-date` class on date inputs
@@ -1120,7 +1120,7 @@ Validated in `validateTransitionRequirements()`:
 
 ## 7. Frontend and Design System
 
-For complete visual rules, CSS variables, color palette, typography, and component specifications, see **`STYLES.md`**. This section covers only the practical essentials needed when writing templates.
+For complete visual rules, CSS variables, color palette, typography, and component specifications, see **`docs/design/`**. This section covers only the practical essentials needed when writing templates.
 
 ### 7.1 Asset Load Order (Mandatory)
 
@@ -1150,7 +1150,7 @@ These initialize automatically via `sgi-common.js` — just add the CSS class:
 | `external.php` | External approval via token (no sidebar) |
 | `ajax.php` | AJAX responses (no layout chrome) |
 
-For the full list of custom CSS classes (`.sgi-stat-card`, `.sgi-btn-primary`, `.sgi-input-group`, etc.) and design principles (borders over shadows, micro-caps, Inter Variable font), refer to `STYLES.md`.
+For the full list of custom CSS classes (`.sgi-stat-card`, `.sgi-btn-primary`, `.sgi-input-group`, etc.) and design principles (borders over shadows, micro-caps, Inter Variable font), refer to `docs/design/`.
 
 ---
 
