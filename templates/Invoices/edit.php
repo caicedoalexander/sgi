@@ -926,16 +926,26 @@ $canRegress = !empty($viewModel->canRegress);
                         <?php endif; ?>
                     </div>
 
+                    <?php if ($showUploadSection): ?>
+                    <?php /* Empty state = dropzone del sistema de diseño. Toda la
+                              zona abre el modal de subida (el JS solo alterna su
+                              display, no depende de la clase). */ ?>
+                    <div id="docs-empty-state" class="dropzone"
+                         data-bs-toggle="modal" data-bs-target="#uploadInvoiceDocModal"
+                         style="cursor:pointer;<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
+                        <i class="bi bi-paperclip" aria-hidden="true"></i>
+                        <div>Arrastra archivos o <a class="dz-link">examina</a></div>
+                        <div class="dz-hint">PDF, JPG, PNG · máximo 10 MB por archivo</div>
+                    </div>
+                    <?php else: ?>
                     <div id="docs-empty-state" class="empty-state"
                          <?= !empty($documentsByStatus) ? 'style="display:none;"' : '' ?>>
                         <div class="es-icon es-icon-neutral">
                             <i class="bi bi-paperclip" aria-hidden="true"></i>
                         </div>
                         <div class="es-title">Sin soportes adjuntos</div>
-                        <?php if ($showUploadSection): ?>
-                        <div class="es-msg">PDF, JPG, PNG · máximo 10 MB por archivo</div>
-                        <?php endif; ?>
                     </div>
+                    <?php endif; ?>
 
                     <div id="docs-list" style="max-height:420px;overflow-y:auto;">
                         <?php foreach ($documentsByStatus as $status => $docs): ?>
