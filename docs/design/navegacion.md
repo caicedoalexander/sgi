@@ -347,3 +347,52 @@ Cada paso = marker + label + timestamp en mono.
 
 ---
 
+## Stepper / Wizard
+
+Asistente paso-a-paso **activo**: el usuario navega para crear algo (factura, alta de empleado, novedad). Distinto del pipeline (sección 14), que es de solo lectura y muestra el estado del flujo. El círculo del paso activo lleva un halo soft.
+
+```css
+.stepper { display: flex; align-items: center; gap: 0; }
+.step { display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; }
+.step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--bg-subtle); color: var(--text-faint); font-size: 11.5px; font-weight: 700; font-family: var(--font-mono); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step.done .step-num { background: var(--primary-color); color: #fff; }
+.step.active .step-num { background: var(--primary-color); color: #fff; outline: 3px solid var(--primary-soft-strong); outline-offset: 0; }
+.step.future .step-num { background: #fff; outline: 1px solid var(--border-color); outline-offset: -1px; }
+.step-label { font-size: 12px; font-weight: 600; color: var(--text-faint); line-height: 1.2; }
+.step.active .step-label { color: var(--text-strong); }
+.step.done .step-label { color: var(--text-default); }
+.step-label-sub { font-size: 10px; color: var(--text-disabled); font-weight: 500; margin-top: 2px; }
+.step-line { flex: 1; height: 1.5px; background: var(--border-color); min-width: 24px; }
+.step-line.done { background: var(--primary-color); }
+```
+
+```html
+<div class="stepper">
+  <div class="step done">
+    <div class="step-num"><i class="bi bi-check-lg"></i></div>
+    <div>
+      <div class="step-label">Proveedor</div>
+      <div class="step-label-sub">Comercializadora Andina</div>
+    </div>
+  </div>
+  <div class="step-line done"></div>
+  <div class="step active">
+    <div class="step-num">2</div>
+    <div>
+      <div class="step-label">Conceptos</div>
+      <div class="step-label-sub">3 ítems añadidos</div>
+    </div>
+  </div>
+  <div class="step-line"></div>
+  <div class="step future">
+    <div class="step-num">3</div>
+    <div>
+      <div class="step-label">Soportes</div>
+      <div class="step-label-sub">PDF, OC</div>
+    </div>
+  </div>
+</div>
+```
+
+Estados del paso: `done` (círculo primary con check) · `active` (círculo primary con halo `outline: 3px solid var(--primary-soft-strong)`) · `future` (círculo blanco con outline gris). Los pasos completados son clickeables para volver; los futuros están deshabilitados. El `.step-line.done` une dos pasos completados en primary.
+

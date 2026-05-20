@@ -2170,3 +2170,17 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .chat-composer-tool { background: transparent; border: none; padding: 5px; color: var(--text-faint); cursor: pointer; display: flex; border-radius: 2px; }
 .chat-composer-tool:hover { background: var(--bg-subtle); color: var(--text-default); }
 .chat-composer-tag { font-size: 9.5px; font-weight: 700; padding: 3px 6px; background: var(--primary-soft); color: var(--primary-color); border-radius: 2px; letter-spacing: 0.5px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+
+/* --- Stepper / Wizard --- */
+.stepper { display: flex; align-items: center; gap: 0; }
+.step { display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; }
+.step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--bg-subtle); color: var(--text-faint); font-size: 11.5px; font-weight: 700; font-family: var(--font-mono); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step.done .step-num { background: var(--primary-color); color: #fff; }
+.step.active .step-num { background: var(--primary-color); color: #fff; outline: 3px solid var(--primary-soft-strong); outline-offset: 0; }
+.step.future .step-num { background: #fff; outline: 1px solid var(--border-color); outline-offset: -1px; }
+.step-label { font-size: 12px; font-weight: 600; color: var(--text-faint); line-height: 1.2; }
+.step.active .step-label { color: var(--text-strong); }
+.step.done .step-label { color: var(--text-default); }
+.step-label-sub { font-size: 10px; color: var(--text-disabled); font-weight: 500; margin-top: 2px; }
+.step-line { flex: 1; height: 1.5px; background: var(--border-color); min-width: 24px; }
+.step-line.done { background: var(--primary-color); }
