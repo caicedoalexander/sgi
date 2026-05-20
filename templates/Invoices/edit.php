@@ -1013,42 +1013,42 @@ $canRegress = !empty($viewModel->canRegress);
         <?php /* ── Log de correos (cuando aplica) ──────────────── */ ?>
         <?= $this->element('email_log_panel', ['emailLogs' => $viewModel->emailLogs ?? []]) ?>
 
-        <?php /* ── Footer de acciones ──────────────────────────── */ ?>
-        <?php if (!empty($viewModel->editableFields) || $canRegress): ?>
-        <div class="sgi-card d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div class="d-flex align-items-center flex-wrap gap-3"
-                 style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-                <span class="d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
-                    Rol: <strong style="color:var(--text-default);"><?= h($viewModel->roleName) ?></strong>
-                </span>
-                <?php if ($invoice->modified): ?>
-                <span style="width:1px;height:14px;background:var(--rule);"></span>
-                <span class="d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
-                    Última modificación: <span class="mono"><?= $invoice->modified->format('d/m/Y H:i') ?></span>
-                </span>
-                <?php endif; ?>
-                <span style="width:1px;height:14px;background:var(--rule);" data-dirty-indicator hidden></span>
-                <span class="d-inline-flex align-items-center gap-1 sgi-fg-secondary"
-                      data-dirty-indicator hidden style="font-weight:600;">
-                    <span style="width:6px;height:6px;background:var(--secondary-color);border-radius:50%;"></span>
-                    Hay cambios sin guardar
-                </span>
-            </div>
-            <div class="d-flex gap-2 flex-shrink-0">
-                <?= $this->Html->link('Cancelar', $viewUrl, ['class' => 'btn btn-ghost']) ?>
-                <?php if (!empty($viewModel->editableFields)): ?>
-                    <button type="submit" class="<?= h($viewModel->submitButtonClass) ?>">
-                        <?= $viewModel->submitButtonHtml ?>
-                    </button>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php endif; ?>
 
     </main>
 </div>
+
+<?php /* ── Footer de acciones ──────────────────────────── */ ?>
+<?php if (!empty($viewModel->editableFields) || $canRegress): ?>
+<div class="sgi-edit-footer">
+    <div class="sgi-edit-footer-meta">
+        <span class="d-inline-flex align-items-center gap-1">
+            <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+            Rol: <strong style="color:var(--text-default);"><?= h($viewModel->roleName) ?></strong>
+        </span>
+        <?php if ($invoice->modified): ?>
+        <span style="width:1px;height:14px;background:var(--rule);"></span>
+        <span class="d-inline-flex align-items-center gap-1">
+            <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+            Última modificación: <span class="mono"><?= $invoice->modified->format('d/m/Y H:i') ?></span>
+        </span>
+        <?php endif; ?>
+        <span style="width:1px;height:14px;background:var(--rule);" data-dirty-indicator hidden></span>
+        <span class="d-inline-flex align-items-center gap-1 sgi-fg-secondary"
+              data-dirty-indicator hidden style="font-weight:600;">
+            <span style="width:6px;height:6px;background:var(--secondary-color);border-radius:50%;"></span>
+            Hay cambios sin guardar
+        </span>
+    </div>
+    <div class="sgi-edit-footer-actions">
+        <?= $this->Html->link('Cancelar', $viewUrl, ['class' => 'btn btn-ghost']) ?>
+        <?php if (!empty($viewModel->editableFields)): ?>
+            <button type="submit" class="<?= h($viewModel->submitButtonClass) ?>">
+                <?= $viewModel->submitButtonHtml ?>
+            </button>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 <?= $this->Form->end() ?>
 
