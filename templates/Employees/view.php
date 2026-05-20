@@ -97,13 +97,33 @@ $navTabColor = fn(string $status) => match ($status) {
                     <?= $this->Paginator->counter('{{count}} en el directorio', ['model' => 'nav']) ?>
                 </div>
             </div>
-            <?php if (!empty($userPermissions['employees']['can_create'])): ?>
-            <?= $this->Html->link(
-                '<i class="bi bi-plus-lg" aria-hidden="true"></i>Nuevo',
-                ['action' => 'add'],
-                ['class' => 'btn btn-primary btn-sm', 'escape' => false]
-            ) ?>
-            <?php endif; ?>
+            <div class="dropdown">
+                <button type="button" class="btn btn-primary btn-sm dropdown-toggle"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    Acciones
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <?php if (!empty($userPermissions['employees']['can_create'])): ?>
+                    <li><?= $this->Html->link(
+                        '<i class="bi bi-person-plus" aria-hidden="true"></i>Nuevo empleado',
+                        ['action' => 'add'],
+                        ['class' => 'dropdown-item', 'escape' => false]
+                    ) ?></li>
+                    <li>
+                        <button type="button" class="dropdown-item"
+                                data-bs-toggle="modal" data-bs-target="#importExcelModal">
+                            <i class="bi bi-download" aria-hidden="true"></i>Importar
+                        </button>
+                    </li>
+                    <?php endif; ?>
+                    <li>
+                        <button type="button" class="dropdown-item"
+                                data-bs-toggle="modal" data-bs-target="#exportExcelModal">
+                            <i class="bi bi-box-arrow-up" aria-hidden="true"></i>Exportar
+                        </button>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         <!-- Search box -->
@@ -281,18 +301,6 @@ $navTabColor = fn(string $status) => match ($status) {
                     ],
                 ]) ?>
             </ul>
-            <button type="button" class="btn-icon"
-                    data-bs-toggle="modal" data-bs-target="#exportExcelModal"
-                    title="Exportar a Excel">
-                <i class="bi bi-box-arrow-up" aria-hidden="true"></i>
-            </button>
-            <?php if (!empty($userPermissions['employees']['can_create'])): ?>
-            <button type="button" class="btn-icon"
-                    data-bs-toggle="modal" data-bs-target="#importExcelModal"
-                    title="Importar desde Excel">
-                <i class="bi bi-download" aria-hidden="true"></i>
-            </button>
-            <?php endif; ?>
         </nav>
     </div>
     <?php endif; ?>
