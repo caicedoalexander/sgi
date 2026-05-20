@@ -289,3 +289,84 @@ Lista vertical scrollable de horas en pasos de 30 min, valor activo con fondo ve
 
 ---
 
+## Switch / Toggle
+
+Control on/off que aplica el cambio de inmediato (semánticamente distinto del checkbox de formulario, que se confirma al guardar). Se usa en filas de ajustes (`.switch-row`).
+
+```css
+.switch { width: 30px; height: 16px; border-radius: 8px; background: var(--border-faint); position: relative; cursor: pointer; transition: background 0.18s; flex-shrink: 0; }
+.switch::after { content: ''; position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #fff; top: 2px; left: 2px; transition: left 0.18s; }
+.switch.on { background: var(--primary-color); }
+.switch.on::after { left: 16px; }
+.switch.disabled { opacity: 0.4; cursor: not-allowed; }
+.switch-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.switch-row:last-child { border-bottom: none; }
+.switch-row-body { flex: 1; }
+.switch-row-title { font-size: 12.5px; font-weight: 600; color: var(--text-default); }
+.switch-row-sub { font-size: 11px; color: var(--text-faint); margin-top: 2px; line-height: 1.4; }
+```
+
+```html
+<div class="switch-row">
+  <div class="switch on"></div>
+  <div class="switch-row-body">
+    <div class="switch-row-title">Vía enlace externo</div>
+    <div class="switch-row-sub">Aprobadores responden sin iniciar sesión</div>
+  </div>
+</div>
+<div class="switch-row">
+  <div class="switch"></div>
+  <div class="switch-row-body">
+    <div class="switch-row-title">Notificarme por correo</div>
+    <div class="switch-row-sub">Resumen diario a las 8:00 AM</div>
+  </div>
+</div>
+<div class="switch-row">
+  <div class="switch disabled"></div>
+  <div class="switch-row-body" style="opacity:0.5">
+    <div class="switch-row-title">Aprobación masiva</div>
+    <div class="switch-row-sub">Requiere rol de administrador</div>
+  </div>
+</div>
+```
+
+Estado activo `.switch.on` (fondo primary, perilla a la derecha). `.switch.disabled` baja la opacidad y bloquea el cursor.
+
+---
+
+## Radio group
+
+Lista vertical de opciones excluyentes con espacio para describir cada una. Para 2–4 opciones cortas sin descripción, preferir el componente Segmented (ver abajo).
+
+```css
+.radio-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; cursor: pointer; font-size: 12.5px; color: var(--text-default); }
+.radio-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; outline: 1px solid var(--border-faint); outline-offset: -1px; background: #fff; position: relative; }
+.radio-dot.on { outline: 1.5px solid var(--primary-color); outline-offset: -1.5px; }
+.radio-dot.on::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: var(--primary-color); }
+```
+
+```html
+<div class="radio-row">
+  <span class="radio-dot on"></span>
+  <div>
+    <div>Aprobación serial</div>
+    <div style="font-size:10.5px; color:var(--text-faint); margin-top:2px">Cada aprobador en orden, según pipeline.</div>
+  </div>
+</div>
+<div class="radio-row">
+  <span class="radio-dot"></span>
+  <div>
+    <div>Aprobación paralela</div>
+    <div style="font-size:10.5px; color:var(--text-faint); margin-top:2px">Todos los aprobadores en simultáneo.</div>
+  </div>
+</div>
+```
+
+El punto seleccionado (`.radio-dot.on`) usa outline primary + relleno interior.
+
+---
+
+## Segmented
+
+Para alternar entre 2–4 opciones cortas mutuamente excluyentes, usar el componente `.segmented` / `.seg` ya documentado en este archivo (sección **08 · Tabs y filtros**). El "Segmented" de la propuesta v1.1 es funcionalmente idéntico — no se introduce una clase nueva.
+
