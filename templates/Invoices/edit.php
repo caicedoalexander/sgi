@@ -238,7 +238,7 @@ $canRegress = !empty($viewModel->canRegress);
 <?= $this->Form->create($invoice, ['id' => 'invoiceEditForm']) ?>
 <?= $this->Form->hidden('expected_status', ['value' => $invoice->pipeline_status]) ?>
 
-<div class="row g-3 view-anim">
+<div class="row g-3 view-anim align-items-start">
 
     <?php /* ═══════════════════ COLUMNA IZQUIERDA ═══════════════════ */ ?>
     <aside class="col-lg-4 d-flex flex-column gap-3">
