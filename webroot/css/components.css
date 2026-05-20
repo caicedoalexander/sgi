@@ -2435,10 +2435,95 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     display: flex;
     flex-direction: column;
 }
-/* La lista de burbujas ocupa el alto disponible del panel (anula el
-   max-height:340px que usa la variante inline en tarjeta). */
-.sgi-obs-drawer .sgi-obs-list {
+/* El timeline ocupa el alto disponible del panel y scrollea. */
+.sgi-obs-drawer .chat-list {
     flex: 1;
     min-height: 0;
-    max-height: none;
+    overflow-y: auto;
+}
+
+
+/* ─── Chat de observaciones · componente .chat ────────────────────────
+   Timeline de comentarios del sistema de diseño (docs/design/layout-tablas.md
+   §"Chat de observaciones"). Se porta el subconjunto usado por el drawer de
+   Invoices/edit: lista + item + composer. Las features sin dato en el backend
+   (eventos del sistema, respuestas, etiquetas, adjuntos, menciones, filtros y
+   los tools del composer) no se portan. */
+.chat-list {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.chat-item { display: flex; gap: 10px; }
+.chat-av {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+    color: #fff;
+    text-transform: uppercase;
+}
+.chat-body { flex: 1; min-width: 0; }
+.chat-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--text-faint);
+}
+.chat-meta-author { color: var(--text-strong); font-weight: 700; font-size: 12px; }
+.chat-meta-time { font-family: var(--font-mono); font-size: 10.5px; }
+.chat-text {
+    font-size: 12.5px;
+    color: var(--text-default);
+    line-height: 1.55;
+    margin-top: 5px;
+    word-wrap: break-word;
+}
+.chat-composer {
+    border-top: 1px solid var(--rule);
+    padding: 12px 14px;
+    background: var(--bg-muted);
+}
+.chat-composer-box {
+    background: #fff;
+    padding: 8px 10px;
+    outline: 1px solid var(--border-color);
+    outline-offset: -1px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.chat-composer-box.focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+}
+.chat-composer-input {
+    border: none;
+    outline: none;
+    resize: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12.5px;
+    color: var(--text-default);
+    min-height: 36px;
+    line-height: 1.55;
+    width: 100%;
+}
+.chat-composer-input::placeholder { color: var(--text-disabled); }
+/* El componente del doc usa space-between (grupo de tools a la izquierda +
+   botón a la derecha). El subconjunto portado solo lleva el botón Publicar. */
+.chat-composer-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
 }

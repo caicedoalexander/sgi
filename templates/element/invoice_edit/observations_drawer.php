@@ -3,9 +3,14 @@
  * Drawer flotante de Observaciones para Invoices/edit.
  *
  * Disparador fijo al borde derecho del viewport + Bootstrap Offcanvas con el
- * chat de observaciones. Conserva los IDs estándar (#obs-form, #obs-chat-scroll,
- * #obs-empty-state, #obs-count) que consume observation_chat_init.php, de modo
- * que SgiObservationChat funciona sin cambios.
+ * chat de observaciones, renderizado con el componente `.chat` del sistema de
+ * diseño (timeline de comentarios).
+ *
+ * Autocontenido: emite su propio <template> y inicializa SgiObservationChat —
+ * NO depende del element compartido observation_chat_init.php (las otras vistas
+ * con chat siguen usando ese y las burbujas). Conserva los IDs estándar
+ * (#obs-form, #obs-chat-scroll, #obs-empty-state, #obs-count) del contrato de
+ * webroot/js/sgi-observation-chat.js.
  *
  * Restricciones de uso: incluir este element FUERA del formulario principal de
  * la vista (#invoiceEditForm) para no anidar <form>; y la vista anfitriona no
@@ -17,6 +22,10 @@
  * @var \App\Model\Entity\User|null $currentUser
  */
 $obsCount = count($invoice->invoice_observations ?? []);
+// Nombre del usuario actual: el avatar del <template> es siempre suyo porque
+// SgiObservationChat marca cada mensaje recién publicado como propio.
+$currentUserName = $currentUser->full_name
+    ?? ($currentUser->username ?? 'Usuario');
 ?>
 <button type="button" class="sgi-obs-trigger"
         data-bs-toggle="offcanvas" data-bs-target="#obsDrawer"
@@ -37,12 +46,9 @@ $obsCount = count($invoice->invoice_observations ?? []);
         </button>
     </div>
     <div class="offcanvas-body">
-        <div id="obs-chat-scroll" class="sgi-obs-list">
+        <div id="obs-chat-scroll" class="chat-list">
             <?php foreach ($invoice->invoice_observations ?? [] as $obs): ?>
-                <?= $this->element('observation_bubble', [
-                    'observation' => $obs,
-                    'isMine' => $currentUser && $obs->user_id === $currentUser->id,
-                ]) ?>
+                <?= $this->element('invoice_edit/observation_chat_item', ['observation' => $obs]) ?>
             <?php endforeach; ?>
         </div>
 
@@ -53,32 +59,77 @@ $obsCount = count($invoice->invoice_observations ?? []);
             <div class="es-msg">Sin observaciones aún</div>
         </div>
 
-        <div class="sgi-obs-input-bar">
+        <div class="chat-composer">
             <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $invoice->id], 'id' => 'obs-form']) ?>
-            <div class="sgi-obs-compose">
-                <textarea id="obs-message" name="message" class="auto-resize" rows="1"
-                          placeholder="Escriba una observación..."></textarea>
-                <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                    <i class="bi bi-send" aria-hidden="true"></i>
-                </button>
+            <div class="chat-composer-box">
+                <textarea id="obs-message" name="message" class="auto-resize chat-composer-input"
+                          rows="1" placeholder="Escriba una observación..."></textarea>
+                <div class="chat-composer-toolbar">
+                    <button type="submit" class="btn btn-primary btn-sm">Publicar</button>
+                </div>
             </div>
             <?= $this->Form->end() ?>
         </div>
     </div>
 </div>
 
+<?php /* Gemelo estructural de observation_chat_item.php; el avatar es del
+         usuario actual (SgiObservationChat marca cada mensaje nuevo como propio). */ ?>
+<template id="invoice-obs-chat-item">
+    <div class="chat-item" data-obs-id="">
+        <?= $this->element('invoice_edit/_chat_avatar', ['name' => $currentUserName]) ?>
+        <div class="chat-body">
+            <div class="chat-meta">
+                <span class="chat-meta-author" data-slot="user_name"></span>
+                <span class="chat-meta-time" data-slot="created"></span>
+            </div>
+            <div class="chat-text" data-slot="message"></div>
+        </div>
+    </div>
+</template>
+
+<?= $this->Html->script('sgi-observation-chat', ['block' => true]) ?>
+
 <?php $this->append('script') ?>
 <script>
 (function () {
-    // El panel está oculto al cargar; al mostrarse, posicionar el chat en el
-    // último mensaje (el scroll-al-fondo inicial de SgiObservationChat puede
-    // no aplicar sobre un contenedor aún sin layout visible).
     var drawer = document.getElementById('obsDrawer');
     var scroll = document.getElementById('obs-chat-scroll');
-    if (!drawer || !scroll) return;
-    drawer.addEventListener('shown.bs.offcanvas', function () {
-        scroll.scrollTop = scroll.scrollHeight;
+
+    // Auto-resize del textarea del composer.
+    document.querySelectorAll('#obsDrawer textarea.auto-resize').forEach(function (el) {
+        function sync() { el.style.height = '0px'; el.style.height = (el.scrollHeight + 2) + 'px'; }
+        el.style.overflow = 'hidden';
+        el.style.resize = 'none';
+        sync();
+        el.addEventListener('input', sync);
     });
+
+    // .chat-composer-box toma .focus mientras el textarea está enfocado.
+    var box = document.querySelector('#obsDrawer .chat-composer-box');
+    var ta = document.getElementById('obs-message');
+    if (box && ta) {
+        ta.addEventListener('focus', function () { box.classList.add('focus'); });
+        ta.addEventListener('blur', function () { box.classList.remove('focus'); });
+    }
+
+    if (window.SgiObservationChat) {
+        SgiObservationChat.init({
+            formSelector:           '#obs-form',
+            listSelector:           '#obs-chat-scroll',
+            emptySelector:          '#obs-empty-state',
+            counterSelector:        '#obs-count',
+            bubbleTemplateSelector: '#invoice-obs-chat-item',
+            csrfToken:              <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>,
+        });
+    }
+
+    // El panel está oculto al cargar; al mostrarse, ir al último mensaje.
+    if (drawer && scroll) {
+        drawer.addEventListener('shown.bs.offcanvas', function () {
+            scroll.scrollTop = scroll.scrollHeight;
+        });
+    }
 })();
 </script>
 <?php $this->end() ?>
