@@ -201,8 +201,8 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <script defer src="<?= $this->Url->build('/vendor/flatpickr/flatpickr.min.js') ?>"></script>
     <script defer src="<?= $this->Url->build('/vendor/flatpickr/l10n/es.js') ?>"></script>
     <!-- jQuery, Select2 JS + i18n se cargan bajo demanda via element/cdn_select2.php.
-         AutoNumeric y ApexCharts se cargan bajo demanda desde templates específicos
-         (ver element/cdn_autonumeric.php y templates/Dashboard/index.php). -->
+         AutoNumeric se carga bajo demanda desde templates específicos
+         (ver element/cdn_autonumeric.php). -->
     <?= $this->Html->script('sgi-dialogs', ['block' => false]) ?>
     <?= $this->Html->script('sgi-common', ['block' => false]) ?>
     <?= $this->fetch('script') ?>
