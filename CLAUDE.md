@@ -184,7 +184,8 @@ Tokens, componentes y patrones en `docs/design/`. **Lee solo los archivos releva
 | `docs/design/formularios.md` | Inputs, tabs, filtros, date/time pickers |
 | `docs/design/layout-tablas.md` | Cards y superficies, avatares, tablas |
 | `docs/design/navegacion.md` | TopBar, sidebar, pipeline |
-| `docs/design/documental-vacios.md` | Gestión documental, empty states |
+| `docs/design/documental-vacios.md` | Gestión documental, empty states, skeleton loaders |
+| `docs/design/overlays.md` | Capa flotante: toasts, banner, modal, drawer, tooltip, command palette, menús (select, kebab, usuario, notificaciones) |
 
 Antes de crear o editar cualquier vista, lee siempre `reglas-copy.md` + `fundamentos.md`, luego el archivo del componente concreto.
 
