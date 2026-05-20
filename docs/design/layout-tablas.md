@@ -278,3 +278,203 @@ Header con `--bg-subtle`, fila con bg `#fff`, hover con `--bg-muted`, separador 
 
 ---
 
+## Paginación
+
+Para listados largos (más de 50 filas). Siempre visibles: primera, anterior, página actual, ±2 vecinas, última y siguiente. Elipsis para el resto. La página activa se rellena con primary.
+
+```css
+.pgn { display: inline-flex; align-items: center; gap: 4px; }
+.pgn-btn { min-width: 28px; height: 28px; padding: 0 8px; background: #fff; outline: 1px solid var(--border-color); outline-offset: -1px; font-size: 11.5px; font-weight: 600; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 2px; }
+.pgn-btn:hover { background: var(--bg-subtle); }
+.pgn-btn.active { background: var(--primary-color); color: #fff; outline-color: var(--primary-color); }
+.pgn-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+.pgn-ellipsis { min-width: 22px; text-align: center; color: var(--text-faint); font-size: 12px; }
+```
+
+```html
+<div class="pgn">
+  <div class="pgn-btn disabled" title="Primera"><i class="bi bi-chevron-double-left"></i></div>
+  <div class="pgn-btn disabled" title="Anterior"><i class="bi bi-chevron-left"></i></div>
+  <div class="pgn-btn active">1</div>
+  <div class="pgn-btn">2</div>
+  <div class="pgn-btn">3</div>
+  <div class="pgn-btn">4</div>
+  <span class="pgn-ellipsis">…</span>
+  <div class="pgn-btn">21</div>
+  <div class="pgn-btn" title="Siguiente"><i class="bi bi-chevron-right"></i></div>
+  <div class="pgn-btn" title="Última"><i class="bi bi-chevron-double-right"></i></div>
+</div>
+```
+
+> **Nota:** la app SGI usa **15 ítems por página fijo** (ver `CLAUDE.md`). El selector de tamaño de página de la propuesta original queda como componente disponible pero no cableado.
+
+---
+
+## Accordion / colapsable
+
+Secciones expandibles para reducir scroll en formularios largos, agrupaciones por área o categorías de documentos. El chevron rota 90° al abrir.
+
+```css
+.acc { background: #fff; }
+.acc-row { border-bottom: 1px solid var(--rule); }
+.acc-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px; cursor: pointer; }
+.acc-head:hover { background: var(--bg-muted); }
+.acc-chev { color: var(--text-faint); transition: transform 0.15s; }
+.acc-row.open .acc-chev { transform: rotate(90deg); color: var(--primary-color); }
+.acc-title { flex: 1; font-size: 12.5px; font-weight: 600; color: var(--text-default); }
+.acc-row.open .acc-title { color: var(--text-strong); }
+.acc-meta { font-size: 10.5px; color: var(--text-faint); font-family: var(--font-mono); }
+.acc-body { padding: 0 18px 16px 44px; font-size: 12px; color: var(--text-muted); line-height: 1.55; }
+```
+
+```html
+<div class="acc">
+  <div class="acc-row open">
+    <div class="acc-head">
+      <span class="acc-chev"><i class="bi bi-chevron-right"></i></span>
+      <span class="acc-title">Datos básicos</span>
+      <span class="pill pill-primary-soft" style="font-size:9px">Completado</span>
+      <span class="acc-meta">8 campos</span>
+    </div>
+    <div class="acc-body">
+      Razón social, NIT, número de factura, fecha de emisión, fecha de vencimiento,
+      valor antes de impuestos, IVA, retenciones aplicadas.
+    </div>
+  </div>
+  <div class="acc-row">
+    <div class="acc-head">
+      <span class="acc-chev"><i class="bi bi-chevron-right"></i></span>
+      <span class="acc-title">Contabilización</span>
+      <span class="pill pill-warning-soft" style="font-size:9px">2 faltantes</span>
+      <span class="acc-meta">6 campos</span>
+    </div>
+  </div>
+</div>
+```
+
+La fila abierta lleva la clase `.open` (chevron rotado, título en `--text-strong`); las cerradas omiten el `.acc-body`.
+
+---
+
+## Chat de observaciones
+
+Sustituye el bloque plano de "Observaciones" de la vista de factura. Mezcla comentarios humanos, eventos del sistema (cambios de estado, aprobaciones) y respuestas anidadas. Soporta menciones `@nombre`, adjuntos y etiquetas semánticas.
+
+```css
+.chat { background: #fff; width: 100%; max-width: 560px; display: flex; flex-direction: column; }
+.chat-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--rule); }
+.chat-head-title { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-strong); }
+.chat-head-count { font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 2px; background: var(--bg-subtle); color: var(--text-muted); }
+.chat-filters { display: flex; gap: 0; padding: 6px 14px 0; border-bottom: 1px solid var(--rule); }
+.chat-filter { font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 7px 0; margin-right: 16px; cursor: pointer; border-bottom: 2px solid transparent; }
+.chat-filter.active { color: var(--primary-color); border-color: var(--primary-color); }
+.chat-list { padding: 16px 18px; display: flex; flex-direction: column; gap: 16px; }
+.chat-item { display: flex; gap: 10px; }
+.chat-item.reply { margin-left: 38px; }
+.chat-av { width: 28px; height: 28px; border-radius: 3px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; color: #fff; }
+.chat-body { flex: 1; min-width: 0; }
+.chat-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--text-faint); }
+.chat-meta-author { color: var(--text-strong); font-weight: 700; font-size: 12px; }
+.chat-meta-time { font-family: var(--font-mono); font-size: 10.5px; }
+.chat-meta-tag { font-size: 9px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; padding: 1px 6px; border-radius: 2px; }
+.tag-primary { background: var(--primary-soft); color: var(--primary-color); }
+.tag-warning { background: var(--warning-soft); color: var(--warning-text); }
+.tag-danger  { background: var(--danger-soft); color: var(--danger-color); }
+.tag-muted   { background: var(--bg-subtle); color: var(--text-muted); }
+.chat-text { font-size: 12.5px; color: var(--text-default); line-height: 1.55; margin-top: 5px; }
+.chat-text .mention { color: var(--primary-color); background: rgba(70,157,97,0.10); padding: 1px 4px; border-radius: 2px; font-weight: 600; }
+.chat-attach { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+.chat-attach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; background: var(--bg-subtle); font-size: 11px; color: var(--text-muted); border-radius: 3px; }
+.chat-attach-chip code { font-family: var(--font-mono); color: var(--text-default); }
+.chat-actions { margin-top: 6px; display: flex; gap: 14px; font-size: 10.5px; color: var(--text-faint); }
+.chat-actions a { color: var(--text-muted); cursor: pointer; font-weight: 600; }
+.chat-actions a:hover { color: var(--primary-color); }
+.chat-sys { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 11px; color: var(--text-faint); }
+.chat-sys-line { flex: 1; height: 1px; background: var(--rule); }
+.chat-sys-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 3px; font-size: 10.5px; font-weight: 600; color: var(--text-muted); background: var(--bg-subtle); }
+.chat-composer { border-top: 1px solid var(--rule); padding: 12px 14px; background: var(--bg-muted); }
+.chat-composer-box { background: #fff; padding: 8px 10px; outline: 1px solid var(--border-color); outline-offset: -1px; border-radius: 3px; display: flex; flex-direction: column; gap: 8px; }
+.chat-composer-box.focus { outline: 2px solid var(--primary-color); outline-offset: -2px; }
+.chat-composer-input { border: none; outline: none; resize: none; background: transparent; font-family: inherit; font-size: 12.5px; color: var(--text-default); min-height: 36px; line-height: 1.55; }
+.chat-composer-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.chat-composer-tools { display: flex; gap: 2px; }
+.chat-composer-tool { background: transparent; border: none; padding: 5px; color: var(--text-faint); cursor: pointer; display: flex; border-radius: 2px; }
+.chat-composer-tool:hover { background: var(--bg-subtle); color: var(--text-default); }
+.chat-composer-tag { font-size: 9.5px; font-weight: 700; padding: 3px 6px; background: var(--primary-soft); color: var(--primary-color); border-radius: 2px; letter-spacing: 0.5px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+```
+
+```html
+<div class="chat">
+  <div class="chat-head">
+    <div class="chat-head-title">
+      <i class="bi bi-chat-left-text"></i> Observaciones <span class="chat-head-count">5</span>
+    </div>
+  </div>
+  <div class="chat-filters">
+    <div class="chat-filter active">Todas</div>
+    <div class="chat-filter">Solo comentarios</div>
+    <div class="chat-filter">Solo eventos</div>
+  </div>
+  <div class="chat-list">
+    <!-- Comentario humano con adjunto -->
+    <div class="chat-item">
+      <div class="chat-av" style="background-color:var(--primary-color)">AC</div>
+      <div class="chat-body">
+        <div class="chat-meta">
+          <span class="chat-meta-author">Alexander Caicedo</span>
+          <span class="chat-meta-tag tag-primary">Aprobación externa</span>
+          <span class="chat-meta-time">13/05/2026 09:35</span>
+        </div>
+        <div class="chat-text">Aprobación recibida del proveedor por correo. Documentación conciliada con el OC #4421.</div>
+        <div class="chat-attach">
+          <div class="chat-attach-chip"><i class="bi bi-paperclip"></i> <code>aprobacion_proveedor.pdf</code> · 248 KB</div>
+        </div>
+        <div class="chat-actions"><a>Responder</a><a>Reaccionar</a></div>
+      </div>
+    </div>
+    <!-- Evento del sistema -->
+    <div class="chat-sys">
+      <div class="chat-sys-line"></div>
+      <span class="chat-sys-pill">
+        <i class="bi bi-check-lg" style="color:var(--primary-color)"></i>
+        <b style="color:var(--text-default)">Carolina Mejía</b> marcó como <b style="color:var(--primary-color)">aprobada</b>
+        <span class="mono" style="color:var(--text-faint); margin-left:4px">13/05 10:12</span>
+      </span>
+      <div class="chat-sys-line"></div>
+    </div>
+    <!-- Respuesta anidada -->
+    <div class="chat-item reply">
+      <div class="chat-av" style="background-color:var(--primary-color); width:24px; height:24px; font-size:9.5px">AC</div>
+      <div class="chat-body">
+        <div class="chat-meta">
+          <span class="chat-meta-author" style="font-size:11.5px">Alexander Caicedo</span>
+          <span class="chat-meta-time">13/05/2026 11:14</span>
+        </div>
+        <div class="chat-text" style="font-size:12px">Confirmado, va a OPERACIONES. Ya corregí el centro de costos.</div>
+      </div>
+    </div>
+  </div>
+  <div class="chat-composer">
+    <div class="chat-composer-box focus">
+      <textarea class="chat-composer-input" placeholder="Escribe una observación… usa @ para mencionar"></textarea>
+      <div class="chat-composer-toolbar">
+        <div style="display:flex; align-items:center; gap:8px">
+          <span class="chat-composer-tag"><i class="bi bi-plus-lg"></i> Etiqueta</span>
+          <div class="chat-composer-tools">
+            <button class="chat-composer-tool" title="Adjuntar"><i class="bi bi-paperclip"></i></button>
+            <button class="chat-composer-tool" title="Mencionar"><i class="bi bi-at"></i></button>
+            <button class="chat-composer-tool" title="Marcar como evento"><i class="bi bi-clock"></i></button>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm">Publicar</button>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+- Los eventos del sistema (`.chat-sys`) se renderizan como pill centrado con línea horizontal a ambos lados, sin avatar.
+- Las respuestas (`.chat-item.reply`) indentan 38px y reducen el avatar a 24px.
+- Etiquetas semánticas: `.tag-primary` · `.tag-warning` · `.tag-danger` · `.tag-muted`. Las menciones disparan notificación al usuario citado.
+- El `.chat-composer-box` toma la clase `.focus` cuando el textarea recibe foco.
+
