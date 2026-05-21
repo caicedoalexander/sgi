@@ -250,142 +250,84 @@ $canRegress = !empty($viewModel->canRegress);
     <?php /* ═══════════════════ COLUMNA IZQUIERDA ═══════════════════ */ ?>
     <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
 
-        <?php /* ── Hero: resumen de la factura ─────────────────── */ ?>
-        <div class="sgi-card" style="position:relative;">
-            <div class="d-flex align-items-start" style="gap:12px;margin-bottom:16px;">
-                <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--primary-soft);color:var(--primary-color);border-radius:var(--radius-sm);">
-                    <i class="bi <?= $isAdvance ? 'bi-cash-coin' : 'bi-file-earmark-text' ?>" aria-hidden="true" style="font-size:18px;"></i>
-                </div>
-                <div style="min-width:0;flex:1;">
-                    <div class="mono" style="font-size:16px;font-weight:700;color:var(--text-strong);line-height:1.15;">
-                        <?= h($idLabel) ?>
-                    </div>
-                    <div class="d-flex flex-wrap" style="gap:4px;margin-top:6px;">
-                        <span class="pill pill-secondary"><?= h($invoice->document_type) ?></span>
-                        <?php if ($viewModel->isRejected): ?>
-                            <span class="pill pill-danger-soft">Rechazada</span>
-                        <?php elseif ($viewModel->isApproved): ?>
-                            <span class="pill pill-primary-soft">
-                                <i class="bi bi-check2" aria-hidden="true" style="font-size:9px;"></i>Aprobada
-                            </span>
-                        <?php else: ?>
-                            <span class="pill <?= $statusPill ?>"><?= h($currentLabel) ?></span>
-                        <?php endif; ?>
-                    </div>
+    <?php
+    // Bloque Pagado/Saldo bajo el monto del hero (cuando aplica).
+    $heroExtraHtml = '';
+    if ($totalPagado > 0 || $invoiceAmount > 0) {
+        ob_start(); ?>
+        <div class="d-flex" style="gap:18px;margin-top:12px;">
+            <div>
+                <div class="sgi-label" style="font-size:var(--fs-micro);">Pagado</div>
+                <div class="mono" style="font-size:var(--fs-body-lg);font-weight:700;color:var(--primary-color);margin-top:2px;">
+                    $ <?= number_format($totalPagado, 0, ',', '.') ?>
                 </div>
             </div>
-
-            <div class="sgi-label"><?= $isAdvance ? 'Beneficiario' : 'Proveedor' ?></div>
-            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);margin-top:4px;line-height:1.3;">
-                <?= h($beneficiaryName) ?>
-            </div>
-            <?php if ($invoice->hasValue('operation_center')): ?>
-            <div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:4px;">
-                <i class="bi bi-geo-alt" aria-hidden="true" style="font-size:11px;"></i>
-                <span><?= h($invoice->operation_center->name) ?></span>
-            </div>
-            <?php endif; ?>
-
-            <div class="hr" style="margin:16px 0 14px;"></div>
-
-            <div class="sgi-label"><?= $isAdvance ? 'Valor Anticipo' : 'Valor Factura' ?></div>
-            <div style="margin-top:4px;">
-                <?php if ($invoiceAmount > 0): ?>
-                    <span class="sgi-display">$ <?= number_format($invoiceAmount, 0, ',', '.') ?></span>
-                <?php else: ?>
-                    <span class="sgi-display" style="color:var(--text-disabled);">$ —</span>
-                <?php endif; ?>
-            </div>
-
-            <?php if ($totalPagado > 0 || $invoiceAmount > 0): ?>
-            <div class="d-flex" style="gap:18px;margin-top:12px;">
-                <div>
-                    <div class="sgi-label" style="font-size:var(--fs-micro);">Pagado</div>
-                    <div class="mono" style="font-size:var(--fs-body-lg);font-weight:700;color:var(--primary-color);margin-top:2px;">
-                        $ <?= number_format($totalPagado, 0, ',', '.') ?>
-                    </div>
+            <div>
+                <div class="sgi-label" style="font-size:var(--fs-micro);">Saldo</div>
+                <div class="mono" style="font-size:var(--fs-body-lg);font-weight:700;margin-top:2px;color:<?= $saldo > 0 ? 'var(--secondary-color)' : 'var(--primary-color)' ?>;">
+                    $ <?= number_format(max(0, $saldo), 0, ',', '.') ?>
                 </div>
-                <div>
-                    <div class="sgi-label" style="font-size:var(--fs-micro);">Saldo</div>
-                    <div class="mono" style="font-size:var(--fs-body-lg);font-weight:700;margin-top:2px;color:<?= $saldo > 0 ? 'var(--secondary-color)' : 'var(--primary-color)' ?>;">
-                        $ <?= number_format(max(0, $saldo), 0, ',', '.') ?>
-                    </div>
-                </div>
-            </div>
-            <?php endif; ?>
-        </div>
-
-        <?php /* ── Pipeline vertical ───────────────────────────── */ ?>
-        <div class="sgi-card compact">
-            <span class="sgi-label">Pipeline</span>
-            <div class="pipeline-v" style="margin-top:8px;">
-                <?php foreach ($pipelineSteps as $idx => $stepKey):
-                    $isDone    = $idx < $currentIdx || ($isTerminal && $idx === $currentIdx);
-                    $isCurrent = !$isTerminal && $idx === $currentIdx;
-                    $stepLabel = $viewModel->pipelineLabels[$stepKey] ?? $stepKey;
-
-                    $stepClasses = 'pv-step';
-                    if ($isDone) {
-                        $stepClasses .= ' is-done';
-                    } elseif ($isCurrent && $viewModel->isRejected) {
-                        $stepClasses .= ' is-rejected';
-                    } elseif ($isCurrent) {
-                        $stepClasses .= ' is-current';
-                    } else {
-                        $stepClasses .= ' is-pending';
-                    }
-
-                    $stepMeta = null;
-                    if ($isCurrent || ($isTerminal && $idx === $currentIdx)) {
-                        $stepMeta = $invoice->modified?->format('d/m H:i');
-                    } elseif (!$isDone) {
-                        $stepMeta = 'Pendiente';
-                    }
-                ?>
-                <div class="<?= $stepClasses ?>">
-                    <div class="pv-marker">
-                        <?php if ($isCurrent && $viewModel->isRejected): ?>
-                            <i class="bi bi-x" aria-hidden="true"></i>
-                        <?php elseif ($isDone): ?>
-                            <i class="bi bi-check2" aria-hidden="true"></i>
-                        <?php elseif ($isCurrent): ?>
-                            <span class="dot"></span>
-                        <?php endif; ?>
-                    </div>
-                    <div style="min-width:0;">
-                        <div class="pv-label"><?= h($stepLabel) ?></div>
-                        <?php if ($stepMeta): ?>
-                            <div class="pv-meta"><?= h($stepMeta) ?></div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php endforeach; ?>
             </div>
         </div>
-
-        <?php /* ── Acciones de etapa ───────────────────────────── */ ?>
-        <?php if ($canRegress): ?>
         <?php
-            $prevLabel     = $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus;
-            $regressLocked = !empty($viewModel->regressLockMessage);
-        ?>
-        <div class="sgi-card compact">
-            <span class="sgi-label">Acciones</span>
-            <div class="d-flex flex-column gap-1" style="margin-top:10px;">
-                <?php if ($regressLocked): ?>
-                    <button type="button" class="btn btn-ghost btn-sm w-100 justify-content-start"
-                            disabled title="<?= h($viewModel->regressLockMessage) ?>">
-                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar al paso anterior
-                    </button>
-                <?php else: ?>
-                    <button type="button" class="btn btn-ghost btn-sm w-100 justify-content-start"
-                            data-bs-toggle="modal" data-bs-target="#regressStatusModal">
-                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
-                    </button>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php endif; ?>
+        $heroExtraHtml = ob_get_clean();
+    }
+
+    // Acciones de etapa (regresión) — solo si $canRegress.
+    $stageActionsHtml = null;
+    if ($canRegress) {
+        $prevLabel     = $viewModel->pipelineLabels[$viewModel->previousStatus]
+            ?? $viewModel->previousStatus;
+        $regressLocked = !empty($viewModel->regressLockMessage);
+        ob_start(); ?>
+        <?php if ($regressLocked): ?>
+            <button type="button" class="btn btn-ghost btn-sm w-100 justify-content-start"
+                    disabled title="<?= h($viewModel->regressLockMessage) ?>">
+                <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar al paso anterior
+            </button>
+        <?php else: ?>
+            <button type="button" class="btn btn-ghost btn-sm w-100 justify-content-start"
+                    data-bs-toggle="modal" data-bs-target="#regressStatusModal">
+                <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
+            </button>
+        <?php endif;
+        $stageActionsHtml = ob_get_clean();
+    }
+
+    // Pill de estado: preserva las 3 variantes del hero actual
+    // (rechazada → la maneja el element vía isRejected; aprobada; estado del pipeline).
+    // El hero de Invoices/edit no muestra pill "Pago Parcial" (esa info va en el
+    // bloque Pagado/Saldo de $heroExtraHtml).
+    $heroStatusPill  = $statusPill;
+    $heroStatusLabel = $currentLabel;
+    if (!$viewModel->isRejected && $viewModel->isApproved) {
+        $heroStatusPill  = 'pill-primary-soft';
+        $heroStatusLabel = 'Aprobada';
+    }
+    ?>
+
+    <?= $this->element('pipeline_sidebar', [
+        'icon'          => $isAdvance ? 'cash-coin' : 'file-earmark-text',
+        'idLabel'       => $idLabel,
+        'typeLabel'     => $invoice->document_type,
+        'statusPill'    => $heroStatusPill,
+        'statusLabel'   => $heroStatusLabel,
+        'isRejected'    => $viewModel->isRejected,
+        'entityLabel'   => $isAdvance ? 'Beneficiario' : 'Proveedor',
+        'entityValue'   => $beneficiaryName,
+        'entitySubLabel' => $invoice->hasValue('operation_center')
+            ? $invoice->operation_center->name : null,
+        'amountLabel'   => $isAdvance ? 'Valor Anticipo' : 'Valor Factura',
+        'amount'        => $invoiceAmount,
+        'heroExtraHtml' => $heroExtraHtml,
+        'pipelineSteps'  => $pipelineSteps,
+        'pipelineLabels' => $viewModel->pipelineLabels,
+        'currentStatus'  => $currentStatus,
+        'isTerminal'     => $isTerminal,
+        'modifiedAt'     => $invoice->modified,
+        'actionsHtml'    => $stageActionsHtml,
+    ]) ?>
+
     </aside>
 
     <?php /* ═══════════════════ COLUMNA DERECHA ═══════════════════ */ ?>
