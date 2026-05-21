@@ -156,23 +156,24 @@ $noveltyCount      = $viewModel->noveltyCount;
                 </span>
             </div>
             <?php if (!empty($doc->employee_novelties)): ?>
+            <?php $nvGrid = 'display:grid;grid-template-columns:1.5fr 1fr;gap:10px;align-items:center;'; ?>
             <div style="max-height:280px;overflow-y:auto;">
-                <table class="table table-sm table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Empleado</th>
-                            <th>Tipo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($doc->employee_novelties as $novelty): ?>
-                        <tr class="clickable-row" data-href="<?= $this->Url->build(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]) ?>">
-                            <td><?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?></td>
-                            <td style="font-size:var(--fs-body-lg);"><?= h($novelty->novelty_type->name ?? '—') ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                <div style="<?= $nvGrid ?>padding:8px 12px;background:var(--bg-subtle);font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:0.6px;text-transform:uppercase;" role="row">
+                    <span>Empleado</span>
+                    <span>Tipo</span>
+                </div>
+                <?php foreach ($doc->employee_novelties as $nvIdx => $novelty): ?>
+                <div class="clickable-row" role="row"
+                     data-href="<?= $this->Url->build(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]) ?>"
+                     style="<?= $nvGrid ?>padding:10px 12px;background:#fff;cursor:pointer;<?= $nvIdx > 0 ? 'border-top:1px solid var(--rule);' : '' ?>">
+                    <span style="font-size:12px;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?>
+                    </span>
+                    <span style="font-size:11.5px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <?= h($novelty->novelty_type->name ?? '—') ?>
+                    </span>
+                </div>
+                <?php endforeach; ?>
             </div>
             <?php else: ?>
             <div class="text-center sgi-fg-faint py-3" style="font-size:var(--fs-body);">
@@ -254,7 +255,7 @@ $noveltyCount      = $viewModel->noveltyCount;
             echo $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id]]); ?>
             <div class="d-flex flex-wrap gap-3 align-items-end">
                 <div style="min-width:200px;">
-                    <label class="form-label">Pasa para Pago</label>
+                    <label class="input-label">Pasa para Pago</label>
                     <select name="passes_for_payment" class="form-select" required>
                         <option value="">-- Seleccione --</option>
                         <option value="1" <?= $doc->passes_for_payment === true ? 'selected' : '' ?>>Sí</option>
@@ -271,7 +272,7 @@ $noveltyCount      = $viewModel->noveltyCount;
             echo $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id]]); ?>
             <div class="d-flex flex-wrap gap-3 align-items-end">
                 <div style="min-width:180px;">
-                    <label class="form-label" style="font-size:.8rem;">Fecha Documento</label>
+                    <label class="input-label" style="font-size:.8rem;">Fecha Documento</label>
                     <input type="text" name="document_date" class="form-control form-control-sm flatpickr-date"
                            value="<?= $doc->document_date?->format('Y-m-d') ?>">
                 </div>
@@ -286,7 +287,7 @@ $noveltyCount      = $viewModel->noveltyCount;
             <div class="d-flex flex-wrap gap-3 align-items-end">
                 <?php if ($skipsGdp): ?>
                 <div style="min-width:200px;">
-                    <label class="form-label">Pasa para Pago</label>
+                    <label class="input-label">Pasa para Pago</label>
                     <select name="passes_for_payment" class="form-select" required>
                         <option value="">-- Seleccione --</option>
                         <option value="1" <?= $doc->passes_for_payment === true ? 'selected' : '' ?>>Sí</option>
@@ -546,7 +547,7 @@ $noveltyCount      = $viewModel->noveltyCount;
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Archivo</label>
+                        <label class="input-label">Archivo</label>
                         <input type="file" name="file" class="form-control" required
                                accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
                         <div class="form-text">Máximo <?= h(\App\Constants\UploadConstants::MAX_BYTES_LABEL) ?> — PDF, imágenes, Word o Excel.</div>
