@@ -179,7 +179,7 @@ $amountDec = $amount !== null
     <span class="sgi-label" style="margin-bottom:8px;display:block;">Registro</span>
     <?php foreach ($registryLines as $line): ?>
     <div class="d-flex align-items-center gap-2 mb-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-        <i class="bi <?= h($line['icon'] ?? 'bi-info-circle') ?>" aria-hidden="true"></i>
+        <i class="bi <?= h($line['icon'] ?? 'bi-info-circle') ?> sgi-fg-faint" aria-hidden="true"></i>
         <span><?= $line['html'] ?? '' ?></span>
     </div>
     <?php endforeach; ?>

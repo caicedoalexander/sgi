@@ -41,15 +41,9 @@ $readyForPaymentPills = [
 ];
 
 $pipelineSteps = $pipelineStatuses;
-$currentIdx    = array_search($currentStatus, $pipelineSteps, true);
-if ($currentIdx === false) {
-    $currentIdx = count($pipelineSteps);
-}
 
 // Formateo monto.
 $amountFmt = (float)$invoice->amount;
-$amountInt = number_format(floor($amountFmt), 0, ',', '.');
-$amountDec = sprintf(',%02d', (int)round(($amountFmt - floor($amountFmt)) * 100));
 
 // Total de soportes.
 $documentsByStatus = $documentsByStatus ?? [];

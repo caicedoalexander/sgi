@@ -2,10 +2,10 @@
 /**
  * Caja Menor / view — detalle de un registro de Caja Menor.
  *
- * Reescrito (mayo 2026) para el Sistema de Diseño v2: replica el patrón de
- * `Invoices/view.php` — panel izquierdo (hero card + pipeline vertical inline
- * + acciones) y panel derecho (cards de sección). El pipeline se INLINEA
- * (no usa el element `pipeline_sidebar`), igual que en Invoices/view.php.
+ * Reescrito (mayo 2026) para el Sistema de Diseño v2: panel izquierdo vía
+ * `element('pipeline_sidebar', ...)` (hero card + pipeline vertical + acciones);
+ * la card "Registro / auditoría" se mantiene inline en el panel izquierdo.
+ * Panel derecho con cards de sección (información, pago, facturas, observaciones, soportes).
  *
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\PettyCashRecord $record
@@ -26,10 +26,6 @@ $pcStatusPill  = $statusBadge[$currentStatus] ?? 'pill-muted';
 $pcStatusLabel = $statusLabels[$currentStatus] ?? $currentStatus;
 
 $pipelineSteps = PettyCashConstants::STATUSES;
-$currentIdx    = array_search($currentStatus, $pipelineSteps, true);
-if ($currentIdx === false) {
-    $currentIdx = count($pipelineSteps);
-}
 $isTerminal = $currentStatus === PettyCashConstants::STATUS_PAGADA;
 
 $invoiceCount = count($record->invoices ?? []);
@@ -40,8 +36,6 @@ $obsCount     = count($obsList);
 
 // Formateo del total.
 $amountFmt = (float)$record->total_amount;
-$amountInt = number_format(floor($amountFmt), 0, ',', '.');
-$amountDec = sprintf(',%02d', (int)round(($amountFmt - floor($amountFmt)) * 100));
 
 // Helpers de iniciales para avatares.
 $initialsOf = static function (?string $name): string {
