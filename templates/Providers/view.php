@@ -11,64 +11,74 @@ $this->assign('title', 'Proveedor: ' . $provider->name);
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Detalle del Proveedor</span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
-</div>
-
-<div class="card card-primary mb-4">
-<div class="card-body">
-        <dl class="row mb-0">
-            <dt class="col-sm-3">ID</dt>
-            <dd class="col-sm-9"><?= $this->Number->format($provider->id) ?></dd>
-            <dt class="col-sm-3">Tipo Documento</dt>
-            <dd class="col-sm-9"><span class="pill pill-secondary-soft"><?= h($provider->document_type) ?></span></dd>
-            <dt class="col-sm-3">Número Documento</dt>
-            <dd class="col-sm-9"><code><?= h($provider->document_number) ?></code></dd>
-            <dt class="col-sm-3">Nombre</dt>
-            <dd class="col-sm-9"><?= h($provider->name) ?></dd>
-            <dt class="col-sm-3">Estado</dt>
-            <dd class="col-sm-9"><?= $provider->active ? '<span class="pill pill-primary-soft">Activo</span>' : '<span class="pill pill-secondary-soft">Inactivo</span>' ?></dd>
-            <dt class="col-sm-3">Creado</dt>
-            <dd class="col-sm-9"><?= $provider->created?->format('d/m/Y H:i') ?></dd>
-            <dt class="col-sm-3">Modificado</dt>
-            <dd class="col-sm-9"><?= $provider->modified?->format('d/m/Y H:i') ?></dd>
-        </dl>
-    </div>
-    <div class="card-footer">
+    <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['providers']['can_edit'])): ?>
-        <?= $this->Html->link('<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar', ['action' => 'edit', $provider->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
+        <?= $this->Html->link('<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
+            ['action' => 'edit', $provider->id],
+            ['class' => 'btn btn-primary btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
         <?php if (!empty($userPermissions['providers']['can_delete'])): ?>
-        <?= $this->Form->postLink('<i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar', ['action' => 'delete', $provider->id], ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
+        <?= $this->Form->postLink('<i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar',
+            ['action' => 'delete', $provider->id],
+            ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
+        <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
+            ['action' => 'index'],
+            ['class' => 'btn btn-ghost-card btn-sm', 'escape' => false]) ?>
+    </div>
+</div>
+
+<div class="sgi-card mb-4">
+    <div class="field-row">
+        <span class="k">ID</span>
+        <span class="v mono"><?= $this->Number->format($provider->id) ?></span>
+    </div>
+    <div class="field-row">
+        <span class="k">Tipo Documento</span>
+        <span class="v"><span class="pill pill-secondary-soft"><?= h($provider->document_type) ?></span></span>
+    </div>
+    <div class="field-row">
+        <span class="k">Número Documento</span>
+        <span class="v mono"><?= h($provider->document_number) ?></span>
+    </div>
+    <div class="field-row">
+        <span class="k">Nombre</span>
+        <span class="v"><?= h($provider->name) ?></span>
+    </div>
+    <div class="field-row">
+        <span class="k">Estado</span>
+        <span class="v"><?= $provider->active ? '<span class="pill pill-primary-soft">Activo</span>' : '<span class="pill pill-secondary-soft">Inactivo</span>' ?></span>
+    </div>
+    <div class="field-row">
+        <span class="k">Creado</span>
+        <span class="v mono"><?= $provider->created?->format('d/m/Y H:i') ?></span>
+    </div>
+    <div class="field-row is-last">
+        <span class="k">Modificado</span>
+        <span class="v mono"><?= $provider->modified?->format('d/m/Y H:i') ?></span>
     </div>
 </div>
 
 <?php if (!empty($provider->invoices)): ?>
-<div class="card card-primary">
-    <div class="card-header"><h5 class="mb-0">Facturas del Proveedor</h5></div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>#</th>
-                    <th>Tipo</th>
-                    <th>Fecha Emisión</th>
-                    <th>Valor</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($provider->invoices as $invoice): ?>
-                <tr>
-                    <td><?= $this->Html->link($invoice->id, ['controller' => 'Invoices', 'action' => 'view', $invoice->id]) ?></td>
-                    <td><?= h($invoice->document_type) ?></td>
-                    <td><?= $invoice->issue_date?->format('d/m/Y') ?></td>
-                    <td class="text-end">$ <?= $this->Number->format($invoice->amount, ['places' => 2]) ?></td>
-                    <td><span class="pill <?= InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'pill-muted' ?>"><?= h(InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? $invoice->pipeline_status) ?></span></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+<div class="sgi-card" style="padding:0;">
+    <div style="padding:16px 20px 12px;font-weight:600;color:var(--text-strong);border-bottom:1px solid var(--rule);">
+        Facturas del Proveedor
     </div>
+    <div class="row-fact head" style="grid-template-columns:80px 1fr 130px 150px 150px;" role="row">
+        <span>#</span>
+        <span>Tipo</span>
+        <span>Fecha Emisión</span>
+        <span style="text-align:right;">Valor</span>
+        <span>Estado</span>
+    </div>
+    <?php foreach ($provider->invoices as $invoice): ?>
+    <div class="row-fact" style="grid-template-columns:80px 1fr 130px 150px 150px;" role="row">
+        <span class="mono"><?= $this->Html->link($invoice->id, ['controller' => 'Invoices', 'action' => 'view', $invoice->id]) ?></span>
+        <span><?= h($invoice->document_type) ?></span>
+        <span class="mono"><?= $invoice->issue_date?->format('d/m/Y') ?></span>
+        <span class="mono" style="text-align:right;">$ <?= $this->Number->format($invoice->amount, ['places' => 2]) ?></span>
+        <span><span class="pill <?= InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'pill-muted' ?>"><?= h(InvoiceConstants::STATUS_LABELS[$invoice->pipeline_status] ?? $invoice->pipeline_status) ?></span></span>
+    </div>
+    <?php endforeach; ?>
 </div>
 <?php endif; ?>

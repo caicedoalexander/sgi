@@ -2,31 +2,43 @@
 $this->assign('title', 'Carpeta por Defecto: ' . $defaultFolder->name);
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Detalle</span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
-</div>
-
-<div class="card card-primary">
-<div class="card-body">
-        <dl class="row mb-0">
-            <dt class="col-sm-3">ID</dt>
-            <dd class="col-sm-9"><?= $this->Number->format($defaultFolder->id) ?></dd>
-            <dt class="col-sm-3">Nombre</dt>
-            <dd class="col-sm-9"><?= h($defaultFolder->name) ?></dd>
-            <dt class="col-sm-3">Orden</dt>
-            <dd class="col-sm-9"><?= $this->Number->format($defaultFolder->sort_order) ?></dd>
-            <dt class="col-sm-3">Creado</dt>
-            <dd class="col-sm-9"><?= $defaultFolder->created?->format('d/m/Y H:i') ?></dd>
-            <dt class="col-sm-3">Modificado</dt>
-            <dd class="col-sm-9"><?= $defaultFolder->modified?->format('d/m/Y H:i') ?></dd>
-        </dl>
-    </div>
-    <div class="card-footer">
+    <span class="sgi-page-title">Detalle de Carpeta por Defecto</span>
+    <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['default_folders']['can_edit'])): ?>
-        <?= $this->Html->link('<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar', ['action' => 'edit', $defaultFolder->id], ['class' => 'btn btn-warning btn-sm', 'escape' => false]) ?>
+        <?= $this->Html->link('<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
+            ['action' => 'edit', $defaultFolder->id],
+            ['class' => 'btn btn-primary btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
         <?php if (!empty($userPermissions['default_folders']['can_delete'])): ?>
-        <?= $this->Form->postLink('<i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar', ['action' => 'delete', $defaultFolder->id], ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
+        <?= $this->Form->postLink('<i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar',
+            ['action' => 'delete', $defaultFolder->id],
+            ['confirm' => '¿Está seguro?', 'class' => 'btn btn-danger btn-sm', 'escape' => false]) ?>
         <?php endif; ?>
+        <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
+            ['action' => 'index'],
+            ['class' => 'btn btn-ghost-card btn-sm', 'escape' => false]) ?>
+    </div>
+</div>
+
+<div class="sgi-card">
+    <div class="field-row">
+        <span class="k">ID</span>
+        <span class="v mono"><?= $this->Number->format($defaultFolder->id) ?></span>
+    </div>
+    <div class="field-row">
+        <span class="k">Nombre</span>
+        <span class="v"><?= h($defaultFolder->name) ?></span>
+    </div>
+    <div class="field-row">
+        <span class="k">Orden</span>
+        <span class="v mono"><?= $this->Number->format($defaultFolder->sort_order) ?></span>
+    </div>
+    <div class="field-row">
+        <span class="k">Creado</span>
+        <span class="v mono"><?= $defaultFolder->created?->format('d/m/Y H:i') ?></span>
+    </div>
+    <div class="field-row is-last">
+        <span class="k">Modificado</span>
+        <span class="v mono"><?= $defaultFolder->modified?->format('d/m/Y H:i') ?></span>
     </div>
 </div>
