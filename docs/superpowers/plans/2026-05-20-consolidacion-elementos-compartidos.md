@@ -49,6 +49,9 @@ aceptables**, y no cuentan como regresión en la validación:
 - Pill "Aprobada": se renderiza sin el ícono de check (texto plano).
 - Pill de tipo de documento en `Invoices/edit`: `pill-secondary` → `pill-secondary-soft`
   (el element usa `pill-secondary-soft`, como `Invoices/view`).
+- Monto del hero en estado `pagada` (`Invoices/view`): pierde el color verde
+  (`var(--primary-color)`) y queda con el color por defecto de `.sgi-display`, como
+  en `Invoices/edit`. La línea "Pagado · fecha" bajo el monto sigue señalando el pago.
 
 Cualquier otra diferencia visual SÍ es regresión y debe corregirse.
 
