@@ -30,9 +30,9 @@ legacy en view/edit. Al terminar, se retira el chat de observaciones viejo.
   el dialecto `.sgi-row-fact*` / `.sgi-status-tab*`; esas clases **no existen en
   ningún CSS** (`grep -rn "sgi-row-fact\|sgi-status-tab" webroot/css/` no devuelve
   nada) — renderizan sin estilos. `NoveltyLiquidationDocs/index` usa una `<table>`
-  Bootstrap cruda. El dialecto canónico y funcional es `.row-fact` / `.chip`
-  (definido en `components.css`, usado por `Invoices/index`, `PettyCashRecords/index`,
-  `EmployeeNovelties/index`). Migrar a `.row-fact`/`.chip` es corrección de un bug,
+  Bootstrap cruda. El dialecto canónico y funcional es el de `Invoices/index`:
+  tabla con grid CSS inline dentro de `.sgi-card` + chips `.chip` (clases
+  definidas en `components.css`). Migrar a esa estructura es corrección de un bug,
   no una elección de estilo.
 - **Chat de observaciones viejo.** 10 vistas de módulo + `Employees/view` siguen
   usando `observation_bubble` (o markup ad-hoc) en lugar del `observations/drawer`
@@ -65,8 +65,9 @@ NO incluye:
 
 ## Decisiones de diseño
 
-- **Dialecto de listado:** canónico `.row-fact` + `.chip`, como `Invoices/index`.
-  El dialecto `.sgi-row-fact*` / `.sgi-status-tab*` se elimina (clases sin CSS).
+- **Dialecto de listado:** canónico = la estructura de `Invoices/index` (tabla con
+  grid CSS inline en `.sgi-card` + chips `.chip`). El dialecto `.sgi-row-fact*` /
+  `.sgi-status-tab*` se elimina (clases sin CSS).
 - **Observaciones:** todas las vistas adoptan `element('observations/drawer', …)`.
 - **`add.php`:** fuera de alcance (ver hallazgos).
 - **`Employees/view`:** se migra solo su chat de observaciones, para poder retirar
@@ -78,9 +79,11 @@ NO incluye:
 
 Cada módulo se alinea a Facturas aplicando los patrones ya establecidos:
 
-1. **`index`** → dialecto `.row-fact` + `.chip`; search bar con `<label class="input">`;
-   filtros en panel colapsable; `.pipeline-mini` y pills soft; empty state
-   `.empty-state` (`.es-icon`/`.es-title`/`.es-msg`). Referencia: `Invoices/index.php`.
+1. **`index`** → estructura de `Invoices/index.php`: tabla con grid CSS inline en
+   `.sgi-card`, chips `.chip`/`.dot`, search bar con `<label class="input">`,
+   filtros en panel colapsable (`.sgi-card compact` + `.input-label`),
+   `.pipeline-mini` y pills `pill-sm` soft, empty state `.empty-state`
+   (`.es-icon`/`.es-title`/`.es-msg`).
 2. **Observaciones** → reemplazar `observation_bubble` / `observation_chat_init`
    (o markup ad-hoc) por `element('observations/drawer', ['observations'=>…,
    'count'=>…, 'formUrl'=>…, 'currentUserName'=>…])`, incluido fuera del `<form>`
