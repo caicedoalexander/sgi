@@ -181,23 +181,26 @@ $noveltyCount  = count($doc->employee_novelties ?? []);
                         </span>
                     </div>
                     <?php if ($noveltyCount > 0): ?>
-                    <div style="padding:0 18px 14px;max-height:280px;overflow-y:auto;">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Empleado</th>
-                                    <th>Tipo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($doc->employee_novelties as $novelty): ?>
-                                <tr class="clickable-row" data-href="<?= $this->Url->build(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]) ?>">
-                                    <td><?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?></td>
-                                    <td style="font-size:var(--fs-body-lg);"><?= h($novelty->novelty_type->name ?? '—') ?></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                    <?php $nvGrid = 'display:grid;grid-template-columns:1.5fr 1fr;gap:10px;align-items:center;'; ?>
+                    <div style="padding:0 18px 14px;">
+                        <div style="max-height:280px;overflow-y:auto;">
+                            <div style="<?= $nvGrid ?>padding:8px 12px;background:var(--bg-subtle);font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:0.6px;text-transform:uppercase;" role="row">
+                                <span>Empleado</span>
+                                <span>Tipo</span>
+                            </div>
+                            <?php foreach ($doc->employee_novelties as $nvIdx => $novelty): ?>
+                            <div class="clickable-row" role="row"
+                                 data-href="<?= $this->Url->build(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]) ?>"
+                                 style="<?= $nvGrid ?>padding:10px 12px;background:#fff;cursor:pointer;<?= $nvIdx > 0 ? 'border-top:1px solid var(--rule);' : '' ?>">
+                                <span style="font-size:12px;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    <?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?>
+                                </span>
+                                <span style="font-size:11.5px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    <?= h($novelty->novelty_type->name ?? '—') ?>
+                                </span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                     <?php else: ?>
                     <div style="padding:.5rem 18px 1rem;color:var(--text-disabled);font-size:var(--fs-body-sm);">
@@ -243,47 +246,50 @@ $noveltyCount  = count($doc->employee_novelties ?? []);
 
         <!-- Payments (read-only) -->
         <?php if (!empty($doc->liquidation_doc_payments)): ?>
+        <?php $payGrid = 'display:grid;grid-template-columns:1.4fr 1fr 0.9fr 1.5fr 1.2fr;gap:12px;align-items:center;'; ?>
         <div class="card" style="padding:18px 20px;">
             <div class="sgi-section-head" style="margin-bottom:12px;">
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-bank" aria-hidden="true"></i>Pagos Registrados
                 </span>
             </div>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Entidad Bancaria</th>
-                            <th class="text-end">Monto</th>
-                            <th>Fecha</th>
-                            <th>Estado</th>
-                            <th>Registrado por</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($doc->liquidation_doc_payments as $payment): ?>
-                        <tr>
-                            <td><?= h($payment->banking_entity->name ?? '—') ?></td>
-                            <td class="text-end mono">$ <?= number_format((float)$payment->amount, 0, ',', '.') ?></td>
-                            <td class="mono"><?= $payment->payment_date?->format('d/m/Y') ?? '—' ?></td>
-                            <td>
-                                <?php if ($payment->authorized): ?>
-                                    <span class="pill pill-primary-soft"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Autorizado</span>
-                                    <?php if ($payment->authorized_by_user): ?>
-                                    <div style="font-size:var(--fs-meta);color:var(--text-muted);margin-top:2px;">
-                                        <?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?>
-                                        <?php if ($payment->authorized_date): ?> · <span class="mono"><?= $payment->authorized_date->format('d/m/Y') ?></span><?php endif; ?>
-                                    </div>
-                                    <?php endif; ?>
-                                <?php else: ?>
-                                    <span class="pill pill-warning-soft"><i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente</span>
-                                <?php endif; ?>
-                            </td>
-                            <td><?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="sgi-card" style="padding:0;">
+                <div style="<?= $payGrid ?>padding:9px 14px;background:var(--bg-subtle);font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:0.6px;text-transform:uppercase;" role="row">
+                    <span>Entidad Bancaria</span>
+                    <span style="text-align:right;">Monto</span>
+                    <span>Fecha</span>
+                    <span>Estado</span>
+                    <span>Registrado por</span>
+                </div>
+                <?php foreach ($doc->liquidation_doc_payments as $payIdx => $payment): ?>
+                <div role="row"
+                     style="<?= $payGrid ?>padding:11px 14px;background:#fff;<?= $payIdx > 0 ? 'border-top:1px solid var(--rule);' : '' ?>">
+                    <span style="font-size:12px;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <?= h($payment->banking_entity->name ?? '—') ?>
+                    </span>
+                    <span class="mono" style="text-align:right;font-size:12.5px;font-weight:700;color:var(--text-default);">
+                        $ <?= number_format((float)$payment->amount, 0, ',', '.') ?>
+                    </span>
+                    <span class="mono" style="font-size:11.5px;color:var(--text-muted);">
+                        <?= $payment->payment_date?->format('d/m/Y') ?? '—' ?>
+                    </span>
+                    <span style="min-width:0;">
+                        <?php if ($payment->authorized): ?>
+                            <span class="pill pill-primary-soft pill-sm"><i class="bi bi-check-circle" aria-hidden="true"></i>Autorizado</span>
+                            <?php if ($payment->authorized_by_user): ?>
+                            <div style="font-size:var(--fs-meta);color:var(--text-muted);margin-top:2px;">
+                                <?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?><?php if ($payment->authorized_date): ?> · <span class="mono"><?= $payment->authorized_date->format('d/m/Y') ?></span><?php endif; ?>
+                            </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <span class="pill pill-warning-soft pill-sm"><i class="bi bi-clock" aria-hidden="true"></i>Pendiente</span>
+                        <?php endif; ?>
+                    </span>
+                    <span style="font-size:12px;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?>
+                    </span>
+                </div>
+                <?php endforeach; ?>
             </div>
         </div>
         <?php endif; ?>
