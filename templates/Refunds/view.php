@@ -222,8 +222,8 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
             'observations'    => $record->refund_observations ?? [],
             'count'           => count($record->refund_observations ?? []),
             'formUrl'         => ['action' => 'addObservation', $record->id],
-            'currentUserName' => $this->getRequest()->getAttribute('identity')?->full_name
-                ?? 'Usuario',
+            'currentUserName' => $currentUser->full_name
+                ?? ($currentUser->username ?? 'Usuario'),
         ]) ?>
 
     </main>
