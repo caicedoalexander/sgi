@@ -98,6 +98,9 @@
     background-color: var(--bg-subtle);
     color: var(--text-default);
 }
+.btn-ghost-card { background: #fff; color: var(--text-default);
+                  outline: 1px solid var(--border-color); outline-offset: -1px; }
+.btn-ghost-card:hover { background: var(--bg-subtle); }
 
 /* Subtle — fondo gris sutil */
 .btn-subtle {
