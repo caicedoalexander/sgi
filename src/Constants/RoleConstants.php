@@ -12,11 +12,24 @@ namespace App\Constants;
 final class RoleConstants
 {
     public const ADMIN = 'Administrador';
-    public const REGISTRO_REVISION = 'Registro/Revisión';
-    public const CONTABILIDAD = 'Contabilidad';
-    public const TESORERIA = 'Tesorería';
-    public const AUXILIAR_PERSONAL = 'Auxiliar de Personal';
-    public const ASISTENTE_PERSONAL = 'Asistente de Personal';
-    public const CONTADOR = 'Contador';
-    public const COORDINADOR_ADMIN = 'Coordinador Administrativo y Financiero';
+
+    /**
+     * Roles que el código referencia por nombre. Renombrarlos o eliminarlos
+     * rompe el sistema, por lo que la UI los marca como "Sistema" y bloquea
+     * su eliminación.
+     *
+     * @var list<string>
+     */
+    public const SYSTEM_ROLES = [
+        self::ADMIN,
+    ];
+
+    /**
+     * @param string $name Nombre del rol.
+     * @return bool true si es un rol del sistema (no eliminable).
+     */
+    public static function isSystem(string $name): bool
+    {
+        return in_array($name, self::SYSTEM_ROLES, true);
+    }
 }

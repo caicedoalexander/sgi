@@ -64,6 +64,36 @@ class AuthorizationService
         'email_logs' => 'Logs de correo',
     ];
 
+    /**
+     * Agrupación de presentación de los módulos para la UI de Roles.
+     *
+     * Fuente única del agrupamiento visual en la matriz de permisos. Cada clave
+     * de módulo debe existir en self::MODULES; la unión de todos los grupos
+     * cubre la totalidad de MODULES.
+     *
+     * @var array<string, list<string>>
+     */
+    public const MODULE_GROUPS = [
+        'Financiero' => [
+            'invoices', 'advances', 'petty_cash', 'refunds',
+            'payment_schedulings', 'payment_registry', 'dian_crosschecks', 'novelty_liquidation_docs',
+        ],
+        'RRHH' => [
+            'employees', 'employee_novelties', 'novelty_types',
+        ],
+        'Catálogos' => [
+            'providers', 'approvers', 'operation_centers', 'expense_types', 'cost_centers',
+            'positions', 'marital_statuses', 'education_levels', 'banking_entities',
+            'temporary_organizations', 'leave_document_templates',
+        ],
+        'Seguridad' => [
+            'users', 'roles',
+        ],
+        'Sistema' => [
+            'system_settings', 'default_folders', 'email_logs',
+        ],
+    ];
+
     private array $cache = [];
 
     public function isAllowed(int $roleId, string $roleName, string $module, string $action): bool

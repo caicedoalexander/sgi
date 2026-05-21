@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Attribute\Permission;
 use App\Constants\PipelineStepConstants;
+use App\Constants\RoleConstants;
 use App\Service\AuthorizationService;
 use App\Service\PipelineAuthorizationService;
 
@@ -32,9 +33,52 @@ class RolesController extends AppController
     #[Permission(action: 'view')]
     public function index()
     {
-        $roles = $this->paginate($this->Roles);
+        $roles = $this->paginate($this->Roles->find()->contain(['Users']));
 
-        $this->set(compact('roles'));
+        $moduleTotal = count(AuthorizationService::MODULES);
+        $pipelineTotal = array_sum(array_map('count', PipelineStepConstants::STEPS_BY_PIPELINE));
+
+        // Resumen de permisos y usuarios por cada rol de la página.
+        $roleStats = [];
+        foreach ($roles as $role) {
+            $modMatrix = $this->authService->getPermissionsForRoleAsMatrix($role->id);
+            $moduleCount = 0;
+            foreach ($modMatrix as $perm) {
+                if (
+                    !empty($perm['can_view']) || !empty($perm['can_create'])
+                    || !empty($perm['can_edit']) || !empty($perm['can_delete'])
+                ) {
+                    $moduleCount++;
+                }
+            }
+            $pipelineCount = 0;
+            foreach ($this->pipelineAuth->getPermissionsMatrix($role->id) as $steps) {
+                $pipelineCount += count(array_filter($steps));
+            }
+            $userNames = array_map(static fn($u) => $u->full_name, $role->users ?? []);
+
+            $roleStats[$role->id] = [
+                'moduleCount' => $moduleCount,
+                'pipelineCount' => $pipelineCount,
+                'userCount' => count($userNames),
+                'userNames' => $userNames,
+                'isSystem' => RoleConstants::isSystem($role->name),
+            ];
+        }
+
+        // KPIs y contadores de filtro sobre la totalidad de roles.
+        $allNames = $this->Roles->find()->select(['name'])->all()->extract('name')->toList();
+        $systemCount = count(array_filter($allNames, RoleConstants::isSystem(...)));
+        $kpis = [
+            'roleCount' => count($allNames),
+            'customCount' => count($allNames) - $systemCount,
+            'systemCount' => $systemCount,
+            'userCount' => $this->Roles->Users->find()->where(['role_id IS NOT' => null])->count(),
+            'moduleTotal' => $moduleTotal,
+            'pipelineTotal' => $pipelineTotal,
+        ];
+
+        $this->set(compact('roles', 'roleStats', 'kpis', 'moduleTotal', 'pipelineTotal'));
     }
 
     /**
@@ -77,12 +121,25 @@ class RolesController extends AppController
         }
 
         $modules = AuthorizationService::MODULES;
-        $permissionsMatrix = [];
+        $moduleGroups = AuthorizationService::MODULE_GROUPS;
+        $permissionsMatrix = $this->authService->getPermissionsForRoleAsMatrix(0);
         $pipelineMatrix = $this->pipelineAuth->getEmptyMatrix();
         $pipelineLabels = PipelineStepConstants::PIPELINE_LABELS;
         $stepLabels = PipelineStepConstants::STEP_LABELS;
+        $userCount = 0;
+        $isSystem = false;
 
-        $this->set(compact('role', 'modules', 'permissionsMatrix', 'pipelineMatrix', 'pipelineLabels', 'stepLabels'));
+        $this->set(compact(
+            'role',
+            'modules',
+            'moduleGroups',
+            'permissionsMatrix',
+            'pipelineMatrix',
+            'pipelineLabels',
+            'stepLabels',
+            'userCount',
+            'isSystem',
+        ));
 
         return null;
     }
@@ -111,12 +168,25 @@ class RolesController extends AppController
         }
 
         $modules = AuthorizationService::MODULES;
+        $moduleGroups = AuthorizationService::MODULE_GROUPS;
         $permissionsMatrix = $this->authService->getPermissionsForRoleAsMatrix((int)$id);
         $pipelineMatrix = $this->pipelineAuth->getPermissionsMatrix((int)$id);
         $pipelineLabels = PipelineStepConstants::PIPELINE_LABELS;
         $stepLabels = PipelineStepConstants::STEP_LABELS;
+        $userCount = $this->Roles->Users->find()->where(['role_id' => (int)$id])->count();
+        $isSystem = RoleConstants::isSystem($role->name);
 
-        $this->set(compact('role', 'modules', 'permissionsMatrix', 'pipelineMatrix', 'pipelineLabels', 'stepLabels'));
+        $this->set(compact(
+            'role',
+            'modules',
+            'moduleGroups',
+            'permissionsMatrix',
+            'pipelineMatrix',
+            'pipelineLabels',
+            'stepLabels',
+            'userCount',
+            'isSystem',
+        ));
 
         return null;
     }
@@ -129,6 +199,11 @@ class RolesController extends AppController
     {
         $this->request->allowMethod(['post', 'delete']);
         $role = $this->Roles->get($id);
+        if (RoleConstants::isSystem($role->name)) {
+            $this->Flash->error('Los roles del sistema no pueden eliminarse.');
+
+            return $this->redirect(['action' => 'index']);
+        }
         if ($this->Roles->delete($role)) {
             $this->Flash->success('El rol ha sido eliminado.');
         } else {
