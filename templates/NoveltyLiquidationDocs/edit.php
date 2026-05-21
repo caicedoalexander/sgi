@@ -353,7 +353,7 @@ $noveltyCount      = $viewModel->noveltyCount;
         ]) ?>
         <?php endif; ?>
 
-        <!-- Soportes + Observaciones (grid lateral) -->
+        <!-- Documento de Liquidación (destacado) -->
         <?php
         $canUploadLiqDoc = $currentStatus === NoveltyConstants::STATUS_CONTABILIDAD && !$liquidationDocument;
         $canUpdateLiqDoc = $liquidationDocument && in_array($currentStatus, [
@@ -362,176 +362,126 @@ $noveltyCount      = $viewModel->noveltyCount;
             NoveltyConstants::STATUS_GDP,
         ]);
         ?>
-        <div class="sgi-edit-side-grid">
-
-            <!-- Soportes -->
-            <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
-                <div class="sgi-section-head" style="margin-bottom:12px;">
-                    <span class="sgi-label d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-paperclip" aria-hidden="true"></i>
-                        Soportes
-                        <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
-                    </span>
-                    <?php if ($showUploadSection): ?>
-                    <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
-                        <i class="bi bi-upload" aria-hidden="true"></i>Subir
-                    </button>
-                    <?php endif; ?>
+        <div class="sgi-card d-flex flex-column">
+            <div class="d-flex align-items-center" style="margin-bottom:12px;">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                    Documento de Liquidación
+                </span>
+            </div>
+            <?php if ($liquidationDocument): ?>
+            <div class="doc-row row-flex gap-12" style="padding:10px 12px;background:var(--bg-muted);">
+                <div class="doc-icon row-flex" style="justify-content:center;flex-shrink:0;width:30px;">
+                    <i class="bi <?= h($this->DocumentIcon->iconClass($liquidationDocument->mime_type)) ?>"
+                       style="color:<?= h($this->DocumentIcon->iconColor($liquidationDocument->mime_type)) ?>;font-size:18px;" aria-hidden="true"></i>
                 </div>
-
-                <!-- Documento de Liquidación (fila destacada) -->
-                <div style="padding:.3rem .6rem;background:var(--primary-soft);display:flex;align-items:center;gap:.4rem;margin-bottom:8px;">
-                    <span class="pill pill-primary">D. Liquidación</span>
-                </div>
-                <?php if ($liquidationDocument): ?>
-                <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .75rem;background:var(--primary-soft);margin-bottom:10px;">
-                    <div style="width:34px;height:34px;flex-shrink:0;background:#fff;display:flex;align-items:center;justify-content:center;">
-                        <i class="bi <?= h($this->DocumentIcon->iconClass($liquidationDocument->mime_type)) ?>"
-                           style="color:<?= h($this->DocumentIcon->iconColor($liquidationDocument->mime_type)) ?>;font-size:1rem;"></i>
+                <div class="grow">
+                    <div title="<?= h($liquidationDocument->file_name) ?>"
+                         style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <?= h($liquidationDocument->file_name) ?>
                     </div>
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
-                             title="<?= h($liquidationDocument->file_name) ?>">
-                            <?= h($liquidationDocument->file_name) ?>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
-                            <span style="font-size:var(--fs-label);color:var(--text-disabled);">
-                                <i class="bi bi-clock" style="font-size:var(--fs-micro);" aria-hidden="true"></i>
-                                <?= $liquidationDocument->created?->format('d/m/Y H:i') ?>
-                            </span>
-                            <?php if ($liquidationDocument->file_size): ?>
-                            <span style="font-size:var(--fs-meta);color:var(--text-disabled);"><?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:.25rem;flex-shrink:0;">
-                        <?php if ($canUpdateLiqDoc): ?>
-                        <?= $this->Form->create(null, [
-                            'url' => ['action' => 'updateLiquidationDocument', $doc->id],
-                            'type' => 'file',
-                            'id' => 'liq-doc-update-form',
-                            'class' => 'd-inline',
-                        ]) ?>
-                        <input type="file" name="liquidation_file" id="liq-doc-file" required
-                               accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
-                               style="display:none;"
-                               data-liq-trigger="liq-doc-update-form">
-                        <label for="liq-doc-file" class="btn btn-sm btn-ghost-card" style="width:28px;height:28px;padding:0;line-height:28px;text-align:center;cursor:pointer;" title="Reemplazar">
-                            <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-                        </label>
-                        <?= $this->Form->end() ?>
+                    <div class="row-flex gap-6 mono sgi-body-faint" style="margin-top:2px;">
+                        <span><?= $liquidationDocument->created?->format('d/m/Y H:i') ?></span>
+                        <?php if ($liquidationDocument->file_size): ?>
+                        <span>· <?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
                         <?php endif; ?>
-                        <?= $this->Html->link(
-                            '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
-                            '/' . $liquidationDocument->file_path,
-                            ['class' => 'btn btn-sm btn-ghost-card', 'style' => 'width:28px;height:28px;padding:0;line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
-                        ) ?>
                     </div>
                 </div>
-                <?php elseif ($canUploadLiqDoc): ?>
-                <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .75rem;background:var(--primary-soft);margin-bottom:10px;">
-                    <div style="width:34px;height:34px;flex-shrink:0;background:#fff;display:flex;align-items:center;justify-content:center;">
-                        <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:1rem;" aria-hidden="true"></i>
-                    </div>
-                    <div style="flex:1;min-width:0;">
-                        <span style="font-size:var(--fs-body-sm);color:var(--text-faint);">Sin documento</span>
-                    </div>
+                <div class="row-flex gap-4" style="flex-shrink:0;">
+                    <?php if ($canUpdateLiqDoc): ?>
                     <?= $this->Form->create(null, [
-                        'url' => ['action' => 'uploadLiquidationDocument', $doc->id],
+                        'url' => ['action' => 'updateLiquidationDocument', $doc->id],
                         'type' => 'file',
-                        'id' => 'liq-doc-upload-form',
-                        'class' => 'd-inline flex-shrink-0',
+                        'id' => 'liq-doc-update-form',
+                        'class' => 'd-inline',
                     ]) ?>
-                    <input type="file" name="liquidation_file" id="liq-doc-file-new" required
+                    <input type="file" name="liquidation_file" id="liq-doc-file" required
                            accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
-                           style="display:none;"
-                           data-liq-trigger="liq-doc-upload-form">
-                    <label for="liq-doc-file-new" class="btn btn-sm btn-primary" style="padding:.25rem .5rem;font-size:.72rem;line-height:1;cursor:pointer;" title="Subir documento">
-                        <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
+                           style="display:none;" data-liq-trigger="liq-doc-update-form">
+                    <label for="liq-doc-file" class="btn-icon" style="cursor:pointer;" title="Reemplazar">
+                        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
                     </label>
                     <?= $this->Form->end() ?>
-                </div>
-                <?php else: ?>
-                <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .75rem;background:var(--bg-muted);margin-bottom:10px;">
-                    <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);" aria-hidden="true"></i>
-                    <span style="font-size:var(--fs-body-sm);color:var(--text-disabled);">Sin documento</span>
-                </div>
-                <?php endif; ?>
-
-                <!-- Lista de soportes -->
-                <div id="docs-empty-state" class="sgi-dropzone-empty" <?= !empty($documentsByStatus) ? 'style="display:none;"' : '' ?>>
-                    <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    <div>Sin soportes adjuntos</div>
-                </div>
-                <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-                    <?php
-                    $multipleStatuses = count($documentsByStatus) > 1;
-                    foreach ($documentsByStatus as $status => $docs):
-                    ?>
-                    <?php if ($multipleStatuses): ?>
-                    <div style="padding:.3rem .6rem;background:var(--bg-subtle);display:flex;align-items:center;gap:.4rem;">
-                        <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>"><?= $statusLabels[$status] ?? $status ?></span>
-                        <span style="font-size:var(--fs-label);color:var(--text-disabled);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
-                    </div>
                     <?php endif; ?>
-                    <?php foreach ($docs as $docFile): ?>
-                        <?= $this->element('document_row', [
-                            'doc'          => $docFile,
-                            'canDelete'    => $showUploadSection && $docFile->pipeline_status === $currentStatus,
-                            'deleteUrl'    => $this->Url->build(['action' => 'deleteDocument', $doc->id, $docFile->id]),
-                            'showBadge'    => !$multipleStatuses,
-                            'badgeColors'  => $badgeColors,
-                            'statusLabels' => $statusLabels,
-                        ]) ?>
-                    <?php endforeach; ?>
-                    <?php endforeach; ?>
+                    <?= $this->Html->link(
+                        '<i class="bi bi-eye" aria-hidden="true"></i>',
+                        '/' . $liquidationDocument->file_path,
+                        ['class' => 'btn-icon', 'escape' => false, 'target' => '_blank', 'rel' => 'noopener noreferrer', 'title' => 'Abrir']
+                    ) ?>
                 </div>
             </div>
-
-            <!-- Observaciones -->
-            <?php $obsCount = count($doc->novelty_observations ?? []); ?>
-            <div class="card sgi-obs-card" style="padding:18px 20px;display:flex;flex-direction:column;">
-                <div class="sgi-section-head" style="margin-bottom:12px;">
-                    <span class="sgi-label d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-                        Observaciones
-                        <span id="obs-count" class="sgi-folder-count" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
-                    </span>
+            <?php elseif ($canUploadLiqDoc): ?>
+            <div class="doc-row row-flex gap-12" style="padding:10px 12px;background:var(--bg-muted);">
+                <div class="doc-icon row-flex" style="justify-content:center;flex-shrink:0;width:30px;">
+                    <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:18px;" aria-hidden="true"></i>
                 </div>
-
-                <div id="obs-chat-scroll" class="sgi-obs-list">
-                    <?php foreach ($doc->novelty_observations ?? [] as $obs): ?>
-                        <?= $this->element('observation_bubble', [
-                            'observation' => $obs,
-                            'isMine' => $currentUser && $obs->user_id === $currentUser->id,
-                        ]) ?>
-                    <?php endforeach; ?>
+                <div class="grow">
+                    <span class="sgi-body-faint" style="font-size:var(--fs-body-sm);">Sin documento</span>
                 </div>
-
-                <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-                    <i class="bi bi-chat-square-dots" aria-hidden="true" style="font-size:1.5rem;"></i>
-                    <span style="font-size:var(--fs-body-sm);">Sin observaciones aún</span>
-                </div>
-
-                <?php if (!$isFinal): ?>
-                <div class="sgi-obs-input-bar">
-                    <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $doc->id], 'id' => 'obs-form']) ?>
-                    <div class="sgi-obs-compose">
-                        <textarea name="message" class="auto-resize" rows="1"
-                                  placeholder="Escriba una observación..."></textarea>
-                        <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                            <i class="bi bi-send" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <?= $this->Form->end() ?>
-                </div>
-                <?php endif; ?>
+                <?= $this->Form->create(null, [
+                    'url' => ['action' => 'uploadLiquidationDocument', $doc->id],
+                    'type' => 'file',
+                    'id' => 'liq-doc-upload-form',
+                    'class' => 'd-inline flex-shrink-0',
+                ]) ?>
+                <input type="file" name="liquidation_file" id="liq-doc-file-new" required
+                       accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+                       style="display:none;" data-liq-trigger="liq-doc-upload-form">
+                <label for="liq-doc-file-new" class="btn btn-default btn-sm" style="cursor:pointer;" title="Subir documento">
+                    <i class="bi bi-upload" aria-hidden="true"></i>Subir
+                </label>
+                <?= $this->Form->end() ?>
             </div>
+            <?php else: ?>
+            <div class="empty-state">
+                <div class="es-icon es-icon-neutral">
+                    <i class="bi bi-file-earmark-x" aria-hidden="true"></i>
+                </div>
+                <div class="es-title">Sin documento de liquidación</div>
+            </div>
+            <?php endif; ?>
+        </div>
 
-        </div><!-- /sgi-edit-side-grid -->
+        <?php /* ── Soportes ──────────────────────────────────── */ ?>
+        <?php
+        $docGroups = [];
+        $multipleDocStatuses = count($documentsByStatus) > 1;
+        foreach ($documentsByStatus as $status => $docs) {
+            $rows = [];
+            foreach ($docs as $docFile) {
+                $rows[] = [
+                    'doc'          => $docFile,
+                    'canDelete'    => $showUploadSection && $docFile->pipeline_status === $currentStatus,
+                    'deleteUrl'    => $this->Url->build(['action' => 'deleteDocument', $doc->id, $docFile->id]),
+                    'showBadge'    => !$multipleDocStatuses,
+                    'badgeColors'  => $badgeColors,
+                    'statusLabels' => $statusLabels,
+                ];
+            }
+            $docGroups[] = [
+                'label'    => $multipleDocStatuses ? ($statusLabels[$status] ?? $status) : null,
+                'pillKind' => $multipleDocStatuses ? ($badgeColors[$status] ?? 'pill-muted') : null,
+                'rows'     => $rows,
+            ];
+        }
+        ?>
+        <?= $this->element('documents_section', [
+            'groups'        => $docGroups,
+            'totalDocs'     => $totalDocs,
+            'canUpload'     => $showUploadSection,
+            'uploadModalId' => 'uploadDocModal',
+            'emptyTitle'    => 'Sin soportes adjuntos',
+        ]) ?>
 
     </main>
 </div><!-- /sgi-invoice-view-grid -->
+
+<?= $this->element('observations/drawer', [
+    'observations'    => $doc->novelty_observations ?? [],
+    'count'           => count($doc->novelty_observations ?? []),
+    'formUrl'         => ['action' => 'addObservation', $doc->id],
+    'currentUserName' => $currentUser->full_name ?? ($currentUser->username ?? 'Usuario'),
+]) ?>
 
 <!-- Upload Document Modal -->
 <?php if ($showUploadSection): ?>
@@ -565,7 +515,6 @@ $noveltyCount      = $viewModel->noveltyCount;
 
 <?= $this->element('document_row_template', ['showBadge' => true]) ?>
 <?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
-<?= $this->element('observation_chat_init') ?>
 
 <?= $this->Html->script('sgi-signature') ?>
 <?= $this->Html->script('sgi-epadlink') ?>
