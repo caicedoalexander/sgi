@@ -39,7 +39,6 @@ foreach ($folders as $folder) {
 $novedades = $employee->employee_novelties ?? [];
 $noveltyCount = count($novedades);
 $historyCount = count($employee->employee_histories ?? []);
-$obsCount = count($employee->employee_observations ?? []);
 $currentUser = $this->getRequest()->getAttribute('identity');
 
 // ─── Pill del estado del empleado ───────────────────────────────────
@@ -428,14 +427,6 @@ $navTabColor = fn(string $status) => match ($status) {
                 <i class="bi bi-clock-history" aria-hidden="true"></i> Historial
                 <?php if ($historyCount > 0): ?>
                     <span class="tab-badge"><?= $historyCount ?></span>
-                <?php endif; ?>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="tab" data-bs-toggle="tab" data-bs-target="#tab-observaciones" type="button" role="tab">
-                <i class="bi bi-chat-square-text" aria-hidden="true"></i> Observaciones
-                <?php if ($obsCount > 0): ?>
-                    <span class="tab-badge"><?= $obsCount ?></span>
                 <?php endif; ?>
             </button>
         </li>
@@ -880,46 +871,6 @@ $navTabColor = fn(string $status) => match ($status) {
             </div>
         </div>
 
-        <!-- ───── Tab: Observaciones ───── -->
-        <div class="tab-pane fade" id="tab-observaciones" role="tabpanel">
-            <div class="sgi-card" style="padding:0;overflow:hidden;">
-                <div style="padding:14px 18px;border-bottom:1px solid var(--rule);">
-                    <div style="font-size:13px;font-weight:700;color:var(--text-strong);">Observaciones</div>
-                    <div style="font-size:10.5px;color:var(--text-faint);margin-top:2px;">
-                        <span id="obs-count-label"><?= $obsCount ?> comentario<?= $obsCount !== 1 ? 's' : '' ?></span>
-                    </div>
-                </div>
-
-                <div id="obs-chat-scroll" class="sgi-obs-list">
-                    <?php foreach ($employee->employee_observations ?? [] as $obs): ?>
-                        <?= $this->element('observation_bubble', [
-                            'observation' => $obs,
-                            'isMine' => $currentUser && $obs->user_id === $currentUser->id,
-                        ]) ?>
-                    <?php endforeach; ?>
-                </div>
-
-                <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-                    <i class="bi bi-chat-square-text" aria-hidden="true"></i>
-                    <span>Sin observaciones aún</span>
-                </div>
-
-                <?php if (!empty($userPermissions['employees']['can_edit'])): ?>
-                <div class="sgi-obs-input-bar">
-                    <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $employee->id], 'id' => 'obs-form']) ?>
-                    <div class="sgi-obs-compose">
-                        <textarea name="message" class="auto-resize" rows="1"
-                                  placeholder="Escriba una observación..."></textarea>
-                        <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                            <i class="bi bi-send" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <?= $this->Form->end() ?>
-                </div>
-                <?php endif; ?>
-            </div>
-            <span id="obs-count" hidden><?= $obsCount ?></span>
-        </div>
 
     </div>
 
@@ -1001,7 +952,12 @@ $navTabColor = fn(string $status) => match ($status) {
     'importable' => true,
 ]) ?>
 
-<?= $this->element('observation_chat_init') ?>
+<?= $this->element('observations/drawer', [
+    'observations'    => $employee->employee_observations ?? [],
+    'count'           => count($employee->employee_observations ?? []),
+    'formUrl'         => ['action' => 'addObservation', $employee->id],
+    'currentUserName' => $currentUser?->full_name ?? ($currentUser?->username ?? 'Usuario'),
+]) ?>
 
 <script>
 // Auto-submit del buscador del directorio con debounce.
