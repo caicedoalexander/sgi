@@ -125,7 +125,9 @@ $scopeTabs = [
         <button type="button" class="btn btn-default" id="btn-export-novelties">
             <i class="bi bi-download me-1" aria-hidden="true"></i>Exportar
         </button>
-        <button type="button" class="btn btn-default" id="btn-toggle-filters">
+        <button type="button" class="btn btn-default" id="btn-toggle-filters"
+                data-bs-toggle="collapse" data-bs-target="#noveltyFiltersPanel"
+                aria-expanded="<?= $hasFilters ? 'true' : 'false' ?>">
             <i class="bi bi-funnel me-1" aria-hidden="true"></i>Filtros
         </button>
         <?php if (!empty($userPermissions['employee_novelties']['can_create'])): ?>
@@ -169,33 +171,37 @@ $scopeTabs = [
 </div>
 
 <!-- ═══ Filtros ═══ -->
-<form method="get" id="novelty-filters" class="d-flex gap-2 align-items-center" style="margin-bottom:14px;">
-    <?php if ($action !== 'rejected'): ?>
-    <select name="pipeline_status" class="form-select form-select-sm" style="max-width:220px;" onchange="this.form.submit()">
-        <option value="">Estado: Todos</option>
-        <?php foreach (NoveltyConstants::ALL_STATUSES as $s): ?>
-        <option value="<?= h($s) ?>" <?= ($statusFilter ?? '') === $s ? 'selected' : '' ?>>
-            Estado: <?= h($statusLabels[$s] ?? ucfirst($s)) ?>
-        </option>
-        <?php endforeach; ?>
-    </select>
-    <?php endif; ?>
-    <select name="novelty_type_id" class="form-select form-select-sm" style="max-width:220px;" onchange="this.form.submit()">
-        <option value="">Tipo: Todos</option>
-        <?php foreach ($noveltyTypes as $id => $name): ?>
-        <option value="<?= h($id) ?>" <?= ($typeFilter ?? '') == $id ? 'selected' : '' ?>>
-            Tipo: <?= h($name) ?>
-        </option>
-        <?php endforeach; ?>
-    </select>
-    <?php if ($hasFilters): ?>
-    <?= $this->Html->link(
-        '<i class="bi bi-x" aria-hidden="true"></i> Limpiar filtros',
-        ['action' => $action ?: 'index'],
-        ['class' => 'btn btn-ghost btn-sm sgi-fg-secondary', 'escape' => false]
-    ) ?>
-    <?php endif; ?>
-</form>
+<div class="collapse <?= $hasFilters ? 'show' : '' ?>" id="noveltyFiltersPanel" style="margin-bottom:14px;">
+    <div class="sgi-card compact">
+        <form method="get" id="novelty-filters" class="d-flex gap-2 align-items-center">
+            <?php if ($action !== 'rejected'): ?>
+            <select name="pipeline_status" class="form-select form-select-sm" style="max-width:220px;" onchange="this.form.submit()">
+                <option value="">Estado: Todos</option>
+                <?php foreach (NoveltyConstants::ALL_STATUSES as $s): ?>
+                <option value="<?= h($s) ?>" <?= ($statusFilter ?? '') === $s ? 'selected' : '' ?>>
+                    Estado: <?= h($statusLabels[$s] ?? ucfirst($s)) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+            <?php endif; ?>
+            <select name="novelty_type_id" class="form-select form-select-sm" style="max-width:220px;" onchange="this.form.submit()">
+                <option value="">Tipo: Todos</option>
+                <?php foreach ($noveltyTypes as $id => $name): ?>
+                <option value="<?= h($id) ?>" <?= ($typeFilter ?? '') == $id ? 'selected' : '' ?>>
+                    Tipo: <?= h($name) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+            <?php if ($hasFilters): ?>
+            <?= $this->Html->link(
+                '<i class="bi bi-x" aria-hidden="true"></i> Limpiar filtros',
+                ['action' => $action ?: 'index'],
+                ['class' => 'btn btn-ghost btn-sm sgi-fg-secondary', 'escape' => false]
+            ) ?>
+            <?php endif; ?>
+        </form>
+    </div>
+</div>
 
 <!-- ═══ Grid principal: contenido + side rail ═══ -->
 <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:flex-start;">
@@ -507,5 +513,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 <?php endif; ?>
-</content>
-</invoke>
