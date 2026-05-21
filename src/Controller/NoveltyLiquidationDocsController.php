@@ -75,6 +75,11 @@ class NoveltyLiquidationDocsController extends AppController
             $query->where(['NoveltyLiquidationDocs.pipeline_status' => $statusFilter]);
         }
 
+        $search = trim((string)$this->request->getQuery('search', ''));
+        if ($search !== '') {
+            $query->where(['NoveltyLiquidationDocs.liquidation_number LIKE' => '%' . $search . '%']);
+        }
+
         $liquidationDocs = $this->paginate($query);
         $this->set(compact('liquidationDocs', 'statusFilter', 'visibleStatuses'));
     }
@@ -96,6 +101,11 @@ class NoveltyLiquidationDocsController extends AppController
             $query->where(['NoveltyLiquidationDocs.pipeline_status' => $statusFilter]);
         }
 
+        $search = trim((string)$this->request->getQuery('search', ''));
+        if ($search !== '') {
+            $query->where(['NoveltyLiquidationDocs.liquidation_number LIKE' => '%' . $search . '%']);
+        }
+
         $liquidationDocs = $this->paginate($query);
         $visibleStatuses = [];
         $this->set(compact('liquidationDocs', 'statusFilter', 'visibleStatuses'));
@@ -114,6 +124,11 @@ class NoveltyLiquidationDocsController extends AppController
             ->contain(['PerformedByUsers', 'EmployeeNovelties'])
             ->where(['NoveltyLiquidationDocs.pipeline_status' => NoveltyConstants::STATUS_RECHAZADA])
             ->orderBy(['NoveltyLiquidationDocs.created' => 'DESC']);
+
+        $search = trim((string)$this->request->getQuery('search', ''));
+        if ($search !== '') {
+            $query->where(['NoveltyLiquidationDocs.liquidation_number LIKE' => '%' . $search . '%']);
+        }
 
         $liquidationDocs = $this->paginate($query);
         $statusFilter = NoveltyConstants::STATUS_RECHAZADA;
