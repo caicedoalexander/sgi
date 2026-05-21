@@ -27,7 +27,6 @@ $rfStatusLabel = $statusLabels[$record->status] ?? $record->status;
 $isTerminal = $record->status === RefundConstants::STATUS_PAGADA;
 $invoiceCount = count($record->invoices ?? []);
 $docs = $record->refund_documents ?? [];
-$obsList = $record->refund_observations ?? [];
 
 $bName  = $record->getBeneficiaryName();
 $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?? null;
@@ -190,64 +189,42 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
             <?php endif; ?>
         </div>
 
-        <!-- Soportes + Observaciones (grid lateral) -->
-        <div class="sgi-edit-side-grid">
-            <!-- Soportes -->
-            <div class="card" style="padding:18px 20px;">
-                <div class="sgi-section-head" style="margin-bottom:12px;">
-                    <span class="sgi-label d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-paperclip" aria-hidden="true"></i>
-                        Soportes
-                        <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
-                    </span>
-                </div>
-
-                <?php if (empty($docs)): ?>
-                <div class="sgi-dropzone-empty">
+        <!-- Soportes -->
+        <div class="card" style="padding:18px 20px;">
+            <div class="sgi-section-head" style="margin-bottom:12px;">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    <div>Sin soportes adjuntos</div>
-                </div>
-                <?php else: ?>
-                <div style="max-height:420px;overflow-y:auto;">
-                    <?php foreach ($docs as $doc): ?>
-                        <?= $this->element('document_row', [
-                            'doc'       => $doc,
-                            'canDelete' => false,
-                            'deleteUrl' => null,
-                            'showBadge' => false,
-                        ]) ?>
-                    <?php endforeach; ?>
-                </div>
-                <?php endif; ?>
+                    Soportes
+                    <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
+                </span>
             </div>
 
-            <!-- Observaciones -->
-            <div class="card sgi-obs-card" style="padding:18px 20px;">
-                <div class="sgi-section-head" style="margin-bottom:12px;">
-                    <span class="sgi-label d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-                        Observaciones
-                        <span class="sgi-folder-count"><?= count($obsList) ?></span>
-                    </span>
-                </div>
-
-                <?php if (empty($obsList)): ?>
-                <div class="sgi-obs-empty">
-                    <i class="bi bi-chat-square-dots" aria-hidden="true" style="font-size:1.5rem;"></i>
-                    <span style="font-size:var(--fs-body-sm);">Sin observaciones</span>
-                </div>
-                <?php else: ?>
-                <div class="sgi-obs-list" style="max-height:400px;">
-                    <?php foreach ($obsList as $obs): ?>
-                        <?= $this->element('observation_bubble', [
-                            'observation' => $obs,
-                            'isMine' => false,
-                        ]) ?>
-                    <?php endforeach; ?>
-                </div>
-                <?php endif; ?>
+            <?php if (empty($docs)): ?>
+            <div class="sgi-dropzone-empty">
+                <i class="bi bi-paperclip" aria-hidden="true"></i>
+                <div>Sin soportes adjuntos</div>
             </div>
+            <?php else: ?>
+            <div style="max-height:420px;overflow-y:auto;">
+                <?php foreach ($docs as $doc): ?>
+                    <?= $this->element('document_row', [
+                        'doc'       => $doc,
+                        'canDelete' => false,
+                        'deleteUrl' => null,
+                        'showBadge' => false,
+                    ]) ?>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
         </div>
+
+        <?= $this->element('observations/drawer', [
+            'observations'    => $record->refund_observations ?? [],
+            'count'           => count($record->refund_observations ?? []),
+            'formUrl'         => ['action' => 'addObservation', $record->id],
+            'currentUserName' => $this->getRequest()->getAttribute('identity')?->full_name
+                ?? 'Usuario',
+        ]) ?>
 
     </main>
 </div>
