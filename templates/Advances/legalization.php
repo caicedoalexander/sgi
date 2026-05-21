@@ -449,214 +449,182 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
 
     </div><!-- /card interior -->
 
-    <!-- Soportes + Observaciones -->
-    <div class="sgi-edit-side-grid">
     <!-- Soportes -->
-    <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
-        <div class="sgi-section-head" style="margin-bottom:12px;">
+    <div class="sgi-card d-flex flex-column">
+        <div class="d-flex align-items-center" style="margin-bottom:12px;">
             <span class="sgi-label d-inline-flex align-items-center gap-2">
                 <i class="bi bi-paperclip" aria-hidden="true"></i>
                 Soportes
             </span>
         </div>
 
-    <!-- Documento Especial: Relación de facturas -->
-    <div style="padding:.3rem .875rem;background:rgba(70,157,97,.06);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-        <span class="pill" style="font-size:var(--fs-micro);background:var(--primary-color);color:#fff;">Relación de facturas</span>
-    </div>
-    <?php if ($relationDocument): ?>
-    <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi <?= h($this->DocumentIcon->iconClass($relationDocument->mime_type ?? null)) ?>"
-               style="color:<?= h($this->DocumentIcon->iconColor($relationDocument->mime_type ?? null)) ?>;font-size:1rem;"></i>
+        <div style="max-height:420px;overflow-y:auto;">
+
+        <!-- Documento especial: Relación de facturas -->
+        <div class="d-flex align-items-center gap-2" style="padding:.3rem .5rem;background:var(--bg-subtle);">
+            <span class="pill pill-primary-soft">Relación de facturas</span>
         </div>
-        <div style="flex:1;min-width:0;">
-            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
-                 title="<?= h($relationDocument->file_name ?? '') ?>">
-                <?= h($relationDocument->file_name ?? 'Documento') ?>
+        <?php if ($relationDocument): ?>
+        <div class="doc-row row-flex gap-12" style="padding:10px 12px;background:var(--bg-muted);margin:6px 0;">
+            <div class="doc-icon row-flex" style="justify-content:center;flex-shrink:0;width:30px;">
+                <i class="bi <?= h($this->DocumentIcon->iconClass($relationDocument->mime_type ?? null)) ?>"
+                   style="color:<?= h($this->DocumentIcon->iconColor($relationDocument->mime_type ?? null)) ?>;font-size:18px;" aria-hidden="true"></i>
             </div>
-            <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
-                <?php if ($relationDocument->isSigned()): ?>
-                <span class="pill pill-primary-soft" style="font-size:var(--fs-micro);">
-                    <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Firmado
-                    <?php if ($relationDocument->signed_by_user): ?>
-                        — <?= h($relationDocument->signed_by_user->full_name ?? '') ?>
+            <div class="grow">
+                <div title="<?= h($relationDocument->file_name ?? '') ?>"
+                     style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    <?= h($relationDocument->file_name ?? 'Documento') ?>
+                </div>
+                <div class="row-flex gap-6" style="margin-top:4px;flex-wrap:wrap;">
+                    <?php if ($relationDocument->isSigned()): ?>
+                    <span class="pill pill-primary-soft pill-sm">
+                        <i class="bi bi-check-circle" aria-hidden="true"></i>Firmado<?php if ($relationDocument->signed_by_user): ?> · <?= h($relationDocument->signed_by_user->full_name ?? '') ?><?php endif; ?>
+                    </span>
+                    <?php else: ?>
+                    <span class="pill pill-warning-soft pill-sm">
+                        <i class="bi bi-clock" aria-hidden="true"></i>Pendiente de firma
+                    </span>
                     <?php endif; ?>
-                </span>
-                <?php else: ?>
-                <span class="pill pill-warning-soft" style="font-size:var(--fs-micro);">
-                    <i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente de firma
-                </span>
+                    <?php if ($relationDocument->created): ?>
+                    <span class="mono sgi-body-faint" style="font-size:var(--fs-label);">
+                        <?= $relationDocument->created->format('d/m/Y H:i') ?>
+                    </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="row-flex gap-4" style="flex-shrink:0;">
+                <?php if (in_array($leg->status, [AdvanceConstants::STATUS_VALIDACION, AdvanceConstants::STATUS_REVISION_FIRMAS], true)): ?>
+                <form id="rel-doc-update-form" class="d-inline"
+                      data-upload-url="<?= $this->Url->build(['action' => 'uploadRelationDocument', $leg->advance_invoice_id]) ?>">
+                <input type="file" name="relation_document" id="rel-doc-file-update" required
+                       accept=".pdf,.jpg,.jpeg,.png" style="display:none;" data-rel-doc-trigger>
+                <label for="rel-doc-file-update" class="btn-icon" style="cursor:pointer;" title="Reemplazar">
+                    <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+                </label>
+                </form>
                 <?php endif; ?>
-                <?php if ($relationDocument->created): ?>
-                <span style="font-size:var(--fs-label);color:var(--text-disabled);">
-                    <i class="bi bi-clock" style="font-size:var(--fs-micro);" aria-hidden="true"></i>
-                    <?= $relationDocument->created->format('d/m/Y H:i') ?>
-                </span>
+                <?php if (!empty($relationDocument->file_path)): ?>
+                <?= $this->Html->link(
+                    '<i class="bi bi-eye" aria-hidden="true"></i>',
+                    '/' . $relationDocument->file_path,
+                    ['class' => 'btn-icon', 'escape' => false, 'target' => '_blank', 'rel' => 'noopener noreferrer', 'title' => 'Abrir']
+                ) ?>
                 <?php endif; ?>
             </div>
         </div>
-        <div style="display:flex;gap:.25rem;flex-shrink:0;">
-            <?php if (in_array($leg->status, [AdvanceConstants::STATUS_VALIDACION, AdvanceConstants::STATUS_REVISION_FIRMAS], true)): ?>
-            <form id="rel-doc-update-form" class="d-inline"
+        <?php elseif ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
+        <div class="doc-row row-flex gap-12" style="padding:10px 12px;background:var(--bg-muted);margin:6px 0;">
+            <div class="doc-icon row-flex" style="justify-content:center;flex-shrink:0;width:30px;">
+                <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:18px;" aria-hidden="true"></i>
+            </div>
+            <div class="grow">
+                <span class="sgi-body-faint" style="font-size:var(--fs-body-sm);">Sin documento adjunto</span>
+            </div>
+            <form id="rel-doc-upload-form" class="d-inline flex-shrink-0"
                   data-upload-url="<?= $this->Url->build(['action' => 'uploadRelationDocument', $leg->advance_invoice_id]) ?>">
-            <input type="file" name="relation_document" id="rel-doc-file-update" required
-                   accept=".pdf,.jpg,.jpeg,.png"
-                   style="display:none;" data-rel-doc-trigger>
-            <label for="rel-doc-file-update" class="btn btn-sm btn-outline-primary"
-                   style="width:28px;height:28px;padding:0;font-size:var(--fs-body-sm);line-height:28px;text-align:center;cursor:pointer;" title="Reemplazar">
-                <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+            <input type="file" name="relation_document" id="rel-doc-file-new" required
+                   accept=".pdf,.jpg,.jpeg,.png" style="display:none;" data-rel-doc-trigger>
+            <label for="rel-doc-file-new" class="btn btn-default btn-sm" style="cursor:pointer;" title="Subir">
+                <i class="bi bi-upload" aria-hidden="true"></i>Subir
             </label>
             </form>
-            <?php endif; ?>
-            <?php if (!empty($relationDocument->file_path)): ?>
-            <?= $this->Html->link(
-                '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
-                '/' . $relationDocument->file_path,
-                ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:28px;height:28px;padding:0;font-size:var(--fs-body-sm);line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
-            ) ?>
-            <?php endif; ?>
         </div>
-    </div>
-    <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
-    <?php elseif ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
-    <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:1rem;" aria-hidden="true"></i>
-        </div>
-        <div style="flex:1;min-width:0;">
-            <span style="font-size:var(--fs-body-sm);color:var(--text-faint);">Sin documento adjunto</span>
-        </div>
-        <form id="rel-doc-upload-form" class="d-inline flex-shrink-0"
-              data-upload-url="<?= $this->Url->build(['action' => 'uploadRelationDocument', $leg->advance_invoice_id]) ?>">
-        <input type="file" name="relation_document" id="rel-doc-file-new" required
-               accept=".pdf,.jpg,.jpeg,.png"
-               style="display:none;" data-rel-doc-trigger>
-        <label for="rel-doc-file-new" class="btn btn-sm btn-outline-primary"
-               style="padding:.25rem .5rem;font-size:.72rem;line-height:1;cursor:pointer;" title="Subir">
-            <i class="bi bi-upload me-1" aria-hidden="true"></i>Subir
-        </label>
-        </form>
-    </div>
-    <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
-    <?php else: ?>
-    <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);background:rgba(70,157,97,.03);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:1rem;" aria-hidden="true"></i>
-        </div>
-        <span style="font-size:var(--fs-body-sm);color:var(--text-disabled);">Sin documento</span>
-    </div>
-    <div style="height:2px;background:var(--primary-color);opacity:.35;"></div>
-    <?php endif; ?>
-
-    <!-- Comprobante de consignación (caso faltante) -->
-    <?php if ($leg->case_type === AdvanceConstants::CASE_FALTANTE && $leg->shortage_receipt_path): ?>
-    <div style="padding:.3rem .875rem;background:var(--warning-soft);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
-        <span class="pill" style="font-size:var(--fs-micro);background:var(--secondary-color);color:#fff;">Comprobante de consignación</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .875rem;border-bottom:1px solid var(--border-color);">
-        <div style="width:34px;height:34px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-file-earmark-pdf" style="color:var(--danger-color);font-size:1rem;" aria-hidden="true"></i>
-        </div>
-        <div style="flex:1;min-width:0;">
-            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);">
-                <?= h($leg->shortage_receipt_number ?: 'Comprobante') ?>
+        <?php else: ?>
+        <div class="doc-row row-flex gap-12" style="padding:10px 12px;background:var(--bg-muted);margin:6px 0;">
+            <div class="doc-icon row-flex" style="justify-content:center;flex-shrink:0;width:30px;">
+                <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:18px;" aria-hidden="true"></i>
             </div>
-            <div style="font-size:var(--fs-label);color:var(--text-disabled);margin-top:.25rem;">
-                <?php if ($leg->shortage_received_at): ?>
-                <i class="bi bi-clock" aria-hidden="true"></i> <?= h(date('d/m/Y', strtotime((string)$leg->shortage_received_at))) ?>
-                <?php endif; ?>
+            <div class="grow">
+                <span class="sgi-body-faint" style="font-size:var(--fs-body-sm);">Sin documento</span>
             </div>
         </div>
-        <?= $this->Html->link(
-            '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
-            '/' . $leg->shortage_receipt_path,
-            ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:28px;height:28px;padding:0;font-size:var(--fs-body-sm);line-height:28px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
-        ) ?>
-    </div>
-    <?php endif; ?>
-
-    <!-- Historial de firmas (rechazadas) -->
-    <?php if (!empty($signatureHistory)): ?>
-    <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);">
-        <span style="font-size:var(--fs-label);color:var(--text-faint);text-transform:uppercase;letter-spacing:.1em;font-weight:600;">Historial</span>
-    </div>
-    <?php foreach ($signatureHistory as $sig): ?>
-    <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .875rem;border-bottom:1px solid var(--border-color);opacity:.7;">
-        <div style="width:30px;height:30px;flex-shrink:0;background:var(--background-color);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;">
-            <i class="bi <?= h($this->DocumentIcon->iconClass($sig->mime_type ?? null)) ?>" style="color:var(--text-faint);font-size:.9rem;" aria-hidden="true"></i>
-        </div>
-        <div style="flex:1;min-width:0;">
-            <div style="font-size:var(--fs-body-sm);font-weight:600;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                <?= h($sig->file_name ?? '—') ?>
-            </div>
-            <div style="font-size:var(--fs-meta);color:var(--text-disabled);margin-top:.2rem;">
-                <span class="pill pill-danger-soft" style="font-size:.55rem;">Rechazado</span>
-                <?php if ($sig->rejection_reason): ?>
-                — <?= h($sig->rejection_reason) ?>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php if (!empty($sig->file_path)): ?>
-        <?= $this->Html->link(
-            '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
-            '/' . $sig->file_path,
-            ['class' => 'btn btn-sm btn-outline-secondary', 'style' => 'width:26px;height:26px;padding:0;font-size:.7rem;line-height:26px;text-align:center;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
-        ) ?>
         <?php endif; ?>
-    </div>
-    <?php endforeach; ?>
-    <?php endif; ?>
 
-    <?php if (!$relationDocument && empty($signatureHistory) && !$leg->shortage_receipt_path): ?>
-    <div style="padding:1.5rem 1rem;text-align:center;color:var(--text-disabled);">
-        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
-        <span style="font-size:.8rem;">Sin soportes adjuntos</span>
-    </div>
-    <?php endif; ?>
-</div>
-
-<!-- Observaciones -->
-<?php $obsCount = count($invoice->invoice_observations ?? []); ?>
-<div class="card sgi-obs-card" style="padding:18px 20px;display:flex;flex-direction:column;">
-    <div class="sgi-section-head" style="margin-bottom:12px;">
-        <span class="sgi-label d-inline-flex align-items-center gap-2">
-            <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-            Observaciones
-            <span id="obs-count" class="sgi-folder-count" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
-        </span>
-    </div>
-
-    <div id="obs-chat-scroll" class="sgi-obs-list">
-        <?php foreach ($invoice->invoice_observations ?? [] as $obs): ?>
-            <?= $this->element('observation_bubble', [
-                'observation' => $obs,
-                'isMine' => $currentUser && $obs->user_id === $currentUser->id,
-            ]) ?>
-        <?php endforeach; ?>
-    </div>
-
-    <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
-        <span style="font-size:var(--fs-body);">Sin observaciones aún</span>
-    </div>
-
-    <div class="sgi-obs-input-bar">
-        <?= $this->Form->create(null, ['url' => ['controller' => 'Invoices', 'action' => 'addObservation', $invoice->id], 'id' => 'obs-form']) ?>
-        <div class="sgi-obs-compose">
-            <textarea id="obs-message" name="message" class="auto-resize" rows="1"
-                      placeholder="Escriba una observación..."></textarea>
-            <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                <i class="bi bi-send" aria-hidden="true"></i>
-            </button>
+        <!-- Documento especial: Comprobante de consignación (caso faltante) -->
+        <?php if ($leg->case_type === AdvanceConstants::CASE_FALTANTE && $leg->shortage_receipt_path): ?>
+        <div class="d-flex align-items-center gap-2" style="padding:.3rem .5rem;background:var(--bg-subtle);margin-top:.5rem;">
+            <span class="pill pill-orange-soft">Comprobante de consignación</span>
         </div>
-        <?= $this->Form->end() ?>
-    </div>
-</div>
+        <div class="doc-row row-flex gap-12" style="padding:10px 12px;background:var(--bg-muted);margin:6px 0;">
+            <div class="doc-icon row-flex" style="justify-content:center;flex-shrink:0;width:30px;">
+                <i class="bi bi-file-earmark-pdf" style="color:var(--danger-color);font-size:18px;" aria-hidden="true"></i>
+            </div>
+            <div class="grow">
+                <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    <?= h($leg->shortage_receipt_number ?: 'Comprobante') ?>
+                </div>
+                <?php if ($leg->shortage_received_at): ?>
+                <div class="mono sgi-body-faint" style="font-size:var(--fs-label);margin-top:4px;">
+                    <?= h(date('d/m/Y', strtotime((string)$leg->shortage_received_at))) ?>
+                </div>
+                <?php endif; ?>
+            </div>
+            <div class="row-flex gap-4" style="flex-shrink:0;">
+                <?= $this->Html->link(
+                    '<i class="bi bi-eye" aria-hidden="true"></i>',
+                    '/' . $leg->shortage_receipt_path,
+                    ['class' => 'btn-icon', 'escape' => false, 'target' => '_blank', 'rel' => 'noopener noreferrer', 'title' => 'Abrir']
+                ) ?>
+            </div>
+        </div>
+        <?php endif; ?>
 
-    </div><!-- /sgi-edit-side-grid -->
+        <!-- Documento especial: Historial de firmas rechazadas -->
+        <?php if (!empty($signatureHistory)): ?>
+        <div class="d-flex align-items-center gap-2" style="padding:.3rem .5rem;background:var(--bg-subtle);margin-top:.5rem;">
+            <span class="pill pill-muted">Historial de firmas</span>
+        </div>
+        <?php foreach ($signatureHistory as $sig): ?>
+        <div class="doc-row row-flex gap-12" style="padding:10px 12px;background:var(--bg-muted);margin:6px 0;opacity:.7;">
+            <div class="doc-icon row-flex" style="justify-content:center;flex-shrink:0;width:30px;">
+                <i class="bi <?= h($this->DocumentIcon->iconClass($sig->mime_type ?? null)) ?>"
+                   style="color:var(--text-faint);font-size:18px;" aria-hidden="true"></i>
+            </div>
+            <div class="grow">
+                <div title="<?= h($sig->file_name ?? '') ?>"
+                     style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    <?= h($sig->file_name ?? '—') ?>
+                </div>
+                <div class="row-flex gap-6" style="margin-top:4px;flex-wrap:wrap;">
+                    <span class="pill pill-danger-soft pill-sm">Rechazado</span>
+                    <?php if ($sig->rejection_reason): ?>
+                    <span class="sgi-body-faint" style="font-size:var(--fs-label);"><?= h($sig->rejection_reason) ?></span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="row-flex gap-4" style="flex-shrink:0;">
+                <?php if (!empty($sig->file_path)): ?>
+                <?= $this->Html->link(
+                    '<i class="bi bi-eye" aria-hidden="true"></i>',
+                    '/' . $sig->file_path,
+                    ['class' => 'btn-icon', 'escape' => false, 'target' => '_blank', 'rel' => 'noopener noreferrer', 'title' => 'Abrir']
+                ) ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endforeach; ?>
+        <?php endif; ?>
+
+        <?php if (!$relationDocument && empty($signatureHistory) && !$leg->shortage_receipt_path): ?>
+        <div class="empty-state">
+            <div class="es-icon es-icon-neutral">
+                <i class="bi bi-paperclip" aria-hidden="true"></i>
+            </div>
+            <div class="es-title">Sin soportes adjuntos</div>
+        </div>
+        <?php endif; ?>
+
+        </div>
+    </div>
     </main>
 </div><!-- /sgi-invoice-view-grid -->
+
+<?= $this->element('observations/drawer', [
+    'observations'    => $invoice->invoice_observations ?? [],
+    'count'           => count($invoice->invoice_observations ?? []),
+    'formUrl'         => ['controller' => 'Invoices', 'action' => 'addObservation', $invoice->id],
+    'currentUserName' => $currentUser->full_name ?? ($currentUser->username ?? 'Usuario'),
+]) ?>
 
 <?php if ($leg && $leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
 <?php
@@ -681,8 +649,6 @@ $linkCandidatesUrl = $this->Url->build([
     </div>
 </div>
 <?php endif; ?>
-
-<?= $this->element('observation_chat_init') ?>
 
 <?php $this->append('script') ?>
 <script>
