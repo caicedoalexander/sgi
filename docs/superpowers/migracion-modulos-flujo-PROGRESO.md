@@ -1,6 +1,6 @@
 # Migración de módulos de flujo al diseño de Facturas — PROGRESO
 
-> Documento de continuidad. Última actualización: **2026-05-21**. HEAD: `67d4a44` (rama `main`, todo commiteado, nada pusheado).
+> Documento de continuidad. Última actualización: **2026-05-21**. HEAD: `d53b851` (rama `main`, todo commiteado, nada pusheado).
 
 ## Qué es esto
 
@@ -12,7 +12,7 @@ consolidación de elementos** (drawer de observaciones, `documents_section`,
 - **Spec:** `docs/superpowers/specs/2026-05-20-migracion-modulos-flujo-design.md`
 - **Spec de la consolidación previa:** `docs/superpowers/specs/2026-05-20-consolidacion-elementos-compartidos-design.md`
 
-## Estado: 5 de 7 completados
+## Estado: 6 de 7 completados
 
 | Módulo | Estado | Plan |
 |---|---|---|
@@ -21,8 +21,8 @@ consolidación de elementos** (drawer de observaciones, `documents_section`,
 | PaymentSchedulings | ✅ migrado | `docs/superpowers/plans/2026-05-20-migracion-payment-schedulings.md` |
 | EmployeeNovelties | ✅ migrado | `docs/superpowers/plans/2026-05-20-migracion-employee-novelties.md` |
 | Advances | ✅ migrado | `docs/superpowers/plans/2026-05-20-migracion-advances.md` |
-| **NoveltyLiquidationDocs** | ⏳ PENDIENTE (siguiente) | — falta escribir el plan |
-| **Employees/view** | ⏳ pendiente (solo observaciones) | — falta escribir el plan |
+| NoveltyLiquidationDocs | ✅ migrado | `docs/superpowers/plans/2026-05-20-migracion-novelty-liquidation-docs.md` |
+| **Employees/view** | ⏳ PENDIENTE (último — solo observaciones) | — falta escribir el plan |
 
 ## Cómo reanudar mañana
 
@@ -37,18 +37,9 @@ El flujo por módulo (definido en el spec, sección "Flujo de trabajo"):
 3. Commits directos en `main`. Validación funcional manual la hace el usuario
    entre módulos.
 
-Empezar por **NoveltyLiquidationDocs** (el más pesado de los 2 restantes).
+Queda **Employees/view** (último módulo; cierra la migración).
 
-## Desglose de los 2 módulos pendientes (del spec)
-
-### NoveltyLiquidationDocs
-- `index` → reescritura completa: `<table>` Bootstrap dentro de `.card-primary` →
-  estructura de `Invoices/index`.
-- `view` → varias `<table>` crudas → filas del sistema; bloques de soporte con
-  estilos inline → `documents_section`/`document_row`; cards de firma ad-hoc →
-  patrón del sistema; observaciones → drawer.
-- `edit` → cards de firma ad-hoc; `.form-label`→`.input-label`; bloque "D.
-  Liquidación" con estilos inline → tokens/clases; observaciones → drawer.
+## Desglose del módulo pendiente (del spec)
 
 ### Employees/view
 - Solo: el chat de observaciones ad-hoc (`observation_bubble`) → `observations/drawer`.
@@ -100,6 +91,18 @@ Cuando ningún consumidor use ya el chat viejo:
 - **EmployeeNovelties — diferidos**: la tabla "Historial de Cambios" de `view.php`
   se dejó como `<table>`; la card Bootstrap de `edit.php` solo se limpió el
   `!important` (sin reestructurar). Documentado en el self-review de su plan.
+- **NoveltyLiquidationDocs — diferidos/decisiones**: la tabla "Historial de Cambios
+  del Grupo" de `view.php` se dejó como `<table>` (tabla de auditoría densa; mismo
+  criterio que el diferido de EmployeeNovelties). Las cards de "Firmas" de
+  `view.php`/`edit.php` se dejaron sin cambios — ya usan tokens, sin bordes ni
+  clases Bootstrap crudas, y no existe componente de firma en el Sistema de Diseño.
+  El documento de liquidación destacado ("D. Liquidación") se limpió in-situ en su
+  propia card (no encaja en `documents_section`, igual que la "Relación de facturas"
+  de Advances); la lista de soportes adjuntos sí adoptó `documents_section`. Nota:
+  al migrar a `documents_section`, el `counterSelector` del uploader en `edit.php`
+  tuvo que pasar de `.sgi-folder-count` a `#docs-folder-count` (commit `d53b851`,
+  regresión detectada en la revisión de calidad — `#docs-list` ya no vive dentro de
+  `.card` sino de `.sgi-card`).
 - **Advances — Soportes de `legalization.php`**: los 3 documentos especiales
   (Relación de facturas / Comprobante de consignación / Historial de firmas) **no**
   se forzaron a `documents_section` — no encajan (reemplazo-subida AJAX, "documento"
