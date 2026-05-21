@@ -166,174 +166,104 @@ $initialsOf = static function (?string $name): string {
     <!-- ═════════════════════════ COLUMNA IZQUIERDA ═════════════════════════ -->
     <aside style="display:flex;flex-direction:column;gap:14px;min-width:0;">
 
-        <!-- Hero card -->
-        <div class="sgi-card">
-            <div class="d-flex align-items-start" style="gap:12px;margin-bottom:16px;">
-                <div style="width:40px;height:40px;background:var(--primary-soft-strong);color:var(--primary-color);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <i class="bi bi-file-earmark-text" aria-hidden="true" style="font-size:18px;"></i>
-                </div>
-                <div style="min-width:0;flex:1;">
-                    <div class="mono" style="font-size:16px;font-weight:700;color:var(--text-strong);line-height:1.1;">
-                        <?= h($invoice->invoice_number ?? ('#' . $invoice->id)) ?>
-                    </div>
-                    <div class="d-flex flex-wrap" style="gap:4px;margin-top:6px;">
-                        <span class="pill pill-secondary-soft"><?= h($invoice->document_type) ?></span>
-                        <?php if ($isRejected): ?>
-                            <span class="pill pill-danger-soft">Rechazada</span>
-                        <?php elseif ($isApproved): ?>
-                            <span class="pill pill-primary-soft">
-                                <i class="bi bi-check" aria-hidden="true" style="font-size:10px;"></i>Aprobada
-                            </span>
-                        <?php else: ?>
-                            <span class="pill <?= h($statusPill) ?>"><?= h($statusLabel) ?></span>
-                        <?php endif; ?>
-                        <?php if ($currentStatus === InvoiceConstants::STATUS_TESORERIA && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL): ?>
-                            <span class="pill pill-warning-soft">Pago Parcial</span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-
-            <div class="sgi-label">Proveedor</div>
-            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);margin-top:4px;line-height:1.3;">
-                <?= h($providerName) ?>
-            </div>
-            <?php if ($invoice->hasValue('operation_center')): ?>
-            <div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:4px;">
-                <i class="bi bi-geo-alt" aria-hidden="true" style="font-size:11px;"></i>
-                <span><?= h($invoice->operation_center->name) ?></span>
-            </div>
-            <?php endif; ?>
-
-            <div class="hr"></div>
-
-            <div class="sgi-label">Valor Factura</div>
-            <div class="d-flex align-items-baseline" style="gap:4px;margin-top:4px;">
-                <?php $amountColor = $currentStatus === InvoiceConstants::STATUS_PAGADA ? 'var(--primary-color)' : 'var(--text-strong)'; ?>
-                <span class="sgi-display" style="color:<?= $amountColor ?>;">$ <?= $amountInt ?></span>
-                <span style="font-size:13px;color:var(--text-faint);font-weight:500;"><?= $amountDec ?></span>
-            </div>
-            <?php if ($currentStatus === InvoiceConstants::STATUS_PAGADA && $invoice->full_payment_date): ?>
-            <div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">
-                <i class="bi bi-check-circle sgi-fg-primary" aria-hidden="true" style="font-size:11px;"></i>
-                <span>Pagado · <span class="mono"><?= $invoice->full_payment_date->format('d/m/Y') ?></span></span>
-            </div>
-            <?php elseif ($invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL && $pagosCount > 0): ?>
-            <div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">
-                <i class="bi bi-clock sgi-fg-warning" aria-hidden="true" style="font-size:11px;"></i>
-                <span>Pago parcial · <span class="mono">$ <?= number_format($pagosTotal, 0, ',', '.') ?></span></span>
-            </div>
-            <?php endif; ?>
-
-            <div class="hr"></div>
-
-            <div class="field-row">
-                <span class="k">Emisión</span>
-                <span class="v mono"><?= $invoice->issue_date?->format('d/m/Y') ?? '—' ?></span>
-            </div>
-            <div class="field-row">
-                <span class="k">Vencimiento</span>
-                <?php
-                $isOverdue = $invoice->due_date && $invoice->due_date < new \DateTimeImmutable('today')
-                    && $currentStatus !== InvoiceConstants::STATUS_PAGADA;
-                ?>
-                <span class="v mono" style="<?= $isOverdue ? 'color:var(--danger-color);' : '' ?>">
-                    <?= $invoice->due_date?->format('d/m/Y') ?? '—' ?>
-                </span>
-            </div>
-            <div class="field-row is-last">
-                <span class="k">Registro</span>
-                <span class="v mono"><?= $invoice->registration_date?->format('d/m/Y') ?? '—' ?></span>
-            </div>
-        </div>
-
-        <!-- Pipeline vertical -->
-        <div class="sgi-card">
-            <div class="d-flex justify-content-between align-items-center" style="margin-bottom:6px;">
-                <span class="sgi-label">Pipeline</span>
-            </div>
-            <div class="pipeline-v">
-                <?php
-                $isTerminal = in_array($currentStatus, [InvoiceConstants::STATUS_PAGADA, InvoiceConstants::STATUS_LEGALIZADA], true);
-                foreach ($pipelineSteps as $idx => $stepKey):
-                    $isDone    = $idx < $currentIdx || ($isTerminal && $idx === $currentIdx);
-                    $isCurrent = !$isTerminal && $idx === $currentIdx;
-                    $stepLabel = $pipelineLabels[$stepKey] ?? $stepKey;
-                    $stepRejected = $isCurrent && $isRejected;
-
-                    $cls = 'pv-step';
-                    if ($stepRejected) { $cls .= ' is-rejected'; }
-                    elseif ($isDone)   { $cls .= ' is-done'; }
-                    elseif ($isCurrent){ $cls .= ' is-current'; }
-                    else               { $cls .= ' is-pending'; }
-
-                    $stepMeta = null;
-                    if ($isCurrent || ($isTerminal && $idx === $currentIdx)) {
-                        $stepMeta = $invoice->modified?->format('d/m H:i');
-                    } elseif (!$isDone) {
-                        $stepMeta = 'Pendiente';
-                    }
-                ?>
-                <div class="<?= $cls ?>">
-                    <div class="pv-marker">
-                        <?php if ($stepRejected): ?>
-                            <i class="bi bi-x" aria-hidden="true"></i>
-                        <?php elseif ($isDone): ?>
-                            <i class="bi bi-check" aria-hidden="true"></i>
-                        <?php elseif ($isCurrent): ?>
-                            <span class="dot"></span>
-                        <?php endif; ?>
-                    </div>
-                    <div style="flex:1;min-width:0;padding-top:1px;">
-                        <div class="pv-label"><?= h($stepLabel) ?></div>
-                        <?php if ($stepMeta): ?>
-                            <div class="pv-meta"><?= h($stepMeta) ?></div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <!-- Acciones rápidas -->
         <?php
-        $actions = [];
-        if ($canShowEdit) {
-            $actions[] = [
-                'icon'  => 'bi-pencil',
-                'label' => 'Editar factura',
-                'url'   => $this->Url->build(['action' => 'edit', $invoice->id]),
-            ];
-        }
-        $actions[] = [
-            'icon'  => 'bi-file-pdf',
-            'label' => 'Descargar PDF',
-            'url'   => '#',
-        ];
-        $actions[] = [
-            'icon'  => 'bi-arrow-left',
-            'label' => 'Volver al listado',
-            'url'   => $this->Url->build(['action' => 'index']),
-        ];
+    // Slot del hero: divisor + fechas (Emisión / Vencimiento / Registro).
+    ob_start(); ?>
+    <div class="hr"></div>
+    <div class="field-row">
+        <span class="k">Emisión</span>
+        <span class="v mono"><?= $invoice->issue_date?->format('d/m/Y') ?? '—' ?></span>
+    </div>
+    <div class="field-row">
+        <span class="k">Vencimiento</span>
+        <?php
+        $isOverdue = $invoice->due_date && $invoice->due_date < new \DateTimeImmutable('today')
+            && $currentStatus !== InvoiceConstants::STATUS_PAGADA;
         ?>
-        <?php if (!empty($actions)): ?>
-        <div class="sgi-card compact">
-            <div class="sgi-label" style="margin-bottom:10px;">Acciones</div>
-            <div class="col-flex" style="gap:2px;">
-                <?php foreach ($actions as $a): ?>
-                    <?= $this->Html->link(
-                        '<i class="bi ' . h($a['icon']) . '" aria-hidden="true"></i><span>' . h($a['label']) . '</span>',
-                        $a['url'],
-                        [
-                            'class'   => 'btn btn-ghost btn-sm',
-                            'escape'  => false,
-                            'style'   => 'justify-content:flex-start;width:100%;gap:8px;',
-                        ]
-                    ) ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <?php endif; ?>
+        <span class="v mono" style="<?= $isOverdue ? 'color:var(--danger-color);' : '' ?>">
+            <?= $invoice->due_date?->format('d/m/Y') ?? '—' ?>
+        </span>
+    </div>
+    <div class="field-row is-last">
+        <span class="k">Registro</span>
+        <span class="v mono"><?= $invoice->registration_date?->format('d/m/Y') ?? '—' ?></span>
+    </div>
+    <?php
+    $heroExtraHtml = ob_get_clean();
+
+    // Línea pequeña bajo el monto (pago completo / parcial).
+    $amountExtraHtml = '';
+    if ($currentStatus === InvoiceConstants::STATUS_PAGADA && $invoice->full_payment_date) {
+        $amountExtraHtml = '<div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">'
+            . '<i class="bi bi-check-circle sgi-fg-primary" aria-hidden="true" style="font-size:11px;"></i>'
+            . '<span>Pagado · <span class="mono">' . h($invoice->full_payment_date->format('d/m/Y')) . '</span></span></div>';
+    } elseif ($invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL && $pagosCount > 0) {
+        $amountExtraHtml = '<div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">'
+            . '<i class="bi bi-clock sgi-fg-warning" aria-hidden="true" style="font-size:11px;"></i>'
+            . '<span>Pago parcial · <span class="mono">$ ' . number_format($pagosTotal, 0, ',', '.') . '</span></span></div>';
+    }
+
+    // Acciones rápidas (Editar / PDF / Volver).
+    $quickActions = [];
+    if ($canShowEdit) {
+        $quickActions[] = ['icon' => 'bi-pencil', 'label' => 'Editar factura',
+            'url' => $this->Url->build(['action' => 'edit', $invoice->id])];
+    }
+    $quickActions[] = ['icon' => 'bi-file-pdf', 'label' => 'Descargar PDF', 'url' => '#'];
+    $quickActions[] = ['icon' => 'bi-arrow-left', 'label' => 'Volver al listado',
+        'url' => $this->Url->build(['action' => 'index'])];
+    ob_start();
+    foreach ($quickActions as $a) {
+        echo $this->Html->link(
+            '<i class="bi ' . h($a['icon']) . '" aria-hidden="true"></i><span>' . h($a['label']) . '</span>',
+            $a['url'],
+            ['class' => 'btn btn-ghost btn-sm', 'escape' => false,
+             'style' => 'justify-content:flex-start;width:100%;gap:8px;']
+        );
+    }
+    $quickActionsHtml = ob_get_clean();
+
+    // Pill extra del hero (Pago Parcial).
+    $heroExtraPill = null;
+    if ($currentStatus === InvoiceConstants::STATUS_TESORERIA
+        && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL) {
+        $heroExtraPill = '<span class="pill pill-warning-soft">Pago Parcial</span>';
+    }
+
+    // Pill de estado: preserva las 3 variantes del hero actual
+    // (rechazada → la maneja el element vía isRejected; aprobada; estado del pipeline).
+    $heroStatusPill  = $statusPill;
+    $heroStatusLabel = $statusLabel;
+    if (!$isRejected && $isApproved) {
+        $heroStatusPill  = 'pill-primary-soft';
+        $heroStatusLabel = 'Aprobada';
+    }
+    ?>
+
+    <?= $this->element('pipeline_sidebar', [
+        'icon'          => 'file-earmark-text',
+        'idLabel'       => $invoice->invoice_number ?? ('#' . $invoice->id),
+        'typeLabel'     => $invoice->document_type,
+        'statusPill'    => $heroStatusPill,
+        'statusLabel'   => $heroStatusLabel,
+        'isRejected'    => $isRejected,
+        'extraPillHtml' => $heroExtraPill,
+        'entityLabel'   => 'Proveedor',
+        'entityValue'   => $providerName,
+        'entitySubLabel' => $invoice->hasValue('operation_center')
+            ? $invoice->operation_center->name : null,
+        'amountLabel'   => 'Valor Factura',
+        'amount'        => $amountFmt,
+        'amountExtraHtml' => $amountExtraHtml,
+        'heroExtraHtml' => $heroExtraHtml,
+        'pipelineSteps'  => $pipelineSteps,
+        'pipelineLabels' => $pipelineLabels,
+        'currentStatus'  => $currentStatus,
+        'isTerminal'     => in_array($currentStatus,
+            [InvoiceConstants::STATUS_PAGADA, InvoiceConstants::STATUS_LEGALIZADA], true),
+        'modifiedAt'     => $invoice->modified,
+        'actionsHtml'    => $quickActionsHtml,
+    ]) ?>
 
     </aside>
 
