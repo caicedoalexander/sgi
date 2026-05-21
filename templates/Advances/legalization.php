@@ -275,12 +275,12 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <label class="form-label">Motivo *</label>
+                        <label class="input-label">Motivo *</label>
                         <?= $this->Form->control('reason', ['type' => 'textarea', 'rows' => 3, 'class' => 'form-control', 'required' => true, 'label' => false]) ?>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-warning">Devolver</button>
+                        <button type="submit" class="btn btn-primary">Devolver</button>
                     </div>
                 </div>
                 <?= $this->Form->end() ?>
@@ -304,12 +304,12 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
             <input type="hidden" name="expected_status" value="<?= h($leg->status) ?>">
             <div class="row g-2 align-items-end">
                 <div class="col-md-6">
-                    <label class="form-label">Monto del faltante (consignación pendiente)</label>
+                    <label class="input-label">Monto del faltante (consignación pendiente)</label>
                     <input type="text" name="shortage_amount" class="form-control currency-input"
                            value="<?= number_format($diff, 0, ',', '.') ?>" required>
                 </div>
                 <div class="col-md-6">
-                    <button type="submit" class="btn btn-warning w-100">
+                    <button type="submit" class="btn btn-primary w-100">
                         <i class="bi bi-arrow-down-circle me-1" aria-hidden="true"></i>Registrar faltante
                     </button>
                 </div>
@@ -320,7 +320,7 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
             <input type="hidden" name="expected_status" value="<?= h($leg->status) ?>">
             <div class="row g-2 align-items-end">
                 <div class="col-md-6">
-                    <label class="form-label">Monto del sobrante (reintegro a beneficiario)</label>
+                    <label class="input-label">Monto del sobrante (reintegro a beneficiario)</label>
                     <input type="text" name="surplus_amount" class="form-control currency-input"
                            value="<?= number_format(abs($diff), 0, ',', '.') ?>" required>
                 </div>
@@ -341,13 +341,10 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
                 </span>
             </div>
             <div class="d-flex flex-column gap-1 mb-3">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="text-uppercase fw-semibold flex-shrink-0"
-                          style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
-                        <i class="bi bi-bank me-1" aria-hidden="true"></i>Confirmar consignación
-                    </span>
-                    <div style="flex:1;height:1px;background:var(--border-color);"></div>
-                </div>
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-bank" aria-hidden="true"></i>Confirmar consignación
+                </span>
+                <div class="hr"></div>
                 <div class="d-flex align-items-center gap-2"
                      style="border-left:2px solid var(--secondary-color);padding:.35rem .7rem;">
                     <i class="bi bi-info-circle-fill flex-shrink-0"
@@ -364,15 +361,15 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
                   enctype="multipart/form-data">
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">N.º comprobante *</label>
+                    <label class="input-label">N.º comprobante *</label>
                     <input type="text" name="receipt_number" class="form-control" required>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Fecha</label>
+                    <label class="input-label">Fecha</label>
                     <input type="text" name="received_at" class="form-control flatpickr-date" value="<?= date('Y-m-d') ?>">
                 </div>
                 <div class="col-md-5">
-                    <label class="form-label">Soporte (PDF / imagen)</label>
+                    <label class="input-label">Soporte (PDF / imagen)</label>
                     <input type="file" name="receipt_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                 </div>
             </div>
@@ -437,13 +434,17 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
             'message' => 'El reintegro fue autorizado por el Contador. Confirme cuando el dinero haya salido del banco para cerrar la legalización.',
         ]) ?>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_LEGALIZADA): ?>
-        <div class="alert alert-success d-flex align-items-center gap-2 mb-0">
-            <i class="bi bi-check-circle-fill fs-5" aria-hidden="true"></i>
-            <span>
-                <strong>Legalizada</strong>
-                <?php if ($leg->legalized_at): ?> el <?= h(date('d/m/Y H:i', strtotime((string)$leg->legalized_at))) ?><?php endif; ?>
-                <?php if ($leg->case_type): ?> — caso <strong><?= h($caseLabels[$leg->case_type] ?? $leg->case_type) ?></strong><?php endif; ?>.
-            </span>
+        <div class="banner">
+            <div class="banner-icon" style="background:var(--primary-soft);color:var(--primary-color);">
+                <i class="bi bi-check-circle" aria-hidden="true"></i>
+            </div>
+            <div class="banner-body">
+                <div class="banner-msg">
+                    <strong>Legalizada</strong>
+                    <?php if ($leg->legalized_at): ?> el <?= h(date('d/m/Y H:i', strtotime((string)$leg->legalized_at))) ?><?php endif; ?>
+                    <?php if ($leg->case_type): ?> — caso <strong><?= h($caseLabels[$leg->case_type] ?? $leg->case_type) ?></strong>.<?php else: ?>.<?php endif; ?>
+                </div>
+            </div>
         </div>
         <?php endif; ?>
 
