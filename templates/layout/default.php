@@ -189,6 +189,10 @@ $advancesMineCount = $advancesMineCount ?? 0;
             <main class="p-4">
                 <?= $this->fetch('content') ?>
             </main>
+            <?php /* Formularios diferidos de Form->postLink(['block' => true]):
+                      se renderizan aquí, fuera de cualquier <form>, para evitar
+                      formularios anidados (HTML inválido que rompe el submit). */ ?>
+            <?= $this->fetch('postLink') ?>
         </div>
     </div>
 

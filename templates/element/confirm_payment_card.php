@@ -29,6 +29,7 @@ if (!($canConfirm ?? false) || !($isVerificacionPago ?? false)) {
             'class' => 'btn btn-primary',
             'escape' => false,
             'confirm' => '¿Confirmar que los soportes están completos y desea cerrar el flujo?',
+            'block' => true,
         ],
     ) ?>
 </div>
