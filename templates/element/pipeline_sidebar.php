@@ -2,33 +2,35 @@
 /**
  * Sidebar reutilizable para vistas edit/view de módulos con pipeline.
  *
- * Renderiza tres cards apiladas: Hero (icono + ID + estado + entidad + monto),
- * Pipeline vertical, y Registro/Auditoría.
+ * Renderiza cards apiladas: Hero (icono + ID + estado + entidad + monto),
+ * Pipeline vertical, Acciones (opcional) y Registro (opcional). Usa las clases
+ * v2 del sistema de diseño (.sgi-card, .pipeline-v / .pv-step).
  *
- * Llamado desde Invoices, PettyCashRecords, Refunds, PaymentSchedulings,
- * Advances y EmployeeNovelties. Espera la siguiente interfaz:
+ * El element es agnóstico a la grilla: la vista anfitriona aporta la columna.
  *
- * @var string   $icon            Clase de Bootstrap Icons (sin "bi bi-", e.g. 'wallet2')
- * @var string   $idLabel         ID o código a mostrar como hero (e.g. 'CM-2026-0042')
+ * @var \App\View\AppView $this
+ * @var string   $icon            Clase de Bootstrap Icons sin "bi bi-" (e.g. 'wallet2')
+ * @var string   $idLabel         ID o código (e.g. 'CM-2026-0042')
  * @var ?string  $typeLabel       Tipo de documento (pill secondary). null para omitir.
  * @var string   $statusPill      Clase pill del estado (e.g. 'pill-warning-soft')
  * @var string   $statusLabel     Texto del estado
- * @var bool     $isRejected      Si está rechazado (pinta pill-danger-soft "Rechazada")
- * @var ?string  $extraPillHtml   HTML adicional de pills (ej. "Pago Parcial"). null para omitir.
- * @var string   $entityLabel     Label para la entidad asociada (e.g. 'Proveedor', 'Beneficiario')
+ * @var bool     $isRejected      Si está rechazado (pill-danger-soft "Rechazada")
+ * @var ?string  $extraPillHtml   HTML adicional de pills. null para omitir.
+ * @var string   $entityLabel     Label de la entidad asociada (e.g. 'Proveedor')
  * @var string   $entityValue     Nombre de la entidad
- * @var ?string  $entitySubLabel  Línea secundaria (e.g. centro de operación). null para omitir.
- * @var ?string  $entitySubIcon   Icono para entitySubLabel
- * @var ?string  $amountLabel     Label del monto (e.g. 'Valor Factura'). null = no muestra monto.
- * @var ?float   $amount          Monto numérico. null = muestra "$ —"
- * @var ?string  $amountExtraHtml HTML adicional bajo el monto (e.g. pagado/saldo). null para omitir.
- * @var array    $pipelineSteps   Array de claves de pasos del pipeline (en orden)
+ * @var ?string  $entitySubLabel  Línea secundaria. null para omitir.
+ * @var ?string  $entitySubIcon   Icono (clase bi) para entitySubLabel
+ * @var ?string  $amountLabel     Label del monto. null = no muestra monto.
+ * @var ?float   $amount          Monto numérico. null/0 = muestra "$ —"
+ * @var ?string  $amountExtraHtml HTML pequeño bajo el monto. null para omitir.
+ * @var ?string  $heroExtraHtml   HTML libre al pie del hero (fechas, pagado/saldo). null para omitir.
+ * @var array    $pipelineSteps   Claves de pasos del pipeline en orden
  * @var array    $pipelineLabels  Map paso → label
  * @var string   $currentStatus   Paso actual
- * @var bool     $isTerminal      Si el estado actual es terminal (último paso renderiza como done)
- * @var ?\DateTimeInterface|\Cake\I18n\FrozenTime|null $modifiedAt
- * @var array    $registryLines   Array de ['icon'=>'bi-...', 'html'=>'string|HTML'] para auditoría
- * @var ?string  $actionsHtml     HTML opcional para la card de Acciones (botones de regresión, etc.). null = no card.
+ * @var bool     $isTerminal      Si el estado actual es terminal
+ * @var ?\DateTimeInterface $modifiedAt
+ * @var array    $registryLines   Array de ['icon'=>'bi-...', 'html'=>'string'] para auditoría
+ * @var ?string  $actionsHtml     HTML para la card de Acciones. null = no card.
  */
 $icon            = $icon            ?? 'file-earmark-text';
 $typeLabel       = $typeLabel       ?? null;
@@ -36,11 +38,14 @@ $statusPill      = $statusPill      ?? 'pill-muted';
 $statusLabel     = $statusLabel     ?? '—';
 $isRejected      = $isRejected      ?? false;
 $extraPillHtml   = $extraPillHtml   ?? null;
+$entityLabel     = $entityLabel     ?? null;
+$entityValue     = $entityValue     ?? null;
 $entitySubLabel  = $entitySubLabel  ?? null;
 $entitySubIcon   = $entitySubIcon   ?? 'bi-geo-alt';
 $amountLabel     = $amountLabel     ?? null;
 $amount          = $amount          ?? null;
 $amountExtraHtml = $amountExtraHtml ?? null;
+$heroExtraHtml   = $heroExtraHtml   ?? null;
 $pipelineSteps   = $pipelineSteps   ?? [];
 $pipelineLabels  = $pipelineLabels  ?? [];
 $isTerminal      = $isTerminal      ?? false;
@@ -54,20 +59,24 @@ if ($currentIdx === false) {
 }
 
 $amountInt = $amount !== null ? number_format(floor((float)$amount), 0, ',', '.') : null;
-$amountDec = $amount !== null ? sprintf(',%02d', (int)round(((float)$amount - floor((float)$amount)) * 100)) : null;
+$amountDec = $amount !== null
+    ? sprintf(',%02d', (int)round(((float)$amount - floor((float)$amount)) * 100))
+    : null;
 ?>
 
-<!-- Hero summary -->
-<div class="card" style="padding:20px;">
+<!-- Hero -->
+<div class="sgi-card" style="position:relative;">
     <div class="d-flex align-items-start" style="gap:12px;margin-bottom:16px;">
-        <div class="sgi-hero-icon">
-            <i class="bi bi-<?= h($icon) ?>" aria-hidden="true"></i>
+        <div style="width:40px;height:40px;background:var(--primary-soft-strong);color:var(--primary-color);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-<?= h($icon) ?>" aria-hidden="true" style="font-size:18px;"></i>
         </div>
         <div style="min-width:0;flex:1;">
-            <div class="sgi-hero-id"><?= h($idLabel) ?></div>
+            <div class="mono" style="font-size:16px;font-weight:700;color:var(--text-strong);line-height:1.15;">
+                <?= h($idLabel) ?>
+            </div>
             <div class="d-flex flex-wrap" style="gap:4px;margin-top:6px;">
                 <?php if ($typeLabel): ?>
-                    <span class="pill pill-secondary"><?= h($typeLabel) ?></span>
+                    <span class="pill pill-secondary-soft"><?= h($typeLabel) ?></span>
                 <?php endif; ?>
                 <?php if ($isRejected): ?>
                     <span class="pill pill-danger-soft">Rechazada</span>
@@ -85,7 +94,7 @@ $amountDec = $amount !== null ? sprintf(',%02d', (int)round(((float)$amount - fl
         <?= h($entityValue ?? '—') ?>
     </div>
     <?php if ($entitySubLabel): ?>
-    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" class="d-flex align-items-center gap-1">
+    <div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:4px;">
         <i class="bi <?= h($entitySubIcon) ?>" aria-hidden="true" style="font-size:11px;"></i>
         <span><?= h($entitySubLabel) ?></span>
     </div>
@@ -93,34 +102,37 @@ $amountDec = $amount !== null ? sprintf(',%02d', (int)round(((float)$amount - fl
     <?php endif; ?>
 
     <?php if ($amountLabel !== null): ?>
-    <div class="sgi-hero-divider">
-        <div class="sgi-label"><?= h($amountLabel) ?></div>
-        <div class="d-flex align-items-baseline" style="gap:4px;margin-top:4px;">
-            <?php if ($amount !== null && $amount > 0): ?>
-                <span class="sgi-hero-display">$ <?= $amountInt ?></span>
-                <span class="sgi-hero-decimals"><?= $amountDec ?></span>
-            <?php else: ?>
-                <span class="sgi-hero-display" style="color:var(--text-disabled);">$ —</span>
-            <?php endif; ?>
-        </div>
-        <?= $amountExtraHtml ?>
+    <div class="hr"></div>
+    <div class="sgi-label"><?= h($amountLabel) ?></div>
+    <div class="d-flex align-items-baseline" style="gap:4px;margin-top:4px;">
+        <?php if ($amount !== null && $amount > 0): ?>
+            <span class="sgi-display">$ <?= $amountInt ?></span>
+            <span style="font-size:13px;color:var(--text-faint);font-weight:500;"><?= $amountDec ?></span>
+        <?php else: ?>
+            <span class="sgi-display" style="color:var(--text-disabled);">$ —</span>
+        <?php endif; ?>
     </div>
+    <?= $amountExtraHtml ?>
     <?php endif; ?>
+
+    <?= $heroExtraHtml ?>
 </div>
 
 <!-- Pipeline vertical -->
 <?php if (!empty($pipelineSteps)): ?>
-<div class="card" style="padding:20px;">
-    <div class="sgi-section-head"><span class="sgi-label">Pipeline</span></div>
-    <div class="sgi-pipeline-v">
+<div class="sgi-card compact">
+    <span class="sgi-label">Pipeline</span>
+    <div class="pipeline-v" style="margin-top:8px;">
         <?php foreach ($pipelineSteps as $idx => $stepKey):
-            $isDone = $idx < $currentIdx || ($isTerminal && $idx === $currentIdx);
+            $isDone    = $idx < $currentIdx || ($isTerminal && $idx === $currentIdx);
             $isCurrent = !$isTerminal && $idx === $currentIdx;
             $stepLabel = $pipelineLabels[$stepKey] ?? $stepKey;
-            $stepClasses = 'sgi-pipeline-v-step';
-            if ($isDone) { $stepClasses .= ' is-done'; }
-            if ($isCurrent) { $stepClasses .= ' is-current'; }
-            if ($isCurrent && $isRejected) { $stepClasses .= ' is-rejected'; }
+
+            $cls = 'pv-step';
+            if ($isCurrent && $isRejected) { $cls .= ' is-rejected'; }
+            elseif ($isDone)               { $cls .= ' is-done'; }
+            elseif ($isCurrent)            { $cls .= ' is-current'; }
+            else                           { $cls .= ' is-pending'; }
 
             $stepMeta = null;
             if (($isCurrent || ($isTerminal && $idx === $currentIdx)) && $modifiedAt) {
@@ -129,20 +141,20 @@ $amountDec = $amount !== null ? sprintf(',%02d', (int)round(((float)$amount - fl
                 $stepMeta = 'Pendiente';
             }
         ?>
-        <div class="<?= $stepClasses ?>">
-            <div class="sgi-pipeline-v-marker">
+        <div class="<?= $cls ?>">
+            <div class="pv-marker">
                 <?php if ($isCurrent && $isRejected): ?>
                     <i class="bi bi-x" aria-hidden="true"></i>
                 <?php elseif ($isDone): ?>
-                    <i class="bi bi-check2" aria-hidden="true"></i>
+                    <i class="bi bi-check" aria-hidden="true"></i>
                 <?php elseif ($isCurrent): ?>
                     <span class="dot"></span>
                 <?php endif; ?>
             </div>
-            <div class="sgi-pipeline-v-content">
-                <div class="sgi-pipeline-v-label"><?= h($stepLabel) ?></div>
+            <div style="flex:1;min-width:0;padding-top:1px;">
+                <div class="pv-label"><?= h($stepLabel) ?></div>
                 <?php if ($stepMeta): ?>
-                    <div class="sgi-pipeline-v-meta"><?= h($stepMeta) ?></div>
+                    <div class="pv-meta"><?= h($stepMeta) ?></div>
                 <?php endif; ?>
             </div>
         </div>
@@ -153,25 +165,21 @@ $amountDec = $amount !== null ? sprintf(',%02d', (int)round(((float)$amount - fl
 
 <!-- Acciones (opcional) -->
 <?php if ($actionsHtml): ?>
-<div class="card" style="padding:16px 20px;">
-    <div class="sgi-section-head" style="margin-bottom:10px;">
-        <span class="sgi-label">Acciones</span>
-    </div>
-    <div class="sgi-edit-actions-list">
+<div class="sgi-card compact">
+    <span class="sgi-label">Acciones</span>
+    <div class="d-flex flex-column gap-1" style="margin-top:10px;">
         <?= $actionsHtml ?>
     </div>
 </div>
 <?php endif; ?>
 
-<!-- Registro / Auditoría -->
+<!-- Registro / Auditoría (opcional) -->
 <?php if (!empty($registryLines)): ?>
-<div class="card" style="padding:16px 20px;">
-    <div class="sgi-section-head" style="margin-bottom:10px;">
-        <span class="sgi-label">Registro</span>
-    </div>
+<div class="sgi-card compact">
+    <span class="sgi-label" style="margin-bottom:8px;display:block;">Registro</span>
     <?php foreach ($registryLines as $line): ?>
-    <div style="font-size:var(--fs-body-sm);color:var(--text-muted);" class="d-flex align-items-center gap-2 mb-1">
-        <i class="bi <?= h($line['icon'] ?? 'bi-info-circle') ?> sgi-fg-faint" aria-hidden="true"></i>
+    <div class="d-flex align-items-center gap-2 mb-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
+        <i class="bi <?= h($line['icon'] ?? 'bi-info-circle') ?>" aria-hidden="true"></i>
         <span><?= $line['html'] ?? '' ?></span>
     </div>
     <?php endforeach; ?>
