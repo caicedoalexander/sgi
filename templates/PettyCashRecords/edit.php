@@ -406,6 +406,7 @@ $totalDocs = count($docs);
                                                 'class'   => 'btn-icon',
                                                 'escape'  => false,
                                                 'title'   => 'Quitar',
+                                                'block'   => true,
                                             ]
                                         ) ?>
                                     </td>
@@ -592,6 +593,7 @@ $totalDocs = count($docs);
                         'escape'  => false,
                         'style'   => 'color:var(--danger-color);',
                         'confirm' => '¿Eliminar este registro? Las facturas agrupadas quedarán libres.',
+                        'block'   => true,
                     ]
                 ) ?>
                 <?php endif; ?>

@@ -278,7 +278,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                                         <?= $this->Form->postLink(
                                             '<i class="bi bi-x-lg" aria-hidden="true"></i>',
                                             ['action' => 'removeInvoice', $record->id, $inv->id],
-                                            ['confirm' => '¿Remover esta factura del registro?', 'class' => 'btn btn-sm btn-outline-danger', 'style' => 'padding:.15rem .4rem;font-size:.7rem;line-height:1;', 'escape' => false, 'title' => 'Quitar']
+                                            ['confirm' => '¿Remover esta factura del registro?', 'class' => 'btn btn-sm btn-outline-danger', 'style' => 'padding:.15rem .4rem;font-size:.7rem;line-height:1;', 'escape' => false, 'title' => 'Quitar', 'block' => true]
                                         ) ?>
                                     </td>
                                     <?php endif; ?>
@@ -461,7 +461,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                 <?= $this->Form->postLink(
                     '<i class="bi bi-trash" aria-hidden="true"></i>Eliminar',
                     ['action' => 'delete', $record->id],
-                    ['class' => 'btn btn-ghost-card sgi-fg-danger', 'escape' => false, 'confirm' => '¿Eliminar este registro? Las facturas agrupadas quedarán libres.']
+                    ['class' => 'btn btn-ghost-card sgi-fg-danger', 'escape' => false, 'confirm' => '¿Eliminar este registro? Las facturas agrupadas quedarán libres.', 'block' => true]
                 ) ?>
                 <?php endif; ?>
                 <?= $this->Html->link('Cancelar', ['action' => 'view', $record->id], ['class' => 'btn btn-ghost-card']) ?>
