@@ -109,8 +109,8 @@ $totalAmount = (float)$record->total_amount;
 // ── Soportes ─────────────────────────────────────────────────────
 $docs      = $record->petty_cash_documents ?? [];
 $totalDocs = count($docs);
-$obsCount  = count($record->petty_cash_observations ?? []);
 ?>
+
 
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
@@ -526,12 +526,8 @@ $obsCount  = count($record->petty_cash_observations ?? []);
             'confirmUrl'         => ['action' => 'confirmPayment', $record->id],
         ]) ?>
 
-        <?php /* ── Soportes + Observaciones (grid 2 columnas) ──── */ ?>
-        <div class="row g-3">
-
-            <?php /* ── Soportes ───────────────────────────────── */ ?>
-            <div class="col-md-6">
-                <div class="sgi-card h-100 d-flex flex-column">
+        <?php /* ── Soportes (ancho completo) ──── */ ?>
+        <div class="sgi-card d-flex flex-column">
                     <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
                         <span class="sgi-label d-inline-flex align-items-center gap-2">
                             <i class="bi bi-paperclip" aria-hidden="true"></i>
@@ -567,49 +563,6 @@ $obsCount  = count($record->petty_cash_observations ?? []);
                             ]) ?>
                         <?php endforeach; ?>
                     </div>
-                </div>
-            </div>
-
-            <?php /* ── Observaciones ──────────────────────────── */ ?>
-            <div class="col-md-6">
-                <div class="sgi-card h-100 d-flex flex-column">
-                    <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
-                        <span class="sgi-label d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-chat-square-text" aria-hidden="true"></i>
-                            Observaciones
-                            <span id="obs-count" class="sgi-folder-count"
-                                  <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
-                        </span>
-                    </div>
-
-                    <div id="obs-chat-scroll" class="sgi-obs-list">
-                        <?php foreach ($record->petty_cash_observations ?? [] as $obs): ?>
-                            <?= $this->element('observation_bubble', [
-                                'observation' => $obs,
-                                'isMine' => $currentUser && $obs->user_id === $currentUser->id,
-                            ]) ?>
-                        <?php endforeach; ?>
-                    </div>
-
-                    <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-                        <i class="bi bi-chat-square-text" aria-hidden="true" style="font-size:1.5rem;"></i>
-                        <span style="font-size:var(--fs-body-sm);">Sin observaciones aún</span>
-                    </div>
-
-                    <div class="sgi-obs-input-bar">
-                        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $record->id], 'id' => 'obs-form']) ?>
-                        <div class="sgi-obs-compose">
-                            <textarea name="message" class="auto-resize" rows="1"
-                                      placeholder="Escriba una observación..."></textarea>
-                            <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                                <i class="bi bi-send" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                        <?= $this->Form->end() ?>
-                    </div>
-                </div>
-            </div>
-
         </div>
 
         <?php /* ── Footer de acciones ──────────────────────────── */ ?>
@@ -656,6 +609,14 @@ $obsCount  = count($record->petty_cash_observations ?? []);
 </div>
 
 <?= $this->Form->end() ?>
+
+<?= $this->element('observations/drawer', [
+    'observations'    => $record->petty_cash_observations ?? [],
+    'count'           => count($record->petty_cash_observations ?? []),
+    'formUrl'         => ['action' => 'addObservation', $record->id],
+    'currentUserName' => $currentUser->full_name
+        ?? ($currentUser->username ?? 'Usuario'),
+]) ?>
 
 <?php /* ═══════════════════ MODALES ═══════════════════ */ ?>
 <?php if ($record->isAgrupacion()): ?>
@@ -707,7 +668,6 @@ $obsCount  = count($record->petty_cash_observations ?? []);
 
 <?= $this->element('document_row_template', ['showBadge' => false]) ?>
 <?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
-<?= $this->element('observation_chat_init') ?>
 
 <?php $this->append('script') ?>
 <script>
