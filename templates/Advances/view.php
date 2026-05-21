@@ -153,9 +153,11 @@ $isTerminal = $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA;
             </div>
         </div>
 
-        <div class="alert alert-info d-flex align-items-center gap-2 mb-0">
-            <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
-            <span>La legalización iniciará automáticamente cuando este anticipo llegue al estado <strong>Pagada</strong>.</span>
+        <div class="banner info">
+            <div class="banner-icon"><i class="bi bi-info-circle" aria-hidden="true"></i></div>
+            <div class="banner-body">
+                <div class="banner-msg">La legalización iniciará automáticamente cuando este anticipo llegue al estado <strong>Pagada</strong>.</div>
+            </div>
         </div>
 
     </main>
