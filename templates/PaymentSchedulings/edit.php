@@ -239,76 +239,35 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
             'message' => 'Los pagos fueron autorizados por el Contador. Confirme cuando el dinero haya salido del banco.',
         ]) ?>
 
-        <!-- Soportes + Observaciones -->
+        <!-- Soportes -->
         <?php $documents = $record->payment_scheduling_documents ?? []; ?>
-        <div class="sgi-edit-side-grid">
-            <!-- Soportes -->
-            <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
-                <div class="sgi-section-head" style="margin-bottom:12px;">
-                    <span class="sgi-label d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-paperclip" aria-hidden="true"></i>
-                        Soportes
-                        <span class="sgi-folder-count"><?= count($documents) ?> doc<?= count($documents) !== 1 ? 's' : '' ?></span>
-                    </span>
-                    <?php if (!$viewModel->isPagada): ?>
-                    <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
-                        <i class="bi bi-upload" aria-hidden="true"></i>Subir
-                    </button>
-                    <?php endif; ?>
-                </div>
-
-                <div id="docs-empty-state" class="sgi-dropzone-empty" <?= !empty($documents) ? 'style="display:none;"' : '' ?>>
+        <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
+            <div class="sgi-section-head" style="margin-bottom:12px;">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    <div>Sin soportes adjuntos</div>
-                </div>
-                <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-                    <?php foreach ($documents as $att): ?>
-                        <?= $this->element('document_row', [
-                            'doc'       => $att,
-                            'canDelete' => !$viewModel->isPagada,
-                            'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $att->id]),
-                            'showBadge' => false,
-                        ]) ?>
-                    <?php endforeach; ?>
-                </div>
+                    Soportes
+                    <span class="sgi-folder-count"><?= count($documents) ?> doc<?= count($documents) !== 1 ? 's' : '' ?></span>
+                </span>
+                <?php if (!$viewModel->isPagada): ?>
+                <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                    <i class="bi bi-upload" aria-hidden="true"></i>Subir
+                </button>
+                <?php endif; ?>
             </div>
 
-            <!-- Observaciones -->
-            <?php $obsCount = count($record->payment_scheduling_observations ?? []); ?>
-            <div class="card sgi-obs-card" style="padding:18px 20px;display:flex;flex-direction:column;">
-                <div class="sgi-section-head" style="margin-bottom:12px;">
-                    <span class="sgi-label d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-                        Observaciones
-                        <span id="obs-count" class="sgi-folder-count" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
-                    </span>
-                </div>
-
-                <div id="obs-chat-scroll" class="sgi-obs-list">
-                    <?php foreach ($record->payment_scheduling_observations ?? [] as $obs): ?>
-                        <?= $this->element('observation_bubble', [
-                            'observation' => $obs,
-                            'isMine' => $currentUser && $obs->user_id === $currentUser->id,
-                        ]) ?>
-                    <?php endforeach; ?>
-                </div>
-
-                <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-                    <i class="bi bi-chat-square-dots" aria-hidden="true" style="font-size:1.5rem;"></i>
-                    <span style="font-size:var(--fs-body-sm);">Sin observaciones aún</span>
-                </div>
-
-                <div class="sgi-obs-input-bar">
-                    <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $record->id], 'id' => 'obs-form']) ?>
-                    <div class="sgi-obs-compose">
-                        <textarea id="obs-message" name="message" class="auto-resize" rows="1"
-                                  placeholder="Escriba una observación..."></textarea>
-                        <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                            <i class="bi bi-send" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <?= $this->Form->end() ?>
-                </div>
+            <div id="docs-empty-state" class="sgi-dropzone-empty" <?= !empty($documents) ? 'style="display:none;"' : '' ?>>
+                <i class="bi bi-paperclip" aria-hidden="true"></i>
+                <div>Sin soportes adjuntos</div>
+            </div>
+            <div id="docs-list" style="max-height:420px;overflow-y:auto;">
+                <?php foreach ($documents as $att): ?>
+                    <?= $this->element('document_row', [
+                        'doc'       => $att,
+                        'canDelete' => !$viewModel->isPagada,
+                        'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $att->id]),
+                        'showBadge' => false,
+                    ]) ?>
+                <?php endforeach; ?>
             </div>
         </div>
 
@@ -421,7 +380,13 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
 
 <?= $this->element('document_row_template', ['showBadge' => false]) ?>
 <?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
-<?= $this->element('observation_chat_init') ?>
+<?= $this->element('observations/drawer', [
+    'observations'    => $record->payment_scheduling_observations ?? [],
+    'count'           => count($record->payment_scheduling_observations ?? []),
+    'formUrl'         => ['action' => 'addObservation', $record->id],
+    'currentUserName' => $currentUser->full_name
+        ?? ($currentUser->username ?? 'Usuario'),
+]) ?>
 
 <?php if (!empty($viewModel->canRegress) && empty($viewModel->regressLockMessage)): ?>
 <?= $this->element('regress_status_modal', [
