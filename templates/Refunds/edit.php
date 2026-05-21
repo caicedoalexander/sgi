@@ -199,10 +199,10 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                         <span class="sgi-label flex-shrink-0">
                             <i class="bi bi-person-badge me-1" aria-hidden="true"></i>Beneficiario
                         </span>
-                        <div class="sgi-flex-divider"></div>
+                        <div class="hr"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tipo</label>
+                        <label class="input-label">Tipo</label>
                         <div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="beneficiary_type" id="bt-employee" value="employee"
@@ -217,7 +217,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                         </div>
                     </div>
                     <div class="mb-3 sgi-beneficiary-employee" <?= $record->beneficiary_type === 'employee' ? '' : 'style="display:none;"' ?>>
-                        <label class="form-label">Empleado</label>
+                        <label class="input-label">Empleado</label>
                         <select name="beneficiary_employee_id" class="form-select select2-enable">
                             <option value="">Seleccione un empleado</option>
                             <?php foreach ($employees as $eid => $ename): ?>
@@ -226,7 +226,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                         </select>
                     </div>
                     <div class="mb-3 sgi-beneficiary-provider" <?= $record->beneficiary_type === 'provider' ? '' : 'style="display:none;"' ?>>
-                        <label class="form-label">Proveedor</label>
+                        <label class="input-label">Proveedor</label>
                         <select name="beneficiary_provider_id" class="form-select select2-enable">
                             <option value="">Seleccione un proveedor</option>
                             <?php foreach ($providers as $pid => $pname): ?>
@@ -244,7 +244,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                         <span class="sgi-label flex-shrink-0">
                             <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Agrupadas
                         </span>
-                        <div class="sgi-flex-divider"></div>
+                        <div class="hr"></div>
                         <span class="sgi-folder-count"><?= $invoiceCount ?></span>
                     </div>
 
@@ -323,11 +323,11 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                         <span class="sgi-label flex-shrink-0">
                             <i class="bi bi-calculator me-1" aria-hidden="true"></i>Contabilidad
                         </span>
-                        <div class="sgi-flex-divider"></div>
+                        <div class="hr"></div>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label d-block">Causada</label>
+                            <label class="input-label d-block">Causada</label>
                             <div class="form-check">
                                 <?php if ($canEditAccounting): ?>
                                 <input type="hidden" name="accrued" value="0">
@@ -341,7 +341,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Fecha de Causación<?= $canEditAccounting ? ' <span class="text-danger">*</span>' : '' ?></label>
+                            <label class="input-label">Fecha de Causación<?= $canEditAccounting ? ' <span class="text-danger">*</span>' : '' ?></label>
                             <?php if ($canEditAccounting): ?>
                             <input type="text" name="accrual_date" class="form-control flatpickr-date"
                                    value="<?= $record->accrual_date ? (is_string($record->accrual_date) ? $record->accrual_date : $record->accrual_date->format('Y-m-d')) : '' ?>">
@@ -351,7 +351,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                             <?php endif; ?>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Lista para Pago</label>
+                            <label class="input-label">Lista para Pago</label>
                             <?php if ($canEditAccounting): ?>
                             <select name="ready_for_payment" class="form-select">
                                 <?php foreach ($readyForPaymentOptions as $val => $lbl): ?>
@@ -408,76 +408,35 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
             'confirmUrl' => ['action' => 'confirmPayment', $record->id],
         ]) ?>
 
-        <!-- Soportes + Observaciones -->
-        <div class="sgi-edit-side-grid">
-            <?php $docs = $record->refund_documents ?? []; ?>
-            <!-- Soportes -->
-            <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
-                <div class="sgi-section-head" style="margin-bottom:12px;">
-                    <span class="sgi-label d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-paperclip" aria-hidden="true"></i>
-                        Soportes
-                        <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
-                    </span>
-                    <?php if (!$record->isPagada()): ?>
-                    <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#uploadRefundDocModal">
-                        <i class="bi bi-upload" aria-hidden="true"></i>Subir
-                    </button>
-                    <?php endif; ?>
-                </div>
-
-                <div id="docs-empty-state" class="sgi-dropzone-empty" <?= !empty($docs) ? 'style="display:none;"' : '' ?>>
+        <!-- Soportes -->
+        <?php $docs = $record->refund_documents ?? []; ?>
+        <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
+            <div class="sgi-section-head" style="margin-bottom:12px;">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    <div>Sin soportes adjuntos</div>
-                </div>
-                <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-                    <?php foreach ($docs as $doc): ?>
-                        <?= $this->element('document_row', [
-                            'doc'       => $doc,
-                            'canDelete' => !$record->isPagada(),
-                            'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
-                            'showBadge' => false,
-                        ]) ?>
-                    <?php endforeach; ?>
-                </div>
+                    Soportes
+                    <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
+                </span>
+                <?php if (!$record->isPagada()): ?>
+                <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#uploadRefundDocModal">
+                    <i class="bi bi-upload" aria-hidden="true"></i>Subir
+                </button>
+                <?php endif; ?>
             </div>
 
-            <!-- Observaciones -->
-            <?php $obsCount = count($record->refund_observations ?? []); ?>
-            <div class="card sgi-obs-card" style="padding:18px 20px;display:flex;flex-direction:column;">
-                <div class="sgi-section-head" style="margin-bottom:12px;">
-                    <span class="sgi-label d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-                        Observaciones
-                        <span id="obs-count" class="sgi-folder-count" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
-                    </span>
-                </div>
-
-                <div id="obs-chat-scroll" class="sgi-obs-list">
-                    <?php foreach ($record->refund_observations ?? [] as $obs): ?>
-                        <?= $this->element('observation_bubble', [
-                            'observation' => $obs,
-                            'isMine' => $currentUser && $obs->user_id === $currentUser->id,
-                        ]) ?>
-                    <?php endforeach; ?>
-                </div>
-
-                <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-                    <i class="bi bi-chat-square-dots" aria-hidden="true" style="font-size:1.5rem;"></i>
-                    <span style="font-size:var(--fs-body-sm);">Sin observaciones aún</span>
-                </div>
-
-                <div class="sgi-obs-input-bar">
-                    <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $record->id], 'id' => 'obs-form']) ?>
-                    <div class="sgi-obs-compose">
-                        <textarea name="message" class="auto-resize" rows="1"
-                                  placeholder="Escriba una observación..."></textarea>
-                        <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                            <i class="bi bi-send" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <?= $this->Form->end() ?>
-                </div>
+            <div id="docs-empty-state" class="sgi-dropzone-empty" <?= !empty($docs) ? 'style="display:none;"' : '' ?>>
+                <i class="bi bi-paperclip" aria-hidden="true"></i>
+                <div>Sin soportes adjuntos</div>
+            </div>
+            <div id="docs-list" style="max-height:420px;overflow-y:auto;">
+                <?php foreach ($docs as $doc): ?>
+                    <?= $this->element('document_row', [
+                        'doc'       => $doc,
+                        'canDelete' => !$record->isPagada(),
+                        'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
+                        'showBadge' => false,
+                    ]) ?>
+                <?php endforeach; ?>
             </div>
         </div>
 
@@ -520,6 +479,14 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
 
 <?= $this->Form->end() ?>
 
+<?= $this->element('observations/drawer', [
+    'observations'    => $record->refund_observations ?? [],
+    'count'           => count($record->refund_observations ?? []),
+    'formUrl'         => ['action' => 'addObservation', $record->id],
+    'currentUserName' => $currentUser->full_name
+        ?? ($currentUser->username ?? 'Usuario'),
+]) ?>
+
 <?php if ($record->isAgrupacion()): ?>
 <?= $this->element('link_invoices_modal', [
     'modalId'    => 'linkRefundInvoicesModal',
@@ -547,11 +514,11 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Tipo de Documento (opcional)</label>
+                        <label class="input-label">Tipo de Documento (opcional)</label>
                         <input type="text" name="document_type" class="form-control" placeholder="Ej. Soporte causación, Comprobante...">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Archivo</label>
+                        <label class="input-label">Archivo</label>
                         <input type="file" name="file" class="form-control" required accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
                         <div class="form-text">Máximo <?= h(\App\Constants\UploadConstants::MAX_BYTES_LABEL) ?> — PDF, imágenes, Word o Excel.</div>
                     </div>
@@ -568,7 +535,6 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
 
 <?= $this->element('document_row_template', ['showBadge' => false]) ?>
 <?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
-<?= $this->element('observation_chat_init') ?>
 
 <?php $this->append('script') ?>
 <script>
