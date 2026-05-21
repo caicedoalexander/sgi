@@ -79,7 +79,7 @@ $novIdLabel = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
 
 <!-- Grouped novelty alert -->
 <?php if ($novelty->isGrouped()): ?>
-<div class="alert alert-info d-flex align-items-center gap-2 mb-4" style="border-left:3px solid var(--info-color);">
+<div class="alert alert-info d-flex align-items-center gap-2 mb-4">
     <i class="bi bi-link-45deg fs-5" aria-hidden="true"></i>
     <div>
         Esta novedad pertenece al documento de liquidación
@@ -269,20 +269,15 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <?php endif; ?>
     </div>
 
-    <div class="card-body p-4" style="padding-top:0 !important;">
+    <div class="card-body p-4">
 
         <?php $hasEditableFields = !empty($editableFields ?? []); ?>
         <?php if ($hasEditableFields): ?>
         <!-- Section: Gestión (RRHH fields) -->
         <?php if (in_array('rrhh', $sections)): ?>
         <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
-                    <i class="bi bi-gear me-1" aria-hidden="true"></i>Gestión
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
+            <span class="sgi-label"><i class="bi bi-gear me-1" aria-hidden="true"></i>Gestión</span>
+            <div class="hr" style="margin:8px 0 14px;"></div>
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Registrado por</label>
@@ -327,13 +322,8 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <!-- Signatures -->
         <?php if (in_array('firmas', $sections) && $novelty->employee_signature): ?>
         <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
-                    <i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
+            <span class="sgi-label"><i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas</span>
+            <div class="hr" style="margin:8px 0 14px;"></div>
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label small">Firma del Funcionario</label>
@@ -349,13 +339,8 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <!-- Approver section (when in aprobacion status) -->
         <?php if (in_array('aprobacion', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION && !$isRejected): ?>
         <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
-                    <i class="bi bi-person-check me-1" aria-hidden="true"></i>Aprobación
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
+            <span class="sgi-label"><i class="bi bi-person-check me-1" aria-hidden="true"></i>Aprobación</span>
+            <div class="hr" style="margin:8px 0 14px;"></div>
             <?= $this->Form->create(null, ['url' => ['action' => 'resendApproval', $novelty->id]]) ?>
             <div class="row g-3 align-items-end">
                 <div class="col-md-6">
@@ -404,13 +389,8 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
 
         <?php if (in_array('contabilidad', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_CONTABILIDAD && !$novelty->isGrouped() && !$isRejected): ?>
         <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
-                    <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Asignar a Documento de Liquidación
-                </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
+            <span class="sgi-label"><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Asignar a Documento de Liquidación</span>
+            <div class="hr" style="margin:8px 0 14px;"></div>
             <?= $this->Form->create(null, ['url' => ['action' => 'assignLiquidation', $novelty->id]]) ?>
             <div class="row g-3 align-items-end">
                 <?php if (!empty($liquidationDocs)): ?>
@@ -474,9 +454,6 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
 
 <?= $this->element('email_log_panel', ['emailLogs' => $emailLogs ?? []]) ?>
 
-<!-- Soportes + Observaciones (grid lateral) -->
-<div class="sgi-edit-side-grid">
-
 <!-- Soportes -->
 <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
     <div class="sgi-section-head" style="margin-bottom:12px;">
@@ -521,48 +498,6 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
     </div>
 </div>
 
-<!-- Observations chat -->
-<?php $obsCount = count($novelty->novelty_observations ?? []); ?>
-<div class="card sgi-obs-card" style="padding:18px 20px;display:flex;flex-direction:column;">
-    <div class="sgi-section-head" style="margin-bottom:12px;">
-        <span class="sgi-label d-inline-flex align-items-center gap-2">
-            <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-            Observaciones
-            <span id="obs-count" class="sgi-folder-count" <?= $obsCount === 0 ? 'style="display:none;"' : '' ?>><?= $obsCount ?></span>
-        </span>
-    </div>
-
-    <div id="obs-chat-scroll" class="sgi-obs-list">
-        <?php foreach ($novelty->novelty_observations ?? [] as $obs): ?>
-            <?= $this->element('observation_bubble', [
-                'observation' => $obs,
-                'isMine' => $currentUser && $obs->user_id === $currentUser->id,
-            ]) ?>
-        <?php endforeach; ?>
-    </div>
-
-    <div id="obs-empty-state" class="sgi-obs-empty" <?= $obsCount > 0 ? 'hidden' : '' ?>>
-        <i class="bi bi-chat-square-dots" style="font-size:1.75rem;" aria-hidden="true"></i>
-        <span style="font-size:var(--fs-body);">Sin observaciones aún</span>
-    </div>
-
-    <?php if (!$isRejected && !$novelty->isPaid()): ?>
-    <div class="sgi-obs-input-bar">
-        <?= $this->Form->create(null, ['url' => ['action' => 'addObservation', $novelty->id], 'id' => 'obs-form']) ?>
-        <div class="sgi-obs-compose">
-            <textarea name="message" class="auto-resize" rows="1"
-                      placeholder="Escriba una observación..."></textarea>
-            <button type="submit" class="sgi-obs-compose-send" title="Enviar">
-                <i class="bi bi-send" aria-hidden="true"></i>
-            </button>
-        </div>
-        <?= $this->Form->end() ?>
-    </div>
-    <?php endif; ?>
-</div>
-
-</div><!-- /sgi-edit-side-grid -->
-
     </main>
 </div><!-- /sgi-invoice-view-grid -->
 
@@ -598,7 +533,13 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
 
 <?= $this->element('document_row_template', ['showBadge' => true]) ?>
 <?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
-<?= $this->element('observation_chat_init') ?>
+<?= $this->element('observations/drawer', [
+    'observations'    => $novelty->novelty_observations ?? [],
+    'count'           => count($novelty->novelty_observations ?? []),
+    'formUrl'         => ['action' => 'addObservation', $novelty->id],
+    'currentUserName' => $currentUser->full_name
+        ?? ($currentUser->username ?? 'Usuario'),
+]) ?>
 
 <?php $this->append('script') ?>
 <script>
