@@ -98,6 +98,11 @@ class AdvancesController extends AppController
             $query->where(['Invoices.pipeline_status' => $pipelineStatus]);
         }
 
+        $search = trim((string)$this->request->getQuery('search', ''));
+        if ($search !== '') {
+            $query->where(['Invoices.invoice_number LIKE' => '%' . $search . '%']);
+        }
+
         $advances = $this->paginate($query);
 
         $this->set(compact('advances', 'visibleStatuses'));
@@ -124,6 +129,11 @@ class AdvancesController extends AppController
         $pipelineStatus = (string)$this->request->getQuery('pipeline_status', '');
         if ($pipelineStatus !== '') {
             $query->where(['Invoices.pipeline_status' => $pipelineStatus]);
+        }
+
+        $search = trim((string)$this->request->getQuery('search', ''));
+        if ($search !== '') {
+            $query->where(['Invoices.invoice_number LIKE' => '%' . $search . '%']);
         }
 
         $advances = $this->paginate($query);
@@ -160,6 +170,11 @@ class AdvancesController extends AppController
                 'AdvanceLegalization',
             ])
             ->orderBy(['Invoices.created' => 'DESC']);
+
+        $search = trim((string)$this->request->getQuery('search', ''));
+        if ($search !== '') {
+            $query->where(['Invoices.invoice_number LIKE' => '%' . $search . '%']);
+        }
 
         $advances = $this->paginate($query);
         $visibleStatuses = [];
