@@ -294,119 +294,80 @@ $noveltyCount  = count($doc->employee_novelties ?? []);
         </div>
         <?php endif; ?>
 
-        <!-- Soportes + Observaciones (grid lateral) -->
-        <div class="sgi-edit-side-grid">
-
-            <!-- Soportes -->
-            <div class="card" style="padding:18px 20px;">
-                <div class="sgi-section-head" style="margin-bottom:12px;">
-                    <span class="sgi-label d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-paperclip" aria-hidden="true"></i>
-                        Soportes
-                        <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
-                    </span>
+        <!-- Documento de Liquidación (destacado) -->
+        <div class="sgi-card d-flex flex-column">
+            <div class="d-flex align-items-center" style="margin-bottom:12px;">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                    Documento de Liquidación
+                </span>
+            </div>
+            <?php if ($liquidationDocument ?? null): ?>
+            <div class="doc-row row-flex gap-12" style="padding:10px 12px;background:var(--bg-muted);">
+                <div class="doc-icon row-flex" style="justify-content:center;flex-shrink:0;width:30px;">
+                    <i class="bi <?= h($this->DocumentIcon->iconClass($liquidationDocument->mime_type)) ?>"
+                       style="color:<?= h($this->DocumentIcon->iconColor($liquidationDocument->mime_type)) ?>;font-size:18px;" aria-hidden="true"></i>
                 </div>
-
-                <!-- Documento de Liquidación -->
-                <div style="padding:.3rem .6rem;background:var(--primary-soft);display:flex;align-items:center;gap:.4rem;margin-bottom:8px;">
-                    <span class="pill pill-primary">D. Liquidación</span>
+                <div class="grow">
+                    <div title="<?= h($liquidationDocument->file_name) ?>"
+                         style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <?= h($liquidationDocument->file_name) ?>
+                    </div>
+                    <div class="row-flex gap-6 mono sgi-body-faint" style="margin-top:2px;">
+                        <span><?= $liquidationDocument->created?->format('d/m/Y H:i') ?></span>
+                        <?php if ($liquidationDocument->file_size): ?>
+                        <span>· <?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
+                        <?php endif; ?>
+                    </div>
                 </div>
-                <?php if ($liquidationDocument ?? null): ?>
-                <div style="display:flex;align-items:center;gap:.75rem;padding:.8rem .75rem;background:var(--primary-soft);margin-bottom:10px;">
-                    <div style="width:34px;height:34px;flex-shrink:0;background:#fff;display:flex;align-items:center;justify-content:center;">
-                        <i class="bi <?= h($this->DocumentIcon->iconClass($liquidationDocument->mime_type)) ?>"
-                           style="color:<?= h($this->DocumentIcon->iconColor($liquidationDocument->mime_type)) ?>;font-size:1rem;"></i>
-                    </div>
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35;"
-                             title="<?= h($liquidationDocument->file_name) ?>">
-                            <?= h($liquidationDocument->file_name) ?>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem;flex-wrap:wrap;">
-                            <span style="font-size:var(--fs-label);color:var(--text-disabled);">
-                                <i class="bi bi-clock" style="font-size:var(--fs-micro);" aria-hidden="true"></i>
-                                <?= $liquidationDocument->created?->format('d/m/Y H:i') ?>
-                            </span>
-                            <?php if ($liquidationDocument->file_size): ?>
-                            <span style="font-size:var(--fs-meta);color:var(--text-disabled);"><?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                <div class="row-flex gap-4" style="flex-shrink:0;">
                     <?= $this->Html->link(
-                        '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
+                        '<i class="bi bi-eye" aria-hidden="true"></i>',
                         '/' . $liquidationDocument->file_path,
-                        ['class' => 'btn btn-sm btn-ghost-card', 'style' => 'padding:.25rem .45rem;line-height:1;', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
+                        ['class' => 'btn-icon', 'escape' => false, 'target' => '_blank', 'rel' => 'noopener noreferrer', 'title' => 'Abrir']
                     ) ?>
                 </div>
-                <?php else: ?>
-                <div style="display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;background:var(--bg-muted);margin-bottom:10px;">
-                    <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);" aria-hidden="true"></i>
-                    <span style="font-size:var(--fs-body-sm);color:var(--text-disabled);">Sin documento</span>
-                </div>
-                <?php endif; ?>
-
-                <!-- Lista de soportes -->
-                <?php if (empty($documentsByStatus)): ?>
-                <div class="sgi-dropzone-empty">
-                    <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    <div>Sin soportes adjuntos</div>
-                </div>
-                <?php else: ?>
-                <div style="max-height:420px;overflow-y:auto;">
-                    <?php
-                    $multipleStatuses = count($documentsByStatus) > 1;
-                    foreach ($documentsByStatus as $status => $docs):
-                    ?>
-                    <?php if ($multipleStatuses): ?>
-                    <div style="padding:.3rem .6rem;background:var(--bg-subtle);display:flex;align-items:center;gap:.4rem;">
-                        <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>"><?= $statusLabels[$status] ?? $status ?></span>
-                        <span style="font-size:var(--fs-label);color:var(--text-disabled);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
-                    </div>
-                    <?php endif; ?>
-                    <?php foreach ($docs as $docFile): ?>
-                        <?= $this->element('document_row', [
-                            'doc'          => $docFile,
-                            'canDelete'    => false,
-                            'deleteUrl'    => null,
-                            'showBadge'    => !$multipleStatuses,
-                            'badgeColors'  => $badgeColors,
-                            'statusLabels' => $statusLabels,
-                        ]) ?>
-                    <?php endforeach; ?>
-                    <?php endforeach; ?>
-                </div>
-                <?php endif; ?>
             </div>
-
-            <!-- Observaciones -->
-            <?php $obsList = $doc->novelty_observations ?? []; ?>
-            <div class="card sgi-obs-card" style="padding:18px 20px;">
-                <div class="sgi-section-head" style="margin-bottom:12px;">
-                    <span class="sgi-label d-inline-flex align-items-center gap-2">
-                        <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-                        Observaciones
-                        <span class="sgi-folder-count"><?= count($obsList) ?></span>
-                    </span>
+            <?php else: ?>
+            <div class="empty-state">
+                <div class="es-icon es-icon-neutral">
+                    <i class="bi bi-file-earmark-x" aria-hidden="true"></i>
                 </div>
-
-                <?php if (empty($obsList)): ?>
-                <div class="sgi-obs-empty">
-                    <i class="bi bi-chat-square-dots" aria-hidden="true" style="font-size:1.5rem;"></i>
-                    <span style="font-size:var(--fs-body-sm);">Sin observaciones</span>
-                </div>
-                <?php else: ?>
-                <div class="sgi-obs-list" style="max-height:400px;">
-                    <?php foreach ($obsList as $obs): ?>
-                        <?= $this->element('observation_bubble', [
-                            'observation' => $obs,
-                            'isMine' => false,
-                        ]) ?>
-                    <?php endforeach; ?>
-                </div>
-                <?php endif; ?>
+                <div class="es-title">Sin documento de liquidación</div>
             </div>
+            <?php endif; ?>
+        </div>
 
-        </div><!-- /sgi-edit-side-grid -->
+        <?php /* ── Soportes ──────────────────────────────────── */ ?>
+        <?php
+        $docGroups = [];
+        $multipleDocStatuses = count($documentsByStatus) > 1;
+        foreach ($documentsByStatus as $status => $docs) {
+            $rows = [];
+            foreach ($docs as $docFile) {
+                $rows[] = [
+                    'doc'          => $docFile,
+                    'canDelete'    => false,
+                    'deleteUrl'    => null,
+                    'showBadge'    => !$multipleDocStatuses,
+                    'badgeColors'  => $badgeColors,
+                    'statusLabels' => $statusLabels,
+                ];
+            }
+            $docGroups[] = [
+                'label'    => $multipleDocStatuses ? ($statusLabels[$status] ?? $status) : null,
+                'pillKind' => $multipleDocStatuses ? ($badgeColors[$status] ?? 'pill-muted') : null,
+                'rows'     => $rows,
+            ];
+        }
+        ?>
+        <?= $this->element('documents_section', [
+            'groups'        => $docGroups,
+            'totalDocs'     => $totalDocs,
+            'canUpload'     => false,
+            'uploadModalId' => null,
+            'emptyTitle'    => 'Sin soportes adjuntos',
+        ]) ?>
 
         <!-- Historial de Cambios del Grupo -->
         <?php if (!empty($groupHistories)): ?>
@@ -456,3 +417,9 @@ $noveltyCount  = count($doc->employee_novelties ?? []);
 
     </main>
 </div><!-- /sgi-invoice-view-grid -->
+<?= $this->element('observations/drawer', [
+    'observations'    => $doc->novelty_observations ?? [],
+    'count'           => count($doc->novelty_observations ?? []),
+    'formUrl'         => ['action' => 'addObservation', $doc->id],
+    'currentUserName' => $currentUser->full_name ?? ($currentUser->username ?? 'Usuario'),
+]) ?>
