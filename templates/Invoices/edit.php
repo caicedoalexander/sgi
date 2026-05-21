@@ -1036,14 +1036,18 @@ $canRegress = !empty($viewModel->canRegress);
 <?= $this->element('invoice_edit/upload_doc_modal', ['invoice' => $invoice]) ?>
 <?php endif; ?>
 
-<?= $this->element('invoice_edit/observations_drawer', [
-    'invoice' => $invoice,
-    'currentUser' => $currentUser,
+<?= $this->element('observations/drawer', [
+    'observations'    => $invoice->invoice_observations ?? [],
+    'count'           => is_array($invoice->invoice_observations ?? null)
+        ? count($invoice->invoice_observations) : 0,
+    'formUrl'         => ['action' => 'addObservation', $invoice->id],
+    'currentUserName' => $currentUser->full_name
+        ?? ($currentUser->username ?? 'Usuario'),
 ]) ?>
 
 <?= $this->element('document_row_template', ['showBadge' => true]) ?>
 <?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
 
-<?php /* El chat de observaciones es autocontenido en observations_drawer.php
+<?php /* El chat de observaciones es autocontenido en observations/drawer.php
          (emite su <template> e inicializa SgiObservationChat). */ ?>
 <?= $this->element('invoice_edit/scripts', ['isAdvance' => $isAdvance]) ?>
