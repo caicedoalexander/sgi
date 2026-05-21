@@ -276,39 +276,6 @@ $noveltyName = $novelty->custom_name ?: ($novelty->employee->full_name ?? ('Nove
     </div>
     <?php endif; ?>
 
-    <!-- Observations (read-only, like invoices/view) -->
-    <?php if (!empty($novelty->novelty_observations)): ?>
-    <div style="border-bottom:1px solid var(--border-color);">
-        <div class="sgi-label">Observaciones</div>
-        <div style="padding:.5rem 1.25rem .875rem;max-height:400px;overflow-y:auto;">
-            <?php foreach ($novelty->novelty_observations as $obs): ?>
-            <div class="d-flex align-items-start gap-2 mb-3">
-                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
-                     style="width:32px;height:32px;background:var(--primary-color);color:#fff;font-size:.7rem;font-weight:700;">
-                    <?php
-                    $names = explode(' ', $obs->user->full_name ?? '');
-                    echo strtoupper(substr($names[0] ?? '', 0, 1) . substr($names[1] ?? '', 0, 1));
-                    ?>
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div class="d-flex align-items-center gap-2">
-                        <span style="font-size:.8rem;font-weight:600;color:var(--text-default);">
-                            <?= h($obs->user->full_name ?? '') ?>
-                        </span>
-                        <span style="font-size:.7rem;color:var(--text-disabled);">
-                            <?= $obs->created ? $obs->created->format('d/m/Y H:i') : '' ?>
-                        </span>
-                    </div>
-                    <div style="font-size:.84rem;color:var(--text-muted);line-height:1.5;margin-top:.15rem;">
-                        <?= nl2br(h($obs->message)) ?>
-                    </div>
-                </div>
-            </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-    <?php endif; ?>
-
     <!-- General observations (legacy field) -->
     <?php if ($novelty->observations): ?>
     <div style="border-top:1px solid var(--rule);">
@@ -322,69 +289,36 @@ $noveltyName = $novelty->custom_name ?: ($novelty->employee->full_name ?? ('Nove
     <?php endif; ?>
     </div><!-- /card Información + Gestión -->
 
-<!-- Documents (read-only, grid layout like invoices/view) -->
-<div class="card" style="padding:18px 20px;">
-    <div class="sgi-section-head" style="margin-bottom:12px;">
-        <span class="sgi-label d-inline-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" aria-hidden="true"></i>
-            Soportes
-            <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
-        </span>
-    </div>
-
-    <?php if (empty($documentsByStatus)): ?>
-        <div class="p-3 text-center text-muted" style="font-size:var(--fs-title-card)">
-            <i class="bi bi-file-earmark-x me-1" aria-hidden="true"></i>Sin soportes adjuntos
-        </div>
-    <?php else: ?>
-        <div class="p-3">
-            <div class="row row-cols-1 row-cols-md-3 g-3">
-                <?php foreach ($documentsByStatus as $status => $docs): ?>
-                    <?php foreach ($docs as $doc): ?>
-                    <div class="col">
-                        <div style="border:1px solid var(--border-color);height:100%;display:flex;flex-direction:column;">
-                            <div style="padding:.6rem .875rem;border-bottom:1px solid var(--border-color);background:var(--bg-muted);display:flex;align-items:center;gap:.5rem;min-width:0;">
-                                <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> flex-shrink-0"
-                                   style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.1rem;"></i>
-                                <div style="min-width:0;flex:1;overflow:hidden;">
-                                    <span style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;" title="<?= h($doc->file_name) ?>">
-                                        <?= h($doc->file_name) ?>
-                                    </span>
-                                </div>
-                            </div>
-                            <div style="padding:.6rem .875rem;flex:1;font-size:var(--fs-body);color:var(--text-muted);display:flex;flex-direction:column;gap:.3rem;">
-                                <div>
-                                    <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:var(--fs-label);">
-                                        <?= $statusLabels[$status] ?? $status ?>
-                                    </span>
-                                </div>
-                                <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-muted);">
-                                    <i class="bi bi-person" style="font-size:.8rem;" aria-hidden="true"></i>
-                                    <span><?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?></span>
-                                </div>
-                                <div style="display:flex;align-items:center;gap:.35rem;color:var(--text-faint);">
-                                    <i class="bi bi-clock" style="font-size:var(--fs-body-sm);" aria-hidden="true"></i>
-                                    <span><?= $doc->created?->format('d/m/Y H:i') ?></span>
-                                </div>
-                                <?php if ($doc->file_size): ?>
-                                <div style="color:var(--text-disabled);font-size:.72rem;"><?= $this->Number->toReadableSize($doc->file_size) ?></div>
-                                <?php endif; ?>
-                            </div>
-                            <div style="padding:.5rem .875rem;border-top:1px solid var(--border-color);text-align:right;">
-                                <?= $this->Html->link(
-                                    '<i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Abrir',
-                                    '/' . $doc->file_path,
-                                    ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank']
-                                ) ?>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    <?php endif; ?>
-</div>
+<?php /* ── Soportes ──────────────────────────────────── */ ?>
+<?php
+$docGroups = [];
+$multipleDocStatuses = count($documentsByStatus) > 1;
+foreach ($documentsByStatus as $status => $docs) {
+    $rows = [];
+    foreach ($docs as $doc) {
+        $rows[] = [
+            'doc'          => $doc,
+            'canDelete'    => false,
+            'deleteUrl'    => null,
+            'showBadge'    => !$multipleDocStatuses,
+            'badgeColors'  => $badgeColors,
+            'statusLabels' => $statusLabels,
+        ];
+    }
+    $docGroups[] = [
+        'label'    => $multipleDocStatuses ? ($statusLabels[$status] ?? $status) : null,
+        'pillKind' => $multipleDocStatuses ? ($badgeColors[$status] ?? 'pill-muted') : null,
+        'rows'     => $rows,
+    ];
+}
+?>
+<?= $this->element('documents_section', [
+    'groups'        => $docGroups,
+    'totalDocs'     => $totalDocs,
+    'canUpload'     => false,
+    'uploadModalId' => null,
+    'emptyTitle'    => 'Sin soportes adjuntos',
+]) ?>
 
 <!-- Change History -->
 <?php if (!empty($novelty->novelty_histories)): ?>
@@ -424,3 +358,10 @@ $noveltyName = $novelty->custom_name ?: ($novelty->employee->full_name ?? ('Nove
 
     </main>
 </div><!-- /sgi-invoice-view-grid -->
+<?= $this->element('observations/drawer', [
+    'observations'    => $novelty->novelty_observations ?? [],
+    'count'           => count($novelty->novelty_observations ?? []),
+    'formUrl'         => ['action' => 'addObservation', $novelty->id],
+    'currentUserName' => $currentUser->full_name
+        ?? ($currentUser->username ?? 'Usuario'),
+]) ?>
