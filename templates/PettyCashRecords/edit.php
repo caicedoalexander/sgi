@@ -11,7 +11,8 @@
  * secciones condicionales por estado/rol, forms (registrar pago, subir
  * documento, vincular facturas, observaciones), hidden inputs, CSRF, IDs
  * requeridos por el JS (#pettyCashEditForm, #upload-doc-form, #docs-list,
- * #docs-empty-state, #obs-form, #obs-count, #obs-chat-scroll, #obs-empty-state).
+ * #docs-empty-state, #obs-form, #obs-count, #obs-chat-scroll, #obs-empty-state
+ * — estos últimos son emitidos por el element `observations/drawer`).
  *
  * El controller pasa los datos via $this->set(get_object_vars($vm)),
  * desempaquetando PettyCashEditViewModel en variables individuales.
@@ -110,7 +111,6 @@ $totalAmount = (float)$record->total_amount;
 $docs      = $record->petty_cash_documents ?? [];
 $totalDocs = count($docs);
 ?>
-
 
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
@@ -528,41 +528,41 @@ $totalDocs = count($docs);
 
         <?php /* ── Soportes (ancho completo) ──── */ ?>
         <div class="sgi-card d-flex flex-column">
-                    <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
-                        <span class="sgi-label d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-paperclip" aria-hidden="true"></i>
-                            Soportes
-                            <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
-                        </span>
-                        <?php if (!$record->isPagada()): ?>
-                        <button type="button" class="btn btn-default btn-sm"
-                                data-bs-toggle="modal" data-bs-target="#uploadPcDocModal">
-                            <i class="bi bi-upload" aria-hidden="true"></i>Subir
-                        </button>
-                        <?php endif; ?>
-                    </div>
+            <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-paperclip" aria-hidden="true"></i>
+                    Soportes
+                    <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
+                </span>
+                <?php if (!$record->isPagada()): ?>
+                <button type="button" class="btn btn-default btn-sm"
+                        data-bs-toggle="modal" data-bs-target="#uploadPcDocModal">
+                    <i class="bi bi-upload" aria-hidden="true"></i>Subir
+                </button>
+                <?php endif; ?>
+            </div>
 
-                    <div id="docs-empty-state" class="empty-state"
-                         <?= !empty($docs) ? 'style="display:none;"' : '' ?>>
-                        <div class="es-icon es-icon-neutral">
-                            <i class="bi bi-paperclip" aria-hidden="true"></i>
-                        </div>
-                        <div class="es-title">Sin soportes adjuntos</div>
-                        <?php if (!$record->isPagada()): ?>
-                        <div class="es-msg">PDF, imágenes, Word o Excel.</div>
-                        <?php endif; ?>
-                    </div>
+            <div id="docs-empty-state" class="empty-state"
+                 <?= !empty($docs) ? 'style="display:none;"' : '' ?>>
+                <div class="es-icon es-icon-neutral">
+                    <i class="bi bi-paperclip" aria-hidden="true"></i>
+                </div>
+                <div class="es-title">Sin soportes adjuntos</div>
+                <?php if (!$record->isPagada()): ?>
+                <div class="es-msg">PDF, imágenes, Word o Excel.</div>
+                <?php endif; ?>
+            </div>
 
-                    <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-                        <?php foreach ($docs as $doc): ?>
-                            <?= $this->element('document_row', [
-                                'doc'       => $doc,
-                                'canDelete' => !$record->isPagada(),
-                                'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
-                                'showBadge' => false,
-                            ]) ?>
-                        <?php endforeach; ?>
-                    </div>
+            <div id="docs-list" style="max-height:420px;overflow-y:auto;">
+                <?php foreach ($docs as $doc): ?>
+                    <?= $this->element('document_row', [
+                        'doc'       => $doc,
+                        'canDelete' => !$record->isPagada(),
+                        'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
+                        'showBadge' => false,
+                    ]) ?>
+                <?php endforeach; ?>
+            </div>
         </div>
 
         <?php /* ── Footer de acciones ──────────────────────────── */ ?>
