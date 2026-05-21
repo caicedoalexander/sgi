@@ -154,66 +154,78 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
     <div class="card" style="padding:20px;">
 
         <!-- Sección: Facturas vinculadas -->
+        <?php $liGrid = 'display:grid;grid-template-columns:1.1fr 1.8fr 0.9fr 1fr 1.2fr 32px;gap:12px;align-items:center;'; ?>
         <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">
-                    <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Facturas vinculadas
+            <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
+                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-link-45deg" aria-hidden="true"></i>Facturas vinculadas
                 </span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
                 <?php if ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#advanceLinkModal">
-                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Vincular
+                <button type="button" class="btn btn-default btn-sm" data-bs-toggle="modal" data-bs-target="#advanceLinkModal">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i>Vincular
                 </button>
                 <?php endif; ?>
             </div>
+
             <?php if ($linkedCount === 0): ?>
-            <div class="text-muted text-center py-3" style="font-size:.85rem;">
-                <i class="bi bi-inbox me-1" aria-hidden="true"></i>Sin facturas vinculadas
+            <div class="empty-state">
+                <div class="es-icon es-icon-neutral">
+                    <i class="bi bi-inbox" aria-hidden="true"></i>
+                </div>
+                <div class="es-title">Sin facturas vinculadas</div>
             </div>
             <?php else: ?>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th># Factura</th>
-                            <th>Beneficiario</th>
-                            <th>Fecha</th>
-                            <th class="text-end">Monto</th>
-                            <th>Estado</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($linkedInvoices as $li): ?>
-                        <tr class="clickable-row" data-href="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'view', $li->id]) ?>">
-                            <td class="mono" style="font-weight:600;"><?= h($li->invoice_number ?: '#' . $li->id) ?></td>
-                            <td><?= h($li->provider->name ?? ($li->employee->full_name ?? '—')) ?></td>
-                            <td><?= $li->issue_date?->format('d/m/Y') ?? '—' ?></td>
-                            <td class="text-end" style="font-weight:600;">$ <?= $this->Number->format((float)$li->amount, ['places' => 2]) ?></td>
-                            <td><span class="pill <?= InvoicePresentation::STATUS_BADGES[$li->pipeline_status] ?? 'pill-muted' ?>"><?= h(InvoiceConstants::STATUS_LABELS[$li->pipeline_status] ?? $li->pipeline_status) ?></span></td>
-                            <td class="text-end">
-                                <?php if ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
-                                <?= $this->Form->postLink(
-                                    '<i class="bi bi-x-lg" aria-hidden="true"></i>',
-                                    ['action' => 'unlinkInvoice', $invoice->id, $li->id],
-                                    ['class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'confirm' => '¿Desvincular esta factura?', 'title' => 'Desvincular']
-                                ) ?>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                    <tfoot>
-                        <tr style="background:var(--bg-muted);">
-                            <td colspan="3" class="text-end" style="font-weight:600;color:var(--text-muted);">Total vinculado</td>
-                            <td class="text-end" style="font-weight:700;color:var(--primary-color);">
-                                $ <?= $this->Number->format($linkedTotal, ['places' => 2]) ?>
-                            </td>
-                            <td colspan="2"></td>
-                        </tr>
-                    </tfoot>
-                </table>
+            <div class="sgi-card" style="padding:0;">
+                <div style="<?= $liGrid ?>padding:9px 14px;background:var(--bg-subtle);font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:0.6px;text-transform:uppercase;" role="row">
+                    <span># Factura</span>
+                    <span>Beneficiario</span>
+                    <span>Fecha</span>
+                    <span style="text-align:right;">Monto</span>
+                    <span>Estado</span>
+                    <span aria-hidden="true"></span>
+                </div>
+                <?php foreach ($linkedInvoices as $idx => $li): ?>
+                <div class="clickable-row" role="row"
+                     data-href="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'view', $li->id]) ?>"
+                     style="<?= $liGrid ?>padding:11px 14px;background:#fff;cursor:pointer;<?= $idx > 0 ? 'border-top:1px solid var(--rule);' : '' ?>">
+                    <span class="mono" style="font-size:12px;font-weight:700;color:var(--text-strong);">
+                        <?= h($li->invoice_number ?: '#' . $li->id) ?>
+                    </span>
+                    <span style="font-size:12px;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <?= h($li->provider->name ?? ($li->employee->full_name ?? '—')) ?>
+                    </span>
+                    <span class="mono" style="font-size:11.5px;color:var(--text-muted);">
+                        <?= $li->issue_date?->format('d/m/Y') ?? '—' ?>
+                    </span>
+                    <span class="mono" style="text-align:right;font-size:12.5px;font-weight:700;color:var(--text-default);">
+                        $ <?= number_format((float)$li->amount, 0, ',', '.') ?>
+                    </span>
+                    <span>
+                        <span class="pill <?= InvoicePresentation::STATUS_BADGES[$li->pipeline_status] ?? 'pill-muted' ?> pill-sm">
+                            <?= h(strtoupper(InvoiceConstants::STATUS_LABELS[$li->pipeline_status] ?? $li->pipeline_status)) ?>
+                        </span>
+                    </span>
+                    <span style="display:flex;justify-content:flex-end;">
+                        <?php if ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
+                        <?= $this->Form->postLink(
+                            '<i class="bi bi-x-lg" aria-hidden="true"></i>',
+                            ['action' => 'unlinkInvoice', $invoice->id, $li->id],
+                            ['class' => 'btn-icon', 'escape' => false, 'confirm' => '¿Desvincular esta factura?', 'title' => 'Desvincular']
+                        ) ?>
+                        <?php endif; ?>
+                    </span>
+                </div>
+                <?php endforeach; ?>
+                <div style="<?= $liGrid ?>padding:10px 14px;background:var(--bg-subtle);border-top:1px solid var(--rule);">
+                    <span style="grid-column:1 / 4;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">
+                        Total vinculado
+                    </span>
+                    <span class="mono" style="text-align:right;font-size:12.5px;font-weight:700;color:var(--primary-color);">
+                        $ <?= number_format($linkedTotal, 0, ',', '.') ?>
+                    </span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </div>
             </div>
             <?php endif; ?>
         </div>
