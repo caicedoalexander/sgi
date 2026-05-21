@@ -78,9 +78,11 @@ en `main` → validación manual del usuario.
   creación es transversal a 23 archivos (incl. `Invoices/add`); no es divergencia
   flujo-vs-Facturas.
 - **Cabeceras de `view`/`edit`** (`sgi-page-title`, `sgi-page-header`,
-  `sgi-edit-id-chip`, `btn-ghost-card` — clases sin CSS) son preexistentes y
-  transversales (~85 archivos). **Fuera del alcance** de esta migración; pendiente
-  de decisión del usuario si se aborda como esfuerzo aparte.
+  `sgi-edit-id-chip`, `btn-ghost-card` — clases sin CSS) — fueron **fuera del
+  alcance** de esta migración, pero se abordaron después como esfuerzo aparte
+  (solo-CSS): spec `docs/superpowers/specs/2026-05-21-cabeceras-view-edit-design.md`,
+  commit `af4e469`. Se definieron las 5 clases en `styles.css`/`components.css`
+  sin tocar markup.
 - **EmployeeNovelties — diferidos**: la tabla "Historial de Cambios" de `view.php`
   se dejó como `<table>`; la card Bootstrap de `edit.php` solo se limpió el
   `!important` (sin reestructurar). Documentado en el self-review de su plan.
@@ -114,5 +116,5 @@ en `main` → validación manual del usuario.
 
 ## Pendiente de respuesta del usuario
 
-El usuario no respondió aún si las **cabeceras de view/edit** (clases sin CSS,
-~85 archivos) entran en algún momento al alcance. Retomar esa pregunta si procede.
+Sin pendientes. La única pregunta abierta (cabeceras de view/edit) se resolvió —
+ver "Decisiones de alcance ya tomadas".
