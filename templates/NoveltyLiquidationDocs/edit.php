@@ -526,7 +526,7 @@ $noveltyCount      = $viewModel->noveltyCount;
         formSelector:        '#upload-doc-form',
         listSelector:        '#docs-list',
         emptySelector:       '#docs-empty-state',
-        counterSelector:     '.sgi-folder-count',
+        counterSelector:     '#docs-folder-count',
         rowTemplateSelector: '#doc-row-template',
         modalSelector:       '#uploadDocModal',
         csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
