@@ -1,6 +1,8 @@
 # Migración de módulos de flujo al diseño de Facturas — PROGRESO
 
-> Documento de continuidad. Última actualización: **2026-05-21**. HEAD: `d53b851` (rama `main`, todo commiteado, nada pusheado).
+> Documento de continuidad. Última actualización: **2026-05-21**. HEAD: `83d69bc` (rama `main`, todo commiteado, nada pusheado).
+>
+> ✅ **MIGRACIÓN COMPLETA** — los 7 módulos migrados y el chat viejo retirado.
 
 ## Qué es esto
 
@@ -12,7 +14,7 @@ consolidación de elementos** (drawer de observaciones, `documents_section`,
 - **Spec:** `docs/superpowers/specs/2026-05-20-migracion-modulos-flujo-design.md`
 - **Spec de la consolidación previa:** `docs/superpowers/specs/2026-05-20-consolidacion-elementos-compartidos-design.md`
 
-## Estado: 6 de 7 completados
+## Estado: 7 de 7 completados ✅
 
 | Módulo | Estado | Plan |
 |---|---|---|
@@ -22,35 +24,26 @@ consolidación de elementos** (drawer de observaciones, `documents_section`,
 | EmployeeNovelties | ✅ migrado | `docs/superpowers/plans/2026-05-20-migracion-employee-novelties.md` |
 | Advances | ✅ migrado | `docs/superpowers/plans/2026-05-20-migracion-advances.md` |
 | NoveltyLiquidationDocs | ✅ migrado | `docs/superpowers/plans/2026-05-20-migracion-novelty-liquidation-docs.md` |
-| **Employees/view** | ⏳ PENDIENTE (último — solo observaciones) | — falta escribir el plan |
+| Employees/view | ✅ migrado | `docs/superpowers/plans/2026-05-20-migracion-employees-view.md` |
 
-## Cómo reanudar mañana
+## Cierre de la migración — ✅ hecho
 
-El flujo por módulo (definido en el spec, sección "Flujo de trabajo"):
+- Eliminados `templates/element/observation_bubble.php`,
+  `observation_bubble_template.php`, `observation_chat_init.php` (commit `83d69bc`).
+- Verificado: `git grep` en `templates/` de `observation_bubble*` /
+  `observation_chat_init` y de `.sgi-row-fact*` / `.sgi-status-tab*` → 0 resultados.
+- `webroot/js/sgi-observation-chat.js` se conserva — lo usa `observations/drawer`.
 
-1. Invocar la skill **`superpowers:writing-plans`** y escribir el plan del módulo
-   en `docs/superpowers/plans/2026-05-20-migracion-<modulo>.md`.
-2. Ejecutar con **`superpowers:subagent-driven-development`**: por cada tarea, un
-   subagente implementador (modelo `sonnet`) + un subagente revisor de spec. La
-   revisión de calidad de código corre **una sola vez al final** del plan (no por
-   tarea — preferencia del usuario).
-3. Commits directos en `main`. Validación funcional manual la hace el usuario
-   entre módulos.
+Todo el trabajo está commiteado en `main`, **nada pusheado**. La validación
+funcional final (recorrer las vistas de los 7 módulos en el navegador) la hace el
+usuario.
 
-Queda **Employees/view** (último módulo; cierra la migración).
+## Flujo que se siguió (referencia)
 
-## Desglose del módulo pendiente (del spec)
-
-### Employees/view
-- Solo: el chat de observaciones ad-hoc (`observation_bubble`) → `observations/drawer`.
-
-## Cierre de la migración (tras Employees/view)
-
-Cuando ningún consumidor use ya el chat viejo:
-- Eliminar `templates/element/observation_bubble.php`,
-  `observation_bubble_template.php`, `observation_chat_init.php`.
-- Verificar que no quedan referencias a `.sgi-row-fact*` / `.sgi-status-tab*` ni a
-  `observation_bubble*` en `templates/`.
+Un spec → por cada módulo, en el orden de ejecución: `writing-plans` → ejecución
+con `subagent-driven-development` (implementador `sonnet` + revisor de spec por
+tarea; revisión de calidad de código una vez al final del plan) → commits directos
+en `main` → validación manual del usuario.
 
 ## Patrones establecidos (repetidos en cada módulo)
 
@@ -103,6 +96,12 @@ Cuando ningún consumidor use ya el chat viejo:
   tuvo que pasar de `.sgi-folder-count` a `#docs-folder-count` (commit `d53b851`,
   regresión detectada en la revisión de calidad — `#docs-list` ya no vive dentro de
   `.card` sino de `.sgi-card`).
+- **Employees/view — pestaña de observaciones**: la vista es tabbed; adoptar el
+  `observations/drawer` flotante implicó **eliminar la pestaña "Observaciones"**
+  (botón de nav + panel) — decisión aprobada por el usuario. Las observaciones
+  quedan accesibles desde cualquier pestaña vía el disparador fijo del drawer.
+  El CSS `.sgi-obs-*` del chat viejo queda muerto pero limpiarlo está fuera de
+  alcance (el spec solo pedía verificar referencias en `templates/`).
 - **Advances — Soportes de `legalization.php`**: los 3 documentos especiales
   (Relación de facturas / Comprobante de consignación / Historial de firmas) **no**
   se forzaron a `documents_section` — no encajan (reemplazo-subida AJAX, "documento"
