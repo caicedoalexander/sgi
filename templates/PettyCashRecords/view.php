@@ -99,127 +99,59 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
     <!-- ═════════════════════════ COLUMNA IZQUIERDA ═════════════════════════ -->
     <aside style="display:flex;flex-direction:column;gap:14px;min-width:0;">
 
-        <!-- Hero card -->
-        <div class="sgi-card">
-            <div class="d-flex align-items-start" style="gap:12px;margin-bottom:16px;">
-                <div style="width:40px;height:40px;background:var(--primary-soft-strong);color:var(--primary-color);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <i class="bi bi-wallet2" aria-hidden="true" style="font-size:18px;"></i>
-                </div>
-                <div style="min-width:0;flex:1;">
-                    <div class="mono" style="font-size:16px;font-weight:700;color:var(--text-strong);line-height:1.1;">
-                        <?= h($record->code) ?>
-                    </div>
-                    <div class="d-flex flex-wrap" style="gap:4px;margin-top:6px;">
-                        <span class="pill pill-secondary-soft">Caja Menor</span>
-                        <span class="pill <?= h($pcStatusPill) ?>"><?= h($pcStatusLabel) ?></span>
-                    </div>
-                </div>
-            </div>
+    <?php
+    // Acciones rápidas (Editar registro / Volver).
+    $quickActions = [];
+    if ($canEdit) {
+        $quickActions[] = ['icon' => 'bi-pencil', 'label' => 'Editar registro',
+            'url' => $this->Url->build(['action' => 'edit', $record->id])];
+    }
+    $quickActions[] = ['icon' => 'bi-arrow-left', 'label' => 'Volver al listado',
+        'url' => $this->Url->build(['action' => 'index'])];
+    ob_start();
+    foreach ($quickActions as $a) {
+        echo $this->Html->link(
+            '<i class="bi ' . h($a['icon']) . '" aria-hidden="true"></i><span>' . h($a['label']) . '</span>',
+            $a['url'],
+            ['class' => 'btn btn-ghost btn-sm', 'escape' => false,
+             'style' => 'justify-content:flex-start;width:100%;gap:8px;']
+        );
+    }
+    $quickActionsHtml = ob_get_clean();
 
-            <div class="sgi-label">Centro de Operación</div>
-            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);margin-top:4px;line-height:1.3;">
-                <?= h($record->operation_center->name ?? '—') ?>
-            </div>
-            <div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:4px;">
-                <i class="bi bi-receipt" aria-hidden="true" style="font-size:11px;"></i>
-                <span><?= $invoiceCount ?> factura<?= $invoiceCount !== 1 ? 's' : '' ?></span>
-            </div>
+    // Línea "Pagado" bajo el monto, cuando el registro está en estado terminal.
+    $amountExtraHtml = '';
+    if ($isTerminal && $record->payment_date) {
+        $amountExtraHtml = '<div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">'
+            . '<i class="bi bi-check-circle sgi-fg-primary" aria-hidden="true" style="font-size:11px;"></i>'
+            . '<span>Pagado · <span class="mono">' . h($record->payment_date->format('d/m/Y')) . '</span></span></div>';
+    }
+    ?>
 
-            <div class="hr"></div>
+    <?= $this->element('pipeline_sidebar', [
+        'icon'          => 'wallet2',
+        'idLabel'       => $record->code,
+        'typeLabel'     => 'Caja Menor',
+        'statusPill'    => $pcStatusPill,
+        'statusLabel'   => $pcStatusLabel,
+        'isRejected'    => false,
+        'entityLabel'   => 'Centro de Operación',
+        'entityValue'   => $record->operation_center->name ?? '—',
+        'entitySubLabel' => $invoiceCount . ' factura' . ($invoiceCount !== 1 ? 's' : ''),
+        'entitySubIcon'  => 'bi-receipt',
+        'amountLabel'   => 'Total',
+        'amount'        => $amountFmt,
+        'amountExtraHtml' => $amountExtraHtml,
+        'pipelineSteps'  => $pipelineSteps,
+        'pipelineLabels' => $statusLabels,
+        'currentStatus'  => $currentStatus,
+        'isTerminal'     => $isTerminal,
+        'modifiedAt'     => $record->modified,
+        'actionsHtml'    => $quickActionsHtml,
+    ]) ?>
 
-            <div class="sgi-label">Total</div>
-            <div class="d-flex align-items-baseline" style="gap:4px;margin-top:4px;">
-                <?php $amountColor = $isTerminal ? 'var(--primary-color)' : 'var(--text-strong)'; ?>
-                <?php if ($amountFmt > 0): ?>
-                    <span class="sgi-display" style="color:<?= $amountColor ?>;">$ <?= $amountInt ?></span>
-                    <span style="font-size:13px;color:var(--text-faint);font-weight:500;"><?= $amountDec ?></span>
-                <?php else: ?>
-                    <span class="sgi-display" style="color:var(--text-disabled);">$ —</span>
-                <?php endif; ?>
-            </div>
-            <?php if ($isTerminal && $record->payment_date): ?>
-            <div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">
-                <i class="bi bi-check-circle sgi-fg-primary" aria-hidden="true" style="font-size:11px;"></i>
-                <span>Pagado · <span class="mono"><?= $record->payment_date->format('d/m/Y') ?></span></span>
-            </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Pipeline vertical (inline) -->
-        <div class="sgi-card">
-            <div class="d-flex justify-content-between align-items-center" style="margin-bottom:6px;">
-                <span class="sgi-label">Pipeline</span>
-            </div>
-            <div class="pipeline-v">
-                <?php
-                foreach ($pipelineSteps as $idx => $stepKey):
-                    $isDone    = $idx < $currentIdx || ($isTerminal && $idx === $currentIdx);
-                    $isCurrent = !$isTerminal && $idx === $currentIdx;
-                    $stepLabel = $statusLabels[$stepKey] ?? $stepKey;
-
-                    $cls = 'pv-step';
-                    if ($isDone)        { $cls .= ' is-done'; }
-                    elseif ($isCurrent) { $cls .= ' is-current'; }
-                    else                { $cls .= ' is-pending'; }
-
-                    $stepMeta = null;
-                    if ($isCurrent || ($isTerminal && $idx === $currentIdx)) {
-                        $stepMeta = $record->modified?->format('d/m H:i');
-                    } elseif (!$isDone) {
-                        $stepMeta = 'Pendiente';
-                    }
-                ?>
-                <div class="<?= $cls ?>">
-                    <div class="pv-marker">
-                        <?php if ($isDone): ?>
-                            <i class="bi bi-check" aria-hidden="true"></i>
-                        <?php elseif ($isCurrent): ?>
-                            <span class="dot"></span>
-                        <?php endif; ?>
-                    </div>
-                    <div style="flex:1;min-width:0;padding-top:1px;">
-                        <div class="pv-label"><?= h($stepLabel) ?></div>
-                        <?php if ($stepMeta): ?>
-                            <div class="pv-meta"><?= h($stepMeta) ?></div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <!-- Acciones rápidas -->
-        <?php
-        $actions = [];
-        if ($canEdit) {
-            $actions[] = [
-                'icon'  => 'bi-pencil',
-                'label' => 'Editar registro',
-                'url'   => $this->Url->build(['action' => 'edit', $record->id]),
-            ];
-        }
-        $actions[] = [
-            'icon'  => 'bi-arrow-left',
-            'label' => 'Volver al listado',
-            'url'   => $this->Url->build(['action' => 'index']),
-        ];
-        ?>
-        <div class="sgi-card compact">
-            <div class="sgi-label" style="margin-bottom:10px;">Acciones</div>
-            <div class="col-flex" style="gap:2px;">
-                <?php foreach ($actions as $a): ?>
-                    <?= $this->Html->link(
-                        '<i class="bi ' . h($a['icon']) . '" aria-hidden="true"></i><span>' . h($a['label']) . '</span>',
-                        $a['url'],
-                        [
-                            'class'  => 'btn btn-ghost btn-sm',
-                            'escape' => false,
-                            'style'  => 'justify-content:flex-start;width:100%;gap:8px;',
-                        ]
-                    ) ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
+    <?php /* La card "Registro / auditoría" existente y el </aside> se conservan
+             tal cual a continuación de esta llamada. */ ?>
 
         <!-- Registro / auditoría -->
         <div class="sgi-card compact">
