@@ -40,13 +40,33 @@ $navTabColor = fn(string $status) => match ($status) {
                 <div style="font-size:15px;font-weight:700;color:var(--text-strong);">Empleados</div>
                 <div style="font-size:10.5px;color:var(--text-faint);margin-top:2px;">0 en el directorio</div>
             </div>
-            <?php if ($canCreate) : ?>
-                <?= $this->Html->link(
-                    '<i class="bi bi-plus-lg" aria-hidden="true"></i>Nuevo',
-                    ['action' => 'add'],
-                    ['class' => 'btn btn-primary btn-sm', 'escape' => false],
-                ) ?>
-            <?php endif; ?>
+            <div class="dropdown">
+                <button type="button" class="btn btn-primary btn-sm dropdown-toggle"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    Acciones
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <?php if ($canCreate) : ?>
+                    <li><?= $this->Html->link(
+                        '<i class="bi bi-person-plus" aria-hidden="true"></i>Nuevo empleado',
+                        ['action' => 'add'],
+                        ['class' => 'dropdown-item', 'escape' => false],
+                    ) ?></li>
+                    <li>
+                        <button type="button" class="dropdown-item"
+                                data-bs-toggle="modal" data-bs-target="#importExcelModal">
+                            <i class="bi bi-download" aria-hidden="true"></i>Importar
+                        </button>
+                    </li>
+                    <?php endif; ?>
+                    <li>
+                        <button type="button" class="dropdown-item"
+                                data-bs-toggle="modal" data-bs-target="#exportExcelModal">
+                            <i class="bi bi-box-arrow-up" aria-hidden="true"></i>Exportar
+                        </button>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         <form method="get" class="emp-nav-search input" role="search"
@@ -125,3 +145,10 @@ $navTabColor = fn(string $status) => match ($status) {
     </div>
 </section>
 </div>
+
+<?= $this->element('excel_wizard/modals', [
+    'module' => 'Employees',
+    'entityName' => 'Empleados',
+    'downloadSlug' => 'empleados',
+    'importable' => true,
+]) ?>
