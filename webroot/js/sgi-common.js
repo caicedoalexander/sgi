@@ -196,6 +196,30 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // ── Tabs del sistema de diseño (.tabs > .tab) ───────────────────────────
+    // Reemplaza al plugin Bootstrap Tab: éste alterna la clase `active`, pero
+    // el sistema de diseño estiliza el estado activo con `is-active`. Cada .tab
+    // referencia su .tab-pane vía data-bs-target (selector CSS del panel).
+    document.querySelectorAll('.tabs').forEach(function (group) {
+        var tabs = group.querySelectorAll('.tab');
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                var sel = tab.getAttribute('data-bs-target');
+                var panel = sel ? document.querySelector(sel) : null;
+                if (!panel) return;
+                tabs.forEach(function (t) { t.classList.remove('is-active'); });
+                tab.classList.add('is-active');
+                var content = panel.closest('.tab-content');
+                if (content) {
+                    content.querySelectorAll('.tab-pane').forEach(function (p) {
+                        p.classList.remove('show', 'active');
+                    });
+                }
+                panel.classList.add('show', 'active');
+            });
+        });
+    });
+
     // ── Modal AJAX loader (audit SU-003) ─────────────────────────────────────
     // Cualquier modal con data-load-url carga su .modal-content vía fetch al
     // momento de abrirse. Evita cargas de queries pesadas en el render del

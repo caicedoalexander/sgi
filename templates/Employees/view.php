@@ -397,7 +397,7 @@ $navTabColor = fn(string $status) => match ($status) {
     <!-- Tabs -->
     <ul class="nav tabs" role="tablist" style="padding-left:4px;">
         <li class="nav-item" role="presentation">
-            <button class="tab is-active" data-bs-toggle="tab" data-bs-target="#tab-docs" type="button" role="tab">
+            <button class="tab is-active" data-bs-target="#tab-docs" type="button" role="tab">
                 <i class="bi bi-file-earmark-text" aria-hidden="true"></i> Documentos
                 <?php if ($totalDocs > 0): ?>
                     <span class="tab-badge"><?= $totalDocs ?></span>
@@ -405,17 +405,17 @@ $navTabColor = fn(string $status) => match ($status) {
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="tab" data-bs-toggle="tab" data-bs-target="#tab-perfil" type="button" role="tab">
+            <button class="tab" data-bs-target="#tab-perfil" type="button" role="tab">
                 <i class="bi bi-person" aria-hidden="true"></i> Perfil
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="tab" data-bs-toggle="tab" data-bs-target="#tab-contrato" type="button" role="tab">
+            <button class="tab" data-bs-target="#tab-contrato" type="button" role="tab">
                 <i class="bi bi-file-earmark" aria-hidden="true"></i> Contrato
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="tab" data-bs-toggle="tab" data-bs-target="#tab-novedades" type="button" role="tab">
+            <button class="tab" data-bs-target="#tab-novedades" type="button" role="tab">
                 <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Novedades
                 <?php if ($noveltyCount > 0): ?>
                     <span class="tab-badge"><?= $noveltyCount ?></span>
@@ -423,7 +423,7 @@ $navTabColor = fn(string $status) => match ($status) {
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="tab" data-bs-toggle="tab" data-bs-target="#tab-historial" type="button" role="tab">
+            <button class="tab" data-bs-target="#tab-historial" type="button" role="tab">
                 <i class="bi bi-clock-history" aria-hidden="true"></i> Historial
                 <?php if ($historyCount > 0): ?>
                     <span class="tab-badge"><?= $historyCount ?></span>
