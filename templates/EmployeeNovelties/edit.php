@@ -269,31 +269,33 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <?php endif; ?>
     </div>
 
-    <div class="card-body p-4">
+    <div class="card" style="padding:20px;">
 
         <?php $hasEditableFields = !empty($editableFields ?? []); ?>
         <?php if ($hasEditableFields): ?>
         <!-- Section: Gestión (RRHH fields) -->
         <?php if (in_array('rrhh', $sections)): ?>
         <div class="mb-4">
-            <span class="sgi-label"><i class="bi bi-gear me-1" aria-hidden="true"></i>Gestión</span>
-            <div class="hr" style="margin:8px 0 14px;"></div>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="sgi-label flex-shrink-0"><i class="bi bi-gear me-1" aria-hidden="true"></i>Gestión</span>
+                <div class="hr"></div>
+            </div>
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Registrado por</label>
+                    <label class="input-label">Registrado por</label>
                     <input type="text" class="form-control" disabled
                            value="<?= h($novelty->registered_by_user->full_name ?? '—') ?>">
                 </div>
                 <?php if ($novelty->rrhh_by_user): ?>
                 <div class="col-md-4">
-                    <label class="form-label">Procesado RRHH</label>
+                    <label class="input-label">Procesado RRHH</label>
                     <input type="text" class="form-control" disabled
                            value="<?= h($novelty->rrhh_by_user->full_name ?? '—') ?>">
                 </div>
                 <?php endif; ?>
                 <?php if ($novelty->passes_payroll !== null): ?>
                 <div class="col-md-4">
-                    <label class="form-label">Pasa a Nómina</label>
+                    <label class="input-label">Pasa a Nómina</label>
                     <div class="pt-1">
                         <span class="pill pill-<?= $novelty->passes_payroll ? 'primary-soft' : 'muted' ?>">
                             <?= $novelty->passes_payroll ? 'Sí' : 'No' ?>
@@ -306,12 +308,12 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
             <!-- Liquidation doc link -->
             <?php if ($novelty->isGrouped()): ?>
             <div class="mt-3">
-                <label class="form-label">Documento de Liquidación</label>
+                <label class="input-label">Documento de Liquidación</label>
                 <div>
                     <?= $this->Html->link(
                         '<i class="bi bi-link-45deg me-1" aria-hidden="true"></i>' . h($novelty->novelty_liquidation_doc->liquidation_number ?? 'Ver'),
                         ['controller' => 'NoveltyLiquidationDocs', 'action' => 'view', $novelty->liquidation_doc_id],
-                        ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false]
+                        ['class' => 'btn btn-sm btn-ghost-card', 'escape' => false]
                     ) ?>
                 </div>
             </div>
@@ -322,14 +324,16 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <!-- Signatures -->
         <?php if (in_array('firmas', $sections) && $novelty->employee_signature): ?>
         <div class="mb-4">
-            <span class="sgi-label"><i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas</span>
-            <div class="hr" style="margin:8px 0 14px;"></div>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="sgi-label flex-shrink-0"><i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas</span>
+                <div class="hr"></div>
+            </div>
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label small">Firma del Funcionario</label>
+                    <label class="input-label">Firma del Funcionario</label>
                     <div>
                         <img src="<?= $this->Url->build('/' . $novelty->employee_signature) ?>" alt="Firma"
-                             style="max-width:300px;max-height:120px;border:1px solid var(--border-color);">
+                             style="max-width:300px;max-height:120px;background:var(--bg-subtle);padding:6px;">
                     </div>
                 </div>
             </div>
@@ -339,12 +343,14 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <!-- Approver section (when in aprobacion status) -->
         <?php if (in_array('aprobacion', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION && !$isRejected): ?>
         <div class="mb-4">
-            <span class="sgi-label"><i class="bi bi-person-check me-1" aria-hidden="true"></i>Aprobación</span>
-            <div class="hr" style="margin:8px 0 14px;"></div>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="sgi-label flex-shrink-0"><i class="bi bi-person-check me-1" aria-hidden="true"></i>Aprobación</span>
+                <div class="hr"></div>
+            </div>
             <?= $this->Form->create(null, ['url' => ['action' => 'resendApproval', $novelty->id]]) ?>
             <div class="row g-3 align-items-end">
                 <div class="col-md-6">
-                    <label class="form-label">Aprobador</label>
+                    <label class="input-label">Aprobador</label>
                     <?= $this->Form->control('approver_id', [
                         'label' => false,
                         'options' => $approversList ?? [],
@@ -365,12 +371,12 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
 
         <!-- Stage-specific actions -->
         <?php if ($novelty->pipeline_status === NoveltyConstants::STATUS_RRHH && !$isRejected): ?>
-        <div class="pt-3" style="border-top:1px solid var(--border-color);">
+        <div class="pt-3" style="border-top:1px solid var(--rule);">
             <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id]]) ?>
             <?= $this->Form->hidden('expected_status', ['value' => $novelty->pipeline_status]) ?>
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label">Pasa a Nómina</label>
+                    <label class="input-label">Pasa a Nómina</label>
                     <select name="passes_payroll" class="form-select" required>
                         <option value="">-- Seleccione --</option>
                         <option value="1" <?= $novelty->passes_payroll === true ? 'selected' : '' ?>>Sí</option>
@@ -389,13 +395,15 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
 
         <?php if (in_array('contabilidad', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_CONTABILIDAD && !$novelty->isGrouped() && !$isRejected): ?>
         <div class="mb-4">
-            <span class="sgi-label"><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Asignar a Documento de Liquidación</span>
-            <div class="hr" style="margin:8px 0 14px;"></div>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="sgi-label flex-shrink-0"><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Asignar a Documento de Liquidación</span>
+                <div class="hr"></div>
+            </div>
             <?= $this->Form->create(null, ['url' => ['action' => 'assignLiquidation', $novelty->id]]) ?>
             <div class="row g-3 align-items-end">
                 <?php if (!empty($liquidationDocs)): ?>
                 <div class="col-md-4">
-                    <label class="form-label">Documento existente</label>
+                    <label class="input-label">Documento existente</label>
                     <select name="existing_doc_id" class="form-select">
                         <option value="">-- Crear nuevo --</option>
                         <?php foreach ($liquidationDocs as $docId => $docNumber): ?>
@@ -406,11 +414,11 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
                 <div class="col-md-1 text-center pt-4"><strong>o</strong></div>
                 <?php endif; ?>
                 <div class="col-md-3">
-                    <label class="form-label">Nuevo No. Liquidación</label>
+                    <label class="input-label">Nuevo No. Liquidación</label>
                     <input type="text" name="liquidation_number" class="form-control" placeholder="LIQ-001">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Período</label>
+                    <label class="input-label">Período</label>
                     <select name="period" class="form-select">
                         <?php foreach (NoveltyConstants::PERIOD_LABELS as $val => $label): ?>
                         <option value="<?= $val ?>"><?= $label ?></option>
@@ -429,7 +437,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
 
         <!-- Advance/Reject buttons (non-RRHH stages) -->
         <?php if ($canAdvance && !in_array($currentStatus, [NoveltyConstants::STATUS_RRHH, NoveltyConstants::STATUS_APROBACION])): ?>
-        <div class="d-flex gap-2 pt-3" style="border-top:1px solid var(--border-color);">
+        <div class="d-flex gap-2 pt-3" style="border-top:1px solid var(--rule);">
             <?php if (empty($transitionErrors)): ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id], 'class' => 'd-inline']) ?>
             <?= $this->Form->hidden('expected_status', ['value' => $novelty->pipeline_status]) ?>
@@ -449,8 +457,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         </div>
         <?php endif; ?>
 
-    </div>
-</div><!-- /card-body interior -->
+    </div><!-- /card Gestión -->
 
 <?= $this->element('email_log_panel', ['emailLogs' => $emailLogs ?? []]) ?>
 
@@ -479,7 +486,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         foreach ($documentsByStatus as $status => $docs):
         ?>
         <?php if ($multipleStatuses): ?>
-        <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:.4rem;">
+        <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:.4rem;">
             <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:var(--fs-micro);"><?= $statusLabels[$status] ?? $status ?></span>
             <span style="font-size:var(--fs-label);color:var(--text-disabled);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
         </div>
@@ -515,14 +522,14 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Archivo</label>
+                        <label class="input-label">Archivo</label>
                         <input type="file" name="file" class="form-control" required
                                accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
                         <div class="form-text">Máximo <?= h(\App\Constants\UploadConstants::MAX_BYTES_LABEL) ?> — PDF, imágenes, Word o Excel.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-ghost-card" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Subir</button>
                 </div>
             </form>
@@ -548,7 +555,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         formSelector:        '#upload-doc-form',
         listSelector:        '#docs-list',
         emptySelector:       '#docs-empty-state',
-        counterSelector:     '.card.card-primary .card-header .sgi-folder-count',
+        counterSelector:     '.sgi-folder-count',
         rowTemplateSelector: '#doc-row-template',
         modalSelector:       '#uploadDocModal',
         csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>

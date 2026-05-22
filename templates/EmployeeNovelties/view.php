@@ -265,12 +265,12 @@ $noveltyName = $novelty->custom_name ?: ($novelty->employee->full_name ?? ('Nove
 
     <!-- Signatures -->
     <?php if ($novelty->employee_signature): ?>
-    <div class="row g-0" style="border-bottom:1px solid var(--border-color);">
+    <div class="row g-0" style="border-bottom:1px solid var(--rule);">
         <div class="col-12">
             <div class="sgi-label">Firma del Funcionario</div>
             <div style="padding:.25rem 1.25rem .875rem;">
                 <img src="<?= $this->Url->build('/' . $novelty->employee_signature) ?>" alt="Firma Funcionario"
-                     style="max-width:400px;max-height:150px;border:1px solid var(--border-color);">
+                     style="max-width:400px;max-height:150px;background:var(--bg-subtle);padding:6px;">
             </div>
         </div>
     </div>
