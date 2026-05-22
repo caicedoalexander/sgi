@@ -2262,6 +2262,70 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     animation: shimmer 1.4s infinite linear;
 }
 
+/* --- Layout de detalle/edición: grid 2 columnas + info-grid --- */
+/* Restaurado: el CSS de estas clases fue borrado por error en 962be2f.
+   Lo usan EmployeeNovelties, Refunds, PaymentSchedulings, Advances y
+   NoveltyLiquidationDocs (vistas view/edit con pipeline_sidebar). */
+.sgi-invoice-view-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 14px;
+    align-items: start;
+}
+.sgi-invoice-view-left,
+.sgi-invoice-view-right {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+.sgi-section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+.sgi-section-head .sgi-label { margin: 0; }
+
+/* Info grid (4 columnas key/value compactas) */
+.sgi-info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+.sgi-info-cell {
+    padding: .6rem .85rem;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    min-width: 0;
+}
+.sgi-info-cell:nth-child(4n) { border-right: none; }
+.sgi-info-cell-label {
+    font-size: var(--fs-meta);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label, 0.06em);
+    color: var(--text-disabled);
+    font-weight: 700;
+    margin-bottom: .2rem;
+    white-space: nowrap;
+}
+.sgi-info-cell-value {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text-strong);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.35;
+}
+
+@media (max-width: 991.98px) {
+    .sgi-invoice-view-grid { grid-template-columns: 1fr; }
+    .sgi-info-grid { grid-template-columns: repeat(2, 1fr); }
+    .sgi-info-cell:nth-child(4n) { border-right: 1px solid var(--rule); }
+    .sgi-info-cell:nth-child(2n) { border-right: none; }
+}
+
 /* --- Footer de edición (barra fija) --- */
 .sgi-edit-footer {
     position: fixed;
