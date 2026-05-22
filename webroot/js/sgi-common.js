@@ -199,16 +199,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Tabs del sistema de diseño (.tabs > .tab) ───────────────────────────
     // Reemplaza al plugin Bootstrap Tab: éste alterna la clase `active`, pero
     // el sistema de diseño estiliza el estado activo con `is-active`. Cada .tab
-    // referencia su .tab-pane vía data-bs-target (selector CSS del panel).
+    // referencia su .tab-pane vía data-target (selector CSS del panel).
     document.querySelectorAll('.tabs').forEach(function (group) {
         var tabs = group.querySelectorAll('.tab');
         tabs.forEach(function (tab) {
             tab.addEventListener('click', function () {
-                var sel = tab.getAttribute('data-bs-target');
+                var sel = tab.getAttribute('data-target');
                 var panel = sel ? document.querySelector(sel) : null;
                 if (!panel) return;
-                tabs.forEach(function (t) { t.classList.remove('is-active'); });
+                tabs.forEach(function (t) {
+                    t.classList.remove('is-active');
+                    t.setAttribute('aria-selected', 'false');
+                });
                 tab.classList.add('is-active');
+                tab.setAttribute('aria-selected', 'true');
                 var content = panel.closest('.tab-content');
                 if (content) {
                     content.querySelectorAll('.tab-pane').forEach(function (p) {

@@ -798,34 +798,6 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .accordion-body { padding: 14px 16px; }
 
 
-/* ─── A.12 NAV-TABS (alias del sistema .tab) ────────────────────── */
-.nav-tabs {
-    border-bottom: 1px solid var(--rule);
-    gap: 4px;
-}
-.nav-tabs .nav-item { margin-bottom: -1px; }
-.nav-tabs .nav-link {
-    background: transparent;
-    border: 0;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    padding: 8px 14px;
-    font-size: var(--fs-body);
-    font-weight: 600;
-    color: var(--text-muted);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: color var(--t-fast) ease, border-color var(--t-fast) ease;
-}
-.nav-tabs .nav-link:hover { color: var(--text-strong); }
-.nav-tabs .nav-link.active {
-    color: var(--primary-color);
-    background: transparent;
-    border-bottom-color: var(--primary-color);
-}
-
-
 /* ═══════════════════════════════════════════════════════════════════
    B. COMPONENTES SGI CANÓNICOS
    ═══════════════════════════════════════════════════════════════════ */
