@@ -335,6 +335,7 @@ $noveltyCount      = $viewModel->noveltyCount;
         ]);
         ?>
         <?php if ($showPayments): ?>
+        <div class="sgi-card">
         <?= $this->element('payment_section', [
             'payments'           => $doc->liquidation_doc_payments ?? [],
             'bankingEntities'    => $bankingEntities,
@@ -346,6 +347,7 @@ $noveltyCount      = $viewModel->noveltyCount;
             'canDelete'          => false,
             'rejectMessage'      => '¿Rechazar este pago? El documento volverá a Tesorería.',
         ]) ?>
+        </div>
         <?= $this->element('confirm_payment_card', [
             'isVerificacionPago' => $currentStatus === NoveltyConstants::STATUS_VERIFICACION_PAGO,
             'canConfirm' => $canConfirmPayment ?? false,
