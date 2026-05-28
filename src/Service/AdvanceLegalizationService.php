@@ -119,6 +119,25 @@ class AdvanceLegalizationService
                     return false;
                 }
 
+                if ((int)$count > 0) {
+                    $linkedNumbers = $invoices->find()
+                        ->select(['invoice_number'])
+                        ->where([
+                            'id IN' => $invoiceIds,
+                            'advance_id' => $leg->advance_invoice_id,
+                        ])
+                        ->all()
+                        ->extract('invoice_number')
+                        ->toList();
+                    $this->historyService->recordFieldChange(
+                        $leg->id,
+                        'invoices_linked',
+                        null,
+                        $this->_summarizeInvoiceNumbers($linkedNumbers),
+                        $userId,
+                    );
+                }
+
                 $result = ServiceResult::ok(['linked' => (int)$count]);
 
                 return true;
@@ -143,6 +162,12 @@ class AdvanceLegalizationService
         $result = null;
         $invoices->getConnection()->transactional(
             function () use ($leg, $invoiceId, $userId, $invoices, $legTable, &$result): bool {
+                // Capturar el invoice_number ANTES de limpiar advance_id.
+                $invoice = $invoices->find()
+                    ->select(['invoice_number'])
+                    ->where(['id' => $invoiceId, 'advance_id' => $leg->advance_invoice_id])
+                    ->first();
+
                 $count = $invoices->updateAll(
                     ['advance_id' => null],
                     [
@@ -165,6 +190,14 @@ class AdvanceLegalizationService
 
                     return false;
                 }
+
+                $this->historyService->recordFieldChange(
+                    $leg->id,
+                    'invoices_unlinked',
+                    (string)($invoice->invoice_number ?? $invoiceId),
+                    null,
+                    $userId,
+                );
 
                 $result = ServiceResult::ok(['unlinked' => 1]);
 
@@ -599,6 +632,23 @@ class AdvanceLegalizationService
         return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId, [
             'surplus_payment_id' => [(string)$oldPaymentId, null],
         ]);
+    }
+
+    /**
+     * Construye un resumen legible de los números de factura para el audit
+     * trail de vinculación. Una sola factura → su número; varias → conteo +
+     * lista entre paréntesis.
+     *
+     * @param array<int, string|null> $numbers Números de factura vinculados.
+     */
+    private function _summarizeInvoiceNumbers(array $numbers): string
+    {
+        $clean = array_values(array_filter(array_map('strval', $numbers), fn($n) => $n !== ''));
+        if (count($clean) === 1) {
+            return $clean[0];
+        }
+
+        return sprintf('%d facturas (%s)', count($clean), implode(', ', $clean));
     }
 
     /**

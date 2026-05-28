@@ -208,6 +208,9 @@ class PettyCashRecordsController extends AppController
                     foreach ($errors as $err) {
                         $this->Flash->warning($err);
                     }
+                    if (empty($errors)) {
+                        $this->_recordInvoicesLinked((int)$record->id, $invoiceIds);
+                    }
                 }
 
                 $this->Flash->success('Registro de Caja Menor creado exitosamente.');
@@ -534,7 +537,17 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
         $record = $this->PettyCashRecords->get($recordId);
 
+        // Capturar el invoice_number ANTES de desvincular.
+        $invoiceNumber = $this->_invoiceNumber((int)$invoiceId);
+
         if ($this->pettyCashService->removeInvoice($record, (int)$invoiceId)) {
+            $this->historyService->recordFieldChange(
+                (int)$recordId,
+                'invoices_unlinked',
+                $invoiceNumber,
+                null,
+                (int)$this->_getCurrentUser()->id,
+            );
             $this->Flash->success('Factura removida del registro de caja menor.');
         } else {
             $this->Flash->error('No se puede remover facturas de un registro que no esté en Agrupación.');
@@ -564,6 +577,7 @@ class PettyCashRecordsController extends AppController
 
         $errors = $this->pettyCashService->addInvoices($record, $invoiceIds);
         if (empty($errors)) {
+            $this->_recordInvoicesLinked((int)$record->id, $invoiceIds);
             $this->Flash->success(sprintf('%d factura(s) vinculada(s).', count($invoiceIds)));
         } else {
             foreach ($errors as $err) {
@@ -572,6 +586,58 @@ class PettyCashRecordsController extends AppController
         }
 
         return $this->redirect(['action' => 'edit', $recordId]);
+    }
+
+    /**
+     * Registra en el historial del record de caja menor padre la vinculación
+     * de un lote de facturas. Resuelve los invoice_number a partir de los ids y
+     * guarda una única entrada resumen.
+     *
+     * @param int $recordId Record padre.
+     * @param array<int> $invoiceIds Ids de las facturas vinculadas.
+     */
+    private function _recordInvoicesLinked(int $recordId, array $invoiceIds): void
+    {
+        if (empty($invoiceIds)) {
+            return;
+        }
+
+        $numbers = $this->fetchTable('Invoices')->find()
+            ->select(['invoice_number'])
+            ->where(['id IN' => $invoiceIds])
+            ->all()
+            ->extract('invoice_number')
+            ->toList();
+
+        $clean = array_values(array_filter(array_map('strval', $numbers), fn($n) => $n !== ''));
+        if (empty($clean)) {
+            return;
+        }
+
+        $summary = count($clean) === 1
+            ? $clean[0]
+            : sprintf('%d facturas (%s)', count($clean), implode(', ', $clean));
+
+        $this->historyService->recordFieldChange(
+            $recordId,
+            'invoices_linked',
+            null,
+            $summary,
+            (int)$this->_getCurrentUser()->id,
+        );
+    }
+
+    /**
+     * Resuelve el invoice_number de una factura, o el id como fallback.
+     */
+    private function _invoiceNumber(int $invoiceId): string
+    {
+        $invoice = $this->fetchTable('Invoices')->find()
+            ->select(['invoice_number'])
+            ->where(['id' => $invoiceId])
+            ->first();
+
+        return (string)($invoice->invoice_number ?? $invoiceId);
     }
 
     #[Permission(action: 'add')]
