@@ -14,6 +14,7 @@ use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashHistoryService;
 use App\Service\PettyCashService;
 use App\Service\Pipeline\PettyCash\Policy\PettyCashActionPolicy;
+use App\Service\StructuredLogger;
 use App\ViewModel\PettyCashAddViewModel;
 use App\ViewModel\PettyCashEditViewModel;
 use Cake\ORM\Query\SelectQuery;
@@ -203,6 +204,12 @@ class PettyCashRecordsController extends AppController
             ]);
 
             if ($this->PettyCashRecords->save($record)) {
+                $this->historyService->recordStatusChange(
+                    (int)$record->id,
+                    '',
+                    (string)$record->status,
+                    (int)$user->id,
+                );
                 if (!empty($invoiceIds)) {
                     $errors = $this->pettyCashService->addInvoices($record, $invoiceIds);
                     foreach ($errors as $err) {
@@ -520,9 +527,21 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post', 'delete']);
         $record = $this->PettyCashRecords->get($id);
 
+        // Capturar datos auditables ANTES del hard-delete (el FK CASCADE de
+        // petty_cash_histories impide registrar en la tabla de historial).
+        $recordId = (int)$record->id;
+        $recordCode = $record->code;
+        $recordStatus = $record->status;
+
         $result = $this->pettyCashService->deleteRecord($record);
 
         if ($result->success) {
+            (new StructuredLogger('PettyCashAudit'))->info('petty_cash_record_deleted', [
+                'petty_cash_record_id' => $recordId,
+                'code' => $recordCode,
+                'status' => $recordStatus,
+                'deleted_by' => (int)$this->_getCurrentUser()->id,
+            ]);
             $this->Flash->success($result->data ?? 'Registro de Caja Menor eliminado.');
         } else {
             $this->Flash->error($result->firstError() ?? 'No se pudo eliminar el registro.');

@@ -16,6 +16,7 @@ use App\Service\RefundDocumentService;
 use App\Service\RefundHistoryService;
 use App\Service\RefundPaymentService;
 use App\Service\RefundService;
+use App\Service\StructuredLogger;
 use App\ViewModel\RefundAddViewModel;
 use App\ViewModel\RefundEditViewModel;
 use Cake\Http\Response;
@@ -257,6 +258,12 @@ class RefundsController extends AppController
             $record->created_by = $user->id;
 
             if ($this->Refunds->save($record)) {
+                $this->historyService->recordStatusChange(
+                    (int)$record->id,
+                    '',
+                    (string)$record->status,
+                    (int)$user->id,
+                );
                 $this->Flash->success('Reintegro creado exitosamente.');
 
                 return $this->redirect(['action' => 'edit', $record->id]);
@@ -652,7 +659,17 @@ class RefundsController extends AppController
             ['refund_id' => $record->id],
         );
 
+        $refundId = (int)$record->id;
+        $refundCode = $record->code;
+        $refundStatus = $record->status;
+
         if ($this->Refunds->delete($record)) {
+            (new StructuredLogger('RefundAudit'))->info('refund_deleted', [
+                'refund_id' => $refundId,
+                'code' => $refundCode,
+                'status' => $refundStatus,
+                'deleted_by' => (int)$this->_getCurrentUser()->id,
+            ]);
             $this->Flash->success('Reintegro eliminado.');
         } else {
             $this->Flash->error('No se pudo eliminar el registro.');
