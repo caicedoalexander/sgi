@@ -11,6 +11,7 @@ use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\PaymentScheduling;
 use App\Service\PaymentSchedulingDocumentService;
+use App\Service\PaymentSchedulingHistoryService;
 use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
 use App\Service\Pipeline\PaymentScheduling\Policy\PaymentSchedulingActionPolicy;
@@ -33,6 +34,8 @@ class PaymentSchedulingsController extends AppController
 
     private PaymentSchedulingActionPolicy $actionPolicy;
 
+    private PaymentSchedulingHistoryService $historyService;
+
     public function initialize(): void
     {
         parent::initialize();
@@ -41,6 +44,7 @@ class PaymentSchedulingsController extends AppController
         $this->documentService = $container->get(PaymentSchedulingDocumentService::class);
         $this->importService = $container->get(PaymentSchedulingImportService::class);
         $this->actionPolicy = $container->get(PaymentSchedulingActionPolicy::class);
+        $this->historyService = $container->get(PaymentSchedulingHistoryService::class);
     }
 
     private function _getCurrentUser(): object
@@ -118,6 +122,12 @@ class PaymentSchedulingsController extends AppController
 
             $record = $this->PaymentSchedulings->patchEntity($record, $data);
             if ($this->PaymentSchedulings->save($record)) {
+                $this->historyService->recordStatusChange(
+                    $record->id,
+                    '',
+                    PaymentSchedulingConstants::STATUS_BORRADOR,
+                    (int)$user->id,
+                );
                 $this->Flash->success('Programación creada correctamente.');
 
                 return $this->redirect(['action' => 'edit', $record->id]);
@@ -250,8 +260,15 @@ class PaymentSchedulingsController extends AppController
             }
         }
 
+        $fromStatus = $record->pipeline_status;
         $record->pipeline_status = $nextStatus;
         if ($this->PaymentSchedulings->save($record)) {
+            $this->historyService->recordStatusChange(
+                $record->id,
+                $fromStatus,
+                $nextStatus,
+                (int)$user->id,
+            );
             $label = PaymentSchedulingConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
             $this->Flash->success("Programación avanzada a: {$label}");
 
@@ -268,7 +285,8 @@ class PaymentSchedulingsController extends AppController
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
-        $roleId = (int)$this->_getCurrentUser()->role_id;
+        $user = $this->_getCurrentUser();
+        $roleId = (int)$user->role_id;
 
         if (!$this->actionPolicy->canReject($record, $roleId)) {
             $this->Flash->error('No tiene permisos para rechazar esta programación.');
@@ -276,8 +294,15 @@ class PaymentSchedulingsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
+        $fromStatus = $record->pipeline_status;
         $record->pipeline_status = PaymentSchedulingConstants::REJECTION_TARGET;
         if ($this->PaymentSchedulings->save($record)) {
+            $this->historyService->recordStatusChange(
+                $record->id,
+                $fromStatus,
+                PaymentSchedulingConstants::REJECTION_TARGET,
+                (int)$user->id,
+            );
             $this->Flash->warning('Programación devuelta a Tesorería para corrección.');
         } else {
             $this->Flash->error('No se pudo rechazar la programación.');
@@ -403,6 +428,13 @@ class PaymentSchedulingsController extends AppController
 
         if ($this->schedulingService->linkItems($record->id, $result['valid'])) {
             $count = count($result['valid']);
+            $this->historyService->recordFieldChange(
+                $record->id,
+                'import',
+                null,
+                "{$count} factura(s) importada(s)",
+                (int)$this->_getCurrentUser()->id,
+            );
             $this->Flash->success("{$count} factura(s) vinculadas correctamente.");
         } else {
             $this->Flash->error('Error al vincular las facturas.');
@@ -434,6 +466,14 @@ class PaymentSchedulingsController extends AppController
         ]);
 
         if ($itemsTable->save($item)) {
+            $invoice = $this->fetchTable('Invoices')->get($item->invoice_id);
+            $this->historyService->recordFieldChange(
+                (int)$id,
+                'invoices_linked',
+                null,
+                (string)$invoice->invoice_number,
+                (int)$this->_getCurrentUser()->id,
+            );
             $this->Flash->success('Factura vinculada.');
         } else {
             $this->Flash->error('No se pudo vincular la factura.');
@@ -455,9 +495,17 @@ class PaymentSchedulingsController extends AppController
         }
 
         $itemsTable = $this->fetchTable('PaymentSchedulingItems');
-        $item = $itemsTable->get($itemId);
+        $item = $itemsTable->get($itemId, contain: ['Invoices']);
+        $invoiceNumber = (string)($item->invoice->invoice_number ?? $item->invoice_id);
 
         if ($itemsTable->delete($item)) {
+            $this->historyService->recordFieldChange(
+                (int)$id,
+                'invoices_unlinked',
+                $invoiceNumber,
+                null,
+                (int)$this->_getCurrentUser()->id,
+            );
             $this->Flash->success('Factura desvinculada.');
         } else {
             $this->Flash->error('No se pudo desvincular la factura.');
@@ -487,6 +535,16 @@ class PaymentSchedulingsController extends AppController
             $file,
             (int)$this->_getCurrentUser()->id,
         );
+
+        if (!is_string($result)) {
+            $this->historyService->recordFieldChange(
+                (int)$id,
+                'document',
+                null,
+                (string)$result->file_name,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
 
         if ($this->_isJsonRequest()) {
             if (is_string($result)) {
@@ -544,6 +602,16 @@ class PaymentSchedulingsController extends AppController
         }
 
         $deleted = $this->documentService->deleteDocument((int)$documentId);
+
+        if ($deleted) {
+            $this->historyService->recordFieldChange(
+                (int)$id,
+                'document',
+                (string)$document->file_name,
+                null,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
 
         if ($this->_isJsonRequest()) {
             return $this->_jsonResponse(

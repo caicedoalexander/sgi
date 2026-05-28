@@ -53,10 +53,12 @@ use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
 use App\Service\PaymentRegistryService;
 use App\Service\PaymentSchedulingDocumentService;
+use App\Service\PaymentSchedulingHistoryService;
 use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
 use App\Service\PendingNotificationsService;
 use App\Service\PettyCashDocumentService;
+use App\Service\PettyCashHistoryService;
 use App\Service\PettyCashService;
 use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
@@ -73,6 +75,7 @@ use App\Service\Pipeline\Invoice\State\LegalizadaState;
 use App\Service\Pipeline\Invoice\State\PagadaState;
 use App\Service\Pipeline\Invoice\State\TesoreriaState;
 use App\Service\Pipeline\Invoice\State\VerificacionPagoState;
+use App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry;
 use App\Service\Pipeline\Novelty\Policy\NoveltyActionPolicy;
 use App\Service\Pipeline\Novelty\Policy\NoveltyFieldAccessPolicy;
 use App\Service\Pipeline\PaymentScheduling\Policy\PaymentSchedulingActionPolicy;
@@ -83,6 +86,7 @@ use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\PipelineAuthorizationService;
 use App\Service\RefundDocumentService;
 use App\Service\RefundPaymentService;
+use App\Service\RefundHistoryService;
 use App\Service\RefundService;
 use App\Service\SidebarCounterService;
 use App\Service\Strategy\InvoiceApprovalStrategy;
@@ -343,10 +347,13 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(NoveltySignatureService::class);
         $container->addShared(NoveltyFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
+        $container->addShared(NoveltyPipelineStateRegistry::class);
         $container->addShared(NoveltyService::class)
             ->addArguments([
                 AuthorizationFacade::class,
                 NoveltyFieldAccessPolicy::class,
+                NoveltyPipelineStateRegistry::class,
+                NoveltyHistoryService::class,
             ]);
         $container->addShared(LeaveDocumentService::class);
         $container->addShared(LeaveSignatureService::class);
@@ -354,6 +361,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         // === Petty cash / payment scheduling / advances ===
         $container->addShared(PettyCashDocumentService::class);
+        $container->addShared(PettyCashHistoryService::class);
         $container->addShared(PettyCashFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
         $container->addShared(PettyCashService::class)
@@ -370,6 +378,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoiceHistoryService::class,
                 AuthorizationFacade::class,
             ]);
+        $container->addShared(RefundHistoryService::class);
         $container->addShared(RefundPaymentService::class)
             ->addArgument(AuthorizationFacade::class);
         $container->addShared(PaymentSchedulingService::class)
@@ -377,6 +386,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoicePaymentService::class,
                 AuthorizationFacade::class,
             ]);
+        $container->addShared(PaymentSchedulingHistoryService::class);
         $container->addShared(PaymentSchedulingImportService::class)
             ->addArgument(InvoicePaymentService::class);
         $container->addShared(PaymentSchedulingDocumentService::class);

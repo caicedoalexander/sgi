@@ -58,6 +58,12 @@ class NoveltyApprovalStrategy implements ApprovalStrategyInterface
         if ($saved) {
             $actorUserId = (int)($novelty->approver_id ?? $createdBy ?? 0);
             if ($action === 'approve') {
+                $this->historyService->recordStatusChange(
+                    $entityId,
+                    NoveltyConstants::STATUS_APROBACION,
+                    NoveltyConstants::STATUS_RRHH,
+                    $actorUserId,
+                );
                 $this->historyService->recordFieldChange(
                     $entityId,
                     'approver_response',

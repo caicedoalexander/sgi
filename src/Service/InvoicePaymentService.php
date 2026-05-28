@@ -130,6 +130,7 @@ class InvoicePaymentService
         ) {
             $payment = $paymentsTable->get($paymentId);
 
+            $previousPaymentStatus = (string)$payment->status;
             $payment->authorized = true;
             $payment->status = InvoiceConstants::PAYMENT_RECORD_AUTHORIZED;
             $payment->authorized_by = $authorizedBy;
@@ -138,6 +139,14 @@ class InvoicePaymentService
             if (!$paymentsTable->save($payment)) {
                 return false; // → rollback
             }
+
+            $this->historyService->recordFieldChange(
+                (int)$payment->invoice_id,
+                'payment.status',
+                $previousPaymentStatus,
+                InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
+                $authorizedBy,
+            );
 
             $isRefund = (bool)($payment->is_refund ?? false);
 
@@ -314,12 +323,28 @@ class InvoicePaymentService
         if ((bool)($payment->is_refund ?? false)) {
             $connection = $paymentsTable->getConnection();
             $ok = $connection->transactional(function () use ($paymentsTable, $payment, $reason, $rejectedBy) {
+                $previousPaymentStatus = (string)$payment->status;
                 $payment->status = InvoiceConstants::PAYMENT_RECORD_REJECTED;
                 $payment->rejection_reason = $reason;
 
                 if (!$paymentsTable->save($payment)) {
                     return false;
                 }
+
+                $this->historyService->recordFieldChange(
+                    (int)$payment->invoice_id,
+                    'payment.status',
+                    $previousPaymentStatus,
+                    InvoiceConstants::PAYMENT_RECORD_REJECTED,
+                    $rejectedBy,
+                );
+                $this->historyService->recordFieldChange(
+                    (int)$payment->invoice_id,
+                    'payment.rejection_reason',
+                    null,
+                    $reason,
+                    $rejectedBy,
+                );
 
                 $this->events->dispatch(new Event(
                     'Invoice.refundRejected',
@@ -350,12 +375,28 @@ class InvoicePaymentService
             $reason,
             $rejectedBy,
         ): bool {
+            $previousPaymentStatus = (string)$payment->status;
             $payment->status = InvoiceConstants::PAYMENT_RECORD_REJECTED;
             $payment->rejection_reason = $reason;
 
             if (!$paymentsTable->save($payment)) {
                 return false;
             }
+
+            $this->historyService->recordFieldChange(
+                $invoiceId,
+                'payment.status',
+                $previousPaymentStatus,
+                InvoiceConstants::PAYMENT_RECORD_REJECTED,
+                $rejectedBy,
+            );
+            $this->historyService->recordFieldChange(
+                $invoiceId,
+                'payment.rejection_reason',
+                null,
+                $reason,
+                $rejectedBy,
+            );
 
             $invoice->pipeline_status = InvoiceConstants::STATUS_TESORERIA;
             if (!$invoicesTable->save($invoice)) {

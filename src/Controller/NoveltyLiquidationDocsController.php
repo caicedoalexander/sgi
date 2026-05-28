@@ -38,6 +38,8 @@ class NoveltyLiquidationDocsController extends AppController
 
     private NoveltyActionPolicy $actionPolicy;
 
+    private NoveltyHistoryService $historyService;
+
     /**
      * @return void
      */
@@ -50,6 +52,7 @@ class NoveltyLiquidationDocsController extends AppController
         $this->observationService = $container->get(NoveltyObservationService::class);
         $this->signatureService = $container->get(NoveltySignatureService::class);
         $this->actionPolicy = $container->get(NoveltyActionPolicy::class);
+        $this->historyService = $container->get(NoveltyHistoryService::class);
     }
 
     /**
@@ -368,6 +371,10 @@ class NoveltyLiquidationDocsController extends AppController
 
         $result = $this->documentService->uploadForGroup($doc->id, $doc->pipeline_status, $file, $user->id);
 
+        if (!is_string($result)) {
+            $this->_recordDocumentChange((int)$doc->id, null, $result->file_name, (int)$user->id);
+        }
+
         if ($this->_isJsonRequest()) {
             if (is_string($result)) {
                 return $this->_jsonResponse(['success' => false, 'error' => $result]);
@@ -424,6 +431,10 @@ class NoveltyLiquidationDocsController extends AppController
         }
 
         $result = $this->documentService->uploadLiquidationDocument($doc->id, $file, $user->id);
+
+        if (!is_string($result)) {
+            $this->_recordDocumentChange((int)$doc->id, null, $result->file_name, (int)$user->id);
+        }
 
         if ($this->_isJsonRequest()) {
             if (is_string($result)) {
@@ -482,7 +493,14 @@ class NoveltyLiquidationDocsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
+        $previous = $this->documentService->getLiquidationDocument((int)$doc->id);
+        $previousFileName = $previous?->file_name;
+
         $result = $this->documentService->updateLiquidationDocument($doc->id, $file, $user->id);
+
+        if (!is_string($result)) {
+            $this->_recordDocumentChange((int)$doc->id, $previousFileName, $result->file_name, (int)$user->id);
+        }
 
         if ($this->_isJsonRequest()) {
             if (is_string($result)) {
@@ -524,7 +542,13 @@ class NoveltyLiquidationDocsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
+        $fileName = $document->file_name;
         $deleted = $this->documentService->deleteDocument((int)$documentId);
+
+        if ($deleted) {
+            $userId = (int)$this->Authentication->getIdentity()->getOriginalData()->id;
+            $this->_recordDocumentChange((int)$doc->id, $fileName, null, $userId);
+        }
 
         if ($this->_isJsonRequest()) {
             return $this->_jsonResponse(
@@ -549,6 +573,43 @@ class NoveltyLiquidationDocsController extends AppController
     private function _liquidationDocumentLabels(): array
     {
         return [NoveltyPresentation::STATUS_BADGES, NoveltyConstants::STATUS_LABELS];
+    }
+
+    /**
+     * Registra el cambio de documento en el historial de cada novedad agrupada
+     * por el documento de liquidación. El audit de novedades se indexa por
+     * `novelty_id` (no existe un id de documento de liquidación en la tabla de
+     * historiales), y un documento agrupa N novedades sin ancla única, por lo
+     * que se registra en todas las novedades hijas del documento.
+     *
+     * @param int $liquidationDocId Documento de liquidación.
+     * @param string|null $oldValue Nombre de archivo previo (null en alta).
+     * @param string|null $newValue Nombre de archivo nuevo (null en borrado).
+     * @param int $userId Usuario que realizó la operación.
+     * @return void
+     */
+    private function _recordDocumentChange(
+        int $liquidationDocId,
+        ?string $oldValue,
+        ?string $newValue,
+        int $userId,
+    ): void {
+        $noveltyIds = $this->fetchTable('EmployeeNovelties')->find()
+            ->select(['id'])
+            ->where(['liquidation_doc_id' => $liquidationDocId])
+            ->all()
+            ->extract('id')
+            ->toArray();
+
+        foreach ($noveltyIds as $noveltyId) {
+            $this->historyService->recordFieldChange(
+                (int)$noveltyId,
+                'document',
+                $oldValue,
+                $newValue,
+                $userId,
+            );
+        }
     }
 
     /**

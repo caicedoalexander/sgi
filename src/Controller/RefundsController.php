@@ -13,12 +13,15 @@ use App\Model\Entity\Refund;
 use App\Service\Pipeline\Refund\Policy\RefundActionPolicy;
 use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\RefundDocumentService;
+use App\Service\RefundHistoryService;
 use App\Service\RefundPaymentService;
 use App\Service\RefundService;
+use App\Service\StructuredLogger;
 use App\ViewModel\RefundAddViewModel;
 use App\ViewModel\RefundEditViewModel;
 use Cake\Http\Response;
 use Cake\ORM\Query\SelectQuery;
+use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 use DateTimeImmutable;
 
@@ -34,6 +37,7 @@ class RefundsController extends AppController
     private RefundDocumentService $documentService;
     private RefundFieldAccessPolicy $fieldPolicy;
     private RefundActionPolicy $actionPolicy;
+    private RefundHistoryService $historyService;
 
     /**
      * @return void
@@ -47,6 +51,7 @@ class RefundsController extends AppController
         $this->documentService = $container->get(RefundDocumentService::class);
         $this->fieldPolicy = $container->get(RefundFieldAccessPolicy::class);
         $this->actionPolicy = $container->get(RefundActionPolicy::class);
+        $this->historyService = $container->get(RefundHistoryService::class);
     }
 
     private function _getCurrentUser(): object
@@ -253,6 +258,12 @@ class RefundsController extends AppController
             $record->created_by = $user->id;
 
             if ($this->Refunds->save($record)) {
+                $this->historyService->recordStatusChange(
+                    (int)$record->id,
+                    '',
+                    (string)$record->status,
+                    (int)$user->id,
+                );
                 $this->Flash->success('Reintegro creado exitosamente.');
 
                 return $this->redirect(['action' => 'edit', $record->id]);
@@ -336,6 +347,19 @@ class RefundsController extends AppController
             $patchData = $filtered->patch;
 
             if (!empty($patchData)) {
+                // patchEntity muta $record en sitio, así que snapshoteamos el
+                // estado original (solo los campos auditables) ANTES de aplicar
+                // el patch para registrar el diff campo a campo tras el save.
+                $original = new Refund([
+                    'id' => $record->id,
+                    'beneficiary_type' => $record->beneficiary_type,
+                    'beneficiary_employee_id' => $record->beneficiary_employee_id,
+                    'beneficiary_provider_id' => $record->beneficiary_provider_id,
+                    'accrued' => $record->accrued,
+                    'accrual_date' => $record->accrual_date,
+                    'ready_for_payment' => $record->ready_for_payment,
+                ]);
+
                 $record = $this->Refunds->patchEntity($record, $patchData);
                 if (!$this->Refunds->save($record)) {
                     $errors = [];
@@ -351,6 +375,12 @@ class RefundsController extends AppController
 
                     return $this->redirect(['action' => 'edit', $id]);
                 }
+
+                $this->historyService->recordChanges(
+                    $original,
+                    $record,
+                    (int)$this->_getCurrentUser()->id,
+                );
             }
 
             // Add invoices (only in agrupacion)
@@ -359,6 +389,9 @@ class RefundsController extends AppController
                 $errors = $this->refundService->addInvoices($record, $invoiceIds);
                 foreach ($errors as $err) {
                     $this->Flash->warning($err);
+                }
+                if (empty($errors)) {
+                    $this->_recordInvoicesLinked((int)$record->id, $invoiceIds);
                 }
             }
 
@@ -626,7 +659,17 @@ class RefundsController extends AppController
             ['refund_id' => $record->id],
         );
 
+        $refundId = (int)$record->id;
+        $refundCode = $record->code;
+        $refundStatus = $record->status;
+
         if ($this->Refunds->delete($record)) {
+            (new StructuredLogger('RefundAudit'))->info('refund_deleted', [
+                'refund_id' => $refundId,
+                'code' => $refundCode,
+                'status' => $refundStatus,
+                'deleted_by' => (int)$this->_getCurrentUser()->id,
+            ]);
             $this->Flash->success('Reintegro eliminado.');
         } else {
             $this->Flash->error('No se pudo eliminar el registro.');
@@ -641,7 +684,17 @@ class RefundsController extends AppController
         $this->request->allowMethod(['post']);
         $record = $this->Refunds->get($recordId);
 
+        // Capturar el invoice_number ANTES de desvincular.
+        $invoiceNumber = $this->_invoiceNumber((int)$invoiceId);
+
         if ($this->refundService->removeInvoice($record, (int)$invoiceId)) {
+            $this->historyService->recordFieldChange(
+                (int)$recordId,
+                'invoices_unlinked',
+                $invoiceNumber,
+                null,
+                (int)$this->_getCurrentUser()->id,
+            );
             $this->Flash->success('Factura removida del registro.');
         } else {
             $this->Flash->error('No se puede remover facturas de un registro que no esté en Agrupación.');
@@ -671,6 +724,7 @@ class RefundsController extends AppController
 
         $errors = $this->refundService->addInvoices($record, $invoiceIds);
         if (empty($errors)) {
+            $this->_recordInvoicesLinked((int)$record->id, $invoiceIds);
             $this->Flash->success(sprintf('%d factura(s) vinculada(s).', count($invoiceIds)));
         } else {
             foreach ($errors as $err) {
@@ -679,6 +733,58 @@ class RefundsController extends AppController
         }
 
         return $this->redirect(['action' => 'edit', $recordId]);
+    }
+
+    /**
+     * Registra en el historial del reintegro padre la vinculación de un lote
+     * de facturas. Resuelve los invoice_number a partir de los ids y guarda una
+     * única entrada resumen.
+     *
+     * @param int $refundId Reintegro padre.
+     * @param array<int> $invoiceIds Ids de las facturas vinculadas.
+     */
+    private function _recordInvoicesLinked(int $refundId, array $invoiceIds): void
+    {
+        if (empty($invoiceIds)) {
+            return;
+        }
+
+        $numbers = $this->fetchTable('Invoices')->find()
+            ->select(['invoice_number'])
+            ->where(['id IN' => $invoiceIds])
+            ->all()
+            ->extract('invoice_number')
+            ->toList();
+
+        $clean = array_values(array_filter(array_map('strval', $numbers), fn($n) => $n !== ''));
+        if (empty($clean)) {
+            return;
+        }
+
+        $summary = count($clean) === 1
+            ? $clean[0]
+            : sprintf('%d facturas (%s)', count($clean), implode(', ', $clean));
+
+        $this->historyService->recordFieldChange(
+            $refundId,
+            'invoices_linked',
+            null,
+            $summary,
+            (int)$this->_getCurrentUser()->id,
+        );
+    }
+
+    /**
+     * Resuelve el invoice_number de una factura, o el id como fallback.
+     */
+    private function _invoiceNumber(int $invoiceId): string
+    {
+        $invoice = $this->fetchTable('Invoices')->find()
+            ->select(['invoice_number'])
+            ->where(['id' => $invoiceId])
+            ->first();
+
+        return (string)($invoice->invoice_number ?? $invoiceId);
     }
 
     #[Permission(action: 'edit')]
@@ -734,6 +840,16 @@ class RefundsController extends AppController
             $this->request->getData('document_type'),
         );
 
+        if (!is_string($result)) {
+            $this->historyService->recordFieldChange(
+                (int)$id,
+                'document',
+                null,
+                $result->file_name,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
+
         if ($this->_isJsonRequest()) {
             if (is_string($result)) {
                 return $this->_jsonResponse(['success' => false, 'error' => $result], 400);
@@ -781,7 +897,23 @@ class RefundsController extends AppController
             return $gate;
         }
 
+        $documentsTable = TableRegistry::getTableLocator()->get('RefundDocuments');
+        $document = $documentsTable->find()
+            ->where(['id' => $documentId, 'refund_id' => $refundId])
+            ->first();
+        $fileName = $document?->file_name;
+
         $deleted = $this->documentService->deleteDocument((int)$documentId, (int)$refundId);
+
+        if ($deleted) {
+            $this->historyService->recordFieldChange(
+                (int)$refundId,
+                'document',
+                $fileName,
+                null,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
 
         if ($this->_isJsonRequest()) {
             if ($deleted) {

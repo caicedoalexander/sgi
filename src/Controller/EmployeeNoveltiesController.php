@@ -705,6 +705,13 @@ class EmployeeNoveltiesController extends AppController
 
             $novelty = $this->EmployeeNovelties->patchEntity($novelty, $data);
             if ($this->EmployeeNovelties->save($novelty)) {
+                $this->historyService->recordStatusChange(
+                    (int)$novelty->id,
+                    '',
+                    (string)$novelty->pipeline_status,
+                    $user->id,
+                );
+
                 // Save massive employees
                 if (!empty($massiveEmployeeIds)) {
                     $massiveTable = TableRegistry::getTableLocator()->get('NoveltyMassiveEmployees');
@@ -911,9 +918,17 @@ class EmployeeNoveltiesController extends AppController
 
         // Allow updating approver from the form
         $newApproverId = $this->request->getData('approver_id');
-        if (!empty($newApproverId)) {
+        if (!empty($newApproverId) && (int)$newApproverId !== (int)$novelty->approver_id) {
+            $previousApproverId = $novelty->approver_id;
             $novelty->approver_id = (int)$newApproverId;
             $this->EmployeeNovelties->save($novelty);
+            $this->historyService->recordFieldChange(
+                (int)$novelty->id,
+                'approver_id',
+                $previousApproverId !== null ? (string)$previousApproverId : null,
+                (string)$newApproverId,
+                (int)$user->id,
+            );
             $novelty = $this->EmployeeNovelties->get($id, contain: ['Employees', 'NoveltyTypes']);
         }
 
@@ -924,8 +939,18 @@ class EmployeeNoveltiesController extends AppController
         }
 
         // Clear rejection
+        $previousAreaApproval = $novelty->area_approval;
         $novelty->area_approval = null;
         $this->EmployeeNovelties->save($novelty);
+        if ($previousAreaApproval !== null) {
+            $this->historyService->recordFieldChange(
+                (int)$novelty->id,
+                'area_approval',
+                (string)$previousAreaApproval,
+                null,
+                (int)$user->id,
+            );
+        }
 
         // Generate new token
         $token = $this->tokenService->generateToken('employee_novelties', $novelty->id, $user->id);
@@ -975,9 +1000,26 @@ class EmployeeNoveltiesController extends AppController
             // Assign to existing doc
             $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
             $doc = $liquidationDocsTable->get($existingDocId);
+            $previousDocId = $novelty->liquidation_doc_id;
+            $previousStatus = (string)$novelty->pipeline_status;
             $novelty->liquidation_doc_id = $doc->id;
             $novelty->pipeline_status = NoveltyConstants::STATUS_CONTABILIDAD;
             if ($this->EmployeeNovelties->save($novelty)) {
+                $this->historyService->recordFieldChange(
+                    (int)$novelty->id,
+                    'liquidation_doc_id',
+                    $previousDocId !== null ? (string)$previousDocId : null,
+                    (string)$doc->id,
+                    (int)$user->id,
+                );
+                if ($previousStatus !== NoveltyConstants::STATUS_CONTABILIDAD) {
+                    $this->historyService->recordStatusChange(
+                        (int)$novelty->id,
+                        $previousStatus,
+                        NoveltyConstants::STATUS_CONTABILIDAD,
+                        (int)$user->id,
+                    );
+                }
                 $this->Flash->success('Novedad asignada al documento de liquidación: ' . $doc->liquidation_number);
             } else {
                 $this->Flash->error('No se pudo asignar la novedad.');

@@ -105,6 +105,39 @@ class PettyCashService
     }
 
     /**
+     * Registra en el historial del record padre la vinculación de un lote de
+     * facturas (entrada resumen única con los invoice_number).
+     *
+     * @param int $recordId Record padre.
+     * @param array<int> $invoiceIds Ids de las facturas vinculadas.
+     * @param int $userId Usuario que vincula.
+     */
+    private function _recordInvoicesLinked(int $recordId, array $invoiceIds, int $userId): void
+    {
+        if (empty($invoiceIds)) {
+            return;
+        }
+
+        $numbers = TableRegistry::getTableLocator()->get('Invoices')->find()
+            ->select(['invoice_number'])
+            ->where(['id IN' => $invoiceIds])
+            ->all()
+            ->extract('invoice_number')
+            ->toList();
+
+        $clean = array_values(array_filter(array_map('strval', $numbers), fn($n) => $n !== ''));
+        if (empty($clean)) {
+            return;
+        }
+
+        $summary = count($clean) === 1
+            ? $clean[0]
+            : sprintf('%d facturas (%s)', count($clean), implode(', ', $clean));
+
+        $this->history->recordFieldChange($recordId, 'invoices_linked', null, $summary, $userId);
+    }
+
+    /**
      * @param \App\Model\Entity\PettyCashRecord $record Record.
      * @return void
      */
@@ -148,6 +181,17 @@ class PettyCashService
         $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
 
         if (!empty($filtered->patch)) {
+            // patchEntity muta $record en sitio, así que snapshoteamos el estado
+            // original (solo los campos auditables) ANTES de aplicar el patch
+            // para poder registrar el diff campo a campo tras el save.
+            $original = new PettyCashRecord([
+                'id' => $record->id,
+                'notes' => $record->notes,
+                'accrued' => $record->accrued,
+                'accrual_date' => $record->accrual_date,
+                'ready_for_payment' => $record->ready_for_payment,
+            ]);
+
             $record = $recordsTable->patchEntity($record, $filtered->patch);
             if (!$recordsTable->save($record)) {
                 $messages = [];
@@ -163,6 +207,8 @@ class PettyCashService
                     !empty($messages) ? $messages : ['No se pudo guardar el registro.'],
                 );
             }
+
+            $this->history->recordChanges($original, $record, $userId);
         }
 
         $linkWarnings = [];
@@ -170,6 +216,9 @@ class PettyCashService
             $invoiceIds = array_map('intval', array_filter((array)$data['invoice_ids']));
             if (!empty($invoiceIds)) {
                 $linkWarnings = $this->addInvoices($record, $invoiceIds);
+                if (empty($linkWarnings)) {
+                    $this->_recordInvoicesLinked((int)$record->id, $invoiceIds, $userId);
+                }
             }
         }
 

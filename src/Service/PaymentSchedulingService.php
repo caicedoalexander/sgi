@@ -22,6 +22,7 @@ class PaymentSchedulingService
     private AuthorizationFacade $auth;
     private PaymentSchedulingPipelineStateRegistry $stateRegistry;
     private InvoiceHistoryService $historyService;
+    private PaymentSchedulingHistoryService $schedulingHistory;
     private ?EventManagerInterface $events;
 
     public function __construct(
@@ -30,10 +31,12 @@ class PaymentSchedulingService
         ?PaymentSchedulingPipelineStateRegistry $stateRegistry = null,
         ?InvoiceHistoryService $historyService = null,
         ?EventManagerInterface $events = null,
+        ?PaymentSchedulingHistoryService $schedulingHistory = null,
     ) {
         $this->auth = $auth;
         $this->stateRegistry = $stateRegistry ?? new PaymentSchedulingPipelineStateRegistry();
         $this->historyService = $historyService ?? new InvoiceHistoryService();
+        $this->schedulingHistory = $schedulingHistory ?? new PaymentSchedulingHistoryService();
         $this->events = $events;
     }
 
@@ -165,6 +168,13 @@ class PaymentSchedulingService
                 if (!$schedulingsTable->save($scheduling)) {
                     return false;
                 }
+
+                $this->schedulingHistory->recordStatusChange(
+                    $scheduling->id,
+                    $currentStatus,
+                    $previousStatus,
+                    $userId,
+                );
 
                 // verificacion_pago → aut_pago: deshacer applyPayments para que el
                 // siguiente avance vuelva a generar invoice_payments y mover hijas.
@@ -364,6 +374,13 @@ class PaymentSchedulingService
             if (!$schedulingsTable->save($scheduling)) {
                 return false;
             }
+
+            $this->schedulingHistory->recordStatusChange(
+                $schedulingId,
+                PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO,
+                PaymentSchedulingConstants::STATUS_PAGADA,
+                $confirmedBy,
+            );
 
             $childIds = $paymentsTable->find()
                 ->select(['invoice_id'])

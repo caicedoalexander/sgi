@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\NoveltyConstants;
+use Cake\ORM\Table;
 use Cake\ORM\TableRegistry;
 
 class LiquidationDocPaymentService
@@ -67,13 +68,24 @@ class LiquidationDocPaymentService
         }
 
         // Advance doc and novelties to aut_pago
-        $doc->pipeline_status = NoveltyConstants::STATUS_AUTORIZACION_PAGO;
-        $docsTable->save($doc);
+        $connection = $docsTable->getConnection();
+        $ok = $connection->transactional(function () use ($docsTable, $noveltiesTable, $doc, $docId, $createdBy) {
+            $doc->pipeline_status = NoveltyConstants::STATUS_AUTORIZACION_PAGO;
+            if (!$docsTable->save($doc)) {
+                return false;
+            }
 
-        $noveltiesTable->updateAll(
-            ['pipeline_status' => NoveltyConstants::STATUS_AUTORIZACION_PAGO],
-            ['liquidation_doc_id' => $docId],
-        );
+            return $this->advanceChildren(
+                $noveltiesTable,
+                $docId,
+                NoveltyConstants::STATUS_AUTORIZACION_PAGO,
+                $createdBy,
+            );
+        });
+
+        if ($ok === false) {
+            return ServiceResult::fail('No se pudo avanzar el documento a Autorización de Pago.');
+        }
 
         return ServiceResult::ok('Pago registrado. Documento avanzado a Autorización de Pago.');
     }
@@ -101,15 +113,27 @@ class LiquidationDocPaymentService
         }
 
         $doc = $docsTable->get($payment->liquidation_doc_id);
-        $doc->pipeline_status = NoveltyConstants::STATUS_VERIFICACION_PAGO;
-        $doc->payment_status = NoveltyConstants::PAYMENT_PAGADO;
-        $doc->payment_date = $payment->payment_date;
-        $docsTable->save($doc);
 
-        $noveltiesTable->updateAll(
-            ['pipeline_status' => NoveltyConstants::STATUS_VERIFICACION_PAGO],
-            ['liquidation_doc_id' => $payment->liquidation_doc_id],
-        );
+        $connection = $docsTable->getConnection();
+        $ok = $connection->transactional(function () use ($docsTable, $noveltiesTable, $doc, $payment, $authorizedBy) {
+            $doc->pipeline_status = NoveltyConstants::STATUS_VERIFICACION_PAGO;
+            $doc->payment_status = NoveltyConstants::PAYMENT_PAGADO;
+            $doc->payment_date = $payment->payment_date;
+            if (!$docsTable->save($doc)) {
+                return false;
+            }
+
+            return $this->advanceChildren(
+                $noveltiesTable,
+                (int)$payment->liquidation_doc_id,
+                NoveltyConstants::STATUS_VERIFICACION_PAGO,
+                $authorizedBy,
+            );
+        });
+
+        if ($ok === false) {
+            return ['success' => false];
+        }
 
         return ['success' => true, 'newPipelineStatus' => NoveltyConstants::STATUS_VERIFICACION_PAGO];
     }
@@ -134,19 +158,32 @@ class LiquidationDocPaymentService
         }
 
         $docId = $payment->liquidation_doc_id;
+        $doc = $docsTable->get($docId);
 
-        if (!$paymentsTable->delete($payment)) {
+        $connection = $docsTable->getConnection();
+        $ok = $connection->transactional(
+            function () use ($paymentsTable, $docsTable, $noveltiesTable, $payment, $doc, $docId, $rejectedBy) {
+                if (!$paymentsTable->delete($payment)) {
+                    return false;
+                }
+
+                $doc->pipeline_status = NoveltyConstants::STATUS_TESORERIA;
+                if (!$docsTable->save($doc)) {
+                    return false;
+                }
+
+                return $this->advanceChildren(
+                    $noveltiesTable,
+                    (int)$docId,
+                    NoveltyConstants::STATUS_TESORERIA,
+                    $rejectedBy,
+                );
+            },
+        );
+
+        if ($ok === false) {
             return ServiceResult::fail('No se pudo rechazar el pago.');
         }
-
-        $doc = $docsTable->get($docId);
-        $doc->pipeline_status = NoveltyConstants::STATUS_TESORERIA;
-        $docsTable->save($doc);
-
-        $noveltiesTable->updateAll(
-            ['pipeline_status' => NoveltyConstants::STATUS_TESORERIA],
-            ['liquidation_doc_id' => $docId],
-        );
 
         return ServiceResult::ok('Pago rechazado. Documento devuelto a Tesorería.');
     }
@@ -205,5 +242,50 @@ class LiquidationDocPaymentService
         }
 
         return ServiceResult::ok('Pago confirmado. El documento y sus novedades quedaron como pagados.');
+    }
+
+    /**
+     * Avanza las novedades hijas de un documento de liquidación al nuevo estado
+     * iterando una a una para preservar la trazabilidad por hija. updateAll
+     * bypassa callbacks y no registra historial; este patrón es el mismo que
+     * confirmPayment ya usa (recordStatusChange por hija).
+     *
+     * Debe invocarse dentro de un `transactional`: si un `save()` falla retorna
+     * false para que el callamante aborte la transacción y haga rollback.
+     *
+     * @param \Cake\ORM\Table $noveltiesTable Tabla de novedades.
+     * @param int $docId ID del documento de liquidación.
+     * @param string $newStatus Estado de destino.
+     * @param int $userId Usuario que realiza el cambio.
+     * @return bool true si todas las hijas se guardaron; false ante el primer fallo.
+     */
+    private function advanceChildren(
+        Table $noveltiesTable,
+        int $docId,
+        string $newStatus,
+        int $userId,
+    ): bool {
+        $children = $noveltiesTable->find()
+            ->where(['liquidation_doc_id' => $docId])
+            ->all();
+
+        foreach ($children as $novelty) {
+            $previousStatus = (string)$novelty->pipeline_status;
+            if ($previousStatus === $newStatus) {
+                continue;
+            }
+            $novelty->pipeline_status = $newStatus;
+            if (!$noveltiesTable->save($novelty)) {
+                return false;
+            }
+            $this->noveltyHistory->recordStatusChange(
+                (int)$novelty->id,
+                $previousStatus,
+                $newStatus,
+                $userId,
+            );
+        }
+
+        return true;
     }
 }

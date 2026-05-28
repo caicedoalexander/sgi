@@ -27,6 +27,7 @@ use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
 use App\Service\Pipeline\Invoice\Policy\InvoiceActionPolicy;
+use App\Service\StructuredLogger;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
@@ -51,6 +52,8 @@ class InvoicesController extends AppController
 
     private InvoiceActionPolicy $actionPolicy;
 
+    private InvoiceHistoryService $historyService;
+
     public function initialize(): void
     {
         parent::initialize();
@@ -61,6 +64,7 @@ class InvoicesController extends AppController
         $this->approvalService = $container->get(InvoiceApprovalService::class);
         $this->paymentService = $container->get(InvoicePaymentService::class);
         $this->actionPolicy = $container->get(InvoiceActionPolicy::class);
+        $this->historyService = $container->get(InvoiceHistoryService::class);
     }
 
     private function _getCurrentUser(): object
@@ -237,6 +241,12 @@ class InvoicesController extends AppController
             );
 
             if ($this->Invoices->save($vm->invoice)) {
+                $this->historyService->recordStatusChange(
+                    (int)$vm->invoice->id,
+                    '',
+                    (string)$vm->invoice->pipeline_status,
+                    (int)$this->_getCurrentUser()->id,
+                );
                 $this->Flash->success(__('La factura ha sido guardada.'));
 
                 return $this->_redirectForInvoice($vm->invoice, 'index');
@@ -523,6 +533,12 @@ class InvoicesController extends AppController
         }
 
         if ($this->Invoices->delete($invoice)) {
+            (new StructuredLogger('InvoiceAudit'))->info('invoice_deleted', [
+                'invoice_id' => (int)$invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'pipeline_status' => $invoice->pipeline_status,
+                'deleted_by' => (int)$this->_getCurrentUser()->id,
+            ]);
             $this->Flash->success(__('La factura ha sido eliminada.'));
         } else {
             $this->Flash->error(__('No se pudo eliminar la factura. Intente de nuevo.'));
@@ -640,6 +656,16 @@ class InvoicesController extends AppController
             $this->request->getData('document_type'),
         );
 
+        if (!is_string($result)) {
+            $this->historyService->recordFieldChange(
+                (int)$invoiceId,
+                'document',
+                null,
+                $result->file_name,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
+
         if ($this->_isJsonRequest()) {
             if (is_string($result)) {
                 return $this->_jsonResponse(['success' => false, 'error' => $result]);
@@ -692,7 +718,18 @@ class InvoicesController extends AppController
             return $this->_redirectForInvoice($invoice, 'view', $invoiceId);
         }
 
+        $fileName = $document->file_name;
         $deleted = $this->documentService->deleteDocument((int)$documentId);
+
+        if ($deleted) {
+            $this->historyService->recordFieldChange(
+                (int)$invoiceId,
+                'document',
+                $fileName,
+                null,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
 
         if ($this->_isJsonRequest()) {
             if ($deleted) {
