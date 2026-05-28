@@ -14,7 +14,6 @@ enum DenialReason: string
     case TERMINAL_STATE = 'terminal_state';
     case UNAUTHORIZED = 'unauthorized';
     case REJECTED = 'rejected';
-    case MISSING_FIELDS = 'missing_fields';
     case REQUIRES_PAYMENT = 'requires_payment';
     case MANAGED_ELSEWHERE = 'managed_elsewhere';
 
@@ -24,7 +23,6 @@ enum DenialReason: string
             self::TERMINAL_STATE => 'El registro ya está en su estado final.',
             self::UNAUTHORIZED => 'No tiene permisos para avanzar este registro.',
             self::REJECTED => 'El registro fue rechazado y no puede avanzar.',
-            self::MISSING_FIELDS => 'Faltan campos requeridos para avanzar.',
             self::REQUIRES_PAYMENT => 'Debe registrar un pago para avanzar desde Tesorería.',
             self::MANAGED_ELSEWHERE => 'La autorización de pago se gestiona desde la sección de pagos.',
         };

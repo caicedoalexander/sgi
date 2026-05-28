@@ -75,11 +75,6 @@ class CircuitBreaker
         }
     }
 
-    public function isOpen(): bool
-    {
-        return $this->_getState() === self::STATE_OPEN;
-    }
-
     private function _onSuccess(): void
     {
         $this->_setFailureCount(0);
