@@ -175,6 +175,13 @@ class PaymentSchedulingService
                     $previousStatus,
                     $userId,
                 );
+                $this->schedulingHistory->recordFieldChange(
+                    $scheduling->id,
+                    'regression_reason',
+                    null,
+                    $reason,
+                    $userId,
+                );
 
                 // verificacion_pago → aut_pago: deshacer applyPayments para que el
                 // siguiente avance vuelva a generar invoice_payments y mover hijas.

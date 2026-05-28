@@ -413,6 +413,13 @@ class InvoicePipelineService
                     $previousStatus,
                     $userId,
                 );
+                $this->historyService->recordFieldChange(
+                    $invoice->id,
+                    'regression_reason',
+                    null,
+                    $reason,
+                    $userId,
+                );
 
                 // verificacion_pago → autorizacion_pago: revertir pagos
                 // autorizados a pendiente para que el Contador re-revise. El

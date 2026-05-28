@@ -315,6 +315,13 @@ class AdvanceLegalizationService
 
                         return false;
                     }
+                    $this->historyService->recordFieldChange(
+                        $leg->id,
+                        'signature_rejection_reason',
+                        null,
+                        $reason,
+                        $userId,
+                    );
                 }
 
                 $inner = $this->_setStatus($leg, AdvanceConstants::STATUS_VALIDACION, $userId);

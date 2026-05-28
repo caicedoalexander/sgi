@@ -39,6 +39,8 @@ class InvoiceHistoryService implements HistoryServiceInterface
         'pipeline_status'             => 'Estado del Pipeline',
         'approvers_modified'          => 'Aprobadores',
         'approver_response'           => 'Respuesta de Aprobador',
+        'regression_reason' => 'Motivo de Regresión',
+        'payment_edit_reason' => 'Motivo de Edición de Pago',
     ];
 
     public function recordChanges(Invoice $original, Invoice $modified, int $userId): void

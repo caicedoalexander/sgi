@@ -491,6 +491,15 @@ class InvoicePaymentService
                 ]));
             }
 
+            // El motivo obligatorio queda también en el historial (no solo en la observación).
+            $this->historyService->recordFieldChange(
+                $payment->invoice_id,
+                'payment_edit_reason',
+                null,
+                $reason,
+                $userId,
+            );
+
             $observationsTable = TableRegistry::getTableLocator()->get('InvoiceObservations');
             $observationsTable->save($observationsTable->newEntity([
                 'invoice_id' => $payment->invoice_id,

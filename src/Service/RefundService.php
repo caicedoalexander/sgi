@@ -519,6 +519,7 @@ class RefundService
                 }
                 $record->status = $previousStatus;
                 $this->refundHistory->recordStatusChange($record->id, $currentStatus, $previousStatus, $userId);
+                $this->refundHistory->recordFieldChange($record->id, 'regression_reason', null, $reason, $userId);
 
                 // verificacion_pago → autorizacion_pago: deshacer la materialización
                 // que hizo RefundPaymentService::authorizePayment para que el Contador
