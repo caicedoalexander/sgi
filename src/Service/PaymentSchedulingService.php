@@ -14,6 +14,7 @@ use App\Model\Entity\PaymentScheduling;
 use App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineStateRegistry;
 use App\ValueObject\UserContext;
 use Cake\Event\Event;
+use Cake\Event\EventManager;
 use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
 
@@ -37,7 +38,7 @@ class PaymentSchedulingService
         $this->stateRegistry = $stateRegistry ?? new PaymentSchedulingPipelineStateRegistry();
         $this->historyService = $historyService ?? new InvoiceHistoryService();
         $this->schedulingHistory = $schedulingHistory ?? new PaymentSchedulingHistoryService();
-        $this->events = $events;
+        $this->events = $events ?? EventManager::instance();
     }
 
     public function getVisibleStatuses(int $roleId): array
