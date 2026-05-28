@@ -17,6 +17,7 @@ use App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry;
 use App\Service\Pipeline\PettyCash\Policy\PettyCashFieldAccessPolicy;
 use App\ValueObject\UserContext;
 use Cake\Event\Event;
+use Cake\Event\EventManager;
 use Cake\Event\EventManagerInterface;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
@@ -61,7 +62,7 @@ class PettyCashService
         $this->fieldPolicy = $fieldPolicy;
         $this->history = $history ?? new PettyCashHistoryService();
         $this->stateRegistry = $stateRegistry ?? new PettyCashPipelineStateRegistry();
-        $this->events = $events;
+        $this->events = $events ?? EventManager::instance();
     }
 
     /**

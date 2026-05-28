@@ -11,6 +11,7 @@ use App\Event\InvoicePaidEvent;
 use App\Service\Interface\HistoryServiceInterface;
 use App\ValueObject\UserContext;
 use Cake\Event\Event;
+use Cake\Event\EventManager;
 use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
 
@@ -38,7 +39,7 @@ class RefundPaymentService
         $this->auth = $auth;
         $this->refundHistory = $refundHistory ?? new RefundHistoryService();
         $this->invoiceHistory = $invoiceHistory ?? new InvoiceHistoryService();
-        $this->events = $events;
+        $this->events = $events ?? EventManager::instance();
     }
 
     /**
