@@ -84,6 +84,7 @@ use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\PipelineAuthorizationService;
 use App\Service\RefundDocumentService;
 use App\Service\RefundPaymentService;
+use App\Service\RefundHistoryService;
 use App\Service\RefundService;
 use App\Service\SidebarCounterService;
 use App\Service\Strategy\InvoiceApprovalStrategy;
@@ -371,6 +372,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoiceHistoryService::class,
                 AuthorizationFacade::class,
             ]);
+        $container->addShared(RefundHistoryService::class);
         $container->addShared(RefundPaymentService::class)
             ->addArgument(AuthorizationFacade::class);
         $container->addShared(PaymentSchedulingService::class)

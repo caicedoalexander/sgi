@@ -13,6 +13,7 @@ use App\Model\Entity\Refund;
 use App\Service\Pipeline\Refund\Policy\RefundActionPolicy;
 use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\RefundDocumentService;
+use App\Service\RefundHistoryService;
 use App\Service\RefundPaymentService;
 use App\Service\RefundService;
 use App\ViewModel\RefundAddViewModel;
@@ -34,6 +35,7 @@ class RefundsController extends AppController
     private RefundDocumentService $documentService;
     private RefundFieldAccessPolicy $fieldPolicy;
     private RefundActionPolicy $actionPolicy;
+    private RefundHistoryService $historyService;
 
     /**
      * @return void
@@ -47,6 +49,7 @@ class RefundsController extends AppController
         $this->documentService = $container->get(RefundDocumentService::class);
         $this->fieldPolicy = $container->get(RefundFieldAccessPolicy::class);
         $this->actionPolicy = $container->get(RefundActionPolicy::class);
+        $this->historyService = $container->get(RefundHistoryService::class);
     }
 
     private function _getCurrentUser(): object
@@ -336,6 +339,19 @@ class RefundsController extends AppController
             $patchData = $filtered->patch;
 
             if (!empty($patchData)) {
+                // patchEntity muta $record en sitio, así que snapshoteamos el
+                // estado original (solo los campos auditables) ANTES de aplicar
+                // el patch para registrar el diff campo a campo tras el save.
+                $original = new Refund([
+                    'id' => $record->id,
+                    'beneficiary_type' => $record->beneficiary_type,
+                    'beneficiary_employee_id' => $record->beneficiary_employee_id,
+                    'beneficiary_provider_id' => $record->beneficiary_provider_id,
+                    'accrued' => $record->accrued,
+                    'accrual_date' => $record->accrual_date,
+                    'ready_for_payment' => $record->ready_for_payment,
+                ]);
+
                 $record = $this->Refunds->patchEntity($record, $patchData);
                 if (!$this->Refunds->save($record)) {
                     $errors = [];
@@ -351,6 +367,12 @@ class RefundsController extends AppController
 
                     return $this->redirect(['action' => 'edit', $id]);
                 }
+
+                $this->historyService->recordChanges(
+                    $original,
+                    $record,
+                    (int)$this->_getCurrentUser()->id,
+                );
             }
 
             // Add invoices (only in agrupacion)
