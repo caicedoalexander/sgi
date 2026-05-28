@@ -912,6 +912,7 @@ class PettyCashService
                 }
 
                 $this->history->recordStatusChange($record->id, $currentStatus, $previousStatus, $userId);
+                $this->history->recordFieldChange($record->id, 'regression_reason', null, $reason, $userId);
 
                 return true;
             },
