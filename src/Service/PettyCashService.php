@@ -148,6 +148,17 @@ class PettyCashService
         $recordsTable = TableRegistry::getTableLocator()->get('PettyCashRecords');
 
         if (!empty($filtered->patch)) {
+            // patchEntity muta $record en sitio, así que snapshoteamos el estado
+            // original (solo los campos auditables) ANTES de aplicar el patch
+            // para poder registrar el diff campo a campo tras el save.
+            $original = new PettyCashRecord([
+                'id' => $record->id,
+                'notes' => $record->notes,
+                'accrued' => $record->accrued,
+                'accrual_date' => $record->accrual_date,
+                'ready_for_payment' => $record->ready_for_payment,
+            ]);
+
             $record = $recordsTable->patchEntity($record, $filtered->patch);
             if (!$recordsTable->save($record)) {
                 $messages = [];
@@ -163,6 +174,8 @@ class PettyCashService
                     !empty($messages) ? $messages : ['No se pudo guardar el registro.'],
                 );
             }
+
+            $this->history->recordChanges($original, $record, $userId);
         }
 
         $linkWarnings = [];

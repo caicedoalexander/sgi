@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\PettyCashConstants;
+use App\Model\Entity\PettyCashRecord;
+use App\Service\Trait\HistoryNormalizationTrait;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -16,6 +18,22 @@ use Cake\ORM\TableRegistry;
  */
 class PettyCashHistoryService
 {
+    use HistoryNormalizationTrait;
+
+    /**
+     * Campos editables del registro que se auditan campo a campo.
+     *
+     * Espejo de los campos que `PettyCashFieldAccessPolicy` permite patchear
+     * en `PettyCashService::saveAndAdvance` (notes en agrupación/contabilidad,
+     * más accrued/accrual_date/ready_for_payment en contabilidad).
+     */
+    private const FIELDS_TO_TRACK = [
+        'notes',
+        'accrued',
+        'accrual_date',
+        'ready_for_payment',
+    ];
+
     /**
      * Registra un cambio de estado del registro de Caja Menor.
      */
@@ -37,6 +55,48 @@ class PettyCashHistoryService
         ]);
 
         $table->save($entity);
+    }
+
+    /**
+     * Registra los cambios campo a campo entre el estado original y el
+     * modificado del registro. Espeja InvoiceHistoryService::recordChanges:
+     * `field_changed` guarda el nombre crudo del campo (no el label).
+     *
+     * @param \App\Model\Entity\PettyCashRecord $original Snapshot previo al patch.
+     * @param \App\Model\Entity\PettyCashRecord $modified Entidad tras el save.
+     * @param int $userId Usuario que realizó el cambio.
+     * @return void
+     */
+    public function recordChanges(PettyCashRecord $original, PettyCashRecord $modified, int $userId): void
+    {
+        $table = TableRegistry::getTableLocator()->get('PettyCashHistories');
+        $entities = [];
+
+        foreach (self::FIELDS_TO_TRACK as $field) {
+            $oldVal = $this->normalizeValue($original->get($field));
+            $newVal = $this->normalizeValue($modified->get($field));
+
+            if (is_bool($oldVal) || is_bool($newVal)) {
+                $oldVal = (bool)$oldVal;
+                $newVal = (bool)$newVal;
+            }
+
+            if ($oldVal !== $newVal) {
+                $entities[] = $table->newEntity([
+                    'petty_cash_record_id' => $original->id,
+                    'user_id' => $userId,
+                    'field_changed' => $field,
+                    'old_value' => $oldVal !== null ? (string)$oldVal : null,
+                    'new_value' => $newVal !== null ? (string)$newVal : null,
+                ]);
+            }
+        }
+
+        if (!empty($entities)) {
+            $table->getConnection()->transactional(function () use ($table, $entities): void {
+                $table->saveMany($entities);
+            });
+        }
     }
 
     /**
