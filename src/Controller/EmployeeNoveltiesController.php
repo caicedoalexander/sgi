@@ -705,6 +705,13 @@ class EmployeeNoveltiesController extends AppController
 
             $novelty = $this->EmployeeNovelties->patchEntity($novelty, $data);
             if ($this->EmployeeNovelties->save($novelty)) {
+                $this->historyService->recordStatusChange(
+                    (int)$novelty->id,
+                    '',
+                    (string)$novelty->pipeline_status,
+                    $user->id,
+                );
+
                 // Save massive employees
                 if (!empty($massiveEmployeeIds)) {
                     $massiveTable = TableRegistry::getTableLocator()->get('NoveltyMassiveEmployees');
