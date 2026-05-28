@@ -20,6 +20,7 @@ use App\ViewModel\RefundAddViewModel;
 use App\ViewModel\RefundEditViewModel;
 use Cake\Http\Response;
 use Cake\ORM\Query\SelectQuery;
+use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 use DateTimeImmutable;
 
@@ -756,6 +757,16 @@ class RefundsController extends AppController
             $this->request->getData('document_type'),
         );
 
+        if (!is_string($result)) {
+            $this->historyService->recordFieldChange(
+                (int)$id,
+                'document',
+                null,
+                $result->file_name,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
+
         if ($this->_isJsonRequest()) {
             if (is_string($result)) {
                 return $this->_jsonResponse(['success' => false, 'error' => $result], 400);
@@ -803,7 +814,23 @@ class RefundsController extends AppController
             return $gate;
         }
 
+        $documentsTable = TableRegistry::getTableLocator()->get('RefundDocuments');
+        $document = $documentsTable->find()
+            ->where(['id' => $documentId, 'refund_id' => $refundId])
+            ->first();
+        $fileName = $document?->file_name;
+
         $deleted = $this->documentService->deleteDocument((int)$documentId, (int)$refundId);
+
+        if ($deleted) {
+            $this->historyService->recordFieldChange(
+                (int)$refundId,
+                'document',
+                $fileName,
+                null,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
 
         if ($this->_isJsonRequest()) {
             if ($deleted) {

@@ -58,6 +58,7 @@ use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
 use App\Service\PendingNotificationsService;
 use App\Service\PettyCashDocumentService;
+use App\Service\PettyCashHistoryService;
 use App\Service\PettyCashService;
 use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
@@ -356,6 +357,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         // === Petty cash / payment scheduling / advances ===
         $container->addShared(PettyCashDocumentService::class);
+        $container->addShared(PettyCashHistoryService::class);
         $container->addShared(PettyCashFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
         $container->addShared(PettyCashService::class)

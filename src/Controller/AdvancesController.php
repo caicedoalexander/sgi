@@ -11,6 +11,7 @@ use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\AdvanceLegalizationDocumentService;
+use App\Service\AdvanceLegalizationHistoryService;
 use App\Service\AdvanceLegalizationService;
 use App\Service\InvoicePipelineService;
 use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
@@ -33,6 +34,8 @@ class AdvancesController extends AppController
 
     private AdvanceLegalizationActionPolicy $actionPolicy;
 
+    private AdvanceLegalizationHistoryService $historyService;
+
     public function initialize(): void
     {
         parent::initialize();
@@ -40,6 +43,7 @@ class AdvancesController extends AppController
         $this->documentService = $this->getContainer()->get(AdvanceLegalizationDocumentService::class);
         $this->pipelineService = $this->getContainer()->get(InvoicePipelineService::class);
         $this->actionPolicy = $this->getContainer()->get(AdvanceLegalizationActionPolicy::class);
+        $this->historyService = $this->getContainer()->get(AdvanceLegalizationHistoryService::class);
         $this->fetchTable('Invoices');
     }
 
@@ -508,6 +512,16 @@ class AdvancesController extends AppController
         }
 
         $result = $this->documentService->attachRelationDocument($leg, $file, (int)$this->_getCurrentUser()->id);
+
+        if ($result->success) {
+            $this->historyService->recordFieldChange(
+                (int)$leg->id,
+                'document',
+                null,
+                $result->data->file_name,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
 
         if ($this->_isJsonRequest()) {
             if (!$result->success) {

@@ -11,11 +11,13 @@ use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\PettyCashDocumentService;
+use App\Service\PettyCashHistoryService;
 use App\Service\PettyCashService;
 use App\Service\Pipeline\PettyCash\Policy\PettyCashActionPolicy;
 use App\ViewModel\PettyCashAddViewModel;
 use App\ViewModel\PettyCashEditViewModel;
 use Cake\ORM\Query\SelectQuery;
+use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 
 class PettyCashRecordsController extends AppController
@@ -31,6 +33,8 @@ class PettyCashRecordsController extends AppController
 
     private PettyCashActionPolicy $actionPolicy;
 
+    private PettyCashHistoryService $historyService;
+
     /**
      * @return void
      */
@@ -41,6 +45,7 @@ class PettyCashRecordsController extends AppController
         $this->pettyCashService = $container->get(PettyCashService::class);
         $this->documentService = $container->get(PettyCashDocumentService::class);
         $this->actionPolicy = $container->get(PettyCashActionPolicy::class);
+        $this->historyService = $container->get(PettyCashHistoryService::class);
     }
 
     private function _getCurrentUser(): \App\Model\Entity\User
@@ -593,6 +598,16 @@ class PettyCashRecordsController extends AppController
             $this->request->getData('document_type'),
         );
 
+        if (!is_string($result)) {
+            $this->historyService->recordFieldChange(
+                (int)$id,
+                'document',
+                null,
+                $result->file_name,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
+
         if ($this->_isJsonRequest()) {
             if (is_string($result)) {
                 return $this->_jsonResponse(['success' => false, 'error' => $result]);
@@ -645,7 +660,23 @@ class PettyCashRecordsController extends AppController
             return $this->redirect(['action' => 'edit', $recordId]);
         }
 
+        $documentsTable = TableRegistry::getTableLocator()->get('PettyCashDocuments');
+        $document = $documentsTable->find()
+            ->where(['id' => $documentId, 'petty_cash_record_id' => $recordId])
+            ->first();
+        $fileName = $document?->file_name;
+
         $deleted = $this->documentService->deleteDocument((int)$documentId);
+
+        if ($deleted) {
+            $this->historyService->recordFieldChange(
+                (int)$recordId,
+                'document',
+                $fileName,
+                null,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
 
         if ($this->_isJsonRequest()) {
             return $this->_jsonResponse(
