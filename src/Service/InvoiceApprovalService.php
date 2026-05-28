@@ -54,6 +54,8 @@ class InvoiceApprovalService
             return ServiceResult::fail($persistResult['errors']);
         }
 
+        $this->_recordInitialAssignment($invoice, $approverUserIds, $createdByUserId);
+
         $emailErrors = $this->_sendApprovalEmails($invoice, $persistResult['pending'], $createdByUserId);
 
         if (!empty($emailErrors)) {
@@ -138,6 +140,35 @@ class InvoiceApprovalService
         }
 
         return $errors;
+    }
+
+    /**
+     * Registra en el historial la asignación inicial de aprobadores.
+     * Usa el mismo campo 'approvers_modified' que modifyApprovers para que la
+     * vista de historial lo muestre igual; old_value es null al ser la primera
+     * asignación.
+     *
+     * @param array<int|string> $approverUserIds
+     */
+    private function _recordInitialAssignment(Invoice $invoice, array $approverUserIds, int $userId): void
+    {
+        $usersTable = TableRegistry::getTableLocator()->get('Users');
+        $users = $usersTable->find()
+            ->where(['id IN' => array_map('intval', $approverUserIds)])
+            ->all()
+            ->toArray();
+        $names = array_map(
+            fn($u) => $u->full_name ?? $u->username ?? 'Usuario #' . $u->id,
+            $users,
+        );
+
+        $this->historyService->recordFieldChange(
+            (int)$invoice->id,
+            'approvers_modified',
+            null,
+            implode(', ', $names) ?: '—',
+            $userId,
+        );
     }
 
     /**
