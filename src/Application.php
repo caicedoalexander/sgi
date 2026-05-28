@@ -53,6 +53,7 @@ use App\Service\NoveltyService;
 use App\Service\NoveltySignatureService;
 use App\Service\PaymentRegistryService;
 use App\Service\PaymentSchedulingDocumentService;
+use App\Service\PaymentSchedulingHistoryService;
 use App\Service\PaymentSchedulingImportService;
 use App\Service\PaymentSchedulingService;
 use App\Service\PendingNotificationsService;
@@ -377,6 +378,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 InvoicePaymentService::class,
                 AuthorizationFacade::class,
             ]);
+        $container->addShared(PaymentSchedulingHistoryService::class);
         $container->addShared(PaymentSchedulingImportService::class)
             ->addArgument(InvoicePaymentService::class);
         $container->addShared(PaymentSchedulingDocumentService::class);
