@@ -20,20 +20,24 @@ class NoveltyService
     private AuthorizationFacade $auth;
     private NoveltyFieldAccessPolicy $fieldPolicy;
     private NoveltyPipelineStateRegistry $stateRegistry;
+    private NoveltyHistoryService $historyService;
 
     /**
      * @param \App\Authorization\AuthorizationFacade $auth Authorization facade.
      * @param \App\Service\Pipeline\Novelty\Policy\NoveltyFieldAccessPolicy $fieldPolicy Field access policy.
      * @param \App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry|null $stateRegistry State registry.
+     * @param \App\Service\NoveltyHistoryService|null $historyService History service.
      */
     public function __construct(
         AuthorizationFacade $auth,
         NoveltyFieldAccessPolicy $fieldPolicy,
         ?NoveltyPipelineStateRegistry $stateRegistry = null,
+        ?NoveltyHistoryService $historyService = null,
     ) {
         $this->auth = $auth;
         $this->fieldPolicy = $fieldPolicy;
         $this->stateRegistry = $stateRegistry ?? new NoveltyPipelineStateRegistry();
+        $this->historyService = $historyService ?? new NoveltyHistoryService();
     }
 
     /**
@@ -182,12 +186,26 @@ class NoveltyService
         }
 
         $saved = $noveltiesTable->getConnection()->transactional(
-            function () use ($noveltiesTable, $liquidationDocsTable, $members, $liquidationDoc, $nextGroupStatus) {
+            function () use (
+                $noveltiesTable,
+                $liquidationDocsTable,
+                $members,
+                $liquidationDoc,
+                $nextGroupStatus,
+                $userId,
+            ) {
                 foreach ($members as $member) {
+                    $previousStatus = (string)$member->pipeline_status;
                     $member->pipeline_status = $nextGroupStatus;
                     if (!$noveltiesTable->save($member)) {
                         return false;
                     }
+                    $this->historyService->recordStatusChange(
+                        (int)$member->id,
+                        $previousStatus,
+                        $nextGroupStatus,
+                        $userId,
+                    );
                 }
 
                 $liquidationDoc->pipeline_status = $nextGroupStatus;
@@ -330,10 +348,28 @@ class NoveltyService
             }
         }
 
+        $previousDocId = $novelty->liquidation_doc_id;
+        $previousStatus = (string)$novelty->pipeline_status;
         $novelty->liquidation_doc_id = $doc->id;
         $novelty->pipeline_status = NoveltyConstants::STATUS_CONTABILIDAD;
         if (!$noveltiesTable->save($novelty)) {
             return ['No se pudo asignar la novedad al documento de liquidación.'];
+        }
+
+        $this->historyService->recordFieldChange(
+            (int)$novelty->id,
+            'liquidation_doc_id',
+            $previousDocId !== null ? (string)$previousDocId : null,
+            (string)$doc->id,
+            $userId,
+        );
+        if ($previousStatus !== NoveltyConstants::STATUS_CONTABILIDAD) {
+            $this->historyService->recordStatusChange(
+                (int)$novelty->id,
+                $previousStatus,
+                NoveltyConstants::STATUS_CONTABILIDAD,
+                $userId,
+            );
         }
 
         return $doc;

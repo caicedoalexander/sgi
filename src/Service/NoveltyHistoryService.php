@@ -34,6 +34,7 @@ class NoveltyHistoryService implements HistoryServiceInterface
         'liquidation_doc_id' => 'Documento de Liquidación',
         'area_approval' => 'Aprobación de Área',
         'approver_response' => 'Respuesta de Aprobador',
+        'approver_id' => 'Aprobador',
     ];
 
     /**

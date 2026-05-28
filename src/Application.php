@@ -75,6 +75,7 @@ use App\Service\Pipeline\Invoice\State\LegalizadaState;
 use App\Service\Pipeline\Invoice\State\PagadaState;
 use App\Service\Pipeline\Invoice\State\TesoreriaState;
 use App\Service\Pipeline\Invoice\State\VerificacionPagoState;
+use App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry;
 use App\Service\Pipeline\Novelty\Policy\NoveltyActionPolicy;
 use App\Service\Pipeline\Novelty\Policy\NoveltyFieldAccessPolicy;
 use App\Service\Pipeline\PaymentScheduling\Policy\PaymentSchedulingActionPolicy;
@@ -346,10 +347,13 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(NoveltySignatureService::class);
         $container->addShared(NoveltyFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
+        $container->addShared(NoveltyPipelineStateRegistry::class);
         $container->addShared(NoveltyService::class)
             ->addArguments([
                 AuthorizationFacade::class,
                 NoveltyFieldAccessPolicy::class,
+                NoveltyPipelineStateRegistry::class,
+                NoveltyHistoryService::class,
             ]);
         $container->addShared(LeaveDocumentService::class);
         $container->addShared(LeaveSignatureService::class);
