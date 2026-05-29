@@ -366,7 +366,6 @@ class NoveltyPipelineService
         int $userId,
     ): object|array {
         $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
-        $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
 
         $doc = $liquidationDocsTable->find()
             ->where(['liquidation_number' => $liquidationNumber])
@@ -415,12 +414,66 @@ class NoveltyPipelineService
             }
         }
 
+        if (!$this->_attachNoveltyToDoc($novelty, $doc, $userId)) {
+            return ['No se pudo asignar la novedad al documento de liquidación.'];
+        }
+
+        return $doc;
+    }
+
+    /**
+     * Asigna una novedad a un documento de liquidación EXISTENTE.
+     *
+     * A diferencia de assignToLiquidationDoc(): el documento ya existe (no se
+     * busca por liquidation_number ni se crea, y NO se crean slots de firma).
+     * Solo reasigna la novedad y la mueve a CONTABILIDAD, en una sola transacción.
+     *
+     * @param \App\Model\Entity\EmployeeNovelty $novelty Novelty to reassign.
+     * @param int $existingDocId Existing liquidation document id.
+     * @param int $userId Acting user id.
+     * @return object|array El doc (object) en éxito; array de strings en error.
+     */
+    public function assignToExistingLiquidationDoc(
+        EmployeeNovelty $novelty,
+        int $existingDocId,
+        int $userId,
+    ): object|array {
+        $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
+        $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+        $doc = $liquidationDocsTable->get($existingDocId);
+
+        $ok = $noveltiesTable->getConnection()->transactional(
+            fn(): bool => $this->_attachNoveltyToDoc($novelty, $doc, $userId),
+        );
+
+        if (!$ok) {
+            return ['No se pudo asignar la novedad.'];
+        }
+
+        return $doc;
+    }
+
+    /**
+     * Lógica de cola compartida: fija liquidation_doc_id sobre un doc ya
+     * resuelto, mueve la novedad a CONTABILIDAD y registra el historial.
+     * La usan assignToLiquidationDoc (doc por número, fuera de transacción) y
+     * assignToExistingLiquidationDoc (doc por id, dentro de transacción).
+     *
+     * @param \App\Model\Entity\EmployeeNovelty $novelty Novelty to reassign.
+     * @param object $doc Resolved liquidation document.
+     * @param int $userId Acting user id.
+     * @return bool True si el save de la novedad tuvo éxito.
+     */
+    private function _attachNoveltyToDoc(EmployeeNovelty $novelty, object $doc, int $userId): bool
+    {
+        $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+
         $previousDocId = $novelty->liquidation_doc_id;
         $previousStatus = (string)$novelty->pipeline_status;
         $novelty->liquidation_doc_id = $doc->id;
         $novelty->pipeline_status = NoveltyConstants::STATUS_CONTABILIDAD;
         if (!$noveltiesTable->save($novelty)) {
-            return ['No se pudo asignar la novedad al documento de liquidación.'];
+            return false;
         }
 
         $this->historyService->recordFieldChange(
@@ -439,7 +492,7 @@ class NoveltyPipelineService
             );
         }
 
-        return $doc;
+        return true;
     }
 
     /**

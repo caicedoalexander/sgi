@@ -23,6 +23,7 @@ use App\ViewModel\EmployeeNoveltyAddViewModel;
 use App\ViewModel\EmployeeNoveltyEditViewModel;
 use Cake\Http\Response;
 use Cake\I18n\Date;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
 use Exception;
@@ -127,7 +128,7 @@ class EmployeeNoveltiesController extends AppController
      * @param \Cake\ORM\Query\SelectQuery $visibleQuery Query already filtered to the visible novelties.
      * @return array{0: array<\App\Model\Entity\EmployeeNovelty>, 1: array<string, int>}
      */
-    private function _buildSideRailData($visibleQuery): array
+    private function _buildSideRailData(SelectQuery $visibleQuery): array
     {
         $today = date('Y-m-d');
 
@@ -998,32 +999,16 @@ class EmployeeNoveltiesController extends AppController
         $existingDocId = $this->request->getData('existing_doc_id');
 
         if ($existingDocId) {
-            // Assign to existing doc
-            $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
-            $doc = $liquidationDocsTable->get($existingDocId);
-            $previousDocId = $novelty->liquidation_doc_id;
-            $previousStatus = (string)$novelty->pipeline_status;
-            $novelty->liquidation_doc_id = $doc->id;
-            $novelty->pipeline_status = NoveltyConstants::STATUS_CONTABILIDAD;
-            if ($this->EmployeeNovelties->save($novelty)) {
-                $this->historyService->recordFieldChange(
-                    (int)$novelty->id,
-                    'liquidation_doc_id',
-                    $previousDocId !== null ? (string)$previousDocId : null,
-                    (string)$doc->id,
-                    (int)$user->id,
-                );
-                if ($previousStatus !== NoveltyConstants::STATUS_CONTABILIDAD) {
-                    $this->historyService->recordStatusChange(
-                        (int)$novelty->id,
-                        $previousStatus,
-                        NoveltyConstants::STATUS_CONTABILIDAD,
-                        (int)$user->id,
-                    );
-                }
-                $this->Flash->success('Novedad asignada al documento de liquidación: ' . $doc->liquidation_number);
+            $result = $this->pipelineService->assignToExistingLiquidationDoc(
+                $novelty,
+                (int)$existingDocId,
+                (int)$user->id,
+            );
+
+            if (is_array($result)) {
+                $this->Flash->error(implode(' ', $result));
             } else {
-                $this->Flash->error('No se pudo asignar la novedad.');
+                $this->Flash->success('Novedad asignada al documento de liquidación: ' . $result->liquidation_number);
             }
         } elseif ($liquidationNumber) {
             $data = $this->request->getData();
