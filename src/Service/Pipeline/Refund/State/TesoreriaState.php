@@ -33,19 +33,4 @@ final class TesoreriaState implements RefundPipelineState
     {
         return ['Debe registrar un pago para avanzar desde Tesorería.'];
     }
-
-    /**
-     * Bloqueo único de regresión en Refunds: tesoreria->contabilidad cuando ya
-     * existe un pago bulk registrado en columnas. Anular o reasignar el pago
-     * primero.
-     */
-    public function getRegressionLockMessage(Refund $record): ?string
-    {
-        if (!empty($record->payment_amount)) {
-            return 'No se puede regresar a Contabilidad: existe un pago pendiente registrado.'
-                . ' Anule o reasigne el pago primero.';
-        }
-
-        return null;
-    }
 }

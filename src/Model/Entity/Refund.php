@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Entity;
 
+use App\Constants\Domain\Refund\PipelineStatus;
 use App\Constants\RefundConstants;
 use Cake\ORM\Entity;
 
@@ -107,7 +108,7 @@ class Refund extends Entity
             return false;
         }
 
-        return isset(RefundConstants::TRANSITIONS[$this->status]);
+        return PipelineStatus::tryFrom((string)$this->status)?->next() !== null;
     }
 
     // -----------------------------------------------------------------

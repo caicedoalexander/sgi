@@ -47,12 +47,4 @@ final class AgrupacionState implements RefundPipelineState
 
         return $errors;
     }
-
-    /**
-     * @inheritDoc
-     */
-    public function getRegressionLockMessage(Refund $record): ?string
-    {
-        return null;
-    }
 }

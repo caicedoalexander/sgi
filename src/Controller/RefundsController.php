@@ -404,13 +404,14 @@ class RefundsController extends AppController
                     (int)$user->id,
                     (int)$user->role_id,
                 );
-                if ($result['success']) {
+                if ($result->success) {
                     $advanced = true;
-                    $nextLabel = RefundConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
+                    $nextStatus = $result->data['nextStatus'];
+                    $nextLabel = RefundConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
                     $this->Flash->success(sprintf('Registro guardado y avanzado a: %s', $nextLabel));
                 } else {
                     $this->Flash->success('Registro actualizado.');
-                    $this->Flash->warning($result['error']);
+                    $this->Flash->warning($result->firstError() ?? 'No se pudo avanzar el registro.');
                 }
             } else {
                 $this->Flash->success('Registro actualizado.');
@@ -436,7 +437,7 @@ class RefundsController extends AppController
      */
     private function _buildEditViewModel(Refund $record, object $user): RefundEditViewModel
     {
-        $nextStatus = RefundConstants::TRANSITIONS[$record->status] ?? null;
+        $nextStatus = $this->refundService->getNextStatus($record->status);
         $advanceErrors = $nextStatus
             ? $this->refundService->getTransitionErrors($record)
             : [];
@@ -489,14 +490,15 @@ class RefundsController extends AppController
             (int)$user->role_id,
         );
 
-        if ($result['success']) {
-            $nextLabel = RefundConstants::STATUS_LABELS[$result['nextStatus']] ?? $result['nextStatus'];
+        if ($result->success) {
+            $nextStatus = $result->data['nextStatus'];
+            $nextLabel = RefundConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
             $this->Flash->success(sprintf('Registro avanzado a: %s', $nextLabel));
 
             return $this->redirect(['action' => 'index']);
         }
 
-        $this->Flash->error($result['error']);
+        $this->Flash->error($result->firstError() ?? 'No se pudo avanzar el registro.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
@@ -521,15 +523,15 @@ class RefundsController extends AppController
             $reason,
         );
 
-        if ($result['success']) {
-            $prevLabel = RefundConstants::STATUS_LABELS[$result['previousStatus']]
-                ?? $result['previousStatus'];
+        if ($result->success) {
+            $previousStatus = $result->data['previousStatus'];
+            $prevLabel = RefundConstants::STATUS_LABELS[$previousStatus] ?? $previousStatus;
             $this->Flash->success(sprintf('Registro regresado a: %s', $prevLabel));
 
             return $this->redirect(['action' => 'index']);
         }
 
-        $this->Flash->error($result['error']);
+        $this->Flash->error($result->firstError() ?? 'No se pudo regresar el registro.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }

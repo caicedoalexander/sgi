@@ -24,6 +24,8 @@ class RefundService
     private GroupedInvoiceService $grouped;
     private RefundHistoryService $refundHistory;
     private RefundPipelineStateRegistry $stateRegistry;
+    private RefundLockPolicy $lockPolicy;
+    private RefundTransitionValidator $transitionValidator;
     private AuthorizationFacade $auth;
 
     /**
@@ -31,12 +33,16 @@ class RefundService
      * @param \App\Authorization\AuthorizationFacade $auth Authorization facade.
      * @param \App\Service\RefundHistoryService|null $refundHistory Refund-specific audit trail.
      * @param \App\Service\Pipeline\Refund\RefundPipelineStateRegistry|null $stateRegistry Pipeline states.
+     * @param \App\Service\RefundLockPolicy|null $lockPolicy Regression lock policy (mirror de InvoiceLockPolicy).
+     * @param \App\Service\RefundTransitionValidator|null $transitionValidator Advance requirements validator.
      */
     public function __construct(
         HistoryServiceInterface $historyService,
         AuthorizationFacade $auth,
         ?RefundHistoryService $refundHistory = null,
         ?RefundPipelineStateRegistry $stateRegistry = null,
+        ?RefundLockPolicy $lockPolicy = null,
+        ?RefundTransitionValidator $transitionValidator = null,
     ) {
         $this->grouped = new GroupedInvoiceService(
             documentType: InvoiceConstants::DOCTYPE_REINTEGRO,
@@ -48,6 +54,8 @@ class RefundService
         $this->auth = $auth;
         $this->refundHistory = $refundHistory ?? new RefundHistoryService();
         $this->stateRegistry = $stateRegistry ?? new RefundPipelineStateRegistry();
+        $this->lockPolicy = $lockPolicy ?? new RefundLockPolicy();
+        $this->transitionValidator = $transitionValidator ?? new RefundTransitionValidator($this->stateRegistry);
     }
 
     /**
@@ -109,6 +117,19 @@ class RefundService
     }
 
     /**
+     * Returns the next pipeline status, or null if the current state is terminal.
+     */
+    public function getNextStatus(string $currentStatus): ?string
+    {
+        $currentEnum = RefundPipelineStatus::tryFrom($currentStatus);
+        if ($currentEnum === null) {
+            return null;
+        }
+
+        return $this->stateRegistry->get($currentEnum)->getNextStatus()?->value;
+    }
+
+    /**
      * Retorna el motivo por el que el reintegro no puede avanzar, o null si puede.
      *
      * Mapea las 4 condiciones de denial estructurales (sin contar validaciones
@@ -121,7 +142,7 @@ class RefundService
     public function denialReasonForAdvance(Refund $refund, int $roleId): ?DenialReason
     {
         $currentStatus = $refund->status;
-        $nextStatus = RefundConstants::TRANSITIONS[$currentStatus] ?? null;
+        $nextStatus = $this->getNextStatus($currentStatus);
 
         if ($nextStatus === null) {
             return DenialReason::TERMINAL_STATE;
@@ -149,33 +170,29 @@ class RefundService
     }
 
     /**
+     * Avanza el reintegro al siguiente estado del pipeline, propagando el estado a
+     * las facturas hijas y registrando historial dentro de una transacción con lock.
+     *
      * @param \App\Model\Entity\Refund $record Record.
      * @param int $userId User ID.
      * @param int $roleId Role ID (para enforcement RBAC).
-     * @return array{success: bool, error?: string, nextStatus?: string}
+     * @return \App\Service\ServiceResult data{nextStatus: string}
      */
-    public function advanceStatus(Refund $record, int $userId, int $roleId): array
+    public function advanceStatus(Refund $record, int $userId, int $roleId): ServiceResult
     {
         $currentStatus = $record->status;
 
         $denial = $this->denialReasonForAdvance($record, $roleId);
         if ($denial !== null) {
-            return ['success' => false, 'error' => $denial->message()];
+            return ServiceResult::fail([$denial->message()]);
         }
 
         // Garantizado no-null por denialReasonForAdvance (TERMINAL_STATE descartado).
-        $nextStatus = RefundConstants::TRANSITIONS[$currentStatus];
+        $nextStatus = $this->getNextStatus($currentStatus);
 
-        $currentEnum = RefundPipelineStatus::tryFrom($currentStatus);
-        if ($currentEnum === null) {
-            return ['success' => false, 'error' => "Estado inválido: {$currentStatus}"];
-        }
-        $validationErrors = $this->stateRegistry->get($currentEnum)->validateAdvance($record);
+        $validationErrors = $this->transitionValidator->validateAdvance($record);
         if (!empty($validationErrors)) {
-            return [
-                'success' => false,
-                'error' => 'No se puede avanzar. ' . implode('. ', $validationErrors),
-            ];
+            return ServiceResult::fail(['No se puede avanzar. ' . implode('. ', $validationErrors)]);
         }
 
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
@@ -203,10 +220,9 @@ class RefundService
                 ->epilog('FOR UPDATE')
                 ->first();
             if ($locked === null || $locked->status !== $currentStatus) {
-                $finalResult = [
-                    'success' => false,
-                    'error' => 'El registro fue modificado por otro usuario. Recargue la página.',
-                ];
+                $finalResult = ServiceResult::fail(
+                    ['El registro fue modificado por otro usuario. Recargue la página.'],
+                );
 
                 return false;
             }
@@ -218,10 +234,9 @@ class RefundService
                 ->where([$fkField => $record->id])
                 ->count() > 0;
             if (!$hasInvoices) {
-                $finalResult = [
-                    'success' => false,
-                    'error' => 'El registro debe tener al menos una factura agrupada.',
-                ];
+                $finalResult = ServiceResult::fail(
+                    ['El registro debe tener al menos una factura agrupada.'],
+                );
 
                 return false;
             }
@@ -265,25 +280,24 @@ class RefundService
 
             $locked->status = $nextStatus;
             if (!$recordsTable->save($locked)) {
-                $finalResult = [
-                    'success' => false,
-                    'error' => self::_buildSaveErrorMessage(
+                $finalResult = ServiceResult::fail([
+                    self::_buildSaveErrorMessage(
                         'No se pudo guardar el avance del registro.',
                         $locked->getErrors(),
                     ),
-                ];
+                ]);
 
                 return false;
             }
             $record->status = $nextStatus;
             $this->refundHistory->recordStatusChange($record->id, $currentStatus, $nextStatus, $userId);
 
-            $finalResult = ['success' => true, 'nextStatus' => $nextStatus];
+            $finalResult = ServiceResult::ok(['nextStatus' => $nextStatus]);
 
             return true;
         });
 
-        return $finalResult ?? ['success' => false, 'error' => 'No se pudo guardar el avance del registro.'];
+        return $finalResult ?? ServiceResult::fail(['No se pudo guardar el avance del registro.']);
     }
 
     /**
@@ -347,21 +361,15 @@ class RefundService
     public function getTransitionErrors(Refund $record): array
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $invoices = $invoicesTable->find()
+        $hasInvoices = $invoicesTable->find()
             ->where([$this->grouped->getFkField() => $record->id])
-            ->all()
-            ->toArray();
+            ->count() > 0;
 
-        if (empty($invoices)) {
+        if (!$hasInvoices) {
             return ['El registro debe tener al menos una factura agrupada.'];
         }
 
-        $statusEnum = RefundPipelineStatus::tryFrom((string)$record->status);
-        if ($statusEnum === null) {
-            return ["Estado inválido: {$record->status}"];
-        }
-
-        return $this->stateRegistry->get($statusEnum)->validateAdvance($record);
+        return $this->transitionValidator->validateAdvance($record);
     }
 
     /**
@@ -378,9 +386,6 @@ class RefundService
         return $this->stateRegistry->get($currentEnum)->getPreviousStatus()?->value;
     }
 
-    /**
-     * Returns true if the role can regress the record from the current status.
-     */
     /**
      * Retorna el motivo por el que el reintegro no puede regresar, o null si puede.
      */
@@ -408,12 +413,7 @@ class RefundService
      */
     public function getRegressionLockMessage(Refund $record): ?string
     {
-        $statusEnum = RefundPipelineStatus::tryFrom((string)$record->status);
-        if ($statusEnum === null) {
-            return null;
-        }
-
-        return $this->stateRegistry->get($statusEnum)->getRegressionLockMessage($record);
+        return $this->lockPolicy->getRegressionLockMessage($record);
     }
 
     /**
@@ -421,14 +421,14 @@ class RefundService
      * Propagates the change to child invoices for contabilidad and tesoreria,
      * and stores the reason as a typed observation.
      *
-     * @return array{success: bool, error: ?string, previousStatus: ?string}
+     * @return \App\Service\ServiceResult data{previousStatus: string}
      */
     public function regress(
         Refund $record,
         int $roleId,
         int $userId,
         string $reason,
-    ): array {
+    ): ServiceResult {
         $reason = trim($reason);
         $currentStatus = $record->status;
 
@@ -438,27 +438,19 @@ class RefundService
                 ? 'Este registro ya está en el primer paso del flujo.'
                 : $regressDenial->message();
 
-            return ['success' => false, 'error' => $error, 'previousStatus' => null];
+            return ServiceResult::fail([$error]);
         }
 
         $lock = $this->getRegressionLockMessage($record);
         if ($lock !== null) {
-            return ['success' => false, 'error' => $lock, 'previousStatus' => null];
+            return ServiceResult::fail([$lock]);
         }
 
         if (mb_strlen($reason) < 10) {
-            return [
-                'success' => false,
-                'error' => 'El motivo es obligatorio (mínimo 10 caracteres).',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail(['El motivo es obligatorio (mínimo 10 caracteres).']);
         }
         if (mb_strlen($reason) > 500) {
-            return [
-                'success' => false,
-                'error' => 'El motivo no puede superar 500 caracteres.',
-                'previousStatus' => null,
-            ];
+            return ServiceResult::fail(['El motivo no puede superar 500 caracteres.']);
         }
 
         $previousStatus = $this->getPreviousStatus($currentStatus);
@@ -496,24 +488,20 @@ class RefundService
                     ->epilog('FOR UPDATE')
                     ->first();
                 if ($locked === null || $locked->status !== $currentStatus) {
-                    $finalResult = [
-                        'success' => false,
-                        'error' => 'El registro fue modificado por otro usuario. Recargue la página.',
-                        'previousStatus' => null,
-                    ];
+                    $finalResult = ServiceResult::fail(
+                        ['El registro fue modificado por otro usuario. Recargue la página.'],
+                    );
 
                     return false;
                 }
                 $locked->status = $previousStatus;
                 if (!$recordsTable->save($locked)) {
-                    $finalResult = [
-                        'success' => false,
-                        'error' => self::_buildSaveErrorMessage(
+                    $finalResult = ServiceResult::fail([
+                        self::_buildSaveErrorMessage(
                             'No se pudo regresar el registro.',
                             $locked->getErrors(),
                         ),
-                        'previousStatus' => null,
-                    ];
+                    ]);
 
                     return false;
                 }
@@ -544,14 +532,12 @@ class RefundService
                     $locked->payment_authorized_by = null;
                     $locked->payment_authorized_date = null;
                     if (!$recordsTable->save($locked)) {
-                        $finalResult = [
-                            'success' => false,
-                            'error' => self::_buildSaveErrorMessage(
+                        $finalResult = ServiceResult::fail([
+                            self::_buildSaveErrorMessage(
                                 'No se pudo revertir la autorización del pago.',
                                 $locked->getErrors(),
                             ),
-                            'previousStatus' => null,
-                        ];
+                        ]);
 
                         return false;
                     }
@@ -590,30 +576,22 @@ class RefundService
                 ]);
 
                 if (!$observationsTable->save($observation)) {
-                    $finalResult = [
-                        'success' => false,
-                        'error' => 'No se pudo registrar la observación de regresión.',
-                        'previousStatus' => null,
-                    ];
+                    $finalResult = ServiceResult::fail(
+                        ['No se pudo registrar la observación de regresión.'],
+                    );
 
                     return false;
                 }
 
-                $finalResult = [
-                    'success' => true,
-                    'error' => null,
-                    'previousStatus' => $previousStatus,
-                ];
+                $finalResult = ServiceResult::ok(['previousStatus' => $previousStatus]);
 
                 return true;
             },
         );
 
-        return $finalResult ?? [
-            'success' => false,
-            'error' => 'No se pudo regresar el registro. Intente de nuevo.',
-            'previousStatus' => null,
-        ];
+        return $finalResult ?? ServiceResult::fail(
+            ['No se pudo regresar el registro. Intente de nuevo.'],
+        );
     }
 
     /**

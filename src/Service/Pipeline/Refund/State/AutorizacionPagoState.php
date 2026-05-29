@@ -37,12 +37,4 @@ final class AutorizacionPagoState implements RefundPipelineState
     {
         return ['La autorización de pago se gestiona desde la sección de pagos.'];
     }
-
-    /**
-     * @inheritDoc
-     */
-    public function getRegressionLockMessage(Refund $record): ?string
-    {
-        return null;
-    }
 }

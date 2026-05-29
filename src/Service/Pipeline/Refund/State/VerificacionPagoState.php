@@ -28,9 +28,4 @@ final class VerificacionPagoState implements RefundPipelineState
     {
         return ['La confirmación de pago se gestiona desde la sección de pagos.'];
     }
-
-    public function getRegressionLockMessage(Refund $record): ?string
-    {
-        return null;
-    }
 }

@@ -9,13 +9,12 @@ use App\Model\Entity\Refund;
 /**
  * Polymorphic representation of one Refund pipeline state.
  *
- * Each State knows its base transitions (next/previous) y dos métodos:
+ * Each State knows its base transitions (next/previous) y un método:
  * - validateAdvance: errores que impiden avanzar al siguiente estado.
- * - getRegressionLockMessage: mensaje de bloqueo si la regresión NO procede,
- *   null si la regresión está permitida desde este estado.
  *
- * Cross-cutting checks (RBAC, transacciones, propagación a hijas, history)
- * son responsabilidad del coordinador (RefundService).
+ * Los States son puros: los bloqueos de regresión viven en RefundLockPolicy y los
+ * cross-cutting checks (RBAC, transacciones, propagación a hijas, history) son
+ * responsabilidad del coordinador (RefundService).
  */
 interface RefundPipelineState
 {
@@ -37,12 +36,4 @@ interface RefundPipelineState
      * @return array<string>
      */
     public function validateAdvance(Refund $record): array;
-
-    /**
-     * Mensaje de bloqueo si la regresión NO procede; null si la regresión está
-     * permitida. Solo `TesoreriaState` lo implementa con la regla del pago pendiente.
-     *
-     * @param \App\Model\Entity\Refund $record Record.
-     */
-    public function getRegressionLockMessage(Refund $record): ?string;
 }

@@ -33,12 +33,4 @@ final class PagadaState implements RefundPipelineState
     {
         return ['Este registro ya está en su estado final.'];
     }
-
-    /**
-     * @inheritDoc
-     */
-    public function getRegressionLockMessage(Refund $record): ?string
-    {
-        return null;
-    }
 }
