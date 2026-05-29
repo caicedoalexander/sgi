@@ -726,6 +726,21 @@ class PettyCashPipelineService
     }
 
     /**
+     * Returns the next pipeline status, or null if the current state is terminal.
+     *
+     * Delega al State pattern: cada estado declara su sucesor.
+     */
+    public function getNextStatus(string $currentStatus): ?string
+    {
+        $currentEnum = PettyCashPipelineStatus::tryFrom($currentStatus);
+        if ($currentEnum === null) {
+            return null;
+        }
+
+        return $this->stateRegistry->get($currentEnum)->getNextStatus()?->value;
+    }
+
+    /**
      * Returns the previous pipeline status, or null if no predecessor exists
      * or the state is excluded from regression.
      *

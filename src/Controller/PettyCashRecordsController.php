@@ -321,7 +321,7 @@ class PettyCashRecordsController extends AppController
         $roleName = $this->_getUserRoleName($user);
         $roleId = (int)$user->role_id;
 
-        $nextStatus = PettyCashConstants::TRANSITIONS[$record->status] ?? null;
+        $nextStatus = $this->pettyCashService->getNextStatus($record->status);
         $advanceErrors = $nextStatus
             ? $this->pettyCashService->validateTransitionRequirements($record)
             : [];
