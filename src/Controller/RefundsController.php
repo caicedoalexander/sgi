@@ -401,8 +401,8 @@ class RefundsController extends AppController
             if ($record->canAdvancePipeline()) {
                 $result = $this->refundService->advance(
                     $record,
-                    (int)$user->id,
                     (int)$user->role_id,
+                    (int)$user->id,
                 );
                 if ($result->success) {
                     $advanced = true;
@@ -486,8 +486,8 @@ class RefundsController extends AppController
 
         $result = $this->refundService->advance(
             $record,
-            (int)$user->id,
             (int)$user->role_id,
+            (int)$user->id,
         );
 
         if ($result->success) {

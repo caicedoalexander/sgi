@@ -178,7 +178,7 @@ class RefundPipelineService
      * @param int $roleId Role ID (para enforcement RBAC).
      * @return \App\Service\ServiceResult data{nextStatus: string}
      */
-    public function advance(Refund $record, int $userId, int $roleId): ServiceResult
+    public function advance(Refund $record, int $roleId, int $userId): ServiceResult
     {
         $currentStatus = $record->status;
 
