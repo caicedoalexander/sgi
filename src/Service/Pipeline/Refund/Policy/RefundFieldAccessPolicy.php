@@ -57,22 +57,25 @@ final class RefundFieldAccessPolicy extends PipelineFieldPolicy
 
     /**
      * Override: aplica las dos ramas (beneficiary en AGRUPACION, accounting en
-     * CONTABILIDAD) que antes vivían inline en `RefundsController::edit`.
-     * Preserva la validación de `accrual_date` requerida cuando `accrued=true`.
-     *
-     * No realiza chequeo de rol aquí — el controller original tampoco lo hacía
-     * (solo verificaba estado). El `_ensureExpectedStatus` del controller sigue
-     * siendo el gate de status; el gate de rol queda como deuda separada
-     * (fuera del alcance de PA-008).
+     * CONTABILIDAD) que antes vivían inline en `RefundsController::edit`, ahora
+     * con gate de rol (A1). Si el rol no puede operar el paso (`canOperate` vía
+     * la base `getEditableFields`), el patch sale vacío y no se persiste ni
+     * valida nada — igual que Invoice/Novelty. Para los roles que SÍ operan el
+     * paso, conserva los casts (`int` de los ids de beneficiario, `accrued`=>bool)
+     * y la validación inline de `accrual_date`. El `_ensureExpectedStatus` del
+     * controller sigue siendo el gate de status; el avance lo gatea aparte
+     * `denialReasonForAdvance`.
      *
      * @param array $data Raw POST data.
-     * @param int $roleId Role ID (unused, conserved by base contract).
+     * @param int $roleId Role ID (gatea la escritura vía canOperate del paso).
      * @param string $step Current pipeline status.
      * @return \App\Service\Pipeline\FilterResult
      */
     public function filterEntityData(array $data, int $roleId, string $step): FilterResult
     {
-        unset($roleId);
+        if ($this->getEditableFields($roleId, $step) === []) {
+            return new FilterResult(patch: [], errors: []);
+        }
         $patch = [];
         $errors = [];
 

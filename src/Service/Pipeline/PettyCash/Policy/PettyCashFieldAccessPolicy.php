@@ -57,22 +57,24 @@ final class PettyCashFieldAccessPolicy extends PipelineFieldPolicy
     }
 
     /**
-     * Override: replica el comportamiento exacto de
-     * `PettyCashPipelineService::_filterEditPatch` original — filtra por **estado**,
-     * sin gate de rol. El gate de rol vive en `denialReasonForAdvance` después
-     * del save (preserva la API actual). La validación inline de `accrual_date`
-     * se conserva.
-     *
-     * El parámetro `$roleId` se conserva por contrato heredado de la base.
+     * Override: filtra los campos del header con gate de rol (A1). Si el rol no
+     * puede operar el paso (`canOperate` vía la base `getEditableFields`), el
+     * patch sale vacío y no se persiste ni valida nada — igual que Invoice/Novelty.
+     * Para los roles que SÍ operan el paso, conserva las coerciones de tipo
+     * (`accrued`=>bool, `accrual_date`=>null) y la validación inline de
+     * `accrual_date` que `array_intersect_key` de la base destruiría. El avance
+     * sigue gateado aparte por `denialReasonForAdvance`.
      *
      * @param array $data Raw POST data.
-     * @param int $roleId Role ID (unused, conserved by base contract).
+     * @param int $roleId Role ID (gatea la escritura vía canOperate del paso).
      * @param string $step Current pipeline status.
      * @return \App\Service\Pipeline\FilterResult
      */
     public function filterEntityData(array $data, int $roleId, string $step): FilterResult
     {
-        unset($roleId);
+        if ($this->getEditableFields($roleId, $step) === []) {
+            return new FilterResult(patch: [], errors: []);
+        }
         $patch = [];
         $errors = [];
 
