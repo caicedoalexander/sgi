@@ -16,7 +16,7 @@ final class AutorizacionPagoState implements RefundPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::VERIFICACION_PAGO;
+        return $this->getStatus()->next();
     }
 
     /**
@@ -26,7 +26,7 @@ final class AutorizacionPagoState implements RefundPipelineState
      */
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::TESORERIA;
+        return $this->getStatus()->previous();
     }
 
     /**

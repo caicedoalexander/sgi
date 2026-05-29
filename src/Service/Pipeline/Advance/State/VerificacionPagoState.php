@@ -22,12 +22,12 @@ final class VerificacionPagoState implements AdvanceLegalizationPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::LEGALIZADA;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::AUTORIZACION_PAGO;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(AdvanceLegalization $leg): array

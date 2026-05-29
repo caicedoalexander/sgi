@@ -45,6 +45,22 @@ final class PipelineStatusTest extends TestCase
         $this->assertNull(PipelineStatus::LEGALIZADA->next());
     }
 
+    public function testPreviousFollowsLinearRegression(): void
+    {
+        $this->assertNull(PipelineStatus::APROBACION->previous());
+        $this->assertSame(PipelineStatus::APROBACION, PipelineStatus::CONTABILIDAD->previous());
+        $this->assertSame(PipelineStatus::CONTABILIDAD, PipelineStatus::TESORERIA->previous());
+        $this->assertSame(PipelineStatus::TESORERIA, PipelineStatus::AUTORIZACION_PAGO->previous());
+        $this->assertSame(PipelineStatus::AUTORIZACION_PAGO, PipelineStatus::VERIFICACION_PAGO->previous());
+    }
+
+    public function testTerminalStatesHaveNoPrevious(): void
+    {
+        // PAGADA y LEGALIZADA son terminales: no admiten regresión por el enum.
+        $this->assertNull(PipelineStatus::PAGADA->previous());
+        $this->assertNull(PipelineStatus::LEGALIZADA->previous());
+    }
+
     public function testIsTerminalIdentifiesPagadaAndLegalizada(): void
     {
         $this->assertTrue(PipelineStatus::PAGADA->isTerminal());

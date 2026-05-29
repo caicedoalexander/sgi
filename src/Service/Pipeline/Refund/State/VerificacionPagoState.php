@@ -16,12 +16,12 @@ final class VerificacionPagoState implements RefundPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::PAGADA;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::AUTORIZACION_PAGO;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(Refund $record): array

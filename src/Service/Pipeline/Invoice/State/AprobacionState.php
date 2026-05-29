@@ -16,12 +16,12 @@ final class AprobacionState implements InvoicePipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::CONTABILIDAD;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return null;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(object $invoice): array

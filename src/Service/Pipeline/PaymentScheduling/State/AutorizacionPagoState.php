@@ -16,12 +16,12 @@ final class AutorizacionPagoState implements PaymentSchedulingPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::VERIFICACION_PAGO;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::TESORERIA;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(PaymentScheduling $scheduling): array

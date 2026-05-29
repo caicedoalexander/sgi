@@ -17,12 +17,12 @@ final class TesoreriaState implements NoveltyPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::AUTORIZACION_PAGO;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::GDP;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvanceIndividual(EmployeeNovelty $novelty): array

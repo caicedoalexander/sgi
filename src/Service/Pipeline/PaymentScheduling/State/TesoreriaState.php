@@ -16,12 +16,12 @@ final class TesoreriaState implements PaymentSchedulingPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::AUTORIZACION_PAGO;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::BORRADOR;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(PaymentScheduling $scheduling): array

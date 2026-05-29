@@ -16,15 +16,12 @@ final class PagadaState implements PettyCashPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return null;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        // Pagada es terminal: regresar implicaría revertir invoice_payments
-        // ya materializados y, posiblemente, una legalización ya iniciada.
-        // Fuera del alcance del flujo estándar.
-        return null;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(PettyCashRecord $record): array

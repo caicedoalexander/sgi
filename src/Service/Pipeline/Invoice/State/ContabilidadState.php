@@ -15,12 +15,12 @@ final class ContabilidadState implements InvoicePipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::TESORERIA;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::APROBACION;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(object $invoice): array

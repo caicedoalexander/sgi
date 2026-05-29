@@ -15,14 +15,12 @@ final class PagadaState implements InvoicePipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return null;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        // Pagada es terminal: revertir implicaría deshacer pagos ya
-        // materializados y, en anticipos, una legalización ya iniciada.
-        return null;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(object $invoice): array

@@ -16,14 +16,12 @@ final class PagadaState implements RefundPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return null;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        // Pagada es terminal en este módulo: revertir implica deshacer pagos
-        // materializados. Mantener `null` por seguridad.
-        return null;
+        return $this->getStatus()->previous();
     }
 
     /**

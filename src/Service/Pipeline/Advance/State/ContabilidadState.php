@@ -16,14 +16,12 @@ final class ContabilidadState implements AdvanceLegalizationPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        // Contabilidad bifurca por acción discreta (markExact / registerShortage
-        // / registerSurplus). No hay un "next" lineal.
-        return null;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::REVISION_FIRMAS;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(AdvanceLegalization $leg): array

@@ -17,14 +17,12 @@ final class PagadaState implements NoveltyPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return null;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        // Pagada es terminal: revertir implicaría deshacer pagos del
-        // documento de liquidación ya autorizados.
-        return null;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvanceIndividual(EmployeeNovelty $novelty): array

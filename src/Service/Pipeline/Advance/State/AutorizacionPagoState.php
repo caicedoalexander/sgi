@@ -16,14 +16,12 @@ final class AutorizacionPagoState implements AdvanceLegalizationPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::VERIFICACION_PAGO;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        // Si el pago de reintegro es rechazado, vuelve a Tesorería para
-        // registrar uno nuevo.
-        return PipelineStatus::TESORERIA;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(AdvanceLegalization $leg): array

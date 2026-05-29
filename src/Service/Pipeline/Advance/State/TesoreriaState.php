@@ -16,16 +16,12 @@ final class TesoreriaState implements AdvanceLegalizationPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        // Bifurca por case_type:
-        //   - faltante → confirmShortageReceipt → legalizada (salta aut_pago)
-        //   - sobrante → registerRefundPayment  → autorizacion_pago → legalizada
-        // Sin "next" lineal.
-        return null;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::CONTABILIDAD;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(AdvanceLegalization $leg): array

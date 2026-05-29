@@ -16,12 +16,12 @@ final class ContabilidadState implements RefundPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::TESORERIA;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::AGRUPACION;
+        return $this->getStatus()->previous();
     }
 
     /**

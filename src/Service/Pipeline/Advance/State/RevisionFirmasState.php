@@ -16,12 +16,12 @@ final class RevisionFirmasState implements AdvanceLegalizationPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::CONTABILIDAD;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::VALIDACION;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvance(AdvanceLegalization $leg): array

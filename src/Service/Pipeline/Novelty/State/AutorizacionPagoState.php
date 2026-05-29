@@ -17,12 +17,12 @@ final class AutorizacionPagoState implements NoveltyPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::VERIFICACION_PAGO;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::TESORERIA;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvanceIndividual(EmployeeNovelty $novelty): array

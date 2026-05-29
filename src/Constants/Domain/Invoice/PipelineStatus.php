@@ -45,6 +45,21 @@ enum PipelineStatus: string
     }
 
     /**
+     * Estado anterior en el flujo (regresión lineal); null si es el primero o
+     * un estado terminal (PAGADA / LEGALIZADA no admiten regresión por el enum).
+     */
+    public function previous(): ?self
+    {
+        return match ($this) {
+            self::APROBACION, self::PAGADA, self::LEGALIZADA => null,
+            self::CONTABILIDAD => self::APROBACION,
+            self::TESORERIA => self::CONTABILIDAD,
+            self::AUTORIZACION_PAGO => self::TESORERIA,
+            self::VERIFICACION_PAGO => self::AUTORIZACION_PAGO,
+        };
+    }
+
+    /**
      * True si el estado es terminal (no admite avance).
      */
     public function isTerminal(): bool

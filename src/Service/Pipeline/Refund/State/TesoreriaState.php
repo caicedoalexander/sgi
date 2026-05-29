@@ -16,12 +16,12 @@ final class TesoreriaState implements RefundPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::AUTORIZACION_PAGO;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::CONTABILIDAD;
+        return $this->getStatus()->previous();
     }
 
     /**

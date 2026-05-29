@@ -28,12 +28,12 @@ final class RevisionFirmasState implements NoveltyPipelineState
 
     public function getNextStatus(): ?PipelineStatus
     {
-        return PipelineStatus::GDP;
+        return $this->getStatus()->next();
     }
 
     public function getPreviousStatus(): ?PipelineStatus
     {
-        return PipelineStatus::CONTABILIDAD;
+        return $this->getStatus()->previous();
     }
 
     public function validateAdvanceIndividual(EmployeeNovelty $novelty): array
