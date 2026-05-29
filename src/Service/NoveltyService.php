@@ -140,13 +140,20 @@ class NoveltyService
             return ServiceResult::fail(['Esta novedad ya está en el estado final.']);
         }
 
+        $fromStatus = (string)$novelty->pipeline_status;
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
 
-        $result = $noveltiesTable->getConnection()->transactional(function () use ($noveltiesTable, $novelty, $nextStatus) {
-            $novelty->pipeline_status = $nextStatus;
+        $result = $noveltiesTable->getConnection()->transactional(
+            function () use ($noveltiesTable, $novelty, $fromStatus, $nextStatus, $userId): bool {
+                $novelty->pipeline_status = $nextStatus;
+                if (!$noveltiesTable->save($novelty)) {
+                    return false;
+                }
+                $this->historyService->recordStatusChange((int)$novelty->id, $fromStatus, $nextStatus, $userId);
 
-            return $noveltiesTable->save($novelty);
-        });
+                return true;
+            },
+        );
 
         if (!$result) {
             return ServiceResult::fail(['No se pudo avanzar el estado.']);

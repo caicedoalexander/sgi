@@ -4,14 +4,23 @@ declare(strict_types=1);
 namespace App\Service\Pipeline\Novelty\State;
 
 use App\Constants\Domain\Novelty\PipelineStatus;
-use App\Constants\NoveltyConstants;
 use App\Model\Entity\EmployeeNovelty;
 use App\Model\Entity\NoveltyLiquidationDoc;
+use App\Service\NoveltyLiquidationGuard;
 use App\Service\Pipeline\Novelty\NoveltyPipelineState;
-use Cake\ORM\TableRegistry;
 
 final class RevisionFirmasState implements NoveltyPipelineState
 {
+    private NoveltyLiquidationGuard $guard;
+
+    /**
+     * @param \App\Service\NoveltyLiquidationGuard|null $guard Liquidation advance guard.
+     */
+    public function __construct(?NoveltyLiquidationGuard $guard = null)
+    {
+        $this->guard = $guard ?? new NoveltyLiquidationGuard();
+    }
+
     public function getStatus(): PipelineStatus
     {
         return PipelineStatus::REVISION_FIRMAS;
@@ -35,34 +44,14 @@ final class RevisionFirmasState implements NoveltyPipelineState
     public function validateAdvanceGroup(NoveltyLiquidationDoc $doc): array
     {
         $errors = [];
-        $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
 
-        $totalSlots = $signaturesTable->find()
-            ->where([
-                'liquidation_doc_id' => $doc->id,
-                'signer_type !=' => NoveltyConstants::SIGNER_TRABAJADOR,
-            ])
-            ->count();
-
-        $signedCount = $signaturesTable->find()
-            ->where([
-                'liquidation_doc_id' => $doc->id,
-                'signer_type !=' => NoveltyConstants::SIGNER_TRABAJADOR,
-                'signature_path IS NOT' => null,
-            ])
-            ->count();
-
-        if ($signedCount < $totalSlots) {
+        if (!$this->guard->requiredSignaturesComplete((int)$doc->id)) {
             $errors[] = 'Todas las firmas requeridas (Contador y Coordinador) deben estar presentes para avanzar.';
         }
 
-        $firstMember = TableRegistry::getTableLocator()->get('EmployeeNovelties')
-            ->find()
-            ->contain(['NoveltyTypes'])
-            ->where(['liquidation_doc_id' => $doc->id])
-            ->first();
-
-        if ($firstMember && $firstMember->novelty_type && !$firstMember->novelty_type->requires_employee_signature_review) {
+        // Cuando el tipo NO requiere revisión de firma del empleado, "Pasa para Pago"
+        // se exige ya en esta etapa (no hay etapa GDP posterior que lo valide).
+        if ($this->guard->firstMemberRequiresEmployeeSignatureReview((int)$doc->id) === false) {
             if ($doc->passes_for_payment === null) {
                 $errors[] = 'Debe indicar si "Pasa para Pago".';
             }

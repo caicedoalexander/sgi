@@ -4,14 +4,23 @@ declare(strict_types=1);
 namespace App\Service\Pipeline\Novelty\State;
 
 use App\Constants\Domain\Novelty\PipelineStatus;
-use App\Constants\NoveltyConstants;
 use App\Model\Entity\EmployeeNovelty;
 use App\Model\Entity\NoveltyLiquidationDoc;
+use App\Service\NoveltyLiquidationGuard;
 use App\Service\Pipeline\Novelty\NoveltyPipelineState;
-use Cake\ORM\TableRegistry;
 
 final class ContabilidadState implements NoveltyPipelineState
 {
+    private NoveltyLiquidationGuard $guard;
+
+    /**
+     * @param \App\Service\NoveltyLiquidationGuard|null $guard Liquidation advance guard.
+     */
+    public function __construct(?NoveltyLiquidationGuard $guard = null)
+    {
+        $this->guard = $guard ?? new NoveltyLiquidationGuard();
+    }
+
     public function getStatus(): PipelineStatus
     {
         return PipelineStatus::CONTABILIDAD;
@@ -38,15 +47,7 @@ final class ContabilidadState implements NoveltyPipelineState
 
     public function validateAdvanceGroup(NoveltyLiquidationDoc $doc): array
     {
-        $documentsTable = TableRegistry::getTableLocator()->get('NoveltyDocuments');
-        $hasLiqDoc = $documentsTable->find()
-            ->where([
-                'liquidation_doc_id' => $doc->id,
-                'document_type' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
-            ])
-            ->count();
-
-        if ($hasLiqDoc === 0) {
+        if (!$this->guard->hasLiquidationDocument((int)$doc->id)) {
             return ['Debe subir el documento de liquidación antes de avanzar.'];
         }
 

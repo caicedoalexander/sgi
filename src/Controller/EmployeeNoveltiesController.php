@@ -838,7 +838,6 @@ class EmployeeNoveltiesController extends AppController
         }
 
         $user = $this->Authentication->getIdentity()->getOriginalData();
-        $originalStatus = $novelty->pipeline_status;
 
         // Save editable fields for current stage before advancing
         $data = $this->request->getData();
@@ -849,16 +848,12 @@ class EmployeeNoveltiesController extends AppController
             $this->historyService->recordChanges($original, $novelty, $user->id);
         }
 
+        // El cambio de estado y su registro en el historial se hacen dentro de la
+        // transacción de NoveltyService::advance() (simetría con advanceGroup).
         $result = $this->pipelineService->advance($novelty, $user->id);
 
         if ($result->success) {
             $nextStatus = $result->data['nextStatus'] ?? null;
-            $this->historyService->recordStatusChange(
-                (int)$novelty->id,
-                $originalStatus,
-                $nextStatus,
-                $user->id,
-            );
             $this->Flash->success('Novedad avanzada a: ' . (NoveltyConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus));
         } else {
             $this->Flash->error($result->firstError() ?? 'No se pudo avanzar la novedad.');

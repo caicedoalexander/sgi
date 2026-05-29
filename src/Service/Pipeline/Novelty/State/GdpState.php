@@ -4,14 +4,23 @@ declare(strict_types=1);
 namespace App\Service\Pipeline\Novelty\State;
 
 use App\Constants\Domain\Novelty\PipelineStatus;
-use App\Constants\NoveltyConstants;
 use App\Model\Entity\EmployeeNovelty;
 use App\Model\Entity\NoveltyLiquidationDoc;
+use App\Service\NoveltyLiquidationGuard;
 use App\Service\Pipeline\Novelty\NoveltyPipelineState;
-use Cake\ORM\TableRegistry;
 
 final class GdpState implements NoveltyPipelineState
 {
+    private NoveltyLiquidationGuard $guard;
+
+    /**
+     * @param \App\Service\NoveltyLiquidationGuard|null $guard Liquidation advance guard.
+     */
+    public function __construct(?NoveltyLiquidationGuard $guard = null)
+    {
+        $this->guard = $guard ?? new NoveltyLiquidationGuard();
+    }
+
     public function getStatus(): PipelineStatus
     {
         return PipelineStatus::GDP;
@@ -40,15 +49,7 @@ final class GdpState implements NoveltyPipelineState
             $errors[] = 'Debe indicar si "Pasa para Pago".';
         }
 
-        $signaturesTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationSignatures');
-        $workerSlot = $signaturesTable->find()
-            ->where([
-                'liquidation_doc_id' => $doc->id,
-                'signer_type' => NoveltyConstants::SIGNER_TRABAJADOR,
-            ])
-            ->first();
-
-        if ($workerSlot && empty($workerSlot->signature_path)) {
+        if ($this->guard->workerSignaturePending((int)$doc->id)) {
             $errors[] = 'La firma del trabajador es requerida para avanzar.';
         }
 
