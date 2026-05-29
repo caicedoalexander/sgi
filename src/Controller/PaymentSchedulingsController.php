@@ -79,7 +79,7 @@ class PaymentSchedulingsController extends AppController
         }
 
         $records = $this->paginate($query);
-        $this->set(compact('records', 'roleName'));
+        $this->set(compact('records'));
     }
 
     #[Permission(action: 'view')]
@@ -307,13 +307,6 @@ class PaymentSchedulingsController extends AppController
     public function confirmPayment($id = null)
     {
         $this->request->allowMethod(['post']);
-
-        $roleId = (int)$this->_getCurrentUser()->role_id;
-        if (!$this->actionPolicy->canOperateStep($roleId, PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO)) {
-            $this->Flash->error('No tiene permisos para confirmar este pago.');
-
-            return $this->redirect(['action' => 'view', $id]);
-        }
 
         $result = $this->schedulingService->confirmPayment(
             (int)$id,

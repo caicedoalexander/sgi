@@ -8,7 +8,6 @@
  *
  * @var \App\View\AppView $this
  * @var iterable $records
- * @var string $roleName
  */
 
 use App\Constants\PaymentSchedulingConstants;

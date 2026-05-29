@@ -538,12 +538,6 @@ class RefundsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        if (!$this->actionPolicy->canOperateStep((int)$user->role_id, RefundConstants::STATUS_VERIFICACION_PAGO)) {
-            $this->Flash->error('No tiene permisos para confirmar este pago.');
-
-            return $this->redirect(['action' => 'view', $id]);
-        }
-
         $result = $this->paymentService->confirmPayment((int)$id, (int)$user->id);
 
         if ($result->success) {

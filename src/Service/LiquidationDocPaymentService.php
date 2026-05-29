@@ -95,9 +95,9 @@ class LiquidationDocPaymentService
      *
      * @param int $paymentId Payment ID to authorize.
      * @param int $authorizedBy User ID who authorizes.
-     * @return array
+     * @return \App\Service\ServiceResult
      */
-    public function authorizePayment(int $paymentId, int $authorizedBy): array
+    public function authorizePayment(int $paymentId, int $authorizedBy): ServiceResult
     {
         $paymentsTable = TableRegistry::getTableLocator()->get('LiquidationDocPayments');
         $docsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
@@ -109,7 +109,7 @@ class LiquidationDocPaymentService
         $payment->authorized_date = date('Y-m-d');
 
         if (!$paymentsTable->save($payment)) {
-            return ['success' => false];
+            return ServiceResult::fail('No se pudo autorizar el pago.');
         }
 
         $doc = $docsTable->get($payment->liquidation_doc_id);
@@ -132,10 +132,10 @@ class LiquidationDocPaymentService
         });
 
         if ($ok === false) {
-            return ['success' => false];
+            return ServiceResult::fail('No se pudo autorizar el pago.');
         }
 
-        return ['success' => true, 'newPipelineStatus' => NoveltyConstants::STATUS_VERIFICACION_PAGO];
+        return ServiceResult::ok('Pago autorizado. Documento en verificación de pago — Tesorería debe confirmar la ejecución.');
     }
 
     /**

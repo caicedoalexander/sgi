@@ -175,7 +175,7 @@ class NoveltyDocumentService
             self::PREFIX,
             [
                 'liquidation_doc_id' => $liquidationDocId,
-                'pipeline_status' => 'd. liquidacion',
+                'pipeline_status' => NoveltyConstants::DOC_STATUS_LIQUIDACION,
                 'document_type' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
                 'uploaded_by' => $uploadedBy,
             ],
@@ -212,7 +212,7 @@ class NoveltyDocumentService
             self::PREFIX,
             [
                 'liquidation_doc_id' => $liquidationDocId,
-                'pipeline_status' => 'd. liquidacion',
+                'pipeline_status' => NoveltyConstants::DOC_STATUS_LIQUIDACION,
                 'document_type' => NoveltyConstants::DOC_TYPE_LIQUIDATION,
                 'uploaded_by' => $uploadedBy,
             ],

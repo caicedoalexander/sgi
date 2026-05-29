@@ -134,6 +134,11 @@ final class NoveltyConstants
     // Document types (for novelty_documents)
     public const DOC_TYPE_LIQUIDATION = 'liquidation_document';
 
+    // pipeline_status persistido en novelty_documents para el doc de liquidación.
+    // Valor literal con punto y espacio — es dato persistido, NO un estado del
+    // pipeline de novedades (no delega a enum).
+    public const DOC_STATUS_LIQUIDACION = 'd. liquidacion';
+
     // Signer types (for liquidation doc signatures) — jefe_inmediato removed
     public const SIGNER_CONTADOR = 'contador';
     public const SIGNER_COORDINADOR_ADMIN = 'coordinador_admin';

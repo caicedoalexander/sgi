@@ -105,10 +105,10 @@ class LiquidationDocPaymentsController extends AppController
 
         $result = $this->paymentService->authorizePayment((int)$paymentId, (int)$this->_getCurrentUser()->id);
 
-        if ($result['success']) {
-            $this->Flash->success('Pago autorizado. Documento en verificación de pago — Tesorería debe confirmar la ejecución.');
+        if ($result->success) {
+            $this->Flash->success($result->data);
         } else {
-            $this->Flash->error('No se pudo autorizar el pago.');
+            $this->Flash->error($result->firstError());
         }
 
         return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'edit', $docId]);
