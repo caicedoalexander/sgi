@@ -167,13 +167,6 @@ class InvoicePipelineService
         return $this->fieldPolicy->filterEntityData($data, $roleId, $status)->patch;
     }
 
-    public function getStatusIndex(string $status): int
-    {
-        $index = array_search($status, self::STATUSES);
-
-        return $index !== false ? $index : 0;
-    }
-
     public function getPreviousStatus(string $currentStatus): ?string
     {
         $currentEnum = PipelineStatus::tryFrom($currentStatus);

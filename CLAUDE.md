@@ -154,6 +154,7 @@ Auditoría completa y roadmap de remediación en `docs/auditoria-paridad-modulos
   - `Advance` usa prefijo de clase `AdvanceLegalization*` por la entidad de dominio (Anticipo = Invoice; reusa `InvoicePipelineService`).
   - `Novelty` tiene 2 controllers (`EmployeeNovelties` individual + `NoveltyLiquidationDocs` grupal) servidos por un `NoveltyService`.
   - `AdvanceLegalizationHistoryService` y `PaymentSchedulingHistoryService` **no** usan `HistoryNormalizationTrait` ni `recordChanges()` (a diferencia de Invoice/Refund/PettyCash/Novelty): Advance audita campo-a-campo explícito por transición vía `_setStatus(extraChanges)` (patrón deliberado y transaccional, no frágil) y PaymentScheduling no edita campos del header por paso. Añadir `recordChanges` sería dead code — están bien dimensionados para su flujo.
+  - `Advances/legalization` **Soportes NO usa `element('documents_section')`**: sus 3 bloques (relación de facturas, comprobante de consignación, historial de firmas) son **docs con firma/estado** (pills firmado/pendiente, reemplazo AJAX inline vía `fetch()` no `SgiDocumentUploader`, metadata de consignación, filas de firma rechazada con motivo) — fuera del contrato upload/delete del element, cuyo `document_row` está acoplado al `document_row_template`↔`sgi-document-uploader.js`. Markup bespoke deliberado; migrarlo exigiría extender `document_row` (transversal a 4+ consumidores) sin ganancia. El resto de módulos (Refund/PettyCash/EmployeeNovelties/PaymentScheduling) **sí** delegan en el element.
   - Trampa de spelling deliberada: `InvoiceConstants::DIAN_REJECTED = 'Rechazado'` (masculino) vs `APPROVAL_REJECTED = 'Rechazada'` — **no unificar** (rompe datos persistidos).
 
 ## Key Conventions
@@ -200,7 +201,7 @@ Antes de crear o editar cualquier vista, lee siempre `reglas-copy.md` + `fundame
 - Colors: dark (#212529), green (#469D61), orange (#CD6A15).
 - JS common: `webroot/js/sgi-common.js` auto-initializes Flatpickr, AutoNumeric, Select2.
 - PDF: TCPDF + FPDI. Excel: PhpSpreadsheet.
-- Pipeline elements: **todos** los módulos de flujo (incluido NoveltyLiquidationDocs) usan el sidebar vertical via `element/pipeline_sidebar.php` (hero + pipeline vertical + registro + acciones), dentro del layout `sgi-invoice-view-grid > sgi-invoice-view-left + sgi-invoice-view-right`. (`pipeline_progress.php` y `progress_stepper.php` quedaron huérfanos tras unificar los steppers; pendientes de eliminación — ver `docs/auditoria-paridad-modulos-flujo.md`.)
+- Pipeline elements: **todos** los módulos de flujo (incluido NoveltyLiquidationDocs) usan el sidebar vertical via `element/pipeline_sidebar.php` (hero + pipeline vertical + registro + acciones), dentro del layout `sgi-invoice-view-grid > sgi-invoice-view-left + sgi-invoice-view-right`. (`pipeline_progress.php` y `progress_stepper.php` —antiguos steppers huérfanos tras unificar el pipeline en el sidebar— se eliminaron el 2026-05-29.)
 
 ## New Module Checklist
 

@@ -92,19 +92,6 @@ final class NoveltyConstants
         self::STATUS_RECHAZADA => 'Rechazada',
     ];
 
-    // Linear transitions
-    public const TRANSITIONS = [
-        self::STATUS_APROBACION => self::STATUS_RRHH,
-        self::STATUS_RRHH => self::STATUS_CONTABILIDAD,
-        self::STATUS_CONTABILIDAD => self::STATUS_REVISION_FIRMAS,
-        self::STATUS_REVISION_FIRMAS => self::STATUS_GDP,
-        self::STATUS_GDP => self::STATUS_TESORERIA,
-        self::STATUS_TESORERIA => self::STATUS_AUTORIZACION_PAGO,
-        self::STATUS_AUTORIZACION_PAGO => self::STATUS_VERIFICACION_PAGO,
-        self::STATUS_VERIFICACION_PAGO => self::STATUS_PAGADA,
-        self::STATUS_PAGADA => null,
-    ];
-
     // Schedule types
     public const SCHEDULE_DAYS = 'days';
     public const SCHEDULE_HOURS = 'hours';

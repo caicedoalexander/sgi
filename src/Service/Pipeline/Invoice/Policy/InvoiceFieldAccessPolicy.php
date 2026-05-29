@@ -16,7 +16,7 @@ use App\Service\Pipeline\PipelineFieldPolicy;
  * de secciones pasó de `step => 'section'` a `step => ['section', ...]` para
  * unificar con Novelty/PettyCash/Refund.
  */
-class InvoiceFieldAccessPolicy extends PipelineFieldPolicy
+final class InvoiceFieldAccessPolicy extends PipelineFieldPolicy
 {
     /**
      * Campos editables por paso del pipeline (sin acoplamiento a rol).

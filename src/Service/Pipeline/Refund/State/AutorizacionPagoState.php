@@ -20,10 +20,9 @@ final class AutorizacionPagoState implements RefundPipelineState
     }
 
     /**
-     * BACKWARD_TRANSITIONS mapea autorizacion_pago -> tesoreria, pero la regresión
-     * real está bloqueada de fábrica (canRegress() retorna false porque
-     * el avance autorizacion_pago->pagada tampoco pasa por el coordinator).
-     * Aquí declaramos previous = tesoreria por consistencia con BACKWARD_TRANSITIONS.
+     * El paso previo es tesoreria, pero la regresión real está bloqueada de
+     * fábrica (canRegress() retorna false porque el avance
+     * autorizacion_pago->pagada tampoco pasa por el coordinator).
      */
     public function getPreviousStatus(): ?PipelineStatus
     {

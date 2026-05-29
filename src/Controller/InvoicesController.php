@@ -366,7 +366,7 @@ class InvoicesController extends AppController
             $rules = $this->pipeline->getTransitionRules($currentStatus);
             $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleId, $currentStatus);
             if (empty($rawErrors)) {
-                $nextStatus = $this->pipeline->getNextStatus($currentStatus);
+                $nextStatus = $this->pipeline->getNextStatus($currentStatus, $invoice->document_type);
             }
         }
 

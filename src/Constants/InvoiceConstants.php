@@ -51,6 +51,10 @@ final class InvoiceConstants
     // Validacion DIAN
     public const DIAN_PENDING = 'Pendiente';
     public const DIAN_APPROVED = 'Aprobada';
+    // OJO: 'Rechazado' (masculino) — divergencia de género DELIBERADA frente a
+    // APPROVAL_REJECTED = 'Rechazada' (femenino). NO unificar: son labels visibles
+    // distintos (estado DIAN del documento vs aprobación de área) y romperían los
+    // datos ya persistidos / los matches por string.
     public const DIAN_REJECTED = 'Rechazado';
     public const DIAN_STATUSES = [self::DIAN_PENDING, self::DIAN_APPROVED, self::DIAN_REJECTED];
 
@@ -86,16 +90,6 @@ final class InvoiceConstants
         self::STATUS_VERIFICACION_PAGO,
         self::STATUS_PAGADA,
         self::STATUS_LEGALIZADA,
-    ];
-
-    public const TRANSITIONS = [
-        self::STATUS_APROBACION => self::STATUS_CONTABILIDAD,
-        self::STATUS_CONTABILIDAD => self::STATUS_TESORERIA,
-        self::STATUS_TESORERIA => self::STATUS_AUTORIZACION_PAGO,
-        self::STATUS_AUTORIZACION_PAGO => self::STATUS_VERIFICACION_PAGO,
-        self::STATUS_VERIFICACION_PAGO => self::STATUS_PAGADA,
-        self::STATUS_PAGADA => null,
-        self::STATUS_LEGALIZADA => null,
     ];
 
     // Pipeline visual exclusivo de Legalizaciones: 3 pasos.

@@ -77,7 +77,7 @@ class InvoiceApprovalService
         $errors = [];
         $approvals = [];
         $pending = [];
-        $expiresAt = new DateTime('+48 hours');
+        $expiresAt = new DateTime('+' . InvoiceConstants::APPROVAL_TOKEN_HOURS . ' hours');
 
         foreach ($approverUserIds as $userId) {
             $token = bin2hex(random_bytes(32));
@@ -169,22 +169,6 @@ class InvoiceApprovalService
             implode(', ', $names) ?: '—',
             $userId,
         );
-    }
-
-    /**
-     * Get active (pending) approvals for an invoice.
-     */
-    public function getActiveApprovals(int $invoiceId): array
-    {
-        return $this->invoiceApprovalsTable->find()
-            ->where([
-                'invoice_id' => $invoiceId,
-                'status' => InvoiceConstants::APPROVER_STATUS_PENDING,
-                'token_expires_at >' => new DateTime(),
-            ])
-            ->contain(['Users'])
-            ->all()
-            ->toArray();
     }
 
     /**
@@ -373,14 +357,6 @@ class InvoiceApprovalService
                 'status IN' => InvoiceConstants::APPROVER_STATUSES_ACTIVE,
             ])
             ->count() > 0;
-    }
-
-    /**
-     * Get approval summary for display (e.g., "2/3 aprobados").
-     */
-    public function getApprovalSummary(int $invoiceId): array
-    {
-        return $this->_summaryFromApprovals($this->getCurrentApprovals($invoiceId));
     }
 
     /**

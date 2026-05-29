@@ -43,17 +43,6 @@ final class PettyCashConstants
         self::STATUS_PAGADA => null,
     ];
 
-    // `pagada` es terminal; la regresión se permite hasta `tesoreria` (no desde
-    // `pagada`, porque la autorización ya materializó pagos en las facturas hijas).
-    public const BACKWARD_TRANSITIONS = [
-        self::STATUS_AGRUPACION => null,
-        self::STATUS_CONTABILIDAD => self::STATUS_AGRUPACION,
-        self::STATUS_TESORERIA => self::STATUS_CONTABILIDAD,
-        self::STATUS_AUTORIZACION_PAGO => self::STATUS_TESORERIA,
-        self::STATUS_VERIFICACION_PAGO => self::STATUS_AUTORIZACION_PAGO,
-        self::STATUS_PAGADA => null,
-    ];
-
     public const OBSERVATION_TYPE_GENERAL = ObservationConstants::TYPE_GENERAL;
     public const OBSERVATION_TYPE_REGRESSION = ObservationConstants::TYPE_REGRESSION;
     public const OBSERVATION_TYPES = ObservationConstants::TYPES;

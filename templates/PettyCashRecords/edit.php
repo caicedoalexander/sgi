@@ -116,22 +116,18 @@ $totalDocs = count($docs);
 <?= $this->element('cdn_select2') ?>
 
 <?php /* ═══════════════════ HEADER DE PÁGINA ═══════════════════ */ ?>
-<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 view-anim"
-     style="padding:4px 0 16px;">
+<div class="sgi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="d-flex align-items-center flex-wrap gap-1"
-             style="font-size:var(--fs-body-sm);color:var(--text-faint);margin-bottom:6px;">
-            <?= $this->Html->link('Caja Menor', ['action' => 'index'], ['class' => 'sgi-fg-faint', 'style' => 'text-decoration:none;']) ?>
+        <div class="sgi-breadcrumb">
+            <?= $this->Html->link('Caja Menor', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
-            <?= $this->Html->link(h($record->code), ['action' => 'view', $record->id], ['class' => 'sgi-fg-faint', 'style' => 'text-decoration:none;']) ?>
+            <?= $this->Html->link(h($record->code), ['action' => 'view', $record->id]) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
-            <span style="color:var(--text-default);">Editar</span>
+            <span class="current">Editar</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-title-page">Editar Caja Menor</span>
-            <span class="mono" style="font-size:var(--fs-body-lg);color:var(--text-muted);padding:3px 8px;background:var(--bg-subtle);border-radius:var(--radius-sm);">
-                <?= h($record->code) ?>
-            </span>
+            <span class="sgi-page-title">Editar Caja Menor</span>
+            <span class="sgi-edit-id-chip"><?= h($record->code) ?></span>
             <span class="pill <?= h($pcStatusPill) ?>"><?= h($pcStatusLabel) ?></span>
         </div>
     </div>
@@ -139,12 +135,12 @@ $totalDocs = count($docs);
         <?= $this->Html->link(
             '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
-            ['class' => 'btn btn-default', 'escape' => false]
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
         ) ?>
         <?= $this->Html->link(
             '<i class="bi bi-eye" aria-hidden="true"></i>Ver detalle',
             ['action' => 'view', $record->id],
-            ['class' => 'btn btn-default', 'escape' => false]
+            ['class' => 'btn btn-ghost-card', 'escape' => false]
         ) ?>
     </div>
 </div>
@@ -152,137 +148,65 @@ $totalDocs = count($docs);
 <?= $this->Form->create($record, ['id' => 'pettyCashEditForm']) ?>
 <?= $this->Form->hidden('expected_status', ['value' => $record->status]) ?>
 
-<div class="row g-3 view-anim">
+<div class="sgi-invoice-view-grid view-anim">
 
     <?php /* ═══════════════════ COLUMNA IZQUIERDA ═══════════════════ */ ?>
-    <aside class="col-lg-4 d-flex flex-column gap-3">
+    <aside class="sgi-invoice-view-left">
+        <?php
+        // Acciones del sidebar (regresión)
+        $actionsHtml = null;
+        if (!empty($canRegress)):
+            $prevLabel = $pipelineLabels[$previousStatus] ?? $previousStatus;
+            $isLocked  = !empty($regressLockMessage);
+            ob_start();
+            if ($isLocked): ?>
+                <button type="button" class="btn" disabled title="<?= h($regressLockMessage) ?>">
+                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar al paso anterior
+                </button>
+            <?php else: ?>
+                <button type="button" class="btn"
+                        data-bs-toggle="modal" data-bs-target="#regressStatusModal">
+                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
+                </button>
+            <?php endif;
+            $actionsHtml = ob_get_clean();
+        endif;
 
-        <?php /* ── Hero: resumen del registro ─────────────────── */ ?>
-        <div class="sgi-card" style="position:relative;">
-            <div class="d-flex align-items-start" style="gap:12px;margin-bottom:16px;">
-                <div style="width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--primary-soft);color:var(--primary-color);border-radius:var(--radius-sm);">
-                    <i class="bi bi-wallet2" aria-hidden="true" style="font-size:18px;"></i>
-                </div>
-                <div style="min-width:0;flex:1;">
-                    <div class="mono" style="font-size:16px;font-weight:700;color:var(--text-strong);line-height:1.15;">
-                        <?= h($record->code) ?>
-                    </div>
-                    <div class="d-flex flex-wrap" style="gap:4px;margin-top:6px;">
-                        <span class="pill pill-secondary">Caja Menor</span>
-                        <span class="pill <?= h($pcStatusPill) ?>"><?= h($pcStatusLabel) ?></span>
-                    </div>
-                </div>
-            </div>
+        $registryLines = [
+            ['icon' => 'bi-person', 'html' => 'Rol: <strong style="color:var(--text-default);">' . h($roleName) . '</strong>'],
+        ];
+        if ($record->created) {
+            $registryLines[] = ['icon' => 'bi-calendar3', 'html' => 'Creado · <span class="mono">' . $record->created->format('d/m/Y') . '</span>'];
+        }
+        if ($record->modified) {
+            $registryLines[] = ['icon' => 'bi-pencil', 'html' => 'Modificado · <span class="mono">' . $record->modified->format('d/m/Y') . '</span>'];
+        }
 
-            <div class="sgi-label">Centro de Operación</div>
-            <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);margin-top:4px;line-height:1.3;">
-                <?= h($record->operation_center->name ?? '—') ?>
-            </div>
-            <div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:4px;">
-                <i class="bi bi-receipt" aria-hidden="true" style="font-size:11px;"></i>
-                <span><?= $invoiceCount ?> factura<?= $invoiceCount !== 1 ? 's' : '' ?></span>
-            </div>
-
-            <div class="hr" style="margin:16px 0 14px;"></div>
-
-            <div class="sgi-label">Total</div>
-            <div style="margin-top:4px;">
-                <?php if ($totalAmount > 0): ?>
-                    <span class="sgi-display">$ <?= number_format($totalAmount, 0, ',', '.') ?></span>
-                <?php else: ?>
-                    <span class="sgi-display" style="color:var(--text-disabled);">$ —</span>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <?php /* ── Pipeline vertical (inline) ──────────────────── */ ?>
-        <div class="sgi-card compact">
-            <span class="sgi-label">Pipeline</span>
-            <div class="pipeline-v" style="margin-top:8px;">
-                <?php foreach ($pipelineSteps as $idx => $stepKey):
-                    $isDone    = $idx < $currentIdx || ($isTerminal && $idx === $currentIdx);
-                    $isCurrent = !$isTerminal && $idx === $currentIdx;
-                    $stepLabel = $pipelineLabels[$stepKey] ?? $stepKey;
-
-                    $stepClasses = 'pv-step';
-                    if ($isDone)        { $stepClasses .= ' is-done'; }
-                    elseif ($isCurrent) { $stepClasses .= ' is-current'; }
-                    else                { $stepClasses .= ' is-pending'; }
-
-                    $stepMeta = null;
-                    if ($isCurrent || ($isTerminal && $idx === $currentIdx)) {
-                        $stepMeta = $record->modified?->format('d/m H:i');
-                    } elseif (!$isDone) {
-                        $stepMeta = 'Pendiente';
-                    }
-                ?>
-                <div class="<?= $stepClasses ?>">
-                    <div class="pv-marker">
-                        <?php if ($isDone): ?>
-                            <i class="bi bi-check" aria-hidden="true"></i>
-                        <?php elseif ($isCurrent): ?>
-                            <span class="dot"></span>
-                        <?php endif; ?>
-                    </div>
-                    <div style="min-width:0;">
-                        <div class="pv-label"><?= h($stepLabel) ?></div>
-                        <?php if ($stepMeta): ?>
-                            <div class="pv-meta"><?= h($stepMeta) ?></div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <?php /* ── Acciones de etapa (regresión) ───────────────── */ ?>
-        <?php if (!empty($canRegress)):
-            $prevLabel     = $pipelineLabels[$previousStatus] ?? $previousStatus;
-            $regressLocked = !empty($regressLockMessage);
+        echo $this->element('pipeline_sidebar', [
+            'icon'           => 'wallet2',
+            'idLabel'        => $record->code,
+            'typeLabel'      => 'Caja Menor',
+            'statusPill'     => $pcStatusPill,
+            'statusLabel'    => $pcStatusLabel,
+            'entityLabel'    => 'Centro de Operación',
+            'entityValue'    => $record->operation_center->name ?? '—',
+            'entitySubLabel' => $invoiceCount . ' factura' . ($invoiceCount !== 1 ? 's' : ''),
+            'entitySubIcon'  => 'bi-receipt',
+            'amountLabel'    => 'Total',
+            'amount'         => $totalAmount,
+            'pipelineSteps'  => $pipelineSteps,
+            'pipelineLabels' => $pipelineLabels,
+            'currentStatus'  => $record->status,
+            'isTerminal'     => $isTerminal,
+            'modifiedAt'     => $record->modified,
+            'registryLines'  => $registryLines,
+            'actionsHtml'    => $actionsHtml,
+        ]);
         ?>
-        <div class="sgi-card compact">
-            <span class="sgi-label">Acciones</span>
-            <div class="d-flex flex-column gap-1" style="margin-top:10px;">
-                <?php if ($regressLocked): ?>
-                    <button type="button" class="btn btn-ghost btn-sm w-100 justify-content-start"
-                            disabled title="<?= h($regressLockMessage) ?>">
-                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar al paso anterior
-                    </button>
-                <?php else: ?>
-                    <button type="button" class="btn btn-ghost btn-sm w-100 justify-content-start"
-                            data-bs-toggle="modal" data-bs-target="#regressStatusModal">
-                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
-                    </button>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <?php /* ── Registro / auditoría ────────────────────────── */ ?>
-        <div class="sgi-card compact">
-            <span class="sgi-label">Registro</span>
-            <div class="d-flex align-items-center gap-2 mt-2" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-                <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
-                <span>Rol: <strong style="color:var(--text-default);"><?= h($roleName) ?></strong></span>
-            </div>
-            <?php if ($record->created): ?>
-            <div class="d-flex align-items-center gap-2 mt-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-                <i class="bi bi-calendar3 sgi-fg-faint" aria-hidden="true"></i>
-                <span>Creado · <span class="mono"><?= $record->created->format('d/m/Y') ?></span></span>
-            </div>
-            <?php endif; ?>
-            <?php if ($record->modified): ?>
-            <div class="d-flex align-items-center gap-2 mt-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-                <i class="bi bi-pencil sgi-fg-faint" aria-hidden="true"></i>
-                <span>Modificado · <span class="mono"><?= $record->modified->format('d/m/Y') ?></span></span>
-            </div>
-            <?php endif; ?>
-        </div>
-
     </aside>
 
     <?php /* ═══════════════════ COLUMNA DERECHA ═══════════════════ */ ?>
-    <main class="col-lg-8 d-flex flex-column gap-3">
+    <main class="sgi-invoice-view-right">
 
         <?php /* ── Banner: requisitos para avanzar ─────────────── */ ?>
         <?php if ($canAdvance && !empty($advanceErrors)): ?>
@@ -548,38 +472,36 @@ $totalDocs = count($docs);
             'emptyTitle'    => 'Sin soportes adjuntos',
         ]) ?>
 
-        <?php /* ── Footer de acciones ──────────────────────────── */ ?>
+        <?php /* ── Footer de acciones (barra fija) ──────────────── */ ?>
         <?php if ($canSave || !empty($canRegress)): ?>
-        <div class="sgi-card d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div class="d-flex align-items-center flex-wrap gap-3"
-                 style="font-size:var(--fs-body-sm);color:var(--text-muted);">
+        <div class="sgi-edit-footer">
+            <div class="sgi-edit-footer-meta">
                 <span class="d-inline-flex align-items-center gap-1">
                     <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
                     Rol: <strong style="color:var(--text-default);"><?= h($roleName) ?></strong>
                 </span>
                 <?php if ($record->modified): ?>
-                <span style="width:1px;height:14px;background:var(--rule);"></span>
+                <span class="sep"></span>
                 <span class="d-inline-flex align-items-center gap-1">
                     <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
                     Última modificación: <span class="mono"><?= $record->modified->format('d/m/Y H:i') ?></span>
                 </span>
                 <?php endif; ?>
             </div>
-            <div class="d-flex gap-2 flex-shrink-0">
+            <div class="sgi-edit-footer-actions">
                 <?php if ($record->isAgrupacion() && !empty($userPermissions['petty_cash']['can_delete'])): ?>
                 <?= $this->Form->postLink(
                     '<i class="bi bi-trash" aria-hidden="true"></i>Eliminar',
                     ['action' => 'delete', $record->id],
                     [
-                        'class'   => 'btn btn-ghost',
+                        'class'   => 'btn btn-ghost-card sgi-fg-danger',
                         'escape'  => false,
-                        'style'   => 'color:var(--danger-color);',
                         'confirm' => '¿Eliminar este registro? Las facturas agrupadas quedarán libres.',
                         'block'   => true,
                     ]
                 ) ?>
                 <?php endif; ?>
-                <?= $this->Html->link('Cancelar', ['action' => 'view', $record->id], ['class' => 'btn btn-ghost']) ?>
+                <?= $this->Html->link('Cancelar', ['action' => 'view', $record->id], ['class' => 'btn btn-ghost-card']) ?>
                 <?php if ($canSave): ?>
                 <button type="submit" class="<?= h($btnClass) ?>">
                     <?= $btnLabel ?>

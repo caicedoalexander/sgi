@@ -163,7 +163,7 @@ templates/
 │   ├── ajax.php                   # AJAX responses (no layout chrome)
 │   └── email/                     # Email templates (HTML + text)
 ├── element/
-│   ├── pipeline_progress.php      # Reusable pipeline visual bar
+│   ├── pipeline_sidebar.php       # Reusable pipeline sidebar (hero + pipeline + registro)
 │   ├── pagination.php             # Pagination component (use in all lists)
 │   └── catalog_excel_buttons.php  # Export/import buttons for catalogs
 └── {ControllerName}/
@@ -848,7 +848,7 @@ CakePHP enforces most naming via convention-over-configuration. This table docum
 | Constants | `UPPER_SNAKE_CASE` | `APPROVAL_REJECTED` |
 | Template folder | `PascalCase`, matches controller | `templates/InvoiceHistories/` |
 | Template file | `snake_case.php` | `index.php`, `add.php` |
-| Element file | `snake_case.php` | `pipeline_progress.php` |
+| Element file | `snake_case.php` | `pipeline_sidebar.php` |
 | Migration file | `YYYYMMDDHHMMSS_PascalCase.php` | `20260215120000_CreateWidgets.php` |
 | Route URL | `kebab-case` | `/invoices/advance-status/{id}` |
 | Controller action | `camelCase` | `advanceStatus()`, `exportExcel()` |
