@@ -3,15 +3,24 @@ declare(strict_types=1);
 
 namespace App\Service\Pipeline\Advance\State;
 
-use App\Constants\AdvanceConstants;
 use App\Constants\Domain\Advance\PipelineStatus;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\AdvanceLegalization;
+use App\Service\AdvanceLegalizationGuard;
 use App\Service\Pipeline\Advance\AdvanceLegalizationPipelineState;
-use Cake\ORM\TableRegistry;
 
 final class ValidacionState implements AdvanceLegalizationPipelineState
 {
+    private AdvanceLegalizationGuard $guard;
+
+    /**
+     * @param \App\Service\AdvanceLegalizationGuard|null $guard Advance legalization advance guard.
+     */
+    public function __construct(?AdvanceLegalizationGuard $guard = null)
+    {
+        $this->guard = $guard ?? new AdvanceLegalizationGuard();
+    }
+
     public function getStatus(): PipelineStatus
     {
         return PipelineStatus::VALIDACION;
@@ -30,16 +39,9 @@ final class ValidacionState implements AdvanceLegalizationPipelineState
     public function validateAdvance(AdvanceLegalization $leg): array
     {
         $errors = [];
-        $invoices = TableRegistry::getTableLocator()->get('Invoices');
+        $linked = $this->guard->linkedLegalizationInvoices((int)$leg->advance_invoice_id);
 
-        $linked = $invoices->find()
-            ->where([
-                'advance_id' => $leg->advance_invoice_id,
-                'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
-            ])
-            ->all();
-
-        if ($linked->isEmpty()) {
+        if (count($linked) === 0) {
             $errors[] = 'Vincule al menos una factura antes de avanzar.';
         }
 
@@ -53,12 +55,7 @@ final class ValidacionState implements AdvanceLegalizationPipelineState
             }
         }
 
-        $sigTable = TableRegistry::getTableLocator()->get('AdvanceLegalizationSignatures');
-        $hasDoc = $sigTable->exists([
-            'legalization_id' => $leg->id,
-            'signature_status' => AdvanceConstants::SIGNATURE_PENDING,
-        ]);
-        if (!$hasDoc) {
+        if (!$this->guard->hasPendingRelationDocument((int)$leg->id)) {
             $errors[] = 'Debe adjuntar la relación de facturas (PDF).';
         }
 
