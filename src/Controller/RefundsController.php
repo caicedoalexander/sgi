@@ -11,7 +11,6 @@ use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\Refund;
 use App\Service\Pipeline\Refund\Policy\RefundActionPolicy;
-use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\RefundDocumentService;
 use App\Service\RefundHistoryService;
 use App\Service\RefundPaymentService;
@@ -35,7 +34,6 @@ class RefundsController extends AppController
     private RefundPipelineService $refundService;
     private RefundPaymentService $paymentService;
     private RefundDocumentService $documentService;
-    private RefundFieldAccessPolicy $fieldPolicy;
     private RefundActionPolicy $actionPolicy;
     private RefundHistoryService $historyService;
 
@@ -49,7 +47,6 @@ class RefundsController extends AppController
         $this->refundService = $container->get(RefundPipelineService::class);
         $this->paymentService = $container->get(RefundPaymentService::class);
         $this->documentService = $container->get(RefundDocumentService::class);
-        $this->fieldPolicy = $container->get(RefundFieldAccessPolicy::class);
         $this->actionPolicy = $container->get(RefundActionPolicy::class);
         $this->historyService = $container->get(RefundHistoryService::class);
     }
@@ -332,93 +329,38 @@ class RefundsController extends AppController
                 return $this->redirect(['action' => 'edit', $id]);
             }
 
-            $data = $this->request->getData();
-            $roleId = (int)$this->_getCurrentUser()->role_id;
-            $filtered = $this->fieldPolicy->filterEntityData($data, $roleId, (string)$record->status);
+            $user = $this->_getCurrentUser();
 
-            if ($filtered->hasErrors()) {
-                foreach ($filtered->errors as $err) {
+            $result = $this->refundService->saveAndAdvance(
+                $record,
+                (int)$user->role_id,
+                (int)$user->id,
+                $this->request->getData(),
+            );
+
+            if (!$result->success) {
+                foreach ($result->errors as $err) {
                     $this->Flash->error($err);
                 }
 
                 return $this->redirect(['action' => 'edit', $id]);
             }
 
-            $patchData = $filtered->patch;
-
-            if (!empty($patchData)) {
-                // patchEntity muta $record en sitio, así que snapshoteamos el
-                // estado original (solo los campos auditables) ANTES de aplicar
-                // el patch para registrar el diff campo a campo tras el save.
-                $original = new Refund([
-                    'id' => $record->id,
-                    'beneficiary_type' => $record->beneficiary_type,
-                    'beneficiary_employee_id' => $record->beneficiary_employee_id,
-                    'beneficiary_provider_id' => $record->beneficiary_provider_id,
-                    'accrued' => $record->accrued,
-                    'accrual_date' => $record->accrual_date,
-                    'ready_for_payment' => $record->ready_for_payment,
-                ]);
-
-                $record = $this->Refunds->patchEntity($record, $patchData);
-                if (!$this->Refunds->save($record)) {
-                    $errors = [];
-                    foreach ($record->getErrors() as $field => $fieldErrors) {
-                        foreach ($fieldErrors as $msg) {
-                            $errors[] = "$field: $msg";
-                        }
-                    }
-                    $this->Flash->error(
-                        'No se pudo guardar el registro.'
-                        . (!empty($errors) ? ' ' . implode(', ', $errors) : ''),
-                    );
-
-                    return $this->redirect(['action' => 'edit', $id]);
-                }
-
-                $this->historyService->recordChanges(
-                    $original,
-                    $record,
-                    (int)$this->_getCurrentUser()->id,
-                );
+            foreach ($result->data['linkWarnings'] ?? [] as $warning) {
+                $this->Flash->warning($warning);
             }
 
-            // Add invoices (only in agrupacion)
-            if ($record->isAgrupacion() && !empty($data['invoice_ids'])) {
-                $invoiceIds = array_map('intval', array_filter((array)$data['invoice_ids']));
-                $errors = $this->refundService->addInvoices($record, $invoiceIds);
-                foreach ($errors as $err) {
-                    $this->Flash->warning($err);
-                }
-                if (empty($errors)) {
-                    $this->_recordInvoicesLinked((int)$record->id, $invoiceIds);
-                }
-            }
+            if (!empty($result->data['advanced'])) {
+                $next = $result->data['nextStatus'] ?? '';
+                $nextLabel = RefundConstants::STATUS_LABELS[$next] ?? $next;
+                $this->Flash->success(sprintf('Registro guardado y avanzado a: %s', $nextLabel));
 
-            // Try to advance automatically (save + advance unified)
-            $user = $this->_getCurrentUser();
-            $advanced = false;
-            if ($record->canAdvancePipeline()) {
-                $result = $this->refundService->advance(
-                    $record,
-                    (int)$user->role_id,
-                    (int)$user->id,
-                );
-                if ($result->success) {
-                    $advanced = true;
-                    $nextStatus = $result->data['nextStatus'];
-                    $nextLabel = RefundConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
-                    $this->Flash->success(sprintf('Registro guardado y avanzado a: %s', $nextLabel));
-                } else {
-                    $this->Flash->success('Registro actualizado.');
-                    $this->Flash->warning($result->firstError() ?? 'No se pudo avanzar el registro.');
-                }
-            } else {
-                $this->Flash->success('Registro actualizado.');
-            }
-
-            if ($advanced) {
                 return $this->redirect(['action' => 'index']);
+            }
+
+            $this->Flash->success('Registro actualizado.');
+            if (!empty($result->data['advanceWarning'])) {
+                $this->Flash->warning($result->data['advanceWarning']);
             }
 
             return $this->redirect(['action' => 'edit', $id]);

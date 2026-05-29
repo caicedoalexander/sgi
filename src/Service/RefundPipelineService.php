@@ -12,6 +12,7 @@ use App\Constants\RefundConstants;
 use App\Model\Entity\Refund;
 use App\Service\Dto\BulkPaymentView;
 use App\Service\Interface\HistoryServiceInterface;
+use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\Pipeline\Refund\RefundPipelineStateRegistry;
 use App\ValueObject\UserContext;
 use Cake\I18n\Date;
@@ -27,6 +28,7 @@ class RefundPipelineService
     private RefundLockPolicy $lockPolicy;
     private RefundTransitionValidator $transitionValidator;
     private AuthorizationFacade $auth;
+    private RefundFieldAccessPolicy $fieldPolicy;
 
     /**
      * @param \App\Service\Interface\HistoryServiceInterface $historyService History service for child invoices.
@@ -35,6 +37,7 @@ class RefundPipelineService
      * @param \App\Service\Pipeline\Refund\RefundPipelineStateRegistry|null $stateRegistry Pipeline states.
      * @param \App\Service\RefundLockPolicy|null $lockPolicy Regression lock policy (mirror de InvoiceLockPolicy).
      * @param \App\Service\RefundTransitionValidator|null $transitionValidator Advance requirements validator.
+     * @param \App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy|null $fieldPolicy Rol-aware field filter.
      */
     public function __construct(
         HistoryServiceInterface $historyService,
@@ -43,6 +46,7 @@ class RefundPipelineService
         ?RefundPipelineStateRegistry $stateRegistry = null,
         ?RefundLockPolicy $lockPolicy = null,
         ?RefundTransitionValidator $transitionValidator = null,
+        ?RefundFieldAccessPolicy $fieldPolicy = null,
     ) {
         $this->grouped = new GroupedInvoiceService(
             documentType: InvoiceConstants::DOCTYPE_REINTEGRO,
@@ -52,6 +56,7 @@ class RefundPipelineService
             historyService: $historyService,
         );
         $this->auth = $auth;
+        $this->fieldPolicy = $fieldPolicy ?? new RefundFieldAccessPolicy($this->auth);
         $this->refundHistory = $refundHistory ?? new RefundHistoryService();
         $this->stateRegistry = $stateRegistry ?? new RefundPipelineStateRegistry();
         $this->lockPolicy = $lockPolicy ?? new RefundLockPolicy();
@@ -114,6 +119,136 @@ class RefundPipelineService
     public function getAvailableInvoices(array $filters = []): SelectQuery
     {
         return $this->grouped->getAvailableInvoices($filters);
+    }
+
+    /**
+     * Guardar campos editables, vincular facturas nuevas e intentar avanzar el
+     * pipeline en una operación coordinada. Espejo de
+     * PettyCashPipelineService::saveAndAdvance / InvoicePipelineService::saveAndAdvance:
+     * saca la orquestación del controller. Como en PettyCash, recordChanges y
+     * advance() abren cada uno su transacción (no hay transacción raíz única).
+     *
+     * @param \App\Model\Entity\Refund $record Reintegro.
+     * @param int $roleId Rol que opera.
+     * @param int $userId Usuario que opera.
+     * @param array $data Datos crudos del POST.
+     * @return \App\Service\ServiceResult on success: data = [
+     *   'advanced' => bool,
+     *   'nextStatus' => ?string,
+     *   'advanceWarning' => ?string,
+     *   'linkWarnings' => string[],
+     * ]
+     */
+    public function saveAndAdvance(
+        Refund $record,
+        int $roleId,
+        int $userId,
+        array $data,
+    ): ServiceResult {
+        $filtered = $this->fieldPolicy->filterEntityData($data, $roleId, (string)$record->status);
+        if ($filtered->hasErrors()) {
+            return ServiceResult::fail($filtered->errors);
+        }
+
+        if (!empty($filtered->patch)) {
+            $recordsTable = TableRegistry::getTableLocator()->get('Refunds');
+
+            // patchEntity muta $record en sitio, así que snapshoteamos el estado
+            // original (solo los campos auditables) ANTES de aplicar el patch
+            // para poder registrar el diff campo a campo tras el save.
+            $original = new Refund([
+                'id' => $record->id,
+                'beneficiary_type' => $record->beneficiary_type,
+                'beneficiary_employee_id' => $record->beneficiary_employee_id,
+                'beneficiary_provider_id' => $record->beneficiary_provider_id,
+                'accrued' => $record->accrued,
+                'accrual_date' => $record->accrual_date,
+                'ready_for_payment' => $record->ready_for_payment,
+            ]);
+
+            $record = $recordsTable->patchEntity($record, $filtered->patch);
+            if (!$recordsTable->save($record)) {
+                $messages = [];
+                foreach ($record->getErrors() as $fieldErrors) {
+                    foreach ($fieldErrors as $msg) {
+                        if (is_string($msg) && $msg !== '') {
+                            $messages[] = $msg;
+                        }
+                    }
+                }
+
+                return ServiceResult::fail(
+                    !empty($messages) ? $messages : ['No se pudo guardar el registro.'],
+                );
+            }
+
+            $this->refundHistory->recordChanges($original, $record, $userId);
+        }
+
+        $linkWarnings = [];
+        if ($record->isAgrupacion() && !empty($data['invoice_ids'])) {
+            $invoiceIds = array_map('intval', array_filter((array)$data['invoice_ids']));
+            if (!empty($invoiceIds)) {
+                $linkWarnings = $this->addInvoices($record, $invoiceIds);
+                if (empty($linkWarnings)) {
+                    $this->_recordInvoicesLinked((int)$record->id, $invoiceIds, $userId);
+                }
+            }
+        }
+
+        $advanced = false;
+        $nextStatus = null;
+        $advanceWarning = null;
+        if (!$record->isPagada() && $this->denialReasonForAdvance($record, $roleId) === null) {
+            $advanceResult = $this->advance($record, $roleId, $userId);
+            if ($advanceResult->success) {
+                $advanced = true;
+                $nextStatus = $advanceResult->data['nextStatus'] ?? null;
+            } else {
+                $advanceWarning = $advanceResult->firstError();
+            }
+        }
+
+        return ServiceResult::ok([
+            'advanced' => $advanced,
+            'nextStatus' => $nextStatus,
+            'advanceWarning' => $advanceWarning,
+            'linkWarnings' => $linkWarnings,
+        ]);
+    }
+
+    /**
+     * Registra en el historial el lote de facturas vinculadas. Copia privada del
+     * servicio (espejo de PettyCashPipelineService); el helper homónimo del
+     * controller conserva otro caller (addInvoicesToGroup).
+     *
+     * @param int $refundId Reintegro padre.
+     * @param array<int> $invoiceIds Ids de las facturas vinculadas.
+     * @param int $userId Usuario que vincula.
+     */
+    private function _recordInvoicesLinked(int $refundId, array $invoiceIds, int $userId): void
+    {
+        if (empty($invoiceIds)) {
+            return;
+        }
+
+        $numbers = TableRegistry::getTableLocator()->get('Invoices')->find()
+            ->select(['invoice_number'])
+            ->where(['id IN' => $invoiceIds])
+            ->all()
+            ->extract('invoice_number')
+            ->toList();
+
+        $clean = array_values(array_filter(array_map('strval', $numbers), fn($n) => $n !== ''));
+        if (empty($clean)) {
+            return;
+        }
+
+        $summary = count($clean) === 1
+            ? $clean[0]
+            : sprintf('%d facturas (%s)', count($clean), implode(', ', $clean));
+
+        $this->refundHistory->recordFieldChange($refundId, 'invoices_linked', null, $summary, $userId);
     }
 
     /**
