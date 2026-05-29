@@ -24,7 +24,7 @@ class PettyCashHistoryService
      * Campos editables del registro que se auditan campo a campo.
      *
      * Espejo de los campos que `PettyCashFieldAccessPolicy` permite patchear
-     * en `PettyCashService::saveAndAdvance` (notes en agrupación/contabilidad,
+     * en `PettyCashPipelineService::saveAndAdvance` (notes en agrupación/contabilidad,
      * más accrued/accrual_date/ready_for_payment en contabilidad).
      */
     private const FIELDS_TO_TRACK = [

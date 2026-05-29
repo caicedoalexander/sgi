@@ -19,7 +19,7 @@ use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use DateTimeInterface;
 
-class RefundService
+class RefundPipelineService
 {
     private GroupedInvoiceService $grouped;
     private RefundHistoryService $refundHistory;

@@ -15,7 +15,7 @@ use App\ValueObject\UserContext;
 use Cake\ORM\TableRegistry;
 use DateTime;
 
-class NoveltyService
+class NoveltyPipelineService
 {
     private AuthorizationFacade $auth;
     private NoveltyFieldAccessPolicy $fieldPolicy;

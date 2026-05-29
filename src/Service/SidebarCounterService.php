@@ -18,15 +18,15 @@ class SidebarCounterService
 
     /**
      * @param \App\Service\InvoicePipelineService $invoicePipeline Invoice pipeline.
-     * @param \App\Service\NoveltyService $noveltyPipeline Novelty pipeline.
-     * @param \App\Service\PettyCashService $pettyCashService Petty cash service.
-     * @param \App\Service\RefundService $refundService Refund service.
+     * @param \App\Service\NoveltyPipelineService $noveltyPipeline Novelty pipeline.
+     * @param \App\Service\PettyCashPipelineService $pettyCashService Petty cash service.
+     * @param \App\Service\RefundPipelineService $refundService Refund service.
      */
     public function __construct(
         private readonly InvoicePipelineService $invoicePipeline,
-        private readonly NoveltyService $noveltyPipeline,
-        private readonly PettyCashService $pettyCashService,
-        private readonly RefundService $refundService,
+        private readonly NoveltyPipelineService $noveltyPipeline,
+        private readonly PettyCashPipelineService $pettyCashService,
+        private readonly RefundPipelineService $refundService,
     ) {
         $this->logger = new StructuredLogger('Sidebar');
     }

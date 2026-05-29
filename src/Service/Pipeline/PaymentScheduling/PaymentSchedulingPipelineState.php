@@ -11,7 +11,7 @@ use App\Model\Entity\PaymentScheduling;
  *
  * Each State knows its natural transitions (next/previous) and the field
  * requirements specific to advancing. Cross-state checks (role authorization,
- * payment application) are composed by the coordinator (PaymentSchedulingService).
+ * payment application) are composed by the coordinator (PaymentSchedulingPipelineService).
  */
 interface PaymentSchedulingPipelineState
 {

@@ -49,17 +49,17 @@ use App\Service\NotificationService;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
-use App\Service\NoveltyService;
+use App\Service\NoveltyPipelineService;
 use App\Service\NoveltySignatureService;
 use App\Service\PaymentRegistryService;
 use App\Service\PaymentSchedulingDocumentService;
 use App\Service\PaymentSchedulingHistoryService;
 use App\Service\PaymentSchedulingImportService;
-use App\Service\PaymentSchedulingService;
+use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PendingNotificationsService;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashHistoryService;
-use App\Service\PettyCashService;
+use App\Service\PettyCashPipelineService;
 use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\Policy\InvoiceActionPolicy;
@@ -87,7 +87,7 @@ use App\Service\PipelineAuthorizationService;
 use App\Service\RefundDocumentService;
 use App\Service\RefundPaymentService;
 use App\Service\RefundHistoryService;
-use App\Service\RefundService;
+use App\Service\RefundPipelineService;
 use App\Service\SidebarCounterService;
 use App\Service\Strategy\InvoiceApprovalStrategy;
 use App\Service\Strategy\NoveltyApprovalStrategy;
@@ -348,7 +348,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(NoveltyFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
         $container->addShared(NoveltyPipelineStateRegistry::class);
-        $container->addShared(NoveltyService::class)
+        $container->addShared(NoveltyPipelineService::class)
             ->addArguments([
                 AuthorizationFacade::class,
                 NoveltyFieldAccessPolicy::class,
@@ -364,7 +364,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(PettyCashHistoryService::class);
         $container->addShared(PettyCashFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
-        $container->addShared(PettyCashService::class)
+        $container->addShared(PettyCashPipelineService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
                 AuthorizationFacade::class,
@@ -373,7 +373,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(RefundFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
         $container->addShared(RefundDocumentService::class);
-        $container->addShared(RefundService::class)
+        $container->addShared(RefundPipelineService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
                 AuthorizationFacade::class,
@@ -381,7 +381,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(RefundHistoryService::class);
         $container->addShared(RefundPaymentService::class)
             ->addArgument(AuthorizationFacade::class);
-        $container->addShared(PaymentSchedulingService::class)
+        $container->addShared(PaymentSchedulingPipelineService::class)
             ->addArguments([
                 InvoicePaymentService::class,
                 AuthorizationFacade::class,
@@ -421,14 +421,14 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(SidebarCounterService::class)
             ->addArguments([
                 InvoicePipelineService::class,
-                NoveltyService::class,
-                PettyCashService::class,
-                RefundService::class,
+                NoveltyPipelineService::class,
+                PettyCashPipelineService::class,
+                RefundPipelineService::class,
             ]);
         $container->addShared(PendingNotificationsService::class)
             ->addArguments([
                 SidebarCounterService::class,
-                PaymentSchedulingService::class,
+                PaymentSchedulingPipelineService::class,
             ]);
 
         // === Plan 6: Health checks ===

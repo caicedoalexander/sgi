@@ -17,7 +17,7 @@ use InvalidArgumentException;
 
 /**
  * Resolves `employee_novelties.pipeline_status` (enum) to a concrete State.
- * Sole dependency the coordinator (NoveltyService) needs to access states.
+ * Sole dependency the coordinator (NoveltyPipelineService) needs to access states.
  *
  * Note: registro and rechazada no tienen State class porque son estados
  * de borde (registro = inicial sin lógica, rechazada = terminal sin lógica).

@@ -10,7 +10,7 @@ use App\Service\Pipeline\PipelineFieldPolicy;
 /**
  * Campos editables y secciones visibles por estado del pipeline de novedades.
  *
- * Audit PA-008 — extraído de `NoveltyService::FIELDS_BY_STEP/SECTIONS_BY_STEP`
+ * Audit PA-008 — extraído de `NoveltyPipelineService::FIELDS_BY_STEP/SECTIONS_BY_STEP`
  * para unificar con el resto de dominios bajo `PipelineFieldPolicy`.
  */
 final class NoveltyFieldAccessPolicy extends PipelineFieldPolicy

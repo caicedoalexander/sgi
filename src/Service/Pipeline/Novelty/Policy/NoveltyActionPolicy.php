@@ -14,7 +14,7 @@ use App\ValueObject\UserContext;
  * Audit PA-011 — espejo de `AdvanceLegalizationActionPolicy` para novedades.
  * El controller `EmployeeNoveltiesController` no realiza chequeos de
  * `authFacade->canOperate` directos hoy (la lógica de gating vive en
- * `NoveltyService`), pero esta policy queda registrada para uniformidad y como
+ * `NoveltyPipelineService`), pero esta policy queda registrada para uniformidad y como
  * punto de extensión cuando se introduzcan acciones futuras en el pipeline.
  */
 final class NoveltyActionPolicy

@@ -13,7 +13,7 @@ use App\Service\Pipeline\Refund\State\VerificacionPagoState;
 
 /**
  * Resolves `refunds.status` (enum) to a concrete State.
- * Sole dependency the coordinator (RefundService) needs to access states.
+ * Sole dependency the coordinator (RefundPipelineService) needs to access states.
  */
 final class RefundPipelineStateRegistry
 {

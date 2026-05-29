@@ -12,7 +12,7 @@ use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\PettyCashRecord;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashHistoryService;
-use App\Service\PettyCashService;
+use App\Service\PettyCashPipelineService;
 use App\Service\Pipeline\PettyCash\Policy\PettyCashActionPolicy;
 use App\Service\StructuredLogger;
 use App\ViewModel\PettyCashAddViewModel;
@@ -28,7 +28,7 @@ class PettyCashRecordsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
-    private PettyCashService $pettyCashService;
+    private PettyCashPipelineService $pettyCashService;
 
     private PettyCashDocumentService $documentService;
 
@@ -43,7 +43,7 @@ class PettyCashRecordsController extends AppController
     {
         parent::initialize();
         $container = $this->getContainer();
-        $this->pettyCashService = $container->get(PettyCashService::class);
+        $this->pettyCashService = $container->get(PettyCashPipelineService::class);
         $this->documentService = $container->get(PettyCashDocumentService::class);
         $this->actionPolicy = $container->get(PettyCashActionPolicy::class);
         $this->historyService = $container->get(PettyCashHistoryService::class);

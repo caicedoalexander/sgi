@@ -19,11 +19,11 @@ class PendingNotificationsService
 {
     /**
      * @param \App\Service\SidebarCounterService $counterService Sidebar counters reused as source of truth.
-     * @param \App\Service\PaymentSchedulingService $paymentSchedulingService Payment scheduling visibility resolver.
+     * @param \App\Service\PaymentSchedulingPipelineService $paymentSchedulingService Payment scheduling visibility resolver.
      */
     public function __construct(
         private readonly SidebarCounterService $counterService,
-        private readonly PaymentSchedulingService $paymentSchedulingService,
+        private readonly PaymentSchedulingPipelineService $paymentSchedulingService,
     ) {
     }
 

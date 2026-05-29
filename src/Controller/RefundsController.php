@@ -15,7 +15,7 @@ use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\RefundDocumentService;
 use App\Service\RefundHistoryService;
 use App\Service\RefundPaymentService;
-use App\Service\RefundService;
+use App\Service\RefundPipelineService;
 use App\Service\StructuredLogger;
 use App\ViewModel\RefundAddViewModel;
 use App\ViewModel\RefundEditViewModel;
@@ -32,7 +32,7 @@ class RefundsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
-    private RefundService $refundService;
+    private RefundPipelineService $refundService;
     private RefundPaymentService $paymentService;
     private RefundDocumentService $documentService;
     private RefundFieldAccessPolicy $fieldPolicy;
@@ -46,7 +46,7 @@ class RefundsController extends AppController
     {
         parent::initialize();
         $container = $this->getContainer();
-        $this->refundService = $container->get(RefundService::class);
+        $this->refundService = $container->get(RefundPipelineService::class);
         $this->paymentService = $container->get(RefundPaymentService::class);
         $this->documentService = $container->get(RefundDocumentService::class);
         $this->fieldPolicy = $container->get(RefundFieldAccessPolicy::class);

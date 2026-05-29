@@ -12,7 +12,7 @@ use App\Model\Entity\PettyCashRecord;
  * Cada State conoce su transición natural (next/previous) y los requisitos
  * de campos específicos para avanzar al siguiente. Los chequeos cross-state
  * (autorización por rol, presencia de pago, facturas agrupadas) los compone
- * el coordinador (PettyCashService).
+ * el coordinador (PettyCashPipelineService).
  */
 interface PettyCashPipelineState
 {

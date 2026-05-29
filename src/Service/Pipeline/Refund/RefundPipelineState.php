@@ -14,7 +14,7 @@ use App\Model\Entity\Refund;
  *
  * Los States son puros: los bloqueos de regresión viven en RefundLockPolicy y los
  * cross-cutting checks (RBAC, transacciones, propagación a hijas, history) son
- * responsabilidad del coordinador (RefundService).
+ * responsabilidad del coordinador (RefundPipelineService).
  */
 interface RefundPipelineState
 {

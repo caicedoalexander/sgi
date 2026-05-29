@@ -24,7 +24,7 @@ use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use DateTimeInterface;
 
-class PettyCashService
+class PettyCashPipelineService
 {
     private GroupedInvoiceService $grouped;
     private AuthorizationFacade $auth;

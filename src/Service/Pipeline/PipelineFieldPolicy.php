@@ -12,8 +12,8 @@ use App\ValueObject\UserContext;
  * `step → sections`. La autorización rol×paso se delega a `AuthorizationFacade`.
  *
  * Audit PA-008 — unifica el patrón que antes existía duplicado entre
- * InvoiceFieldAccessPolicy (clase dedicada), NoveltyService (constantes en
- * service), PettyCashService::_filterEditPatch (lógica inline) y
+ * InvoiceFieldAccessPolicy (clase dedicada), NoveltyPipelineService (constantes en
+ * service), PettyCashPipelineService::_filterEditPatch (lógica inline) y
  * RefundsController::edit (lógica inline en controller).
  */
 abstract class PipelineFieldPolicy
@@ -78,7 +78,7 @@ abstract class PipelineFieldPolicy
      *
      * El segundo argumento `$currentStep` es opcional y se ignora; existe para
      * retrocompatibilidad con callers legacy de `InvoiceFieldAccessPolicy` y
-     * `NoveltyService` que lo pasaban antes del refactor PA-008.
+     * `NoveltyPipelineService` que lo pasaban antes del refactor PA-008.
      *
      * @return array<int, string>
      */

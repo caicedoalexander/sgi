@@ -12,7 +12,7 @@ use App\Service\Pipeline\PaymentScheduling\State\VerificacionPagoState;
 
 /**
  * Resolves `payment_schedulings.pipeline_status` (enum) to a concrete State.
- * Sole dependency the coordinator (PaymentSchedulingService) needs to access states.
+ * Sole dependency the coordinator (PaymentSchedulingPipelineService) needs to access states.
  */
 final class PaymentSchedulingPipelineStateRegistry
 {

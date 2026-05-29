@@ -9,7 +9,7 @@ use App\Service\Pipeline\FilterResult;
 use App\Service\Pipeline\PipelineFieldPolicy;
 
 /**
- * Audit PA-008 — extraído de `PettyCashService::_filterEditPatch` para alinear
+ * Audit PA-008 — extraído de `PettyCashPipelineService::_filterEditPatch` para alinear
  * caja menor con el patrón unificado. La validación inline de `accrual_date`
  * cuando `accrued=true` se conserva en el override de `filterEntityData`.
  */
@@ -58,7 +58,7 @@ final class PettyCashFieldAccessPolicy extends PipelineFieldPolicy
 
     /**
      * Override: replica el comportamiento exacto de
-     * `PettyCashService::_filterEditPatch` original — filtra por **estado**,
+     * `PettyCashPipelineService::_filterEditPatch` original — filtra por **estado**,
      * sin gate de rol. El gate de rol vive en `denialReasonForAdvance` después
      * del save (preserva la API actual). La validación inline de `accrual_date`
      * se conserva.

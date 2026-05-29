@@ -16,7 +16,7 @@ use App\Service\NotificationService;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
-use App\Service\NoveltyService;
+use App\Service\NoveltyPipelineService;
 use App\Service\NoveltySignatureService;
 use App\View\Presentation\NoveltyPresentation;
 use App\ViewModel\EmployeeNoveltyAddViewModel;
@@ -33,7 +33,7 @@ class EmployeeNoveltiesController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
-    private NoveltyService $pipelineService;
+    private NoveltyPipelineService $pipelineService;
 
     private NoveltyDocumentService $documentService;
 
@@ -53,7 +53,7 @@ class EmployeeNoveltiesController extends AppController
     {
         parent::initialize();
         $container = $this->getContainer();
-        $this->pipelineService = $container->get(NoveltyService::class);
+        $this->pipelineService = $container->get(NoveltyPipelineService::class);
         $this->documentService = $container->get(NoveltyDocumentService::class);
         $this->observationService = $container->get(NoveltyObservationService::class);
         $this->historyService = $container->get(NoveltyHistoryService::class);
@@ -849,7 +849,7 @@ class EmployeeNoveltiesController extends AppController
         }
 
         // El cambio de estado y su registro en el historial se hacen dentro de la
-        // transacción de NoveltyService::advance() (simetría con advanceGroup).
+        // transacción de NoveltyPipelineService::advance() (simetría con advanceGroup).
         $result = $this->pipelineService->advance($novelty, $user->id);
 
         if ($result->success) {

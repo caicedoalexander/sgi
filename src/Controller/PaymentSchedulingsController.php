@@ -13,7 +13,7 @@ use App\Model\Entity\PaymentScheduling;
 use App\Service\PaymentSchedulingDocumentService;
 use App\Service\PaymentSchedulingHistoryService;
 use App\Service\PaymentSchedulingImportService;
-use App\Service\PaymentSchedulingService;
+use App\Service\PaymentSchedulingPipelineService;
 use App\Service\Pipeline\PaymentScheduling\Policy\PaymentSchedulingActionPolicy;
 use App\ViewModel\PaymentSchedulingAddViewModel;
 use App\ViewModel\PaymentSchedulingEditViewModel;
@@ -26,7 +26,7 @@ class PaymentSchedulingsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
-    private PaymentSchedulingService $schedulingService;
+    private PaymentSchedulingPipelineService $schedulingService;
 
     private PaymentSchedulingDocumentService $documentService;
 
@@ -40,7 +40,7 @@ class PaymentSchedulingsController extends AppController
     {
         parent::initialize();
         $container = $this->getContainer();
-        $this->schedulingService = $container->get(PaymentSchedulingService::class);
+        $this->schedulingService = $container->get(PaymentSchedulingPipelineService::class);
         $this->documentService = $container->get(PaymentSchedulingDocumentService::class);
         $this->importService = $container->get(PaymentSchedulingImportService::class);
         $this->actionPolicy = $container->get(PaymentSchedulingActionPolicy::class);

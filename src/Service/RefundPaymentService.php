@@ -19,7 +19,7 @@ use Cake\ORM\TableRegistry;
  * Operaciones de pago del flujo de reintegros: registro pendiente, autorización
  * y rechazo. Análogo a `InvoicePaymentService` para invoices.
  *
- * Separado de `RefundService` (pipeline) para que cada servicio tenga una
+ * Separado de `RefundPipelineService` (pipeline) para que cada servicio tenga una
  * responsabilidad clara: el pipeline gestiona transiciones de estado y la
  * agrupación de facturas; este servicio gestiona el subdominio de pagos.
  */

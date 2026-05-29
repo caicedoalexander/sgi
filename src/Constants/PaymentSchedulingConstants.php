@@ -35,7 +35,7 @@ final class PaymentSchedulingConstants
 
     // El avance (next) y la regresión (previous) son responsabilidad del enum
     // App\Constants\Domain\PaymentScheduling\PipelineStatus (next()/previous()),
-    // consumido por PaymentSchedulingService::getNextStatus/getPreviousStatus.
+    // consumido por PaymentSchedulingPipelineService::getNextStatus/getPreviousStatus.
 
     // Target status when Contador rejects from autorizacion_pago.
     // Espeja PipelineStatus::rejectionTarget(); se conserva como const porque las

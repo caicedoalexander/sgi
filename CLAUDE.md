@@ -64,12 +64,12 @@ Sistema de diseño: ver la sección [Sistema de Diseño](#sistema-de-diseño) m�
 | `InvoiceApprovalService` | Invoice approval operations. `sendApprovalLinks()`, `modifyApprovers()` (con motivo obligatorio), `resetFlow()` cuando `area_approval='Rechazada'` |
 | `InvoiceFilterService` / `EmployeeFilterService` | Filtros de listados (extends `Filter/BaseFilterService`) |
 | `GroupedInvoiceService` | Grouped invoice batch operations |
-| `NoveltyService` | Workflow del pipeline de novedades (delega a `NoveltyPipelineStateRegistry`) |
-| `PaymentSchedulingService` | Payment scheduling pipeline (5 estados: borrador → tesoreria → autorizacion_pago → verificacion_pago → pagada) y management de registros |
+| `NoveltyPipelineService` | Workflow del pipeline de novedades (delega a `NoveltyPipelineStateRegistry`) |
+| `PaymentSchedulingPipelineService` | Payment scheduling pipeline (5 estados: borrador → tesoreria → autorizacion_pago → verificacion_pago → pagada) y management de registros |
 | `AdvanceLegalizationService` | Pipeline de legalizaciones de anticipos (validacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → revision_firmas → legalizada) |
-| `RefundService` | Pipeline de reintegros (agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada) y outcomes |
+| `RefundPipelineService` | Pipeline de reintegros (agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada) y outcomes |
 | `RefundPaymentService` | Registro/edición/rechazo de pagos individuales del módulo de reintegros |
-| `PettyCashService` | Pipeline de caja menor (agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada) |
+| `PettyCashPipelineService` | Pipeline de caja menor (agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada) |
 | `LiquidationDocPaymentService` | Pagos de documentos de liquidación de novedades |
 | `PaymentRegistryService` | Vista consolidada del registro de pagos cross-módulo |
 | `AuthorizationService` | RBAC via `permissions` table. Admin **solo** bypassa los módulos en `ADMIN_BYPASS_MODULES = ['users', 'roles']`; en los demás módulos el rol Administrador pasa por el lookup normal en la tabla `permissions`. |
@@ -148,11 +148,11 @@ Auditoría completa y roadmap de remediación en `docs/auditoria-paridad-modulos
 
 - **Canon de backend/pipeline = Invoice**: State pattern limpio (un archivo por estado, States sin IO directo salvo servicios inyectados), enum `Domain/{Modulo}/PipelineStatus` como **fuente única** y las `*Constants` delegan a él (`STATUS_X = PipelineStatus::X->value`). El avance/regresión se resuelve vía `enum::next()/previous()` o `State::getNextStatus()` — **no** vía mapas `TRANSITIONS` legacy (en migración).
 - **Canon de templates = la familia migrada**, no Invoice: layout `sgi-invoice-view-grid` + `element('pipeline_sidebar')` (Invoice aún arrastra grid inline y es el outlier a alinear). `add.php` es legacy en todos.
-- **Nomenclatura del coordinador**: el objetivo es `{Modulo}PipelineService` (hoy solo `InvoicePipelineService` lo cumple; rename de los demás pendiente).
+- **Nomenclatura del coordinador**: el objetivo es `{Modulo}PipelineService` (rename completado el 2026-05-29 — los 5 coordinadores cumplen; `AdvanceLegalizationService` excluido (no es coordinador de pipeline)).
 - **Excepciones legítimas (NO son migración a medias):**
   - `Advance` y `PaymentScheduling` **no** tienen `FieldAccessPolicy`: Advance edita vía `Invoices::edit` (redirect) y PaymentScheduling no edita campos del header por paso. No crear policies vacías.
   - `Advance` usa prefijo de clase `AdvanceLegalization*` por la entidad de dominio (Anticipo = Invoice; reusa `InvoicePipelineService`).
-  - `Novelty` tiene 2 controllers (`EmployeeNovelties` individual + `NoveltyLiquidationDocs` grupal) servidos por un `NoveltyService`.
+  - `Novelty` tiene 2 controllers (`EmployeeNovelties` individual + `NoveltyLiquidationDocs` grupal) servidos por un `NoveltyPipelineService`.
   - `AdvanceLegalizationHistoryService` y `PaymentSchedulingHistoryService` **no** usan `HistoryNormalizationTrait` ni `recordChanges()` (a diferencia de Invoice/Refund/PettyCash/Novelty): Advance audita campo-a-campo explícito por transición vía `_setStatus(extraChanges)` (patrón deliberado y transaccional, no frágil) y PaymentScheduling no edita campos del header por paso. Añadir `recordChanges` sería dead code — están bien dimensionados para su flujo.
   - `Advances/legalization` **Soportes NO usa `element('documents_section')`**: sus 3 bloques (relación de facturas, comprobante de consignación, historial de firmas) son **docs con firma/estado** (pills firmado/pendiente, reemplazo AJAX inline vía `fetch()` no `SgiDocumentUploader`, metadata de consignación, filas de firma rechazada con motivo) — fuera del contrato upload/delete del element, cuyo `document_row` está acoplado al `document_row_template`↔`sgi-document-uploader.js`. Markup bespoke deliberado; migrarlo exigiría extender `document_row` (transversal a 4+ consumidores) sin ganancia. El resto de módulos (Refund/PettyCash/EmployeeNovelties/PaymentScheduling) **sí** delegan en el element.
   - Trampa de spelling deliberada: `InvoiceConstants::DIAN_REJECTED = 'Rechazado'` (masculino) vs `APPROVAL_REJECTED = 'Rechazada'` — **no unificar** (rompe datos persistidos).

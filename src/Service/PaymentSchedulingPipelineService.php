@@ -18,7 +18,7 @@ use Cake\Event\EventManager;
 use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
 
-class PaymentSchedulingService
+class PaymentSchedulingPipelineService
 {
     private AuthorizationFacade $auth;
     private PaymentSchedulingPipelineStateRegistry $stateRegistry;

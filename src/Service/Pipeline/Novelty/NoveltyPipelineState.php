@@ -15,7 +15,7 @@ use App\Model\Entity\NoveltyLiquidationDoc;
  * (EmployeeNovelty) o como grupo (NoveltyLiquidationDoc) según la etapa.
  *
  * Cross-cutting checks (role authorization, conditional skips, side effects)
- * are composed by the coordinator (NoveltyService).
+ * are composed by the coordinator (NoveltyPipelineService).
  */
 interface NoveltyPipelineState
 {

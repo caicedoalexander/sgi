@@ -12,7 +12,7 @@ use App\Model\Entity\PettyCashRecord;
  * reasignar el pago primero).
  *
  * Espejo de InvoiceLockPolicy / RefundLockPolicy. Antes esta regla vivía inline
- * en PettyCashService; extraerla unifica el patrón con sus módulos hermanos.
+ * en PettyCashPipelineService; extraerla unifica el patrón con sus módulos hermanos.
  */
 final class PettyCashLockPolicy
 {

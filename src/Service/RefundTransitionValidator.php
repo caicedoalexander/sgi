@@ -15,7 +15,7 @@ use App\Service\Pipeline\Refund\RefundPipelineStateRegistry;
  * document_type ni rechazo de área, así que la validación de avance se reduce a
  * los requisitos de campos que declara cada State::validateAdvance(). La regla de
  * "al menos una factura agrupada" es una invariante de agrupación y vive en el
- * coordinador (RefundService), no aquí.
+ * coordinador (RefundPipelineService), no aquí.
  */
 final class RefundTransitionValidator
 {

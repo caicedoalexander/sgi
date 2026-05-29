@@ -14,7 +14,7 @@ use App\Service\Pipeline\PettyCash\State\VerificacionPagoState;
 /**
  * Resuelve `petty_cash_records.status` (enum) → instancia concreta de
  * PettyCashPipelineState. Es la única dependencia que necesita el
- * coordinador (PettyCashService) para acceder a los estados.
+ * coordinador (PettyCashPipelineService) para acceder a los estados.
  */
 final class PettyCashPipelineStateRegistry
 {
