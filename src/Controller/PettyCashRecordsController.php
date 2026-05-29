@@ -323,7 +323,7 @@ class PettyCashRecordsController extends AppController
 
         $nextStatus = PettyCashConstants::TRANSITIONS[$record->status] ?? null;
         $advanceErrors = $nextStatus
-            ? $this->pettyCashService->getTransitionErrors($record)
+            ? $this->pettyCashService->validateTransitionRequirements($record)
             : [];
 
         $canRegisterPayment = $this->actionPolicy->canRegisterPayment($record, $roleId);

@@ -439,7 +439,7 @@ class RefundsController extends AppController
     {
         $nextStatus = $this->refundService->getNextStatus($record->status);
         $advanceErrors = $nextStatus
-            ? $this->refundService->getTransitionErrors($record)
+            ? $this->refundService->validateTransitionRequirements($record)
             : [];
 
         $groupFilters = $this->request->getQueryParams();

@@ -408,7 +408,7 @@ class PettyCashPipelineService
      * @param \App\Model\Entity\PettyCashRecord $record Record.
      * @return array
      */
-    public function getTransitionErrors(PettyCashRecord $record): array
+    public function validateTransitionRequirements(PettyCashRecord $record): array
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $invoices = $invoicesTable->find()

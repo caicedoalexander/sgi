@@ -358,7 +358,7 @@ class RefundPipelineService
      * @param \App\Model\Entity\Refund $record Record.
      * @return array
      */
-    public function getTransitionErrors(Refund $record): array
+    public function validateTransitionRequirements(Refund $record): array
     {
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $hasInvoices = $invoicesTable->find()
