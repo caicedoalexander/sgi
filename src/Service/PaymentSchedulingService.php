@@ -51,12 +51,12 @@ class PaymentSchedulingService
 
     public function getNextStatus(string $currentStatus): ?string
     {
-        return PaymentSchedulingConstants::FORWARD_TRANSITIONS[$currentStatus] ?? null;
+        return PipelineStatus::tryFrom($currentStatus)?->next()?->value;
     }
 
     public function getPreviousStatus(string $currentStatus): ?string
     {
-        return PaymentSchedulingConstants::BACKWARD_TRANSITIONS[$currentStatus] ?? null;
+        return PipelineStatus::tryFrom($currentStatus)?->previous()?->value;
     }
 
     /**
@@ -116,6 +116,90 @@ class PaymentSchedulingService
     public function getRegressionLockMessage(PaymentScheduling $scheduling): ?string
     {
         return null;
+    }
+
+    /**
+     * Avanza la programación al siguiente estado del pipeline.
+     *
+     * Si el avance materializa pagos (autorizacion_pago → verificacion_pago), crea
+     * los invoice_payments, mueve las facturas hijas, guarda el nuevo estado y
+     * registra el historial — TODO en una sola transacción. Antes esta orquestación
+     * vivía en el controller con el save del estado FUERA del transactional de
+     * applyPayments, dejando una ventana de inconsistencia.
+     *
+     * @return \App\Service\ServiceResult data{nextStatus: string, advanced: list<int>, partial: list<int>}
+     */
+    public function advance(PaymentScheduling $scheduling, int $roleId, int $userId): ServiceResult
+    {
+        $advanceDenial = $this->denialReasonForAdvance($scheduling, $roleId);
+        if ($advanceDenial !== null) {
+            return ServiceResult::fail([$advanceDenial->message()]);
+        }
+
+        $currentStatus = $scheduling->pipeline_status;
+        $errors = $this->validateTransitionRequirements($scheduling, $currentStatus);
+        if (!empty($errors)) {
+            return ServiceResult::fail($errors);
+        }
+
+        $nextStatus = $this->getNextStatus($currentStatus);
+        if ($nextStatus === null) {
+            return ServiceResult::fail(['La programación ya está en el último paso del flujo.']);
+        }
+
+        $schedulingsTable = TableRegistry::getTableLocator()->get('PaymentSchedulings');
+
+        $advanced = [];
+        $partial = [];
+        $applyErrors = [];
+
+        $ok = $schedulingsTable->getConnection()->transactional(function () use (
+            $schedulingsTable,
+            $scheduling,
+            $currentStatus,
+            $nextStatus,
+            $userId,
+            &$advanced,
+            &$partial,
+            &$applyErrors,
+        ): bool {
+            // Si avanza a verificacion_pago (Contador autoriza), materializar pagos
+            // y mover las facturas hijas dentro de ESTA transacción.
+            if ($nextStatus === PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO) {
+                $result = $this->_applyPayments($scheduling, $userId);
+                if (!empty($result['errors'])) {
+                    $applyErrors = $result['errors'];
+
+                    return false;
+                }
+                $advanced = $result['advanced'];
+                $partial = $result['partial'];
+            }
+
+            $scheduling->pipeline_status = $nextStatus;
+            if (!$schedulingsTable->save($scheduling)) {
+                return false;
+            }
+
+            $this->schedulingHistory->recordStatusChange(
+                $scheduling->id,
+                $currentStatus,
+                $nextStatus,
+                $userId,
+            );
+
+            return true;
+        });
+
+        if (!$ok) {
+            return ServiceResult::fail($applyErrors ?: ['No se pudo avanzar la programación.']);
+        }
+
+        return ServiceResult::ok([
+            'nextStatus' => $nextStatus,
+            'advanced' => $advanced,
+            'partial' => $partial,
+        ]);
     }
 
     /**
@@ -237,104 +321,102 @@ class PaymentSchedulingService
     }
 
     /**
-     * Vincula items validados a una programación.
+     * Vincula items validados a una programación, all-or-nothing.
+     *
+     * @param array<int, array{invoice_id: int, banking_entity_id: int, amount: mixed}> $validItems
+     * @return \App\Service\ServiceResult data{linked: int}
      */
-    public function linkItems(int $schedulingId, array $validItems): bool
+    public function linkItems(int $schedulingId, array $validItems): ServiceResult
     {
         $itemsTable = TableRegistry::getTableLocator()->get('PaymentSchedulingItems');
 
-        foreach ($validItems as $item) {
-            $entity = $itemsTable->newEntity([
-                'payment_scheduling_id' => $schedulingId,
-                'invoice_id' => $item['invoice_id'],
-                'banking_entity_id' => $item['banking_entity_id'],
-                'amount' => $item['amount'],
-            ]);
+        $ok = $itemsTable->getConnection()->transactional(
+            function () use ($itemsTable, $schedulingId, $validItems): bool {
+                foreach ($validItems as $item) {
+                    $entity = $itemsTable->newEntity([
+                        'payment_scheduling_id' => $schedulingId,
+                        'invoice_id' => $item['invoice_id'],
+                        'banking_entity_id' => $item['banking_entity_id'],
+                        'amount' => $item['amount'],
+                    ]);
 
-            if (!$itemsTable->save($entity)) {
-                return false;
-            }
+                    if (!$itemsTable->save($entity)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            },
+        );
+
+        if (!$ok) {
+            return ServiceResult::fail(['No se pudieron vincular todas las facturas.']);
         }
 
-        return true;
+        return ServiceResult::ok(['linked' => count($validItems)]);
     }
 
     /**
-     * Aplica los pagos de una programación autorizada.
+     * Materializa los pagos autorizados de una programación y mueve las facturas
+     * hijas (a verificacion_pago si quedan full, o las deja en tesorería si parcial).
+     *
+     * DEBE invocarse dentro de una transacción (no abre la suya): cualquier fallo
+     * retorna un error y deja que la transacción del caller — advance() — revierta.
+     *
+     * @return array{errors: list<string>, advanced: list<int>, partial: list<int>}
      */
-    public function applyPayments(int $schedulingId, int $authorizedBy): array
+    private function _applyPayments(PaymentScheduling $scheduling, int $authorizedBy): array
     {
         $itemsTable = TableRegistry::getTableLocator()->get('PaymentSchedulingItems');
         $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $schedulingsTable = TableRegistry::getTableLocator()->get('PaymentSchedulings');
 
-        $scheduling = $schedulingsTable->get($schedulingId);
         $items = $itemsTable->find()
-            ->where(['payment_scheduling_id' => $schedulingId])
+            ->where(['payment_scheduling_id' => $scheduling->id])
             ->all();
 
-        $connection = $paymentsTable->getConnection();
+        $appliedInvoiceIds = [];
+        foreach ($items as $item) {
+            $payment = $paymentsTable->newEntity([
+                'invoice_id' => $item->invoice_id,
+                'banking_entity_id' => $item->banking_entity_id,
+                'amount' => $item->amount,
+                'payment_date' => date('Y-m-d'),
+                'payment_scheduling_id' => $scheduling->id,
+                'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
+                'authorized' => true,
+                'authorized_by' => $authorizedBy,
+                'authorized_date' => date('Y-m-d'),
+                'created_by' => $scheduling->created_by,
+            ]);
 
-        return $connection->transactional(function () use (
-            $items,
-            $paymentsTable,
-            $invoicesTable,
-            $scheduling,
-            $schedulingId,
-            $authorizedBy,
-        ) {
-            $appliedInvoiceIds = [];
-            $errors = [];
-
-            foreach ($items as $item) {
-                $payment = $paymentsTable->newEntity([
-                    'invoice_id' => $item->invoice_id,
-                    'banking_entity_id' => $item->banking_entity_id,
-                    'amount' => $item->amount,
-                    'payment_date' => date('Y-m-d'),
-                    'payment_scheduling_id' => $schedulingId,
-                    'status' => InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
-                    'authorized' => true,
-                    'authorized_by' => $authorizedBy,
-                    'authorized_date' => date('Y-m-d'),
-                    'created_by' => $scheduling->created_by,
-                ]);
-
-                if (!$paymentsTable->save($payment)) {
-                    $errors[] = "No se pudo crear pago para factura ID {$item->invoice_id}";
-                    continue;
-                }
-
-                $appliedInvoiceIds[] = $item->invoice_id;
+            if (!$paymentsTable->save($payment)) {
+                return [
+                    'errors' => ["No se pudo crear pago para factura ID {$item->invoice_id}"],
+                    'advanced' => [],
+                    'partial' => [],
+                ];
             }
 
-            if (!empty($errors)) {
-                return ['success' => false, 'errors' => $errors, 'advanced_to_pagada' => [], 'partial_payment' => []];
+            $appliedInvoiceIds[] = $item->invoice_id;
+        }
+
+        $advanced = [];
+        $partial = [];
+        foreach (array_unique($appliedInvoiceIds) as $invoiceId) {
+            $this->paymentService->recalculatePaymentStatus($invoiceId);
+
+            $invoice = $invoicesTable->get($invoiceId);
+            if ($invoice->payment_status === InvoiceConstants::PAYMENT_FULL) {
+                $invoice->pipeline_status = InvoiceConstants::STATUS_VERIFICACION_PAGO;
+                $invoicesTable->save($invoice);
+                $advanced[] = $invoiceId;
+            } else {
+                $partial[] = $invoiceId;
             }
+        }
 
-            $advanced = [];
-            $partial = [];
-            foreach (array_unique($appliedInvoiceIds) as $invoiceId) {
-                $this->paymentService->recalculatePaymentStatus($invoiceId);
-
-                $invoice = $invoicesTable->get($invoiceId);
-                if ($invoice->payment_status === InvoiceConstants::PAYMENT_FULL) {
-                    $invoice->pipeline_status = InvoiceConstants::STATUS_VERIFICACION_PAGO;
-                    $invoicesTable->save($invoice);
-                    $advanced[] = $invoiceId;
-                } else {
-                    $partial[] = $invoiceId;
-                }
-            }
-
-            return [
-                'success' => true,
-                'errors' => [],
-                'advanced_to_pagada' => $advanced,
-                'partial_payment' => $partial,
-            ];
-        });
+        return ['errors' => [], 'advanced' => $advanced, 'partial' => $partial];
     }
 
     /**

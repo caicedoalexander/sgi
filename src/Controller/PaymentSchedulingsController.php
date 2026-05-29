@@ -220,64 +220,30 @@ class PaymentSchedulingsController extends AppController
 
         $user = $this->_getCurrentUser();
 
-        $advanceDenial = $this->schedulingService->denialReasonForAdvance($record, (int)$user->role_id);
-        if ($advanceDenial !== null) {
-            $this->Flash->error($advanceDenial->message());
+        $result = $this->schedulingService->advance($record, (int)$user->role_id, (int)$user->id);
 
-            return $this->redirect(['action' => 'edit', $id]);
-        }
-
-        $errors = $this->schedulingService->validateTransitionRequirements($record, $record->pipeline_status);
-        if (!empty($errors)) {
-            foreach ($errors as $err) {
+        if (!$result->success) {
+            foreach ($result->errors as $err) {
                 $this->Flash->error($err);
             }
 
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $nextStatus = $this->schedulingService->getNextStatus($record->pipeline_status);
-
-        // Si avanza a verificacion_pago (desde aut_pago — Contador autoriza),
-        // crear los pagos y dejar las facturas hijas en verificacion_pago.
-        if ($nextStatus === PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO) {
-            $result = $this->schedulingService->applyPayments($record->id, (int)$user->id);
-            if (!$result['success']) {
-                foreach ($result['errors'] as $err) {
-                    $this->Flash->error($err);
-                }
-
-                return $this->redirect(['action' => 'edit', $id]);
-            }
-
-            $advancedCount = count($result['advanced_to_pagada']);
-            $partialCount = count($result['partial_payment']);
-            if ($advancedCount > 0) {
-                $this->Flash->success("{$advancedCount} factura(s) en Verificación de pago.");
-            }
-            if ($partialCount > 0) {
-                $this->Flash->warning("{$partialCount} factura(s) con Pago Parcial, permanecen en Tesorería.");
-            }
+        $advancedCount = count($result->data['advanced'] ?? []);
+        $partialCount = count($result->data['partial'] ?? []);
+        if ($advancedCount > 0) {
+            $this->Flash->success("{$advancedCount} factura(s) en Verificación de pago.");
+        }
+        if ($partialCount > 0) {
+            $this->Flash->warning("{$partialCount} factura(s) con Pago Parcial, permanecen en Tesorería.");
         }
 
-        $fromStatus = $record->pipeline_status;
-        $record->pipeline_status = $nextStatus;
-        if ($this->PaymentSchedulings->save($record)) {
-            $this->historyService->recordStatusChange(
-                $record->id,
-                $fromStatus,
-                $nextStatus,
-                (int)$user->id,
-            );
-            $label = PaymentSchedulingConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
-            $this->Flash->success("Programación avanzada a: {$label}");
+        $nextStatus = $result->data['nextStatus'];
+        $label = PaymentSchedulingConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
+        $this->Flash->success("Programación avanzada a: {$label}");
 
-            return $this->redirect(['action' => 'index']);
-        }
-
-        $this->Flash->error('No se pudo avanzar la programación.');
-
-        return $this->redirect(['action' => 'edit', $id]);
+        return $this->redirect(['action' => 'index']);
     }
 
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS)]
@@ -426,8 +392,9 @@ class PaymentSchedulingsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        if ($this->schedulingService->linkItems($record->id, $result['valid'])) {
-            $count = count($result['valid']);
+        $linkResult = $this->schedulingService->linkItems($record->id, $result['valid']);
+        if ($linkResult->success) {
+            $count = $linkResult->data['linked'] ?? count($result['valid']);
             $this->historyService->recordFieldChange(
                 $record->id,
                 'import',
@@ -437,7 +404,7 @@ class PaymentSchedulingsController extends AppController
             );
             $this->Flash->success("{$count} factura(s) vinculadas correctamente.");
         } else {
-            $this->Flash->error('Error al vincular las facturas.');
+            $this->Flash->error($linkResult->firstError() ?? 'Error al vincular las facturas.');
         }
 
         $this->request->getSession()->delete("import_preview_{$id}");

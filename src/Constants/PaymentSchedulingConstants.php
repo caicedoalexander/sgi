@@ -33,26 +33,13 @@ final class PaymentSchedulingConstants
     // Code prefix
     public const CODE_PREFIX = 'PRO';
 
-    // Backward transitions for the regress operation.
-    // Excluida `pagada` por irreversibilidad de invoice_payments creados.
-    public const BACKWARD_TRANSITIONS = [
-        self::STATUS_BORRADOR => null,
-        self::STATUS_TESORERIA => self::STATUS_BORRADOR,
-        self::STATUS_AUTORIZACION_PAGO => self::STATUS_TESORERIA,
-        self::STATUS_VERIFICACION_PAGO => self::STATUS_AUTORIZACION_PAGO,
-        self::STATUS_PAGADA => null,
-    ];
-
-    // Forward transitions (extracted from PaymentSchedulingPipelineService::TRANSITIONS).
-    public const FORWARD_TRANSITIONS = [
-        self::STATUS_BORRADOR => self::STATUS_TESORERIA,
-        self::STATUS_TESORERIA => self::STATUS_AUTORIZACION_PAGO,
-        self::STATUS_AUTORIZACION_PAGO => self::STATUS_VERIFICACION_PAGO,
-        self::STATUS_VERIFICACION_PAGO => self::STATUS_PAGADA,
-        self::STATUS_PAGADA => null,
-    ];
+    // El avance (next) y la regresión (previous) son responsabilidad del enum
+    // App\Constants\Domain\PaymentScheduling\PipelineStatus (next()/previous()),
+    // consumido por PaymentSchedulingService::getNextStatus/getPreviousStatus.
 
     // Target status when Contador rejects from autorizacion_pago.
+    // Espeja PipelineStatus::rejectionTarget(); se conserva como const porque las
+    // expresiones constantes no pueden invocar métodos del enum.
     public const REJECTION_TARGET = self::STATUS_TESORERIA;
 
     // Tipos de observación — definidos en ObservationConstants.
