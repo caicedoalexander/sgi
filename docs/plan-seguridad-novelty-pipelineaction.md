@@ -1,6 +1,8 @@
 # Plan — Sub-paso de seguridad: enforcement de `canOperate` en las transiciones de Novelty
 
-> Estado: **PLAN** (no ejecutado). Es un cambio **puro de código (servicio + atributos)**. **NO** toca la BD: `pipeline_permissions` la gestiona el admin vía la UI "Permisos de Pipeline" y ya está configurada (39/39 pasos). Sin seed, sin migración de datos.
+> Estado: **✅ EJECUTADO 2026-05-29** (commit `feat(seguridad): enforcement de canOperate en las transiciones de Novelty`). Cambio puro de código (servicio + atributos), sin BD. `php -l` limpio + 192/192 + revisión de seguridad adversarial (2 revisores) + revisión manual del código. **Hueco HIGH encontrado por la revisión adversarial y CERRADO**: el pre-save del header en `advanceGroup` hacía `patchEntity(getData())` crudo (mass-assignment de `pipeline_status`/`payment_status`/…); fix = gate `canOperate` + whitelist de campos editables. **Pendiente**: verificación manual por rol vía la UI de Permisos antes de producción (requiere login).
+>
+> _(Plan original abajo, conservado como referencia de diseño.)_
 >
 > _Corrección 2026-05-29: una versión previa de este plan incluía "seed / verificación de `pipeline_permissions` / mapeo rol→paso". **Eliminado** — fue un malentendido: no hay seed por defecto, todo lo configura el admin desde la UI._
 
