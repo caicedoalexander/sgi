@@ -26,7 +26,7 @@ final class TesoreriaState implements PettyCashPipelineState
 
     public function validateAdvance(PettyCashRecord $record): array
     {
-        // El avance desde Tesorería NO se hace por advanceStatus directo;
+        // El avance desde Tesorería NO se hace por advance directo;
         // requiere registrar un pago vía registerPayment. El coordinador
         // bloquea esa transición. Sin requirements de campos a este nivel.
         return [];

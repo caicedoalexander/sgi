@@ -399,7 +399,7 @@ class RefundsController extends AppController
             $user = $this->_getCurrentUser();
             $advanced = false;
             if ($record->canAdvancePipeline()) {
-                $result = $this->refundService->advanceStatus(
+                $result = $this->refundService->advance(
                     $record,
                     (int)$user->id,
                     (int)$user->role_id,
@@ -484,7 +484,7 @@ class RefundsController extends AppController
 
         $user = $this->_getCurrentUser();
 
-        $result = $this->refundService->advanceStatus(
+        $result = $this->refundService->advance(
             $record,
             (int)$user->id,
             (int)$user->role_id,

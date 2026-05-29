@@ -26,7 +26,7 @@ final class TesoreriaState implements RefundPipelineState
 
     /**
      * El avance tesoreria->aut_pago lo gestiona RefundPaymentService::registerPayment
-     * (no pasa por advanceStatus). Si alguien intenta avanzar desde el coordinator,
+     * (no pasa por advance). Si alguien intenta avanzar desde el coordinator,
      * devolvemos un mensaje claro.
      */
     public function validateAdvance(Refund $record): array

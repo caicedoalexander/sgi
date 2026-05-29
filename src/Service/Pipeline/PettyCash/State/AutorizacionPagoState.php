@@ -27,7 +27,7 @@ final class AutorizacionPagoState implements PettyCashPipelineState
     public function validateAdvance(PettyCashRecord $record): array
     {
         // El avance desde Aut. Pago se gestiona vía authorizePayment, no
-        // por advanceStatus. Sin requirements de campos a este nivel.
+        // por advance. Sin requirements de campos a este nivel.
         return [];
     }
 }

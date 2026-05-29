@@ -231,7 +231,7 @@ class PettyCashPipelineService
         $nextStatus = null;
         $advanceWarning = null;
         if (!$record->isPagada() && $this->denialReasonForAdvance($record, $roleId) === null) {
-            $advanceResult = $this->advanceStatus($record, $roleId, $userId);
+            $advanceResult = $this->advance($record, $roleId, $userId);
             if ($advanceResult->success) {
                 $advanced = true;
                 $nextStatus = $advanceResult->data['nextStatus'] ?? null;
@@ -290,7 +290,7 @@ class PettyCashPipelineService
      * @param int $userId User ID.
      * @return \App\Service\ServiceResult on success: data = ['nextStatus' => string]
      */
-    public function advanceStatus(
+    public function advance(
         PettyCashRecord $record,
         int $roleId,
         int $userId,
