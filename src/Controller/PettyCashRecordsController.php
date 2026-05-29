@@ -357,37 +357,6 @@ class PettyCashRecordsController extends AppController
     }
 
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH)]
-    public function advanceStatus($id = null)
-    {
-        $this->request->allowMethod(['post']);
-        $record = $this->PettyCashRecords->get($id);
-
-        if (!$this->_ensureExpectedStatus($record->status)) {
-            return $this->redirect(['action' => 'edit', $id]);
-        }
-
-        $user = $this->_getCurrentUser();
-
-        $result = $this->pettyCashService->advanceStatus(
-            $record,
-            (int)$user->role_id,
-            $user->id,
-        );
-
-        if ($result->success) {
-            $next = $result->data['nextStatus'] ?? '';
-            $nextLabel = PettyCashConstants::STATUS_LABELS[$next] ?? $next;
-            $this->Flash->success(sprintf('Registro avanzado a: %s', $nextLabel));
-
-            return $this->redirect(['action' => 'index']);
-        }
-
-        $this->Flash->error($result->firstError() ?? 'No se pudo avanzar el registro.');
-
-        return $this->redirect(['action' => 'edit', $id]);
-    }
-
-    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH)]
     public function regressStatus($id = null)
     {
         $this->request->allowMethod(['post']);

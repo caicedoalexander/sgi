@@ -86,13 +86,6 @@ return function (RouteBuilder $routes): void {
             ['controller' => 'Invoices', 'action' => 'overdue'],
         );
 
-        // Invoice pipeline advance action
-        $builder->connect(
-            '/invoices/advance-status/{id}',
-            ['controller' => 'Invoices', 'action' => 'advanceStatus'],
-            ['id' => '\d+', 'pass' => ['id']],
-        );
-
         // Invoice pipeline regress action
         $builder->connect(
             '/invoices/regress-status/{id}',
@@ -316,11 +309,6 @@ return function (RouteBuilder $routes): void {
         );
 
         // Petty Cash Records (Caja Menor)
-        $builder->connect(
-            '/petty-cash-records/advance-status/{id}',
-            ['controller' => 'PettyCashRecords', 'action' => 'advanceStatus'],
-            ['id' => '\d+', 'pass' => ['id']],
-        );
         $builder->connect(
             '/petty-cash-records/regress-status/{id}',
             ['controller' => 'PettyCashRecords', 'action' => 'regressStatus'],

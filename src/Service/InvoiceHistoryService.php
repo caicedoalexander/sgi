@@ -41,6 +41,12 @@ class InvoiceHistoryService implements HistoryServiceInterface
         'approver_response'           => 'Respuesta de Aprobador',
         'regression_reason' => 'Motivo de Regresión',
         'payment_edit_reason' => 'Motivo de Edición de Pago',
+        // Cambios de pagos individuales (field_changed = 'payment.*' en InvoicePaymentService)
+        'payment.status'            => 'Estado del Pago',
+        'payment.rejection_reason'  => 'Motivo de Rechazo del Pago',
+        'payment.amount'            => 'Monto del Pago',
+        'payment.payment_date'      => 'Fecha del Pago',
+        'payment.banking_entity_id' => 'Entidad Bancaria del Pago',
     ];
 
     public function recordChanges(Invoice $original, Invoice $modified, int $userId): void

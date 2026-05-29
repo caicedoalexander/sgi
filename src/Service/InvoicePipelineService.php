@@ -311,42 +311,6 @@ class InvoicePipelineService
     }
 
     /**
-     * Standalone advance (without field edits). Used by the legacy advanceStatus route.
-     *
-     * @return \App\Service\ServiceResult on success: data = ['nextStatus' => string]
-     */
-    public function advance(Invoice $invoice, int $roleId, int $userId): ServiceResult
-    {
-        $currentStatus = $invoice->pipeline_status;
-
-        $denial = $this->denialReasonForAdvance($invoice, $roleId);
-        if ($denial !== null) {
-            return ServiceResult::fail([$denial->message()]);
-        }
-
-        $errors = $this->validateTransitionRequirements($invoice, $currentStatus);
-        if (!empty($errors)) {
-            return ServiceResult::fail($errors);
-        }
-
-        $nextStatus = $this->getNextStatus($currentStatus, $invoice->document_type);
-        if (!$nextStatus) {
-            return ServiceResult::fail(['Esta factura ya está en el estado final.']);
-        }
-
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        $invoice->pipeline_status = $nextStatus;
-
-        if (!$invoicesTable->save($invoice)) {
-            return ServiceResult::fail(['No se pudo avanzar el estado.']);
-        }
-
-        $this->historyService->recordStatusChange($invoice->id, $currentStatus, $nextStatus, $userId);
-
-        return ServiceResult::ok(['nextStatus' => $nextStatus]);
-    }
-
-    /**
      * Regress the invoice to its previous pipeline status (cold regression).
      *
      * @return \App\Service\ServiceResult on success: data = ['previousStatus' => string]

@@ -429,40 +429,6 @@ class InvoicesController extends AppController
     }
 
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES)]
-    public function advanceStatus($id = null)
-    {
-        $this->request->allowMethod(['post']);
-        $invoice = $this->Invoices->get($id);
-
-        if (!$this->_ensureExpectedStatus($invoice->pipeline_status)) {
-            return $this->_redirectForInvoice($invoice, 'edit', $id);
-        }
-
-        $lockMessage = $this->pipeline->getEditLockMessage($invoice);
-        if ($lockMessage !== null) {
-            $this->Flash->error($lockMessage);
-
-            return $this->_redirectForInvoice($invoice, 'view', $id);
-        }
-
-        $user = $this->_getCurrentUser();
-
-        $result = $this->pipeline->advance($invoice, (int)$user->role_id, $user->id);
-
-        if ($result->success) {
-            $nextStatus = $result->data['nextStatus'] ?? null;
-            $nextLabel = InvoiceConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus;
-            $this->Flash->success(sprintf('Factura avanzada a: %s', $nextLabel));
-
-            return $this->_redirectForInvoice($invoice, 'index');
-        }
-
-        $this->Flash->error($result->firstError() ?? 'No se pudo avanzar la factura.');
-
-        return $this->_redirectForInvoice($invoice, 'edit', $id);
-    }
-
-    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES)]
     public function regressStatus($id = null)
     {
         $this->request->allowMethod(['post']);
