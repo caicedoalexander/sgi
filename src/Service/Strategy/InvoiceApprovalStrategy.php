@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Strategy;
 
+use App\Constants\ApprovalConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\RoleConstants;
 use App\Service\InvoiceHistoryService;
@@ -45,7 +46,7 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
         $userId = $createdBy ?? 0;
         $parsedDate = !empty($approvalDate) ? new DateTime($approvalDate) : new DateTime();
 
-        if ($action === 'approve') {
+        if ($action === ApprovalConstants::ACTION_APPROVE) {
             $result = $this->pipeline->saveAndAdvance(
                 $invoice,
                 [
@@ -64,7 +65,7 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
             return $result->success;
         }
 
-        if ($action === 'reject') {
+        if ($action === ApprovalConstants::ACTION_REJECT) {
             $invoice->area_approval = InvoiceConstants::APPROVAL_REJECTED;
             $invoice->area_approval_date = $parsedDate;
 

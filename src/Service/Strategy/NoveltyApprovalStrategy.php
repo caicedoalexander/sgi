@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Strategy;
 
+use App\Constants\ApprovalConstants;
 use App\Constants\NoveltyConstants;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
@@ -42,12 +43,12 @@ class NoveltyApprovalStrategy implements ApprovalStrategyInterface
         $table = TableRegistry::getTableLocator()->get('EmployeeNovelties');
         $novelty = $table->get($entityId);
 
-        if ($action === 'approve') {
+        if ($action === ApprovalConstants::ACTION_APPROVE) {
             $novelty->pipeline_status = NoveltyConstants::STATUS_RRHH;
             $novelty->area_approval = NoveltyConstants::APPROVAL_APPROVED;
             $novelty->approved_by = $novelty->approver_id;
             $novelty->approved_at = new DateTime();
-        } elseif ($action === 'reject') {
+        } elseif ($action === ApprovalConstants::ACTION_REJECT) {
             $novelty->area_approval = NoveltyConstants::APPROVAL_REJECTED;
             $novelty->approved_by = $novelty->approver_id;
             $novelty->approved_at = new DateTime();
@@ -57,7 +58,7 @@ class NoveltyApprovalStrategy implements ApprovalStrategyInterface
 
         if ($saved) {
             $actorUserId = (int)($novelty->approver_id ?? $createdBy ?? 0);
-            if ($action === 'approve') {
+            if ($action === ApprovalConstants::ACTION_APPROVE) {
                 $this->historyService->recordStatusChange(
                     $entityId,
                     NoveltyConstants::STATUS_APROBACION,
@@ -71,7 +72,7 @@ class NoveltyApprovalStrategy implements ApprovalStrategyInterface
                     NoveltyConstants::APPROVAL_APPROVED,
                     $actorUserId,
                 );
-            } elseif ($action === 'reject') {
+            } elseif ($action === ApprovalConstants::ACTION_REJECT) {
                 $this->historyService->recordFieldChange(
                     $entityId,
                     'approver_response',

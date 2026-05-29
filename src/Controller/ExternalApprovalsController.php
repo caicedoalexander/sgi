@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\NoAuthGate;
+use App\Constants\ApprovalConstants;
 use App\Constants\InvoiceConstants;
 use App\Service\ApprovalTokenService;
 use App\Service\InvoiceApprovalService;
@@ -110,7 +111,7 @@ class ExternalApprovalsController extends AppController
         $this->viewBuilder()->setLayout('external');
 
         $action = $this->request->getData('action');
-        if (!in_array($action, ['approve', 'reject'], true)) {
+        if (!in_array($action, ApprovalConstants::ACTIONS, true)) {
             $this->Flash->error('Acción no válida.');
 
             return $this->redirect(['action' => 'review', $token]);

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Constants\ApprovalConstants;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
 use App\Model\Entity\InvoiceApproval;
@@ -232,7 +233,7 @@ class InvoiceApprovalService
                 return ServiceResult::fail(['Token inválido o expirado']);
             }
 
-            $newStatus = $action === 'approve'
+            $newStatus = $action === ApprovalConstants::ACTION_APPROVE
                 ? InvoiceConstants::APPROVER_STATUS_APPROVED
                 : InvoiceConstants::APPROVER_STATUS_REJECTED;
 
@@ -250,7 +251,7 @@ class InvoiceApprovalService
             $invoiceId = $approval->invoice_id;
 
             // Registrar respuesta individual en el historial (una entrada por aprobador)
-            $responseLabel = $action === 'approve'
+            $responseLabel = $action === ApprovalConstants::ACTION_APPROVE
                 ? InvoiceConstants::APPROVER_STATUS_APPROVED
                 : InvoiceConstants::APPROVER_STATUS_REJECTED;
             $this->historyService->recordFieldChange(
@@ -261,7 +262,7 @@ class InvoiceApprovalService
                 (int)$approval->user_id,
             );
 
-            if ($action === 'reject') {
+            if ($action === ApprovalConstants::ACTION_REJECT) {
                 $this->_invalidatePendingTokens($invoiceId, $approval->id);
 
                 $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
