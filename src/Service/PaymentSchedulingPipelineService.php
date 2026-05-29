@@ -321,6 +321,44 @@ class PaymentSchedulingPipelineService
     }
 
     /**
+     * Rechazo del Contador: devuelve la programación a Tesorería para corrección.
+     *
+     * Transición atómica (estado + auditoría) en una sola transacción. La
+     * autorización (canReject) la gatea el controller vía la ActionPolicy,
+     * igual que confirmPayment.
+     */
+    public function reject(PaymentScheduling $scheduling, int $userId): ServiceResult
+    {
+        $fromStatus = $scheduling->pipeline_status;
+        $toStatus = PaymentSchedulingConstants::REJECTION_TARGET;
+        $schedulingsTable = TableRegistry::getTableLocator()->get('PaymentSchedulings');
+
+        $ok = $schedulingsTable->getConnection()->transactional(
+            function () use ($schedulingsTable, $scheduling, $fromStatus, $toStatus, $userId): bool {
+                $scheduling->pipeline_status = $toStatus;
+                if (!$schedulingsTable->save($scheduling)) {
+                    return false;
+                }
+
+                $this->schedulingHistory->recordStatusChange(
+                    $scheduling->id,
+                    $fromStatus,
+                    $toStatus,
+                    $userId,
+                );
+
+                return true;
+            },
+        );
+
+        if (!$ok) {
+            return ServiceResult::fail(['No se pudo rechazar la programación.']);
+        }
+
+        return ServiceResult::ok(['fromStatus' => $fromStatus, 'toStatus' => $toStatus]);
+    }
+
+    /**
      * Vincula items validados a una programación, all-or-nothing.
      *
      * @param array<int, array{invoice_id: int, banking_entity_id: int, amount: mixed}> $validItems

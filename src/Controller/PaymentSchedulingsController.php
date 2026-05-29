@@ -260,18 +260,12 @@ class PaymentSchedulingsController extends AppController
             return $this->redirect(['action' => 'edit', $id]);
         }
 
-        $fromStatus = $record->pipeline_status;
-        $record->pipeline_status = PaymentSchedulingConstants::REJECTION_TARGET;
-        if ($this->PaymentSchedulings->save($record)) {
-            $this->historyService->recordStatusChange(
-                $record->id,
-                $fromStatus,
-                PaymentSchedulingConstants::REJECTION_TARGET,
-                (int)$user->id,
-            );
+        $result = $this->schedulingService->reject($record, (int)$user->id);
+
+        if ($result->success) {
             $this->Flash->warning('Programación devuelta a Tesorería para corrección.');
         } else {
-            $this->Flash->error('No se pudo rechazar la programación.');
+            $this->Flash->error($result->firstError() ?? 'No se pudo rechazar la programación.');
         }
 
         return $this->redirect(['action' => 'edit', $id]);
