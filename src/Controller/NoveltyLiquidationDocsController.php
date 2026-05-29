@@ -282,14 +282,20 @@ class NoveltyLiquidationDocsController extends AppController
         $doc = $this->NoveltyLiquidationDocs->get($id);
         $user = $this->Authentication->getIdentity()->getOriginalData();
 
-        // Save editable fields for current stage before advancing
+        // Guardar campos editables del header SOLO si el rol puede operar el paso
+        // actual (canOperate), y con whitelist explícita: pipeline_status /
+        // payment_status / payment_date / created_by los controla el pipeline y el
+        // flujo de pago — NO deben mass-assignarse desde el formulario (SU-sec).
         $data = $this->request->getData();
-        if (!empty($data)) {
-            $doc = $this->NoveltyLiquidationDocs->patchEntity($doc, $data);
+        $canOperateStep = $this->pipelineService->denialReasonForAdvanceGroup($doc, (int)$user->role_id) === null;
+        if ($canOperateStep && !empty($data)) {
+            $doc = $this->NoveltyLiquidationDocs->patchEntity($doc, $data, [
+                'fields' => ['liquidation_number', 'period', 'document_date', 'performed_by', 'passes_for_payment'],
+            ]);
             $this->NoveltyLiquidationDocs->save($doc);
         }
 
-        $result = $this->pipelineService->advanceGroup($doc, $user->id);
+        $result = $this->pipelineService->advanceGroup($doc, (int)$user->role_id, (int)$user->id);
 
         if ($result->success) {
             $nextStatus = $result->data['nextStatus'] ?? null;

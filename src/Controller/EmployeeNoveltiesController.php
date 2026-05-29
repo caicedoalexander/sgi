@@ -839,22 +839,28 @@ class EmployeeNoveltiesController extends AppController
 
         $user = $this->Authentication->getIdentity()->getOriginalData();
 
-        // Save editable fields for current stage before advancing
-        $data = $this->request->getData();
-        $original = clone $novelty;
-        if (!empty($data)) {
-            $novelty = $this->EmployeeNovelties->patchEntity($novelty, $data);
-            $this->EmployeeNovelties->save($novelty);
-            $this->historyService->recordChanges($original, $novelty, $user->id);
-        }
-
-        // El cambio de estado y su registro en el historial se hacen dentro de la
-        // transacción de NoveltyPipelineService::advance() (simetría con advanceGroup).
-        $result = $this->pipelineService->advance($novelty, $user->id);
+        // El guardado de campos del paso (filtrado por canOperate), el avance y su
+        // registro en el historial se hacen dentro de la transacción de
+        // NoveltyPipelineService::saveAndAdvance().
+        $result = $this->pipelineService->saveAndAdvance(
+            $novelty,
+            $this->request->getData(),
+            (int)$user->role_id,
+            (int)$user->id,
+        );
 
         if ($result->success) {
-            $nextStatus = $result->data['nextStatus'] ?? null;
-            $this->Flash->success('Novedad avanzada a: ' . (NoveltyConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus));
+            if ((bool)($result->data['advanced'] ?? false)) {
+                $nextStatus = $result->data['nextStatus'] ?? null;
+                $this->Flash->success(
+                    'Novedad avanzada a: ' . (NoveltyConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus),
+                );
+            } else {
+                $this->Flash->success('La novedad ha sido actualizada.');
+                foreach ($result->data['advanceErrors'] ?? [] as $err) {
+                    $this->Flash->warning($err);
+                }
+            }
         } else {
             $this->Flash->error($result->firstError() ?? 'No se pudo avanzar la novedad.');
         }
@@ -866,7 +872,7 @@ class EmployeeNoveltiesController extends AppController
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null
      */
-    #[Permission(action: 'edit')]
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_NOVELTIES)]
     public function reject(?string $id = null)
     {
         $this->request->allowMethod(['post']);
@@ -875,7 +881,7 @@ class EmployeeNoveltiesController extends AppController
         $originalStatus = $novelty->pipeline_status;
 
         $observations = $this->request->getData('observations');
-        $result = $this->pipelineService->reject($novelty, $user->id, $observations);
+        $result = $this->pipelineService->reject($novelty, (int)$user->role_id, (int)$user->id, $observations);
 
         if ($result->success) {
             $this->historyService->recordStatusChange(

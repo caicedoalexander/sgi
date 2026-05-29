@@ -113,12 +113,18 @@ class NoveltyPipelineService
     }
 
     /**
-     * Advance a single novelty individually.
-     * Blocked if novelty has a liquidation_doc_id.
+     * Save editable fields for the current step, optionally advance the pipeline,
+     * and record history — all in a single transaction (espejo de
+     * InvoicePipelineService::saveAndAdvance).
      *
-     * @return \App\Service\ServiceResult on success: data = ['nextStatus' => string]
+     * Blocked if novelty has a liquidation_doc_id (debe avanzar desde el grupo).
+     * El avance solo ocurre si el rol puede operar el paso actual
+     * (denialReasonForAdvance === null) y se cumplen los requisitos de transición;
+     * de lo contrario guarda igual y devuelve warnings (no error).
+     *
+     * @return \App\Service\ServiceResult on success: data = ['advanced' => bool, 'nextStatus' => ?string, 'advanceErrors' => string[]]
      */
-    public function advance(EmployeeNovelty $novelty, int $userId): ServiceResult
+    public function saveAndAdvance(EmployeeNovelty $novelty, array $data, int $roleId, int $userId): ServiceResult
     {
         if ($novelty->isGrouped()) {
             return ServiceResult::fail([
@@ -130,45 +136,87 @@ class NoveltyPipelineService
             return ServiceResult::fail(['La novedad fue rechazada. El flujo ha terminado.']);
         }
 
-        $errors = $this->validateTransitionRequirements($novelty, $novelty->pipeline_status);
-        if (!empty($errors)) {
-            return ServiceResult::fail($errors);
+        $currentStatus = (string)$novelty->pipeline_status;
+        $filteredData = $this->filterEntityData($data, $roleId, $currentStatus);
+
+        $canAdvance = $this->denialReasonForAdvance($novelty, $roleId) === null;
+
+        $advanceNextStatus = null;
+        $postAdvanceErrors = [];
+        if ($canAdvance) {
+            $postAdvanceErrors = $this->validateTransitionRequirements($novelty, $currentStatus);
+            if (empty($postAdvanceErrors)) {
+                $advanceNextStatus = $this->getNextStatus($novelty);
+            }
         }
 
-        $nextStatus = $this->getNextStatus($novelty);
-        if (!$nextStatus) {
-            return ServiceResult::fail(['Esta novedad ya está en el estado final.']);
-        }
-
-        $fromStatus = (string)$novelty->pipeline_status;
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
+        $original = clone $novelty;
 
-        $result = $noveltiesTable->getConnection()->transactional(
-            function () use ($noveltiesTable, $novelty, $fromStatus, $nextStatus, $userId): bool {
-                $novelty->pipeline_status = $nextStatus;
+        $saved = $noveltiesTable->getConnection()->transactional(
+            function () use (
+                $noveltiesTable,
+                &$novelty,
+                $filteredData,
+                $advanceNextStatus,
+                $currentStatus,
+                $userId,
+                $original,
+            ): bool {
+                $novelty = $noveltiesTable->patchEntity($novelty, $filteredData);
                 if (!$noveltiesTable->save($novelty)) {
                     return false;
                 }
-                $this->historyService->recordStatusChange((int)$novelty->id, $fromStatus, $nextStatus, $userId);
+                $this->historyService->recordChanges($original, $novelty, $userId);
+
+                if ($advanceNextStatus) {
+                    $novelty->pipeline_status = $advanceNextStatus;
+                    if (!$noveltiesTable->save($novelty)) {
+                        return false;
+                    }
+                    $this->historyService->recordStatusChange(
+                        (int)$novelty->id,
+                        $currentStatus,
+                        $advanceNextStatus,
+                        $userId,
+                    );
+                }
 
                 return true;
             },
         );
 
-        if (!$result) {
-            return ServiceResult::fail(['No se pudo avanzar el estado.']);
+        if (!$saved) {
+            return ServiceResult::fail(['No se pudo guardar la novedad.']);
         }
 
-        return ServiceResult::ok(['nextStatus' => $nextStatus]);
+        return ServiceResult::ok([
+            'advanced' => (bool)$advanceNextStatus,
+            'nextStatus' => $advanceNextStatus,
+            'advanceErrors' => $postAdvanceErrors,
+        ]);
     }
 
     /**
      * Advance all novelties in a liquidation document group.
      *
+     * El avance se autoriza con `canOperate(rol, PIPELINE_LIQUIDATION_DOCS, paso)`
+     * vía `denialReasonForAdvanceGroup`. A diferencia de la transición individual
+     * (`saveAndAdvance`), el grupo NO aplica `filterEntityData`: no existe una
+     * política de campos del header por paso para el documento de liquidación, así
+     * que el guardado de campos del header se conserva en el controller
+     * (`NoveltyLiquidationDocsController::advanceGroup`). Excepción análoga a
+     * PaymentScheduling (no edita campos del header por paso).
+     *
      * @return \App\Service\ServiceResult on success: data = ['nextStatus' => string]
      */
-    public function advanceGroup(object $liquidationDoc, int $userId): ServiceResult
+    public function advanceGroup(object $liquidationDoc, int $roleId, int $userId): ServiceResult
     {
+        $denial = $this->denialReasonForAdvanceGroup($liquidationDoc, $roleId);
+        if ($denial !== null) {
+            return ServiceResult::fail([$denial->message()]);
+        }
+
         $errors = $this->validateGroupTransition($liquidationDoc);
         if (!empty($errors)) {
             return ServiceResult::fail($errors);
@@ -233,11 +281,23 @@ class NoveltyPipelineService
 
     /**
      * Reject a novelty (from any stage).
+     *
+     * Solo puede rechazar quien puede operar el paso actual
+     * (`denialReasonForReject` → `canOperate(rol, PIPELINE_NOVELTIES, paso)`).
      */
-    public function reject(EmployeeNovelty $novelty, int $userId, ?string $observations = null): ServiceResult
-    {
+    public function reject(
+        EmployeeNovelty $novelty,
+        int $roleId,
+        int $userId,
+        ?string $observations = null,
+    ): ServiceResult {
         if ($novelty->isRejected()) {
             return ServiceResult::fail(['La novedad ya está rechazada.']);
+        }
+
+        $denial = $this->denialReasonForReject($novelty, $roleId);
+        if ($denial !== null) {
+            return ServiceResult::fail([$denial->message()]);
         }
 
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
@@ -474,6 +534,59 @@ class NoveltyPipelineService
                 new UserContext($roleId),
                 PipelineStepConstants::PIPELINE_NOVELTIES,
                 (string)$novelty->pipeline_status,
+            )
+        ) {
+            return DenialReason::UNAUTHORIZED;
+        }
+
+        return null;
+    }
+
+    /**
+     * Retorna el motivo por el que la novedad no puede ser rechazada, o null si puede.
+     *
+     * Decisión §5.1: quien puede operar el paso actual puede rechazar desde él.
+     */
+    public function denialReasonForReject(EmployeeNovelty $novelty, int $roleId): ?DenialReason
+    {
+        if ($novelty->isRejected()) {
+            return DenialReason::TERMINAL_STATE;
+        }
+
+        $statusEnum = NoveltyPipelineStatus::tryFrom((string)$novelty->pipeline_status);
+        if ($statusEnum === null || $statusEnum->isTerminal()) {
+            return DenialReason::TERMINAL_STATE;
+        }
+
+        if (
+            !$this->auth->canOperate(
+                new UserContext($roleId),
+                PipelineStepConstants::PIPELINE_NOVELTIES,
+                (string)$novelty->pipeline_status,
+            )
+        ) {
+            return DenialReason::UNAUTHORIZED;
+        }
+
+        return null;
+    }
+
+    /**
+     * Retorna el motivo por el que el documento de liquidación no puede avanzar,
+     * o null si puede. Opera sobre PIPELINE_LIQUIDATION_DOCS.
+     */
+    public function denialReasonForAdvanceGroup(object $liquidationDoc, int $roleId): ?DenialReason
+    {
+        $statusEnum = NoveltyPipelineStatus::tryFrom((string)$liquidationDoc->pipeline_status);
+        if ($statusEnum === null || $statusEnum->isTerminal()) {
+            return DenialReason::TERMINAL_STATE;
+        }
+
+        if (
+            !$this->auth->canOperate(
+                new UserContext($roleId),
+                PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS,
+                (string)$liquidationDoc->pipeline_status,
             )
         ) {
             return DenialReason::UNAUTHORIZED;
