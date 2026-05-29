@@ -462,48 +462,35 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
 <?= $this->element('email_log_panel', ['emailLogs' => $emailLogs ?? []]) ?>
 
 <!-- Soportes -->
-<div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
-    <div class="sgi-section-head" style="margin-bottom:12px;">
-        <span class="sgi-label d-inline-flex align-items-center gap-2">
-            <i class="bi bi-paperclip" aria-hidden="true"></i>
-            Soportes
-            <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
-        </span>
-        <?php if ($showUploadSection): ?>
-        <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
-            <i class="bi bi-upload" aria-hidden="true"></i>Subir
-        </button>
-        <?php endif; ?>
-    </div>
-
-    <div id="docs-empty-state" style="padding:2rem 1rem;text-align:center;color:var(--text-disabled);<?= !empty($documentsByStatus) ? 'display:none;' : '' ?>">
-        <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:1.5rem;" aria-hidden="true"></i>
-        <span style="font-size:.8rem;">Sin soportes adjuntos</span>
-    </div>
-    <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-        <?php
-        $multipleStatuses = count($documentsByStatus) > 1;
-        foreach ($documentsByStatus as $status => $docs):
-        ?>
-        <?php if ($multipleStatuses): ?>
-        <div style="padding:.3rem .875rem;background:var(--bg-subtle);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:.4rem;">
-            <span class="pill <?= $badgeColors[$status] ?? 'pill-muted' ?>" style="font-size:var(--fs-micro);"><?= $statusLabels[$status] ?? $status ?></span>
-            <span style="font-size:var(--fs-label);color:var(--text-disabled);"><?= count($docs) ?> archivo<?= count($docs) !== 1 ? 's' : '' ?></span>
-        </div>
-        <?php endif; ?>
-        <?php foreach ($docs as $doc): ?>
-            <?= $this->element('document_row', [
-                'doc'          => $doc,
-                'canDelete'    => $showUploadSection && $doc->pipeline_status === $currentStatus,
-                'deleteUrl'    => $this->Url->build(['controller' => 'NoveltyDocuments', 'action' => 'delete', $novelty->id, $doc->id]),
-                'showBadge'    => !$multipleStatuses,
-                'badgeColors'  => $badgeColors,
-                'statusLabels' => $statusLabels,
-            ]) ?>
-        <?php endforeach; ?>
-        <?php endforeach; ?>
-    </div>
-</div>
+<?php
+$multipleStatuses = count($documentsByStatus) > 1;
+$noveltyDocGroups = [];
+foreach ($documentsByStatus as $status => $statusDocs) {
+    $rows = [];
+    foreach ($statusDocs as $doc) {
+        $rows[] = [
+            'doc'          => $doc,
+            'canDelete'    => $showUploadSection && $doc->pipeline_status === $currentStatus,
+            'deleteUrl'    => $this->Url->build(['controller' => 'NoveltyDocuments', 'action' => 'delete', $novelty->id, $doc->id]),
+            'showBadge'    => !$multipleStatuses,
+            'badgeColors'  => $badgeColors,
+            'statusLabels' => $statusLabels,
+        ];
+    }
+    $noveltyDocGroups[] = [
+        'label'    => $multipleStatuses ? ($statusLabels[$status] ?? $status) : null,
+        'pillKind' => $multipleStatuses ? ($badgeColors[$status] ?? 'pill-muted') : null,
+        'rows'     => $rows,
+    ];
+}
+?>
+<?= $this->element('documents_section', [
+    'groups'        => $noveltyDocGroups,
+    'totalDocs'     => $totalDocs,
+    'canUpload'     => $showUploadSection,
+    'uploadModalId' => 'uploadDocModal',
+    'emptyTitle'    => 'Sin soportes adjuntos',
+]) ?>
 
     </main>
 </div><!-- /sgi-invoice-view-grid -->

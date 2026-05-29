@@ -409,36 +409,26 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
         ]) ?>
 
         <!-- Soportes -->
-        <?php $docs = $record->refund_documents ?? []; ?>
-        <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
-                    <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    Soportes
-                    <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
-                </span>
-                <?php if (!$record->isPagada()): ?>
-                <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#uploadRefundDocModal">
-                    <i class="bi bi-upload" aria-hidden="true"></i>Subir
-                </button>
-                <?php endif; ?>
-            </div>
-
-            <div id="docs-empty-state" class="sgi-dropzone-empty" <?= !empty($docs) ? 'style="display:none;"' : '' ?>>
-                <i class="bi bi-paperclip" aria-hidden="true"></i>
-                <div>Sin soportes adjuntos</div>
-            </div>
-            <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-                <?php foreach ($docs as $doc): ?>
-                    <?= $this->element('document_row', [
-                        'doc'       => $doc,
-                        'canDelete' => !$record->isPagada(),
-                        'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
-                        'showBadge' => false,
-                    ]) ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
+        <?php
+        $docs = $record->refund_documents ?? [];
+        $canUploadDocs = !$record->isPagada();
+        $refundDocRows = [];
+        foreach ($docs as $doc) {
+            $refundDocRows[] = [
+                'doc'       => $doc,
+                'canDelete' => $canUploadDocs,
+                'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
+                'showBadge' => false,
+            ];
+        }
+        ?>
+        <?= $this->element('documents_section', [
+            'groups'        => [['label' => null, 'pillKind' => null, 'rows' => $refundDocRows]],
+            'totalDocs'     => count($docs),
+            'canUpload'     => $canUploadDocs,
+            'uploadModalId' => 'uploadRefundDocModal',
+            'emptyTitle'    => 'Sin soportes adjuntos',
+        ]) ?>
 
         <!-- Sticky footer -->
         <?php if ($canSave || !empty($canRegress)): ?>

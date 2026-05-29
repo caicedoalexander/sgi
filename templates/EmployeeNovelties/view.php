@@ -138,21 +138,21 @@ $noveltyName = $novelty->custom_name ?: ($novelty->employee->full_name ?? ('Nove
                 <span class="sgi-label">Información de la Novedad</span>
             </div>
             <?php if ($novelty->employee): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Empleado</span>
-                <span class="sgi-data-value"><?= h($novelty->employee->full_name ?? '—') ?></span>
+            <div class="field-row">
+                <span class="k">Empleado</span>
+                <span class="v"><?= h($novelty->employee->full_name ?? '—') ?></span>
             </div>
             <?php elseif ($novelty->custom_name): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Nombre</span>
-                <span class="sgi-data-value"><?= h($novelty->custom_name) ?></span>
+            <div class="field-row">
+                <span class="k">Nombre</span>
+                <span class="v"><?= h($novelty->custom_name) ?></span>
             </div>
             <?php endif; ?>
 
             <?php if (!empty($novelty->novelty_massive_employees)): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Empleados (Masiva)</span>
-                <span class="sgi-data-value">
+            <div class="field-row">
+                <span class="k">Empleados (Masiva)</span>
+                <span class="v">
                     <?php foreach ($novelty->novelty_massive_employees as $me): ?>
                         <span class="pill pill-muted me-1 mb-1"><?= h($me->employee->full_name ?? '—') ?></span>
                     <?php endforeach; ?>
@@ -160,52 +160,52 @@ $noveltyName = $novelty->custom_name ?: ($novelty->employee->full_name ?? ('Nove
             </div>
             <?php endif; ?>
 
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Tipo</span>
-                <span class="sgi-data-value"><?= h($novelty->novelty_type->name ?? '—') ?></span>
+            <div class="field-row">
+                <span class="k">Tipo</span>
+                <span class="v"><?= h($novelty->novelty_type->name ?? '—') ?></span>
             </div>
             <?php if ($novelty->permission_date): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Fecha del Permiso</span>
-                <span class="sgi-data-value"><?= $novelty->permission_date->format('d/m/Y') ?></span>
+            <div class="field-row">
+                <span class="k">Fecha del Permiso</span>
+                <span class="v"><?= $novelty->permission_date->format('d/m/Y') ?></span>
             </div>
             <?php endif; ?>
             <?php if ($novelty->schedule_type): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Horario</span>
-                <span class="sgi-data-value"><?= $scheduleLabels[$novelty->schedule_type] ?? h($novelty->schedule_type) ?></span>
+            <div class="field-row">
+                <span class="k">Horario</span>
+                <span class="v"><?= $scheduleLabels[$novelty->schedule_type] ?? h($novelty->schedule_type) ?></span>
             </div>
             <?php endif; ?>
             <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_DAYS): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Fecha Inicio</span>
-                <span class="sgi-data-value"><?= $novelty->start_date?->format('d/m/Y') ?: '—' ?></span>
+            <div class="field-row">
+                <span class="k">Fecha Inicio</span>
+                <span class="v"><?= $novelty->start_date?->format('d/m/Y') ?: '—' ?></span>
             </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Fecha Fin</span>
-                <span class="sgi-data-value"><?= $novelty->end_date?->format('d/m/Y') ?: '—' ?></span>
+            <div class="field-row">
+                <span class="k">Fecha Fin</span>
+                <span class="v"><?= $novelty->end_date?->format('d/m/Y') ?: '—' ?></span>
             </div>
             <?php endif; ?>
             <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_HOURS): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Hora Salida</span>
-                <span class="sgi-data-value"><?= h($novelty->start_time) ?: '—' ?></span>
+            <div class="field-row">
+                <span class="k">Hora Salida</span>
+                <span class="v"><?= h($novelty->start_time) ?: '—' ?></span>
             </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Hora Entrada</span>
-                <span class="sgi-data-value"><?= h($novelty->end_time) ?: '—' ?></span>
+            <div class="field-row">
+                <span class="k">Hora Entrada</span>
+                <span class="v"><?= h($novelty->end_time) ?: '—' ?></span>
             </div>
             <?php endif; ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Remunerado</span>
-                <span class="sgi-data-value">
+            <div class="field-row">
+                <span class="k">Remunerado</span>
+                <span class="v">
                     <span class="pill pill-<?= $novelty->is_paid ? 'primary-soft' : 'muted' ?>"><?= $novelty->is_paid ? 'Sí' : 'No' ?></span>
                 </span>
             </div>
             <?php if ($novelty->reason): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Motivo</span>
-                <span class="sgi-data-value"><?= nl2br(h($novelty->reason)) ?></span>
+            <div class="field-row">
+                <span class="k">Motivo</span>
+                <span class="v"><?= nl2br(h($novelty->reason)) ?></span>
             </div>
             <?php endif; ?>
         </div>
@@ -214,44 +214,44 @@ $noveltyName = $novelty->custom_name ?: ($novelty->employee->full_name ?? ('Nove
             <div class="sgi-section-head" style="padding:14px 18px 0;">
                 <span class="sgi-label">Gestión</span>
             </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Registrado por</span>
-                <span class="sgi-data-value"><?= h($novelty->registered_by_user->full_name ?? '—') ?></span>
+            <div class="field-row">
+                <span class="k">Registrado por</span>
+                <span class="v"><?= h($novelty->registered_by_user->full_name ?? '—') ?></span>
             </div>
             <?php if ($novelty->rrhh_by_user): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Procesado RRHH por</span>
-                <span class="sgi-data-value"><?= h($novelty->rrhh_by_user->full_name ?? '—') ?></span>
+            <div class="field-row">
+                <span class="k">Procesado RRHH por</span>
+                <span class="v"><?= h($novelty->rrhh_by_user->full_name ?? '—') ?></span>
             </div>
             <?php endif; ?>
             <?php if ($novelty->passes_payroll !== null): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Pasa a Nómina</span>
-                <span class="sgi-data-value">
+            <div class="field-row">
+                <span class="k">Pasa a Nómina</span>
+                <span class="v">
                     <span class="pill pill-<?= $novelty->passes_payroll ? 'primary-soft' : 'muted' ?>"><?= $novelty->passes_payroll ? 'Sí' : 'No' ?></span>
                 </span>
             </div>
             <?php endif; ?>
             <?php if ($novelty->approved_by_user): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Aprobado/Rechazado por</span>
-                <span class="sgi-data-value"><?= h($novelty->approved_by_user->full_name ?? '—') ?></span>
+            <div class="field-row">
+                <span class="k">Aprobado/Rechazado por</span>
+                <span class="v"><?= h($novelty->approved_by_user->full_name ?? '—') ?></span>
             </div>
             <?php endif; ?>
             <?php if ($novelty->approved_at): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Fecha</span>
-                <span class="sgi-data-value"><?= $novelty->approved_at->format('d/m/Y H:i') ?></span>
+            <div class="field-row">
+                <span class="k">Fecha</span>
+                <span class="v"><?= $novelty->approved_at->format('d/m/Y H:i') ?></span>
             </div>
             <?php endif; ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Fecha Diligenciamiento</span>
-                <span class="sgi-data-value"><?= $novelty->filing_date?->format('d/m/Y') ?? '—' ?></span>
+            <div class="field-row">
+                <span class="k">Fecha Diligenciamiento</span>
+                <span class="v"><?= $novelty->filing_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
             <?php if ($novelty->isGrouped()): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Documento de Liquidación</span>
-                <span class="sgi-data-value">
+            <div class="field-row">
+                <span class="k">Documento de Liquidación</span>
+                <span class="v">
                     <?= $this->Html->link(
                         $novelty->novelty_liquidation_doc->liquidation_number ?? 'Ver',
                         ['controller' => 'NoveltyLiquidationDocs', 'action' => 'view', $novelty->liquidation_doc_id],
@@ -322,36 +322,54 @@ foreach ($documentsByStatus as $status => $docs) {
 
 <!-- Change History -->
 <?php if (!empty($novelty->novelty_histories)): ?>
-<div class="card" style="padding:18px 20px;">
-    <div class="sgi-section-head" style="margin-bottom:12px;">
+<?php
+$histCount = count($novelty->novelty_histories);
+$initialsOf = static function (?string $name): string {
+    if (!$name) {
+        return '?';
+    }
+    $parts = preg_split('/\s+/', trim($name)) ?: [];
+    $ini = '';
+    foreach (array_slice($parts, 0, 2) as $p) {
+        $ini .= mb_strtoupper(mb_substr($p, 0, 1));
+    }
+
+    return $ini ?: mb_strtoupper(mb_substr($name, 0, 2));
+};
+?>
+<div class="sgi-card">
+    <div class="d-flex justify-content-between align-items-center" style="margin-bottom:14px;">
         <span class="sgi-label d-inline-flex align-items-center gap-2">
             <i class="bi bi-clock-history" aria-hidden="true"></i>
             Historial de Cambios
+            <span class="sgi-folder-count"><?= $histCount ?></span>
         </span>
     </div>
-    <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Usuario</th>
-                    <th>Campo</th>
-                    <th>Valor Anterior</th>
-                    <th>Valor Nuevo</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($novelty->novelty_histories as $history): ?>
-                <tr>
-                    <td><?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?></td>
-                    <td><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
-                    <td><?= h($fieldLabels[$history->field_changed] ?? $history->field_changed) ?></td>
-                    <td class="text-muted"><?= h($history->old_value) ?: '—' ?></td>
-                    <td class="fw-semibold"><?= h($history->new_value) ?: '—' ?></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+    <div class="col-flex">
+    <?php foreach ($novelty->novelty_histories as $hi => $history):
+        $hUser = $history->hasValue('user') ? $history->user->full_name : '—';
+        $hField = $fieldLabels[$history->field_changed] ?? $history->field_changed;
+    ?>
+        <div class="d-flex align-items-center" style="gap:12px;padding:10px 0;<?= $hi === 0 ? '' : 'border-top:1px solid var(--rule);' ?>font-size:var(--fs-body-sm);">
+            <span class="mono" style="color:var(--text-muted);flex-shrink:0;min-width:110px;">
+                <?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?>
+            </span>
+            <span class="d-inline-flex align-items-center" style="gap:6px;flex-shrink:0;min-width:140px;">
+                <span class="av av-sm"><?= h($initialsOf($hUser)) ?></span>
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= h($hUser) ?></span>
+            </span>
+            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <?= h($hField) ?>
+            </span>
+            <span style="color:var(--text-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <?= $history->old_value ? h($history->old_value) : '—' ?>
+            </span>
+            <i class="bi bi-arrow-right" aria-hidden="true" style="color:var(--text-faint);font-size:11px;flex-shrink:0;"></i>
+            <span style="color:var(--primary-color);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <?= $history->new_value ? h($history->new_value) : '—' ?>
+            </span>
+        </div>
+    <?php endforeach; ?>
     </div>
 </div>
 <?php endif; ?>

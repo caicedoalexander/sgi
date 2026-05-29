@@ -110,36 +110,36 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                     <div class="sgi-section-head" style="padding:14px 18px 0;">
                         <span class="sgi-label">Información</span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Código</span>
-                        <span class="sgi-data-value mono"><?= h($record->code) ?></span>
+                    <div class="field-row">
+                        <span class="k">Código</span>
+                        <span class="v mono"><?= h($record->code) ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Estado</span>
-                        <span class="sgi-data-value">
+                    <div class="field-row">
+                        <span class="k">Estado</span>
+                        <span class="v">
                             <span class="pill <?= $rfStatusPill ?>"><?= h($rfStatusLabel) ?></span>
                         </span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Creado por</span>
-                        <span class="sgi-data-value"><?= $record->hasValue('created_by_user') ? h($record->created_by_user->full_name) : '—' ?></span>
+                    <div class="field-row">
+                        <span class="k">Creado por</span>
+                        <span class="v"><?= $record->hasValue('created_by_user') ? h($record->created_by_user->full_name) : '—' ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Fecha</span>
-                        <span class="sgi-data-value mono"><?= $record->created?->format('d/m/Y H:i') ?? '—' ?></span>
+                    <div class="field-row">
+                        <span class="k">Fecha</span>
+                        <span class="v mono"><?= $record->created?->format('d/m/Y H:i') ?? '—' ?></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="sgi-section-head" style="padding:14px 18px 0;">
                         <span class="sgi-label">Beneficiario</span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Tipo</span>
-                        <span class="sgi-data-value"><?= h($bLabel ?? '—') ?></span>
+                    <div class="field-row">
+                        <span class="k">Tipo</span>
+                        <span class="v"><?= h($bLabel ?? '—') ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Beneficiario</span>
-                        <span class="sgi-data-value"><?= h($bName ?? '—') ?></span>
+                    <div class="field-row">
+                        <span class="k">Beneficiario</span>
+                        <span class="v"><?= h($bName ?? '—') ?></span>
                     </div>
                 </div>
             </div>
@@ -190,33 +190,24 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
         </div>
 
         <!-- Soportes -->
-        <div class="card" style="padding:18px 20px;">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
-                    <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    Soportes
-                    <span class="sgi-folder-count"><?= count($docs) ?> doc<?= count($docs) !== 1 ? 's' : '' ?></span>
-                </span>
-            </div>
-
-            <?php if (empty($docs)): ?>
-            <div class="sgi-dropzone-empty">
-                <i class="bi bi-paperclip" aria-hidden="true"></i>
-                <div>Sin soportes adjuntos</div>
-            </div>
-            <?php else: ?>
-            <div style="max-height:420px;overflow-y:auto;">
-                <?php foreach ($docs as $doc): ?>
-                    <?= $this->element('document_row', [
-                        'doc'       => $doc,
-                        'canDelete' => false,
-                        'deleteUrl' => null,
-                        'showBadge' => false,
-                    ]) ?>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
-        </div>
+        <?php
+        $refundDocRows = [];
+        foreach ($docs as $doc) {
+            $refundDocRows[] = [
+                'doc'       => $doc,
+                'canDelete' => false,
+                'deleteUrl' => null,
+                'showBadge' => false,
+            ];
+        }
+        ?>
+        <?= $this->element('documents_section', [
+            'groups'        => [['label' => null, 'pillKind' => null, 'rows' => $refundDocRows]],
+            'totalDocs'     => count($docs),
+            'canUpload'     => false,
+            'uploadModalId' => null,
+            'emptyTitle'    => 'Sin soportes adjuntos',
+        ]) ?>
 
         <?= $this->element('observations/drawer', [
             'observations'    => $record->refund_observations ?? [],

@@ -98,7 +98,7 @@ $errors = $result['errors'] ?? [];
     <?= $this->Html->link(
         'Cancelar',
         ['action' => 'edit', $record->id],
-        ['class' => 'btn btn-outline-secondary']
+        ['class' => 'btn btn-ghost-card']
     ) ?>
 </div>
 <?php else: ?>

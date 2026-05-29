@@ -232,8 +232,9 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
 
         <!-- Sección: Acciones del estado -->
         <?php if ($leg->status === AdvanceConstants::STATUS_VALIDACION): ?>
-        <div class="sgi-stage-actions">
-            <div class="sgi-stage-actions-head">
+        <div class="sgi-card" style="position:relative">
+            <div class="accent-strip accent-green"></div>
+            <div class="sgi-section-head">
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>Acción del paso actual
                 </span>
@@ -248,8 +249,9 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
             </div>
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_REVISION_FIRMAS): ?>
-        <div class="sgi-stage-actions">
-            <div class="sgi-stage-actions-head">
+        <div class="sgi-card" style="position:relative">
+            <div class="accent-strip accent-green"></div>
+            <div class="sgi-section-head">
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-pen" aria-hidden="true"></i>Acción del paso actual
                 </span>
@@ -287,8 +289,9 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
             </div>
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_CONTABILIDAD): ?>
-        <div class="sgi-stage-actions">
-            <div class="sgi-stage-actions-head">
+        <div class="sgi-card" style="position:relative">
+            <div class="accent-strip accent-green"></div>
+            <div class="sgi-section-head">
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-calculator" aria-hidden="true"></i>Acción del paso actual
                 </span>
@@ -334,8 +337,9 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
             <?php endif; ?>
         </div>
         <?php elseif ($leg->status === AdvanceConstants::STATUS_TESORERIA && $leg->case_type === AdvanceConstants::CASE_FALTANTE): ?>
-        <div class="sgi-stage-actions">
-            <div class="sgi-stage-actions-head">
+        <div class="sgi-card" style="position:relative">
+            <div class="accent-strip accent-green"></div>
+            <div class="sgi-section-head">
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-bank" aria-hidden="true"></i>Acción del paso actual
                 </span>

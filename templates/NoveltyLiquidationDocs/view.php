@@ -131,44 +131,44 @@ $noveltyCount  = count($doc->employee_novelties ?? []);
                     <div class="sgi-section-head" style="padding:14px 18px 0;">
                         <span class="sgi-label">Información del Documento</span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">No. Liquidación</span>
-                        <span class="sgi-data-value mono"><?= h($doc->liquidation_number) ?></span>
+                    <div class="field-row">
+                        <span class="k">No. Liquidación</span>
+                        <span class="v mono"><?= h($doc->liquidation_number) ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Período</span>
-                        <span class="sgi-data-value"><?= h($periodLabels[$doc->period] ?? $doc->period) ?></span>
+                    <div class="field-row">
+                        <span class="k">Período</span>
+                        <span class="v"><?= h($periodLabels[$doc->period] ?? $doc->period) ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Fecha Documento</span>
-                        <span class="sgi-data-value mono"><?= $doc->document_date?->format('d/m/Y') ?: '—' ?></span>
+                    <div class="field-row">
+                        <span class="k">Fecha Documento</span>
+                        <span class="v mono"><?= $doc->document_date?->format('d/m/Y') ?: '—' ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Elaborado por</span>
-                        <span class="sgi-data-value"><?= h($doc->performed_by_user->full_name ?? '—') ?></span>
+                    <div class="field-row">
+                        <span class="k">Elaborado por</span>
+                        <span class="v"><?= h($doc->performed_by_user->full_name ?? '—') ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Creado por</span>
-                        <span class="sgi-data-value"><?= h($doc->created_by_user->full_name ?? '—') ?></span>
+                    <div class="field-row">
+                        <span class="k">Creado por</span>
+                        <span class="v"><?= h($doc->created_by_user->full_name ?? '—') ?></span>
                     </div>
                     <?php if ($doc->passes_for_payment !== null): ?>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Pasa para Pago</span>
-                        <span class="sgi-data-value">
+                    <div class="field-row">
+                        <span class="k">Pasa para Pago</span>
+                        <span class="v">
                             <span class="pill pill-<?= $doc->passes_for_payment ? 'primary-soft' : 'muted' ?>"><?= $doc->passes_for_payment ? 'Sí' : 'No' ?></span>
                         </span>
                     </div>
                     <?php endif; ?>
                     <?php if ($doc->payment_status): ?>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Estado de Pago</span>
-                        <span class="sgi-data-value"><?= h($paymentLabels[$doc->payment_status] ?? $doc->payment_status) ?></span>
+                    <div class="field-row">
+                        <span class="k">Estado de Pago</span>
+                        <span class="v"><?= h($paymentLabels[$doc->payment_status] ?? $doc->payment_status) ?></span>
                     </div>
                     <?php endif; ?>
                     <?php if ($doc->payment_date): ?>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Fecha de Pago</span>
-                        <span class="sgi-data-value mono"><?= $doc->payment_date->format('d/m/Y') ?></span>
+                    <div class="field-row">
+                        <span class="k">Fecha de Pago</span>
+                        <span class="v mono"><?= $doc->payment_date->format('d/m/Y') ?></span>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -371,46 +371,63 @@ $noveltyCount  = count($doc->employee_novelties ?? []);
 
         <!-- Historial de Cambios del Grupo -->
         <?php if (!empty($groupHistories)): ?>
-        <div class="card" style="padding:18px 20px;">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
+        <?php
+        $histCount = count($groupHistories);
+        $initialsOf = static function (?string $name): string {
+            if (!$name) {
+                return '?';
+            }
+            $parts = preg_split('/\s+/', trim($name)) ?: [];
+            $ini = '';
+            foreach (array_slice($parts, 0, 2) as $p) {
+                $ini .= mb_strtoupper(mb_substr($p, 0, 1));
+            }
+
+            return $ini ?: mb_strtoupper(mb_substr($name, 0, 2));
+        };
+        ?>
+        <div class="sgi-card">
+            <div class="d-flex justify-content-between align-items-center" style="margin-bottom:14px;">
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-clock-history" aria-hidden="true"></i>
                     Historial de Cambios del Grupo
+                    <span class="sgi-folder-count"><?= $histCount ?></span>
                 </span>
             </div>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Novedad</th>
-                            <th>Usuario</th>
-                            <th>Campo</th>
-                            <th>Valor Anterior</th>
-                            <th>Valor Nuevo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($groupHistories as $history): ?>
-                        <tr>
-                            <td class="mono"><?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?></td>
-                            <td style="font-size:var(--fs-body-lg);">
-                                <?php if ($history->has('employee_novelty')): ?>
-                                    <?= $this->Html->link(
-                                        '#' . $history->employee_novelty->id,
-                                        ['controller' => 'EmployeeNovelties', 'action' => 'view', $history->employee_novelty->id],
-                                        ['class' => 'mono']
-                                    ) ?>
-                                <?php endif; ?>
-                            </td>
-                            <td><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
-                            <td><?= h($fieldLabels[$history->field_changed] ?? $history->field_changed) ?></td>
-                            <td class="sgi-fg-muted"><?= h($history->old_value) ?: '—' ?></td>
-                            <td class="fw-semibold"><?= h($history->new_value) ?: '—' ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="col-flex">
+            <?php foreach ($groupHistories as $hi => $history):
+                $hUser = $history->hasValue('user') ? $history->user->full_name : '—';
+                $hField = $fieldLabels[$history->field_changed] ?? $history->field_changed;
+            ?>
+                <div class="d-flex align-items-center" style="gap:12px;padding:10px 0;<?= $hi === 0 ? '' : 'border-top:1px solid var(--rule);' ?>font-size:var(--fs-body-sm);">
+                    <span class="mono" style="color:var(--text-muted);flex-shrink:0;min-width:110px;">
+                        <?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?>
+                    </span>
+                    <span class="mono" style="flex-shrink:0;min-width:46px;">
+                        <?php if ($history->has('employee_novelty')): ?>
+                        <?= $this->Html->link(
+                            '#' . $history->employee_novelty->id,
+                            ['controller' => 'EmployeeNovelties', 'action' => 'view', $history->employee_novelty->id],
+                            ['class' => 'mono']
+                        ) ?>
+                        <?php else: ?>—<?php endif; ?>
+                    </span>
+                    <span class="d-inline-flex align-items-center" style="gap:6px;flex-shrink:0;min-width:140px;">
+                        <span class="av av-sm"><?= h($initialsOf($hUser)) ?></span>
+                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= h($hUser) ?></span>
+                    </span>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <?= h($hField) ?>
+                    </span>
+                    <span style="color:var(--text-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <?= $history->old_value ? h($history->old_value) : '—' ?>
+                    </span>
+                    <i class="bi bi-arrow-right" aria-hidden="true" style="color:var(--text-faint);font-size:11px;flex-shrink:0;"></i>
+                    <span style="color:var(--primary-color);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <?= $history->new_value ? h($history->new_value) : '—' ?>
+                    </span>
+                </div>
+            <?php endforeach; ?>
             </div>
         </div>
         <?php endif; ?>

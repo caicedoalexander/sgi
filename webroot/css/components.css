@@ -1109,6 +1109,15 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .field-row > .v.mono  { font-family: var(--font-mono); }
 .field-row > .v.dash  { color: var(--text-disabled); font-weight: 500; }
 
+/* Field-rows dentro de un layout de 2 columnas (.row.g-0 > col-*): padding
+   horizontal para que el valor (alineado a la derecha) no colisione con la
+   columna vecina/divisor y para alinear con el .sgi-section-head (18px).
+   No afecta a las field-rows dentro de .sgi-card (single-column, canon Invoice). */
+.row.g-0 > [class*="col-"] > .field-row {
+    padding-left: 18px;
+    padding-right: 18px;
+}
+
 
 /* ─── B.9 TABS y TAB BADGE ──────────────────────────────────────── */
 .tabs {

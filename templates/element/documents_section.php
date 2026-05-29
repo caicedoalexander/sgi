@@ -30,7 +30,7 @@ foreach ($groups as $g) {
 }
 $showUpload = $canUpload && $uploadModalId !== null;
 ?>
-<div class="sgi-card d-flex flex-column">
+<div class="sgi-card card d-flex flex-column">
     <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
         <span class="sgi-label d-inline-flex align-items-center gap-2">
             <i class="bi bi-paperclip" aria-hidden="true"></i>

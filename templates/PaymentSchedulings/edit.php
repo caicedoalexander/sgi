@@ -240,36 +240,26 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
         ]) ?>
 
         <!-- Soportes -->
-        <?php $documents = $record->payment_scheduling_documents ?? []; ?>
-        <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
-                    <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    Soportes
-                    <span class="sgi-folder-count"><?= count($documents) ?> doc<?= count($documents) !== 1 ? 's' : '' ?></span>
-                </span>
-                <?php if (!$viewModel->isPagada): ?>
-                <button type="button" class="btn btn-ghost-card btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
-                    <i class="bi bi-upload" aria-hidden="true"></i>Subir
-                </button>
-                <?php endif; ?>
-            </div>
-
-            <div id="docs-empty-state" class="sgi-dropzone-empty" <?= !empty($documents) ? 'style="display:none;"' : '' ?>>
-                <i class="bi bi-paperclip" aria-hidden="true"></i>
-                <div>Sin soportes adjuntos</div>
-            </div>
-            <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-                <?php foreach ($documents as $att): ?>
-                    <?= $this->element('document_row', [
-                        'doc'       => $att,
-                        'canDelete' => !$viewModel->isPagada,
-                        'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $att->id]),
-                        'showBadge' => false,
-                    ]) ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
+        <?php
+        $documents = $record->payment_scheduling_documents ?? [];
+        $canUploadDocs = !$viewModel->isPagada;
+        $schedulingDocRows = [];
+        foreach ($documents as $att) {
+            $schedulingDocRows[] = [
+                'doc'       => $att,
+                'canDelete' => $canUploadDocs,
+                'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $att->id]),
+                'showBadge' => false,
+            ];
+        }
+        ?>
+        <?= $this->element('documents_section', [
+            'groups'        => [['label' => null, 'pillKind' => null, 'rows' => $schedulingDocRows]],
+            'totalDocs'     => count($documents),
+            'canUpload'     => $canUploadDocs,
+            'uploadModalId' => 'uploadDocumentModal',
+            'emptyTitle'    => 'Sin soportes adjuntos',
+        ]) ?>
 
         <!-- Sticky footer con acciones del pipeline -->
         <?php if ($viewModel->canAdvance || $viewModel->canReject || !empty($viewModel->canRegress)): ?>

@@ -99,17 +99,17 @@ $documents = $record->payment_scheduling_documents ?? [];
                     <div class="sgi-section-head" style="padding:14px 18px 0;">
                         <span class="sgi-label">Información</span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Código</span>
-                        <span class="sgi-data-value mono"><?= h($record->code) ?></span>
+                    <div class="field-row">
+                        <span class="k">Código</span>
+                        <span class="v mono"><?= h($record->code) ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Título</span>
-                        <span class="sgi-data-value"><?= h($record->title) ?: '—' ?></span>
+                    <div class="field-row">
+                        <span class="k">Título</span>
+                        <span class="v"><?= h($record->title) ?: '—' ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Estado</span>
-                        <span class="sgi-data-value">
+                    <div class="field-row">
+                        <span class="k">Estado</span>
+                        <span class="v">
                             <span class="pill <?= $psStatusPill ?>"><?= h($psStatusLabel) ?></span>
                         </span>
                     </div>
@@ -118,17 +118,17 @@ $documents = $record->payment_scheduling_documents ?? [];
                     <div class="sgi-section-head" style="padding:14px 18px 0;">
                         <span class="sgi-label">Detalles</span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Creado por</span>
-                        <span class="sgi-data-value"><?= h($record->created_by_user->full_name ?? '—') ?></span>
+                    <div class="field-row">
+                        <span class="k">Creado por</span>
+                        <span class="v"><?= h($record->created_by_user->full_name ?? '—') ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Facturas</span>
-                        <span class="sgi-data-value"><?= $itemCount ?></span>
+                    <div class="field-row">
+                        <span class="k">Facturas</span>
+                        <span class="v"><?= $itemCount ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Monto Total</span>
-                        <span class="sgi-data-value mono" style="color:var(--primary-color);font-weight:700;">$ <?= number_format((float)$total, 0, ',', '.') ?></span>
+                    <div class="field-row">
+                        <span class="k">Monto Total</span>
+                        <span class="v mono" style="color:var(--primary-color);font-weight:700;">$ <?= number_format((float)$total, 0, ',', '.') ?></span>
                     </div>
                 </div>
             </div>

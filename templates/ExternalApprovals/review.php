@@ -37,44 +37,44 @@ $badgeMap = $entityType === 'employee_novelties'
     <div style="border-top:1px solid var(--border-color);">
         <?php if ($entityType === 'invoices'): ?>
             <div class="sgi-label">Factura</div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Número</span>
-                <span class="sgi-data-value"><?= h($entity->invoice_number ?? '#' . $entity->id) ?></span>
+            <div class="field-row">
+                <span class="k">Número</span>
+                <span class="v"><?= h($entity->invoice_number ?? '#' . $entity->id) ?></span>
             </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Proveedor</span>
-                <span class="sgi-data-value"><?= h($entity->provider->name ?? '—') ?></span>
+            <div class="field-row">
+                <span class="k">Proveedor</span>
+                <span class="v"><?= h($entity->provider->name ?? '—') ?></span>
             </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Monto</span>
-                <span class="sgi-data-value fw-semibold" style="color:var(--primary-color);">
+            <div class="field-row">
+                <span class="k">Monto</span>
+                <span class="v fw-semibold" style="color:var(--primary-color);">
                     $ <?= number_format((float)$entity->amount, 2, ',', '.') ?>
                 </span>
             </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Estado Actual</span>
-                <span class="sgi-data-value"><?= h(\App\Constants\InvoiceConstants::STATUS_LABELS[$entity->pipeline_status] ?? $entity->pipeline_status) ?></span>
+            <div class="field-row">
+                <span class="k">Estado Actual</span>
+                <span class="v"><?= h(\App\Constants\InvoiceConstants::STATUS_LABELS[$entity->pipeline_status] ?? $entity->pipeline_status) ?></span>
             </div>
         <?php elseif ($entityType === 'employee_novelties'): ?>
             <div class="sgi-label">Novedad</div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Empleado</span>
-                <span class="sgi-data-value"><?= h($entity->employee->full_name ?? $entity->custom_name ?? '—') ?></span>
+            <div class="field-row">
+                <span class="k">Empleado</span>
+                <span class="v"><?= h($entity->employee->full_name ?? $entity->custom_name ?? '—') ?></span>
             </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Tipo de Novedad</span>
-                <span class="sgi-data-value"><?= h($entity->novelty_type->name ?? '—') ?></span>
+            <div class="field-row">
+                <span class="k">Tipo de Novedad</span>
+                <span class="v"><?= h($entity->novelty_type->name ?? '—') ?></span>
             </div>
             <?php if (!empty($entity->reason)): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Motivo</span>
-                <span class="sgi-data-value"><?= h($entity->reason) ?></span>
+            <div class="field-row">
+                <span class="k">Motivo</span>
+                <span class="v"><?= h($entity->reason) ?></span>
             </div>
             <?php endif; ?>
             <?php if ($entity->start_date || $entity->end_date): ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Fechas</span>
-                <span class="sgi-data-value">
+            <div class="field-row">
+                <span class="k">Fechas</span>
+                <span class="v">
                     <?= $entity->start_date ? (is_string($entity->start_date) ? $entity->start_date : $entity->start_date->format('d/m/Y')) : '' ?>
                     <?php if ($entity->end_date): ?>
                      — <?= is_string($entity->end_date) ? $entity->end_date : $entity->end_date->format('d/m/Y') ?>
@@ -82,23 +82,23 @@ $badgeMap = $entityType === 'employee_novelties'
                 </span>
             </div>
             <?php endif; ?>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Estado Actual</span>
-                <span class="sgi-data-value"><?= h(\App\Constants\NoveltyConstants::STATUS_LABELS[$entity->pipeline_status] ?? $entity->pipeline_status) ?></span>
+            <div class="field-row">
+                <span class="k">Estado Actual</span>
+                <span class="v"><?= h(\App\Constants\NoveltyConstants::STATUS_LABELS[$entity->pipeline_status] ?? $entity->pipeline_status) ?></span>
             </div>
         <?php elseif ($entityType === 'employee_leaves'): ?>
             <div class="sgi-label">Permiso / Licencia</div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Empleado</span>
-                <span class="sgi-data-value"><?= h($entity->employee->full_name ?? '—') ?></span>
+            <div class="field-row">
+                <span class="k">Empleado</span>
+                <span class="v"><?= h($entity->employee->full_name ?? '—') ?></span>
             </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Tipo</span>
-                <span class="sgi-data-value"><?= h($entity->leave_type->name ?? '—') ?></span>
+            <div class="field-row">
+                <span class="k">Tipo</span>
+                <span class="v"><?= h($entity->leave_type->name ?? '—') ?></span>
             </div>
-            <div class="sgi-data-row">
-                <span class="sgi-data-label">Fechas</span>
-                <span class="sgi-data-value">
+            <div class="field-row">
+                <span class="k">Fechas</span>
+                <span class="v">
                     <?= $entity->start_date?->format('d/m/Y') ?> — <?= $entity->end_date?->format('d/m/Y') ?>
                 </span>
             </div>

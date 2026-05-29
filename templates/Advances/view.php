@@ -108,46 +108,46 @@ $isTerminal = $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA;
                     <div class="sgi-section-head" style="padding:14px 18px 0;">
                         <span class="sgi-label">Beneficiario</span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Tipo</span>
-                        <span class="sgi-data-value"><?= h($beneficiaryType) ?></span>
+                    <div class="field-row">
+                        <span class="k">Tipo</span>
+                        <span class="v"><?= h($beneficiaryType) ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Nombre</span>
-                        <span class="sgi-data-value"><?= h($beneficiary) ?></span>
+                    <div class="field-row">
+                        <span class="k">Nombre</span>
+                        <span class="v"><?= h($beneficiary) ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Centro de Operación</span>
-                        <span class="sgi-data-value"><?= h($invoice->operation_center->name ?? '—') ?></span>
+                    <div class="field-row">
+                        <span class="k">Centro de Operación</span>
+                        <span class="v"><?= h($invoice->operation_center->name ?? '—') ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Tipo de Gasto</span>
-                        <span class="sgi-data-value"><?= h($invoice->expense_type->name ?? '—') ?></span>
+                    <div class="field-row">
+                        <span class="k">Tipo de Gasto</span>
+                        <span class="v"><?= h($invoice->expense_type->name ?? '—') ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Centro de Costos</span>
-                        <span class="sgi-data-value"><?= h($invoice->cost_center->name ?? '—') ?></span>
+                    <div class="field-row">
+                        <span class="k">Centro de Costos</span>
+                        <span class="v"><?= h($invoice->cost_center->name ?? '—') ?></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="sgi-section-head" style="padding:14px 18px 0;">
                         <span class="sgi-label">Detalle</span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Fecha de Emisión</span>
-                        <span class="sgi-data-value mono"><?= $invoice->issue_date?->format('d/m/Y') ?? '—' ?></span>
+                    <div class="field-row">
+                        <span class="k">Fecha de Emisión</span>
+                        <span class="v mono"><?= $invoice->issue_date?->format('d/m/Y') ?? '—' ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Registrado por</span>
-                        <span class="sgi-data-value"><?= $invoice->hasValue('registered_by_user') ? h($invoice->registered_by_user->full_name ?? '—') : '—' ?></span>
+                    <div class="field-row">
+                        <span class="k">Registrado por</span>
+                        <span class="v"><?= $invoice->hasValue('registered_by_user') ? h($invoice->registered_by_user->full_name ?? '—') : '—' ?></span>
                     </div>
-                    <div class="sgi-data-row">
-                        <span class="sgi-data-label">Fecha de Registro</span>
-                        <span class="sgi-data-value mono"><?= $invoice->created?->format('d/m/Y H:i') ?? '—' ?></span>
+                    <div class="field-row">
+                        <span class="k">Fecha de Registro</span>
+                        <span class="v mono"><?= $invoice->created?->format('d/m/Y H:i') ?? '—' ?></span>
                     </div>
-                    <div class="sgi-data-row align-items-start">
-                        <span class="sgi-data-label">Concepto</span>
-                        <span class="sgi-data-value"><?= $invoice->detail ? nl2br(h($invoice->detail)) : '—' ?></span>
+                    <div class="field-row align-items-start">
+                        <span class="k">Concepto</span>
+                        <span class="v"><?= $invoice->detail ? nl2br(h($invoice->detail)) : '—' ?></span>
                     </div>
                 </div>
             </div>

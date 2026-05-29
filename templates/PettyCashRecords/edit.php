@@ -528,43 +528,25 @@ $totalDocs = count($docs);
         ]) ?>
 
         <?php /* ── Soportes (ancho completo) ──── */ ?>
-        <div class="sgi-card d-flex flex-column">
-            <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
-                    <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    Soportes
-                    <span class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
-                </span>
-                <?php if (!$record->isPagada()): ?>
-                <button type="button" class="btn btn-default btn-sm"
-                        data-bs-toggle="modal" data-bs-target="#uploadPcDocModal">
-                    <i class="bi bi-upload" aria-hidden="true"></i>Subir
-                </button>
-                <?php endif; ?>
-            </div>
-
-            <div id="docs-empty-state" class="empty-state"
-                 <?= !empty($docs) ? 'style="display:none;"' : '' ?>>
-                <div class="es-icon es-icon-neutral">
-                    <i class="bi bi-paperclip" aria-hidden="true"></i>
-                </div>
-                <div class="es-title">Sin soportes adjuntos</div>
-                <?php if (!$record->isPagada()): ?>
-                <div class="es-msg">PDF, imágenes, Word o Excel.</div>
-                <?php endif; ?>
-            </div>
-
-            <div id="docs-list" style="max-height:420px;overflow-y:auto;">
-                <?php foreach ($docs as $doc): ?>
-                    <?= $this->element('document_row', [
-                        'doc'       => $doc,
-                        'canDelete' => !$record->isPagada(),
-                        'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
-                        'showBadge' => false,
-                    ]) ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
+        <?php
+        $canUploadDocs = !$record->isPagada();
+        $pettyCashDocRows = [];
+        foreach ($docs as $doc) {
+            $pettyCashDocRows[] = [
+                'doc'       => $doc,
+                'canDelete' => $canUploadDocs,
+                'deleteUrl' => $this->Url->build(['action' => 'deleteDocument', $record->id, $doc->id]),
+                'showBadge' => false,
+            ];
+        }
+        ?>
+        <?= $this->element('documents_section', [
+            'groups'        => [['label' => null, 'pillKind' => null, 'rows' => $pettyCashDocRows]],
+            'totalDocs'     => $totalDocs,
+            'canUpload'     => $canUploadDocs,
+            'uploadModalId' => 'uploadPcDocModal',
+            'emptyTitle'    => 'Sin soportes adjuntos',
+        ]) ?>
 
         <?php /* ── Footer de acciones ──────────────────────────── */ ?>
         <?php if ($canSave || !empty($canRegress)): ?>
