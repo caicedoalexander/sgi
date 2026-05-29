@@ -31,6 +31,7 @@ class PettyCashService
     private PettyCashFieldAccessPolicy $fieldPolicy;
     private PettyCashHistoryService $history;
     private PettyCashPipelineStateRegistry $stateRegistry;
+    private PettyCashLockPolicy $lockPolicy;
     private HistoryServiceInterface $invoiceHistory;
     private ?EventManagerInterface $events;
 
@@ -41,6 +42,7 @@ class PettyCashService
      * @param \App\Service\PettyCashHistoryService|null $history Audit trail for the petty cash record itself.
      * @param \App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry|null $stateRegistry State registry.
      * @param \Cake\Event\EventManagerInterface|null $events Event manager.
+     * @param \App\Service\PettyCashLockPolicy|null $lockPolicy Regression lock policy (mirror de InvoiceLockPolicy).
      */
     public function __construct(
         HistoryServiceInterface $historyService,
@@ -49,6 +51,7 @@ class PettyCashService
         ?PettyCashHistoryService $history = null,
         ?PettyCashPipelineStateRegistry $stateRegistry = null,
         ?EventManagerInterface $events = null,
+        ?PettyCashLockPolicy $lockPolicy = null,
     ) {
         $this->grouped = new GroupedInvoiceService(
             documentType: InvoiceConstants::DOCTYPE_CAJA_MENOR,
@@ -62,6 +65,7 @@ class PettyCashService
         $this->fieldPolicy = $fieldPolicy;
         $this->history = $history ?? new PettyCashHistoryService();
         $this->stateRegistry = $stateRegistry ?? new PettyCashPipelineStateRegistry();
+        $this->lockPolicy = $lockPolicy ?? new PettyCashLockPolicy();
         $this->events = $events ?? EventManager::instance();
     }
 
@@ -768,15 +772,7 @@ class PettyCashService
      */
     public function getRegressionLockMessage(PettyCashRecord $record): ?string
     {
-        // Único bloqueo: tesoreria → contabilidad con pago pendiente registrado.
-        if (
-            $record->status === PettyCashConstants::STATUS_TESORERIA
-            && !empty($record->payment_amount)
-        ) {
-            return 'No se puede regresar a Contabilidad: existe un pago pendiente registrado. Anule o reasigne el pago primero.';
-        }
-
-        return null;
+        return $this->lockPolicy->getRegressionLockMessage($record);
     }
 
     /**
