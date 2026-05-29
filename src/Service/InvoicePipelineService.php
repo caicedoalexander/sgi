@@ -14,6 +14,8 @@ use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
 use App\Service\Pipeline\Invoice\Policy\InvoiceFieldAccessPolicy;
+use App\Service\Pipeline\Invoice\Policy\InvoiceLockPolicy;
+use App\Service\Pipeline\Invoice\Policy\InvoiceTransitionValidator;
 use App\ValueObject\UserContext;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;

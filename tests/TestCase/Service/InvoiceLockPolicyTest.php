@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Service;
 
 use App\Constants\InvoiceConstants;
-use App\Service\InvoiceLockPolicy;
+use App\Service\Pipeline\Invoice\Policy\InvoiceLockPolicy;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 

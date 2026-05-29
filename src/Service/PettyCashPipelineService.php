@@ -15,6 +15,7 @@ use App\Service\Dto\BulkPaymentView;
 use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry;
 use App\Service\Pipeline\PettyCash\Policy\PettyCashFieldAccessPolicy;
+use App\Service\Pipeline\PettyCash\Policy\PettyCashLockPolicy;
 use App\ValueObject\UserContext;
 use Cake\Event\Event;
 use Cake\Event\EventManager;
@@ -42,7 +43,7 @@ class PettyCashPipelineService
      * @param \App\Service\PettyCashHistoryService|null $history Audit trail for the petty cash record itself.
      * @param \App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry|null $stateRegistry State registry.
      * @param \Cake\Event\EventManagerInterface|null $events Event manager.
-     * @param \App\Service\PettyCashLockPolicy|null $lockPolicy Regression lock policy (mirror de InvoiceLockPolicy).
+     * @param \App\Service\Pipeline\PettyCash\Policy\PettyCashLockPolicy|null $lockPolicy Regression lock policy (mirror de InvoiceLockPolicy).
      */
     public function __construct(
         HistoryServiceInterface $historyService,

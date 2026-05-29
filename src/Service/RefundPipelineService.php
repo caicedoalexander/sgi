@@ -13,6 +13,8 @@ use App\Model\Entity\Refund;
 use App\Service\Dto\BulkPaymentView;
 use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
+use App\Service\Pipeline\Refund\Policy\RefundLockPolicy;
+use App\Service\Pipeline\Refund\Policy\RefundTransitionValidator;
 use App\Service\Pipeline\Refund\RefundPipelineStateRegistry;
 use App\ValueObject\UserContext;
 use Cake\I18n\Date;
@@ -35,8 +37,8 @@ class RefundPipelineService
      * @param \App\Authorization\AuthorizationFacade $auth Authorization facade.
      * @param \App\Service\RefundHistoryService|null $refundHistory Refund-specific audit trail.
      * @param \App\Service\Pipeline\Refund\RefundPipelineStateRegistry|null $stateRegistry Pipeline states.
-     * @param \App\Service\RefundLockPolicy|null $lockPolicy Regression lock policy (mirror de InvoiceLockPolicy).
-     * @param \App\Service\RefundTransitionValidator|null $transitionValidator Advance requirements validator.
+     * @param \App\Service\Pipeline\Refund\Policy\RefundLockPolicy|null $lockPolicy Regression lock policy (mirror de InvoiceLockPolicy).
+     * @param \App\Service\Pipeline\Refund\Policy\RefundTransitionValidator|null $transitionValidator Advance requirements validator.
      * @param \App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy|null $fieldPolicy Rol-aware field filter.
      */
     public function __construct(

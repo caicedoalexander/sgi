@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\Pipeline\PettyCash\Policy;
 
 use App\Constants\PettyCashConstants;
 use App\Model\Entity\PettyCashRecord;

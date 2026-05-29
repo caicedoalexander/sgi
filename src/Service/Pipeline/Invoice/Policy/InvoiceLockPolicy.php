@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\Pipeline\Invoice\Policy;
 
 use App\Constants\InvoiceConstants;
 use App\Constants\PaymentSchedulingConstants;

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\Pipeline\Refund\Policy;
 
 use App\Constants\Domain\Refund\PipelineStatus;
 use App\Model\Entity\Refund;
