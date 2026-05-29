@@ -184,7 +184,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
             </div>
         </div>
 
-        <?= $this->Form->hidden('pipeline_status', ['value' => 'aprobacion']) ?>
+        <?= $this->Form->hidden('pipeline_status', ['value' => InvoiceConstants::STATUS_APROBACION]) ?>
 
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">
