@@ -130,7 +130,7 @@ class NoveltyPipelineService
             return ServiceResult::fail(['La novedad fue rechazada. El flujo ha terminado.']);
         }
 
-        $errors = $this->validateTransition($novelty, $novelty->pipeline_status);
+        $errors = $this->validateTransitionRequirements($novelty, $novelty->pipeline_status);
         if (!empty($errors)) {
             return ServiceResult::fail($errors);
         }
@@ -259,7 +259,7 @@ class NoveltyPipelineService
     /**
      * Validate transition requirements for a single novelty.
      */
-    public function validateTransition(object $novelty, string $fromStatus): array
+    public function validateTransitionRequirements(object $novelty, string $fromStatus): array
     {
         if ($novelty->isRejected()) {
             return ['La novedad fue rechazada. El flujo ha terminado.'];
