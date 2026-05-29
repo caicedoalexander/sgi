@@ -139,8 +139,22 @@ States (fuente única: `App\Constants\Domain\Invoice\PipelineStatus` enum, espej
 - Facturas rechazadas (`area_approval='Rechazada'`) bloquean todo avance; Registro puede `resetFlow` para reiniciar
 - En `autorizacion_pago` el Contador autoriza/rechaza cada pago; al quedar todos autorizados, la factura puede avanzar. Los soportes de pago se cargan como documentos normales del pipeline en `tesoreria` (`InvoiceDocuments`)
 - Facturas en `pagada` redireccionan a `view` para no-admins
-- Secciones del formulario controladas por `InvoiceFieldAccessPolicy::SECTION_BY_STEP`: `ledger` (siempre visible), `revision` (aprobacion), `accounting` (contabilidad), `treasury` (tesoreria), `payment_authorization` (autorizacion_pago **y** verificacion_pago — esta última reusa la misma sección read-only). Las plantillas además exponen secciones estructurales `general`, `dates`, `classification`.
+- Secciones del formulario controladas por `InvoiceFieldAccessPolicy` (const privada `SECTIONS_BY_STEP`, expuesta vía `getVisibleSections()`): `ledger` (siempre visible), `revision` (aprobacion), `accounting` (contabilidad), `treasury` (tesoreria), `payment_authorization` (autorizacion_pago **y** verificacion_pago — esta última reusa la misma sección read-only). Las plantillas además exponen secciones estructurales `general`, `dates`, `classification`.
 - Estados de un pago individual (`invoice_payments.status`, slugs en inglés por convención): `pending`, `authorized`, `rejected`
+
+### Paridad de módulos de flujo (alineación al canon de Facturas — en curso)
+
+Auditoría completa y roadmap de remediación en `docs/auditoria-paridad-modulos-flujo.md`. Decisiones de canon vigentes:
+
+- **Canon de backend/pipeline = Invoice**: State pattern limpio (un archivo por estado, States sin IO directo salvo servicios inyectados), enum `Domain/{Modulo}/PipelineStatus` como **fuente única** y las `*Constants` delegan a él (`STATUS_X = PipelineStatus::X->value`). El avance/regresión se resuelve vía `enum::next()/previous()` o `State::getNextStatus()` — **no** vía mapas `TRANSITIONS` legacy (en migración).
+- **Canon de templates = la familia migrada**, no Invoice: layout `sgi-invoice-view-grid` + `element('pipeline_sidebar')` (Invoice aún arrastra grid inline y es el outlier a alinear). `add.php` es legacy en todos.
+- **Nomenclatura del coordinador**: el objetivo es `{Modulo}PipelineService` (hoy solo `InvoicePipelineService` lo cumple; rename de los demás pendiente).
+- **Excepciones legítimas (NO son migración a medias):**
+  - `Advance` y `PaymentScheduling` **no** tienen `FieldAccessPolicy`: Advance edita vía `Invoices::edit` (redirect) y PaymentScheduling no edita campos del header por paso. No crear policies vacías.
+  - `Advance` usa prefijo de clase `AdvanceLegalization*` por la entidad de dominio (Anticipo = Invoice; reusa `InvoicePipelineService`).
+  - `Novelty` tiene 2 controllers (`EmployeeNovelties` individual + `NoveltyLiquidationDocs` grupal) servidos por un `NoveltyService`.
+  - `AdvanceLegalizationHistoryService` y `PaymentSchedulingHistoryService` **no** usan `HistoryNormalizationTrait` ni `recordChanges()` (a diferencia de Invoice/Refund/PettyCash/Novelty): Advance audita campo-a-campo explícito por transición vía `_setStatus(extraChanges)` (patrón deliberado y transaccional, no frágil) y PaymentScheduling no edita campos del header por paso. Añadir `recordChanges` sería dead code — están bien dimensionados para su flujo.
+  - Trampa de spelling deliberada: `InvoiceConstants::DIAN_REJECTED = 'Rechazado'` (masculino) vs `APPROVAL_REJECTED = 'Rechazada'` — **no unificar** (rompe datos persistidos).
 
 ## Key Conventions
 
@@ -186,7 +200,7 @@ Antes de crear o editar cualquier vista, lee siempre `reglas-copy.md` + `fundame
 - Colors: dark (#212529), green (#469D61), orange (#CD6A15).
 - JS common: `webroot/js/sgi-common.js` auto-initializes Flatpickr, AutoNumeric, Select2.
 - PDF: TCPDF + FPDI. Excel: PhpSpreadsheet.
-- Pipeline elements: `pipeline_progress.php` (stepper horizontal, usado en NoveltyLiquidationDocs), `progress_stepper.php` (stepper genérico parametrizable). El resto de módulos usan el sidebar vertical via `element/pipeline_sidebar.php` (hero + pipeline vertical + registro + acciones), dentro del layout `sgi-invoice-view-grid > sgi-invoice-view-left + sgi-invoice-view-right`.
+- Pipeline elements: **todos** los módulos de flujo (incluido NoveltyLiquidationDocs) usan el sidebar vertical via `element/pipeline_sidebar.php` (hero + pipeline vertical + registro + acciones), dentro del layout `sgi-invoice-view-grid > sgi-invoice-view-left + sgi-invoice-view-right`. (`pipeline_progress.php` y `progress_stepper.php` quedaron huérfanos tras unificar los steppers; pendientes de eliminación — ver `docs/auditoria-paridad-modulos-flujo.md`.)
 
 ## New Module Checklist
 
