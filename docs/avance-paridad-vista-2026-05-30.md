@@ -57,7 +57,7 @@ Leyenda: ✅ ejecutado · 🔄 reclasificado · ⏸ diferido · ◻ decisión pe
 | **C2** 🔑 | `RowView` generalizado (lógica dentro de `forRow()`) | ✅ ejecutado | `0ab9da5`+`fbb0d1f` — 5 RowViews nuevos + Invoice ampliado (P9) |
 | **C3** | Slot/builder compartido para el `ob_start` del sidebar (`registryLines`/`actionsHtml`) en cada `edit` | ✅ ejecutado (parcial) | Ola 4 — extraído `element('pipeline_regress_action')` (botón regresar, **idéntico** en PettyCash/Refund/PaymentScheduling). `registryLines` se deja bespoke por dominio (no es duplicación real: contenido distinto por módulo) |
 | **C4** | Extender `Support/PipelineEditFlags` a Novelty | ◻ decisión pendiente | paridad menor |
-| **C5** | `email_log_panel` solo en Invoice + EN/edit | ◻ decisión pendiente | requiere saber qué módulos emiten correos de pipeline |
+| **C5** | `email_log_panel` solo en Invoice + EN/edit | 🔄 (B) esencial — **no es gap** | Investigado: solo Invoice (`sendApprovalLinkNotification`) y EmployeeNovelty (`sendNoveltyApprovalEmail`) emiten correos (únicos `entity_type` en `email_logs`: `invoice`/`employee_novelty`). Refund/PettyCash/PaymentScheduling/Advance/NLD **no** llaman a `NotificationService` ni tienen aprobación externa → el panel aparece donde hay correos. Alinear renderizaría paneles vacíos. |
 | **C6** | `document_row` directo vs `documents_section` en 3 `view` | ◻ decisión pendiente | decidir canon de docs en `view` (o flag `readOnly` al element); se solapa con A7 |
 | **C7** | Estandarizar `final readonly class` | ◻ cosmético | bajo retorno |
 | **C8** | `AddViewModel` muta el ORM (Advance/Invoice) | ◻ decisión pendiente | reorganización menor |
@@ -102,9 +102,9 @@ Hallazgo durante la validación visual: 404 `/marked_as_signed` en `NoveltyLiqui
 2. ~~**C3**~~ ✅ (parcial) — extraído `element('pipeline_regress_action')` (botón regresar idéntico en PettyCash/Refund/PaymentScheduling). `registryLines` se mantiene bespoke por dominio (no era duplicación real).
 3. ~~Retirar checkbox inerte~~ ✅ — `requires_employee_signature_creation` retirado de UI (`add`/`edit`) + `getFlags()` + `$_accessible`/`validator`; columna BD conservada.
 
-**Decisiones tuyas (abren trabajo) — pendientes:**
-4. **C6 / A7** — canon de documentos en `view`: ¿flag `readOnly` en `documents_section`, o aceptar `document_row` directo como canon? (3 vistas ya convergieron a directo).
-5. **C5** — ¿qué módulos emiten correos de pipeline vía `EmailLogService`? Define si `email_log_panel` en 4 módulos es gap (alinear) o ausencia correcta.
+**Decisiones tuyas (abren trabajo):**
+4. **C6 / A7** — canon de documentos en `view`: ¿flag `readOnly` en `documents_section`, o aceptar `document_row` directo como canon? (3 vistas ya convergieron a directo). **← única pendiente real.**
+5. ~~**C5**~~ ✅ resuelto → **(B) esencial, no es gap.** Solo Invoice y EmployeeNovelty emiten correos (`sendApprovalLinkNotification`/`sendNoveltyApprovalEmail`; `entity_type` `invoice`/`employee_novelty`). Los otros 4 módulos no usan `NotificationService` → `email_log_panel` aparece donde hay correos; alinear daría paneles vacíos. Sin trabajo.
 
 **Bajo retorno / opcional:** A13 (`.clickable-row`), C4 (`PipelineEditFlags` a Novelty), C7 (`final readonly class`), C8 (rol del AddVM), C9 (element de sub-tablas).
 
