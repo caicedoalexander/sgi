@@ -4,15 +4,20 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\PaymentSchedulingConstants;
+use App\Service\Interface\HistoryServiceInterface;
 use Cake\ORM\TableRegistry;
 
 /**
  * Audit trail dedicado al pipeline de Programaciones de Pago.
  *
- * No implementa HistoryServiceInterface (que apunta a Invoice). Esto registra
- * cambios sobre `payment_schedulings`.
+ * Implementa HistoryServiceInterface: el contrato sólo cubre
+ * recordStatusChange (cambios de estado de `payment_schedulings`, el history
+ * del propio módulo). El typehint HistoryServiceInterface que aparece en los
+ * coordinadores de pipeline apunta al history de las facturas hijas
+ * (InvoiceHistoryService), no a este servicio; el `implements` aquí es
+ * uniformidad.
  */
-class PaymentSchedulingHistoryService
+class PaymentSchedulingHistoryService implements HistoryServiceInterface
 {
     /**
      * Registra un cambio de estado del registro de Programación de Pago.

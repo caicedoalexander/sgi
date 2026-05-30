@@ -5,18 +5,21 @@ namespace App\Service;
 
 use App\Constants\PettyCashConstants;
 use App\Model\Entity\PettyCashRecord;
+use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Trait\HistoryNormalizationTrait;
 use Cake\ORM\TableRegistry;
 
 /**
  * Audit trail dedicado al pipeline de Caja Menor.
  *
- * No implementa HistoryServiceInterface (que apunta a Invoice). Esto registra
- * cambios sobre `petty_cash_records` — los cambios de pipeline de las facturas
- * hijas siguen registrándose por separado vía InvoiceHistoryService usado por
- * GroupedInvoiceService::recordBulkHistory.
+ * Implementa HistoryServiceInterface: el contrato sólo cubre
+ * recordStatusChange (cambios de estado de `petty_cash_records`, el history
+ * del propio módulo). El typehint HistoryServiceInterface que aparece en los
+ * coordinadores de pipeline apunta al history de las facturas hijas
+ * (InvoiceHistoryService usado vía GroupedInvoiceService::recordBulkHistory),
+ * no a este servicio; el `implements` aquí es uniformidad.
  */
-class PettyCashHistoryService
+class PettyCashHistoryService implements HistoryServiceInterface
 {
     use HistoryNormalizationTrait;
 

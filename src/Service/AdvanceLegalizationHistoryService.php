@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\AdvanceConstants;
+use App\Service\Interface\HistoryServiceInterface;
 use Cake\ORM\TableRegistry;
 
 /**
@@ -12,8 +13,14 @@ use Cake\ORM\TableRegistry;
  * Espejo del patrón usado por PettyCashHistoryService / InvoiceHistoryService.
  * Registra cambios de estado, declaración de caso, montos y comprobantes
  * sobre la entidad AdvanceLegalization (audit SU-004).
+ *
+ * Implementa HistoryServiceInterface: el contrato sólo cubre
+ * recordStatusChange (el history del propio módulo). El typehint
+ * HistoryServiceInterface que aparece en los coordinadores de pipeline apunta
+ * al history de las facturas hijas (InvoiceHistoryService), no a este
+ * servicio; el `implements` aquí es uniformidad.
  */
-class AdvanceLegalizationHistoryService
+class AdvanceLegalizationHistoryService implements HistoryServiceInterface
 {
     /**
      * Registra un cambio de estado del pipeline de legalización.

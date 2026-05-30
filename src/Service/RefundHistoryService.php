@@ -5,18 +5,21 @@ namespace App\Service;
 
 use App\Constants\RefundConstants;
 use App\Model\Entity\Refund;
+use App\Service\Interface\HistoryServiceInterface;
 use App\Service\Trait\HistoryNormalizationTrait;
 use Cake\ORM\TableRegistry;
 
 /**
  * Audit trail dedicado al pipeline de Reintegros.
  *
- * No implementa HistoryServiceInterface (que apunta a Invoice). Esto registra
- * cambios sobre `refunds` — los cambios de pipeline de las facturas hijas
- * siguen registrándose por separado vía InvoiceHistoryService usado por
- * GroupedInvoiceService::recordBulkHistory.
+ * Implementa HistoryServiceInterface: el contrato sólo cubre
+ * recordStatusChange (cambios de estado de `refunds`, el history del propio
+ * módulo). El typehint HistoryServiceInterface que aparece en los
+ * coordinadores de pipeline apunta al history de las facturas hijas
+ * (InvoiceHistoryService usado vía GroupedInvoiceService::recordBulkHistory),
+ * no a este servicio; el `implements` aquí es uniformidad.
  */
-class RefundHistoryService
+class RefundHistoryService implements HistoryServiceInterface
 {
     use HistoryNormalizationTrait;
 

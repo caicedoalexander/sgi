@@ -49,21 +49,27 @@ class InvoiceHistoryService implements HistoryServiceInterface
         'payment.banking_entity_id' => 'Entidad Bancaria del Pago',
     ];
 
+    /**
+     * Campos del encabezado de la factura que se auditan campo a campo en
+     * recordChanges(). Subconjunto deliberado de FIELD_LABELS: excluye las
+     * claves payment.* y approvers_modified, que se registran por otras vías
+     * (InvoicePaymentService / InvoiceApprovalService).
+     */
+    private const FIELDS_TO_TRACK = [
+        'invoice_number', 'registration_date', 'issue_date', 'due_date',
+        'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
+        'detail', 'amount', 'expense_type_id', 'cost_center_id',
+        'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
+        'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
+        'payment_status', 'full_payment_date', 'pipeline_status',
+    ];
+
     public function recordChanges(Invoice $original, Invoice $modified, int $userId): void
     {
-        $fieldsToTrack = [
-            'invoice_number', 'registration_date', 'issue_date', 'due_date',
-            'document_type', 'purchase_order', 'provider_id', 'operation_center_id',
-            'detail', 'amount', 'expense_type_id', 'cost_center_id',
-            'confirmed_by', 'approver_id', 'area_approval', 'area_approval_date',
-            'dian_validation', 'accrued', 'accrual_date', 'ready_for_payment',
-            'payment_status', 'full_payment_date', 'pipeline_status',
-        ];
-
         $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
         $entities = [];
 
-        foreach ($fieldsToTrack as $field) {
+        foreach (self::FIELDS_TO_TRACK as $field) {
             $oldVal = $this->normalizeValue($original->get($field));
             $newVal = $this->normalizeValue($modified->get($field));
 
