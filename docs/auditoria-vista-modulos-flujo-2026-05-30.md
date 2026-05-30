@@ -254,7 +254,7 @@ Remediación implementada en `main`, validada visualmente con Playwright (índic
 | Ola | Ítems | Commit | Estado |
 |---|---|---|---|
 | 1 | A1 (pills→const, 2 drifts corregidos), A4 (`STATUS_ICONS` dead 6/6), A5 (`READY_FOR_PAYMENT_BADGES`), A11 (`operationCenters`), A12 (`linkedInvoices/Total`) | `44acb33` | ✅ |
-| 2 | C1 (`ViewViewModelInterface` + 6 `{Modulo}ViewViewModel`), C2 (5 `RowView` + `forRow()`; Invoice `RowView` ampliado, P9) | `0ab9da5` (piloto Refund) + `fbb0d1f` (5 módulos) | ✅ |
+| 2 | C1 (`ViewViewModelInterface` + 6 `{Modulo}ViewViewModel`), C2 (6 `RowView` nuevos incl. piloto Refund + `forRow()`; Invoice `RowView` ampliado, P9) | `0ab9da5` (piloto Refund) + `fbb0d1f` (5 módulos) | ✅ |
 | 3 | A8 (element `change_history`), docblock `InvoicePresentation`, A10 (`Invoices/view`+`PettyCash/view`→grid) | `88aeb00` + `f0a6911` | ✅ |
 
 **Reclasificaciones por evidencia visual/de coste (divergen del análisis original):**
@@ -262,6 +262,4 @@ Remediación implementada en `main`, validada visualmente con Playwright (índic
 - **A6 → skip recomendado** — uniformar el método de entrada en `add` es churn de bajo valor sobre forms legacy (Invoice exigiría rediseñar `InvoiceAddViewModel`).
 - **A3 → no-deriva** — `statusBadgeMap`/`badgeColors` cumplen dos roles distintos (pill de header vs pills de documentos), no son alias muertos.
 
-**Pendiente (Ola 4, bajo retorno):** C3–C9. **Bug previo ajeno detectado:** 404 `/marked_as_signed` en la sección de firmas bespoke de `NoveltyLiquidationDocs/view` (no tocada por esta refactorización).
-
-</invoke>
+**Pendiente:** solo **C9** (element de sub-tablas de detalle; ganancia marginal). C3–C8 quedaron resueltos en Ola 4 — ver la sección 5 (tabla actualizada arriba) y el archivo de avance [`avance-paridad-vista-2026-05-30.md`](avance-paridad-vista-2026-05-30.md). **Bug previo ajeno detectado:** 404 `/marked_as_signed` en la sección de firmas bespoke de `NoveltyLiquidationDocs/view` — resuelto después al eliminar la captura de firma (ver el Anexo del avance).
