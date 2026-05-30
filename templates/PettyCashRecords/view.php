@@ -85,10 +85,10 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
 </div>
 
 <!-- ─── Grid principal (340px + 1fr) ──────────────────────────────── -->
-<div class="view-anim" style="display:grid;grid-template-columns:340px 1fr;gap:16px;">
+<div class="sgi-invoice-view-grid view-anim">
 
     <!-- ═════════════════════════ COLUMNA IZQUIERDA ═════════════════════════ -->
-    <aside style="display:flex;flex-direction:column;gap:14px;min-width:0;">
+    <aside class="sgi-invoice-view-left">
 
     <?php
     // Acciones rápidas (Editar registro / Volver).
@@ -165,7 +165,7 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
     </aside>
 
     <!-- ═════════════════════════ COLUMNA DERECHA ═════════════════════════ -->
-    <main style="display:flex;flex-direction:column;gap:14px;min-width:0;">
+    <main class="sgi-invoice-view-right">
 
         <!-- Información + Notas -->
         <div class="sgi-card">

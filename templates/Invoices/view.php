@@ -120,10 +120,10 @@ $initialsOf = static function (?string $name): string {
 </div>
 
 <!-- ─── Grid principal (340px + 1fr) ──────────────────────────────── -->
-<div class="view-anim" style="display:grid;grid-template-columns:340px 1fr;gap:16px;">
+<div class="sgi-invoice-view-grid view-anim">
 
     <!-- ═════════════════════════ COLUMNA IZQUIERDA ═════════════════════════ -->
-    <aside style="display:flex;flex-direction:column;gap:14px;min-width:0;">
+    <aside class="sgi-invoice-view-left">
 
         <?php
     // Slot del hero: divisor + fechas (Emisión / Vencimiento / Registro).
@@ -206,7 +206,7 @@ $initialsOf = static function (?string $name): string {
     </aside>
 
     <!-- ═════════════════════════ COLUMNA DERECHA ═════════════════════════ -->
-    <main style="display:flex;flex-direction:column;gap:14px;min-width:0;">
+    <main class="sgi-invoice-view-right">
 
         <!-- Datos generales (Documento + Clasificación) -->
         <div class="sgi-card">
