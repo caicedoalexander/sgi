@@ -106,7 +106,8 @@ final class NoveltyPipelineServiceTest extends TestCase
 
         $result = $service->assignToExistingLiquidationDoc($novelty, 55, 9);
 
-        $this->assertSame($this->doc, $result);
+        $this->assertTrue($result->success);
+        $this->assertSame($this->doc, $result->data);
         $this->assertSame(55, $novelty->liquidation_doc_id);
         $this->assertSame(NoveltyConstants::STATUS_CONTABILIDAD, $novelty->pipeline_status);
     }
@@ -125,7 +126,8 @@ final class NoveltyPipelineServiceTest extends TestCase
 
         $result = $service->assignToExistingLiquidationDoc($novelty, 55, 9);
 
-        $this->assertSame($this->doc, $result);
+        $this->assertTrue($result->success);
+        $this->assertSame($this->doc, $result->data);
     }
 
     public function testAssignToExistingReturnsErrorAndSkipsHistoryWhenSaveFails(): void
@@ -143,7 +145,8 @@ final class NoveltyPipelineServiceTest extends TestCase
 
         $result = $service->assignToExistingLiquidationDoc($novelty, 55, 9);
 
-        $this->assertSame(['No se pudo asignar la novedad.'], $result);
+        $this->assertFalse($result->success);
+        $this->assertSame(['No se pudo asignar la novedad.'], $result->errors);
     }
 
     public function testSaveAndAdvanceSurfacesWarningWhenRoleCannotOperateStep(): void

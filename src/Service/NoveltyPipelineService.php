@@ -364,13 +364,15 @@ class NoveltyPipelineService
      * Assign a novelty to a liquidation document.
      * Creates the document if it doesn't exist yet.
      * Creates 2 or 3 signature slots based on type's requires_employee_signature_review.
+     *
+     * @return \App\Service\ServiceResult ok(data=NoveltyLiquidationDoc) en éxito; fail([...]) en error.
      */
     public function assignToLiquidationDoc(
         EmployeeNovelty $novelty,
         string $liquidationNumber,
         array $data,
         int $userId,
-    ): object|array {
+    ): ServiceResult {
         $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
 
         $doc = $liquidationDocsTable->find()
@@ -388,7 +390,7 @@ class NoveltyPipelineService
             ]);
 
             if (!$liquidationDocsTable->save($doc)) {
-                return ['No se pudo crear el documento de liquidación.'];
+                return ServiceResult::fail(['No se pudo crear el documento de liquidación.']);
             }
 
             // Determine which signature slots to create
@@ -421,10 +423,10 @@ class NoveltyPipelineService
         }
 
         if (!$this->_attachNoveltyToDoc($novelty, $doc, $userId)) {
-            return ['No se pudo asignar la novedad al documento de liquidación.'];
+            return ServiceResult::fail(['No se pudo asignar la novedad al documento de liquidación.']);
         }
 
-        return $doc;
+        return ServiceResult::ok($doc);
     }
 
     /**
@@ -437,13 +439,13 @@ class NoveltyPipelineService
      * @param \App\Model\Entity\EmployeeNovelty $novelty Novelty to reassign.
      * @param int $existingDocId Existing liquidation document id.
      * @param int $userId Acting user id.
-     * @return object|array El doc (object) en éxito; array de strings en error.
+     * @return \App\Service\ServiceResult ok(data=doc) en éxito; fail([...]) en error.
      */
     public function assignToExistingLiquidationDoc(
         EmployeeNovelty $novelty,
         int $existingDocId,
         int $userId,
-    ): object|array {
+    ): ServiceResult {
         $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
         $doc = $liquidationDocsTable->get($existingDocId);
@@ -453,10 +455,10 @@ class NoveltyPipelineService
         );
 
         if (!$ok) {
-            return ['No se pudo asignar la novedad.'];
+            return ServiceResult::fail(['No se pudo asignar la novedad.']);
         }
 
-        return $doc;
+        return ServiceResult::ok($doc);
     }
 
     /**

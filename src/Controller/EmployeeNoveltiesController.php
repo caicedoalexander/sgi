@@ -1005,19 +1005,21 @@ class EmployeeNoveltiesController extends AppController
                 (int)$user->id,
             );
 
-            if (is_array($result)) {
-                $this->Flash->error(implode(' ', $result));
+            if (!$result->success) {
+                $this->Flash->error(implode(' ', $result->errors));
             } else {
-                $this->Flash->success('Novedad asignada al documento de liquidación: ' . $result->liquidation_number);
+                $docNumber = $result->data->liquidation_number;
+                $this->Flash->success('Novedad asignada al documento de liquidación: ' . $docNumber);
             }
         } elseif ($liquidationNumber) {
             $data = $this->request->getData();
             $result = $this->pipelineService->assignToLiquidationDoc($novelty, $liquidationNumber, $data, $user->id);
 
-            if (is_array($result)) {
-                $this->Flash->error(implode(' ', $result));
+            if (!$result->success) {
+                $this->Flash->error(implode(' ', $result->errors));
             } else {
-                $this->Flash->success('Novedad asignada al documento de liquidación: ' . $result->liquidation_number);
+                $docNumber = $result->data->liquidation_number;
+                $this->Flash->success('Novedad asignada al documento de liquidación: ' . $docNumber);
             }
         } else {
             $this->Flash->error('Debe indicar un número de liquidación o seleccionar un documento existente.');
