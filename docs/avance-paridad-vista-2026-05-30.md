@@ -97,6 +97,8 @@ Hallazgo durante la validación visual: 404 `/marked_as_signed` en `NoveltyLiqui
 
 ## Siguientes pasos
 
+> **Cierre Ola 4 (2026-05-30).** Toda la deriva accidental (A) está ejecutada y todas las zonas grises (C) resueltas — sea por implementación (C3, C6/A7, C7, C8) o por reclasificación a (B) con evidencia (C4, C5). **Único pendiente deliberadamente diferido: C9** (element de sub-tablas), por ganancia marginal y riesgo visual desproporcionado. La auditoría de la capa de vista se da por cerrada salvo que se retome C9.
+
 **Lote rentable (✅ ejecutado — Ola 4, validado: 219/219 PHPUnit · `php -l` limpio · `cs-check` sin nuevos errores):**
 1. ~~**A2**~~ ✅ — `PaymentScheduling/edit.php` lee `$viewModel->currentStatusBadge` (`view.php` ya lo hacía tras C1); import huérfano eliminado.
 2. ~~**C3**~~ ✅ (parcial) — extraído `element('pipeline_regress_action')` (botón regresar idéntico en PettyCash/Refund/PaymentScheduling). `registryLines` se mantiene bespoke por dominio (no era duplicación real).
