@@ -4,8 +4,7 @@ declare(strict_types=1);
 namespace App\Service\Pipeline\Invoice\Policy;
 
 use App\Constants\InvoiceConstants;
-use App\Constants\PaymentSchedulingConstants;
-use Cake\ORM\TableRegistry;
+use App\Service\InvoiceLockGuard;
 
 /**
  * Policy que encapsula los bloqueos de edición y regresión de una factura
@@ -16,6 +15,13 @@ use Cake\ORM\TableRegistry;
  */
 final class InvoiceLockPolicy
 {
+    private InvoiceLockGuard $guard;
+
+    public function __construct(?InvoiceLockGuard $guard = null)
+    {
+        $this->guard = $guard ?? new InvoiceLockGuard();
+    }
+
     /**
      * Returns true if the invoice is linked to a Petty Cash record.
      */
@@ -30,16 +36,7 @@ final class InvoiceLockPolicy
      */
     public function isLockedByPaidScheduling(int $invoiceId): bool
     {
-        $paymentsTable = TableRegistry::getTableLocator()->get('InvoicePayments');
-
-        return $paymentsTable->find()
-            ->matching('PaymentSchedulings', function ($q) {
-                return $q->where([
-                    'PaymentSchedulings.pipeline_status' => PaymentSchedulingConstants::STATUS_PAGADA,
-                ]);
-            })
-            ->where(['InvoicePayments.invoice_id' => $invoiceId])
-            ->count() > 0;
+        return $this->guard->hasPaidSchedulingLink($invoiceId);
     }
 
     /**
