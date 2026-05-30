@@ -95,7 +95,6 @@ class NoveltyTypesController extends AppController
             ->withType('application/json')
             ->withStringBody(json_encode([
                 'requires_boss_approval' => (bool)$noveltyType->requires_boss_approval,
-                'requires_employee_signature_creation' => (bool)$noveltyType->requires_employee_signature_creation,
                 'requires_employee_signature_review' => (bool)$noveltyType->requires_employee_signature_review,
                 'show_start_date' => (bool)$noveltyType->show_start_date,
                 'show_end_date' => (bool)$noveltyType->show_end_date,

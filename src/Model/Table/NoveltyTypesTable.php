@@ -59,7 +59,6 @@ class NoveltyTypesTable extends Table
             ->allowEmptyString('parent_id');
 
         $validator->boolean('requires_boss_approval');
-        $validator->boolean('requires_employee_signature_creation');
         $validator->boolean('requires_employee_signature_review');
         $validator->boolean('show_start_date');
         $validator->boolean('show_end_date');

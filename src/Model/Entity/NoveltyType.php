@@ -11,7 +11,6 @@ class NoveltyType extends Entity
         'name' => true,
         'parent_id' => true,
         'requires_boss_approval' => true,
-        'requires_employee_signature_creation' => true,
         'requires_employee_signature_review' => true,
         'show_start_date' => true,
         'show_end_date' => true,

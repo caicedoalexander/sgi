@@ -41,7 +41,7 @@ Leyenda: ✅ ejecutado · 🔄 reclasificado · ⏸ diferido · ◻ decisión pe
 | # | Divergencia | Estado | Commit / nota |
 |---|---|---|---|
 | **A1** | Mapas estado→pill inline → `*Presentation::STATUS_BADGES` (6 templates) | ✅ ejecutado | `44acb33` — 2 drifts reales corregidos de paso |
-| **A2** | `PaymentScheduling/edit` recomputa el pill en vez de usar `$viewModel->currentStatusBadge` | ⏸ diferido | trivial; quedó fuera del lote (se ligaba a C1, ya resuelto) |
+| **A2** | `PaymentScheduling/edit` recomputa el pill en vez de usar `$viewModel->currentStatusBadge` | ✅ ejecutado | Ola 4 — solo restaba `edit.php` (`view.php` ya lo leía tras C1); ahora `[$psStatusLabel,$psStatusPill]=$viewModel->currentStatusBadge` + import `PaymentSchedulingPresentation` huérfano eliminado |
 | **A3** | "Doble alias `statusBadgeMap`/`badgeColors`" en Novelty | 🔄 no-deriva | dos roles distintos (header vs docs); no se toca |
 | **A4** | `STATUS_ICONS` dead-code | ✅ ejecutado | `44acb33` — borrado en las 6 Presentations + props/alias muertos (6/6, P1) |
 | **A5** | `READY_FOR_PAYMENT_BADGES` dead const | ✅ ejecutado | `44acb33` — `SharedPresentation` + import huérfano |
@@ -55,7 +55,7 @@ Leyenda: ✅ ejecutado · 🔄 reclasificado · ⏸ diferido · ◻ decisión pe
 | **A13** | Filas de `index` con `onmouseenter/leave` inline vs `.clickable-row` | ⏸ diferido | menor, transversal a los 6 |
 | **C1** 🔑 | VM read-only para la acción `view` en los 6 | ✅ ejecutado | `0ab9da5`+`fbb0d1f` — `ViewViewModelInterface` + 6 `{Modulo}ViewViewModel` |
 | **C2** 🔑 | `RowView` generalizado (lógica dentro de `forRow()`) | ✅ ejecutado | `0ab9da5`+`fbb0d1f` — 5 RowViews nuevos + Invoice ampliado (P9) |
-| **C3** | Slot/builder compartido para el `ob_start` del sidebar (`registryLines`/`actionsHtml`) en cada `edit` | ◻ decisión pendiente | el ítem de Ola 4 con más retorno (duplicación real en 5 edits) |
+| **C3** | Slot/builder compartido para el `ob_start` del sidebar (`registryLines`/`actionsHtml`) en cada `edit` | ✅ ejecutado (parcial) | Ola 4 — extraído `element('pipeline_regress_action')` (botón regresar, **idéntico** en PettyCash/Refund/PaymentScheduling). `registryLines` se deja bespoke por dominio (no es duplicación real: contenido distinto por módulo) |
 | **C4** | Extender `Support/PipelineEditFlags` a Novelty | ◻ decisión pendiente | paridad menor |
 | **C5** | `email_log_panel` solo en Invoice + EN/edit | ◻ decisión pendiente | requiere saber qué módulos emiten correos de pipeline |
 | **C6** | `document_row` directo vs `documents_section` en 3 `view` | ◻ decisión pendiente | decidir canon de docs en `view` (o flag `readOnly` al element); se solapa con A7 |
@@ -91,18 +91,18 @@ Hallazgo durante la validación visual: 404 `/marked_as_signed` en `NoveltyLiqui
 - **Fase B — quitar captura:** eliminado el campo de firma (imagen + canvas) en `EmployeeNovelties/add` y su manejo en `EmployeeNoveltiesController::add()`. La columna `employee_signature` se **conserva** (sin migración): datos históricos siguen renderizando; solo se deja de poblar.
 - **Fase C — código muerto:** borrados `sgi-signature.js`, `sgi-epadlink.js`, `NoveltySignatureService`, `LeaveSignatureService`; quitadas inyecciones DI en 2 controllers + `Application.php`; docs actualizados.
 - Commit: `2f2c00a` · 219/219 tests · 404 confirmado eliminado en navegador.
-- **Cabo suelto:** el checkbox `requires_employee_signature_creation` quedó **inerte** en el admin de `NoveltyTypes` (su única UI consumidora se eliminó). Pendiente decidir si se retira.
+- **Cabo suelto (✅ resuelto, Ola 4):** el checkbox `requires_employee_signature_creation` quedó **inerte** en el admin de `NoveltyTypes` (su única UI consumidora se eliminó). Retirado: 2 casillas UI (`add.php`/`edit.php`) + clave muerta del JSON de `getFlags()` + `$_accessible`/`validator->boolean`. La **columna de BD se conserva** (sin migración, igual que `employee_signature`); solo se retira la superficie editable/expuesta.
 
 ---
 
 ## Siguientes pasos
 
-**Lote rentable (cuando se retome):**
-1. **A2** — `PaymentScheduling/edit`/`view` que lean `$viewModel->currentStatusBadge` en vez de recomputar (trivial).
-2. **C3** — extraer un slot/builder compartido para el `ob_start` del sidebar (`registryLines`/`actionsHtml`) repetido en los 5 `edit`. El de mayor retorno de la Ola 4.
-3. Retirar el checkbox inerte `requires_employee_signature_creation` del admin de `NoveltyTypes` (cabo del trabajo de firmas).
+**Lote rentable (✅ ejecutado — Ola 4, validado: 219/219 PHPUnit · `php -l` limpio · `cs-check` sin nuevos errores):**
+1. ~~**A2**~~ ✅ — `PaymentScheduling/edit.php` lee `$viewModel->currentStatusBadge` (`view.php` ya lo hacía tras C1); import huérfano eliminado.
+2. ~~**C3**~~ ✅ (parcial) — extraído `element('pipeline_regress_action')` (botón regresar idéntico en PettyCash/Refund/PaymentScheduling). `registryLines` se mantiene bespoke por dominio (no era duplicación real).
+3. ~~Retirar checkbox inerte~~ ✅ — `requires_employee_signature_creation` retirado de UI (`add`/`edit`) + `getFlags()` + `$_accessible`/`validator`; columna BD conservada.
 
-**Decisiones tuyas (abren trabajo):**
+**Decisiones tuyas (abren trabajo) — pendientes:**
 4. **C6 / A7** — canon de documentos en `view`: ¿flag `readOnly` en `documents_section`, o aceptar `document_row` directo como canon? (3 vistas ya convergieron a directo).
 5. **C5** — ¿qué módulos emiten correos de pipeline vía `EmailLogService`? Define si `email_log_panel` en 4 módulos es gap (alinear) o ausencia correcta.
 

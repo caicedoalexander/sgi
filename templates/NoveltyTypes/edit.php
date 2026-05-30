@@ -48,10 +48,6 @@ $this->assign('title', 'Editar Tipo de Novedad');
                     <label class="form-check-label" for="requires-boss-approval">Requiere aprobación del jefe inmediato</label>
                 </div>
                 <div class="form-check mb-2">
-                    <?= $this->Form->checkbox('requires_employee_signature_creation', ['class' => 'form-check-input', 'id' => 'requires-sig-creation']) ?>
-                    <label class="form-check-label" for="requires-sig-creation">Requiere firma del empleado al crear</label>
-                </div>
-                <div class="form-check mb-2">
                     <?= $this->Form->checkbox('requires_employee_signature_review', ['class' => 'form-check-input', 'id' => 'requires-sig-review']) ?>
                     <label class="form-check-label" for="requires-sig-review">Requiere firma del empleado en revisión de documentos</label>
                 </div>
