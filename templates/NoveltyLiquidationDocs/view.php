@@ -200,15 +200,13 @@ $noveltyCount  = $viewModel->noveltyCount;
                     <div style="background:var(--bg-subtle);padding:14px;text-align:center;height:100%;">
                         <div class="sgi-label" style="margin-bottom:6px;"><?= $signerLabels[$sig->signer_type] ?? h($sig->signer_type) ?></div>
                         <?php if ($sig->signature_path): ?>
-                            <img src="<?= $this->Url->build('/' . $sig->signature_path) ?>" alt="Firma"
-                                 style="max-width:100%;max-height:90px;">
+                            <span class="pill pill-primary-soft"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Firmado</span>
                             <div class="mt-2" style="font-size:var(--fs-body-sm);color:var(--text-muted);line-height:1.4;">
                                 <?= h($sig->signed_by_user->full_name ?? '') ?>
                                 <?php if ($sig->approved_at): ?>
                                 <div class="mono" style="font-size:var(--fs-meta);"><?= $sig->approved_at->format('d/m/Y H:i') ?></div>
                                 <?php endif; ?>
                             </div>
-                            <span class="pill pill-primary-soft mt-2">Firmado</span>
                         <?php else: ?>
                             <span class="pill pill-warning-soft mt-2">Pendiente</span>
                         <?php endif; ?>

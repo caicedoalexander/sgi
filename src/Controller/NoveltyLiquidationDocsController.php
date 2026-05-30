@@ -13,7 +13,6 @@ use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
-use App\Service\NoveltySignatureService;
 use App\Service\Pipeline\Novelty\Policy\NoveltyActionPolicy;
 use App\View\Presentation\NoveltyPresentation;
 use App\ViewModel\NoveltyLiquidationDocEditViewModel;
@@ -35,8 +34,6 @@ class NoveltyLiquidationDocsController extends AppController
 
     private NoveltyObservationService $observationService;
 
-    private NoveltySignatureService $signatureService;
-
     private NoveltyActionPolicy $actionPolicy;
 
     private NoveltyHistoryService $historyService;
@@ -51,7 +48,6 @@ class NoveltyLiquidationDocsController extends AppController
         $this->pipelineService = $container->get(NoveltyPipelineService::class);
         $this->documentService = $container->get(NoveltyDocumentService::class);
         $this->observationService = $container->get(NoveltyObservationService::class);
-        $this->signatureService = $container->get(NoveltySignatureService::class);
         $this->actionPolicy = $container->get(NoveltyActionPolicy::class);
         $this->historyService = $container->get(NoveltyHistoryService::class);
     }

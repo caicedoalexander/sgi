@@ -518,9 +518,6 @@ $noveltyCount      = $viewModel->noveltyCount;
 <?= $this->element('document_row_template', ['showBadge' => true]) ?>
 <?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
 
-<?= $this->Html->script('sgi-signature') ?>
-<?= $this->Html->script('sgi-epadlink') ?>
-
 <?php $this->append('script') ?>
 <script>
 (function(){

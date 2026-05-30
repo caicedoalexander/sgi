@@ -76,7 +76,6 @@ Sistema de diseño: ver la sección [Sistema de Diseño](#sistema-de-diseño) m�
 | `PipelineAuthorizationService` | Autoriza si un rol puede operar (avanzar/regresar/editar) un paso de un pipeline (`pipeline_permissions`). Espejo del `AuthorizationService` para steps de pipeline. |
 | `InvoiceHistoryService` / `EmployeeHistoryService` / `PettyCashHistoryService` / `RefundHistoryService` / `AdvanceLegalizationHistoryService` / `NoveltyHistoryService` | Audit trail field-by-field por dominio |
 | `*DocumentService` (`InvoiceDocumentService`, `EmployeeDocumentService`, `PettyCashDocumentService`, `RefundDocumentService`, `AdvanceLegalizationDocumentService`, `PaymentSchedulingDocumentService`, `NoveltyDocumentService`, `LeaveDocumentService`) | Gestión de uploads/eliminación de documentos por dominio (usan `Trait/DocumentUploadTrait`) |
-| `LeaveSignatureService` / `NoveltySignatureService` | Firmas de documentos de licencias y novedades |
 | `NoveltyObservationService` | Observaciones del pipeline de novedades |
 | `ApprovalTokenService` | External approval via SHA256 tokens (48h TTL) |
 | `NotificationService` | Email para links de aprobación, notificaciones del pipeline y prueba SMTP. Usa `CircuitBreaker`. |

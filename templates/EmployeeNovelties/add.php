@@ -148,21 +148,6 @@ $this->assign('title', 'Nueva Novedad');
                 ]) ?>
             </div>
 
-            <!-- Firma del Funcionario (shown when type requires employee signature at creation) -->
-            <div class="col-12" id="signature-field" style="display:none;">
-                <label class="form-label">Firma del Funcionario <span class="text-muted fw-normal" style="font-size:var(--fs-body);">(Opcional)</span></label>
-                <div class="d-flex gap-3 align-items-start mb-2">
-                    <div>
-                        <input type="file" name="signature_file" id="signature-file" class="form-control form-control-sm"
-                               accept="image/png,image/jpeg" style="max-width:300px;">
-                        <div class="form-text">Suba una imagen o haga clic en el recuadro para dibujar su firma</div>
-                    </div>
-                </div>
-                <div class="sgi-signature-pad" data-target="#signature-base64"
-                     data-signer-label="Firma del Funcionario"
-                     style="width:320px;height:120px;"></div>
-                <input type="hidden" name="signature_base64" id="signature-base64">
-            </div>
         </div>
 
         <div class="d-flex gap-2 pt-3 mt-3" style="border-top:1px solid var(--border-color);">
@@ -233,16 +218,8 @@ $this->assign('title', 'Nueva Novedad');
                 if (approverField) {
                     approverField.style.display = flags.requires_boss_approval ? '' : 'none';
                 }
-
-                // Show/hide employee signature field
-                var sigField = document.getElementById('signature-field');
-                if (sigField) {
-                    sigField.style.display = flags.requires_employee_signature_creation ? '' : 'none';
-                }
             });
     });
 
 })();
 </script>
-<?= $this->Html->script('sgi-signature') ?>
-<?= $this->Html->script('sgi-epadlink') ?>

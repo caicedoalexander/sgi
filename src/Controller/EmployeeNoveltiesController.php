@@ -17,7 +17,6 @@ use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
-use App\Service\NoveltySignatureService;
 use App\View\Presentation\NoveltyPresentation;
 use App\ViewModel\EmployeeNoveltyAddViewModel;
 use App\ViewModel\EmployeeNoveltyEditViewModel;
@@ -45,8 +44,6 @@ class EmployeeNoveltiesController extends AppController
 
     private LeaveDocumentService $leaveDocumentService;
 
-    private NoveltySignatureService $signatureService;
-
     private ApprovalTokenService $tokenService;
 
     private NotificationService $notificationService;
@@ -60,7 +57,6 @@ class EmployeeNoveltiesController extends AppController
         $this->observationService = $container->get(NoveltyObservationService::class);
         $this->historyService = $container->get(NoveltyHistoryService::class);
         $this->leaveDocumentService = $container->get(LeaveDocumentService::class);
-        $this->signatureService = $container->get(NoveltySignatureService::class);
         $this->tokenService = $container->get(ApprovalTokenService::class);
         $this->notificationService = $container->get(NotificationService::class);
     }
@@ -725,36 +721,6 @@ class EmployeeNoveltiesController extends AppController
                         ]);
                         $massiveTable->save($massiveEntry);
                     }
-                }
-
-                // Handle employee signature
-                $signaturePath = null;
-
-                $signatureFile = $this->request->getUploadedFile('signature_file');
-                if ($signatureFile && $signatureFile->getError() === UPLOAD_ERR_OK) {
-                    $signaturePath = $this->signatureService->saveFromUpload(
-                        $novelty->id,
-                        $signatureFile,
-                        $user->id,
-                        'employee',
-                    );
-                }
-
-                if (!$signaturePath) {
-                    $signatureBase64 = $this->request->getData('signature_base64');
-                    if (!empty($signatureBase64)) {
-                        $signaturePath = $this->signatureService->saveFromBase64(
-                            $novelty->id,
-                            $signatureBase64,
-                            $user->id,
-                            'employee',
-                        );
-                    }
-                }
-
-                if ($signaturePath) {
-                    $novelty->employee_signature = $signaturePath;
-                    $this->EmployeeNovelties->save($novelty);
                 }
 
                 // Generate approval token if type requires boss approval

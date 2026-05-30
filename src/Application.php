@@ -39,7 +39,6 @@ use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
 use App\Service\LeaveDocumentService;
-use App\Service\LeaveSignatureService;
 use App\Service\LiquidationDocPaymentService;
 use App\Service\N8nService;
 use App\Service\NotificationService;
@@ -47,7 +46,6 @@ use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
 use App\Service\NoveltyPipelineService;
-use App\Service\NoveltySignatureService;
 use App\Service\PaymentRegistryService;
 use App\Service\PaymentSchedulingDocumentService;
 use App\Service\PaymentSchedulingHistoryService;
@@ -351,7 +349,6 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(NoveltyHistoryService::class);
         $container->addShared(NoveltyObservationService::class);
         $container->addShared(NoveltyDocumentService::class);
-        $container->addShared(NoveltySignatureService::class);
         $container->addShared(NoveltyFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
         $container->addShared(NoveltyPipelineStateRegistry::class);
@@ -363,7 +360,6 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 NoveltyHistoryService::class,
             ]);
         $container->addShared(LeaveDocumentService::class);
-        $container->addShared(LeaveSignatureService::class);
         $container->addShared(LiquidationDocPaymentService::class);
 
         // === Petty cash / payment scheduling / advances ===

@@ -82,10 +82,6 @@ Radio asimétrico 10/2 es convención universal (WhatsApp/Slack/iMessage). Manti
 ```
 Badges numéricos pequeños como contadores; convención visual estándar.
 
-### Signature overlay (`webroot/js/sgi-signature.js`)
-
-Card modal temporal flotante sobre documento con `backdrop-filter: blur(3px)`. **Única excepción que permite `box-shadow`** porque flota sobre fondo borroso y el border sería insuficiente.
-
 ### Template editor
 
 Editor visual de plantillas con borders funcionales (zona arrastrable, selección). Los borders son afordancia interactiva, no decoración.
