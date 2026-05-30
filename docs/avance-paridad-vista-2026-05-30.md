@@ -1,0 +1,111 @@
+# Avance de ejecución — Paridad de la capa de vista (Olas 1-3)
+
+> **Fecha:** 2026-05-30 · **Estado:** ejecutado en `main`, validado visualmente.
+>
+> Documento **compañero** de [`auditoria-vista-modulos-flujo-2026-05-30.md`](auditoria-vista-modulos-flujo-2026-05-30.md) (la auditoría base de la capa de vista — ViewModel/Presentation/templates). Aquí se registra el **delta de implementación** de las Olas 1-3 de ese roadmap: qué se ejecutó, con qué commits, qué se reclasificó con evidencia nueva, y qué queda. Es el equivalente, para la **capa de vista**, de lo que [`avance-paridad-olas-1-4.md`](avance-paridad-olas-1-4.md) es para la capa estructural/backend.
+>
+> ⚠️ **Numeración independiente.** Los códigos A1–A13 / C1–C9 de **este** documento son los de la auditoría **de vista** y **no** coinciden con los de la auditoría estructural (que tienen el mismo formato pero distinto significado). Aquí, p. ej., **C1 = "VM read-only para `view`"** y **C2 = "RowView generalizado"**, no lo que esos códigos significan en el tracker estructural.
+
+---
+
+## Cómo leer las señales
+
+Mismas convenciones que el tracker estructural: lo único que se migra es la **deriva accidental (clase A)**; las **(B)** son diferencias esenciales de dominio (no tocar) y las **(C)** son zonas grises que requieren decisión. Un ítem ✅ está cerrado; ⚠️/🔵 describen el estado final aceptado, no tareas pendientes.
+
+---
+
+## Resumen por ola
+
+| Ola | Foco | Ítems ejecutados | Commits | Resultado |
+|---|---|---|---|---|
+| **1** | Colapsar mapas estado→pill + dead-code | A1, A4, A5, A11, A12 | `44acb33` | ✅ 219/219 PHPUnit · `php -l` limpio · **2 drifts visuales reales corregidos** |
+| **2** | VM read-only de `view` + RowView (decisiones C1, C2) | C1, C2 (6 módulos) | `0ab9da5` (piloto Refund), `fbb0d1f` (5 módulos) | ✅ 219/219 · cross-check de accesores · validado visualmente |
+| **3** | Element compartido + layout + docblock | A8, A10, docblock | `88aeb00`, `f0a6911`, `656be1e` (doc) | ✅ 219/219 · validado visualmente. **A9 reclasificado a (B)**; **A6 skip** |
+
+**Matices de ejecución a registrar:**
+
+- **A1 — el diff celda-a-celda evitó un barrido a ciegas.** El adversarial exigió comparar cada array de pills inline contra su `*Presentation::STATUS_BADGES` antes de unificar. Resultado: solo 2 eran drifts reales (`Invoices/edit` pintaba `verificacion_pago` como `info-soft` ≠ const `warning-soft`; `EmployeeNovelties/view` tenía un mapa stale con `rrhh: info-soft` ≠ `accent-soft` + 3 claves faltantes que caían a `pill-muted`). El resto eran copias idénticas o no-ops redundantes. Alcance real: 6 ediciones triviales, no un refactor.
+- **A4 — `STATUS_ICONS` muerto en 6/6, no 4/6.** La re-verificación adversarial (P1) corrigió la estimación: la const era dead-code en los 6 módulos, incluida la cadena VM→template de Novelty (`statusIcons` se asignaba pero nunca se renderizaba). Se borró la const + 2 props muertas de VM + 2 alias de template.
+- **C1/C2 (Ola 2) — piloto antes de replicar.** Se implementó primero en **Refund** (`ViewViewModelInterface` + `RefundViewViewModel` + `RefundRowView` + `forRow()`), se validó, y recién entonces se replicó a los otros 5 con un workflow multi-agente. Verificación central post-workflow: `php -l`, cross-check de que cada `$viewModel->X`/`$row->X` existe como propiedad, y que ningún `view()` deja variables sueltas sin setear (Invoice/EN/NLD conservan su `compact()` y solo añaden el VM; los demás asignan todo desde el VM).
+- **C2 — caveat P9 atendido.** Tener `RowView` no basta: el propio `Invoices/index` re-derivaba variantes pese a usar `forRow()`. Al generalizar se movió esa lógica (`pipelineVariant`/`stageIdx`/`pillClass`) **dentro** de `forRow()`/`InvoiceRowView` (ampliado a 13 campos).
+- **A3 reclasificado a no-deriva.** La premisa del audit ("`statusBadgeMap` es alias muerto de `badgeColors`") es **falsa**: el código muestra dos roles distintos — `statusBadgeMap` = pill del estado del header; `badgeColors` = pills de estado de **documentos** (pasado a `document_row`). Coincidir en la misma const no los hace alias. No se tocó.
+- **A9 reclasificado a (B) esencial — la validación visual refutó el audit.** El audit marcó `Invoices/edit` (que usa `sgi-edit-shell`) como deriva ("template viejo sin migrar"). El navegador mostró lo contrario: `sgi-edit-shell` es un **app-shell de altura completa** (header **fijo** + body con scroll interno + footer sticky) **más sofisticado** que el grid canónico para el form más pesado. Migrarlo perdería el header fijo (regresión UX). Diferencia esencial, no deriva.
+- **A6 skip recomendado.** Unificar el método de entrada en `add` (`get_object_vars`/props sueltas → `set('viewModel')`) es churn sobre forms `add` **legacy** (canon B), e Invoice exigiría rediseñar `InvoiceAddViewModel` para cargar dropdowns. Bajo valor; se perdería al reescribir esos `add`.
+
+---
+
+## Estado de divergencias (capa de vista)
+
+Leyenda: ✅ ejecutado · 🔄 reclasificado · ⏸ diferido · ◻ decisión pendiente · ❎ skip.
+
+| # | Divergencia | Estado | Commit / nota |
+|---|---|---|---|
+| **A1** | Mapas estado→pill inline → `*Presentation::STATUS_BADGES` (6 templates) | ✅ ejecutado | `44acb33` — 2 drifts reales corregidos de paso |
+| **A2** | `PaymentScheduling/edit` recomputa el pill en vez de usar `$viewModel->currentStatusBadge` | ⏸ diferido | trivial; quedó fuera del lote (se ligaba a C1, ya resuelto) |
+| **A3** | "Doble alias `statusBadgeMap`/`badgeColors`" en Novelty | 🔄 no-deriva | dos roles distintos (header vs docs); no se toca |
+| **A4** | `STATUS_ICONS` dead-code | ✅ ejecutado | `44acb33` — borrado en las 6 Presentations + props/alias muertos (6/6, P1) |
+| **A5** | `READY_FOR_PAYMENT_BADGES` dead const | ✅ ejecutado | `44acb33` — `SharedPresentation` + import huérfano |
+| **A6** | Unificar método de entrada en `add` | ❎ skip recomendado | churn en forms legacy; Invoice exigiría rediseñar el AddVM |
+| **A7** | `view` re-pinta docs/pagos a mano teniendo elements | ⏸ parcial | Refund migrado en C1; PettyCash/PaymentScheduling/NLD usan `document_row` directo (se solapa con **C6**, decisión de canon pendiente) |
+| **A8** | Extraer element `change_history` (historial duplicado en EN/NLD) | ✅ ejecutado | `88aeb00` — `templates/element/change_history.php` (param `title`/`showNoveltyLink`) |
+| **A9** | `Invoices/edit` `sgi-edit-shell` → `sgi-invoice-view-grid` | 🔄 reclasificado a (B) | `656be1e` — `sgi-edit-shell` es superior (header fijo); NO migrar |
+| **A10** | `Invoices/view` + `PettyCash/view` grid inline → `sgi-invoice-view-grid` | ✅ ejecutado | `f0a6911` — validado visualmente (render idéntico) |
+| **A11** | Over-fetch `operationCenters` en `PaymentSchedulingAddViewModel` | ✅ ejecutado | `44acb33` — fetch + prop + paso eliminados |
+| **A12** | Sets muertos `linkedInvoices`/`linkedTotal` en `Advances::view` | ✅ ejecutado | `44acb33` |
+| **A13** | Filas de `index` con `onmouseenter/leave` inline vs `.clickable-row` | ⏸ diferido | menor, transversal a los 6 |
+| **C1** 🔑 | VM read-only para la acción `view` en los 6 | ✅ ejecutado | `0ab9da5`+`fbb0d1f` — `ViewViewModelInterface` + 6 `{Modulo}ViewViewModel` |
+| **C2** 🔑 | `RowView` generalizado (lógica dentro de `forRow()`) | ✅ ejecutado | `0ab9da5`+`fbb0d1f` — 5 RowViews nuevos + Invoice ampliado (P9) |
+| **C3** | Slot/builder compartido para el `ob_start` del sidebar (`registryLines`/`actionsHtml`) en cada `edit` | ◻ decisión pendiente | el ítem de Ola 4 con más retorno (duplicación real en 5 edits) |
+| **C4** | Extender `Support/PipelineEditFlags` a Novelty | ◻ decisión pendiente | paridad menor |
+| **C5** | `email_log_panel` solo en Invoice + EN/edit | ◻ decisión pendiente | requiere saber qué módulos emiten correos de pipeline |
+| **C6** | `document_row` directo vs `documents_section` en 3 `view` | ◻ decisión pendiente | decidir canon de docs en `view` (o flag `readOnly` al element); se solapa con A7 |
+| **C7** | Estandarizar `final readonly class` | ◻ cosmético | bajo retorno |
+| **C8** | `AddViewModel` muta el ORM (Advance/Invoice) | ◻ decisión pendiente | reorganización menor |
+| **C9** | Grids inline de sub-tablas (facturas/pagos) sin element | ◻ decisión pendiente | exigiría crear un element nuevo, ganancia marginal |
+
+**Decisión de arquitectura mayor (cerrada):** ViewModel y Presentation **coexisten** con responsabilidades disjuntas (per-request vs const-maps estáticos); **no fusionar** (B1). Acoplamiento mutuo nulo, dirección única VM→Presentation.
+
+---
+
+## Validación visual (Playwright, 2026-05-30)
+
+Índices y vistas de los 6 módulos renderizados en el navegador, **0 errores de console** en todas las páginas con datos:
+
+| Módulo | index | view | Nota |
+|---|---|---|---|
+| Invoice | ✅ | ✅ | el más pesado; `InvoiceViewViewModel` + RowView (P9) + A10 |
+| Refund | ✅ | ✅ | piloto |
+| EmployeeNovelties | ✅ | ✅ | element `change_history` |
+| NoveltyLiquidationDocs | ✅ | ✅ | `change_history` con link |
+| Advance | ✅ | ✅ | `AdvanceRowView` (pipeline + legalización) |
+| PettyCash | ✅ (empty) | n/a | sin registros; index empty-state OK, view no testeable |
+| PaymentScheduling | ✅ (empty) | n/a | ídem |
+
+---
+
+## Anexo — Eliminación de captura de firma (fuera del audit de vista)
+
+Hallazgo durante la validación visual: 404 `/marked_as_signed` en `NoveltyLiquidationDocs/view`. Al investigarlo se decidió (con el usuario) **eliminar la captura de firma desde el sistema** (canvas de dibujo + dispositivo ePad + imagen) y dejar solo el toggle **"marcar como firmado"**. El flujo pasa a: el usuario descarga el documento, lo firma fuera, lo re-sube como documento normal y marca "Firmado".
+
+- **Fase A — fix + vestigial:** `NLD/view` ya no renderiza el sentinel `signature_path='marked_as_signed'` como `<img>` (404 eliminado, badge "Firmado"); quitados los `script()` vestigiales de `NLD/edit`.
+- **Fase B — quitar captura:** eliminado el campo de firma (imagen + canvas) en `EmployeeNovelties/add` y su manejo en `EmployeeNoveltiesController::add()`. La columna `employee_signature` se **conserva** (sin migración): datos históricos siguen renderizando; solo se deja de poblar.
+- **Fase C — código muerto:** borrados `sgi-signature.js`, `sgi-epadlink.js`, `NoveltySignatureService`, `LeaveSignatureService`; quitadas inyecciones DI en 2 controllers + `Application.php`; docs actualizados.
+- Commit: `2f2c00a` · 219/219 tests · 404 confirmado eliminado en navegador.
+- **Cabo suelto:** el checkbox `requires_employee_signature_creation` quedó **inerte** en el admin de `NoveltyTypes` (su única UI consumidora se eliminó). Pendiente decidir si se retira.
+
+---
+
+## Siguientes pasos
+
+**Lote rentable (cuando se retome):**
+1. **A2** — `PaymentScheduling/edit`/`view` que lean `$viewModel->currentStatusBadge` en vez de recomputar (trivial).
+2. **C3** — extraer un slot/builder compartido para el `ob_start` del sidebar (`registryLines`/`actionsHtml`) repetido en los 5 `edit`. El de mayor retorno de la Ola 4.
+3. Retirar el checkbox inerte `requires_employee_signature_creation` del admin de `NoveltyTypes` (cabo del trabajo de firmas).
+
+**Decisiones tuyas (abren trabajo):**
+4. **C6 / A7** — canon de documentos en `view`: ¿flag `readOnly` en `documents_section`, o aceptar `document_row` directo como canon? (3 vistas ya convergieron a directo).
+5. **C5** — ¿qué módulos emiten correos de pipeline vía `EmailLogService`? Define si `email_log_panel` en 4 módulos es gap (alinear) o ausencia correcta.
+
+**Bajo retorno / opcional:** A13 (`.clickable-row`), C4 (`PipelineEditFlags` a Novelty), C7 (`final readonly class`), C8 (rol del AddVM), C9 (element de sub-tablas).
+
+**NO tocar (B, esenciales de dominio):** dualidad VM/Presentation, soportes bespoke con firmas, `add` legacy, side-rail de Novelty, Advance vía Invoices, forms-por-estado, naming `AdvanceLegalization*`, y `sgi-edit-shell` de Invoice/edit (A9 reclasificado).
