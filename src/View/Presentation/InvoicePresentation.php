@@ -9,7 +9,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 
 /**
- * Configuración de presentación (clases pill del Sistema de Diseño, iconos)
+ * Configuración de presentación (clases pill del Sistema de Diseño)
  * para el pipeline de facturas. Datos puros de UI — no contiene reglas de dominio.
  */
 final class InvoicePresentation
