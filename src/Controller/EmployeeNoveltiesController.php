@@ -828,7 +828,7 @@ class EmployeeNoveltiesController extends AppController
      * @param string|null $id Novelty ID.
      * @return \Cake\Http\Response|null
      */
-    #[Permission(action: 'edit')]
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_NOVELTIES)]
     public function advance(?string $id = null)
     {
         $this->request->allowMethod(['post']);

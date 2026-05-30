@@ -17,7 +17,8 @@ use Cake\ORM\TableRegistry;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Unit tests para NoveltyPipelineService::assignToExistingLiquidationDoc() (A4).
+ * Unit tests para NoveltyPipelineService: `assignToExistingLiquidationDoc()` (A4)
+ * y `saveAndAdvance()` (C8 — surfacing del motivo cuando no se puede avanzar).
  *
  * Suite pura (sin DB): TableLocator con mocks de NoveltyLiquidationDocs (get) y
  * EmployeeNovelties (getConnection/save); transactional() ejecuta el callback en
@@ -60,10 +61,17 @@ final class NoveltyPipelineServiceTest extends TestCase
 
         $noveltiesTable = $this->getMockBuilder(Table::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['save', 'getConnection'])
+            ->onlyMethods(['save', 'getConnection', 'patchEntity'])
             ->getMock();
         $noveltiesTable->method('getConnection')->willReturn($connection);
         $noveltiesTable->method('save')->willReturnCallback(fn($entity) => $this->saveSucceeds ? $entity : false);
+        $noveltiesTable->method('patchEntity')->willReturnCallback(function ($entity, array $data) {
+            foreach ($data as $field => $value) {
+                $entity->set($field, $value);
+            }
+
+            return $entity;
+        });
 
         $locator = new TableLocator();
         $locator->set('NoveltyLiquidationDocs', $docsTable);
@@ -136,5 +144,29 @@ final class NoveltyPipelineServiceTest extends TestCase
         $result = $service->assignToExistingLiquidationDoc($novelty, 55, 9);
 
         $this->assertSame(['No se pudo asignar la novedad.'], $result);
+    }
+
+    public function testSaveAndAdvanceSurfacesWarningWhenRoleCannotOperateStep(): void
+    {
+        // canOperate=false (stub por defecto): el avance no ocurre. Antes se
+        // omitía en silencio (C8); ahora se devuelve el motivo como warning.
+        $this->history->expects($this->never())->method('recordStatusChange');
+
+        $service = $this->buildService();
+        $novelty = new EmployeeNovelty([
+            'id' => 7,
+            'pipeline_status' => NoveltyConstants::STATUS_CONTABILIDAD,
+            'liquidation_doc_id' => null,
+        ]);
+
+        $result = $service->saveAndAdvance($novelty, [], 4, 9);
+
+        $this->assertTrue($result->success);
+        $this->assertFalse($result->data['advanced']);
+        $this->assertNull($result->data['nextStatus']);
+        $this->assertContains(
+            'No tiene permisos para avanzar este registro.',
+            $result->data['advanceErrors'],
+        );
     }
 }

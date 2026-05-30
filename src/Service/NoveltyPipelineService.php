@@ -139,7 +139,8 @@ class NoveltyPipelineService
         $currentStatus = (string)$novelty->pipeline_status;
         $filteredData = $this->filterEntityData($data, $roleId, $currentStatus);
 
-        $canAdvance = $this->denialReasonForAdvance($novelty, $roleId) === null;
+        $advanceDenial = $this->denialReasonForAdvance($novelty, $roleId);
+        $canAdvance = $advanceDenial === null;
 
         $advanceNextStatus = null;
         $postAdvanceErrors = [];
@@ -148,6 +149,11 @@ class NoveltyPipelineService
             if (empty($postAdvanceErrors)) {
                 $advanceNextStatus = $this->getNextStatus($novelty);
             }
+        } elseif ($advanceDenial === DenialReason::UNAUTHORIZED) {
+            // C8: antes el avance se omitía en silencio cuando el rol no podía
+            // operar el paso. Ahora se guarda igual pero se devuelve el motivo
+            // como warning (el controller lo muestra vía Flash->warning).
+            $postAdvanceErrors = [$advanceDenial->message()];
         }
 
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
