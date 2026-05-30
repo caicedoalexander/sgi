@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Constants\NoveltyConstants;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -82,6 +83,19 @@ class LiquidationDocPaymentsTable extends Table
         $validator
             ->date('authorized_date')
             ->allowEmptyDate('authorized_date');
+
+        $validator
+            ->scalar('status')
+            ->inList('status', [
+                NoveltyConstants::PAYMENT_RECORD_PENDING,
+                NoveltyConstants::PAYMENT_RECORD_AUTHORIZED,
+                NoveltyConstants::PAYMENT_RECORD_REJECTED,
+            ])
+            ->allowEmptyString('status');
+
+        $validator
+            ->scalar('rejection_reason')
+            ->allowEmptyString('rejection_reason');
 
         return $validator;
     }

@@ -15,6 +15,8 @@ class LiquidationDocPayment extends Entity
         'authorized' => true,
         'authorized_by' => true,
         'authorized_date' => true,
+        'status' => true,
+        'rejection_reason' => true,
         'created_by' => true,
     ];
 }

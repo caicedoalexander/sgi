@@ -163,7 +163,12 @@ class LiquidationDocPaymentsController extends AppController
             return $this->redirect(['controller' => 'NoveltyLiquidationDocs', 'action' => 'edit', $docId]);
         }
 
-        $result = $this->paymentService->rejectPayment((int)$paymentId, (int)$this->_getCurrentUser()->id);
+        $reason = (string)$this->request->getData('reason');
+        $result = $this->paymentService->rejectPayment(
+            (int)$paymentId,
+            (int)$this->_getCurrentUser()->id,
+            $reason,
+        );
 
         if ($result->success) {
             $this->Flash->success($result->data);

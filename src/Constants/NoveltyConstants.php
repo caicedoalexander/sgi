@@ -131,6 +131,13 @@ final class NoveltyConstants
         self::PAYMENT_NA => 'N/A',
     ];
 
+    // Estado de cada registro de pago (liquidation_doc_payments.status).
+    // Slugs en inglés por convención de estados técnicos internos (ver CLAUDE.md
+    // "Slug language convention"). Espeja InvoiceConstants::PAYMENT_RECORD_*.
+    public const PAYMENT_RECORD_PENDING = 'pending';
+    public const PAYMENT_RECORD_AUTHORIZED = 'authorized';
+    public const PAYMENT_RECORD_REJECTED = 'rejected';
+
     // Document types (for novelty_documents)
     public const DOC_TYPE_LIQUIDATION = 'liquidation_document';
 
@@ -158,5 +165,4 @@ final class NoveltyConstants
     public const APPROVAL_PENDING = 'Pendiente';
     public const APPROVAL_APPROVED = 'Aprobada';
     public const APPROVAL_REJECTED = 'Rechazada';
-
 }

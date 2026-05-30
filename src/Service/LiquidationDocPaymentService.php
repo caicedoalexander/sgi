@@ -36,8 +36,14 @@ class LiquidationDocPaymentService
             return ServiceResult::fail('Solo se pueden registrar pagos en estado Tesorería.');
         }
 
+        // Solo un pago en estado 'pending' bloquea un nuevo intento. Una fila
+        // previamente rechazada persiste con status='rejected' (no se borra) y
+        // NO debe impedir registrar un nuevo pago.
         $existing = $paymentsTable->find()
-            ->where(['liquidation_doc_id' => $docId, 'authorized' => false])
+            ->where([
+                'liquidation_doc_id' => $docId,
+                'status' => NoveltyConstants::PAYMENT_RECORD_PENDING,
+            ])
             ->first();
         if ($existing) {
             return ServiceResult::fail('Ya existe un pago pendiente de autorización.');
@@ -105,6 +111,7 @@ class LiquidationDocPaymentService
 
         $payment = $paymentsTable->get($paymentId);
         $payment->authorized = true;
+        $payment->status = NoveltyConstants::PAYMENT_RECORD_AUTHORIZED;
         $payment->authorized_by = $authorizedBy;
         $payment->authorized_date = date('Y-m-d');
 
@@ -141,12 +148,20 @@ class LiquidationDocPaymentService
     /**
      * Reject a pending payment and return document to Tesorería.
      *
+     * Marca el pago como rechazado (status=rejected) persistiendo el motivo en
+     * la fila; no elimina el registro (paridad con InvoicePaymentService).
+     *
      * @param int $paymentId Payment ID to reject.
      * @param int $rejectedBy User ID who rejects.
+     * @param string $reason Motivo del rechazo (obligatorio).
      * @return \App\Service\ServiceResult
      */
-    public function rejectPayment(int $paymentId, int $rejectedBy): ServiceResult
+    public function rejectPayment(int $paymentId, int $rejectedBy, string $reason): ServiceResult
     {
+        if (trim($reason) === '') {
+            return ServiceResult::fail('El motivo de rechazo es obligatorio.');
+        }
+
         $paymentsTable = TableRegistry::getTableLocator()->get('LiquidationDocPayments');
         $docsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
@@ -162,8 +177,10 @@ class LiquidationDocPaymentService
 
         $connection = $docsTable->getConnection();
         $ok = $connection->transactional(
-            function () use ($paymentsTable, $docsTable, $noveltiesTable, $payment, $doc, $docId, $rejectedBy) {
-                if (!$paymentsTable->delete($payment)) {
+            function () use ($paymentsTable, $docsTable, $noveltiesTable, $payment, $doc, $docId, $rejectedBy, $reason) {
+                $payment->status = NoveltyConstants::PAYMENT_RECORD_REJECTED;
+                $payment->rejection_reason = $reason;
+                if (!$paymentsTable->save($payment)) {
                     return false;
                 }
 
