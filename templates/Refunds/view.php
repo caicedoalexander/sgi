@@ -1,28 +1,20 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\Refund $record
+ * @var \App\ViewModel\RefundViewViewModel $viewModel
  */
 use App\Constants\InvoiceConstants;
-use App\Constants\RefundConstants;
 use App\View\Presentation\InvoicePresentation;
-use App\View\Presentation\RefundPresentation;
 
-$this->assign('title', 'Reintegro ' . $record->code);
+$record = $viewModel->record;
 
-$statusBadge  = RefundPresentation::STATUS_BADGES;
-$statusLabels = RefundConstants::STATUS_LABELS;
+$this->assign('title', $viewModel->pageTitle);
 
-$rfStatusPills = RefundPresentation::STATUS_BADGES;
-$rfStatusPill  = $rfStatusPills[$record->status] ?? 'pill-muted';
-$rfStatusLabel = $statusLabels[$record->status] ?? $record->status;
-
-$isTerminal = $record->status === RefundConstants::STATUS_PAGADA;
-$invoiceCount = count($record->invoices ?? []);
-$docs = $record->refund_documents ?? [];
-
-$bName  = $record->getBeneficiaryName();
-$bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?? null;
+[$rfStatusLabel, $rfStatusPill] = $viewModel->currentStatusBadge;
+$isTerminal   = $viewModel->isTerminal;
+$invoiceCount = $viewModel->invoiceCount;
+$bName        = $viewModel->beneficiaryName;
+$bLabel       = $viewModel->beneficiaryLabel;
 ?>
 
 <!-- Page header -->
@@ -60,17 +52,6 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
     <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
     <aside class="sgi-invoice-view-left">
         <?php
-        $registryLines = [];
-        if ($record->hasValue('created_by_user')) {
-            $registryLines[] = ['icon' => 'bi-person', 'html' => 'Creado por ' . h($record->created_by_user->full_name)];
-        }
-        if ($record->created) {
-            $registryLines[] = ['icon' => 'bi-calendar3', 'html' => 'Creado · <span class="mono">' . $record->created->format('d/m/Y H:i') . '</span>'];
-        }
-        if ($record->modified) {
-            $registryLines[] = ['icon' => 'bi-pencil-square', 'html' => 'Modificado · <span class="mono">' . $record->modified->format('d/m/Y') . '</span>'];
-        }
-
         echo $this->element('pipeline_sidebar', [
             'icon'           => 'arrow-counterclockwise',
             'idLabel'        => $record->code,
@@ -82,13 +63,13 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
             'entitySubLabel' => $bLabel,
             'entitySubIcon'  => 'bi-person-badge',
             'amountLabel'    => 'Total',
-            'amount'         => (float)$record->total_amount,
-            'pipelineSteps'  => RefundConstants::STATUSES,
-            'pipelineLabels' => $statusLabels,
-            'currentStatus'  => $record->status,
+            'amount'         => $viewModel->totalAmount,
+            'pipelineSteps'  => $viewModel->pipelineSteps,
+            'pipelineLabels' => $viewModel->pipelineLabels,
+            'currentStatus'  => $viewModel->currentStatus,
             'isTerminal'     => $isTerminal,
             'modifiedAt'     => $record->modified,
-            'registryLines'  => $registryLines,
+            'registryLines'  => $viewModel->registryLines,
         ]);
         ?>
     </aside>
@@ -183,20 +164,9 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
         </div>
 
         <!-- Soportes -->
-        <?php
-        $refundDocRows = [];
-        foreach ($docs as $doc) {
-            $refundDocRows[] = [
-                'doc'       => $doc,
-                'canDelete' => false,
-                'deleteUrl' => null,
-                'showBadge' => false,
-            ];
-        }
-        ?>
         <?= $this->element('documents_section', [
-            'groups'        => [['label' => null, 'pillKind' => null, 'rows' => $refundDocRows]],
-            'totalDocs'     => count($docs),
+            'groups'        => [['label' => null, 'pillKind' => null, 'rows' => $viewModel->documentRows]],
+            'totalDocs'     => $viewModel->totalDocs,
             'canUpload'     => false,
             'uploadModalId' => null,
             'emptyTitle'    => 'Sin soportes adjuntos',

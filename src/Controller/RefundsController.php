@@ -18,6 +18,7 @@ use App\Service\RefundPipelineService;
 use App\Service\StructuredLogger;
 use App\ViewModel\RefundAddViewModel;
 use App\ViewModel\RefundEditViewModel;
+use App\ViewModel\RefundViewViewModel;
 use Cake\Http\Response;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
@@ -219,7 +220,7 @@ class RefundsController extends AppController
             'RefundDocuments' => ['UploadedByUsers'],
         ]);
 
-        $this->set(compact('record'));
+        $this->set('viewModel', new RefundViewViewModel($record));
     }
 
     #[Permission(action: 'add')]

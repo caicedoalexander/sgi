@@ -22,9 +22,7 @@ $pageTitles = [
 $pageTitle = $pageTitles[$action] ?? 'Reintegros';
 $this->assign('title', $pageTitle);
 
-$statusBadge   = RefundPresentation::STATUS_BADGES;
 $statusLabels  = RefundConstants::STATUS_LABELS;
-$pipelineSteps = RefundConstants::STATUSES;
 
 $query        = $this->request->getQueryParams();
 $activeStatus = (string)($query['status'] ?? '');
@@ -211,14 +209,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2fr 1.1fr 0.8fr 1fr 1.7fr
     $rowCount = 0;
     foreach ($recordsArr as $i => $record):
         $rowCount++;
-        $stageIdx = array_search($record->status, $pipelineSteps, true);
-        if ($stageIdx === false) {
-            $stageIdx = -1;
-        }
-        $pillClass    = $statusBadge[$record->status] ?? 'pill-muted';
-        $invoiceCount = count($record->invoices ?? []);
-        $isPaid       = $record->status === RefundConstants::STATUS_PAGADA;
-        $beneficiary  = $record->getBeneficiaryName() ?: null;
+        $row  = RefundPresentation::forRow($record);
         $href = $this->Url->build(['action' => 'edit', $record->id]);
     ?>
         <a href="<?= h($href) ?>" role="row"
@@ -239,8 +230,8 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2fr 1.1fr 0.8fr 1fr 1.7fr
             <?php /* 2. Beneficiario + creador */ ?>
             <div style="min-width:0;">
                 <div style="font-size:12.5px;font-weight:600;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                    <?= $beneficiary
-                        ? h($beneficiary)
+                    <?= $row->beneficiaryName
+                        ? h($row->beneficiaryName)
                         : '<span style="color:var(--text-faint);">—</span>' ?>
                 </div>
                 <?php if ($record->hasValue('created_by_user')): ?>
@@ -252,13 +243,13 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2fr 1.1fr 0.8fr 1fr 1.7fr
             </div>
 
             <?php /* 3. Total */ ?>
-            <div class="mono" style="text-align:right;font-size:13.5px;font-weight:700;<?= $isPaid ? 'color:var(--primary-color);' : 'color:var(--text-default);' ?>">
+            <div class="mono" style="text-align:right;font-size:13.5px;font-weight:700;<?= $row->isPaid ? 'color:var(--primary-color);' : 'color:var(--text-default);' ?>">
                 $ <?= number_format((float)$record->total_amount, 0, ',', '.') ?>
             </div>
 
             <?php /* 4. # Facturas */ ?>
             <div class="mono" style="text-align:center;font-size:12px;color:var(--text-muted);">
-                <?= $invoiceCount ?>
+                <?= $row->invoiceCount ?>
             </div>
 
             <?php /* 5. Fecha */ ?>
@@ -268,17 +259,17 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2fr 1.1fr 0.8fr 1fr 1.7fr
 
             <?php /* 6. Estado · Pipeline */ ?>
             <div style="min-width:0;">
-                <?php if ($stageIdx >= 0): ?>
+                <?php if ($row->stageIdx >= 0): ?>
                     <div class="pipeline-mini" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
-                        <?php for ($s = 0, $n = count($pipelineSteps); $s < $n; $s++): ?>
-                            <div class="<?= $s <= $stageIdx ? 'on' : '' ?>"></div>
+                        <?php for ($s = 0; $s < $row->pipelineLength; $s++): ?>
+                            <div class="<?= $s <= $row->stageIdx ? 'on' : '' ?>"></div>
                         <?php endfor; ?>
                     </div>
                 <?php endif; ?>
                 <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                    <span class="pill <?= h($pillClass) ?> pill-sm">
-                        <?php if ($isPaid): ?><i class="bi bi-check" style="font-size:9px;" aria-hidden="true"></i><?php endif; ?>
-                        <?= h(strtoupper($statusLabels[$record->status] ?? $record->status)) ?>
+                    <span class="pill <?= h($row->statusBadgeClass) ?> pill-sm">
+                        <?php if ($row->isPaid): ?><i class="bi bi-check" style="font-size:9px;" aria-hidden="true"></i><?php endif; ?>
+                        <?= h(strtoupper($row->statusLabel)) ?>
                     </span>
                 </div>
             </div>
