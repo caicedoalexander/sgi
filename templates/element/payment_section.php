@@ -66,6 +66,10 @@ $showAddButton = $canRegisterPayment && !($singlePaymentOnly && $hasActivePaymen
 // Compute totals
 $paymentsTotal = 0;
 foreach ($payments as $p) {
+    $pSt = $p->status ?? ($p->authorized ? 'authorized' : 'pending');
+    if ($pSt === 'rejected') {
+        continue;
+    }
     $paymentsTotal += (float)$p->amount;
 }
 $remainingAmount = max(0, $totalAmount - $paymentsTotal);
@@ -262,7 +266,10 @@ $addUrl = $this->Url->build($addPaymentUrl);
                         $ <?= number_format((float)$payment->amount, 0, ',', '.') ?>
                     </div>
                 </div>
-                <?php if (($canAuthorize || $canDelete) && !$payment->authorized && !$isFromModule): ?>
+                <?php
+                $pActionStatus = $payment->status ?? ($payment->authorized ? 'authorized' : 'pending');
+                if (($canAuthorize || $canDelete) && !$payment->authorized && $pActionStatus !== 'rejected' && !$isFromModule):
+                ?>
                 <div class="row-flex gap-4" style="width:100%;justify-content:flex-end;border-top:1px solid var(--rule);padding-top:8px;">
                     <?php if ($canAuthorize && $authorizeUrlFn): ?>
                     <button type="button" class="btn btn-secondary btn-sm btn-post-action"

@@ -274,11 +274,19 @@ $noveltyCount  = count($doc->employee_novelties ?? []);
                         <?= $payment->payment_date?->format('d/m/Y') ?? '—' ?>
                     </span>
                     <span style="min-width:0;">
-                        <?php if ($payment->authorized): ?>
+                        <?php $pStatus = $payment->status ?? ($payment->authorized ? 'authorized' : 'pending'); ?>
+                        <?php if ($pStatus === 'authorized'): ?>
                             <span class="pill pill-primary-soft pill-sm"><i class="bi bi-check-circle" aria-hidden="true"></i>Autorizado</span>
                             <?php if ($payment->authorized_by_user): ?>
                             <div style="font-size:var(--fs-meta);color:var(--text-muted);margin-top:2px;">
                                 <?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?><?php if ($payment->authorized_date): ?> · <span class="mono"><?= $payment->authorized_date->format('d/m/Y') ?></span><?php endif; ?>
+                            </div>
+                            <?php endif; ?>
+                        <?php elseif ($pStatus === 'rejected'): ?>
+                            <span class="pill pill-danger-soft pill-sm"><i class="bi bi-x-circle" aria-hidden="true"></i>Rechazado</span>
+                            <?php if ($payment->rejection_reason): ?>
+                            <div style="font-size:var(--fs-meta);color:var(--text-muted);margin-top:2px;">
+                                <?= h($payment->rejection_reason) ?>
                             </div>
                             <?php endif; ?>
                         <?php else: ?>

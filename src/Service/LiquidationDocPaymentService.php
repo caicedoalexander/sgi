@@ -110,6 +110,10 @@ class LiquidationDocPaymentService
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
 
         $payment = $paymentsTable->get($paymentId);
+        if ($payment->status !== NoveltyConstants::PAYMENT_RECORD_PENDING) {
+            return ServiceResult::fail('Solo se puede autorizar un pago pendiente.');
+        }
+
         $payment->authorized = true;
         $payment->status = NoveltyConstants::PAYMENT_RECORD_AUTHORIZED;
         $payment->authorized_by = $authorizedBy;
@@ -177,7 +181,7 @@ class LiquidationDocPaymentService
 
         $connection = $docsTable->getConnection();
         $ok = $connection->transactional(
-            function () use ($paymentsTable, $docsTable, $noveltiesTable, $payment, $doc, $docId, $rejectedBy, $reason) {
+            function () use ($paymentsTable, $docsTable, $noveltiesTable, $payment, $doc, $rejectedBy, $reason) {
                 $payment->status = NoveltyConstants::PAYMENT_RECORD_REJECTED;
                 $payment->rejection_reason = $reason;
                 if (!$paymentsTable->save($payment)) {
@@ -191,7 +195,7 @@ class LiquidationDocPaymentService
 
                 return $this->advanceChildren(
                     $noveltiesTable,
-                    (int)$docId,
+                    (int)$doc->id,
                     NoveltyConstants::STATUS_TESORERIA,
                     $rejectedBy,
                 );
