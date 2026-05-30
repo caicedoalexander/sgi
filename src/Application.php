@@ -56,7 +56,9 @@ use App\Service\PaymentSchedulingPipelineService;
 use App\Service\PendingNotificationsService;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashHistoryService;
+use App\Service\PettyCashPaymentService;
 use App\Service\PettyCashPipelineService;
+use App\Service\Pipeline\Advance\AdvanceLegalizationPipelineStateRegistry;
 use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
@@ -78,11 +80,14 @@ use App\Service\Pipeline\Invoice\State\VerificacionPagoState;
 use App\Service\Pipeline\Novelty\NoveltyPipelineStateRegistry;
 use App\Service\Pipeline\Novelty\Policy\NoveltyActionPolicy;
 use App\Service\Pipeline\Novelty\Policy\NoveltyFieldAccessPolicy;
+use App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineStateRegistry;
 use App\Service\Pipeline\PaymentScheduling\Policy\PaymentSchedulingActionPolicy;
+use App\Service\Pipeline\PettyCash\PettyCashPipelineStateRegistry;
 use App\Service\Pipeline\PettyCash\Policy\PettyCashActionPolicy;
 use App\Service\Pipeline\PettyCash\Policy\PettyCashFieldAccessPolicy;
 use App\Service\Pipeline\Refund\Policy\RefundActionPolicy;
 use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
+use App\Service\Pipeline\Refund\RefundPipelineStateRegistry;
 use App\Service\PipelineAuthorizationService;
 use App\Service\RefundDocumentService;
 use App\Service\RefundHistoryService;
@@ -244,11 +249,13 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ]);
         $container->addShared(AdvanceLegalizationHistoryService::class);
         $container->addShared(AdvanceLegalizationDocumentService::class);
+        $container->addShared(AdvanceLegalizationPipelineStateRegistry::class);
         $container->addShared(AdvanceLegalizationService::class)
             ->addArguments([
                 EventManagerInterface::class,
                 AdvanceLegalizationHistoryService::class,
                 AdvanceLegalizationDocumentService::class,
+                AdvanceLegalizationPipelineStateRegistry::class,
             ]);
         $container->addShared(AdvanceLegalizationActionPolicy::class)
             ->addArgument(AuthorizationFacade::class);
@@ -364,27 +371,37 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(PettyCashHistoryService::class);
         $container->addShared(PettyCashFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
+        $container->addShared(PettyCashPipelineStateRegistry::class);
         $container->addShared(PettyCashPipelineService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
                 AuthorizationFacade::class,
                 PettyCashFieldAccessPolicy::class,
+                PettyCashHistoryService::class,
+                PettyCashPipelineStateRegistry::class,
             ]);
+        $container->addShared(PettyCashPaymentService::class)
+            ->addArgument(AuthorizationFacade::class);
         $container->addShared(RefundFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
         $container->addShared(RefundDocumentService::class);
+        $container->addShared(RefundHistoryService::class);
+        $container->addShared(RefundPipelineStateRegistry::class);
         $container->addShared(RefundPipelineService::class)
             ->addArguments([
                 InvoiceHistoryService::class,
                 AuthorizationFacade::class,
+                RefundHistoryService::class,
+                RefundPipelineStateRegistry::class,
             ]);
-        $container->addShared(RefundHistoryService::class);
         $container->addShared(RefundPaymentService::class)
             ->addArgument(AuthorizationFacade::class);
+        $container->addShared(PaymentSchedulingPipelineStateRegistry::class);
         $container->addShared(PaymentSchedulingPipelineService::class)
             ->addArguments([
                 InvoicePaymentService::class,
                 AuthorizationFacade::class,
+                PaymentSchedulingPipelineStateRegistry::class,
             ]);
         $container->addShared(PaymentSchedulingHistoryService::class);
         $container->addShared(PaymentSchedulingImportService::class)

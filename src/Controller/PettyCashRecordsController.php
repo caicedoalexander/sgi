@@ -10,8 +10,10 @@ use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\PettyCashRecord;
+use App\Model\Entity\User;
 use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashHistoryService;
+use App\Service\PettyCashPaymentService;
 use App\Service\PettyCashPipelineService;
 use App\Service\Pipeline\PettyCash\Policy\PettyCashActionPolicy;
 use App\Service\StructuredLogger;
@@ -30,6 +32,8 @@ class PettyCashRecordsController extends AppController
 
     private PettyCashPipelineService $pettyCashService;
 
+    private PettyCashPaymentService $paymentService;
+
     private PettyCashDocumentService $documentService;
 
     private PettyCashActionPolicy $actionPolicy;
@@ -44,12 +48,13 @@ class PettyCashRecordsController extends AppController
         parent::initialize();
         $container = $this->getContainer();
         $this->pettyCashService = $container->get(PettyCashPipelineService::class);
+        $this->paymentService = $container->get(PettyCashPaymentService::class);
         $this->documentService = $container->get(PettyCashDocumentService::class);
         $this->actionPolicy = $container->get(PettyCashActionPolicy::class);
         $this->historyService = $container->get(PettyCashHistoryService::class);
     }
 
-    private function _getCurrentUser(): \App\Model\Entity\User
+    private function _getCurrentUser(): User
     {
         return $this->Authentication->getIdentity()->getOriginalData();
     }
@@ -397,7 +402,7 @@ class PettyCashRecordsController extends AppController
             $data['payment_amount'] = $data['amount'];
         }
 
-        $result = $this->pettyCashService->registerPayment(
+        $result = $this->paymentService->registerPayment(
             (int)$id,
             (int)$user->role_id,
             $data,
@@ -419,7 +424,7 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        $result = $this->pettyCashService->authorizePayment(
+        $result = $this->paymentService->authorizePayment(
             (int)$id,
             (int)$user->role_id,
             $user->id,
@@ -444,7 +449,7 @@ class PettyCashRecordsController extends AppController
         $this->request->allowMethod(['post']);
 
         $user = $this->_getCurrentUser();
-        $result = $this->pettyCashService->confirmPayment((int)$id, (int)$user->id);
+        $result = $this->paymentService->confirmPayment((int)$id, (int)$user->id);
 
         if ($result->success) {
             $this->Flash->success($result->data ?? 'Pago confirmado.');
@@ -468,7 +473,7 @@ class PettyCashRecordsController extends AppController
         }
 
         $user = $this->_getCurrentUser();
-        $result = $this->pettyCashService->rejectPayment(
+        $result = $this->paymentService->rejectPayment(
             (int)$id,
             (int)$user->role_id,
             $user->id,
