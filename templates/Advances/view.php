@@ -16,14 +16,7 @@ $pipelineLabels = InvoiceConstants::STATUS_LABELS;
 $beneficiary = $invoice->provider->name ?? ($invoice->employee->full_name ?? '—');
 $beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id ? 'Empleado' : '—');
 
-$advStatusPills = [
-    InvoiceConstants::STATUS_APROBACION        => 'pill-warning-soft',
-    InvoiceConstants::STATUS_CONTABILIDAD      => 'pill-secondary-soft',
-    InvoiceConstants::STATUS_TESORERIA         => 'pill-info-soft',
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'pill-warning-soft',
-    InvoiceConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
-    InvoiceConstants::STATUS_PAGADA            => 'pill-primary-soft',
-];
+$advStatusPills = InvoicePresentation::STATUS_BADGES;
 $advStatusPill = $advStatusPills[$invoice->pipeline_status] ?? 'pill-muted';
 $advStatusLabel = $pipelineLabels[$invoice->pipeline_status] ?? $invoice->pipeline_status;
 $advIdLabel = $invoice->invoice_number ?? ('#' . $invoice->id);

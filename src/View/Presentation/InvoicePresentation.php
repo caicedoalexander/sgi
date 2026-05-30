@@ -24,16 +24,6 @@ final class InvoicePresentation
         InvoiceConstants::STATUS_LEGALIZADA        => 'pill-primary-soft',
     ];
 
-    public const STATUS_ICONS = [
-        InvoiceConstants::STATUS_APROBACION        => 'bi-check-circle',
-        InvoiceConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
-        InvoiceConstants::STATUS_TESORERIA         => 'bi-bank',
-        InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
-        InvoiceConstants::STATUS_VERIFICACION_PAGO => 'bi-hourglass-split',
-        InvoiceConstants::STATUS_PAGADA            => 'bi-cash-coin',
-        InvoiceConstants::STATUS_LEGALIZADA        => 'bi-cash-coin',
-    ];
-
     /** Mapping para el campo area_approval. Default no listado: 'pill-muted'. */
     public const APPROVAL_BADGES = [
         InvoiceConstants::APPROVAL_APPROVED => 'pill-primary-soft',

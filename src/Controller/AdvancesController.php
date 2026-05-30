@@ -257,8 +257,6 @@ class AdvancesController extends AppController
         }
 
         $this->set(compact('invoice'));
-        $this->set('linkedInvoices', []);
-        $this->set('linkedTotal', 0.0);
 
         return null;
     }

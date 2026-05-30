@@ -6,7 +6,7 @@ namespace App\View\Presentation;
 use App\Constants\PaymentSchedulingConstants;
 
 /**
- * Configuración de presentación (clases pill del Sistema de Diseño, iconos)
+ * Configuración de presentación (clases pill del Sistema de Diseño)
  * para el pipeline de programación de pagos.
  */
 final class PaymentSchedulingPresentation
@@ -17,13 +17,5 @@ final class PaymentSchedulingPresentation
         PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => 'pill-info-soft',
         PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
         PaymentSchedulingConstants::STATUS_PAGADA            => 'pill-primary-soft',
-    ];
-
-    public const STATUS_ICONS = [
-        PaymentSchedulingConstants::STATUS_BORRADOR          => 'bi-pencil',
-        PaymentSchedulingConstants::STATUS_TESORERIA         => 'bi-bank',
-        PaymentSchedulingConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
-        PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO => 'bi-hourglass-split',
-        PaymentSchedulingConstants::STATUS_PAGADA            => 'bi-cash-coin',
     ];
 }

@@ -27,9 +27,7 @@ $this->assign('title', $pageTitle);
 
 $statusLabels = NoveltyConstants::STATUS_LABELS;
 $periodLabels = NoveltyConstants::PERIOD_LABELS;
-$statusBadge  = NoveltyPresentation::STATUS_BADGES + [
-    NoveltyConstants::STATUS_RECHAZADA => 'pill-danger-soft',
-];
+$statusBadge  = NoveltyPresentation::STATUS_BADGES;
 
 $query        = $this->request->getQueryParams();
 $activeStatus = (string)($statusFilter ?? '');

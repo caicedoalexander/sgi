@@ -27,7 +27,6 @@ $liquidationDocs    = $viewModel->liquidationDocs;
 $emailLogs          = $viewModel->emailLogs;
 
 $statusLabels       = $viewModel->statusLabels;
-$statusIcons        = $viewModel->statusIcons;
 $scheduleLabels     = $viewModel->scheduleLabels;
 $statusBadgeMap     = $viewModel->statusBadgeMap;
 $badgeColors        = $viewModel->badgeColors;

@@ -18,8 +18,6 @@ final class EmployeeNoveltyEditViewModel implements EditViewModelInterface
     /** @var array<string,string> */
     public readonly array $statusLabels;
     /** @var array<string,string> */
-    public readonly array $statusIcons;
-    /** @var array<string,string> */
     public readonly array $scheduleLabels;
     /** @var array<string,string> */
     public readonly array $statusBadgeMap;
@@ -63,7 +61,6 @@ final class EmployeeNoveltyEditViewModel implements EditViewModelInterface
     ) {
         $this->pageTitle      = 'Editar Novedad #' . $novelty->id;
         $this->statusLabels   = NoveltyConstants::STATUS_LABELS;
-        $this->statusIcons    = NoveltyPresentation::STATUS_ICONS;
         $this->scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
         $this->badgeColors    = NoveltyPresentation::STATUS_BADGES;
 

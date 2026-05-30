@@ -13,14 +13,7 @@ $this->assign('title', 'Reintegro ' . $record->code);
 $statusBadge  = RefundPresentation::STATUS_BADGES;
 $statusLabels = RefundConstants::STATUS_LABELS;
 
-$rfStatusPills = [
-    RefundConstants::STATUS_AGRUPACION        => 'pill-muted',
-    RefundConstants::STATUS_CONTABILIDAD      => 'pill-primary-soft',
-    RefundConstants::STATUS_TESORERIA         => 'pill-info-soft',
-    RefundConstants::STATUS_AUTORIZACION_PAGO => 'pill-info-soft',
-    RefundConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
-    RefundConstants::STATUS_PAGADA            => 'pill-primary-soft',
-];
+$rfStatusPills = RefundPresentation::STATUS_BADGES;
 $rfStatusPill  = $rfStatusPills[$record->status] ?? 'pill-muted';
 $rfStatusLabel = $statusLabels[$record->status] ?? $record->status;
 

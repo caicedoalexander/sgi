@@ -6,7 +6,7 @@ namespace App\View\Presentation;
 use App\Constants\RefundConstants;
 
 /**
- * Configuración de presentación (clases pill del Sistema de Diseño, iconos)
+ * Configuración de presentación (clases pill del Sistema de Diseño)
  * para el pipeline de reintegros.
  */
 final class RefundPresentation
@@ -18,14 +18,5 @@ final class RefundPresentation
         RefundConstants::STATUS_AUTORIZACION_PAGO => 'pill-info-soft',
         RefundConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
         RefundConstants::STATUS_PAGADA            => 'pill-primary-soft',
-    ];
-
-    public const STATUS_ICONS = [
-        RefundConstants::STATUS_AGRUPACION        => 'bi-collection',
-        RefundConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
-        RefundConstants::STATUS_TESORERIA         => 'bi-bank',
-        RefundConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
-        RefundConstants::STATUS_VERIFICACION_PAGO => 'bi-hourglass-split',
-        RefundConstants::STATUS_PAGADA            => 'bi-cash-coin',
     ];
 }

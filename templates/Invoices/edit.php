@@ -52,15 +52,7 @@ $stageAccentMap = [
 $stageAccent = $viewModel->isRejected ? 'accent-danger' : ($stageAccentMap[$currentStatus] ?? 'accent-green');
 
 // ── Pill kind del estado del pipeline (soft variants) ────────────
-$statusPills = [
-    InvoiceConstants::STATUS_APROBACION        => 'pill-warning-soft',
-    InvoiceConstants::STATUS_CONTABILIDAD      => 'pill-secondary-soft',
-    InvoiceConstants::STATUS_TESORERIA         => 'pill-info-soft',
-    InvoiceConstants::STATUS_AUTORIZACION_PAGO => 'pill-warning-soft',
-    InvoiceConstants::STATUS_VERIFICACION_PAGO => 'pill-info-soft',
-    InvoiceConstants::STATUS_PAGADA            => 'pill-primary-soft',
-    InvoiceConstants::STATUS_LEGALIZADA        => 'pill-primary-soft',
-];
+$statusPills = InvoicePresentation::STATUS_BADGES;
 $statusPill = $statusPills[$currentStatus] ?? 'pill-muted';
 
 // ── URLs (Factura vs Anticipo) ───────────────────────────────────

@@ -23,9 +23,7 @@ $isRejected    = $doc->pipeline_status === NoveltyConstants::STATUS_RECHAZADA;
 $isPaid        = $doc->pipeline_status === NoveltyConstants::STATUS_PAGADA;
 $currentStatus = $doc->pipeline_status;
 
-$statusBadgeMap = NoveltyPresentation::STATUS_BADGES + [
-    NoveltyConstants::STATUS_RECHAZADA => 'pill-danger-soft',
-];
+$statusBadgeMap = NoveltyPresentation::STATUS_BADGES;
 $nldStatusPill  = $statusBadgeMap[$currentStatus] ?? 'pill-muted';
 $nldStatusLabel = $statusLabels[$currentStatus] ?? ucfirst($currentStatus);
 $badgeColors   = NoveltyPresentation::STATUS_BADGES;

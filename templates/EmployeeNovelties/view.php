@@ -14,21 +14,11 @@ use App\View\Presentation\NoveltyPresentation;
 $this->assign('title', 'Novedad #' . $novelty->id);
 
 $statusLabels = NoveltyConstants::STATUS_LABELS;
-$statusIcons = NoveltyPresentation::STATUS_ICONS;
 $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
 $isRejected = $novelty->isRejected();
 $currentStatus = $novelty->pipeline_status;
 
-$statusBadgeMap = [
-    'aprobacion' => 'pill-warning-soft',
-    'rrhh' => 'pill-info-soft',
-    'contabilidad' => 'pill-primary-soft',
-    'revision_firmas' => 'pill-warning-soft',
-    'gdp' => 'pill-muted',
-    'tesoreria' => 'pill-info-soft',
-    'pagada' => 'pill-primary-soft',
-    'rechazada' => 'pill-danger-soft',
-];
+$statusBadgeMap = NoveltyPresentation::STATUS_BADGES;
 
 // Documents prep
 $totalDocs = array_sum(array_map('count', $documentsByStatus));

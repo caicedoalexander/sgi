@@ -6,7 +6,7 @@ namespace App\View\Presentation;
 use App\Constants\NoveltyConstants;
 
 /**
- * Configuración de presentación (clases pill del Sistema de Diseño, iconos,
+ * Configuración de presentación (clases pill del Sistema de Diseño,
  * colores de calendario) para el pipeline de novedades. Datos puros de UI —
  * no contiene reglas de dominio.
  */
@@ -24,19 +24,6 @@ final class NoveltyPresentation
         NoveltyConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
         NoveltyConstants::STATUS_PAGADA           => 'pill-primary-soft',
         NoveltyConstants::STATUS_RECHAZADA        => 'pill-danger-soft',
-    ];
-
-    public const STATUS_ICONS = [
-        NoveltyConstants::STATUS_REGISTRO          => 'bi-pencil-square',
-        NoveltyConstants::STATUS_APROBACION        => 'bi-person-check',
-        NoveltyConstants::STATUS_RRHH              => 'bi-people',
-        NoveltyConstants::STATUS_CONTABILIDAD      => 'bi-calculator',
-        NoveltyConstants::STATUS_REVISION_FIRMAS   => 'bi-pen',
-        NoveltyConstants::STATUS_GDP               => 'bi-clipboard-check',
-        NoveltyConstants::STATUS_TESORERIA         => 'bi-bank',
-        NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'bi-shield-check',
-        NoveltyConstants::STATUS_VERIFICACION_PAGO => 'bi-hourglass-split',
-        NoveltyConstants::STATUS_PAGADA            => 'bi-cash-coin',
     ];
 
     /** Mapping para el campo area_approval. Default no listado: 'pill-warning-soft'. */

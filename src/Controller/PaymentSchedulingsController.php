@@ -141,11 +141,8 @@ class PaymentSchedulingsController extends AppController
 
     private function _buildAddViewModel(PaymentScheduling $record): PaymentSchedulingAddViewModel
     {
-        $operationCenters = $this->fetchTable('OperationCenters')->find('codeList')->all();
-
         return new PaymentSchedulingAddViewModel(
             record: $record,
-            operationCenters: $operationCenters,
         );
     }
 

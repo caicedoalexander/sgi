@@ -20,8 +20,6 @@ final class NoveltyLiquidationDocEditViewModel implements EditViewModelInterface
     /** @var array<string,string> */
     public readonly array $statusLabels;
     /** @var array<string,string> */
-    public readonly array $statusIcons;
-    /** @var array<string,string> */
     public readonly array $periodLabels;
     /** @var array<string,string> */
     public readonly array $signerLabels;
@@ -63,7 +61,6 @@ final class NoveltyLiquidationDocEditViewModel implements EditViewModelInterface
     ) {
         $this->pageTitle    = 'Editar Liquidación: ' . ($doc->liquidation_number ?? ('#' . $doc->id));
         $this->statusLabels = NoveltyConstants::STATUS_LABELS;
-        $this->statusIcons  = NoveltyPresentation::STATUS_ICONS;
         $this->periodLabels  = NoveltyConstants::PERIOD_LABELS;
         $this->signerLabels  = NoveltyConstants::SIGNER_LABELS;
         $this->paymentLabels = NoveltyConstants::PAYMENT_LABELS;

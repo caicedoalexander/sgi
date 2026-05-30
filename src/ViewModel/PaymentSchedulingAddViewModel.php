@@ -12,7 +12,6 @@ final class PaymentSchedulingAddViewModel
 {
     public function __construct(
         public readonly PaymentScheduling $record,
-        public readonly mixed $operationCenters,
     ) {
     }
 }
