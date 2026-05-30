@@ -46,7 +46,7 @@ Leyenda: ✅ ejecutado · 🔄 reclasificado · ⏸ diferido · ◻ decisión pe
 | **A4** | `STATUS_ICONS` dead-code | ✅ ejecutado | `44acb33` — borrado en las 6 Presentations + props/alias muertos (6/6, P1) |
 | **A5** | `READY_FOR_PAYMENT_BADGES` dead const | ✅ ejecutado | `44acb33` — `SharedPresentation` + import huérfano |
 | **A6** | Unificar método de entrada en `add` | ❎ skip recomendado | churn en forms legacy; Invoice exigiría rediseñar el AddVM |
-| **A7** | `view` re-pinta docs/pagos a mano teniendo elements | ⏸ parcial | Refund migrado en C1; PettyCash/PaymentScheduling/NLD usan `document_row` directo (se solapa con **C6**, decisión de canon pendiente) |
+| **A7** | `view` re-pinta docs/pagos a mano teniendo elements | ✅ ejecutado (docs) | Ola 4 — `PettyCash/view` + `PaymentScheduling/view` migrados a `documents_section` read-only (VMs exponen `documentRows`). Toda `view` (salvo Invoice, outlier propio) delega ya en el element. Pagos a mano = fuera de alcance (otra sub-tabla) |
 | **A8** | Extraer element `change_history` (historial duplicado en EN/NLD) | ✅ ejecutado | `88aeb00` — `templates/element/change_history.php` (param `title`/`showNoveltyLink`) |
 | **A9** | `Invoices/edit` `sgi-edit-shell` → `sgi-invoice-view-grid` | 🔄 reclasificado a (B) | `656be1e` — `sgi-edit-shell` es superior (header fijo); NO migrar |
 | **A10** | `Invoices/view` + `PettyCash/view` grid inline → `sgi-invoice-view-grid` | ✅ ejecutado | `f0a6911` — validado visualmente (render idéntico) |
@@ -58,7 +58,7 @@ Leyenda: ✅ ejecutado · 🔄 reclasificado · ⏸ diferido · ◻ decisión pe
 | **C3** | Slot/builder compartido para el `ob_start` del sidebar (`registryLines`/`actionsHtml`) en cada `edit` | ✅ ejecutado (parcial) | Ola 4 — extraído `element('pipeline_regress_action')` (botón regresar, **idéntico** en PettyCash/Refund/PaymentScheduling). `registryLines` se deja bespoke por dominio (no es duplicación real: contenido distinto por módulo) |
 | **C4** | Extender `Support/PipelineEditFlags` a Novelty | ◻ decisión pendiente | paridad menor |
 | **C5** | `email_log_panel` solo en Invoice + EN/edit | 🔄 (B) esencial — **no es gap** | Investigado: solo Invoice (`sendApprovalLinkNotification`) y EmployeeNovelty (`sendNoveltyApprovalEmail`) emiten correos (únicos `entity_type` en `email_logs`: `invoice`/`employee_novelty`). Refund/PettyCash/PaymentScheduling/Advance/NLD **no** llaman a `NotificationService` ni tienen aprobación externa → el panel aparece donde hay correos. Alinear renderizaría paneles vacíos. |
-| **C6** | `document_row` directo vs `documents_section` en 3 `view` | ◻ decisión pendiente | decidir canon de docs en `view` (o flag `readOnly` al element); se solapa con A7 |
+| **C6** | `document_row` directo vs `documents_section` en 3 `view` | ✅ resuelto → canon = `documents_section` read-only | `documents_section` ya soporta read-only (`uploadModalId => null`); Refund/NLD/EN ya lo usaban. Alineados los 2 rezagados (PettyCash/PaymentScheduling/view). No hizo falta flag `readOnly` nuevo |
 | **C7** | Estandarizar `final readonly class` | ◻ cosmético | bajo retorno |
 | **C8** | `AddViewModel` muta el ORM (Advance/Invoice) | ◻ decisión pendiente | reorganización menor |
 | **C9** | Grids inline de sub-tablas (facturas/pagos) sin element | ◻ decisión pendiente | exigiría crear un element nuevo, ganancia marginal |
@@ -102,8 +102,8 @@ Hallazgo durante la validación visual: 404 `/marked_as_signed` en `NoveltyLiqui
 2. ~~**C3**~~ ✅ (parcial) — extraído `element('pipeline_regress_action')` (botón regresar idéntico en PettyCash/Refund/PaymentScheduling). `registryLines` se mantiene bespoke por dominio (no era duplicación real).
 3. ~~Retirar checkbox inerte~~ ✅ — `requires_employee_signature_creation` retirado de UI (`add`/`edit`) + `getFlags()` + `$_accessible`/`validator`; columna BD conservada.
 
-**Decisiones tuyas (abren trabajo):**
-4. **C6 / A7** — canon de documentos en `view`: ¿flag `readOnly` en `documents_section`, o aceptar `document_row` directo como canon? (3 vistas ya convergieron a directo). **← única pendiente real.**
+**Decisiones tuyas — todas resueltas:**
+4. ~~**C6 / A7**~~ ✅ resuelto → canon = `documents_section` read-only (`uploadModalId => null`; ya lo usaban Refund/NLD/EN). Alineados los 2 rezagados (`PettyCash/view` + `PaymentScheduling/view`); VMs exponen `documentRows`. No hizo falta flag nuevo. Toda `view` delega en el element salvo Invoice (outlier reconocido).
 5. ~~**C5**~~ ✅ resuelto → **(B) esencial, no es gap.** Solo Invoice y EmployeeNovelty emiten correos (`sendApprovalLinkNotification`/`sendNoveltyApprovalEmail`; `entity_type` `invoice`/`employee_novelty`). Los otros 4 módulos no usan `NotificationService` → `email_log_panel` aparece donde hay correos; alinear daría paneles vacíos. Sin trabajo.
 
 **Bajo retorno / opcional:** A13 (`.clickable-row`), C4 (`PipelineEditFlags` a Novelty), C7 (`final readonly class`), C8 (rol del AddVM), C9 (element de sub-tablas).

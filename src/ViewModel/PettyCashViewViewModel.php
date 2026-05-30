@@ -24,6 +24,8 @@ final class PettyCashViewViewModel implements ViewViewModelInterface
 
     public readonly bool   $isTerminal;
     public readonly int    $invoiceCount;
+    /** @var list<array{doc:mixed,canDelete:bool,deleteUrl:?string,showBadge:bool}> */
+    public readonly array  $documentRows;
     public readonly int    $totalDocs;
     public readonly int    $obsCount;
     public readonly float  $totalAmount;
@@ -47,7 +49,12 @@ final class PettyCashViewViewModel implements ViewViewModelInterface
         ];
         $this->isTerminal      = $status === PettyCashConstants::STATUS_PAGADA;
         $this->invoiceCount    = count($record->invoices ?? []);
-        $this->totalDocs       = count($record->petty_cash_documents ?? []);
+        $rows = [];
+        foreach ($record->petty_cash_documents ?? [] as $doc) {
+            $rows[] = ['doc' => $doc, 'canDelete' => false, 'deleteUrl' => null, 'showBadge' => false];
+        }
+        $this->documentRows    = $rows;
+        $this->totalDocs       = count($rows);
         $this->obsCount        = count($record->petty_cash_observations ?? []);
         $this->totalAmount     = (float)$record->total_amount;
         $this->showPaymentCard = $record->isAutorizacionPago() || $record->isVerificacionPago() || $record->isPagada();

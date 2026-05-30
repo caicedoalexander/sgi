@@ -11,7 +11,6 @@ $this->assign('title', $viewModel->pageTitle);
 $isTerminal = $viewModel->isTerminal;
 $itemCount  = $viewModel->itemCount;
 $total      = $viewModel->total;
-$documents  = $viewModel->documents;
 ?>
 
 <!-- Page header -->
@@ -164,33 +163,13 @@ $documents  = $viewModel->documents;
         <?php endif; ?>
 
         <!-- Soportes -->
-        <div class="card" style="padding:18px 20px;">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
-                    <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    Soportes
-                    <span class="sgi-folder-count"><?= count($documents) ?> doc<?= count($documents) !== 1 ? 's' : '' ?></span>
-                </span>
-            </div>
-
-            <?php if (empty($documents)): ?>
-            <div class="sgi-dropzone-empty">
-                <i class="bi bi-paperclip" aria-hidden="true"></i>
-                <div>Sin soportes adjuntos</div>
-            </div>
-            <?php else: ?>
-            <div style="max-height:420px;overflow-y:auto;">
-                <?php foreach ($documents as $att): ?>
-                    <?= $this->element('document_row', [
-                        'doc'       => $att,
-                        'canDelete' => false,
-                        'deleteUrl' => null,
-                        'showBadge' => false,
-                    ]) ?>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
-        </div>
+        <?= $this->element('documents_section', [
+            'groups'        => [['label' => null, 'pillKind' => null, 'rows' => $viewModel->documentRows]],
+            'totalDocs'     => $viewModel->totalDocs,
+            'canUpload'     => false,
+            'uploadModalId' => null,
+            'emptyTitle'    => 'Sin soportes adjuntos',
+        ]) ?>
 
     </main>
 </div>

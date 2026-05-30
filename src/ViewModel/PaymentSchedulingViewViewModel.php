@@ -27,6 +27,8 @@ final class PaymentSchedulingViewViewModel implements ViewViewModelInterface
     public readonly array $registryLines;
     /** @var list<mixed> */
     public readonly array $documents;
+    /** @var list<array{doc:mixed,canDelete:bool,deleteUrl:?string,showBadge:bool}> */
+    public readonly array $documentRows;
     public readonly int   $totalDocs;
     /** @var array<string,string> */
     public readonly array $pipelineLabels;
@@ -49,6 +51,11 @@ final class PaymentSchedulingViewViewModel implements ViewViewModelInterface
         $this->itemCount      = count($record->payment_scheduling_items ?? []);
         $this->total          = $total;
         $this->documents      = $record->payment_scheduling_documents ?? [];
+        $rows = [];
+        foreach ($this->documents as $doc) {
+            $rows[] = ['doc' => $doc, 'canDelete' => false, 'deleteUrl' => null, 'showBadge' => false];
+        }
+        $this->documentRows   = $rows;
         $this->totalDocs      = count($this->documents);
         $this->pipelineLabels = $labels;
         $this->pipelineSteps  = PaymentSchedulingConstants::PIPELINE_STATUSES;

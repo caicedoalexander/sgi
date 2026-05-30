@@ -26,9 +26,7 @@ $pipelineSteps = $viewModel->pipelineSteps;
 $isTerminal    = $viewModel->isTerminal;
 
 $invoiceCount = $viewModel->invoiceCount;
-$docs         = $record->petty_cash_documents ?? [];
 $obsList      = $record->petty_cash_observations ?? [];
-$totalDocs    = $viewModel->totalDocs;
 $obsCount     = $viewModel->obsCount;
 
 // Formateo del total.
@@ -366,34 +364,13 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
         </div>
 
         <!-- Documentos / Soportes -->
-        <div class="sgi-card">
-            <div class="d-flex justify-content-between align-items-center" style="margin-bottom:14px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
-                    <i class="bi bi-paperclip" aria-hidden="true"></i>
-                    Soportes
-                    <span class="sgi-folder-count"><?= $totalDocs ?></span>
-                </span>
-            </div>
-
-            <?php if ($totalDocs === 0): ?>
-                <div class="empty-state">
-                    <div class="es-icon es-icon-neutral"><i class="bi bi-paperclip" aria-hidden="true"></i></div>
-                    <div class="es-title">Sin documentos adjuntos</div>
-                    <div class="es-msg">No se han cargado soportes para este registro.</div>
-                </div>
-            <?php else: ?>
-                <div class="col-flex" style="gap:0;max-height:420px;overflow-y:auto;">
-                    <?php foreach ($docs as $doc): ?>
-                        <?= $this->element('document_row', [
-                            'doc'       => $doc,
-                            'canDelete' => false,
-                            'deleteUrl' => null,
-                            'showBadge' => false,
-                        ]) ?>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
+        <?= $this->element('documents_section', [
+            'groups'        => [['label' => null, 'pillKind' => null, 'rows' => $viewModel->documentRows]],
+            'totalDocs'     => $viewModel->totalDocs,
+            'canUpload'     => false,
+            'uploadModalId' => null,
+            'emptyTitle'    => 'Sin documentos adjuntos',
+        ]) ?>
 
     </main>
 </div>
