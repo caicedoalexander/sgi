@@ -175,8 +175,8 @@ templates/{Controller}/
 | A6 | **Método de entrada del VM triple** (`get_object_vars` / `set('invoice',$vm->invoice)` / `build()`) vs `set('viewModel',$vm)` mayoritario | `PettyCashRecordsController:248,315`; `InvoicesController:255,262`; `AdvancesController:206,226`; `legalization.php:15` | Ninguno; unificar a `set('viewModel',$vm)` + props directas |
 | A7 | **`view` re-pinta docs/pagos a mano** teniendo elements | `NLD/view.php:248-303` vs `payment_section` mode `'view'`; `Invoice/view.php:613-681` vs `documents_section` | Ninguno (el element ya existe y el `edit` lo prueba) |
 | A8 | **Historial de cambios duplicado a mano** entre los 2 `view.php` de Novelty | `EN/view.php:349-372` ≈ `NLD/view.php:351-441` | Ninguno; candidato a **extraer element `change_history`** |
-| A9 | **`Invoices/edit.php` usa `sgi-edit-shell-body`** en vez de `sgi-invoice-view-grid` | `edit.php:224` | Ninguno; el propio CLAUDE.md lo declara "el outlier a alinear" |
-| A10 | **`Invoices/view.php` + `PettyCashRecords/view.php` grid inline `340px 1fr`** | `Invoice/view.php:158`, `PettyCash/view.php:91` | Ninguno; mismo `pipeline_sidebar`, solo difiere el contenedor |
+| ~~A9~~ → **B** (reclasificado 2026-05-30) | **`Invoices/edit.php` usa `sgi-edit-shell-body`** en vez de `sgi-invoice-view-grid` | `edit.php:224` | **NO migrar.** La validación visual refutó la premisa "template viejo": `sgi-edit-shell` es un app-shell de altura completa (header **fijo** + body con scroll interno + footer sticky) **más sofisticado** que el grid canónico para el form más pesado. Migrarlo perdería el header fijo (regresión UX). Diferencia esencial, no deriva. Alinear "al revés" (los otros edits al shell) sería decisión de diseño mayor, fuera de alcance. |
+| A10 ✅ hecho (`f0a6911`) | **`Invoices/view.php` + `PettyCashRecords/view.php` grid inline `340px 1fr`** | `Invoice/view.php:158`, `PettyCash/view.php:91` | Ninguno; mismo `pipeline_sidebar`, solo difiere el contenedor. CSS de la clase equivalente. |
 | A11 | **`operationCenters` over-fetch en AddVM** no consumido | `PaymentScheduling _buildAddViewModel:144`, `add.php` no lo usa | Ninguno; query DB + props muertas |
 | A12 | **`view()` setea `linkedInvoices`/`linkedTotal` muertos** | `AdvancesController:260-261` | Ninguno. **Muerte por no-consumo, NO por inalcanzabilidad** (adversarial P2: `view.php` SÍ se alcanza para anticipos sin legalización) |
 | A13 | **Filas de `index` con `onmouseenter/leave` inline** en vez de `.clickable-row` | `Invoices/index.php:326-327`; `NoveltyLiquidationDocs/index.php:158-159` | Ninguno; deriva colectiva transversal a los 6 (menor) |
@@ -225,7 +225,7 @@ templates/{Controller}/
 4. **C2 (decisión) — `RowView` generalizado** a los 6, moviendo la lógica de fila DENTRO de `forRow()` (no solo crear el DTO — caveat P9). Cubre A13 y los `periodLabel`/`pageTotal` inline.
 
 **Ola 3 — Convergencia de layout y mecanismo.** Esfuerzo bajo, riesgo bajo.
-5. **A9 + A10** — migrar `Invoices/edit` y `Invoices/view` + `PettyCash/view` a `sgi-invoice-view-grid`.
+5. **A10** (hecho 2026-05-30, `f0a6911`) — migrar `Invoices/view` + `PettyCash/view` a `sgi-invoice-view-grid`. **A9 descartado**: la validación visual mostró que `sgi-edit-shell` es esencial (header fijo), no deriva — reclasificado a (B).
 6. **A6** — unificar el método de entrada a `set('viewModel', $vm)` (PettyCash, Invoice/add, Advance/add, Advance/legalization).
 7. **A8** — extraer un element `change_history` compartido (Novelty `view` × 2; reutilizable por los demás).
 
@@ -244,5 +244,24 @@ Señaladas por el agente adversarial; conviene cerrarlas antes de cualquier reme
 - **C1:** decidir si `EditViewModelInterface` cubre la semántica de `view` o se necesita un contrato/VM read-only aparte.
 - **C5:** auditar qué módulos emiten correos de pipeline vía `EmailLogService` (define si `email_log_panel` en 4 módulos es gap o ausencia correcta).
 - **Reconciliación con backend:** confirmar que `AdvanceLegalizationViewModel` hoy implementa `EditViewModelInterface` (`:24`) y actualizar el hallazgo A9 de `docs/auditoria-estructural-fresca-2026-05-29.md` si procede.
-</content>
+
+---
+
+## 8. Estado de ejecución (2026-05-30)
+
+Remediación implementada en `main`, validada visualmente con Playwright (índices y vistas de los 6 módulos renderizados sin errores; PettyCash/PaymentScheduling `view` no testeables por falta de datos pero con el mismo patrón validado en los otros 5).
+
+| Ola | Ítems | Commit | Estado |
+|---|---|---|---|
+| 1 | A1 (pills→const, 2 drifts corregidos), A4 (`STATUS_ICONS` dead 6/6), A5 (`READY_FOR_PAYMENT_BADGES`), A11 (`operationCenters`), A12 (`linkedInvoices/Total`) | `44acb33` | ✅ |
+| 2 | C1 (`ViewViewModelInterface` + 6 `{Modulo}ViewViewModel`), C2 (5 `RowView` + `forRow()`; Invoice `RowView` ampliado, P9) | `0ab9da5` (piloto Refund) + `fbb0d1f` (5 módulos) | ✅ |
+| 3 | A8 (element `change_history`), docblock `InvoicePresentation`, A10 (`Invoices/view`+`PettyCash/view`→grid) | `88aeb00` + `f0a6911` | ✅ |
+
+**Reclasificaciones por evidencia visual/de coste (divergen del análisis original):**
+- **A9 → (B) esencial** — `sgi-edit-shell` (Invoice/edit) es un app-shell superior (header fijo), no deriva. NO migrar.
+- **A6 → skip recomendado** — uniformar el método de entrada en `add` es churn de bajo valor sobre forms legacy (Invoice exigiría rediseñar `InvoiceAddViewModel`).
+- **A3 → no-deriva** — `statusBadgeMap`/`badgeColors` cumplen dos roles distintos (pill de header vs pills de documentos), no son alias muertos.
+
+**Pendiente (Ola 4, bajo retorno):** C3–C9. **Bug previo ajeno detectado:** 404 `/marked_as_signed` en la sección de firmas bespoke de `NoveltyLiquidationDocs/view` (no tocada por esta refactorización).
+
 </invoke>
