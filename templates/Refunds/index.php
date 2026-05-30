@@ -212,10 +212,8 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2fr 1.1fr 0.8fr 1fr 1.7fr
         $row  = RefundPresentation::forRow($record);
         $href = $this->Url->build(['action' => 'edit', $record->id]);
     ?>
-        <a href="<?= h($href) ?>" role="row"
-           style="<?= $gridStyle ?>padding:14px 18px;background:#fff;color:inherit;text-decoration:none;cursor:pointer;transition:background-color var(--t-fast) ease;<?= $i > 0 ? 'border-top:1px solid var(--rule);' : '' ?>"
-           onmouseenter="this.style.background='var(--bg-muted)'"
-           onmouseleave="this.style.background='#fff'">
+        <a href="<?= h($href) ?>" role="row" class="row-fact"
+           style="<?= $gridStyle ?>padding:14px 18px;">
 
             <?php /* 1. Código + tipo */ ?>
             <div style="min-width:0;">

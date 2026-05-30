@@ -148,10 +148,8 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 1.1fr 1.4fr 0.8fr 1.6fr 1
         $row = NoveltyPresentation::forLiquidationDocRow($doc);
         $pillClass = $row->statusBadgeClass;
     ?>
-        <a href="<?= $this->Url->build(['action' => 'edit', $doc->id]) ?>" role="row"
-           style="<?= $gridStyle ?>padding:14px 18px;background:#fff;color:inherit;text-decoration:none;cursor:pointer;transition:background-color var(--t-fast) ease;<?= $i > 0 ? 'border-top:1px solid var(--rule);' : '' ?>"
-           onmouseenter="this.style.background='var(--bg-muted)'"
-           onmouseleave="this.style.background='#fff'">
+        <a href="<?= $this->Url->build(['action' => 'edit', $doc->id]) ?>" role="row" class="row-fact"
+           style="<?= $gridStyle ?>padding:14px 18px;">
 
             <?php /* 1. No. Liquidación */ ?>
             <div class="mono" style="font-size:12.5px;font-weight:700;color:var(--text-strong);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">

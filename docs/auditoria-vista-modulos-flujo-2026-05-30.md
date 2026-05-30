@@ -179,7 +179,7 @@ templates/{Controller}/
 | A10 ✅ hecho (`f0a6911`) | **`Invoices/view.php` + `PettyCashRecords/view.php` grid inline `340px 1fr`** | `Invoice/view.php:158`, `PettyCash/view.php:91` | Ninguno; mismo `pipeline_sidebar`, solo difiere el contenedor. CSS de la clase equivalente. |
 | A11 | **`operationCenters` over-fetch en AddVM** no consumido | `PaymentScheduling _buildAddViewModel:144`, `add.php` no lo usa | Ninguno; query DB + props muertas |
 | A12 | **`view()` setea `linkedInvoices`/`linkedTotal` muertos** | `AdvancesController:260-261` | Ninguno. **Muerte por no-consumo, NO por inalcanzabilidad** (adversarial P2: `view.php` SÍ se alcanza para anticipos sin legalización) |
-| A13 | **Filas de `index` con `onmouseenter/leave` inline** en vez de `.clickable-row` | `Invoices/index.php:326-327`; `NoveltyLiquidationDocs/index.php:158-159` | Ninguno; deriva colectiva transversal a los 6 (menor) |
+| A13 ✅ hecho (2026-05-30) | **Filas de `index` con `onmouseenter/leave` inline** | `Invoices/index.php:326-327`; `NoveltyLiquidationDocs/index.php:158-159` | **Cerrado.** Las 6 filas `<a role="row">` adoptan el componente canónico `.row-fact` (components.css:1221); 12 handlers JS + props inline redundantes eliminados; `padding:14px 18px` preservado (idéntico). Nota: no era `.clickable-row` (eso es para `<tr data-href>`; estas son `<a>`) |
 
 ### (B) Diferencia esencial del dominio → NO UNIFICAR
 

@@ -52,7 +52,7 @@ Leyenda: ✅ ejecutado · 🔄 reclasificado · ⏸ diferido · ◻ decisión pe
 | **A10** | `Invoices/view` + `PettyCash/view` grid inline → `sgi-invoice-view-grid` | ✅ ejecutado | `f0a6911` — validado visualmente (render idéntico) |
 | **A11** | Over-fetch `operationCenters` en `PaymentSchedulingAddViewModel` | ✅ ejecutado | `44acb33` — fetch + prop + paso eliminados |
 | **A12** | Sets muertos `linkedInvoices`/`linkedTotal` en `Advances::view` | ✅ ejecutado | `44acb33` |
-| **A13** | Filas de `index` con `onmouseenter/leave` inline vs `.clickable-row` | ⏸ diferido | menor, transversal a los 6 |
+| **A13** | Filas de `index` con `onmouseenter/leave` inline | ✅ ejecutado | Ola 4 — las 6 filas `<a role="row">` adoptan el componente canónico `.row-fact` (bg/hover/transition/cursor/separador `+`-sibling); se eliminan 12 handlers JS inline + props redundantes. `padding:14px 18px` preservado inline (idéntico por construcción). El `.clickable-row` del audit no aplicaba: son `<a>`, no `<tr data-href>` |
 | **C1** 🔑 | VM read-only para la acción `view` en los 6 | ✅ ejecutado | `0ab9da5`+`fbb0d1f` — `ViewViewModelInterface` + 6 `{Modulo}ViewViewModel` |
 | **C2** 🔑 | `RowView` generalizado (lógica dentro de `forRow()`) | ✅ ejecutado | `0ab9da5`+`fbb0d1f` — 5 RowViews nuevos + Invoice ampliado (P9) |
 | **C3** | Slot/builder compartido para el `ob_start` del sidebar (`registryLines`/`actionsHtml`) en cada `edit` | ✅ ejecutado (parcial) | Ola 4 — extraído `element('pipeline_regress_action')` (botón regresar, **idéntico** en PettyCash/Refund/PaymentScheduling). `registryLines` se deja bespoke por dominio (no es duplicación real: contenido distinto por módulo) |
