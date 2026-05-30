@@ -16,88 +16,88 @@ use App\ViewModel\Support\SubmitButton;
  * Datos inmutables de vista para InvoicesController::edit().
  * El controller construye este objeto; la vista accede via get_object_vars().
  */
-final class InvoiceEditViewModel implements EditViewModelInterface
+final readonly class InvoiceEditViewModel implements EditViewModelInterface
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
     /** @var array<string,string> */
-    public readonly array $documentTypes;
+    public array $documentTypes;
     /** @var array<string,string> */
-    public readonly array $approvalOptions;
+    public array $approvalOptions;
     /** @var array<string,string> */
-    public readonly array $dianOptions;
+    public array $dianOptions;
     /** @var array<string,string> */
-    public readonly array $readyForPaymentOptions;
+    public array $readyForPaymentOptions;
     /** @var array<string,string> */
-    public readonly array $paymentStatusOptions;
+    public array $paymentStatusOptions;
 
-    public readonly bool $isAdvance;
-    public readonly string $pageTitle;
+    public bool $isAdvance;
+    public string $pageTitle;
 
     /** @var array{0:string,1:string} Pareja [label, class] para el currentStatus. */
-    public readonly array $currentStatusBadge;
+    public array $currentStatusBadge;
 
     /** @var array<string,string[]> Sección → campos editables que la habilitan. */
-    public readonly array $sectionFieldMap;
+    public array $sectionFieldMap;
     /** @var string[] */
-    public readonly array $editableSectionKeys;
+    public array $editableSectionKeys;
     /** @var string[] */
-    public readonly array $readOnlySectionKeys;
+    public array $readOnlySectionKeys;
     /** @var string[] Render order: non-collapsible editable → collapsible editable → read-only. */
-    public readonly array $renderOrder;
+    public array $renderOrder;
 
     /** HTML pre-renderizado (ícono + texto). El template lo imprime raw. */
-    public readonly string $submitButtonHtml;
-    public readonly string $submitButtonClass;
+    public string $submitButtonHtml;
+    public string $submitButtonClass;
 
     // ── Propiedades desempacadas de DTOs (preservan API del template) ───
-    public readonly bool $canAdvance;
-    public readonly bool $canDeleteDocuments;
-    public readonly bool $canRegress;
-    public readonly bool $canConfirmPayment;
-    public readonly bool $canRegisterPayment;
-    public readonly bool $canAuthorizePayment;
-    public readonly bool $isRejected;
-    public readonly bool $isApproved;
+    public bool $canAdvance;
+    public bool $canDeleteDocuments;
+    public bool $canRegress;
+    public bool $canConfirmPayment;
+    public bool $canRegisterPayment;
+    public bool $canAuthorizePayment;
+    public bool $isRejected;
+    public bool $isApproved;
 
     /** @var array<int, mixed> */
-    public readonly array $currentApprovals;
-    public readonly bool $hasPendingApprovals;
-    public readonly bool $canSendLinks;
-    public readonly bool $canModifyApprovers;
+    public array $currentApprovals;
+    public bool $hasPendingApprovals;
+    public bool $canSendLinks;
+    public bool $canModifyApprovers;
 
-    public readonly mixed $providers;
-    public readonly mixed $operationCenters;
-    public readonly mixed $expenseTypes;
-    public readonly mixed $costCenters;
-    public readonly mixed $approvers;
-    public readonly mixed $employees;
-    public readonly mixed $bankingEntities;
+    public mixed $providers;
+    public mixed $operationCenters;
+    public mixed $expenseTypes;
+    public mixed $costCenters;
+    public mixed $approvers;
+    public mixed $employees;
+    public mixed $bankingEntities;
 
     public function __construct(
         // Entidad principal
-        public readonly Invoice $invoice,
-        public readonly string $currentStatus,
-        public readonly string $roleName,
+        public Invoice $invoice,
+        public string $currentStatus,
+        public string $roleName,
 
         // Campos editables y secciones
-        public readonly array $editableFields,
-        public readonly array $visibleSections,
+        public array $editableFields,
+        public array $visibleSections,
 
         // Avance / retroceso
-        public readonly array $advanceErrors,
-        public readonly ?string $nextStatus,
-        public readonly ?string $previousStatus,
-        public readonly ?string $regressLockMessage,
+        public array $advanceErrors,
+        public ?string $nextStatus,
+        public ?string $previousStatus,
+        public ?string $regressLockMessage,
 
         // Pipeline visual
-        public readonly array $pipelineStatuses,
-        public readonly array $pipelineLabels,
+        public array $pipelineStatuses,
+        public array $pipelineLabels,
 
         // Pagos
-        public readonly float $paymentsTotal,
+        public float $paymentsTotal,
 
         // Email logs
-        public readonly array $emailLogs,
+        public array $emailLogs,
 
         // Bundles de DTOs
         InvoiceEditPermissions $permissions,

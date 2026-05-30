@@ -16,41 +16,41 @@ use App\View\Presentation\InvoicePresentation;
  * heroExtraHtml, quickActionsHtml) ni el markup bespoke de pagos/observaciones/
  * soportes/historial — esos se quedan en el template.
  */
-final class InvoiceViewViewModel implements ViewViewModelInterface
+final readonly class InvoiceViewViewModel implements ViewViewModelInterface
 {
-    public readonly string $pageTitle;
+    public string $pageTitle;
     /** @var array{0:string,1:string} */
-    public readonly array $currentStatusBadge;
-    public readonly string $currentStatus;
+    public array $currentStatusBadge;
+    public string $currentStatus;
 
-    public readonly string $statusLabel;
-    public readonly string $statusPill;
-    public readonly bool   $isTerminal;
+    public string $statusLabel;
+    public string $statusPill;
+    public bool   $isTerminal;
 
     /** Pill/label del hero: resuelve la variante "Aprobada" cuando aplica. */
-    public readonly string $heroStatusPill;
-    public readonly string $heroStatusLabel;
-    public readonly ?string $heroExtraPill;
+    public string $heroStatusPill;
+    public string $heroStatusLabel;
+    public ?string $heroExtraPill;
 
-    public readonly float  $amount;
-    public readonly ?string $amountExtraHtml;
+    public float  $amount;
+    public ?string $amountExtraHtml;
 
-    public readonly string $providerName;
-    public readonly bool   $isReciboDeCaja;
+    public string $providerName;
+    public bool   $isReciboDeCaja;
 
     /** @var list<string> */
-    public readonly array  $approvedNames;
+    public array  $approvedNames;
 
-    public readonly int    $pagosCount;
-    public readonly float  $pagosTotal;
-    public readonly int    $totalDocs;
-    public readonly bool   $isLinkedLegalization;
+    public int    $pagosCount;
+    public float  $pagosTotal;
+    public int    $totalDocs;
+    public bool   $isLinkedLegalization;
 
     /**
      * @param array<string,\App\Model\Entity\InvoiceDocument[]> $documentsByStatus
      */
     public function __construct(
-        public readonly Invoice $record,
+        public Invoice $record,
         bool $isRejected,
         bool $isApproved,
         array $documentsByStatus = [],

@@ -8,16 +8,16 @@ namespace App\ViewModel\Invoice;
  * campo es `mixed` porque puede ser un ResultSet de Cake o un array plano
  * según el origen (find('list'), array_combine, etc.).
  */
-final class InvoiceFormDropdowns
+final readonly class InvoiceFormDropdowns
 {
     public function __construct(
-        public readonly mixed $providers,
-        public readonly mixed $operationCenters,
-        public readonly mixed $expenseTypes,
-        public readonly mixed $costCenters,
-        public readonly mixed $approvers,
-        public readonly mixed $employees,
-        public readonly mixed $bankingEntities,
+        public mixed $providers,
+        public mixed $operationCenters,
+        public mixed $expenseTypes,
+        public mixed $costCenters,
+        public mixed $approvers,
+        public mixed $employees,
+        public mixed $bankingEntities,
     ) {
     }
 }

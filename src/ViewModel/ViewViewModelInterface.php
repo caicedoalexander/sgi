@@ -9,8 +9,9 @@ namespace App\ViewModel;
  * que los templates de detalle puedan asumir la presencia de estos 3 datos
  * canónicos sin tipar contra una clase concreta.
  *
- * Implementado por: propiedades `public readonly` promovidas/declaradas en el
- * ctor de cada VM. Una readonly satisface el accesor `{ get; }` del interface.
+ * Implementado por propiedades promovidas/declaradas en cada VM (clases
+ * `final readonly class`). Una propiedad readonly satisface el accesor
+ * `{ get; }` del interface.
  */
 interface ViewViewModelInterface
 {

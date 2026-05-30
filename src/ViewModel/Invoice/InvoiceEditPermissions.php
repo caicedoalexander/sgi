@@ -8,17 +8,17 @@ namespace App\ViewModel\Invoice;
  * factura. El VM las desempaca a propiedades planas para preservar la API
  * que consume el template.
  */
-final class InvoiceEditPermissions
+final readonly class InvoiceEditPermissions
 {
     public function __construct(
-        public readonly bool $canAdvance,
-        public readonly bool $canDeleteDocuments,
-        public readonly bool $canRegress,
-        public readonly bool $canConfirmPayment,
-        public readonly bool $canRegisterPayment,
-        public readonly bool $canAuthorizePayment,
-        public readonly bool $isRejected,
-        public readonly bool $isApproved,
+        public bool $canAdvance,
+        public bool $canDeleteDocuments,
+        public bool $canRegress,
+        public bool $canConfirmPayment,
+        public bool $canRegisterPayment,
+        public bool $canAuthorizePayment,
+        public bool $isRejected,
+        public bool $isApproved,
     ) {
     }
 }

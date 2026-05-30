@@ -12,30 +12,30 @@ use App\View\Presentation\PaymentSchedulingPresentation;
  * Encapsula la derivación de estado/registro/documentos que antes vivía inline
  * en templates/PaymentSchedulings/view.php.
  */
-final class PaymentSchedulingViewViewModel implements ViewViewModelInterface
+final readonly class PaymentSchedulingViewViewModel implements ViewViewModelInterface
 {
-    public readonly string $pageTitle;
+    public string $pageTitle;
     /** @var array{0:string,1:string} */
-    public readonly array $currentStatusBadge;
-    public readonly string $currentStatus;
+    public array $currentStatusBadge;
+    public string $currentStatus;
 
-    public readonly string $code;
-    public readonly bool   $isTerminal;
-    public readonly int    $itemCount;
-    public readonly float  $total;
+    public string $code;
+    public bool   $isTerminal;
+    public int    $itemCount;
+    public float  $total;
     /** @var array<int,array{icon:string,html:string}> */
-    public readonly array $registryLines;
+    public array $registryLines;
     /** @var list<mixed> */
-    public readonly array $documents;
+    public array $documents;
     /** @var list<array{doc:mixed,canDelete:bool,deleteUrl:?string,showBadge:bool}> */
-    public readonly array $documentRows;
-    public readonly int   $totalDocs;
+    public array $documentRows;
+    public int   $totalDocs;
     /** @var array<string,string> */
-    public readonly array $pipelineLabels;
+    public array $pipelineLabels;
     /** @var list<string> */
-    public readonly array $pipelineSteps;
+    public array $pipelineSteps;
 
-    public function __construct(public readonly PaymentScheduling $record, float $total)
+    public function __construct(public PaymentScheduling $record, float $total)
     {
         $status = $record->pipeline_status;
         $labels = PaymentSchedulingConstants::STATUS_LABELS;

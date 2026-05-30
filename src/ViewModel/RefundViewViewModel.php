@@ -12,30 +12,30 @@ use App\View\Presentation\RefundPresentation;
  * Encapsula toda la derivación de estado/registro/documentos que antes vivía
  * inline en templates/Refunds/view.php (Ola 2 — C1).
  */
-final class RefundViewViewModel implements ViewViewModelInterface
+final readonly class RefundViewViewModel implements ViewViewModelInterface
 {
-    public readonly string $pageTitle;
+    public string $pageTitle;
     /** @var array{0:string,1:string} */
-    public readonly array $currentStatusBadge;
-    public readonly string $currentStatus;
+    public array $currentStatusBadge;
+    public string $currentStatus;
 
-    public readonly string $code;
-    public readonly bool $isTerminal;
-    public readonly ?string $beneficiaryName;
-    public readonly ?string $beneficiaryLabel;
-    public readonly float $totalAmount;
-    public readonly int $invoiceCount;
+    public string $code;
+    public bool $isTerminal;
+    public ?string $beneficiaryName;
+    public ?string $beneficiaryLabel;
+    public float $totalAmount;
+    public int $invoiceCount;
     /** @var array<int,array{icon:string,html:string}> */
-    public readonly array $registryLines;
+    public array $registryLines;
     /** @var list<array{doc:mixed,canDelete:bool,deleteUrl:null,showBadge:bool}> */
-    public readonly array $documentRows;
-    public readonly int $totalDocs;
+    public array $documentRows;
+    public int $totalDocs;
     /** @var array<string,string> */
-    public readonly array $pipelineLabels;
+    public array $pipelineLabels;
     /** @var list<string> */
-    public readonly array $pipelineSteps;
+    public array $pipelineSteps;
 
-    public function __construct(public readonly Refund $record)
+    public function __construct(public Refund $record)
     {
         $status = $record->status;
         $labels = RefundConstants::STATUS_LABELS;

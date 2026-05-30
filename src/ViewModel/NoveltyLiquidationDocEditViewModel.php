@@ -13,31 +13,31 @@ use App\View\Presentation\NoveltyPresentation;
  * Datos inmutables de vista para NoveltyLiquidationDocsController::edit().
  * El controller construye este objeto; la vista accede via get_object_vars().
  */
-final class NoveltyLiquidationDocEditViewModel implements EditViewModelInterface
+final readonly class NoveltyLiquidationDocEditViewModel implements EditViewModelInterface
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
-    public readonly string $pageTitle;
+    public string $pageTitle;
     /** @var array<string,string> */
-    public readonly array $statusLabels;
+    public array $statusLabels;
     /** @var array<string,string> */
-    public readonly array $periodLabels;
+    public array $periodLabels;
     /** @var array<string,string> */
-    public readonly array $signerLabels;
+    public array $signerLabels;
     /** @var array<string,string> */
-    public readonly array $paymentLabels;
+    public array $paymentLabels;
     /** @var array<string,string> */
-    public readonly array $statusBadgeMap;
+    public array $statusBadgeMap;
     /** @var array{0:string,1:string} */
-    public readonly array $currentStatusBadge;
+    public array $currentStatusBadge;
     /** @var array<string,string> */
-    public readonly array $badgeColors;
-    public readonly bool $isRejected;
-    public readonly bool $isPaid;
-    public readonly bool $isFinal;
-    public readonly string $currentStatus;
-    public readonly bool $showUploadSection;
-    public readonly int $totalDocs;
-    public readonly int $noveltyCount;
+    public array $badgeColors;
+    public bool $isRejected;
+    public bool $isPaid;
+    public bool $isFinal;
+    public string $currentStatus;
+    public bool $showUploadSection;
+    public int $totalDocs;
+    public int $noveltyCount;
 
     /**
      * @param array<string> $groupErrors
@@ -46,18 +46,18 @@ final class NoveltyLiquidationDocEditViewModel implements EditViewModelInterface
      * @param array<int, string> $bankingEntities
      */
     public function __construct(
-        public readonly NoveltyLiquidationDoc $doc,
-        public readonly string $roleName,
-        public readonly array $groupErrors,
-        public readonly array $effectiveStatuses,
-        public readonly array $documentsByStatus,
-        public readonly ?NoveltyDocument $liquidationDocument,
-        public readonly User $currentUser,
-        public readonly bool $skipsGdp,
-        public readonly array $bankingEntities,
-        public readonly bool $canRegisterPayment,
-        public readonly bool $canAuthorizePayment,
-        public readonly bool $canConfirmPayment,
+        public NoveltyLiquidationDoc $doc,
+        public string $roleName,
+        public array $groupErrors,
+        public array $effectiveStatuses,
+        public array $documentsByStatus,
+        public ?NoveltyDocument $liquidationDocument,
+        public User $currentUser,
+        public bool $skipsGdp,
+        public array $bankingEntities,
+        public bool $canRegisterPayment,
+        public bool $canAuthorizePayment,
+        public bool $canConfirmPayment,
     ) {
         $this->pageTitle    = 'Editar Liquidación: ' . ($doc->liquidation_number ?? ('#' . $doc->id));
         $this->statusLabels = NoveltyConstants::STATUS_LABELS;

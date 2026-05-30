@@ -9,15 +9,15 @@ namespace App\ViewModel\Support;
  * (RefundEditViewModel, PettyCashEditViewModel). Centraliza la regla
  * "una sección es visible cuando ya pasamos por su estado".
  */
-final class PipelineEditFlags
+final readonly class PipelineEditFlags
 {
     public function __construct(
-        public readonly int $statusIndex,
-        public readonly bool $showAccounting,
-        public readonly bool $showTreasury,
-        public readonly bool $canEditAccounting,
-        public readonly bool $canEditTreasury,
-        public readonly bool $canSave,
+        public int $statusIndex,
+        public bool $showAccounting,
+        public bool $showTreasury,
+        public bool $canEditAccounting,
+        public bool $canEditTreasury,
+        public bool $canSave,
     ) {
     }
 

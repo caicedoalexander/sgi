@@ -8,10 +8,10 @@ use App\Model\Entity\PaymentScheduling;
 /**
  * Datos inmutables de vista para PaymentSchedulingsController::add().
  */
-final class PaymentSchedulingAddViewModel
+final readonly class PaymentSchedulingAddViewModel
 {
     public function __construct(
-        public readonly PaymentScheduling $record,
+        public PaymentScheduling $record,
     ) {
     }
 }

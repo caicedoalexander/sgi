@@ -15,22 +15,22 @@ use App\View\Presentation\NoveltyPresentation;
  * NOTA: effectiveStatuses (pasos del pipeline) lo calcula NoveltyPipelineService
  * y se pasa por separado — no deriva de la entidad, no vive aquí.
  */
-final class NoveltyLiquidationDocViewViewModel implements ViewViewModelInterface
+final readonly class NoveltyLiquidationDocViewViewModel implements ViewViewModelInterface
 {
-    public readonly string $pageTitle;
+    public string $pageTitle;
     /** @var array{0:string,1:string} */
-    public readonly array $currentStatusBadge;
-    public readonly string $currentStatus;
+    public array $currentStatusBadge;
+    public string $currentStatus;
 
-    public readonly bool   $isRejected;
-    public readonly bool   $isTerminal;
-    public readonly string $periodLabel;
-    public readonly int    $noveltyCount;
-    public readonly string $extraPillHtml;
+    public bool   $isRejected;
+    public bool   $isTerminal;
+    public string $periodLabel;
+    public int    $noveltyCount;
+    public string $extraPillHtml;
     /** @var array<int,array{icon:string,html:string}> */
-    public readonly array $registryLines;
+    public array $registryLines;
 
-    public function __construct(public readonly NoveltyLiquidationDoc $record)
+    public function __construct(public NoveltyLiquidationDoc $record)
     {
         $status        = (string)$record->pipeline_status;
         $labels        = NoveltyConstants::STATUS_LABELS;

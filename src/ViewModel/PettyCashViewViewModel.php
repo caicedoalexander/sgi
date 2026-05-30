@@ -15,28 +15,28 @@ use App\View\Presentation\PettyCashPresentation;
  * acoplados a helpers de la vista ($quickActionsHtml, $canEdit) se quedan en
  * el template.
  */
-final class PettyCashViewViewModel implements ViewViewModelInterface
+final readonly class PettyCashViewViewModel implements ViewViewModelInterface
 {
-    public readonly string $pageTitle;
+    public string $pageTitle;
     /** @var array{0:string,1:string} */
-    public readonly array $currentStatusBadge;
-    public readonly string $currentStatus;
+    public array $currentStatusBadge;
+    public string $currentStatus;
 
-    public readonly bool   $isTerminal;
-    public readonly int    $invoiceCount;
+    public bool   $isTerminal;
+    public int    $invoiceCount;
     /** @var list<array{doc:mixed,canDelete:bool,deleteUrl:?string,showBadge:bool}> */
-    public readonly array  $documentRows;
-    public readonly int    $totalDocs;
-    public readonly int    $obsCount;
-    public readonly float  $totalAmount;
-    public readonly bool   $showPaymentCard;
-    public readonly string $amountExtraHtml;
+    public array  $documentRows;
+    public int    $totalDocs;
+    public int    $obsCount;
+    public float  $totalAmount;
+    public bool   $showPaymentCard;
+    public string $amountExtraHtml;
     /** @var list<string> */
-    public readonly array $pipelineSteps;
+    public array $pipelineSteps;
     /** @var array<string,string> */
-    public readonly array $pipelineLabels;
+    public array $pipelineLabels;
 
-    public function __construct(public readonly PettyCashRecord $record)
+    public function __construct(public PettyCashRecord $record)
     {
         $status = $record->status ?? '';
         $labels = PettyCashConstants::STATUS_LABELS;

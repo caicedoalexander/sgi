@@ -16,22 +16,22 @@ use App\View\Presentation\NoveltyPresentation;
  * NoveltyPipelineService y se pasan por separado al template — no derivan de la
  * entidad, así que NO viven aquí.
  */
-final class EmployeeNoveltyViewViewModel implements ViewViewModelInterface
+final readonly class EmployeeNoveltyViewViewModel implements ViewViewModelInterface
 {
-    public readonly string $pageTitle;
+    public string $pageTitle;
     /** @var array{0:string,1:string} */
-    public readonly array $currentStatusBadge;
-    public readonly string $currentStatus;
+    public array $currentStatusBadge;
+    public string $currentStatus;
 
-    public readonly bool   $isRejected;
-    public readonly bool   $isTerminal;
-    public readonly string $noveltyName;
+    public bool   $isRejected;
+    public bool   $isTerminal;
+    public string $noveltyName;
     /** @var array<string,string> */
-    public readonly array $pipelineLabels;
+    public array $pipelineLabels;
     /** @var array<int,array{icon:string,html:string}> */
-    public readonly array $registryLines;
+    public array $registryLines;
 
-    public function __construct(public readonly EmployeeNovelty $record)
+    public function __construct(public EmployeeNovelty $record)
     {
         $status = (string)$record->pipeline_status;
         $labels = NoveltyConstants::STATUS_LABELS;

@@ -8,7 +8,7 @@ use App\Model\Entity\EmployeeNovelty;
 /**
  * Datos inmutables de vista para EmployeeNoveltiesController::add() (GET).
  */
-final class EmployeeNoveltyAddViewModel
+final readonly class EmployeeNoveltyAddViewModel
 {
     /**
      * @param iterable<int, mixed> $employees
@@ -16,11 +16,11 @@ final class EmployeeNoveltyAddViewModel
      * @param array<int, string> $approversList
      */
     public function __construct(
-        public readonly EmployeeNovelty $novelty,
-        public readonly iterable $employees,
-        public readonly array $noveltyTypes,
-        public readonly array $approversList,
-        public readonly ?int $preselectedEmployee,
+        public EmployeeNovelty $novelty,
+        public iterable $employees,
+        public array $noveltyTypes,
+        public array $approversList,
+        public ?int $preselectedEmployee,
     ) {
     }
 }

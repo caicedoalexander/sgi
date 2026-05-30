@@ -9,8 +9,9 @@ namespace App\ViewModel;
  * templates de edit puedan asumir la presencia de estos 4 datos canónicos
  * sin tipar contra una clase concreta.
  *
- * Implementado por: propiedades `public readonly` promovidas en el ctor de
- * cada VM. Una readonly satisface el accesor `{ get; }` del interface.
+ * Implementado por propiedades promovidas/declaradas en cada VM (clases
+ * `final readonly class`). Una propiedad readonly satisface el accesor
+ * `{ get; }` del interface.
  */
 interface EditViewModelInterface
 {

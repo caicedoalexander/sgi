@@ -14,30 +14,30 @@ use App\ViewModel\Support\SubmitButton;
  * Datos inmutables de vista para RefundsController::edit().
  * El controller construye este objeto; la vista accede via get_object_vars().
  */
-final class RefundEditViewModel implements EditViewModelInterface
+final readonly class RefundEditViewModel implements EditViewModelInterface
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
-    public readonly string $pageTitle;
+    public string $pageTitle;
     /** @var array<string,string> */
-    public readonly array $statusLabels;
+    public array $statusLabels;
     /** @var array<string,string> */
-    public readonly array $statusBadgeMap;
+    public array $statusBadgeMap;
     /** @var array{0:string,1:string} */
-    public readonly array $currentStatusBadge;
+    public array $currentStatusBadge;
     /** @var array<string,string> */
-    public readonly array $readyForPaymentOptions;
+    public array $readyForPaymentOptions;
     /** @var array<string,string> */
-    public readonly array $paymentStatusOptions;
-    public readonly int $statusIndex;
-    public readonly bool $showAccounting;
-    public readonly bool $showTreasury;
-    public readonly bool $canEditAccounting;
-    public readonly bool $canEditTreasury;
-    public readonly bool $canSave;
+    public array $paymentStatusOptions;
+    public int $statusIndex;
+    public bool $showAccounting;
+    public bool $showTreasury;
+    public bool $canEditAccounting;
+    public bool $canEditTreasury;
+    public bool $canSave;
     /** HTML pre-renderizado (ícono + texto). El template lo imprime raw. */
-    public readonly string $submitButtonHtml;
-    public readonly string $submitButtonClass;
-    public readonly int $invoiceCount;
+    public string $submitButtonHtml;
+    public string $submitButtonClass;
+    public int $invoiceCount;
 
     /**
      * @param \App\Model\Entity\Refund $record Refund cargado con todos sus contains.
@@ -60,26 +60,26 @@ final class RefundEditViewModel implements EditViewModelInterface
      * @param array<string, string> $pipelineLabels Mapa estado => label.
      */
     public function __construct(
-        public readonly Refund $record,
-        public readonly string $currentStatus,
-        public readonly array $employees,
-        public readonly array $providers,
-        public readonly iterable $operationCenters,
-        public readonly array $bankingEntities,
-        public readonly iterable $availableInvoices,
-        public readonly array $groupFilters,
-        public readonly ?string $nextStatus,
-        public readonly array $advanceErrors,
-        public readonly bool $canAdvance,
-        public readonly bool $canRegress,
-        public readonly ?string $previousStatus,
-        public readonly ?string $regressLockMessage,
-        public readonly bool $canRegisterPayment,
-        public readonly bool $canAuthorizePayment,
-        public readonly bool $canConfirmPayment,
-        public readonly array $syntheticPayments,
-        public readonly string $roleName,
-        public readonly array $pipelineLabels,
+        public Refund $record,
+        public string $currentStatus,
+        public array $employees,
+        public array $providers,
+        public iterable $operationCenters,
+        public array $bankingEntities,
+        public iterable $availableInvoices,
+        public array $groupFilters,
+        public ?string $nextStatus,
+        public array $advanceErrors,
+        public bool $canAdvance,
+        public bool $canRegress,
+        public ?string $previousStatus,
+        public ?string $regressLockMessage,
+        public bool $canRegisterPayment,
+        public bool $canAuthorizePayment,
+        public bool $canConfirmPayment,
+        public array $syntheticPayments,
+        public string $roleName,
+        public array $pipelineLabels,
     ) {
         $this->pageTitle    = 'Editar Reintegro ' . ($record->code ?? ('#' . $record->id));
         $this->statusLabels = RefundConstants::STATUS_LABELS;

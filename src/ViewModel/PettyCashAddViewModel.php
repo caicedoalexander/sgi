@@ -9,14 +9,14 @@ use App\Model\Entity\PettyCashRecord;
  * Datos inmutables de vista para PettyCashRecordsController::add().
  * El controller construye este objeto; la vista accede via get_object_vars().
  */
-final class PettyCashAddViewModel
+final readonly class PettyCashAddViewModel
 {
     public function __construct(
-        public readonly PettyCashRecord $record,
-        public readonly mixed $availableInvoices,
-        public readonly mixed $operationCenters,
-        public readonly mixed $providers,
-        public readonly array $groupFilters,
+        public PettyCashRecord $record,
+        public mixed $availableInvoices,
+        public mixed $operationCenters,
+        public mixed $providers,
+        public array $groupFilters,
     ) {
     }
 }

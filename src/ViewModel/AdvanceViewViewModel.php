@@ -14,26 +14,26 @@ use App\View\Presentation\InvoicePresentation;
  * Absorbe la derivación de estado/registro que antes vivía inline en
  * templates/Advances/view.php (Ola 2 — Advance).
  */
-final class AdvanceViewViewModel implements ViewViewModelInterface
+final readonly class AdvanceViewViewModel implements ViewViewModelInterface
 {
-    public readonly string $pageTitle;
+    public string $pageTitle;
     /** @var array{0:string,1:string} */
-    public readonly array $currentStatusBadge;
-    public readonly string $currentStatus;
+    public array $currentStatusBadge;
+    public string $currentStatus;
 
-    public readonly string $idLabel;
-    public readonly bool $isTerminal;
-    public readonly string $beneficiary;
-    public readonly string $beneficiaryType;
-    public readonly float $amount;
+    public string $idLabel;
+    public bool $isTerminal;
+    public string $beneficiary;
+    public string $beneficiaryType;
+    public float $amount;
     /** @var array<int,array{icon:string,html:string}> */
-    public readonly array $registryLines;
+    public array $registryLines;
     /** @var array<string,string> */
-    public readonly array $pipelineLabels;
+    public array $pipelineLabels;
     /** @var list<string> */
-    public readonly array $pipelineSteps;
+    public array $pipelineSteps;
 
-    public function __construct(public readonly Invoice $record)
+    public function __construct(public Invoice $record)
     {
         $status = $record->pipeline_status;
         $labels = InvoiceConstants::STATUS_LABELS;
