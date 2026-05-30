@@ -5,15 +5,11 @@
  * @var \App\Model\Entity\User|null $currentUser
  */
 use App\Constants\PaymentSchedulingConstants;
-use App\View\Presentation\PaymentSchedulingPresentation;
 
 $this->assign('title', h($viewModel->pageTitle));
 
 $record = $viewModel->record;
-$psStatusPills  = PaymentSchedulingPresentation::STATUS_BADGES;
-$psStatusPill   = $psStatusPills[$record->pipeline_status] ?? 'pill-muted';
-$psStatusLabels = PaymentSchedulingConstants::STATUS_LABELS;
-$psStatusLabel  = $psStatusLabels[$record->pipeline_status] ?? $record->pipeline_status;
+[$psStatusLabel, $psStatusPill] = $viewModel->currentStatusBadge;
 
 $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PAGADA;
 ?>
@@ -71,23 +67,14 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
     <aside class="sgi-invoice-view-left">
         <?php
-        $actionsHtml = null;
-        if (!empty($viewModel->canRegress)):
-            $prevLabel = $viewModel->pipelineLabels[$viewModel->previousStatus] ?? $viewModel->previousStatus;
-            $isLocked = !empty($viewModel->regressLockMessage);
-            ob_start();
-            if ($isLocked): ?>
-                <button type="button" class="btn" disabled title="<?= h($viewModel->regressLockMessage) ?>">
-                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar al paso anterior
-                </button>
-            <?php else: ?>
-                <button type="button" class="btn"
-                        data-bs-toggle="modal" data-bs-target="#regressStatusModal">
-                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
-                </button>
-            <?php endif;
-            $actionsHtml = ob_get_clean();
-        endif;
+        // Acciones del sidebar (regresión) — element compartido
+        $actionsHtml = !empty($viewModel->canRegress)
+            ? $this->element('pipeline_regress_action', [
+                'previousStatus'     => $viewModel->previousStatus,
+                'pipelineLabels'     => $viewModel->pipelineLabels,
+                'regressLockMessage' => $viewModel->regressLockMessage,
+            ])
+            : null;
 
         $registryLines = [
             ['icon' => 'bi-person', 'html' => 'Rol: <strong style="color:var(--text-default);">' . h($viewModel->roleName) . '</strong>'],

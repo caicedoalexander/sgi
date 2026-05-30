@@ -105,24 +105,14 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
     <aside class="sgi-invoice-view-left">
         <?php
-        // Acciones del sidebar (regresión)
-        $actionsHtml = null;
-        if (!empty($canRegress)):
-            $prevLabel = $pipelineLabels[$previousStatus] ?? $previousStatus;
-            $isLocked = !empty($regressLockMessage);
-            ob_start();
-            if ($isLocked): ?>
-                <button type="button" class="btn" disabled title="<?= h($regressLockMessage) ?>">
-                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar al paso anterior
-                </button>
-            <?php else: ?>
-                <button type="button" class="btn"
-                        data-bs-toggle="modal" data-bs-target="#regressStatusModal">
-                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Regresar a: <?= h($prevLabel) ?>
-                </button>
-            <?php endif;
-            $actionsHtml = ob_get_clean();
-        endif;
+        // Acciones del sidebar (regresión) — element compartido
+        $actionsHtml = !empty($canRegress)
+            ? $this->element('pipeline_regress_action', [
+                'previousStatus'     => $previousStatus,
+                'pipelineLabels'     => $pipelineLabels,
+                'regressLockMessage' => $regressLockMessage,
+            ])
+            : null;
 
         $registryLines = [
             ['icon' => 'bi-person', 'html' => 'Rol: <strong style="color:var(--text-default);">' . h($roleName) . '</strong>'],
