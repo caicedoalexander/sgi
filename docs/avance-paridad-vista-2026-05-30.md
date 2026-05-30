@@ -60,7 +60,7 @@ Leyenda: ✅ ejecutado · 🔄 reclasificado · ⏸ diferido · ◻ decisión pe
 | **C5** | `email_log_panel` solo en Invoice + EN/edit | 🔄 (B) esencial — **no es gap** | Investigado: solo Invoice (`sendApprovalLinkNotification`) y EmployeeNovelty (`sendNoveltyApprovalEmail`) emiten correos (únicos `entity_type` en `email_logs`: `invoice`/`employee_novelty`). Refund/PettyCash/PaymentScheduling/Advance/NLD **no** llaman a `NotificationService` ni tienen aprobación externa → el panel aparece donde hay correos. Alinear renderizaría paneles vacíos. |
 | **C6** | `document_row` directo vs `documents_section` en 3 `view` | ✅ resuelto → canon = `documents_section` read-only | `documents_section` ya soporta read-only (`uploadModalId => null`); Refund/NLD/EN ya lo usaban. Alineados los 2 rezagados (PettyCash/PaymentScheduling/view). No hizo falta flag `readOnly` nuevo |
 | **C7** | Estandarizar `final readonly class` | ◻ cosmético | bajo retorno |
-| **C8** | `AddViewModel` muta el ORM (Advance/Invoice) | ◻ decisión pendiente | reorganización menor |
+| **C8** | `AddViewModel` muta el ORM (Advance/Invoice) | ✅ ejecutado | Ola 4 — `Invoice/AdvanceAddViewModel` ahora son DTO de transporte puro; el entity-building (defaults + whitelist CR-001 + guard beneficiario + `patchEntity`) se movió inline a `{Invoices,Advances}Controller::add()` (canon Refund). Behavior-preserving; VMs quedan cs-clean |
 | **C9** | Grids inline de sub-tablas (facturas/pagos) sin element | ◻ decisión pendiente | exigiría crear un element nuevo, ganancia marginal |
 
 **Decisión de arquitectura mayor (cerrada):** ViewModel y Presentation **coexisten** con responsabilidades disjuntas (per-request vs const-maps estáticos); **no fusionar** (B1). Acoplamiento mutuo nulo, dirección única VM→Presentation.

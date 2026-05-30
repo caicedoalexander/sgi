@@ -236,11 +236,16 @@ class InvoicesController extends AppController
     public function add()
     {
         if ($this->request->is('post')) {
-            $vm = InvoiceAddViewModel::fromRequest(
-                $this->Invoices,
-                $this->request->getData(),
-                (int)$this->_getCurrentUser()->id,
-            );
+            $data = $this->request->getData();
+            $data['registered_by'] = (int)$this->_getCurrentUser()->id;
+            $data['pipeline_status'] = InvoiceConstants::STATUS_APROBACION;
+            $data['registration_date'] = date('Y-m-d');
+            // Documentos sin vencimiento real (Legalización, Anticipo, etc.) usan
+            // la fecha de emisión como vencimiento para satisfacer el NOT NULL.
+            if (empty($data['due_date']) && !empty($data['issue_date'])) {
+                $data['due_date'] = $data['issue_date'];
+            }
+            $vm = new InvoiceAddViewModel($this->Invoices->patchEntity($this->Invoices->newEmptyEntity(), $data));
 
             if ($this->Invoices->save($vm->invoice)) {
                 $this->historyService->recordStatusChange(
@@ -260,7 +265,7 @@ class InvoicesController extends AppController
             return;
         }
 
-        $vm = InvoiceAddViewModel::forForm($this->Invoices);
+        $vm = new InvoiceAddViewModel($this->Invoices->newEmptyEntity());
         $this->set('invoice', $vm->invoice);
         $this->set($this->_getFormDropdowns());
     }

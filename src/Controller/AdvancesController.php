@@ -25,6 +25,22 @@ class AdvancesController extends AppController
 {
     use DocumentJsonPayloadTrait;
 
+    /**
+     * Lista blanca de campos mass-assignable al crear un Anticipo (audit CR-001):
+     * bloquea approver_id, area_approval, payment_status, confirmed_by, accrued, advance_id.
+     */
+    private const ADVANCE_ALLOWED_FIELDS = [
+        'provider_id', 'employee_id', 'operation_center_id',
+        'expense_type_id', 'cost_center_id', 'amount', 'detail',
+        'issue_date', 'due_date', 'document_type', 'registered_by',
+        'pipeline_status', 'registration_date',
+    ];
+
+    private const ADVANCE_BLOCKED_FIELDS = [
+        'approver_id', 'area_approval', 'payment_status',
+        'confirmed_by', 'accrued', 'advance_id',
+    ];
+
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     private AdvanceLegalizationService $legalizationService;
@@ -195,20 +211,34 @@ class AdvancesController extends AppController
         $dropdowns = $this->_dropdowns();
 
         if ($this->request->is('post')) {
-            $vm = AdvanceAddViewModel::fromRequest(
-                $invoicesTable,
-                $this->request->getData(),
-                (int)$this->_getCurrentUser()->id,
-                $dropdowns,
-            );
+            $data = $this->request->getData();
+            $data['document_type'] = InvoiceConstants::DOCTYPE_ANTICIPO;
+            $data['registered_by'] = (int)$this->_getCurrentUser()->id;
+            $data['pipeline_status'] = InvoiceConstants::STATUS_APROBACION;
+            $data['registration_date'] = date('Y-m-d');
+            // Anticipos no tienen fecha de vencimiento; usamos la de emisión.
+            if (empty($data['due_date']) && !empty($data['issue_date'])) {
+                $data['due_date'] = $data['issue_date'];
+            }
 
-            if (!empty($vm->errors)) {
-                $this->Flash->error($vm->errors[0]);
+            if (empty($data['provider_id']) && empty($data['employee_id'])) {
+                $this->Flash->error('Debe seleccionar un proveedor o un empleado como beneficiario.');
+                $vm = new AdvanceAddViewModel($invoicesTable->newEmptyEntity(), $dropdowns);
                 $this->set('invoice', $vm->invoice);
                 $this->set($vm->dropdowns);
 
                 return null;
             }
+
+            // Lista blanca de mass-assignment (audit CR-001).
+            $accessibleFields = array_fill_keys(self::ADVANCE_ALLOWED_FIELDS, true)
+                + array_fill_keys(self::ADVANCE_BLOCKED_FIELDS, false);
+            $invoice = $invoicesTable->patchEntity(
+                $invoicesTable->newEmptyEntity(),
+                $data,
+                ['accessibleFields' => $accessibleFields],
+            );
+            $vm = new AdvanceAddViewModel($invoice, $dropdowns);
 
             if ($invoicesTable->save($vm->invoice)) {
                 $this->Flash->success('Anticipo creado.');
@@ -223,7 +253,7 @@ class AdvancesController extends AppController
             return null;
         }
 
-        $vm = AdvanceAddViewModel::forForm($invoicesTable, $dropdowns);
+        $vm = new AdvanceAddViewModel($invoicesTable->newEmptyEntity(), $dropdowns);
         $this->set('invoice', $vm->invoice);
         $this->set($vm->dropdowns);
 
