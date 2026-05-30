@@ -16,9 +16,7 @@ use App\View\Presentation\PaymentSchedulingPresentation;
 $pageTitle = 'Programación de Pagos';
 $this->assign('title', $pageTitle);
 
-$statusBadge   = PaymentSchedulingPresentation::STATUS_BADGES;
 $statusLabels  = PaymentSchedulingConstants::STATUS_LABELS;
-$pipelineSteps = PaymentSchedulingConstants::PIPELINE_STATUSES;
 
 $query        = $this->request->getQueryParams();
 $activeStatus = (string)($query['status'] ?? '');
@@ -184,13 +182,11 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2.2fr 0.7fr 1.5fr 1fr 1.7
     $rowCount = 0;
     foreach ($recordsArr as $i => $record):
         $rowCount++;
-        $stageIdx = array_search($record->pipeline_status, $pipelineSteps, true);
-        if ($stageIdx === false) {
-            $stageIdx = -1;
-        }
-        $pillClass = $statusBadge[$record->pipeline_status] ?? 'pill-muted';
-        $itemCount = count($record->payment_scheduling_items ?? []);
-        $isPaid    = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PAGADA;
+        $row       = PaymentSchedulingPresentation::forRow($record);
+        $stageIdx  = $row->stageIdx;
+        $pillClass = $row->statusBadgeClass;
+        $itemCount = $row->itemCount;
+        $isPaid    = $row->isPaid;
         $href = $this->Url->build(['action' => 'edit', $record->id]);
     ?>
         <a href="<?= h($href) ?>" role="row"
@@ -238,7 +234,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2.2fr 0.7fr 1.5fr 1fr 1.7
             <div style="min-width:0;">
                 <?php if ($stageIdx >= 0): ?>
                     <div class="pipeline-mini" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
-                        <?php for ($s = 0, $n = count($pipelineSteps); $s < $n; $s++): ?>
+                        <?php for ($s = 0, $n = $row->pipelineLength; $s < $n; $s++): ?>
                             <div class="<?= $s <= $stageIdx ? 'on' : '' ?>"></div>
                         <?php endfor; ?>
                     </div>
@@ -246,7 +242,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2.2fr 0.7fr 1.5fr 1fr 1.7
                 <div style="display:flex;flex-wrap:wrap;gap:4px;">
                     <span class="pill <?= h($pillClass) ?> pill-sm">
                         <?php if ($isPaid): ?><i class="bi bi-check" style="font-size:9px;" aria-hidden="true"></i><?php endif; ?>
-                        <?= h(strtoupper($statusLabels[$record->pipeline_status] ?? $record->pipeline_status)) ?>
+                        <?= h(strtoupper($row->statusLabel)) ?>
                     </span>
                 </div>
             </div>

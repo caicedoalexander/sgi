@@ -17,6 +17,7 @@ use App\Service\NoveltySignatureService;
 use App\Service\Pipeline\Novelty\Policy\NoveltyActionPolicy;
 use App\View\Presentation\NoveltyPresentation;
 use App\ViewModel\NoveltyLiquidationDocEditViewModel;
+use App\ViewModel\NoveltyLiquidationDocViewViewModel;
 use Cake\Http\Response;
 use Cake\Routing\Router;
 use DateTime;
@@ -189,6 +190,7 @@ class NoveltyLiquidationDocsController extends AppController
                 ->toArray();
         }
 
+        $this->set('viewModel', new NoveltyLiquidationDocViewViewModel($doc));
         $this->set(compact(
             'doc',
             'groupErrors',

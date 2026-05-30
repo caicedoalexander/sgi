@@ -15,6 +15,7 @@ use App\ViewModel\Invoice\InvoiceEditPermissions;
 use App\ViewModel\Invoice\InvoiceFormDropdowns;
 use App\ViewModel\InvoiceAddViewModel;
 use App\ViewModel\InvoiceEditViewModel;
+use App\ViewModel\InvoiceViewViewModel;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 use App\Controller\Trait\ObservationControllerTrait;
@@ -227,7 +228,8 @@ class InvoicesController extends AppController
         }
 
         $fieldLabels = InvoiceHistoryService::FIELD_LABELS;
-        $this->set(compact('invoice', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'canShowEdit', 'showPettyCashLock', 'showSchedulingLock', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
+        $viewModel = new InvoiceViewViewModel($invoice, $isRejected, $isApproved, $documentsByStatus);
+        $this->set(compact('viewModel', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'canShowEdit', 'showPettyCashLock', 'showSchedulingLock', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
     }
 
     #[Permission(action: 'add')]

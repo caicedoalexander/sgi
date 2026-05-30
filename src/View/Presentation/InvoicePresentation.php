@@ -57,6 +57,18 @@ final class InvoicePresentation
                         && !$isRejected
                         && $invoice->due_date < $today;
 
+        $isLegalization = $invoice->document_type === InvoiceConstants::DOCTYPE_LEGALIZACION;
+        $steps          = $isLegalization
+            ? InvoiceConstants::PIPELINE_STATUSES_LEGALIZACION
+            : InvoiceConstants::PIPELINE_STATUSES;
+        $stageIdx       = array_search($status, $steps, true);
+        $stageIdx       = $stageIdx === false ? -1 : $stageIdx;
+
+        $pipelineVariant = $isRejected ? 'is-danger' : self::pipelineVariant($status);
+        $pillClass       = $isRejected
+            ? 'pill-danger-soft'
+            : (self::STATUS_BADGES[$status] ?? 'pill-muted');
+
         return new InvoiceRowView(
             statusLabel:      InvoiceConstants::STATUS_LABELS[$status] ?? 'Desconocido',
             statusBadgeClass: self::STATUS_BADGES[$status] ?? 'pill-muted',
@@ -66,6 +78,25 @@ final class InvoicePresentation
             isPaid:           $isPaid,
             isReadyForPay:    $readyForPay,
             isOverdue:        $isOverdue,
+            isLegalization:   $isLegalization,
+            pipelineSteps:    $steps,
+            stageIdx:         $stageIdx,
+            pipelineVariant:  $pipelineVariant,
+            pillClass:        $pillClass,
         );
+    }
+
+    /** Variante de color para .pipeline-mini según estado actual (no-rechazado). */
+    private static function pipelineVariant(string $status): string
+    {
+        return match ($status) {
+            InvoiceConstants::STATUS_APROBACION,
+            InvoiceConstants::STATUS_AUTORIZACION_PAGO,
+            InvoiceConstants::STATUS_VERIFICACION_PAGO,
+            InvoiceConstants::STATUS_LEGALIZADA           => 'is-warning',
+            InvoiceConstants::STATUS_CONTABILIDAD,
+            InvoiceConstants::STATUS_TESORERIA            => 'is-orange',
+            default                                       => '', // primary (PAGADA)
+        };
     }
 }

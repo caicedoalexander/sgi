@@ -229,10 +229,9 @@ $scopeTabs = [
                 $rowCount = 0;
                 foreach ($novelties as $novelty):
                     $rowCount++;
-                    $isRejected = $novelty->isRejected();
-                    $pillClass = $isRejected
-                        ? 'pill-danger-soft'
-                        : ($statusBadges[$novelty->pipeline_status] ?? 'pill-muted');
+                    $row = NoveltyPresentation::forEmployeeNoveltyRow($novelty);
+                    $isRejected = $row->isRejected;
+                    $pillClass = $row->statusBadgeClass;
 
                     $typeId = (int)$novelty->novelty_type_id;
                     $typeName = $novelty->novelty_type->name ?? '—';
@@ -292,12 +291,12 @@ $scopeTabs = [
                         <span class="pill pill-sm <?= h($pillClass) ?>">
                             <?php if ($isRejected): ?>
                             <i class="bi bi-x" aria-hidden="true"></i>
-                            <?php elseif ($novelty->pipeline_status === NoveltyConstants::STATUS_PAGADA): ?>
+                            <?php elseif ($row->isPaid): ?>
                             <i class="bi bi-check" aria-hidden="true"></i>
                             <?php else: ?>
                             <i class="bi bi-clock" aria-hidden="true"></i>
                             <?php endif; ?>
-                            <?= h(mb_strtoupper($statusLabels[$novelty->pipeline_status] ?? $novelty->pipeline_status)) ?>
+                            <?= h(mb_strtoupper($row->statusLabel)) ?>
                         </span>
                         <div style="font-size:10px;color:var(--text-faint);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                             <?= h($approverName) ?>

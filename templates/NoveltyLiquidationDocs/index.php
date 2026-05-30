@@ -25,10 +25,6 @@ $titleMap = [
 $pageTitle = $titleMap[$action] ?? 'Documentos de Liquidación';
 $this->assign('title', $pageTitle);
 
-$statusLabels = NoveltyConstants::STATUS_LABELS;
-$periodLabels = NoveltyConstants::PERIOD_LABELS;
-$statusBadge  = NoveltyPresentation::STATUS_BADGES;
-
 $query        = $this->request->getQueryParams();
 $activeStatus = (string)($statusFilter ?? '');
 $searchValue  = (string)($query['search'] ?? '');
@@ -149,7 +145,8 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 1.1fr 1.4fr 0.8fr 1.6fr 1
     $rowCount = 0;
     foreach ($docsArr as $i => $doc):
         $rowCount++;
-        $pillClass = $statusBadge[$doc->pipeline_status] ?? 'pill-muted';
+        $row = NoveltyPresentation::forLiquidationDocRow($doc);
+        $pillClass = $row->statusBadgeClass;
     ?>
         <a href="<?= $this->Url->build(['action' => 'edit', $doc->id]) ?>" role="row"
            style="<?= $gridStyle ?>padding:14px 18px;background:#fff;color:inherit;text-decoration:none;cursor:pointer;transition:background-color var(--t-fast) ease;<?= $i > 0 ? 'border-top:1px solid var(--rule);' : '' ?>"
@@ -163,19 +160,19 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 1.1fr 1.4fr 0.8fr 1.6fr 1
 
             <?php /* 2. Período */ ?>
             <div style="font-size:12px;color:var(--text-default);">
-                <?= h($periodLabels[$doc->period] ?? $doc->period) ?>
+                <?= h($row->periodLabel) ?>
             </div>
 
             <?php /* 3. Estado */ ?>
             <div style="min-width:0;">
                 <span class="pill <?= h($pillClass) ?> pill-sm">
-                    <?= h(strtoupper($statusLabels[$doc->pipeline_status] ?? $doc->pipeline_status)) ?>
+                    <?= h(strtoupper($row->statusLabel)) ?>
                 </span>
             </div>
 
             <?php /* 4. Novedades */ ?>
             <div class="mono" style="text-align:center;font-size:12px;color:var(--text-muted);">
-                <?= count($doc->employee_novelties) ?>
+                <?= $row->noveltyCount ?>
             </div>
 
             <?php /* 5. Elaborado por */ ?>

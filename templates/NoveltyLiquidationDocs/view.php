@@ -1,34 +1,33 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\NoveltyLiquidationDoc $doc
+ * @var \App\ViewModel\NoveltyLiquidationDocViewViewModel $viewModel
  * @var array $groupErrors
  * @var array $effectiveStatuses
  * @var array $documentsByStatus
  * @var object|null $liquidationDocument
  * @var array $groupHistories
  * @var array $fieldLabels
- * @var string $currentStatus
  */
 use App\Constants\NoveltyConstants;
 use App\View\Presentation\NoveltyPresentation;
 
-$this->assign('title', 'Liquidación: ' . h($doc->liquidation_number));
+$doc = $viewModel->record;
+$this->assign('title', $viewModel->pageTitle);
 
 $statusLabels  = NoveltyConstants::STATUS_LABELS;
 $periodLabels  = NoveltyConstants::PERIOD_LABELS;
 $signerLabels  = NoveltyConstants::SIGNER_LABELS;
 $paymentLabels = NoveltyConstants::PAYMENT_LABELS;
-$isRejected    = $doc->pipeline_status === NoveltyConstants::STATUS_RECHAZADA;
-$isPaid        = $doc->pipeline_status === NoveltyConstants::STATUS_PAGADA;
-$currentStatus = $doc->pipeline_status;
+$isRejected    = $viewModel->isRejected;
+$isPaid        = $viewModel->isTerminal;
+$currentStatus = $viewModel->currentStatus;
 
-$statusBadgeMap = NoveltyPresentation::STATUS_BADGES;
-$nldStatusPill  = $statusBadgeMap[$currentStatus] ?? 'pill-muted';
+$nldStatusPill  = NoveltyPresentation::STATUS_BADGES[$currentStatus] ?? 'pill-muted';
 $nldStatusLabel = $statusLabels[$currentStatus] ?? ucfirst($currentStatus);
 $badgeColors   = NoveltyPresentation::STATUS_BADGES;
 $totalDocs     = array_sum(array_map('count', $documentsByStatus));
-$noveltyCount  = count($doc->employee_novelties ?? []);
+$noveltyCount  = $viewModel->noveltyCount;
 ?>
 
 <!-- Page header -->
@@ -70,30 +69,8 @@ $noveltyCount  = count($doc->employee_novelties ?? []);
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
     <aside class="sgi-invoice-view-left">
         <?php
-        $registryLines = [];
-        if ($doc->performed_by_user) {
-            $registryLines[] = ['icon' => 'bi-person', 'html' => 'Elaborado por ' . h($doc->performed_by_user->full_name)];
-        }
-        if ($doc->created) {
-            $registryLines[] = ['icon' => 'bi-calendar3', 'html' => 'Creado · <span class="mono">' . $doc->created->format('d/m/Y') . '</span>'];
-        }
-        if ($doc->modified) {
-            $registryLines[] = ['icon' => 'bi-pencil-square', 'html' => 'Modificado · <span class="mono">' . $doc->modified->format('d/m/Y') . '</span>'];
-        }
-        if ($doc->payment_date) {
-            $registryLines[] = ['icon' => 'bi-cash-coin', 'html' => 'Pagado · <span class="mono">' . $doc->payment_date->format('d/m/Y') . '</span>'];
-        }
-
-        $extraPills = [];
-        if ($doc->passes_for_payment === true) {
-            $extraPills[] = '<span class="pill pill-primary-soft">Pasa a pago</span>';
-        } elseif ($doc->passes_for_payment === false) {
-            $extraPills[] = '<span class="pill pill-muted">No pasa a pago</span>';
-        }
-        if ($doc->payment_status) {
-            $extraPills[] = '<span class="pill pill-info-soft">' . h($paymentLabels[$doc->payment_status] ?? $doc->payment_status) . '</span>';
-        }
-        $extraPillHtml = implode(' ', $extraPills);
+        $registryLines = $viewModel->registryLines;
+        $extraPillHtml = $viewModel->extraPillHtml;
 
         echo $this->element('pipeline_sidebar', [
             'icon'           => 'file-earmark-text',

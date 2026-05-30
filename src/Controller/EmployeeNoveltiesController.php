@@ -21,6 +21,7 @@ use App\Service\NoveltySignatureService;
 use App\View\Presentation\NoveltyPresentation;
 use App\ViewModel\EmployeeNoveltyAddViewModel;
 use App\ViewModel\EmployeeNoveltyEditViewModel;
+use App\ViewModel\EmployeeNoveltyViewViewModel;
 use Cake\Http\Response;
 use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
@@ -621,6 +622,7 @@ class EmployeeNoveltiesController extends AppController
 
         $fieldLabels = NoveltyHistoryService::FIELD_LABELS;
 
+        $this->set('viewModel', new EmployeeNoveltyViewViewModel($novelty));
         $this->set(compact(
             'novelty',
             'effectiveStatuses',

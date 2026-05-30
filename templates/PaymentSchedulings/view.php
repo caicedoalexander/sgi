@@ -1,24 +1,17 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\PaymentScheduling $record
- * @var string $roleName
- * @var float $total
- * @var array $pipelineLabels
+ * @var \App\ViewModel\PaymentSchedulingViewViewModel $viewModel
  */
-use App\Constants\PaymentSchedulingConstants;
-use App\View\Presentation\PaymentSchedulingPresentation;
+$record = $viewModel->record;
 
-$this->assign('title', 'Programación ' . h($record->code));
+$this->assign('title', $viewModel->pageTitle);
 
-$statusLabels = PaymentSchedulingConstants::STATUS_LABELS;
-$psStatusPills = PaymentSchedulingPresentation::STATUS_BADGES;
-$psStatusPill = $psStatusPills[$record->pipeline_status] ?? 'pill-muted';
-$psStatusLabel = $statusLabels[$record->pipeline_status] ?? $record->pipeline_status;
-
-$isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PAGADA;
-$itemCount = count($record->payment_scheduling_items ?? []);
-$documents = $record->payment_scheduling_documents ?? [];
+[$psStatusLabel, $psStatusPill] = $viewModel->currentStatusBadge;
+$isTerminal = $viewModel->isTerminal;
+$itemCount  = $viewModel->itemCount;
+$total      = $viewModel->total;
+$documents  = $viewModel->documents;
 ?>
 
 <!-- Page header -->
@@ -56,17 +49,6 @@ $documents = $record->payment_scheduling_documents ?? [];
     <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
     <aside class="sgi-invoice-view-left">
         <?php
-        $registryLines = [];
-        if ($record->hasValue('created_by_user')) {
-            $registryLines[] = ['icon' => 'bi-person', 'html' => 'Creado por ' . h($record->created_by_user->full_name)];
-        }
-        if ($record->created) {
-            $registryLines[] = ['icon' => 'bi-calendar3', 'html' => 'Creado · <span class="mono">' . $record->created->format('d/m/Y H:i') . '</span>'];
-        }
-        if ($record->modified) {
-            $registryLines[] = ['icon' => 'bi-pencil-square', 'html' => 'Modificado · <span class="mono">' . $record->modified->format('d/m/Y') . '</span>'];
-        }
-
         echo $this->element('pipeline_sidebar', [
             'icon'           => 'calendar2-check',
             'idLabel'        => $record->code,
@@ -79,12 +61,12 @@ $documents = $record->payment_scheduling_documents ?? [];
             'entitySubIcon'  => 'bi-receipt',
             'amountLabel'    => 'Monto Total',
             'amount'         => (float)$total,
-            'pipelineSteps'  => PaymentSchedulingConstants::PIPELINE_STATUSES,
-            'pipelineLabels' => $pipelineLabels,
-            'currentStatus'  => $record->pipeline_status,
+            'pipelineSteps'  => $viewModel->pipelineSteps,
+            'pipelineLabels' => $viewModel->pipelineLabels,
+            'currentStatus'  => $viewModel->currentStatus,
             'isTerminal'     => $isTerminal,
             'modifiedAt'     => $record->modified,
-            'registryLines'  => $registryLines,
+            'registryLines'  => $viewModel->registryLines,
         ]);
         ?>
     </aside>

@@ -83,27 +83,6 @@ $tabs = [
     [InvoiceConstants::STATUS_PAGADA,            'Pagadas',       'var(--primary-color)'],
 ];
 
-/* ─────────── Pipeline mini: pasos por tipo de documento ─────────── */
-$pipelineStepsFull = InvoiceConstants::PIPELINE_STATUSES;
-$pipelineStepsLeg  = [
-    InvoiceConstants::STATUS_APROBACION,
-    InvoiceConstants::STATUS_CONTABILIDAD,
-    InvoiceConstants::STATUS_LEGALIZADA,
-];
-
-/* Variante de color para .pipeline-mini según estado actual. */
-$pipelineVariant = function (string $status): string {
-    return match ($status) {
-        InvoiceConstants::STATUS_APROBACION,
-        InvoiceConstants::STATUS_AUTORIZACION_PAGO,
-        InvoiceConstants::STATUS_VERIFICACION_PAGO,
-        InvoiceConstants::STATUS_LEGALIZADA           => 'is-warning',
-        InvoiceConstants::STATUS_CONTABILIDAD,
-        InvoiceConstants::STATUS_TESORERIA            => 'is-orange',
-        default                                       => '', // primary (PAGADA)
-    };
-};
-
 /* Pills para ready_for_payment. */
 $readyForPaymentPills = [
     InvoiceConstants::READY_FOR_PAYMENT_SI          => 'pill-primary-soft',
@@ -308,17 +287,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2.4fr 1fr 1fr 1.1fr 1.7fr
     $today    = new \DateTimeImmutable('today');
     foreach ($invoicesArr as $i => $invoice):
         $rowCount++;
-        $row            = InvoicePresentation::forRow($invoice, $today);
-        $isLegalization = $invoice->document_type === 'Legalización';
-        $steps          = $isLegalization ? $pipelineStepsLeg : $pipelineStepsFull;
-        $stageIdx       = array_search($invoice->pipeline_status, $steps, true);
-        if ($stageIdx === false) {
-            $stageIdx = -1;
-        }
-        $pipeVariant = $row->isRejected ? 'is-danger' : $pipelineVariant($invoice->pipeline_status ?? '');
-        $pillClass   = $row->isRejected
-            ? 'pill-danger-soft'
-            : (InvoicePresentation::STATUS_BADGES[$invoice->pipeline_status] ?? 'pill-muted');
+        $row  = InvoicePresentation::forRow($invoice, $today);
         $href = $this->Url->build(['action' => $isAllView ? 'view' : 'edit', $invoice->id]);
     ?>
         <a href="<?= h($href) ?>" role="row"
@@ -372,10 +341,10 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2.4fr 1fr 1fr 1.1fr 1.7fr
 
             <?php /* 6. Estado · Pipeline */ ?>
             <div style="min-width:0;">
-                <?php if ($stageIdx >= 0): ?>
-                    <div class="pipeline-mini <?= h($pipeVariant) ?>" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
-                        <?php for ($s = 0, $n = count($steps); $s < $n; $s++): ?>
-                            <div class="<?= $s <= $stageIdx ? 'on' : '' ?>"></div>
+                <?php if ($row->stageIdx >= 0): ?>
+                    <div class="pipeline-mini <?= h($row->pipelineVariant) ?>" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
+                        <?php for ($s = 0, $n = count($row->pipelineSteps); $s < $n; $s++): ?>
+                            <div class="<?= $s <= $row->stageIdx ? 'on' : '' ?>"></div>
                         <?php endfor; ?>
                     </div>
                 <?php endif; ?>
@@ -383,7 +352,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2.4fr 1fr 1fr 1.1fr 1.7fr
                     <?php if ($row->isRejected): ?>
                         <span class="pill pill-danger-soft pill-sm">RECHAZADA</span>
                     <?php else: ?>
-                        <span class="pill <?= h($pillClass) ?> pill-sm">
+                        <span class="pill <?= h($row->pillClass) ?> pill-sm">
                             <?php if ($row->isPaid): ?><i class="bi bi-check" style="font-size:9px;" aria-hidden="true"></i><?php endif; ?>
                             <?= h(strtoupper($row->statusLabel)) ?>
                         </span>

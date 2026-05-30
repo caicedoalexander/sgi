@@ -17,6 +17,7 @@ use App\Service\PaymentSchedulingPipelineService;
 use App\Service\Pipeline\PaymentScheduling\Policy\PaymentSchedulingActionPolicy;
 use App\ViewModel\PaymentSchedulingAddViewModel;
 use App\ViewModel\PaymentSchedulingEditViewModel;
+use App\ViewModel\PaymentSchedulingViewViewModel;
 use Cake\Routing\Router;
 
 class PaymentSchedulingsController extends AppController
@@ -101,11 +102,9 @@ class PaymentSchedulingsController extends AppController
             ],
         ]);
 
-        $roleName = $this->_getRoleName();
         $total = $this->schedulingService->calculateTotal($record->id);
-        $pipelineLabels = PaymentSchedulingConstants::STATUS_LABELS;
 
-        $this->set(compact('record', 'roleName', 'total', 'pipelineLabels'));
+        $this->set('viewModel', new PaymentSchedulingViewViewModel($record, (float)$total));
     }
 
     #[Permission(action: 'add')]

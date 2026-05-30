@@ -27,9 +27,7 @@ $pageTitles = [
 $pageTitle = $pageTitles[$action] ?? 'Caja Menor';
 $this->assign('title', $pageTitle);
 
-$statusBadge   = PettyCashPresentation::STATUS_BADGES;
 $statusLabels  = PettyCashConstants::STATUS_LABELS;
-$pipelineSteps = PettyCashConstants::STATUSES;
 
 $query        = $this->request->getQueryParams();
 $activeStatus = (string)($query['status'] ?? '');
@@ -75,17 +73,6 @@ $tabs = [
     [PettyCashConstants::STATUS_AUTORIZACION_PAGO,  'Autorización', 'var(--info-text)'],
     [PettyCashConstants::STATUS_PAGADA,             'Pagados',      'var(--primary-color)'],
 ];
-
-/* Variante de color para .pipeline-mini según estado actual. */
-$pipelineVariant = function (string $status): string {
-    return match ($status) {
-        PettyCashConstants::STATUS_TESORERIA,
-        PettyCashConstants::STATUS_VERIFICACION_PAGO => 'is-warning',
-        PettyCashConstants::STATUS_AGRUPACION,
-        PettyCashConstants::STATUS_AUTORIZACION_PAGO => 'is-orange',
-        default                                      => '', // primary
-    };
-};
 
 /* Grid 7-col compartido entre header y filas. */
 $gridStyle = 'display:grid;grid-template-columns:1.3fr 1.2fr 0.8fr 1.8fr 1fr 1.7fr 36px;gap:14px;align-items:center;';
@@ -230,15 +217,8 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 1.2fr 0.8fr 1.8fr 1fr 1.7
     $rowCount = 0;
     foreach ($recordsArr as $i => $record):
         $rowCount++;
-        $stageIdx = array_search($record->status, $pipelineSteps, true);
-        if ($stageIdx === false) {
-            $stageIdx = -1;
-        }
-        $pillClass    = $statusBadge[$record->status] ?? 'pill-muted';
-        $pipeVariant  = $pipelineVariant($record->status ?? '');
-        $invoiceCount = count($record->invoices ?? []);
-        $isPaid       = $record->status === PettyCashConstants::STATUS_PAGADA;
-        $href         = $this->Url->build(['action' => 'edit', $record->id]);
+        $row  = PettyCashPresentation::forRow($record);
+        $href = $this->Url->build(['action' => 'edit', $record->id]);
     ?>
         <a href="<?= h($href) ?>" role="row"
            style="<?= $gridStyle ?>padding:14px 18px;background:#fff;color:inherit;text-decoration:none;cursor:pointer;transition:background-color var(--t-fast) ease;<?= $i > 0 ? 'border-top:1px solid var(--rule);' : '' ?>"
@@ -256,7 +236,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 1.2fr 0.8fr 1.8fr 1fr 1.7
             </div>
 
             <?php /* 2. Total */ ?>
-            <div class="mono" style="text-align:right;font-size:13.5px;font-weight:700;<?= $isPaid
+            <div class="mono" style="text-align:right;font-size:13.5px;font-weight:700;<?= $row->isPaid
                 ? 'color:var(--primary-color);'
                 : 'color:var(--text-default);' ?>">
                 $ <?= number_format((float)$record->total_amount, 0, ',', '.') ?>
@@ -264,7 +244,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 1.2fr 0.8fr 1.8fr 1fr 1.7
 
             <?php /* 3. # Facturas */ ?>
             <div class="mono" style="text-align:center;font-size:12px;color:var(--text-muted);">
-                <?= $invoiceCount ?>
+                <?= $row->invoiceCount ?>
             </div>
 
             <?php /* 4. Creado por */ ?>
@@ -283,17 +263,17 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 1.2fr 0.8fr 1.8fr 1fr 1.7
 
             <?php /* 6. Estado · Pipeline */ ?>
             <div style="min-width:0;">
-                <?php if ($stageIdx >= 0): ?>
-                    <div class="pipeline-mini <?= h($pipeVariant) ?>" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
-                        <?php for ($s = 0, $n = count($pipelineSteps); $s < $n; $s++): ?>
-                            <div class="<?= $s <= $stageIdx ? 'on' : '' ?>"></div>
+                <?php if ($row->stageIdx >= 0): ?>
+                    <div class="pipeline-mini <?= h($row->pipelineVariant) ?>" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
+                        <?php for ($s = 0; $s < $row->pipelineLength; $s++): ?>
+                            <div class="<?= $s <= $row->stageIdx ? 'on' : '' ?>"></div>
                         <?php endfor; ?>
                     </div>
                 <?php endif; ?>
                 <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                    <span class="pill <?= h($pillClass) ?> pill-sm">
-                        <?php if ($isPaid): ?><i class="bi bi-check" style="font-size:9px;" aria-hidden="true"></i><?php endif; ?>
-                        <?= h(strtoupper($statusLabels[$record->status] ?? $record->status)) ?>
+                    <span class="pill <?= h($row->statusBadgeClass) ?> pill-sm">
+                        <?php if ($row->isPaid): ?><i class="bi bi-check" style="font-size:9px;" aria-hidden="true"></i><?php endif; ?>
+                        <?= h(strtoupper($row->statusLabel)) ?>
                     </span>
                 </div>
             </div>

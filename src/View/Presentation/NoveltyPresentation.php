@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\View\Presentation;
 
 use App\Constants\NoveltyConstants;
+use App\Model\Entity\EmployeeNovelty;
+use App\Model\Entity\NoveltyLiquidationDoc;
 
 /**
  * Configuración de presentación (clases pill del Sistema de Diseño,
@@ -48,4 +50,38 @@ final class NoveltyPresentation
         '#10B981', // emerald
         '#6366F1', // indigo
     ];
+
+    /**
+     * Derivación de estado para una fila de EmployeeNovelties/index (vista lista).
+     * Encapsula isRejected/isPaid + pill/label que antes vivían inline en el loop.
+     */
+    public static function forEmployeeNoveltyRow(EmployeeNovelty $record): EmployeeNoveltyRowView
+    {
+        $status     = (string)$record->pipeline_status;
+        $isRejected = $record->isRejected();
+
+        return new EmployeeNoveltyRowView(
+            isRejected:       $isRejected,
+            isPaid:           $status === NoveltyConstants::STATUS_PAGADA,
+            statusLabel:      NoveltyConstants::STATUS_LABELS[$status] ?? $status,
+            statusBadgeClass: $isRejected
+                ? 'pill-danger-soft'
+                : (self::STATUS_BADGES[$status] ?? 'pill-muted'),
+        );
+    }
+
+    /**
+     * Derivación de estado para una fila de NoveltyLiquidationDocs/index.
+     */
+    public static function forLiquidationDocRow(NoveltyLiquidationDoc $record): NoveltyLiquidationDocRowView
+    {
+        $status = (string)$record->pipeline_status;
+
+        return new NoveltyLiquidationDocRowView(
+            statusLabel:      NoveltyConstants::STATUS_LABELS[$status] ?? $status,
+            statusBadgeClass: self::STATUS_BADGES[$status] ?? 'pill-muted',
+            periodLabel:      NoveltyConstants::PERIOD_LABELS[$record->period] ?? (string)$record->period,
+            noveltyCount:     count($record->employee_novelties ?? []),
+        );
+    }
 }

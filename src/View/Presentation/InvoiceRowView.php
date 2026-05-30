@@ -9,6 +9,9 @@ namespace App\View\Presentation;
  */
 final readonly class InvoiceRowView
 {
+    /**
+     * @param list<string> $pipelineSteps Pasos del pipeline-mini según tipo de documento.
+     */
     public function __construct(
         public string $statusLabel,
         public string $statusBadgeClass,
@@ -18,6 +21,11 @@ final readonly class InvoiceRowView
         public bool   $isPaid,
         public bool   $isReadyForPay,
         public bool   $isOverdue,
+        public bool   $isLegalization,
+        public array  $pipelineSteps,
+        public int    $stageIdx,
+        public string $pipelineVariant,
+        public string $pillClass,
     ) {
     }
 }

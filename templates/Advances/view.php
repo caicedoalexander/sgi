@@ -1,26 +1,19 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\Invoice $invoice
- * @var array $pipelineLabels
+ * @var \App\ViewModel\AdvanceViewViewModel $viewModel
  */
 
-use App\Constants\InvoiceConstants;
-use App\View\Presentation\InvoicePresentation;
+$invoice = $viewModel->record;
 
-$this->assign('title', $invoice->invoice_number ?? '#' . $invoice->id);
+$this->assign('title', $viewModel->pageTitle);
 
-$pipelineBadge = InvoicePresentation::STATUS_BADGES;
-$pipelineLabels = InvoiceConstants::STATUS_LABELS;
+$beneficiary     = $viewModel->beneficiary;
+$beneficiaryType = $viewModel->beneficiaryType;
 
-$beneficiary = $invoice->provider->name ?? ($invoice->employee->full_name ?? '—');
-$beneficiaryType = $invoice->provider_id ? 'Proveedor' : ($invoice->employee_id ? 'Empleado' : '—');
-
-$advStatusPills = InvoicePresentation::STATUS_BADGES;
-$advStatusPill = $advStatusPills[$invoice->pipeline_status] ?? 'pill-muted';
-$advStatusLabel = $pipelineLabels[$invoice->pipeline_status] ?? $invoice->pipeline_status;
-$advIdLabel = $invoice->invoice_number ?? ('#' . $invoice->id);
-$isTerminal = $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA;
+[$advStatusLabel, $advStatusPill] = $viewModel->currentStatusBadge;
+$advIdLabel  = $viewModel->idLabel;
+$isTerminal  = $viewModel->isTerminal;
 ?>
 
 <!-- Page header -->
@@ -58,17 +51,6 @@ $isTerminal = $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA;
     <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
     <aside class="sgi-invoice-view-left">
         <?php
-        $registryLines = [];
-        if ($invoice->hasValue('registered_by_user')) {
-            $registryLines[] = ['icon' => 'bi-person', 'html' => 'Registrado por ' . h($invoice->registered_by_user->full_name)];
-        }
-        if ($invoice->created) {
-            $registryLines[] = ['icon' => 'bi-calendar3', 'html' => 'Creado · <span class="mono">' . $invoice->created->format('d/m/Y H:i') . '</span>'];
-        }
-        if ($invoice->modified) {
-            $registryLines[] = ['icon' => 'bi-pencil-square', 'html' => 'Modificado · <span class="mono">' . $invoice->modified->format('d/m/Y') . '</span>'];
-        }
-
         echo $this->element('pipeline_sidebar', [
             'icon'           => 'cash-coin',
             'idLabel'        => $advIdLabel,
@@ -81,12 +63,12 @@ $isTerminal = $invoice->pipeline_status === InvoiceConstants::STATUS_PAGADA;
             'entitySubIcon'  => 'bi-geo-alt',
             'amountLabel'    => 'Monto',
             'amount'         => (float)$invoice->amount,
-            'pipelineSteps'  => InvoiceConstants::PIPELINE_STATUSES,
-            'pipelineLabels' => $pipelineLabels,
-            'currentStatus'  => $invoice->pipeline_status,
+            'pipelineSteps'  => $viewModel->pipelineSteps,
+            'pipelineLabels' => $viewModel->pipelineLabels,
+            'currentStatus'  => $viewModel->currentStatus,
             'isTerminal'     => $isTerminal,
             'modifiedAt'     => $invoice->modified,
-            'registryLines'  => $registryLines,
+            'registryLines'  => $viewModel->registryLines,
         ]);
         ?>
     </aside>

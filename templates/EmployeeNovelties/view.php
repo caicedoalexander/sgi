@@ -1,24 +1,24 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\EmployeeNovelty $novelty
+ * @var \App\ViewModel\EmployeeNoveltyViewViewModel $viewModel
  * @var array $effectiveStatuses
  * @var array $documentsByStatus
  * @var bool $hasActiveTemplate
  * @var array $fieldLabels
- * @var string $currentStatus
  */
 use App\Constants\NoveltyConstants;
 use App\View\Presentation\NoveltyPresentation;
 
-$this->assign('title', 'Novedad #' . $novelty->id);
+$novelty = $viewModel->record;
+$this->assign('title', $viewModel->pageTitle);
 
 $statusLabels = NoveltyConstants::STATUS_LABELS;
 $scheduleLabels = NoveltyConstants::SCHEDULE_LABELS;
-$isRejected = $novelty->isRejected();
-$currentStatus = $novelty->pipeline_status;
+$isRejected = $viewModel->isRejected;
+$currentStatus = $viewModel->currentStatus;
 
-$statusBadgeMap = NoveltyPresentation::STATUS_BADGES;
+[$novViewStatusLabel, $novViewStatusPill] = $viewModel->currentStatusBadge;
 
 // Documents prep
 $totalDocs = array_sum(array_map('count', $documentsByStatus));
@@ -28,8 +28,6 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 <!-- Page header -->
 <?php
 $novViewId = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
-$novViewStatusLabel = $statusLabels[$novelty->pipeline_status] ?? $novelty->pipeline_status;
-$novViewStatusPill = $statusBadgeMap[$novelty->pipeline_status] ?? 'pill-muted';
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
@@ -72,33 +70,23 @@ $novViewStatusPill = $statusBadgeMap[$novelty->pipeline_status] ?? 'pill-muted';
 </div>
 
 <?php
-$noveltyPipelineLabels = $statusLabels;
-$noveltyPipelineLabels[NoveltyConstants::STATUS_CONTABILIDAD] = 'Paso a Nómina';
+$noveltyPipelineLabels = $viewModel->pipelineLabels;
 $pipelineStepsToShow = $noveltyStatuses ?? $effectiveStatuses;
-$isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
-$noveltyName = $novelty->custom_name ?: ($novelty->employee->full_name ?? ('Novedad #' . $novelty->id));
+$isNovTerminal = $viewModel->isTerminal;
+$noveltyName = $viewModel->noveltyName;
 ?>
 <div class="sgi-invoice-view-grid view-anim">
 
     <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
     <aside class="sgi-invoice-view-left">
         <?php
-        $registryLines = [];
-        if ($novelty->registered_by_user) {
-            $registryLines[] = ['icon' => 'bi-person', 'html' => 'Registrado por ' . h($novelty->registered_by_user->full_name)];
-        }
-        if ($novelty->filing_date) {
-            $registryLines[] = ['icon' => 'bi-calendar3', 'html' => 'Diligenciada · <span class="mono">' . $novelty->filing_date->format('d/m/Y') . '</span>'];
-        }
-        if ($novelty->modified) {
-            $registryLines[] = ['icon' => 'bi-pencil-square', 'html' => 'Modificada · <span class="mono">' . $novelty->modified->format('d/m/Y') . '</span>'];
-        }
+        $registryLines = $viewModel->registryLines;
 
         echo $this->element('pipeline_sidebar', [
             'icon'           => 'calendar-check',
             'idLabel'        => $noveltyName,
             'typeLabel'      => $novelty->novelty_type->name ?? null,
-            'statusPill'     => $statusBadgeMap[$currentStatus] ?? 'pill-muted',
+            'statusPill'     => NoveltyPresentation::STATUS_BADGES[$currentStatus] ?? 'pill-muted',
             'statusLabel'    => $statusLabels[$currentStatus] ?? ucfirst($currentStatus),
             'isRejected'     => $isRejected,
             'entityLabel'    => 'Fecha del Permiso',

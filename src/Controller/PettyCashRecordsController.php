@@ -19,6 +19,7 @@ use App\Service\Pipeline\PettyCash\Policy\PettyCashActionPolicy;
 use App\Service\StructuredLogger;
 use App\ViewModel\PettyCashAddViewModel;
 use App\ViewModel\PettyCashEditViewModel;
+use App\ViewModel\PettyCashViewViewModel;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
@@ -186,7 +187,7 @@ class PettyCashRecordsController extends AppController
             ],
         ]);
 
-        $this->set(compact('record'));
+        $this->set('viewModel', new PettyCashViewViewModel($record));
     }
 
     #[Permission(action: 'add')]

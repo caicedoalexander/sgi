@@ -14,10 +14,8 @@
  * @var string[] $visibleStatuses
  */
 
-use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\View\Presentation\AdvancePresentation;
-use App\View\Presentation\InvoicePresentation;
 
 $action = $this->request->getParam('action');
 $pageTitles = [
@@ -26,13 +24,6 @@ $pageTitles = [
 ];
 $pageTitle = $pageTitles[$action] ?? 'Anticipos';
 $this->assign('title', $pageTitle);
-
-$pipelineBadge        = InvoicePresentation::STATUS_BADGES;
-$pipelineLabels       = InvoiceConstants::STATUS_LABELS;
-$legalizationBadge    = AdvancePresentation::STATUS_BADGES;
-$legalizationLabels   = AdvanceConstants::STATUS_LABELS;
-$invoicePipelineSteps = InvoiceConstants::PIPELINE_STATUSES;
-$legalizationSteps    = AdvanceConstants::PIPELINE_STATUSES;
 
 $query        = $this->request->getQueryParams();
 $activeStatus = (string)($query['pipeline_status'] ?? '');
@@ -167,21 +158,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.2fr 2fr 1.2fr 1.1fr 1.7fr 1.7
     $rowCount = 0;
     foreach ($advancesArr as $i => $a):
         $rowCount++;
-        $pipelineIdx = array_search($a->pipeline_status, $invoicePipelineSteps, true);
-        if ($pipelineIdx === false) {
-            $pipelineIdx = -1;
-        }
-        $pillClass   = $pipelineBadge[$a->pipeline_status] ?? 'pill-muted';
-        $isPaid      = $a->pipeline_status === InvoiceConstants::STATUS_PAGADA;
-        $beneficiary = $a->provider->name ?? ($a->employee->full_name ?? null);
-
-        $legalization    = $a->advance_legalization ?? null;
-        $legalizationIdx = $legalization
-            ? array_search($legalization->status, $legalizationSteps, true)
-            : false;
-        if ($legalizationIdx === false) {
-            $legalizationIdx = -1;
-        }
+        $row = AdvancePresentation::forRow($a);
     ?>
         <a href="<?= $this->Url->build(['action' => 'view', $a->id]) ?>" role="row"
            style="<?= $gridStyle ?>padding:14px 18px;background:#fff;color:inherit;text-decoration:none;cursor:pointer;transition:background-color var(--t-fast) ease;<?= $i > 0 ? 'border-top:1px solid var(--rule);' : '' ?>"
@@ -191,7 +168,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.2fr 2fr 1.2fr 1.1fr 1.7fr 1.7
             <?php /* 1. Anticipo: código + tipo */ ?>
             <div style="min-width:0;">
                 <div class="mono" style="font-size:12.5px;font-weight:700;color:var(--text-strong);">
-                    <?= h($a->invoice_number ?: '#' . $a->id) ?>
+                    <?= h($row->idLabel) ?>
                 </div>
                 <div style="font-size:9.5px;color:var(--text-faint);letter-spacing:0.5px;font-weight:600;margin-top:2px;text-transform:uppercase;">
                     Anticipo
@@ -201,56 +178,56 @@ $gridStyle = 'display:grid;grid-template-columns:1.2fr 2fr 1.2fr 1.1fr 1.7fr 1.7
             <?php /* 2. Beneficiario */ ?>
             <div style="min-width:0;">
                 <div style="font-size:12.5px;font-weight:600;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                    <?= $beneficiary ? h($beneficiary) : '<span style="color:var(--text-faint);">—</span>' ?>
+                    <?= $row->beneficiaryName ? h($row->beneficiaryName) : '<span style="color:var(--text-faint);">—</span>' ?>
                 </div>
             </div>
 
             <?php /* 3. Centro de operación */ ?>
             <div style="min-width:0;">
                 <div style="font-size:12px;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                    <?= $a->hasValue('operation_center')
-                        ? h($a->operation_center->name)
+                    <?= $row->operationCenterName !== null
+                        ? h($row->operationCenterName)
                         : '<span style="color:var(--text-faint);">—</span>' ?>
                 </div>
             </div>
 
             <?php /* 4. Monto */ ?>
-            <div class="mono" style="text-align:right;font-size:13.5px;font-weight:700;<?= $isPaid
+            <div class="mono" style="text-align:right;font-size:13.5px;font-weight:700;<?= $row->isPaid
                 ? 'color:var(--primary-color);'
                 : 'color:var(--text-default);' ?>">
-                $ <?= number_format((float)$a->amount, 0, ',', '.') ?>
+                $ <?= number_format($row->amount, 0, ',', '.') ?>
             </div>
 
             <?php /* 5. Pago · Pipeline */ ?>
             <div style="min-width:0;">
-                <?php if ($pipelineIdx >= 0): ?>
+                <?php if ($row->pipelineIdx >= 0): ?>
                     <div class="pipeline-mini" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
-                        <?php for ($s = 0, $n = count($invoicePipelineSteps); $s < $n; $s++): ?>
-                            <div class="<?= $s <= $pipelineIdx ? 'on' : '' ?>"></div>
+                        <?php for ($s = 0; $s < $row->pipelineLength; $s++): ?>
+                            <div class="<?= $s <= $row->pipelineIdx ? 'on' : '' ?>"></div>
                         <?php endfor; ?>
                     </div>
                 <?php endif; ?>
                 <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                    <span class="pill <?= h($pillClass) ?> pill-sm">
-                        <?php if ($isPaid): ?><i class="bi bi-check" style="font-size:9px;" aria-hidden="true"></i><?php endif; ?>
-                        <?= h(strtoupper($pipelineLabels[$a->pipeline_status] ?? $a->pipeline_status)) ?>
+                    <span class="pill <?= h($row->statusBadgeClass) ?> pill-sm">
+                        <?php if ($row->isPaid): ?><i class="bi bi-check" style="font-size:9px;" aria-hidden="true"></i><?php endif; ?>
+                        <?= h(strtoupper($row->statusLabel)) ?>
                     </span>
                 </div>
             </div>
 
             <?php /* 6. Legalización */ ?>
             <div style="min-width:0;">
-                <?php if ($legalization): ?>
-                    <?php if ($legalizationIdx >= 0): ?>
+                <?php if ($row->hasLegalization): ?>
+                    <?php if ($row->legalizationIdx >= 0): ?>
                         <div class="pipeline-mini" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
-                            <?php for ($s = 0, $n = count($legalizationSteps); $s < $n; $s++): ?>
-                                <div class="<?= $s <= $legalizationIdx ? 'on' : '' ?>"></div>
+                            <?php for ($s = 0; $s < $row->legalizationLength; $s++): ?>
+                                <div class="<?= $s <= $row->legalizationIdx ? 'on' : '' ?>"></div>
                             <?php endfor; ?>
                         </div>
                     <?php endif; ?>
                     <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                        <span class="pill <?= h($legalizationBadge[$legalization->status] ?? 'pill-muted') ?> pill-sm">
-                            <?= h(strtoupper($legalizationLabels[$legalization->status] ?? $legalization->status)) ?>
+                        <span class="pill <?= h($row->legalizationBadgeClass) ?> pill-sm">
+                            <?= h(strtoupper($row->legalizationLabel)) ?>
                         </span>
                     </div>
                 <?php else: ?>

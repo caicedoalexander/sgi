@@ -8,34 +8,31 @@
  * Panel derecho con cards de sección (información, pago, facturas, observaciones, soportes).
  *
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\PettyCashRecord $record
+ * @var \App\ViewModel\PettyCashViewViewModel $viewModel
  */
 
 use App\Constants\InvoiceConstants;
-use App\Constants\PettyCashConstants;
 use App\View\Presentation\InvoicePresentation;
-use App\View\Presentation\PettyCashPresentation;
 
-$this->assign('title', 'Caja Menor ' . $record->code);
+$record = $viewModel->record;
 
-// ─── Datos derivados de presentación ────────────────────────────────
-$statusBadge   = PettyCashPresentation::STATUS_BADGES;
-$statusLabels  = PettyCashConstants::STATUS_LABELS;
-$currentStatus = $record->status ?? '';
-$pcStatusPill  = $statusBadge[$currentStatus] ?? 'pill-muted';
-$pcStatusLabel = $statusLabels[$currentStatus] ?? $currentStatus;
+$this->assign('title', $viewModel->pageTitle);
 
-$pipelineSteps = PettyCashConstants::STATUSES;
-$isTerminal = $currentStatus === PettyCashConstants::STATUS_PAGADA;
+// ─── Datos derivados de presentación (vía ViewModel) ────────────────
+[$pcStatusLabel, $pcStatusPill] = $viewModel->currentStatusBadge;
+$currentStatus = $viewModel->currentStatus;
+$statusLabels  = $viewModel->pipelineLabels;
+$pipelineSteps = $viewModel->pipelineSteps;
+$isTerminal    = $viewModel->isTerminal;
 
-$invoiceCount = count($record->invoices ?? []);
+$invoiceCount = $viewModel->invoiceCount;
 $docs         = $record->petty_cash_documents ?? [];
 $obsList      = $record->petty_cash_observations ?? [];
-$totalDocs    = count($docs);
-$obsCount     = count($obsList);
+$totalDocs    = $viewModel->totalDocs;
+$obsCount     = $viewModel->obsCount;
 
 // Formateo del total.
-$amountFmt = (float)$record->total_amount;
+$amountFmt = $viewModel->totalAmount;
 
 // Helpers de iniciales para avatares.
 $initialsOf = static function (?string $name): string {
@@ -51,7 +48,7 @@ $initialsOf = static function (?string $name): string {
     return $ini ?: mb_strtoupper(mb_substr($name, 0, 2));
 };
 
-$showPaymentCard = $record->isAutorizacionPago() || $record->isVerificacionPago() || $record->isPagada();
+$showPaymentCard = $viewModel->showPaymentCard;
 $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPagada();
 ?>
 
@@ -113,13 +110,8 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
     }
     $quickActionsHtml = ob_get_clean();
 
-    // Línea "Pagado" bajo el monto, cuando el registro está en estado terminal.
-    $amountExtraHtml = '';
-    if ($isTerminal && $record->payment_date) {
-        $amountExtraHtml = '<div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">'
-            . '<i class="bi bi-check-circle sgi-fg-primary" aria-hidden="true" style="font-size:11px;"></i>'
-            . '<span>Pagado · <span class="mono">' . h($record->payment_date->format('d/m/Y')) . '</span></span></div>';
-    }
+    // Línea "Pagado" bajo el monto (HTML derivado en el ViewModel).
+    $amountExtraHtml = $viewModel->amountExtraHtml;
     ?>
 
     <?= $this->element('pipeline_sidebar', [

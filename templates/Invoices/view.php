@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\Invoice $invoice
+ * @var \App\ViewModel\InvoiceViewViewModel $viewModel
  * @var string $roleName
  * @var bool $isRejected
  * @var bool $isApproved
@@ -17,15 +17,14 @@
 use App\Constants\InvoiceConstants;
 use App\View\Presentation\InvoicePresentation;
 
-$this->assign('title', 'Factura ' . ($invoice->invoice_number ?? '#' . $invoice->id));
+$invoice = $viewModel->record;
+$this->assign('title', $viewModel->pageTitle);
 
-// ─── Datos derivados de presentación ────────────────────────────────
-$currentStatus = $invoice->pipeline_status ?? '';
-$statusLabel   = InvoiceConstants::STATUS_LABELS[$currentStatus] ?? 'Desconocido';
-
-// Pill kind del estado del pipeline (soft variants).
-$statusPills = InvoicePresentation::STATUS_BADGES;
-$statusPill = $statusPills[$currentStatus] ?? 'pill-muted';
+// ─── Datos derivados (desde el ViewModel) ───────────────────────────
+$currentStatus = $viewModel->currentStatus;
+$statusLabel   = $viewModel->statusLabel;
+$statusPills   = InvoicePresentation::STATUS_BADGES;
+$statusPill    = $viewModel->statusPill;
 
 $readyForPaymentPills = [
     InvoiceConstants::READY_FOR_PAYMENT_SI          => 'pill-primary-soft',
@@ -34,39 +33,12 @@ $readyForPaymentPills = [
 ];
 
 $pipelineSteps = $pipelineStatuses;
-
-// Formateo monto.
-$amountFmt = (float)$invoice->amount;
-
-// Total de soportes.
-$documentsByStatus = $documentsByStatus ?? [];
-$totalDocs = array_sum(array_map('count', $documentsByStatus));
-
-// Total pagado.
-$pagosCount = is_array($invoice->invoice_payments ?? null) ? count($invoice->invoice_payments) : 0;
-$pagosTotal = 0.0;
-foreach ($invoice->invoice_payments ?? [] as $p) {
-    $pagosTotal += (float)$p->amount;
-}
-
-// Aprobadores que ya aprobaron.
-$approvedNames = [];
-foreach ($invoice->invoice_approvals ?? [] as $a) {
-    if ($a->status === InvoiceConstants::APPROVER_STATUS_APPROVED && $a->hasValue('user')) {
-        $approvedNames[] = $a->user->full_name ?? $a->user->username ?? ('Usuario #' . $a->user_id);
-    }
-}
-
-// Titular (recibo de caja vs. factura común).
-$isReciboDeCaja = ($invoice->document_type ?? '') === InvoiceConstants::DOCTYPE_RECIBO_CAJA;
-$providerName = '';
-if ($isReciboDeCaja && ($invoice->equivalent_holder_type ?? '') === 'employee') {
-    $providerName = $invoice->hasValue('employee') ? $invoice->employee->full_name : '—';
-} elseif ($isReciboDeCaja && ($invoice->equivalent_holder_type ?? '') === 'manual') {
-    $providerName = $invoice->manual_document_number ?? '—';
-} else {
-    $providerName = $invoice->hasValue('provider') ? $invoice->provider->name : '—';
-}
+$amountFmt     = $viewModel->amount;
+$totalDocs     = $viewModel->totalDocs;
+$pagosCount    = $viewModel->pagosCount;
+$pagosTotal    = $viewModel->pagosTotal;
+$approvedNames = $viewModel->approvedNames;
+$providerName  = $viewModel->providerName;
 
 // Helpers de iniciales para avatares.
 $initialsOf = static function (?string $name): string {
@@ -83,7 +55,7 @@ $initialsOf = static function (?string $name): string {
 };
 ?>
 
-<?php if (($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($invoice->advance_id)): ?>
+<?php if ($viewModel->isLinkedLegalization): ?>
     <div class="alert alert-info d-flex justify-content-between align-items-center">
         <div>
             <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
@@ -178,17 +150,8 @@ $initialsOf = static function (?string $name): string {
     <?php
     $heroExtraHtml = ob_get_clean();
 
-    // Línea pequeña bajo el monto (pago completo / parcial).
-    $amountExtraHtml = '';
-    if ($currentStatus === InvoiceConstants::STATUS_PAGADA && $invoice->full_payment_date) {
-        $amountExtraHtml = '<div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">'
-            . '<i class="bi bi-check-circle sgi-fg-primary" aria-hidden="true" style="font-size:11px;"></i>'
-            . '<span>Pagado · <span class="mono">' . h($invoice->full_payment_date->format('d/m/Y')) . '</span></span></div>';
-    } elseif ($invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL && $pagosCount > 0) {
-        $amountExtraHtml = '<div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">'
-            . '<i class="bi bi-clock sgi-fg-warning" aria-hidden="true" style="font-size:11px;"></i>'
-            . '<span>Pago parcial · <span class="mono">$ ' . number_format($pagosTotal, 0, ',', '.') . '</span></span></div>';
-    }
+    // Línea pequeña bajo el monto (pago completo / parcial) — derivada en el VM.
+    $amountExtraHtml = $viewModel->amountExtraHtml ?? '';
 
     // Acciones rápidas (Editar / PDF / Volver).
     $quickActions = [];
@@ -210,21 +173,10 @@ $initialsOf = static function (?string $name): string {
     }
     $quickActionsHtml = ob_get_clean();
 
-    // Pill extra del hero (Pago Parcial).
-    $heroExtraPill = null;
-    if ($currentStatus === InvoiceConstants::STATUS_TESORERIA
-        && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL) {
-        $heroExtraPill = '<span class="pill pill-warning-soft">Pago Parcial</span>';
-    }
-
-    // Pill de estado: preserva las 3 variantes del hero actual
-    // (rechazada → la maneja el element vía isRejected; aprobada; estado del pipeline).
-    $heroStatusPill  = $statusPill;
-    $heroStatusLabel = $statusLabel;
-    if (!$isRejected && $isApproved) {
-        $heroStatusPill  = 'pill-primary-soft';
-        $heroStatusLabel = 'Aprobada';
-    }
+    // Pills del hero (Pago Parcial + estado con variante "Aprobada") — derivados en el VM.
+    $heroExtraPill   = $viewModel->heroExtraPill;
+    $heroStatusPill  = $viewModel->heroStatusPill;
+    $heroStatusLabel = $viewModel->heroStatusLabel;
     ?>
 
     <?= $this->element('pipeline_sidebar', [
@@ -246,8 +198,7 @@ $initialsOf = static function (?string $name): string {
         'pipelineSteps'  => $pipelineSteps,
         'pipelineLabels' => $pipelineLabels,
         'currentStatus'  => $currentStatus,
-        'isTerminal'     => in_array($currentStatus,
-            [InvoiceConstants::STATUS_PAGADA, InvoiceConstants::STATUS_LEGALIZADA], true),
+        'isTerminal'     => $viewModel->isTerminal,
         'modifiedAt'     => $invoice->modified,
         'actionsHtml'    => $quickActionsHtml,
     ]) ?>

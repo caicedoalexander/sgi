@@ -17,6 +17,7 @@ use App\Service\InvoicePipelineService;
 use App\Service\Pipeline\Advance\Policy\AdvanceLegalizationActionPolicy;
 use App\ViewModel\AdvanceAddViewModel;
 use App\ViewModel\AdvanceLegalizationViewModel;
+use App\ViewModel\AdvanceViewViewModel;
 use Cake\Http\Response;
 use Cake\ORM\TableRegistry;
 
@@ -256,7 +257,7 @@ class AdvancesController extends AppController
             return $this->redirect(['action' => 'legalization', $invoice->id]);
         }
 
-        $this->set(compact('invoice'));
+        $this->set('viewModel', new AdvanceViewViewModel($invoice));
 
         return null;
     }
