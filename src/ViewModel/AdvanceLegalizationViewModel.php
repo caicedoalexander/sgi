@@ -21,8 +21,23 @@ use App\View\Presentation\AdvancePresentation;
  * el controller y se inyectan vía constructor — alinea con el patrón uniforme
  * de los otros 5 edit ViewModels: el VM solo deriva, no consulta (audit CR-102).
  */
-final readonly class AdvanceLegalizationViewModel
+final readonly class AdvanceLegalizationViewModel implements EditViewModelInterface
 {
+    /**
+     * Título de la página (header del browser y de la vista).
+     */
+    public string $pageTitle;
+
+    /**
+     * Slug del estado actual del pipeline de la legalización.
+     */
+    public string $currentStatus;
+
+    /**
+     * @var array{0:string,1:string} Pareja [label, clase-pill] del estado actual.
+     */
+    public array $currentStatusBadge;
+
     /**
      * @param \App\Model\Entity\Invoice $invoice Anticipo invoice.
      * @param \App\Model\Entity\AdvanceLegalization $leg Legalización en curso.
@@ -45,6 +60,13 @@ final readonly class AdvanceLegalizationViewModel
         public bool $canAuthorizeRefundPayment = false,
         public bool $canConfirmRefundPayment = false,
     ) {
+        // Contrato EditViewModelInterface.
+        $this->pageTitle = 'Legalización ' . ($invoice->invoice_number ?? '#' . $invoice->id);
+        $this->currentStatus = (string)$leg->status;
+        $this->currentStatusBadge = [
+            AdvanceConstants::STATUS_LABELS[$leg->status] ?? 'Desconocido',
+            AdvancePresentation::STATUS_BADGES[$leg->status] ?? 'pill-muted',
+        ];
     }
 
     /**
@@ -76,22 +98,17 @@ final readonly class AdvanceLegalizationViewModel
         }
 
         // ── Derivaciones de presentación (antes inline en el template) ──
-        $pageTitle         = 'Legalización ' . ($this->invoice->invoice_number ?? '#' . $this->invoice->id);
         $legPipelineLabels = AdvanceConstants::STATUS_LABELS;
 
-        $beneficiary        = $this->invoice->provider->name ?? ($this->invoice->employee->full_name ?? '—');
-        $beneficiaryDoc     = $this->invoice->provider->document_number ?? ($this->invoice->employee->document_number ?? null);
+        $beneficiary = $this->invoice->provider->name ?? ($this->invoice->employee->full_name ?? '—');
+        $beneficiaryDoc = $this->invoice->provider->document_number
+            ?? ($this->invoice->employee->document_number ?? null);
         $beneficiaryDocType = $this->invoice->provider_id
             ? ($this->invoice->provider->document_type ?? '')
             : ($this->invoice->employee_id ? ($this->invoice->employee->document_type ?? '') : '');
         $beneficiaryKind = $this->invoice->provider_id
             ? 'Proveedor'
             : ($this->invoice->employee_id ? 'Empleado' : '—');
-
-        $ps = [
-            AdvanceConstants::STATUS_LABELS[$this->leg->status]        ?? 'Desconocido',
-            AdvancePresentation::STATUS_BADGES[$this->leg->status]     ?? 'pill-muted',
-        ];
 
         $linkedCount = is_countable($this->linkedInvoices)
             ? count($this->linkedInvoices)
@@ -102,7 +119,7 @@ final readonly class AdvanceLegalizationViewModel
             : ($diff > 0 ? 'pill-warning-soft' : 'pill-danger-soft');
 
         $caseLabels = [
-            AdvanceConstants::CASE_EXACTO   => 'Exacto',
+            AdvanceConstants::CASE_EXACTO => 'Exacto',
             AdvanceConstants::CASE_FALTANTE => 'Faltante',
             AdvanceConstants::CASE_SOBRANTE => 'Sobrante',
         ];
@@ -123,13 +140,13 @@ final readonly class AdvanceLegalizationViewModel
             'canAuthorizeRefundPayment' => $this->canAuthorizeRefundPayment,
             'canConfirmRefundPayment' => $this->canConfirmRefundPayment,
             // Derivaciones de presentación.
-            'pageTitle' => $pageTitle,
+            'pageTitle' => $this->pageTitle,
             'legPipelineLabels' => $legPipelineLabels,
             'beneficiary' => $beneficiary,
             'beneficiaryDoc' => $beneficiaryDoc,
             'beneficiaryDocType' => $beneficiaryDocType,
             'beneficiaryKind' => $beneficiaryKind,
-            'ps' => $ps,
+            'ps' => $this->currentStatusBadge,
             'linkedCount' => $linkedCount,
             'diffBadgeClass' => $diffBadgeClass,
             'caseLabels' => $caseLabels,

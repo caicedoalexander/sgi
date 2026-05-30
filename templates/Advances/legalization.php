@@ -1,42 +1,43 @@
 <?php
 /**
- * El controller pasa los datos via $this->set(\$vm->build()),
- * desempaquetando AdvanceLegalizationViewModel en variables individuales.
- *
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\Invoice $invoice
- * @var \App\Model\Entity\AdvanceLegalization $leg
- * @var \Cake\Collection\CollectionInterface<\App\Model\Entity\Invoice> $linkedInvoices
- * @var float $linkedTotal
- * @var float $advanceTotal
- * @var float $diff
- * @var \App\Model\Entity\AdvanceLegalizationSignature|null $relationDocument
- * @var array<\App\Model\Entity\AdvanceLegalizationSignature> $signatureHistory
- * @var array $bankingEntities
- * @var \App\Model\Entity\InvoicePayment|null $surplusPayment
- * @var string $roleName
- * @var bool $canRegisterRefund
- * @var bool $canAuthorizeRefundPayment
- * @var bool $canConfirmRefundPayment
+ * @var \App\ViewModel\AdvanceLegalizationViewModel $viewModel
  * @var \App\Model\Entity\User|null $currentUser
- *
- * Derivaciones de presentación (desde el ViewModel):
- * @var string $pageTitle
- * @var array<string,string> $legPipelineLabels
- * @var string $beneficiary
- * @var string|null $beneficiaryDoc
- * @var string $beneficiaryDocType
- * @var string $beneficiaryKind
- * @var array{0:string,1:string} $ps
- * @var int $linkedCount
- * @var string $diffBadgeClass
- * @var array<string,string> $caseLabels
  */
 
 use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\View\Presentation\AdvancePresentation;
 use App\View\Presentation\InvoicePresentation;
+
+// Reconstituye las variables bare que consume el cuerpo del template desde el
+// ViewModel canónico (set('viewModel', $vm) en AdvancesController::legalization()).
+[
+    'invoice' => $invoice,
+    'leg' => $leg,
+    'linkedInvoices' => $linkedInvoices,
+    'linkedTotal' => $linkedTotal,
+    'advanceTotal' => $advanceTotal,
+    'diff' => $diff,
+    'relationDocument' => $relationDocument,
+    'signatureHistory' => $signatureHistory,
+    'bankingEntities' => $bankingEntities,
+    'surplusPayment' => $surplusPayment,
+    'roleName' => $roleName,
+    'canRegisterRefund' => $canRegisterRefund,
+    'canAuthorizeRefundPayment' => $canAuthorizeRefundPayment,
+    'canConfirmRefundPayment' => $canConfirmRefundPayment,
+    'pageTitle' => $pageTitle,
+    'legPipelineLabels' => $legPipelineLabels,
+    'beneficiary' => $beneficiary,
+    'beneficiaryDoc' => $beneficiaryDoc,
+    'beneficiaryDocType' => $beneficiaryDocType,
+    'beneficiaryKind' => $beneficiaryKind,
+    'ps' => $ps,
+    'linkedCount' => $linkedCount,
+    'diffBadgeClass' => $diffBadgeClass,
+    'caseLabels' => $caseLabels,
+] = $viewModel->build();
 
 $this->assign('title', $pageTitle);
 ?>

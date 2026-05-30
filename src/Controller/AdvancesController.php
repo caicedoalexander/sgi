@@ -337,7 +337,7 @@ class AdvancesController extends AppController
             canAuthorizeRefundPayment: $this->actionPolicy->canAuthorizeRefundPayment($leg, $roleId),
             canConfirmRefundPayment: $this->actionPolicy->canConfirmRefundPayment($leg, $roleId),
         );
-        $this->set($vm->build());
+        $this->set('viewModel', $vm);
 
         return null;
     }
