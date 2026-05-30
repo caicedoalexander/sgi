@@ -23,8 +23,7 @@ $isRejected    = $viewModel->isRejected;
 $isPaid        = $viewModel->isTerminal;
 $currentStatus = $viewModel->currentStatus;
 
-$nldStatusPill  = NoveltyPresentation::STATUS_BADGES[$currentStatus] ?? 'pill-muted';
-$nldStatusLabel = $statusLabels[$currentStatus] ?? ucfirst($currentStatus);
+[$nldStatusLabel, $nldStatusPill] = $viewModel->currentStatusBadge;
 $badgeColors   = NoveltyPresentation::STATUS_BADGES;
 $totalDocs     = array_sum(array_map('count', $documentsByStatus));
 $noveltyCount  = $viewModel->noveltyCount;
