@@ -8,6 +8,29 @@
 
 ---
 
+## Cómo leer las señales (⚠️/🔵 no significan «pendiente»)
+
+Cada señal codifica **dos cosas a la vez**: si el artefacto está *presente* y si *hay algo que hacer*. Leerlas como "todo lo que no es ✅ es trabajo pendiente" es el malentendido a evitar.
+
+| Señal | ¿Presente? | ¿Conforme al canon? | ¿Acción? |
+|---|---|---|---|
+| ✅ | Sí | Sí | **No** — ya está como debe |
+| ⚠️ | Sí | No (difiere del canon) | **Depende** — ver regla de oro |
+| ❌ | No | — | **Casi nunca** — solo significa "no lo tiene" |
+| 🔵 | No | Sí: *el dominio no lo pide* | **No, nunca** — ausencia legítima |
+| n/a | El concepto **no aplica** al módulo | — | **No** — nada que evaluar |
+
+**🔵 ≠ ❌, y n/a ≠ ❌.** `❌` = "no existe" (dato neutro); `🔵` = "no existe **y está bien**, el módulo no lo necesita por su dominio"; `n/a` = "ese concepto ni siquiera tiene sentido aquí" (p. ej. *Modelo de rechazo de pago* en PaymentScheduling, que rechaza la programación entera, no pagos individuales).
+
+**Regla de oro — qué se migra y qué no.** Lo único que se migra es la **deriva accidental (clase A)**: el mismo problema resuelto de formas distintas sin razón de dominio. **Toda la clase A ya se ejecutó en las Olas 1-4** (por eso hoy figura como ✅). Por lo tanto:
+
+- **Todo 🔵 restante = NO accionable.** Ausencia legítima por dominio; "migrarlo" sería crear una abstracción vacía de un solo caso (dead code). La re-verificación adversarial 2026-05-30 intentó refutar cada 🔵 como deriva disfrazada y **falló en todos**.
+- **Todo ⚠️ restante = NO accionable salvo decisión puntual.** Es **diferencia esencial de dominio (clase B)** —unificarla rompería el dominio o **datos persistidos** (valores de estado en BD, slugs en `permissions`/`pipeline_permissions`, URLs bookmarkeadas)— o una **divergencia cosmética tolerada** (p. ej. la forma de una firma) sin beneficio que justifique el churn.
+
+En resumen: **los ⚠️ y 🔵 que quedan describen el estado final aceptado, no una lista de tareas.** Solo se tocan por una decisión explícita y acotada (como la alineación de `assign*` a `ServiceResult`, registrada en la re-verificación 2026-05-30). La clasificación A/B/C completa y el porqué de cada caso están en el [informe base](auditoria-estructural-fresca-2026-05-29.md).
+
+---
+
 ## Resumen por ola
 
 | Ola | Foco | Ítems ejecutados | Commits | Resultado |
@@ -31,7 +54,7 @@
 
 ## Cuadros actualizados (post-refactor)
 
-Leyenda: ✅ presente/canónico · ⚠️ presente pero divergente · ❌ ausente · 🔵 ausencia legítima de dominio. La columna **Δ** señala el ítem de remediación que cambió la celda respecto a la versión as-audited (sección 1 del informe base).
+Leyenda: ✅ presente/canónico · ⚠️ presente pero divergente · ❌ ausente · 🔵 ausencia legítima de dominio. **Semántica de acción** (qué es accionable y qué no) en la sección «Cómo leer las señales» del inicio del documento. La columna **Δ** señala el ítem de remediación que cambió la celda respecto a la versión as-audited (sección 1 del informe base).
 
 ### Tabla A — Coordinador y API de transición (post)
 
@@ -42,11 +65,13 @@ Leyenda: ✅ presente/canónico · ⚠️ presente pero divergente · ❌ ausent
 | `advance` (puro) | ❌ (plegado en edit) | ❌ | ❌ | ✅ `:293` | ✅ `:181` | ✅ `:132` | — |
 | `regress` | ✅ `:318` | ❌ (tiene `reject` terminal) 🔵 | ❌ (verbos por outcome) 🔵 | ✅ `:800` | ✅ `:426` | ✅ `:208` | — |
 | `reject` | ❌ (vía `area_approval`) | ✅ `:288` terminal 🔵 | ❌ | ❌ | ❌ | ✅ **en el coordinador** `:330` (transaccional) | **A3** |
-| `validateTransitionRequirements` firma | `(inv, fromStatus, overrides)` `:104` | `(nov, fromStatus)` `:322` | ❌ | `(record)` `:411` ⚠️ | `(record)` `:361` ⚠️ | `(sched, fromStatus)` `:106` | — |
+| `validateTransitionRequirements` firma | `(inv, fromStatus, overrides)` `:106` | `(nov, fromStatus)` `:328` | ❌ | `(record)` `:402` ⚠️ | `(record)` `:498` ⚠️ | `(sched, fromStatus)` `:106` | **re-verif. 2026-05-30** |
 | `getNextStatus` firma | `(string, ?docType)` `:145` | `(object, ?type)` 🔵 | ❌ (hardcode `_setStatus`) | `(string)` | `(string)` | `(string)` | — |
 | Resolución de avance | State `:145` | State + skips por tipo 🔵 | hardcode literal `_setStatus(…)` ⚠️ | State (→ enum) | State (→ enum) | enum `next()` | **A5** (States ahora delegan al enum; ya no hay doble fuente) |
-| Retorna `ServiceResult` | ✅ | ✅ (`assignToExistingLiquidationDoc` ✅; `assignToLiquidationDoc` aún array) | ✅ | ✅ | ✅ | ✅ | **A4** (rama existing_doc_id) |
-| Coordinador con IO/transacción inline | ⚠️ sí | ⚠️ sí | ⚠️ sí (fat) | ⚠️ sí (fat) | ⚠️ sí | ⚠️ sí | — |
+| Retorna `ServiceResult` | ✅ | ✅ **(ambos `assign*` → `ServiceResult`)** | ✅ | ✅ | ✅ | ✅ | **A4** + **re-verif. 2026-05-30** |
+| Coordinador posee la transacción (IO inline, States puros) | ✅ canónico | ✅ canónico | ⚠️ *fat* | ⚠️ *fat* | ✅ canónico | ✅ canónico | **re-verif. 2026-05-30** |
+
+> **Re-verificación 2026-05-30 (Tabla A).** Auditoría fresca de los puntos ⚠️/🔵 contra código vivo (workflow multi-agente: verificación + reto adversarial). **(1) Fila "Coordinador posee la transacción":** que el coordinador abra la transacción inline con States puros **es el patrón canónico** —el propio Invoice lo hace (`InvoicePipelineService:247,354`)—, no una divergencia per-módulo; la versión as-audited la marcaba ⚠️ en los 6, confundiendo "uniforme/aceptado" con "a remediar". El ⚠️ subsiste solo para **Advance** (761 líneas, 6 `transactional()`) y **PettyCash** (~743 líneas tras C2, antes ~1057) por **concentración de responsabilidades** (*fat*), no por la transacción en sí. **(2) Retorno `ServiceResult` (Novelty):** la verificación detectó que `assignToExistingLiquidationDoc` **no** retornaba `ServiceResult` (ambos `assign*` devolvían `object|array`); se **alineó el contrato** de los dos métodos a `ServiceResult` (servicio + controller + 3 tests; suite **219/219**). **(3) Refs `validateTransitionRequirements`** actualizadas a líneas vivas (Invoice `:106`, Novelty `:328`, PettyCash `:402`, Refund `:498`). El resto de ⚠️/🔵 se confirmó intacto.
 
 ### Tabla B — Suite de Pipeline (post)
 
