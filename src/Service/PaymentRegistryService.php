@@ -24,22 +24,44 @@ class PaymentRegistryService
     ];
 
     /**
-     * Get all payments across modules, merged and sorted.
+     * Get one page of payments across modules, merged and sorted by `created` DESC.
+     *
+     * M3: en lugar de materializar TODAS las filas de ambas tablas y paginar en
+     * memoria, cada sub-query trae a lo sumo `offset + limit` filas (LIMIT en SQL,
+     * ya ordenadas DESC), se fusionan, se reordenan y se recorta la ventana de la
+     * página. El total se calcula con COUNT(*) por tabla (ver count()), no contando
+     * un array materializado. Memoria acotada a O(offset + limit), no O(N).
      *
      * @param array $filters Optional filters (type, authorized, banking_entity_id, date_from, date_to).
+     * @param int $offset Filas a saltar (0-based).
+     * @param int $limit Tamaño de página.
      * @return array
      */
-    public function getAll(array $filters = []): array
+    public function getPage(array $filters, int $offset, int $limit): array
     {
-        $results = [];
+        $max = $offset + $limit;
 
-        $results = array_merge($results, $this->_queryInvoicePayments($filters));
-        $results = array_merge($results, $this->_queryLiquidationDocPayments($filters));
+        $results = array_merge(
+            $this->_queryInvoicePayments($filters, $max),
+            $this->_queryLiquidationDocPayments($filters, $max),
+        );
 
         // Sort by created DESC
         usort($results, fn($a, $b) => strtotime($b['created']) - strtotime($a['created']));
 
-        return $results;
+        return array_slice($results, $offset, $limit);
+    }
+
+    /**
+     * Total de pagos que coinciden con los filtros, vía COUNT(*) por tabla.
+     *
+     * @param array $filters Mismos filtros que getPage().
+     * @return int
+     */
+    public function count(array $filters = []): int
+    {
+        return $this->_countInvoicePayments($filters)
+            + $this->_countLiquidationDocPayments($filters);
     }
 
     /**
@@ -62,9 +84,10 @@ class PaymentRegistryService
      * Query invoice payments.
      *
      * @param array $filters Filters to apply.
+     * @param int|null $max Límite de filas a traer (SQL LIMIT); null = sin límite.
      * @return array
      */
-    private function _queryInvoicePayments(array $filters): array
+    private function _queryInvoicePayments(array $filters, ?int $max = null): array
     {
         $requestedType = $filters['type'] ?? null;
         $invoiceTypeKeys = ['refund', 'advance', 'debit_note', 'receipt', 'credit_card', 'reintegro_doc', 'invoice'];
@@ -79,6 +102,10 @@ class PaymentRegistryService
 
         $this->_applyCommonFilters($query, $filters, 'InvoicePayments');
         $this->_applyInvoiceTypeFilter($query, $requestedType);
+
+        if ($max !== null) {
+            $query->limit($max);
+        }
 
         return array_map(function ($p) {
             $documentType = $p->invoice->document_type ?? null;
@@ -177,9 +204,10 @@ class PaymentRegistryService
      * Query liquidation document payments.
      *
      * @param array $filters Filters to apply.
+     * @param int|null $max Límite de filas a traer (SQL LIMIT); null = sin límite.
      * @return array
      */
-    private function _queryLiquidationDocPayments(array $filters): array
+    private function _queryLiquidationDocPayments(array $filters, ?int $max = null): array
     {
         if (!empty($filters['type']) && $filters['type'] !== 'liquidation') {
             return [];
@@ -191,6 +219,10 @@ class PaymentRegistryService
             ->orderBy(['LiquidationDocPayments.created' => 'DESC']);
 
         $this->_applyCommonFilters($query, $filters, 'LiquidationDocPayments');
+
+        if ($max !== null) {
+            $query->limit($max);
+        }
 
         return array_map(fn($p) => [
             'type' => 'liquidation',
@@ -211,6 +243,49 @@ class PaymentRegistryService
             'source_url' => null,
             'created' => $p->created?->format('Y-m-d H:i:s') ?? '',
         ], $query->all()->toArray());
+    }
+
+    /**
+     * COUNT(*) de pagos de facturas que coinciden con los filtros (M3).
+     *
+     * @param array $filters Filtros a aplicar.
+     * @return int
+     */
+    private function _countInvoicePayments(array $filters): int
+    {
+        $requestedType = $filters['type'] ?? null;
+        $invoiceTypeKeys = ['refund', 'advance', 'debit_note', 'receipt', 'credit_card', 'reintegro_doc', 'invoice'];
+        if (!empty($requestedType) && !in_array($requestedType, $invoiceTypeKeys, true)) {
+            return 0;
+        }
+
+        $table = TableRegistry::getTableLocator()->get('InvoicePayments');
+        // contain('Invoices') agrega el JOIN belongsTo (1:1) para que el filtro por
+        // document_type resuelva; count() ignora el select de las asociaciones.
+        $query = $table->find()->contain(['Invoices']);
+        $this->_applyCommonFilters($query, $filters, 'InvoicePayments');
+        $this->_applyInvoiceTypeFilter($query, $requestedType);
+
+        return $query->count();
+    }
+
+    /**
+     * COUNT(*) de pagos de documentos de liquidación que coinciden con los filtros (M3).
+     *
+     * @param array $filters Filtros a aplicar.
+     * @return int
+     */
+    private function _countLiquidationDocPayments(array $filters): int
+    {
+        if (!empty($filters['type']) && $filters['type'] !== 'liquidation') {
+            return 0;
+        }
+
+        $table = TableRegistry::getTableLocator()->get('LiquidationDocPayments');
+        $query = $table->find();
+        $this->_applyCommonFilters($query, $filters, 'LiquidationDocPayments');
+
+        return $query->count();
     }
 
     /**

@@ -34,13 +34,13 @@ class PaymentRegistryController extends AppController
             'date_to' => $this->request->getQuery('date_to'),
         ];
 
-        $allPayments = $this->registryService->getAll($filters);
-
-        // Manual pagination
-        $page = (int)($this->request->getQuery('page') ?? 1);
+        // Paginación en SQL: COUNT(*) por tabla para el total + ventana de página
+        // acotada (cada sub-query trae a lo sumo offset+limit filas). Ya no se
+        // materializa la tabla completa en memoria (M3).
+        $page = max(1, (int)($this->request->getQuery('page') ?? 1));
         $limit = 15;
-        $total = count($allPayments);
-        $payments = array_slice($allPayments, ($page - 1) * $limit, $limit);
+        $total = $this->registryService->count($filters);
+        $payments = $this->registryService->getPage($filters, ($page - 1) * $limit, $limit);
         $totalPages = (int)ceil($total / $limit);
 
         $bankingEntities = $this->fetchTable('BankingEntities')->find('list')->toArray();
