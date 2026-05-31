@@ -26,7 +26,7 @@ class Invoice extends Entity
         'cost_center_id' => true,
         'confirmed_by' => true,
         'approver_id' => true,
-        'area_approval' => true,
+        'area_approval' => false,
         'area_approval_date' => false,
         'dian_validation' => true,
         'accrued' => true,

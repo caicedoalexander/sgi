@@ -680,7 +680,18 @@ class InvoicesController extends AppController
         $invoice = $this->Invoices->get($invoiceId);
 
         $documentsTable = TableRegistry::getTableLocator()->get('InvoiceDocuments');
-        $document = $documentsTable->get($documentId);
+        $document = $documentsTable->find()
+            ->where(['id' => $documentId, 'invoice_id' => $invoiceId])
+            ->first();
+
+        if ($document === null) {
+            if ($this->_isJsonRequest()) {
+                return $this->_jsonResponse(['success' => false, 'error' => 'Soporte no encontrado.']);
+            }
+            $this->Flash->error(__('Soporte no encontrado.'));
+
+            return $this->_redirectForInvoice($invoice, 'view', $invoiceId);
+        }
 
         if (!$this->documentService->canDeleteDocument($document, $invoice->pipeline_status)) {
             if ($this->_isJsonRequest()) {
