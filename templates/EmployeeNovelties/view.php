@@ -51,13 +51,13 @@ $novViewId = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
         <?= $this->Html->link(
             '<i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>Exportar PDF',
             ['action' => 'exportPdf', $novelty->id],
-            ['class' => 'btn btn-ghost-card sgi-fg-danger', 'escape' => false, 'target' => '_blank']
+            ['class' => 'btn btn-default sgi-fg-danger', 'escape' => false, 'target' => '_blank']
         ) ?>
         <?php endif; ?>
         <?= $this->Html->link(
             '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
-            ['class' => 'btn btn-ghost-card', 'escape' => false]
+            ['class' => 'btn btn-default', 'escape' => false]
         ) ?>
         <?php if (!empty($userPermissions['employee_novelties']['can_edit'])): ?>
         <?= $this->Html->link(

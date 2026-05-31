@@ -66,12 +66,12 @@ $noveltyCount      = $viewModel->noveltyCount;
         <?= $this->Html->link(
             '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
-            ['class' => 'btn btn-ghost-card', 'escape' => false]
+            ['class' => 'btn btn-default', 'escape' => false]
         ) ?>
         <?= $this->Html->link(
             '<i class="bi bi-eye" aria-hidden="true"></i>Ver',
             ['action' => 'view', $doc->id],
-            ['class' => 'btn btn-ghost-card', 'escape' => false]
+            ['class' => 'btn btn-default', 'escape' => false]
         ) ?>
     </div>
 </div>
@@ -514,32 +514,10 @@ $noveltyCount      = $viewModel->noveltyCount;
 
 <!-- Upload Document Modal -->
 <?php if ($showUploadSection): ?>
-<div class="modal fade" id="uploadDocModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="upload-doc-form"
-                  data-url="<?= $this->Url->build(['action' => 'uploadDocument', $doc->id]) ?>"
-                  enctype="multipart/form-data">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-upload me-2" aria-hidden="true"></i>Subir Soporte</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="input-label">Archivo</label>
-                        <input type="file" name="file" class="form-control" required
-                               accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx">
-                        <div class="form-text">Máximo <?= h(\App\Constants\UploadConstants::MAX_BYTES_LABEL) ?> — PDF, imágenes, Word o Excel.</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-ghost-card" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Subir</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<?= $this->element('upload_doc_modal', [
+    'modalId'   => 'uploadDocModal',
+    'uploadUrl' => $this->Url->build(['action' => 'uploadDocument', $doc->id]),
+]) ?>
 <?php endif; ?>
 
 <?= $this->element('document_row_template', ['showBadge' => true]) ?>

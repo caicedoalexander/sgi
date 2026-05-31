@@ -144,15 +144,6 @@ body {
     color: var(--text-strong);
 }
 
-.sgi-title-page {
-    font-size: var(--fs-title-page);
-    font-weight: 700;
-    letter-spacing: -0.2px;
-    color: var(--text-strong);
-    margin: 0;
-    line-height: 1.15;
-}
-
 .sgi-page-header { margin-bottom: 16px; }
 
 .sgi-breadcrumb {

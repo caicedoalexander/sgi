@@ -159,7 +159,7 @@ $canRegress = !empty($viewModel->canRegress);
             <span style="color:var(--text-default);">Editar</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-title-page"><?= h($titleLabel) ?></span>
+            <span class="sgi-page-title"><?= h($titleLabel) ?></span>
             <span class="mono" style="font-size:var(--fs-body-lg);color:var(--text-muted);padding:3px 8px;background:var(--bg-subtle);border-radius:var(--radius-sm);">
                 <?= h($idLabel) ?>
             </span>

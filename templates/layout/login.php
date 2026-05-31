@@ -184,7 +184,7 @@
 
         <!-- Tarjeta -->
         <div class="sgi-login-card">
-            <h1 class="sgi-title-page">Iniciar sesión</h1>
+            <h1 class="sgi-page-title">Iniciar sesión</h1>
             <p class="sgi-login-subtitle">Ingresa con tus credenciales corporativas.</p>
 
             <?= $this->Flash->render() ?>

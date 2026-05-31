@@ -30,7 +30,7 @@ $kpiCards = [
 <!-- ═══ Header ═══ -->
 <div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
     <div>
-        <span class="sgi-title-page">Roles del sistema</span>
+        <span class="sgi-page-title">Roles del sistema</span>
         <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
             Define qué módulos, acciones y pasos del pipeline puede operar cada usuario.
         </div>

@@ -51,7 +51,7 @@ $noveltyCount  = $viewModel->noveltyCount;
         <?= $this->Html->link(
             '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
-            ['class' => 'btn btn-ghost-card', 'escape' => false]
+            ['class' => 'btn btn-default', 'escape' => false]
         ) ?>
         <?php if (!empty($userPermissions['novelty_liquidation_docs']['can_edit'])): ?>
         <?= $this->Html->link(

@@ -116,7 +116,7 @@ $scopeTabs = [
 <!-- ═══ Header ═══ -->
 <div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
     <div>
-        <span class="sgi-title-page"><?= h($pageTitle) ?></span>
+        <span class="sgi-page-title"><?= h($pageTitle) ?></span>
         <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
             <span class="sgi-fg-muted"><?= $this->Paginator->counter('{{count}} solicitudes') ?></span>
         </div>

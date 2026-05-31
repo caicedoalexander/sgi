@@ -113,7 +113,7 @@ $moduleTotal = count($modules);
             <i class="bi bi-chevron-right" style="font-size:9px;color:var(--text-disabled);" aria-hidden="true"></i>
             <span style="color:var(--text-default);"><?= $isNew ? 'Nuevo rol' : h($role->name) ?></span>
         </div>
-        <span class="sgi-title-page"><?= $isNew ? 'Nuevo rol' : h($role->name) ?></span>
+        <span class="sgi-page-title"><?= $isNew ? 'Nuevo rol' : h($role->name) ?></span>
     </div>
     <div class="d-flex align-items-center" style="gap:10px;">
         <span id="sgi-rp-dirty" class="pill pill-sm pill-warning-soft" style="display:none;">Cambios sin guardar</span>

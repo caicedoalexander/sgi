@@ -34,7 +34,7 @@ $isTerminal  = $viewModel->isTerminal;
         <?= $this->Html->link(
             '<i class="bi bi-arrow-left" aria-hidden="true"></i>Volver',
             ['action' => 'index'],
-            ['class' => 'btn btn-ghost-card', 'escape' => false]
+            ['class' => 'btn btn-default', 'escape' => false]
         ) ?>
         <?php if (!empty($userPermissions['advances']['can_edit']) && !$isTerminal): ?>
         <?= $this->Html->link(

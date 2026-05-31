@@ -76,7 +76,7 @@ $sectionHead = function (string $icon, string $label) {
             <span style="width:3px;height:12px;background:var(--primary-color);"></span>
             <span class="sgi-label">Compañía Operadora Portuaria Cafetera S.A.</span>
         </div>
-        <div class="sgi-title-page" style="font-size:1.5rem;">
+        <div class="sgi-page-title" style="font-size:1.5rem;">
             <?php if ($firstName !== ''): ?>
                 <?= h($saludo) ?>, <span style="color:var(--primary-color);"><?= h($firstName) ?></span>
             <?php else: ?>

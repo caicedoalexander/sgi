@@ -216,7 +216,7 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
         <i class="bi bi-chevron-right" style="font-size:8px;color:var(--text-disabled);" aria-hidden="true"></i>
         <span class="sgi-label">Configuración</span>
     </div>
-    <div class="sgi-title-page">Configuración del Sistema</div>
+    <div class="sgi-page-title">Configuración del Sistema</div>
     <div class="mt-2" style="font-size:var(--fs-body);color:var(--text-muted);">
         Servidor de correo, webhooks de n8n y credenciales de la API interna.
     </div>

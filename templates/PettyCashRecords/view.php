@@ -59,7 +59,7 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
             <span style="color:var(--text-default);"><?= h($record->code) ?></span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <h1 class="sgi-title-page">Ver Caja Menor</h1>
+            <h1 class="sgi-page-title">Ver Caja Menor</h1>
             <span class="mono" style="font-size:var(--fs-body-lg);color:var(--text-muted);padding:3px 8px;background:var(--bg-subtle);border-radius:var(--radius-sm);">
                 <?= h($record->code) ?>
             </span>

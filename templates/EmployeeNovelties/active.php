@@ -11,7 +11,7 @@ $this->assign('title', 'Novedades Vigentes');
 <!-- ═══ Header ═══ -->
 <div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
     <div>
-        <span class="sgi-title-page">Novedades Vigentes</span>
+        <span class="sgi-page-title">Novedades Vigentes</span>
     </div>
 </div>
 

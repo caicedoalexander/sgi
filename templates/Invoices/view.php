@@ -96,7 +96,7 @@ $initialsOf = static function (?string $name): string {
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:10px;"></i>
             <span style="color:var(--text-default);">Ver Factura</span>
         </div>
-        <h1 class="sgi-title-page">Ver Factura</h1>
+        <h1 class="sgi-page-title">Ver Factura</h1>
     </div>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
