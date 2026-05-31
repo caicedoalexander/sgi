@@ -139,7 +139,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
 <div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="col-lg-3 sgi-edit-col">
+    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
         <?php
         $registryLines = [];
         if ($novelty->registered_by_user) {
@@ -176,7 +176,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="col-lg-9 sgi-edit-col">
+    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
 
     <!-- Información de la novedad -->
     <div class="sgi-card">

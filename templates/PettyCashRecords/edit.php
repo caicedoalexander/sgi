@@ -157,7 +157,7 @@ $totalDocs = count($docs);
 <div class="row gx-3">
 
     <?php /* ═══════════════════ COLUMNA IZQUIERDA ═══════════════════ */ ?>
-    <aside class="col-lg-3 sgi-edit-col">
+    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
         <?php
         // Acciones del sidebar (regresión) — element compartido
         $actionsHtml = !empty($canRegress)
@@ -202,7 +202,7 @@ $totalDocs = count($docs);
     </aside>
 
     <?php /* ═══════════════════ COLUMNA DERECHA ═══════════════════ */ ?>
-    <main class="col-lg-9 sgi-edit-col">
+    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
 
         <?php /* ── Banner: requisitos para avanzar ─────────────── */ ?>
         <?php if ($canAdvance && !empty($advanceErrors)): ?>

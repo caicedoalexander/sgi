@@ -100,7 +100,7 @@ $noveltyCount      = $viewModel->noveltyCount;
 <div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="col-lg-3 sgi-edit-col">
+    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
         <?php
         $registryLines = [
             ['icon' => 'bi-person', 'html' => 'Rol: <strong style="color:var(--text-default);">' . h($roleName) . '</strong>'],
@@ -152,7 +152,7 @@ $noveltyCount      = $viewModel->noveltyCount;
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="col-lg-9 sgi-edit-col">
+    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
 
         <!-- Novedades Asociadas -->
         <div class="sgi-card">

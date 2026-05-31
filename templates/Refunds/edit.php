@@ -111,7 +111,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
 <div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="col-lg-3 sgi-edit-col">
+    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
         <?php
         // Acciones del sidebar (regresión) — element compartido
         $actionsHtml = !empty($canRegress)
@@ -162,7 +162,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="col-lg-9 sgi-edit-col">
+    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
 
         <?php
         $sections = [];
