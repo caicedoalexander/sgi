@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Attribute\Permission;
 use App\Service\NotificationService;
 use App\Service\SystemSettingsService;
+use Cake\Http\Exception\ForbiddenException;
 
 class SystemSettingsController extends AppController
 {
@@ -29,6 +30,12 @@ class SystemSettingsController extends AppController
         $apiSettings = $this->settingsService->getGroup('api');
 
         if ($this->request->is(['post', 'put'])) {
+            // RBAC: la página se abre con can_view, pero mutar la configuración
+            // (credenciales SMTP, webhooks n8n) exige can_edit sobre el módulo.
+            if (!$this->_checkPermission('system_settings', 'edit')) {
+                throw new ForbiddenException('No tiene permisos para editar la configuración del sistema.');
+            }
+
             $data = $this->request->getData();
             $formType = $data['_form_type'] ?? 'smtp';
 
