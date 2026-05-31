@@ -223,6 +223,31 @@ class InvoicePaymentService
             return ServiceResult::fail('is_refund solo es válido en pagos de Anticipos.');
         }
 
+        // B-6: el monto debe ser positivo y no exceder el saldo pendiente.
+        // Para pagos no-refund el tope considera los pagos ya autorizados y los
+        // pendientes (evita registrar sobrepagos acumulados). Cálculo en centavos
+        // para evitar errores de coma flotante (idéntico a getPendingBalance()).
+        $amount = (float)($paymentData['amount'] ?? 0);
+        if ($amount <= 0) {
+            return ServiceResult::fail('El monto del pago debe ser mayor a cero.');
+        }
+        if (empty($paymentData['is_refund'])) {
+            $committed = (float)$paymentsTable->find()
+                ->where([
+                    'invoice_id' => $invoiceId,
+                    'status IN' => [
+                        InvoiceConstants::PAYMENT_RECORD_AUTHORIZED,
+                        InvoiceConstants::PAYMENT_RECORD_PENDING,
+                    ],
+                ])
+                ->all()
+                ->sumOf('amount');
+            $remainingCents = (int)round((float)$invoice->amount * 100) - (int)round($committed * 100);
+            if ((int)round($amount * 100) > $remainingCents) {
+                return ServiceResult::fail('El monto del pago excede el saldo pendiente de la factura.');
+            }
+        }
+
         $idempotencyKey = isset($paymentData['idempotency_key']) && trim((string)$paymentData['idempotency_key']) !== ''
             ? trim((string)$paymentData['idempotency_key'])
             : Text::uuid();

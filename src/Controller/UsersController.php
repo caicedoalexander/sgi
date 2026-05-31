@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Attribute\NoAuthGate;
 use App\Attribute\Permission;
 use Cake\Event\EventInterface;
+use Cake\ORM\TableRegistry;
 
 class UsersController extends AppController
 {
@@ -24,15 +25,55 @@ class UsersController extends AppController
         $this->request->allowMethod(['get', 'post']);
 
         $result = $this->Authentication->getResult();
-        if ($result && $result->isValid()) {
-            $redirect = $this->request->getQuery('redirect', ['controller' => 'Dashboard', 'action' => 'index']);
 
-            return $this->redirect($redirect);
+        // B-7: lockout por email (defensa frente a credential stuffing distribuido,
+        // donde el rate limit por IP del middleware no aplica). Ventana de 15 min.
+        $email = strtolower(trim((string)$this->request->getData('email', '')));
+        $buckets = TableRegistry::getTableLocator()->get('RateLimitBuckets');
+        $window = 900;
+        $windowStart = (int)floor(time() / $window) * $window;
+        $emailKey = hash('sha256', 'login_email|' . $email . '|' . $windowStart);
+        $maxFailures = 10;
+
+        if ($email !== '' && $buckets->getCount($emailKey) >= $maxFailures) {
+            $this->Flash->error('Demasiados intentos fallidos para esta cuenta. Intentá de nuevo en unos minutos.');
+
+            return null;
+        }
+
+        if ($result && $result->isValid()) {
+            return $this->redirect($this->_safeLoginRedirect());
         }
 
         if ($this->request->is('post') && !$result->isValid()) {
+            if ($email !== '') {
+                $buckets->incrementAndGet($emailKey, $windowStart);
+            }
             $this->Flash->error('Usuario o contraseña incorrectos.');
         }
+    }
+
+    /**
+     * B-5: devuelve un destino de redirección post-login seguro. Solo acepta
+     * rutas internas relativas (descarta URLs absolutas y protocol-relative
+     * que habilitarían open redirect / phishing).
+     *
+     * @return array|string
+     */
+    private function _safeLoginRedirect(): array|string
+    {
+        $redirect = $this->request->getQuery('redirect');
+
+        if (
+            is_string($redirect)
+            && $redirect !== ''
+            && str_starts_with($redirect, '/')
+            && !str_starts_with($redirect, '//')
+        ) {
+            return $redirect;
+        }
+
+        return ['controller' => 'Dashboard', 'action' => 'index'];
     }
 
     #[NoAuthGate(reason: 'Always available to authenticated users')]
@@ -47,7 +88,7 @@ class UsersController extends AppController
     }
 
     #[Permission(action: 'view')]
-    public function index()
+    public function index(): void
     {
         $query = $this->Users->find()->contain(['Roles']);
         $users = $this->paginate($query);
@@ -56,7 +97,7 @@ class UsersController extends AppController
     }
 
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view($id = null): void
     {
         $user = $this->Users->get($id, contain: ['Roles']);
 

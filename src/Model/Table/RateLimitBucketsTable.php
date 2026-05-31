@@ -43,6 +43,19 @@ class RateLimitBucketsTable extends Table
     }
 
     /**
+     * Return the current count for a bucket key without incrementing it.
+     */
+    public function getCount(string $bucketKey): int
+    {
+        $stmt = $this->getConnection()->execute(
+            'SELECT count FROM rate_limit_buckets WHERE bucket_key = ?',
+            [$bucketKey],
+        );
+
+        return (int)$stmt->fetchColumn(0);
+    }
+
+    /**
      * Delete bucket rows whose window started more than $olderThanSeconds ago.
      */
     public function garbageCollect(int $olderThanSeconds): int

@@ -55,7 +55,13 @@ class SystemSettingsController extends AppController
 
                 foreach ($n8nKeys as $key) {
                     if (array_key_exists($key, $data)) {
-                        $this->settingsService->set($key, $data[$key] ?: null, 'n8n');
+                        $value = $data[$key] ?: null;
+                        if ($value !== null && !$this->_isSafeWebhookUrl((string)$value)) {
+                            $this->Flash->error('La URL del webhook no es válida o apunta a una dirección no permitida.');
+
+                            return $this->redirect(['action' => 'index']);
+                        }
+                        $this->settingsService->set($key, $value, 'n8n');
                     }
                 }
 
@@ -66,6 +72,36 @@ class SystemSettingsController extends AppController
         }
 
         $this->set(compact('smtpSettings', 'n8nSettings', 'apiSettings'));
+    }
+
+    /**
+     * B-4: valida que una URL de webhook sea http/https y no apunte a
+     * localhost ni a rangos IP privados/reservados (mitigación SSRF).
+     */
+    private function _isSafeWebhookUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+        if ($parts === false || empty($parts['scheme']) || empty($parts['host'])) {
+            return false;
+        }
+
+        if (!in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
+            return false;
+        }
+
+        $host = strtolower(trim($parts['host'], '[]'));
+        if (in_array($host, ['localhost', '127.0.0.1', '::1', '0.0.0.0'], true)) {
+            return false;
+        }
+
+        // Si el host es una IP literal, rechazar rangos privados/reservados.
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            if (!filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     #[Permission(action: 'edit')]
