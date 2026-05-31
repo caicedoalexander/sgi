@@ -179,87 +179,91 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
     <main class="col-lg-9 sgi-edit-col">
 
     <!-- Información de la novedad -->
-    <div class="card" style="padding:18px 20px;">
+    <div class="sgi-card">
         <div class="sgi-section-head" style="margin-bottom:12px;">
             <span class="sgi-label">Información de la novedad</span>
         </div>
-        <div class="sgi-info-grid">
-            <div class="sgi-info-cell" style="grid-column:span 2;">
-                <div class="sgi-info-cell-label">Empleado</div>
-                <div class="sgi-info-cell-value"><?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?></div>
-            </div>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Tipo de Novedad</div>
-                <div class="sgi-info-cell-value"><?= h($novelty->novelty_type->name ?? '—') ?></div>
-            </div>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Diligenciamiento</div>
-                <div class="sgi-info-cell-value mono"><?= $novelty->filing_date?->format('d/m/Y') ?? '—' ?></div>
-            </div>
-            <?php if ($novelty->permission_date): ?>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Fecha del Permiso</div>
-                <div class="sgi-info-cell-value mono"><?= $novelty->permission_date->format('d/m/Y') ?></div>
-            </div>
-            <?php endif; ?>
-            <?php if ($novelty->schedule_type): ?>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Horario</div>
-                <div class="sgi-info-cell-value"><?= $scheduleLabels[$novelty->schedule_type] ?? h($novelty->schedule_type) ?></div>
-            </div>
-            <?php endif; ?>
-            <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_DAYS): ?>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Fecha Inicio</div>
-                <div class="sgi-info-cell-value mono"><?= $novelty->start_date?->format('d/m/Y') ?: '—' ?></div>
-            </div>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Fecha Fin</div>
-                <div class="sgi-info-cell-value mono"><?= $novelty->end_date?->format('d/m/Y') ?: '—' ?></div>
-            </div>
-            <?php endif; ?>
-            <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_HOURS): ?>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Hora Salida</div>
-                <div class="sgi-info-cell-value mono"><?= h($novelty->start_time) ?: '—' ?></div>
-            </div>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Hora Entrada</div>
-                <div class="sgi-info-cell-value mono"><?= h($novelty->end_time) ?: '—' ?></div>
-            </div>
-            <?php endif; ?>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Remunerado</div>
-                <div class="sgi-info-cell-value">
-                    <span class="pill pill-<?= $novelty->is_paid ? 'primary-soft' : 'muted' ?>"><?= $novelty->is_paid ? 'Sí' : 'No' ?></span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
+            <div>
+                <div class="sgi-label" style="margin-bottom:6px;">Identificación</div>
+                <div class="field-row">
+                    <span class="k">Empleado</span>
+                    <span class="v"><?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?></span>
+                </div>
+                <div class="field-row">
+                    <span class="k">Tipo de Novedad</span>
+                    <span class="v"><?= h($novelty->novelty_type->name ?? '—') ?></span>
+                </div>
+                <div class="field-row is-last">
+                    <span class="k">Diligenciamiento</span>
+                    <span class="v mono"><?= $novelty->filing_date?->format('d/m/Y') ?? '—' ?></span>
                 </div>
             </div>
-            <?php if ($novelty->approved_by_user): ?>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Aprobador</div>
-                <div class="sgi-info-cell-value"><?= h($novelty->approved_by_user->full_name ?? '—') ?></div>
-            </div>
-            <?php endif; ?>
-            <?php if ($novelty->area_approval): ?>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Estado Aprobación</div>
-                <div class="sgi-info-cell-value">
-                    <?php $approvalBadge = NoveltyPresentation::APPROVAL_BADGES[$novelty->area_approval] ?? 'pill-warning-soft'; ?>
-                    <span class="pill <?= $approvalBadge ?>"><?= h($novelty->area_approval) ?></span>
+            <div>
+                <div class="sgi-label" style="margin-bottom:6px;">Permiso y aprobación</div>
+                <?php if ($novelty->permission_date): ?>
+                <div class="field-row">
+                    <span class="k">Fecha del Permiso</span>
+                    <span class="v mono"><?= $novelty->permission_date->format('d/m/Y') ?></span>
                 </div>
+                <?php endif; ?>
+                <?php if ($novelty->schedule_type): ?>
+                <div class="field-row">
+                    <span class="k">Horario</span>
+                    <span class="v"><?= $scheduleLabels[$novelty->schedule_type] ?? h($novelty->schedule_type) ?></span>
+                </div>
+                <?php endif; ?>
+                <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_DAYS): ?>
+                <div class="field-row">
+                    <span class="k">Fecha Inicio</span>
+                    <span class="v mono"><?= $novelty->start_date?->format('d/m/Y') ?: '—' ?></span>
+                </div>
+                <div class="field-row">
+                    <span class="k">Fecha Fin</span>
+                    <span class="v mono"><?= $novelty->end_date?->format('d/m/Y') ?: '—' ?></span>
+                </div>
+                <?php endif; ?>
+                <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_HOURS): ?>
+                <div class="field-row">
+                    <span class="k">Hora Salida</span>
+                    <span class="v mono"><?= h($novelty->start_time) ?: '—' ?></span>
+                </div>
+                <div class="field-row">
+                    <span class="k">Hora Entrada</span>
+                    <span class="v mono"><?= h($novelty->end_time) ?: '—' ?></span>
+                </div>
+                <?php endif; ?>
+                <div class="field-row">
+                    <span class="k">Remunerado</span>
+                    <span class="v"><span class="pill pill-<?= $novelty->is_paid ? 'primary-soft' : 'muted' ?>"><?= $novelty->is_paid ? 'Sí' : 'No' ?></span></span>
+                </div>
+                <?php if ($novelty->approved_by_user): ?>
+                <div class="field-row">
+                    <span class="k">Aprobador</span>
+                    <span class="v"><?= h($novelty->approved_by_user->full_name ?? '—') ?></span>
+                </div>
+                <?php endif; ?>
+                <?php if ($novelty->area_approval): ?>
+                <div class="field-row">
+                    <span class="k">Estado Aprobación</span>
+                    <span class="v">
+                        <?php $approvalBadge = NoveltyPresentation::APPROVAL_BADGES[$novelty->area_approval] ?? 'pill-warning-soft'; ?>
+                        <span class="pill <?= $approvalBadge ?>"><?= h($novelty->area_approval) ?></span>
+                    </span>
+                </div>
+                <?php endif; ?>
+                <?php if ($novelty->approved_at): ?>
+                <div class="field-row">
+                    <span class="k">Fecha Aprobación</span>
+                    <span class="v mono"><?= $novelty->approved_at->format('d/m/Y H:i') ?></span>
+                </div>
+                <?php endif; ?>
             </div>
-            <?php endif; ?>
-            <?php if ($novelty->approved_at): ?>
-            <div class="sgi-info-cell">
-                <div class="sgi-info-cell-label">Fecha Aprobación</div>
-                <div class="sgi-info-cell-value mono"><?= $novelty->approved_at->format('d/m/Y H:i') ?></div>
-            </div>
-            <?php endif; ?>
             <?php if ($novelty->reason): ?>
-            <div class="sgi-info-cell" style="grid-column:span 4;">
-                <div class="sgi-info-cell-label">Motivo</div>
-                <div class="sgi-info-cell-value" style="white-space:normal;font-weight:400;font-size:.8rem;line-height:1.5;">
-                    <?= nl2br(h($novelty->reason)) ?>
+            <div style="grid-column:1 / -1;">
+                <div class="sgi-label" style="margin-bottom:6px;">Motivo</div>
+                <div class="field-row is-last">
+                    <span class="v" style="white-space:normal;font-weight:400;font-size:.8rem;line-height:1.5;"><?= nl2br(h($novelty->reason)) ?></span>
                 </div>
             </div>
             <?php endif; ?>
@@ -276,7 +280,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <?php endif; ?>
     </div>
 
-    <div class="card" style="padding:20px;">
+    <div class="sgi-card">
 
         <?php $hasEditableFields = !empty($editableFields ?? []); ?>
         <?php if ($hasEditableFields): ?>

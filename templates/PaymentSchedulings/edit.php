@@ -121,7 +121,7 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
     <main class="col-lg-9 sgi-edit-col">
 
         <!-- Facturas Vinculadas -->
-        <div class="card" style="padding:18px 20px;">
+        <div class="sgi-card">
             <div class="sgi-section-head" style="margin-bottom:12px;">
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-receipt" aria-hidden="true"></i>
@@ -202,7 +202,7 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
                                 <?= $this->Form->postLink(
                                     '<i class="bi bi-x-lg" aria-hidden="true"></i>',
                                     ['action' => 'removeItem', $record->id, $item->id],
-                                    ['confirm' => '¿Desvincular esta factura?', 'class' => 'btn btn-sm btn-outline-danger', 'style' => 'padding:.15rem .4rem;font-size:.7rem;line-height:1;', 'escape' => false]
+                                    ['confirm' => '¿Desvincular esta factura?', 'class' => 'btn-icon sgi-fg-danger', 'escape' => false, 'title' => 'Desvincular']
                                 ) ?>
                             </td>
                             <?php endif; ?>

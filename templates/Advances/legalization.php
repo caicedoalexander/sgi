@@ -357,14 +357,14 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
                     <i class="bi bi-bank" aria-hidden="true"></i>Confirmar consignación
                 </span>
                 <div class="hr"></div>
-                <div class="d-flex align-items-center gap-2"
-                     style="border-left:2px solid var(--secondary-color);padding:.35rem .7rem;">
-                    <i class="bi bi-info-circle-fill flex-shrink-0"
-                       style="color:var(--secondary-color);font-size:.85rem;" aria-hidden="true"></i>
-                    <span style="font-size:var(--fs-body-sm);color:var(--text-muted);">Monto pendiente:</span>
-                    <strong style="color:var(--text-default);font-size:.85rem;letter-spacing:-.01em;">
-                        $ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?>
-                    </strong>
+                <div class="banner info">
+                    <div class="banner-icon"><i class="bi bi-info-circle-fill" aria-hidden="true"></i></div>
+                    <div class="banner-body">
+                        <div class="banner-msg">
+                            Monto pendiente:
+                            <strong style="color:var(--text-default);">$ <?= $this->Number->format((float)$leg->shortage_amount, ['places' => 2]) ?></strong>
+                        </div>
+                    </div>
                 </div>
             </div>
 

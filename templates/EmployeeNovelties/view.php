@@ -109,12 +109,10 @@ $noveltyName = $viewModel->noveltyName;
     <main class="sgi-invoice-view-right">
 
     <!-- Información + Gestión -->
-    <div class="card">
-    <div class="row g-0">
-        <div class="col-md-6" style="border-right:1px solid var(--rule);">
-            <div class="sgi-section-head" style="padding:14px 18px 0;">
-                <span class="sgi-label">Información de la Novedad</span>
-            </div>
+    <div class="sgi-card">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
+        <div>
+            <div class="sgi-label" style="margin-bottom:6px;">Información de la Novedad</div>
             <?php if ($novelty->employee): ?>
             <div class="field-row">
                 <span class="k">Empleado</span>
@@ -145,7 +143,7 @@ $noveltyName = $viewModel->noveltyName;
             <?php if ($novelty->permission_date): ?>
             <div class="field-row">
                 <span class="k">Fecha del Permiso</span>
-                <span class="v"><?= $novelty->permission_date->format('d/m/Y') ?></span>
+                <span class="v mono"><?= $novelty->permission_date->format('d/m/Y') ?></span>
             </div>
             <?php endif; ?>
             <?php if ($novelty->schedule_type): ?>
@@ -157,21 +155,21 @@ $noveltyName = $viewModel->noveltyName;
             <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_DAYS): ?>
             <div class="field-row">
                 <span class="k">Fecha Inicio</span>
-                <span class="v"><?= $novelty->start_date?->format('d/m/Y') ?: '—' ?></span>
+                <span class="v mono"><?= $novelty->start_date?->format('d/m/Y') ?: '—' ?></span>
             </div>
             <div class="field-row">
                 <span class="k">Fecha Fin</span>
-                <span class="v"><?= $novelty->end_date?->format('d/m/Y') ?: '—' ?></span>
+                <span class="v mono"><?= $novelty->end_date?->format('d/m/Y') ?: '—' ?></span>
             </div>
             <?php endif; ?>
             <?php if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_HOURS): ?>
             <div class="field-row">
                 <span class="k">Hora Salida</span>
-                <span class="v"><?= h($novelty->start_time) ?: '—' ?></span>
+                <span class="v mono"><?= h($novelty->start_time) ?: '—' ?></span>
             </div>
             <div class="field-row">
                 <span class="k">Hora Entrada</span>
-                <span class="v"><?= h($novelty->end_time) ?: '—' ?></span>
+                <span class="v mono"><?= h($novelty->end_time) ?: '—' ?></span>
             </div>
             <?php endif; ?>
             <div class="field-row">
@@ -188,10 +186,8 @@ $noveltyName = $viewModel->noveltyName;
             <?php endif; ?>
         </div>
 
-        <div class="col-md-6">
-            <div class="sgi-section-head" style="padding:14px 18px 0;">
-                <span class="sgi-label">Gestión</span>
-            </div>
+        <div>
+            <div class="sgi-label" style="margin-bottom:6px;">Gestión</div>
             <div class="field-row">
                 <span class="k">Registrado por</span>
                 <span class="v"><?= h($novelty->registered_by_user->full_name ?? '—') ?></span>
@@ -219,12 +215,12 @@ $noveltyName = $viewModel->noveltyName;
             <?php if ($novelty->approved_at): ?>
             <div class="field-row">
                 <span class="k">Fecha</span>
-                <span class="v"><?= $novelty->approved_at->format('d/m/Y H:i') ?></span>
+                <span class="v mono"><?= $novelty->approved_at->format('d/m/Y H:i') ?></span>
             </div>
             <?php endif; ?>
             <div class="field-row">
                 <span class="k">Fecha Diligenciamiento</span>
-                <span class="v"><?= $novelty->filing_date?->format('d/m/Y') ?? '—' ?></span>
+                <span class="v mono"><?= $novelty->filing_date?->format('d/m/Y') ?? '—' ?></span>
             </div>
             <?php if ($novelty->isGrouped()): ?>
             <div class="field-row">
@@ -243,26 +239,20 @@ $noveltyName = $viewModel->noveltyName;
 
     <!-- Signatures -->
     <?php if ($novelty->employee_signature): ?>
-    <div class="row g-0" style="border-bottom:1px solid var(--rule);">
-        <div class="col-12">
-            <div class="sgi-label">Firma del Funcionario</div>
-            <div style="padding:.25rem 1.25rem .875rem;">
-                <img src="<?= $this->Url->build('/' . $novelty->employee_signature) ?>" alt="Firma Funcionario"
-                     style="max-width:400px;max-height:150px;background:var(--bg-subtle);padding:6px;">
-            </div>
-        </div>
+    <div class="hr"></div>
+    <div class="sgi-label" style="margin-bottom:8px;">Firma del Funcionario</div>
+    <div>
+        <img src="<?= $this->Url->build('/' . $novelty->employee_signature) ?>" alt="Firma Funcionario"
+             style="max-width:400px;max-height:150px;background:var(--bg-subtle);padding:6px;">
     </div>
     <?php endif; ?>
 
     <!-- General observations (legacy field) -->
     <?php if ($novelty->observations): ?>
-    <div style="border-top:1px solid var(--rule);">
-        <div class="sgi-section-head" style="padding:14px 18px 0;">
-            <span class="sgi-label">Observaciones de Rechazo</span>
-        </div>
-        <div style="padding:.25rem 18px 14px;font-size:var(--fs-body);color:var(--text-muted);line-height:1.55;">
-            <?= nl2br(h($novelty->observations)) ?>
-        </div>
+    <div class="hr"></div>
+    <div class="sgi-label" style="margin-bottom:8px;">Observaciones de Rechazo</div>
+    <div style="font-size:var(--fs-body);color:var(--text-muted);line-height:1.55;">
+        <?= nl2br(h($novelty->observations)) ?>
     </div>
     <?php endif; ?>
     </div><!-- /card Información + Gestión -->

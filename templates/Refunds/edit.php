@@ -270,7 +270,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                                         <?= $this->Form->postLink(
                                             '<i class="bi bi-x-lg" aria-hidden="true"></i>',
                                             ['action' => 'removeInvoice', $record->id, $inv->id],
-                                            ['confirm' => '¿Remover esta factura del registro?', 'class' => 'btn btn-sm btn-outline-danger', 'style' => 'padding:.15rem .4rem;font-size:.7rem;line-height:1;', 'escape' => false, 'title' => 'Quitar', 'block' => true]
+                                            ['confirm' => '¿Remover esta factura del registro?', 'class' => 'btn-icon sgi-fg-danger', 'escape' => false, 'title' => 'Quitar', 'block' => true]
                                         ) ?>
                                     </td>
                                     <?php endif; ?>

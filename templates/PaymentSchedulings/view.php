@@ -74,12 +74,10 @@ $total      = $viewModel->total;
     <main class="sgi-invoice-view-right">
 
         <!-- Información general -->
-        <div class="card">
-            <div class="row g-0">
-                <div class="col-md-6" style="border-right:1px solid var(--rule);">
-                    <div class="sgi-section-head" style="padding:14px 18px 0;">
-                        <span class="sgi-label">Información</span>
-                    </div>
+        <div class="sgi-card">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
+                <div>
+                    <div class="sgi-label" style="margin-bottom:6px;">Información</div>
                     <div class="field-row">
                         <span class="k">Código</span>
                         <span class="v mono"><?= h($record->code) ?></span>
@@ -88,17 +86,15 @@ $total      = $viewModel->total;
                         <span class="k">Título</span>
                         <span class="v"><?= h($record->title) ?: '—' ?></span>
                     </div>
-                    <div class="field-row">
+                    <div class="field-row is-last">
                         <span class="k">Estado</span>
                         <span class="v">
                             <span class="pill <?= $psStatusPill ?>"><?= h($psStatusLabel) ?></span>
                         </span>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="sgi-section-head" style="padding:14px 18px 0;">
-                        <span class="sgi-label">Detalles</span>
-                    </div>
+                <div>
+                    <div class="sgi-label" style="margin-bottom:6px;">Detalles</div>
                     <div class="field-row">
                         <span class="k">Creado por</span>
                         <span class="v"><?= h($record->created_by_user->full_name ?? '—') ?></span>
@@ -107,7 +103,7 @@ $total      = $viewModel->total;
                         <span class="k">Facturas</span>
                         <span class="v"><?= $itemCount ?></span>
                     </div>
-                    <div class="field-row">
+                    <div class="field-row is-last">
                         <span class="k">Monto Total</span>
                         <span class="v mono" style="color:var(--primary-color);font-weight:700;">$ <?= number_format((float)$total, 0, ',', '.') ?></span>
                     </div>

@@ -8,26 +8,31 @@ $this->assign('title', 'Novedades Vigentes');
 ?>
 <?= $this->element('cdn_select2') ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Novedades Vigentes</span>
+<!-- ═══ Header ═══ -->
+<div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
+    <div>
+        <span class="sgi-title-page">Novedades Vigentes</span>
+    </div>
 </div>
 
-<!-- View navigation (consistent with index.php) -->
-<div class="d-flex gap-2 mb-3">
+<!-- ═══ Sub-tabs (scope) ═══ -->
+<div class="d-flex" style="gap:4px;margin-bottom:12px;">
     <?= $this->Html->link('Mis Novedades', ['action' => 'index'],
-        ['class' => 'btn btn-sm btn-outline-dark']) ?>
-    <?= $this->Html->link('Todas las Novedades', ['action' => 'all'],
-        ['class' => 'btn btn-sm btn-outline-dark']) ?>
+        ['class' => 'chip']) ?>
+    <?= $this->Html->link('Todas', ['action' => 'all'],
+        ['class' => 'chip']) ?>
     <?= $this->Html->link('Rechazadas', ['action' => 'rejected'],
-        ['class' => 'btn btn-sm btn-outline-danger']) ?>
-    <?= $this->Html->link('Vigentes', ['action' => 'active'],
-        ['class' => 'btn btn-sm btn-primary']) ?>
+        ['class' => 'chip']) ?>
+    <?= $this->Html->link(
+        '<span class="dot" style="background:var(--primary-color);"></span>Vigentes',
+        ['action' => 'active'],
+        ['class' => 'chip is-active', 'escape' => false, 'style' => 'color:var(--primary-color)']
+    ) ?>
 </div>
 
 <!-- Filters -->
-<div class="card card-primary mb-3">
-    <div class="card-body py-2 px-3">
-        <div class="d-flex gap-3 align-items-center flex-wrap">
+<div class="sgi-card compact" style="margin-bottom:14px;">
+    <div class="d-flex gap-3 align-items-center flex-wrap">
             <select id="filter-novelty-type" class="form-select form-select-sm select2" style="max-width:220px;" data-placeholder="Tipo: Todos">
                 <option value="">Tipo: Todos</option>
                 <?php foreach ($noveltyTypes as $id => $name): ?>
@@ -40,18 +45,15 @@ $this->assign('title', 'Novedades Vigentes');
                     <option value="<?= $id ?>"><?= h($name) ?></option>
                 <?php endforeach; ?>
             </select>
-            <button type="button" id="btn-clear-filters" class="btn btn-sm btn-outline-secondary" style="display:none;">
-                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Limpiar
+            <button type="button" id="btn-clear-filters" class="btn btn-ghost btn-sm" style="display:none;">
+                <i class="bi bi-x me-1" aria-hidden="true"></i>Limpiar
             </button>
-        </div>
     </div>
 </div>
 
 <!-- Calendar -->
-<div class="card card-dark">
-    <div class="card-body p-0">
-        <div id="calendar" class="sgi-calendar"></div>
-    </div>
+<div class="sgi-card" style="padding:0;">
+    <div id="calendar" class="sgi-calendar"></div>
 </div>
 
 <?= $this->element('fullcalendar_assets') ?>

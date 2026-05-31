@@ -77,12 +77,10 @@ $isTerminal  = $viewModel->isTerminal;
     <main class="sgi-invoice-view-right">
 
         <!-- Beneficiario + Detalle -->
-        <div class="card">
-            <div class="row g-0">
-                <div class="col-md-6" style="border-right:1px solid var(--rule);">
-                    <div class="sgi-section-head" style="padding:14px 18px 0;">
-                        <span class="sgi-label">Beneficiario</span>
-                    </div>
+        <div class="sgi-card">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
+                <div>
+                    <div class="sgi-label" style="margin-bottom:6px;">Beneficiario</div>
                     <div class="field-row">
                         <span class="k">Tipo</span>
                         <span class="v"><?= h($beneficiaryType) ?></span>
@@ -99,15 +97,13 @@ $isTerminal  = $viewModel->isTerminal;
                         <span class="k">Tipo de Gasto</span>
                         <span class="v"><?= h($invoice->expense_type->name ?? '—') ?></span>
                     </div>
-                    <div class="field-row">
+                    <div class="field-row is-last">
                         <span class="k">Centro de Costos</span>
                         <span class="v"><?= h($invoice->cost_center->name ?? '—') ?></span>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="sgi-section-head" style="padding:14px 18px 0;">
-                        <span class="sgi-label">Detalle</span>
-                    </div>
+                <div>
+                    <div class="sgi-label" style="margin-bottom:6px;">Detalle</div>
                     <div class="field-row">
                         <span class="k">Fecha de Emisión</span>
                         <span class="v mono"><?= $invoice->issue_date?->format('d/m/Y') ?? '—' ?></span>
@@ -120,7 +116,7 @@ $isTerminal  = $viewModel->isTerminal;
                         <span class="k">Fecha de Registro</span>
                         <span class="v mono"><?= $invoice->created?->format('d/m/Y H:i') ?? '—' ?></span>
                     </div>
-                    <div class="field-row align-items-start">
+                    <div class="field-row align-items-start is-last">
                         <span class="k">Concepto</span>
                         <span class="v"><?= $invoice->detail ? nl2br(h($invoice->detail)) : '—' ?></span>
                     </div>

@@ -155,7 +155,7 @@ $noveltyCount      = $viewModel->noveltyCount;
     <main class="col-lg-9 sgi-edit-col">
 
         <!-- Novedades Asociadas -->
-        <div class="card" style="padding:18px 20px;">
+        <div class="sgi-card">
             <div class="sgi-section-head" style="margin-bottom:12px;">
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-people" aria-hidden="true"></i>
@@ -200,7 +200,7 @@ $noveltyCount      = $viewModel->noveltyCount;
         ];
         ?>
         <?php if (in_array($currentStatus, $signaturesVisibleStatuses) || ($isRejected && !empty($doc->novelty_liquidation_signatures))): ?>
-        <div class="card" style="padding:18px 20px;">
+        <div class="sgi-card">
             <div class="sgi-section-head" style="margin-bottom:12px;">
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-pen" aria-hidden="true"></i>Firmas
@@ -314,7 +314,7 @@ $noveltyCount      = $viewModel->noveltyCount;
         ?>
 
         <?php if ($stageFormHtml !== ''): ?>
-        <div class="card" style="padding:18px 20px;">
+        <div class="sgi-card">
             <div class="sgi-section-head" style="margin-bottom:12px;">
                 <span class="sgi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>Acción del paso actual

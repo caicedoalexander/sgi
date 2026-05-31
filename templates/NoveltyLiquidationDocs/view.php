@@ -99,12 +99,10 @@ $noveltyCount  = $viewModel->noveltyCount;
     <main class="sgi-invoice-view-right">
 
         <!-- Información + Novedades -->
-        <div class="card">
-            <div class="row g-0">
-                <div class="col-md-6" style="border-right:1px solid var(--rule);">
-                    <div class="sgi-section-head" style="padding:14px 18px 0;">
-                        <span class="sgi-label">Información del Documento</span>
-                    </div>
+        <div class="sgi-card">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
+                <div>
+                    <div class="sgi-label" style="margin-bottom:6px;">Información del Documento</div>
                     <div class="field-row">
                         <span class="k">No. Liquidación</span>
                         <span class="v mono"><?= h($doc->liquidation_number) ?></span>
@@ -147,12 +145,10 @@ $noveltyCount  = $viewModel->noveltyCount;
                     <?php endif; ?>
                 </div>
 
-                <div class="col-md-6">
-                    <div class="sgi-section-head" style="padding:14px 18px 0;">
-                        <span class="sgi-label d-inline-flex align-items-center gap-2">
-                            Novedades Asociadas
-                            <span class="sgi-folder-count"><?= $noveltyCount ?></span>
-                        </span>
+                <div>
+                    <div class="sgi-label d-inline-flex align-items-center gap-2" style="margin-bottom:6px;">
+                        Novedades Asociadas
+                        <span class="sgi-folder-count"><?= $noveltyCount ?></span>
                     </div>
                     <?php if ($noveltyCount > 0): ?>
                     <?php $nvGrid = 'display:grid;grid-template-columns:1.5fr 1fr;gap:10px;align-items:center;'; ?>
