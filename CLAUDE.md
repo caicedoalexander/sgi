@@ -10,7 +10,7 @@ SGI (Sistema de Gestión Interna) — internal management system built with Cake
 
 ```bash
 # Dev server
-php bin/cake server                  # localhost:8765
+php bin/cake server
 
 # Dependencies
 composer install
@@ -23,9 +23,6 @@ composer cs-fix                      # Auto-fix
 php bin/cake migrations migrate      # Run pending
 php bin/cake migrations rollback     # Rollback last
 php bin/cake migrations create Name  # New migration (uses BaseMigration, NOT AbstractMigration)
-
-# Admin seed
-php bin/seed-admin.php               # username: admin, pass: Admin2024*
 ```
 
 ## Environment Setup
@@ -56,10 +53,7 @@ Sistema de diseño: ver la sección [Sistema de Diseño](#sistema-de-diseño) m�
 
 | Service | Purpose |
 |---------|---------|
-| `InvoicePipelineService` | Coordinador delgado del pipeline de facturas (6 estados). Delega a `InvoicePipelineStateRegistry`, `DocumentTypePolicyFactory`, `InvoiceLockPolicy`, `InvoiceTransitionValidator` y `PipelineAuthorizationService`. API pública preservada. |
-| `InvoiceFieldAccessPolicy` | Editable fields and visible sections per role/state (extracted from pipeline service) |
-| `InvoiceLockPolicy` | Determina qué campos quedan bloqueados según estado/documento |
-| `InvoiceTransitionValidator` | Valida requisitos de avance entre estados del pipeline de facturas |
+| `InvoicePipelineService` | Coordinador delgado del pipeline de facturas (6 estados). Delega a `InvoicePipelineStateRegistry`, `DocumentTypePolicyFactory`, `PipelineAuthorizationService` y las policies en `Pipeline/Invoice/Policy/` (`InvoiceFieldAccessPolicy`, `InvoiceLockPolicy`, `InvoiceTransitionValidator`, `InvoiceActionPolicy`). API pública preservada. |
 | `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation. `registerPayment()` siempre avanza la factura a `autorizacion_pago`. `editPayment()` requiere motivo. `rejectPayment()` persiste `rejection_reason` (no elimina) |
 | `InvoiceApprovalService` | Invoice approval operations. `sendApprovalLinks()`, `modifyApprovers()` (con motivo obligatorio), `resetFlow()` cuando `area_approval='Rechazada'` |
 | `InvoiceFilterService` / `EmployeeFilterService` | Filtros de listados (extends `Filter/BaseFilterService`) |
@@ -102,7 +96,7 @@ Sistema de diseño: ver la sección [Sistema de Diseño](#sistema-de-diseño) m�
 - `Service/Dto/` — `BulkPaymentView` (DTOs ligeros)
 - `Service/Dashboard/` — `EmployeeStatisticsService`, `InvoiceStatisticsService`
 - `Service/Pipeline/` — State pattern por módulo. Cada submódulo expone `{Modulo}PipelineState` (interfaz/abstracta), `{Modulo}PipelineStateRegistry` (resuelve enum → State) y `State/` con un archivo por estado:
-  - `Pipeline/Invoice/` — `InvoicePipelineState`, `InvoicePipelineStateRegistry`, `State/` (Aprobacion, Contabilidad, Tesoreria, AutorizacionPago, VerificacionPago, Pagada, Legalizada), `DocumentTypePolicy` + `DocumentTypePolicyFactory`, `Policy/` (`StandardDocumentTypePolicy`, `AnticipoDocumentTypePolicy`, `LegalizacionDocumentTypePolicy`), `LinkedInvoiceLegalizer`
+  - `Pipeline/Invoice/` — `InvoicePipelineState`, `InvoicePipelineStateRegistry`, `State/` (Aprobacion, Contabilidad, Tesoreria, AutorizacionPago, VerificacionPago, Pagada, Legalizada), `DocumentTypePolicy` + `DocumentTypePolicyFactory`, `LinkedInvoiceLegalizer`, y `Policy/` con las 3 DocumentTypePolicy (`StandardDocumentTypePolicy`, `AnticipoDocumentTypePolicy`, `LegalizacionDocumentTypePolicy`) **y** las policies de campos/locks/transición/acciones (`InvoiceFieldAccessPolicy`, `InvoiceLockPolicy`, `InvoiceTransitionValidator`, `InvoiceActionPolicy`)
   - `Pipeline/Novelty/`, `Pipeline/Advance/`, `Pipeline/PettyCash/`, `Pipeline/Refund/`, `Pipeline/PaymentScheduling/` — misma estructura (Registry + States), con `Policy/` propio cuando aplica (p. ej. `Advance/Policy/AdvanceLegalizationActionPolicy`)
 - `Service/HealthCheck/` — `HealthCheckInterface`, `HealthCheckResult`, `HealthStatus` + implementaciones (`Database`, `Cache`, `EmailLog`, `CircuitBreaker`)
 - `Service/Resilience/` — `Retryer`, `RetryPolicy` (retry con backoff)
@@ -121,9 +115,10 @@ Located in `src/Middleware/`:
 - RBAC enforced in `AppController::beforeFilter()` via `_enforcePermission()`.
 - `$controllerModuleMap` maps controller → module. Actions map to can_view/can_create/can_edit/can_delete.
 - Roles (ver `RoleConstants.php`): Administrador, Contabilidad, Tesorería, Registro/Revisión, Contador, Auxiliar de Personal, Asistente de Personal, Coordinador Administrativo y Financiero.
-- **Admin bypass acotado**: `AuthorizationService::ADMIN_BYPASS_MODULES = ['users', 'roles']`. Para cualquier otro módulo el rol Administrador pasa por el lookup normal en la tabla `permissions` (cleanup post pipeline-permissions, 2026-05-02).
+- **Admin bypass acotado**: `AuthorizationService::ADMIN_BYPASS_MODULES = ['users', 'roles']`. Para cualquier otro módulo el rol Administrador pasa por el lookup normal en la tabla `permissions`.
 - **Pipeline permissions**: `PipelineAuthorizationService` resuelve permisos por (rol, pipeline, step) contra la tabla `pipeline_permissions`. Espejo del flujo CRUD pero por paso de pipeline.
 - **Contador** ve y autoriza pagos en estado `autorizacion_pago` del pipeline de facturas; en `verificacion_pago` se valida la ejecución del pago antes de pasar a `pagada`.
+- **`FieldAccessPolicy` debe ser rol-aware**: heredar de `PipelineFieldPolicy` (un rol sin `canOperate` del paso obtiene patch vacío). **No** usar `unset($roleId)` (filtrado role-blind). Los 6 módulos cumplen — `PettyCash`/`Refund` gatean la escritura con `if (getEditableFields($roleId,$step) === [])`.
 
 ### Invoice Pipeline
 
@@ -141,24 +136,77 @@ States (fuente única: `App\Constants\Domain\Invoice\PipelineStatus` enum, espej
 - Secciones del formulario controladas por `InvoiceFieldAccessPolicy` (const privada `SECTIONS_BY_STEP`, expuesta vía `getVisibleSections()`): `ledger` (siempre visible), `revision` (aprobacion), `accounting` (contabilidad), `treasury` (tesoreria), `payment_authorization` (autorizacion_pago **y** verificacion_pago — esta última reusa la misma sección read-only). Las plantillas además exponen secciones estructurales `general`, `dates`, `classification`.
 - Estados de un pago individual (`invoice_payments.status`, slugs en inglés por convención): `pending`, `authorized`, `rejected`
 
-### Paridad de módulos de flujo (alineación al canon de Facturas — en curso)
+### Paridad de módulos de flujo
 
-Auditoría completa y roadmap de remediación en `docs/auditoria-paridad-modulos-flujo.md`. Decisiones de canon vigentes:
+**Eje doble de canon — NO mezclar criterios:**
+- **Arquitectura (backend/pipeline + capa de vista/ViewModel):** Invoice es el **OUTLIER**. El canon es el *mejor patrón derivado de todos* (PettyCash/Refund como referentes de coordinador/layout).
+- **Visual puro (HTML/CSS/átomos):** Invoice **SÍ es el canon** de apariencia a replicar (ver [Canon visual de templates de flujo](#sistema-de-diseño)).
 
-- **Canon de backend/pipeline = Invoice**: State pattern limpio (un archivo por estado, States sin IO directo salvo servicios inyectados), enum `Domain/{Modulo}/PipelineStatus` como **fuente única** y las `*Constants` delegan a él (`STATUS_X = PipelineStatus::X->value`). El avance/regresión se resuelve vía `enum::next()/previous()` o `State::getNextStatus()` — **no** vía mapas `TRANSITIONS` legacy (en migración).
-- **Canon de templates = la familia migrada**, no Invoice: layout `sgi-invoice-view-grid` + `element('pipeline_sidebar')` (Invoice aún arrastra grid inline y es el outlier a alinear). `add.php` es legacy en todos.
-- **Nomenclatura del coordinador**: el objetivo es `{Modulo}PipelineService` (rename completado el 2026-05-29 — los 5 coordinadores cumplen; `AdvanceLegalizationService` excluido (no es coordinador de pipeline)).
-- **Excepciones legítimas (NO son migración a medias):**
-  - `Advance` y `PaymentScheduling` **no** tienen `FieldAccessPolicy`: Advance edita vía `Invoices::edit` (redirect) y PaymentScheduling no edita campos del header por paso. No crear policies vacías.
-  - **Split de naming `Advance*` / `AdvanceLegalization*` (DECISIÓN: NO renombrar — conviven 3 ejes, todos legítimos):**
-    - **Dir/enum/namespace corto `Advance`** (`App\Service\Pipeline\Advance`, `App\Constants\Domain\Advance\PipelineStatus`): convención de submódulo de Pipeline. Los 6 submódulos usan el sustantivo corto del módulo (`Invoice`, `Novelty`, `PettyCash`, `Refund`, `PaymentScheduling`); renombrar a `AdvanceLegalization` rompería la simetría con los otros 5.
-    - **Clases/tablas largas `AdvanceLegalization*`** (`AdvanceLegalizationService`, `AdvanceLegalizationViewModel`, `AdvanceLegalizationHistoryService`, tablas `advance_legalizations` / `advance_legalization_signatures` / `advance_legalization_histories`): reflejan la entidad de dominio (la **legalización de anticipos**; Anticipo = Invoice, reusa `InvoicePipelineService`).
-    - **Slugs persistidos = 2 ejes DISTINTOS e INMUTABLES** (no son el mismo, no tocar sin migración de datos): el módulo CRUD/permisos es `'advances'` (en `AppController::$controllerModuleMap`, `AuthorizationService::MODULES`, columna `permissions.module`, ruta `/advances/*`, controller `AdvancesController` plural corto), mientras que el pipeline en `pipeline_permissions` es `'legalizations'` (`PipelineStepConstants::PIPELINE_LEGALIZATIONS`). Cambiar cualquiera rompe URLs bookmarkeadas y filas ya persistidas en `permissions` / `pipeline_permissions`.
-  - `Novelty` tiene 2 controllers (`EmployeeNovelties` individual + `NoveltyLiquidationDocs` grupal) servidos por un `NoveltyPipelineService`.
-  - `AdvanceLegalizationHistoryService` y `PaymentSchedulingHistoryService` **no** usan `HistoryNormalizationTrait` ni `recordChanges()` (a diferencia de Invoice/Refund/PettyCash/Novelty): Advance audita campo-a-campo explícito por transición vía `_setStatus(extraChanges)` (patrón deliberado y transaccional, no frágil) y PaymentScheduling no edita campos del header por paso. Añadir `recordChanges` sería dead code — están bien dimensionados para su flujo.
-  - `Advances/legalization` **Soportes NO usa `element('documents_section')`**: sus 3 bloques (relación de facturas, comprobante de consignación, historial de firmas) son **docs con firma/estado** (pills firmado/pendiente, reemplazo AJAX inline vía `fetch()` no `SgiDocumentUploader`, metadata de consignación, filas de firma rechazada con motivo) — fuera del contrato upload/delete del element, cuyo `document_row` está acoplado al `document_row_template`↔`sgi-document-uploader.js`. Markup bespoke deliberado; migrarlo exigiría extender `document_row` (transversal a 4+ consumidores) sin ganancia. El resto de módulos (Refund/PettyCash/EmployeeNovelties/PaymentScheduling) **sí** delegan en el element.
-  - **Verbos del coordinador**: el canon convergido (2026-05-29) es `validateTransitionRequirements` / `saveAndAdvance` (guardar+avanzar) / `advance` (avance puro) / `regress`. **Divergencias de Novelty legítimas (NO unificar):** `getNextStatus(object, $type)` (los skips de pasos dependen del tipo — salta `aprobacion` si `!requires_boss_approval`, salta `GDP` si `!requires_employee_signature_review`; la firma `(string)` de los demás no lo expresa); `reject()` es **rechazo terminal** (→ `RECHAZADA`), distinto de la regresión fría `regress()` (Novelty no tiene `regress`); `advanceGroup()`/`validateGroupTransition()` son ops de lote del doc de liquidación sin equivalente en el canon.
-  - Trampa de spelling deliberada: `InvoiceConstants::DIAN_REJECTED = 'Rechazado'` (masculino) vs `APPROVAL_REJECTED = 'Rechazada'` — **no unificar** (rompe datos persistidos).
+Las estructuras canónicas (backend, capa de vista, visual) y sus excepciones de dominio (B) están detalladas en las subsecciones siguientes. `add.php` es legacy en todos los módulos.
+
+### Estructura canónica de un módulo de flujo (backend)
+
+DEFAULT obligatorio para todo módulo de flujo nuevo o tocado. Es el patrón derivado de todos los módulos, NO "lo que hace Invoice" (Invoice es outlier en backend; PettyCash/Refund son los mejores referentes). Desviarse solo es legítimo para las excepciones (B) listadas abajo.
+
+```
+src/Service/
+  {Modulo}PipelineService.php          ← coordinador DELGADO de aplicación
+  Pipeline/
+    PipelineFieldPolicy.php            ← base abstracta compartida (ya existe)
+    {Modulo}/
+      {Modulo}PipelineState.php        ← interfaz/abstracta del State
+      {Modulo}PipelineStateRegistry.php← resuelve enum → State
+      State/{Estado}State.php          ← un archivo por estado, PUROS (in-memory)
+      Policy/
+        {Modulo}ActionPolicy.php       ← rol×paso (auth->canOperate) + predicados de entidad
+        {Modulo}FieldAccessPolicy.php  ← campos/secciones editables por paso (si edita header)
+        {Modulo}LockPolicy.php         ← bloqueo de campos por estado/documento
+        {Modulo}TransitionValidator.php← requisitos de avance (si aplica)
+      Guard/{Modulo}Guard.php          ← (opcional) encapsula el IO que un State necesite
+  {Modulo}HistoryService.php           ← implements HistoryServiceInterface + HistoryNormalizationTrait + const FIELDS_TO_TRACK
+  {Modulo}DocumentService.php          ← usa DocumentUploadTrait
+  {Modulo}PaymentService.php           ← SOLO si hay agregado de pago con ciclo propio
+src/Constants/
+  {Modulo}Constants.php                ← STATUS_X = PipelineStatus::X->value (delega, no duplica)
+  Domain/{Modulo}/PipelineStatus.php   ← FUENTE ÚNICA: cases + label()/next()/previous()/isTerminal()
+src/ViewModel/
+  {Modulo}EditViewModel.php            ← implements EditViewModelInterface
+```
+
+Responsabilidades:
+- **Enum `PipelineStatus`** = fuente única real. El avance/regresión se resuelve vía `enum::next()/previous()` o `State::getNextStatus()`, NUNCA mapas `TRANSITIONS` legacy.
+- **Coordinador** = una transacción atómica: filtra campos por paso (rol-aware) → valida → persiste → audita → avanza/propaga. Verbos canónicos: `validateTransitionRequirements` / `saveAndAdvance` / `advance` / `regress`.
+- **States** = decisiones in-memory puras; cuando necesitan BD inyectan dependencias (`?? new`), nunca `TableRegistry` estático (encapsular ese IO en un `Guard/{Modulo}Guard` inyectado).
+- **FieldAccessPolicy** extiende `PipelineFieldPolicy` y es **rol-aware** (un rol sin `canOperate` del paso obtiene patch vacío; no `unset($roleId)`).
+- **HistoryService** = interface + trait + `const FIELDS_TO_TRACK`.
+- **PaymentService dedicado** solo si hay agregado de pago con ciclo propio (Invoice/Refund/Novelty-liquidación); PettyCash/PaymentScheduling no.
+
+Excepciones (B) legítimas — NO forzar el patrón:
+- **Advance** reusa `InvoicePipelineService` (Anticipo = Invoice); sin `FieldAccessPolicy` (edita vía `Invoices::edit`); verbos por outcome.
+- **PaymentScheduling** sin `FieldAccessPolicy` (no edita campos del header por paso).
+- **Novelty**: `getNextStatus(object, $type)` (skips de paso dependen del tipo), `reject()` terminal (≠ `regress`), `advanceGroup()`/`validateGroupTransition()` (lote del doc de liquidación). `AdvanceLegalizationHistoryService`/`PaymentSchedulingHistoryService` no usan el trait (auditan por transición / no editan header).
+
+### Estructura canónica de la capa de vista (ViewModel ↔ Presentation)
+
+DEFAULT obligatorio. Dos capas que COEXISTEN con dirección de dependencia única **VM → Presentation** y NO se fusionan:
+
+- **`src/View/Presentation/{Modulo}Presentation.php`** = diccionario UI estático por dominio. `final class` casi enteramente `const` (`STATUS_BADGES`, `STATUS_ICONS`, `APPROVAL_BADGES`, `DIAN_BADGES`) + factory `forRow()`. Fuente = `*Constants`. Vive en **todas** las vistas (index/view no instancian VM). Jamás importa un VM.
+- **`src/ViewModel/{Modulo}{Add,Edit,View}ViewModel.php`** = agregado per-request, `final readonly class`. `Edit`/`View` implementan `EditViewModelInterface`/`ViewViewModelInterface`. Derivan de UNA entidad + permisos + dropdowns. Pueden importar `Presentation`.
+- **`src/View/Presentation/{Modulo}RowView.php`** = DTO de fila de listado para `index`, producido por `Presentation::forRow()`.
+- **`src/ViewModel/Support/`** (`PaymentOptions`, `PipelineEditFlags`, `SubmitButton`) = derivación cross-módulo del VM.
+
+Regla de oro (cero drift): el mapeo **estado→pill/icono vive SOLO en `{Modulo}Presentation` (const)**. CERO arrays literales inline en los `.php`. El VM expone `currentStatusBadge` derivado de Presentation; si un template lo recomputa es **bug de drift**. Toda derivación de fila (`stageIdx`, pill, pipeline-mini, labels ES, totales) va **dentro de `forRow()`**, no en `index.php`. El controller pasa `$viewModel` (uniforme `set('viewModel', $vm)`), no `compact()` crudo.
+
+Excepción (B): `AdvanceLegalizationViewModel` conserva el sufijo de entidad (no "edit de Advance").
+
+### Excepciones de dominio transversales (NO migración a medias)
+
+- **Nomenclatura del coordinador** = `{Modulo}PipelineService` (los 5 coordinadores cumplen; `AdvanceLegalizationService` excluido — gobierna el sub-pipeline de legalización sobre `advance_legalizations`, no es coordinador de pipeline).
+- **Split de naming `Advance*` / `AdvanceLegalization*` (NO renombrar — 3 ejes legítimos):**
+  - Dir/enum/namespace corto `Advance` (`App\Service\Pipeline\Advance`, `App\Constants\Domain\Advance\PipelineStatus`): convención de submódulo (los 6 usan el sustantivo corto: `Invoice`/`Novelty`/`PettyCash`/`Refund`/`PaymentScheduling`). Renombrar rompería la simetría.
+  - Clases/tablas largas `AdvanceLegalization*` (`AdvanceLegalizationService`, `…ViewModel`, `…HistoryService`, tablas `advance_legalizations`/`…_signatures`/`…_histories`): reflejan la entidad de dominio (legalización de anticipos; Anticipo = Invoice, reusa `InvoicePipelineService`).
+  - **Slugs persistidos INMUTABLES** (no tocar sin migración): CRUD/permisos `'advances'` (`$controllerModuleMap`, `AuthorizationService::MODULES`, `permissions.module`, ruta `/advances/*`) ≠ pipeline `'legalizations'` (`pipeline_permissions`, `PipelineStepConstants::PIPELINE_LEGALIZATIONS`). Cambiar cualquiera rompe URLs y filas persistidas.
+- **Novelty** tiene 2 controllers (`EmployeeNovelties` individual + `NoveltyLiquidationDocs` grupal) servidos por un solo `NoveltyPipelineService`.
 
 ## Key Conventions
 
@@ -172,6 +220,12 @@ Auditoría completa y roadmap de remediación en `docs/auditoria-paridad-modulos
 - **CSS load order:** Bootstrap → Bootstrap Icons → Flatpickr → `styles.css` (always this order).
 - **JS auto-init classes:** `.flatpickr-date` (datepicker), `.currency-input` (AutoNumeric COP), `.select2` (searchable dropdown), `.clickable-row` (row click via `data-href`).
 - **Routes:** Custom routes go before `$builder->fallbacks()` in `config/routes.php`.
+- **Mapeo estado→pill/icono — anti-drift:** vive SOLO en `src/View/Presentation/{Modulo}Presentation` (const `STATUS_BADGES`/`STATUS_ICONS`). Los templates lo consumen vía `$viewModel->currentStatusBadge` o `Presentation::forRow()`. **Prohibido** redeclarar mapas estado→pill como literales en el `.php`. Dirección de dependencia única: **VM → Presentation** (Presentation nunca importa VM).
+- **Trampas de datos persistidos — NO tocar sin migración:**
+  - `InvoiceConstants::DIAN_REJECTED = 'Rechazado'` (masculino) vs `APPROVAL_REJECTED = 'Rechazada'` (femenino) — spelling deliberado, no unificar.
+  - Módulo CRUD/permisos `'advances'` ≠ pipeline `'legalizations'` (2 ejes distintos; ver Paridad de módulos de flujo).
+  - `NoveltyConstants::DOC_STATUS_LIQUIDACION = 'd. liquidacion'` (con punto y espacio) — valor persistido en `novelty_documents.pipeline_status`; no "corregir el typo" ni cambiar el valor sin migración.
+  - Slugs español/inglés mixtos (ver convención de slugs abajo).
 - **Slug language convention:** Slugs visibles al usuario (estados de pipeline: `aprobacion`, `tesoreria`, `pagada`, `agrupacion`, `legalizada`, etc.) en **español** sin acentos. Slugs técnicos internos no visibles directamente al usuario (estados de logs de email, registros de pago, firmas de legalización: `pending`, `sent`, `failed`, `authorized`, `rejected`, `signed`) en **inglés**. Estados con label visible (approval/DIAN: `'Pendiente'`, `'Aprobada'`, `'Rechazada'`) en **español capitalizado** porque coinciden con el label de UI. La convivencia es deliberada — no homogeneizar sin migración explícita.
 
 ## Migration Gotchas
@@ -197,14 +251,31 @@ Tokens, componentes y patrones en `docs/design/`. **Lee solo los archivos releva
 
 Antes de crear o editar cualquier vista, lee siempre `reglas-copy.md` + `fundamentos.md`, luego el archivo del componente concreto.
 
+### Canon visual de templates de flujo
+
+En HTML/CSS puro, **Invoice = canon de APARIENCIA a replicar** (eje opuesto al backend/vista, donde es outlier — no mezclar criterios). Estilos inline one-off (header de página, `$gridStyle` N-col, grids de campos, slots `ob_start` del sidebar, `color:var(--primary-color)` sobre `.mono`) son convención canónica, NO deriva.
+
+Tres esqueletos obligatorios:
+- **INDEX** (sin shell): HEADER `.d-flex` (título + única `.btn-primary` "Nueva …") + Form(get) con `.input`+`.btn-default` toggle filtros + `.chip[role=tablist]` + TABLA `.sgi-card[style="padding:0"]` con `<a class="row-fact">` como ANCLA (NO `<table>`), `.pipeline-mini`/`.pill-*-soft`, `.empty-state`, `element('pagination')`.
+- **EDIT** (`.sgi-edit-shell`): `.sgi-edit-shell-head` (fijo) → `Form` `.sgi-edit-shell-form` → `.sgi-edit-shell-body` (scroll) → `.row.gx-3` con `aside.col-lg-3.sgi-edit-col` (`element('pipeline_sidebar')`) + `main.col-lg-9.sgi-edit-col` (ambos `d-flex flex-column gap-3`) → `.sgi-edit-footer` sticky (meta + única `.btn-primary` submit). Split izq/der = Bootstrap `.col-lg-3`/`.col-lg-9`, NO `340px 1fr`.
+- **VIEW** (`.sgi-invoice-view-grid`, grid `340px 1fr`): `.sgi-invoice-view-left` (`pipeline_sidebar`) + `.sgi-invoice-view-right` (`.sgi-card` con campos en `.field-row` `.k`/`.v`/`.v.mono` dentro de grid inline `1fr 1fr;gap:28px`).
+
+Reglas duras:
+- **Vocabulario de átomos — nunca a mano:** `.btn`(+`-primary/-default/-ghost/-secondary/-danger/-subtle/-sm/-icon`), `.pill`(+`-*-soft`/`-sm`/`-lg`), `.input`, `.av`, `.doc`, `.chip`, `.field-row`, `.pipeline-mini`/`.pipeline-v`, `.empty-state`/`.es-*`, `.sgi-card`(+`.compact`), `.mono`, `.accent-strip`.
+- **Campos = `.field-row` en grid inline `1fr 1fr;gap:28px`**, NO `.sgi-info-grid` (eliminado).
+- **Header:** breadcrumb + `.sgi-page-title` (NO `.sgi-title-page`, eliminado) + `.sgi-edit-id-chip`; acciones de header en `.btn-default`.
+- **Modales:** los modales reales son Bootstrap `.modal.fade` — usar `element('upload_doc_modal')` compartido. El componente *modal* del sistema de diseño vive scopeado bajo `.modal-stage` (`.modal-stage .modal { … }`) porque la clase `.modal` pelada colisionaba con Bootstrap. **Nunca** estilar `.modal` sin el scope `.modal-stage`.
+
+Excepciones (B) — markup bespoke legítimo, NO alinear: tablas agrupadas de dominio, soportes con firma (`Advances/legalization`, NLD — fuera del slot-contract de `document_row`), side-rail de calendario en `EmployeeNovelties/index`, forms por-estado. `add.php` sigue legacy `.card.card-primary` (DEUDA → modal `.modal-stage` / stepper, decisión por módulo pendiente).
+
 ## Frontend
 
-- Font: Inter Variable (local, `webroot/fonts/Inter-Variable.ttf`).
+- Font: Inter Variable (local, `webroot/fonts/Inter-Variable.woff2`).
 - Design: Borders instead of shadows. 2px top border on stat cards. No box-shadow.
 - Colors: dark (#212529), green (#469D61), orange (#CD6A15).
 - JS common: `webroot/js/sgi-common.js` auto-initializes Flatpickr, AutoNumeric, Select2.
 - PDF: TCPDF + FPDI. Excel: PhpSpreadsheet.
-- Pipeline elements: **todos** los módulos de flujo (incluido NoveltyLiquidationDocs) usan el sidebar vertical via `element/pipeline_sidebar.php` (hero + pipeline vertical + registro + acciones), dentro del layout `sgi-invoice-view-grid > sgi-invoice-view-left + sgi-invoice-view-right`. (`pipeline_progress.php` y `progress_stepper.php` —antiguos steppers huérfanos tras unificar el pipeline en el sidebar— se eliminaron el 2026-05-29.)
+- Pipeline elements: **todos** los módulos de flujo (incluido NoveltyLiquidationDocs) usan el sidebar vertical via `element/pipeline_sidebar.php` (hero + pipeline vertical + registro + acciones), dentro del layout `sgi-invoice-view-grid > sgi-invoice-view-left + sgi-invoice-view-right`.
 
 ## New Module Checklist
 
