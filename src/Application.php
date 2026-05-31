@@ -146,6 +146,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ->add(new BodyParserMiddleware())
             ->add(new CsrfProtectionMiddleware([
                 'httponly' => true,
+                'secure' => filter_var(env('SESSION_COOKIE_SECURE', false), FILTER_VALIDATE_BOOLEAN),
+                'samesite' => 'Strict',
             ]));
 
         return $middlewareQueue;

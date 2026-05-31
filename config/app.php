@@ -425,6 +425,13 @@ return [
      */
     'Session' => [
         'defaults' => 'php',
+        'timeout' => 30,
+        'ini' => [
+            'session.cookie_secure' => filter_var(env('SESSION_COOKIE_SECURE', false), FILTER_VALIDATE_BOOLEAN),
+            'session.cookie_httponly' => true,
+            'session.cookie_samesite' => 'Strict',
+            'session.gc_maxlifetime' => 3600,
+        ],
     ],
 
     /**
