@@ -80,39 +80,31 @@ class InvoiceStatisticsService
     {
         try {
             $table = TableRegistry::getTableLocator()->get('Invoices');
-            $dateConditions = [
-                'Invoices.created >=' => $from,
-                'Invoices.created <=' => $to . ' 23:59:59',
-            ];
+            $to .= ' 23:59:59';
 
-            $totalPaid = $table->find()
-                ->where(array_merge(
-                    ['pipeline_status' => InvoiceConstants::STATUS_PAGADA],
-                    $dateConditions,
-                ))
-                ->select(['total' => $table->find()->func()->sum('amount')])
-                ->first();
+            // total_paid + total_in_process + avg_amount comparten el rango de
+            // fecha y agregan sobre `amount` → una sola query con SUM(CASE …) (B7).
+            $agg = $table->getConnection()->execute(
+                "SELECT
+                    COALESCE(SUM(CASE WHEN pipeline_status = ? THEN amount ELSE 0 END), 0) AS total_paid,
+                    COALESCE(SUM(CASE WHEN pipeline_status IN (?, ?, ?)
+                                       AND (area_approval IS NULL OR area_approval <> ?)
+                                      THEN amount ELSE 0 END), 0) AS total_in_process,
+                    COALESCE(AVG(amount), 0) AS avg_amount
+                 FROM invoices
+                 WHERE created >= ? AND created <= ?",
+                [
+                    InvoiceConstants::STATUS_PAGADA,
+                    InvoiceConstants::STATUS_APROBACION,
+                    InvoiceConstants::STATUS_CONTABILIDAD,
+                    InvoiceConstants::STATUS_TESORERIA,
+                    InvoiceConstants::APPROVAL_REJECTED,
+                    $from,
+                    $to,
+                ],
+            )->fetch('assoc');
 
-            $totalInProcess = $table->find()
-                ->where(array_merge([
-                    'pipeline_status IN' => [
-                        InvoiceConstants::STATUS_APROBACION,
-                        InvoiceConstants::STATUS_CONTABILIDAD,
-                        InvoiceConstants::STATUS_TESORERIA,
-                    ],
-                    'OR' => [
-                        'area_approval IS' => null,
-                        'area_approval !=' => InvoiceConstants::APPROVAL_REJECTED,
-                    ],
-                ], $dateConditions))
-                ->select(['total' => $table->find()->func()->sum('amount')])
-                ->first();
-
-            $avgAmount = $table->find()
-                ->where($dateConditions)
-                ->select(['avg' => $table->find()->func()->avg('amount')])
-                ->first();
-
+            // `overdue` tiene condiciones distintas (sin rango de fecha) → query aparte.
             $overdue = $table->find()
                 ->where([
                     'due_date <' => date('Y-m-d'),
@@ -125,9 +117,9 @@ class InvoiceStatisticsService
                 ->count();
 
             return [
-                'total_paid' => (float)($totalPaid->total ?? 0),
-                'total_in_process' => (float)($totalInProcess->total ?? 0),
-                'avg_amount' => (float)($avgAmount->avg ?? 0),
+                'total_paid' => (float)($agg['total_paid'] ?? 0),
+                'total_in_process' => (float)($agg['total_in_process'] ?? 0),
+                'avg_amount' => (float)($agg['avg_amount'] ?? 0),
                 'overdue' => $overdue,
             ];
         } catch (DatabaseException $e) {

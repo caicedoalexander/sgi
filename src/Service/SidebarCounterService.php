@@ -125,20 +125,39 @@ class SidebarCounterService
 
     private function getInvoiceStatusCounters(int $roleId): array
     {
-        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
         $visibleStatuses = $this->invoicePipeline->getVisibleStatuses($roleId);
+        $statuses = array_values(array_filter(
+            $visibleStatuses,
+            static fn($status): bool => $status !== InvoiceConstants::STATUS_LEGALIZADA,
+        ));
+        if ($statuses === []) {
+            return [];
+        }
 
+        // Un solo GROUP BY pipeline_status en vez de un COUNT por estado (B1).
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+        $rows = $invoicesTable->find()
+            ->select([
+                'pipeline_status' => 'Invoices.pipeline_status',
+                'cnt' => $invoicesTable->find()->func()->count('*'),
+            ])
+            ->where([
+                'pipeline_status IN' => $statuses,
+                'document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
+            ])
+            ->groupBy('Invoices.pipeline_status')
+            ->all();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[$row->pipeline_status] = (int)$row->cnt;
+        }
+
+        // Preservar la forma original: una clave por estado visible, con 0 si no
+        // hay filas (antes cada COUNT vacío devolvía 0 explícitamente).
         $counters = [];
-        foreach ($visibleStatuses as $status) {
-            if ($status === InvoiceConstants::STATUS_LEGALIZADA) {
-                continue;
-            }
-            $counters[$status] = $invoicesTable->find()
-                ->where([
-                    'pipeline_status' => $status,
-                    'document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
-                ])
-                ->count();
+        foreach ($statuses as $status) {
+            $counters[$status] = $counts[$status] ?? 0;
         }
 
         return $counters;
