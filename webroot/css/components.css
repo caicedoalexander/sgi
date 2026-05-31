@@ -2096,16 +2096,21 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .user-head-name { font-size: 12.5px; font-weight: 700; color: var(--text-strong); }
 .user-head-sub { font-size: 10.5px; color: var(--text-faint); margin-top: 2px; font-family: var(--font-mono); }
 
-/* --- Modal / Dialog --- */
+/* --- Modal / Dialog (componente del design-system) ---
+   Scopeado bajo .modal-stage para NO colisionar con el .modal de Bootstrap
+   (todos los modales reales de la app usan `.modal.fade` de Bootstrap; sus
+   estilos viven en el bloque .modal-content/.modal-header/... de arriba).
+   Sin este scope, `.modal`/`.modal-body`/`.modal-title` clobbereaban a
+   Bootstrap y los modales se renderizaban como panel 480px pegado a la izq. */
 .modal-stage { background: rgba(33,37,41,0.55); padding: 36px; min-height: 360px; display: flex; align-items: center; justify-content: center; }
-.modal { background: #fff; width: 100%; max-width: 480px; border-left: 3px solid var(--primary-color); }
-.modal.danger { border-left-color: var(--danger-color); }
-.modal-head { padding: 18px 22px 0; display: flex; gap: 14px; align-items: flex-start; }
-.modal-icon { width: 36px; height: 36px; flex-shrink: 0; border-radius: 3px; display: flex; align-items: center; justify-content: center; background: var(--danger-soft); color: var(--danger-color); }
-.modal-body { padding: 6px 22px 18px; }
-.modal-title { font-size: 16px; font-weight: 700; color: var(--text-strong); margin-bottom: 6px; }
-.modal-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
-.modal-foot { padding: 14px 22px; background: var(--bg-muted); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.modal-stage .modal { background: #fff; width: 100%; max-width: 480px; border-left: 3px solid var(--primary-color); }
+.modal-stage .modal.danger { border-left-color: var(--danger-color); }
+.modal-stage .modal-head { padding: 18px 22px 0; display: flex; gap: 14px; align-items: flex-start; }
+.modal-stage .modal-icon { width: 36px; height: 36px; flex-shrink: 0; border-radius: 3px; display: flex; align-items: center; justify-content: center; background: var(--danger-soft); color: var(--danger-color); }
+.modal-stage .modal-body { padding: 6px 22px 18px; }
+.modal-stage .modal-title { font-size: 16px; font-weight: 700; color: var(--text-strong); margin-bottom: 6px; }
+.modal-stage .modal-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
+.modal-stage .modal-foot { padding: 14px 22px; background: var(--bg-muted); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 
 /* --- Side drawer --- */
 .drawer-stage { background: rgba(33,37,41,0.45); padding: 0; min-height: 460px; display: flex; justify-content: flex-end; position: relative; overflow: hidden; }
