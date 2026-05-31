@@ -42,6 +42,10 @@ $totalDocs          = $viewModel->totalDocs;
 <?php
 $novIdLabel = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
 ?>
+<div class="sgi-edit-shell">
+
+<?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
+<div class="sgi-edit-shell-head">
 <!-- Page header -->
 <div class="sgi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
@@ -75,6 +79,10 @@ $novIdLabel = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
         ) ?>
     </div>
 </div>
+
+</div><?php /* fin .sgi-edit-shell-head */ ?>
+
+<div class="sgi-edit-shell-body view-anim">
 
 <!-- Grouped novelty alert -->
 <?php if ($novelty->isGrouped()): ?>
@@ -128,10 +136,10 @@ $noveltyPipelineLabels[NoveltyConstants::STATUS_CONTABILIDAD] = 'Paso a Nómina'
 $pipelineStepsToShow = $noveltyStatuses ?? $effectiveStatuses;
 $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
 ?>
-<div class="sgi-invoice-view-grid view-anim">
+<div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <aside class="col-lg-3 sgi-edit-col">
         <?php
         $registryLines = [];
         if ($novelty->registered_by_user) {
@@ -168,7 +176,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <main class="col-lg-9 sgi-edit-col">
 
     <!-- Información de la novedad -->
     <div class="card" style="padding:18px 20px;">
@@ -371,7 +379,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <!-- Stage-specific actions -->
         <?php if ($novelty->pipeline_status === NoveltyConstants::STATUS_RRHH && !$isRejected): ?>
         <div class="pt-3" style="border-top:1px solid var(--rule);">
-            <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id]]) ?>
+            <?= $this->Form->create(null, ['id' => 'novAdvanceFormRrhh', 'url' => ['action' => 'advance', $novelty->id]]) ?>
             <?= $this->Form->hidden('expected_status', ['value' => $novelty->pipeline_status]) ?>
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
@@ -381,11 +389,6 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
                         <option value="1" <?= $novelty->passes_payroll === true ? 'selected' : '' ?>>Sí</option>
                         <option value="0" <?= $novelty->passes_payroll === false ? 'selected' : '' ?>>No</option>
                     </select>
-                </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
-                    </button>
                 </div>
             </div>
             <?= $this->Form->end() ?>
@@ -434,18 +437,11 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         </div>
         <?php endif; ?>
 
-        <!-- Advance/Reject buttons (non-RRHH stages) -->
-        <?php if ($canAdvance && !in_array($currentStatus, [NoveltyConstants::STATUS_RRHH, NoveltyConstants::STATUS_APROBACION])): ?>
-        <div class="d-flex gap-2 pt-3" style="border-top:1px solid var(--rule);">
-            <?php if (empty($transitionErrors)): ?>
-            <?= $this->Form->create(null, ['url' => ['action' => 'advance', $novelty->id], 'class' => 'd-inline']) ?>
+        <!-- Advance form (non-RRHH stages) — botón en el footer vía form="novAdvanceForm" -->
+        <?php if ($canAdvance && !in_array($currentStatus, [NoveltyConstants::STATUS_RRHH, NoveltyConstants::STATUS_APROBACION]) && empty($transitionErrors)): ?>
+            <?= $this->Form->create(null, ['id' => 'novAdvanceForm', 'url' => ['action' => 'advance', $novelty->id], 'class' => 'd-none']) ?>
             <?= $this->Form->hidden('expected_status', ['value' => $novelty->pipeline_status]) ?>
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
-            </button>
             <?= $this->Form->end() ?>
-            <?php endif; ?>
-        </div>
         <?php endif; ?>
 
 
@@ -492,7 +488,44 @@ foreach ($documentsByStatus as $status => $statusDocs) {
 ]) ?>
 
     </main>
-</div><!-- /sgi-invoice-view-grid -->
+</div><?php /* fin .row */ ?>
+</div><?php /* fin .sgi-edit-shell-body */ ?>
+
+<?php /* ═══════════════════ FOOTER (barra fija con avance de pipeline) ═══════════════════ */ ?>
+<?php
+$showRrhhAdvance = ($novelty->pipeline_status === NoveltyConstants::STATUS_RRHH && !$isRejected);
+$showGenericAdvance = ($canAdvance && !in_array($currentStatus, [NoveltyConstants::STATUS_RRHH, NoveltyConstants::STATUS_APROBACION]) && empty($transitionErrors));
+?>
+<?php if ($showRrhhAdvance || $showGenericAdvance): ?>
+<div class="sgi-edit-footer">
+    <div class="sgi-edit-footer-meta">
+        <span class="d-inline-flex align-items-center gap-1">
+            <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+            Rol: <strong style="color:var(--text-default);"><?= h($roleName) ?></strong>
+        </span>
+        <?php if ($novelty->modified): ?>
+        <span class="sep"></span>
+        <span class="d-inline-flex align-items-center gap-1">
+            <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+            Última modificación: <span class="mono"><?= $novelty->modified->format('d/m/Y H:i') ?></span>
+        </span>
+        <?php endif; ?>
+    </div>
+    <div class="sgi-edit-footer-actions">
+        <?php if ($showRrhhAdvance): ?>
+        <button type="submit" form="novAdvanceFormRrhh" class="btn btn-primary">
+            <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
+        </button>
+        <?php elseif ($showGenericAdvance): ?>
+        <button type="submit" form="novAdvanceForm" class="btn btn-primary">
+            <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
+        </button>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
+
+</div><?php /* fin .sgi-edit-shell */ ?>
 
 <!-- Upload Document Modal -->
 <?php if ($showUploadSection): ?>

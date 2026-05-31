@@ -15,6 +15,10 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
 ?>
 <?= $this->element('cdn_autonumeric') ?>
 
+<div class="sgi-edit-shell">
+
+<?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
+<div class="sgi-edit-shell-head">
 <!-- Page header -->
 <div class="sgi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
@@ -45,6 +49,10 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
     </div>
 </div>
 
+</div><?php /* fin .sgi-edit-shell-head */ ?>
+
+<div class="sgi-edit-shell-body view-anim">
+
 <!-- Alerta de avance pendiente -->
 <?php if ($viewModel->canAdvance && !empty($viewModel->advanceErrors)): ?>
 <div class="alert alert-warning mb-4">
@@ -62,10 +70,10 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
 </div>
 <?php endif; ?>
 
-<div class="sgi-invoice-view-grid view-anim">
+<div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <aside class="col-lg-3 sgi-edit-col">
         <?php
         // Acciones del sidebar (regresión) — element compartido
         $actionsHtml = !empty($viewModel->canRegress)
@@ -110,7 +118,7 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <main class="col-lg-9 sgi-edit-col">
 
         <!-- Facturas Vinculadas -->
         <div class="card" style="padding:18px 20px;">
@@ -248,8 +256,12 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
             'emptyTitle'    => 'Sin soportes adjuntos',
         ]) ?>
 
-        <!-- Sticky footer con acciones del pipeline -->
-        <?php if ($viewModel->canAdvance || $viewModel->canReject || !empty($viewModel->canRegress)): ?>
+    </main>
+</div><?php /* fin .row */ ?>
+</div><?php /* fin .sgi-edit-shell-body */ ?>
+
+<!-- Sticky footer con acciones del pipeline -->
+<?php if ($viewModel->canAdvance || $viewModel->canReject || !empty($viewModel->canRegress)): ?>
         <div class="sgi-edit-footer">
             <div class="sgi-edit-footer-meta">
                 <span class="d-inline-flex align-items-center gap-1">
@@ -288,9 +300,9 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
         </div>
         <?php endif; ?>
 
-    </main>
-</div>
+</div><?php /* fin .sgi-edit-shell */ ?>
 
+<?php /* ═══════════════════ MODALES ═══════════════════ */ ?>
 <?php if ($viewModel->isBorrador): ?>
 <!-- Modal: Importar Excel -->
 <div class="modal fade" id="importExcelModal" tabindex="-1">

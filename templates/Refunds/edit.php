@@ -50,6 +50,10 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
 
+<div class="sgi-edit-shell">
+
+<?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
+<div class="sgi-edit-shell-head">
 <!-- Page header -->
 <div class="sgi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
@@ -80,6 +84,13 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
     </div>
 </div>
 
+</div><?php /* fin .sgi-edit-shell-head */ ?>
+
+<?= $this->Form->create($record, ['id' => 'refundEditForm', 'class' => 'sgi-edit-shell-form']) ?>
+<?= $this->Form->hidden('expected_status', ['value' => $record->status]) ?>
+
+<div class="sgi-edit-shell-body view-anim">
+
 <!-- Alerta de avance pendiente -->
 <?php if ($canAdvance && !empty($advanceErrors)): ?>
 <div class="alert alert-warning mb-4">
@@ -97,13 +108,10 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
 </div>
 <?php endif; ?>
 
-<?= $this->Form->create($record, ['id' => 'refundEditForm']) ?>
-<?= $this->Form->hidden('expected_status', ['value' => $record->status]) ?>
-
-<div class="sgi-invoice-view-grid view-anim">
+<div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <aside class="col-lg-3 sgi-edit-col">
         <?php
         // Acciones del sidebar (regresión) — element compartido
         $actionsHtml = !empty($canRegress)
@@ -154,7 +162,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <main class="col-lg-9 sgi-edit-col">
 
         <?php
         $sections = [];
@@ -414,6 +422,10 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
             'emptyTitle'    => 'Sin soportes adjuntos',
         ]) ?>
 
+    </main>
+</div><?php /* fin .row */ ?>
+</div><?php /* fin .sgi-edit-shell-body */ ?>
+
         <!-- Sticky footer -->
         <?php if ($canSave || !empty($canRegress)): ?>
         <div class="sgi-edit-footer">
@@ -448,10 +460,9 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
         </div>
         <?php endif; ?>
 
-    </main>
-</div>
-
 <?= $this->Form->end() ?>
+
+</div><?php /* fin .sgi-edit-shell */ ?>
 
 <?= $this->element('observations/drawer', [
     'observations'    => $record->refund_observations ?? [],

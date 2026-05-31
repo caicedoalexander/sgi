@@ -115,7 +115,10 @@ $totalDocs = count($docs);
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
 
-<?php /* ═══════════════════ HEADER DE PÁGINA ═══════════════════ */ ?>
+<div class="sgi-edit-shell">
+
+<?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
+<div class="sgi-edit-shell-head">
 <div class="sgi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
         <div class="sgi-breadcrumb">
@@ -145,13 +148,16 @@ $totalDocs = count($docs);
     </div>
 </div>
 
-<?= $this->Form->create($record, ['id' => 'pettyCashEditForm']) ?>
+</div><?php /* fin .sgi-edit-shell-head */ ?>
+
+<?= $this->Form->create($record, ['id' => 'pettyCashEditForm', 'class' => 'sgi-edit-shell-form']) ?>
 <?= $this->Form->hidden('expected_status', ['value' => $record->status]) ?>
 
-<div class="sgi-invoice-view-grid view-anim">
+<div class="sgi-edit-shell-body view-anim">
+<div class="row gx-3">
 
     <?php /* ═══════════════════ COLUMNA IZQUIERDA ═══════════════════ */ ?>
-    <aside class="sgi-invoice-view-left">
+    <aside class="col-lg-3 sgi-edit-col">
         <?php
         // Acciones del sidebar (regresión) — element compartido
         $actionsHtml = !empty($canRegress)
@@ -196,7 +202,7 @@ $totalDocs = count($docs);
     </aside>
 
     <?php /* ═══════════════════ COLUMNA DERECHA ═══════════════════ */ ?>
-    <main class="sgi-invoice-view-right">
+    <main class="col-lg-9 sgi-edit-col">
 
         <?php /* ── Banner: requisitos para avanzar ─────────────── */ ?>
         <?php if ($canAdvance && !empty($advanceErrors)): ?>
@@ -462,6 +468,10 @@ $totalDocs = count($docs);
             'emptyTitle'    => 'Sin soportes adjuntos',
         ]) ?>
 
+    </main>
+</div><?php /* fin .row */ ?>
+</div><?php /* fin .sgi-edit-shell-body */ ?>
+
         <?php /* ── Footer de acciones (barra fija) ──────────────── */ ?>
         <?php if ($canSave || !empty($canRegress)): ?>
         <div class="sgi-edit-footer">
@@ -501,10 +511,9 @@ $totalDocs = count($docs);
         </div>
         <?php endif; ?>
 
-    </main>
-</div>
-
 <?= $this->Form->end() ?>
+
+</div><?php /* fin .sgi-edit-shell */ ?>
 
 <?= $this->element('observations/drawer', [
     'observations'    => $record->petty_cash_observations ?? [],

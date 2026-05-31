@@ -55,6 +55,10 @@ $this->assign('title', $pageTitle);
 <?php
 $legIdLabel = $invoice->invoice_number ?? ('#' . $invoice->id);
 ?>
+<div class="sgi-edit-shell">
+
+<?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
+<div class="sgi-edit-shell-head">
 <!-- Encabezado de página -->
 <div class="sgi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
@@ -79,16 +83,19 @@ $legIdLabel = $invoice->invoice_number ?? ('#' . $invoice->id);
         ) ?>
     </div>
 </div>
+</div><?php /* fin .sgi-edit-shell-head */ ?>
 
 <?php
 $casePipelineStatuses = AdvanceConstants::PIPELINE_STATUSES_BY_CASE[$leg->case_type ?? '']
     ?? AdvanceConstants::PIPELINE_STATUSES_EXACTO;
 $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
 ?>
-<div class="sgi-invoice-view-grid view-anim">
+<div class="sgi-edit-shell-body view-anim">
+
+<div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <aside class="col-lg-3 sgi-edit-col">
         <?php
         $registryLines = [];
         $registryLines[] = ['icon' => 'bi-person', 'html' => 'Rol: <strong style="color:var(--text-default);">' . h($roleName) . '</strong>'];
@@ -151,7 +158,7 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <main class="col-lg-9 sgi-edit-col">
     <div class="card" style="padding:20px;">
 
         <!-- Sección: Facturas vinculadas -->
@@ -623,7 +630,27 @@ $isLegTerminal = $leg->status === AdvanceConstants::STATUS_LEGALIZADA;
         </div>
     </div>
     </main>
-</div><!-- /sgi-invoice-view-grid -->
+</div><?php /* fin .row */ ?>
+</div><?php /* fin .sgi-edit-shell-body */ ?>
+
+<?php /* ═══════════════════ FOOTER (barra fija) ═══════════════════ */ ?>
+<div class="sgi-edit-footer">
+    <div class="sgi-edit-footer-meta">
+        <span class="d-inline-flex align-items-center gap-1">
+            <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+            Rol: <strong style="color:var(--text-default);"><?= h($roleName) ?></strong>
+        </span>
+        <?php if ($leg->modified): ?>
+        <span class="sep"></span>
+        <span class="d-inline-flex align-items-center gap-1">
+            <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+            Última modificación: <span class="mono"><?= $leg->modified->format('d/m/Y H:i') ?></span>
+        </span>
+        <?php endif; ?>
+    </div>
+</div>
+
+</div><?php /* fin .sgi-edit-shell */ ?>
 
 <?= $this->element('observations/drawer', [
     'observations'    => $invoice->invoice_observations ?? [],

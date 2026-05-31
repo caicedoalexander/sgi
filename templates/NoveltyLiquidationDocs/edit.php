@@ -38,6 +38,10 @@ $noveltyCount      = $viewModel->noveltyCount;
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
 
+<div class="sgi-edit-shell">
+
+<?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
+<div class="sgi-edit-shell-head">
 <!-- Page header -->
 <div class="sgi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
@@ -72,6 +76,10 @@ $noveltyCount      = $viewModel->noveltyCount;
     </div>
 </div>
 
+</div><?php /* fin .sgi-edit-shell-head */ ?>
+
+<div class="sgi-edit-shell-body view-anim">
+
 <!-- Advance warning -->
 <?php if (!$isFinal && !empty($groupErrors)): ?>
 <div class="alert alert-warning mb-4">
@@ -89,10 +97,10 @@ $noveltyCount      = $viewModel->noveltyCount;
 </div>
 <?php endif; ?>
 
-<div class="sgi-invoice-view-grid view-anim">
+<div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <aside class="col-lg-3 sgi-edit-col">
         <?php
         $registryLines = [
             ['icon' => 'bi-person', 'html' => 'Rol: <strong style="color:var(--text-default);">' . h($roleName) . '</strong>'],
@@ -144,7 +152,7 @@ $noveltyCount      = $viewModel->noveltyCount;
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <main class="col-lg-9 sgi-edit-col">
 
         <!-- Novedades Asociadas -->
         <div class="card" style="padding:18px 20px;">
@@ -249,10 +257,12 @@ $noveltyCount      = $viewModel->noveltyCount;
         <?php if (!$isFinal): ?>
         <?php
         $stageFormHtml = '';
+        $stageAdvanceLabel = '';
         ob_start();
 
         if ($currentStatus === NoveltyConstants::STATUS_GDP):
-            echo $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id]]); ?>
+            $stageAdvanceLabel = 'Guardar y Avanzar';
+            echo $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'id' => 'docAdvanceForm']); ?>
             <div class="d-flex flex-wrap gap-3 align-items-end">
                 <div style="min-width:200px;">
                     <label class="input-label">Pasa para Pago</label>
@@ -262,30 +272,26 @@ $noveltyCount      = $viewModel->noveltyCount;
                         <option value="0" <?= $doc->passes_for_payment === false ? 'selected' : '' ?>>No</option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary flex-shrink-0">
-                    <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar
-                </button>
             </div>
             <?= $this->Form->end();
 
         elseif ($currentStatus === NoveltyConstants::STATUS_CONTABILIDAD):
-            echo $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id]]); ?>
+            $stageAdvanceLabel = 'Guardar y Avanzar a ' . h($statusLabels[NoveltyConstants::STATUS_REVISION_FIRMAS] ?? '');
+            echo $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'id' => 'docAdvanceForm']); ?>
             <div class="d-flex flex-wrap gap-3 align-items-end">
                 <div style="min-width:180px;">
                     <label class="input-label" style="font-size:.8rem;">Fecha Documento</label>
                     <input type="text" name="document_date" class="form-control form-control-sm flatpickr-date"
                            value="<?= $doc->document_date?->format('Y-m-d') ?>">
                 </div>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a <?= h($statusLabels[NoveltyConstants::STATUS_REVISION_FIRMAS] ?? '') ?>
-                </button>
             </div>
             <?= $this->Form->end();
 
         elseif ($currentStatus === NoveltyConstants::STATUS_REVISION_FIRMAS):
-            echo $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id]]); ?>
+            $stageAdvanceLabel = 'Guardar y Avanzar';
+            echo $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'id' => 'docAdvanceForm']); ?>
+            <?php if ($skipsGdp): ?>
             <div class="d-flex flex-wrap gap-3 align-items-end">
-                <?php if ($skipsGdp): ?>
                 <div style="min-width:200px;">
                     <label class="input-label">Pasa para Pago</label>
                     <select name="passes_for_payment" class="form-select" required>
@@ -294,20 +300,14 @@ $noveltyCount      = $viewModel->noveltyCount;
                         <option value="0" <?= $doc->passes_for_payment === false ? 'selected' : '' ?>>No</option>
                     </select>
                 </div>
-                <?php endif; ?>
-                <button type="submit" class="btn btn-primary flex-shrink-0">
-                    <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar
-                </button>
             </div>
+            <?php endif; ?>
             <?= $this->Form->end();
 
         elseif ($currentStatus === NoveltyConstants::STATUS_RRHH):
-            echo $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'class' => 'd-inline']);
-            ?>
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Avanzar a <?= h($statusLabels[NoveltyConstants::STATUS_CONTABILIDAD] ?? 'Contabilidad') ?>
-            </button>
-            <?= $this->Form->end();
+            $stageAdvanceLabel = 'Avanzar a ' . h($statusLabels[NoveltyConstants::STATUS_CONTABILIDAD] ?? 'Contabilidad');
+            echo $this->Form->create(null, ['url' => ['action' => 'advanceGroup', $doc->id], 'id' => 'docAdvanceForm']);
+            echo $this->Form->end();
         endif;
 
         $stageFormHtml = trim(ob_get_clean());
@@ -476,7 +476,34 @@ $noveltyCount      = $viewModel->noveltyCount;
         ]) ?>
 
     </main>
-</div><!-- /sgi-invoice-view-grid -->
+</div><?php /* fin .row */ ?>
+</div><?php /* fin .sgi-edit-shell-body */ ?>
+
+<!-- Sticky footer con acción de avance del pipeline -->
+<?php if (!$isFinal && $stageAdvanceLabel !== ''): ?>
+<div class="sgi-edit-footer">
+    <div class="sgi-edit-footer-meta">
+        <span class="d-inline-flex align-items-center gap-1">
+            <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+            Rol: <strong style="color:var(--text-default);"><?= h($roleName) ?></strong>
+        </span>
+        <?php if ($doc->modified): ?>
+        <span class="sep"></span>
+        <span class="d-inline-flex align-items-center gap-1">
+            <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+            Última modificación: <span class="mono"><?= $doc->modified->format('d/m/Y H:i') ?></span>
+        </span>
+        <?php endif; ?>
+    </div>
+    <div class="sgi-edit-footer-actions">
+        <button type="submit" form="docAdvanceForm" class="btn btn-primary">
+            <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i><?= $stageAdvanceLabel ?>
+        </button>
+    </div>
+</div>
+<?php endif; ?>
+
+</div><?php /* fin .sgi-edit-shell */ ?>
 
 <?= $this->element('observations/drawer', [
     'observations'    => $doc->novelty_observations ?? [],
