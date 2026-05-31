@@ -741,13 +741,11 @@ class RefundsController extends AppController
     /**
      * Sube un soporte al reintegro.
      *
-     * Doble enforcement de RBAC (defensa en profundidad):
-     * 1. `AppController::_enforcePermission` ya valida `refunds.can_create`
-     *    para esta acción (mapeo `uploadDocument` → `add` en
-     *    `_actionToPermission`). Sin ese permiso de módulo el request es
-     *    rechazado con 403 antes de entrar al método.
-     * 2. `actionPolicy->canOperateStep` valida que el rol tenga permiso de pipeline
-     *    para operar en el step actual del reintegro.
+     * Enforcement de RBAC: la acción usa `#[PipelineAction(pipeline: refunds)]`
+     * sin `step` (dinámica), por lo que `AppController::_enforcePermission` NO
+     * aplica gate CRUD de módulo. La validación se hace inline en `_documentGate()`,
+     * que delega en `actionPolicy->canOperateStep($roleId, $record->status)` y
+     * responde 403 si el rol no puede operar el step actual del reintegro.
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
     public function uploadDocument($id = null)
@@ -817,13 +815,12 @@ class RefundsController extends AppController
     /**
      * Elimina un soporte del reintegro.
      *
-     * Doble enforcement de RBAC (defensa en profundidad):
-     * 1. `AppController::_enforcePermission` ya valida `refunds.can_delete`
-     *    para esta acción (mapeo `deleteDocument` → `delete` en
-     *    `_actionToPermission`).
-     * 2. `actionPolicy->canOperateStep` valida permiso de pipeline para el step
-     *    actual; el servicio además valida la pertenencia del documento al
-     *    refund (anti-IDOR).
+     * Enforcement de RBAC: la acción usa `#[PipelineAction(pipeline: refunds)]`
+     * sin `step` (dinámica); `AppController::_enforcePermission` NO aplica gate
+     * CRUD de módulo. La validación ocurre inline en `_documentGate()`: bloquea si
+     * el reintegro está pagado (409) y exige `actionPolicy->canOperateStep` para el
+     * step actual (403). El servicio además valida la pertenencia del documento al
+     * refund (anti-IDOR: find filtrado por `id` + `refund_id`).
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
     public function deleteDocument($refundId = null, $documentId = null)

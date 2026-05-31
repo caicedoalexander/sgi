@@ -8,7 +8,6 @@ use App\Constants\ApprovalConstants;
 use App\Constants\InvoiceConstants;
 use App\Service\ApprovalTokenService;
 use App\Service\InvoiceApprovalService;
-use Cake\Event\EventInterface;
 
 class ExternalApprovalsController extends AppController
 {
@@ -22,17 +21,6 @@ class ExternalApprovalsController extends AppController
         $container = $this->getContainer();
         $this->tokenService = $container->get(ApprovalTokenService::class);
         $this->approvalService = $container->get(InvoiceApprovalService::class);
-    }
-
-    public function beforeFilter(EventInterface $event): void
-    {
-        parent::beforeFilter($event);
-    }
-
-    protected function _enforcePermission(object $user): void
-    {
-        // Override to skip permission checks for this controller
-        // Access is controlled by token validation + user identity match
     }
 
     #[NoAuthGate(reason: 'External approval via SHA256 token + identity match; sin gate de módulo')]
