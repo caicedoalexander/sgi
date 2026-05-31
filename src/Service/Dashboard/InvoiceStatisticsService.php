@@ -27,15 +27,17 @@ class InvoiceStatisticsService
      */
     public function getStats(): array
     {
+        // Un solo GROUP BY pipeline_status en lugar de un COUNT por estado (M1).
+        // `rechazada` se cuenta aparte porque depende de `area_approval`, no del
+        // estado de pipeline (puede solaparse con cualquier estado).
+        $countsByStatus = $this->_countByStatus();
+
         return [
-            'total' => $this->_safeCount('Invoices'),
-            'aprobacion' => $this->_safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_APROBACION]),
-            'contabilidad' => $this->_safeCount(
-                'Invoices',
-                ['pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD],
-            ),
-            'tesoreria' => $this->_safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_TESORERIA]),
-            'pagada' => $this->_safeCount('Invoices', ['pipeline_status' => InvoiceConstants::STATUS_PAGADA]),
+            'total' => array_sum($countsByStatus),
+            'aprobacion' => $countsByStatus[InvoiceConstants::STATUS_APROBACION] ?? 0,
+            'contabilidad' => $countsByStatus[InvoiceConstants::STATUS_CONTABILIDAD] ?? 0,
+            'tesoreria' => $countsByStatus[InvoiceConstants::STATUS_TESORERIA] ?? 0,
+            'pagada' => $countsByStatus[InvoiceConstants::STATUS_PAGADA] ?? 0,
             'rechazada' => $this->_safeCount('Invoices', ['area_approval' => InvoiceConstants::APPROVAL_REJECTED]),
         ];
     }
@@ -155,13 +157,11 @@ class InvoiceStatisticsService
                 'Invoices.created <=' => $to . ' 23:59:59',
             ];
 
+            // Un solo GROUP BY pipeline_status en lugar de un SUM por estado (M1).
+            $sumsByStatus = $this->_sumAmountByStatus($dateConditions);
             $statusAmounts = [];
             foreach (InvoiceConstants::PIPELINE_STATUSES as $status) {
-                $result = $table->find()
-                    ->where(array_merge(['pipeline_status' => $status], $dateConditions))
-                    ->select(['total' => $table->find()->func()->sum('amount')])
-                    ->first();
-                $statusAmounts[$status] = (float)($result->total ?? 0);
+                $statusAmounts[$status] = (float)($sumsByStatus[$status] ?? 0);
             }
 
             $rejected = $table->find()
@@ -197,6 +197,67 @@ class InvoiceStatisticsService
 
             return [];
         }
+    }
+
+    /**
+     * Cuenta facturas agrupadas por `pipeline_status` en una sola query (M1).
+     *
+     * @param array $dateConditions Condiciones de rango de fecha opcionales.
+     * @return array<string, int> Mapa estado => cantidad.
+     */
+    private function _countByStatus(array $dateConditions = []): array
+    {
+        try {
+            $table = TableRegistry::getTableLocator()->get('Invoices');
+            $query = $table->find()
+                ->select([
+                    'pipeline_status' => 'Invoices.pipeline_status',
+                    'cnt' => $table->find()->func()->count('*'),
+                ])
+                ->groupBy('Invoices.pipeline_status');
+            if ($dateConditions !== []) {
+                $query->where($dateConditions);
+            }
+
+            $map = [];
+            foreach ($query->all() as $row) {
+                $map[$row->pipeline_status] = (int)$row->cnt;
+            }
+
+            return $map;
+        } catch (DatabaseException $e) {
+            $this->logger->error('count_by_status_query_failed', [
+                'method' => __METHOD__,
+                'exception' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    /**
+     * Suma `amount` agrupado por `pipeline_status` en una sola query (M1).
+     *
+     * @param array $dateConditions Condiciones de rango de fecha.
+     * @return array<string, float> Mapa estado => suma de amount.
+     */
+    private function _sumAmountByStatus(array $dateConditions): array
+    {
+        $table = TableRegistry::getTableLocator()->get('Invoices');
+        $query = $table->find()
+            ->select([
+                'pipeline_status' => 'Invoices.pipeline_status',
+                'total' => $table->find()->func()->sum('amount'),
+            ])
+            ->where($dateConditions)
+            ->groupBy('Invoices.pipeline_status');
+
+        $map = [];
+        foreach ($query->all() as $row) {
+            $map[$row->pipeline_status] = (float)($row->total ?? 0);
+        }
+
+        return $map;
     }
 
     /**

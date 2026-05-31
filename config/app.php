@@ -136,7 +136,7 @@ return [
 
         'sidebar' => [
             'className' => FileEngine::class,
-            'duration' => '+30 seconds',
+            'duration' => '+5 minutes',
             'path' => CACHE,
             'prefix' => 'sgi_sidebar_',
         ],
