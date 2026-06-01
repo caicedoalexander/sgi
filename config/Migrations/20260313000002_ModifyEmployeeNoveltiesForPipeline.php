@@ -10,11 +10,6 @@ class ModifyEmployeeNoveltiesForPipeline extends BaseMigration
         // Rename status → pipeline_status and widen
         $this->execute("ALTER TABLE employee_novelties CHANGE COLUMN `status` `pipeline_status` VARCHAR(30) NOT NULL DEFAULT 'registro'");
 
-        // Migrate old values
-        $this->execute("UPDATE employee_novelties SET pipeline_status = 'registro' WHERE pipeline_status = 'pendiente'");
-        $this->execute("UPDATE employee_novelties SET pipeline_status = 'pagada' WHERE pipeline_status = 'aprobado'");
-        $this->execute("UPDATE employee_novelties SET pipeline_status = 'rechazada' WHERE pipeline_status = 'rechazado'");
-
         // Make employee_id nullable (for massive novelties)
         $this->execute("ALTER TABLE employee_novelties MODIFY COLUMN employee_id INTEGER NULL DEFAULT NULL");
 
@@ -50,9 +45,6 @@ class ModifyEmployeeNoveltiesForPipeline extends BaseMigration
             ->update();
 
         $this->execute("ALTER TABLE employee_novelties MODIFY COLUMN employee_id INTEGER NOT NULL");
-        $this->execute("UPDATE employee_novelties SET pipeline_status = 'pendiente' WHERE pipeline_status = 'registro'");
-        $this->execute("UPDATE employee_novelties SET pipeline_status = 'aprobado' WHERE pipeline_status = 'pagada'");
-        $this->execute("UPDATE employee_novelties SET pipeline_status = 'rechazado' WHERE pipeline_status = 'rechazada'");
         $this->execute("ALTER TABLE employee_novelties CHANGE COLUMN `pipeline_status` `status` VARCHAR(20) NOT NULL DEFAULT 'pendiente'");
     }
 }

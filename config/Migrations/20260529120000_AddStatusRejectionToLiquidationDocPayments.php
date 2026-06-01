@@ -24,12 +24,6 @@ class AddStatusRejectionToLiquidationDocPayments extends BaseMigration
                 'after' => 'status',
             ])
             ->update();
-
-        // Backfill: las filas previamente autorizadas quedan como 'authorized'.
-        // Las filas con authorized=0 conservan el default 'pending'. Las filas
-        // históricas rechazadas no existen (el flujo previo las borraba); es
-        // esperado que no haya nada que backfillear hacia 'rejected'.
-        $this->execute("UPDATE liquidation_doc_payments SET status = 'authorized' WHERE authorized = 1");
     }
 
     public function down(): void

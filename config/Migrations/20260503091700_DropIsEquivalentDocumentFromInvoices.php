@@ -7,11 +7,6 @@ class DropIsEquivalentDocumentFromInvoices extends BaseMigration
 {
     public function up(): void
     {
-        // Migrar datos: las filas marcadas como documento equivalente pasan a 'Recibo de Caja'.
-        $this->execute(
-            "UPDATE invoices SET document_type = 'Recibo de Caja' WHERE is_equivalent_document = 1"
-        );
-
         $table = $this->table('invoices');
         if ($table->hasColumn('is_equivalent_document')) {
             $table->removeColumn('is_equivalent_document')->update();

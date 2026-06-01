@@ -7,14 +7,6 @@ class MigrateObservationsData extends BaseMigration
 {
     public function up(): void
     {
-        // Move existing observations data to invoice_observations table
-        $this->execute("
-            INSERT INTO invoice_observations (invoice_id, user_id, message, created)
-            SELECT i.id, i.registered_by, i.observations, i.created
-            FROM invoices i
-            WHERE i.observations IS NOT NULL AND i.observations != ''
-        ");
-
         // Drop observations column from invoices
         $this->table('invoices')
             ->removeColumn('observations')

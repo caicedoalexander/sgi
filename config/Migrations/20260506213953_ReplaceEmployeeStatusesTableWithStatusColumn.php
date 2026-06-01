@@ -29,10 +29,7 @@ class ReplaceEmployeeStatusesTableWithStatusColumn extends BaseMigration
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME='employees' AND COLUMN_NAME='employee_status_id'"
         );
         if ($hasStatusIdCol) {
-            // 2. Backfill from employee_status_id (1=Activo, 2=Retirado). NULLs become default 'activo'.
-            $this->execute("UPDATE employees SET status = CASE employee_status_id WHEN 2 THEN 'retirado' ELSE 'activo' END");
-
-            // 3. Drop FK (lookup dinámico — nombre puede variar) y columna.
+            // 2. Drop FK (lookup dinámico — nombre puede variar) y columna.
             $fk = $this->fetchRow(
                 "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
                  WHERE TABLE_SCHEMA = DATABASE()
@@ -48,13 +45,10 @@ class ReplaceEmployeeStatusesTableWithStatusColumn extends BaseMigration
             $this->execute('ALTER TABLE employees DROP COLUMN employee_status_id');
         }
 
-        // 4. Drop the catalog table — replaced by the status enum column.
+        // 3. Drop the catalog table — replaced by the status enum column.
         if ($this->hasTable('employee_statuses')) {
             $this->execute('DROP TABLE employee_statuses');
         }
-
-        // 5. Clean up RBAC permissions for the removed module.
-        $this->execute("DELETE FROM permissions WHERE module = 'employee_statuses'");
     }
 
     /**

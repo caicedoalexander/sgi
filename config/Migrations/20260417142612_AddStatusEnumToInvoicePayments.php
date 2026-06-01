@@ -15,9 +15,6 @@ class AddStatusEnumToInvoicePayments extends BaseMigration
                 'after' => 'authorized',
             ])
             ->update();
-
-        $this->execute("UPDATE invoice_payments SET status = 'authorized' WHERE authorized = 1");
-        $this->execute("UPDATE invoice_payments SET status = 'pending' WHERE authorized = 0");
     }
 
     public function down(): void

@@ -28,19 +28,6 @@ class RemoveLegalizationModule extends BaseMigration
                 $this->table($tableName)->drop()->update();
             }
         }
-
-        $this->execute("DELETE FROM permissions WHERE module = 'legalizations'");
-
-        $this->execute(
-            "DELETE FROM cake_migrations WHERE migration_name IN ("
-            . "'CreateLegalizationRecords',"
-            . "'AddLegalizationRecordIdToInvoices',"
-            . "'CreateLegalizationDocuments',"
-            . "'CreateLegalizationObservations',"
-            . "'AddLegalizationPermissions',"
-            . "'CreateLegalizationPayments'"
-            . ")"
-        );
     }
 
     public function down(): void

@@ -40,18 +40,10 @@ class RenameSpanishToEnglish extends BaseMigration
 
         // 5. Rename remunerado in leave_types table
         $this->execute("ALTER TABLE leave_types CHANGE remunerado paid TINYINT(1) NOT NULL DEFAULT 0");
-
-        // 6. Update permissions table module references
-        $this->execute("UPDATE permissions SET module = 'temporary_organizations' WHERE module = 'organizaciones_temporales'");
-        $this->execute("UPDATE permissions SET module = 'employee_incidents' WHERE module = 'employee_novedades'");
     }
 
     public function down(): void
     {
-        // Reverse permissions
-        $this->execute("UPDATE permissions SET module = 'organizaciones_temporales' WHERE module = 'temporary_organizations'");
-        $this->execute("UPDATE permissions SET module = 'employee_novedades' WHERE module = 'employee_incidents'");
-
         // Reverse leave_types
         $this->execute("ALTER TABLE leave_types CHANGE paid remunerado TINYINT(1) NOT NULL DEFAULT 0");
 

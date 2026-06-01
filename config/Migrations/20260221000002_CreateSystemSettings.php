@@ -31,25 +31,6 @@ class CreateSystemSettings extends BaseMigration
             ])
             ->addIndex(['setting_key'], ['unique' => true, 'name' => 'uq_system_settings_key'])
             ->create();
-
-        // Seed SMTP settings
-        $smtpSettings = [
-            ['setting_key' => 'smtp_host', 'setting_value' => null, 'setting_group' => 'smtp'],
-            ['setting_key' => 'smtp_port', 'setting_value' => '587', 'setting_group' => 'smtp'],
-            ['setting_key' => 'smtp_username', 'setting_value' => null, 'setting_group' => 'smtp'],
-            ['setting_key' => 'smtp_password', 'setting_value' => null, 'setting_group' => 'smtp'],
-            ['setting_key' => 'smtp_encryption', 'setting_value' => 'tls', 'setting_group' => 'smtp'],
-            ['setting_key' => 'smtp_from_email', 'setting_value' => null, 'setting_group' => 'smtp'],
-            ['setting_key' => 'smtp_from_name', 'setting_value' => 'SGI', 'setting_group' => 'smtp'],
-        ];
-
-        $table = $this->table('system_settings');
-        foreach ($smtpSettings as $setting) {
-            $setting['created'] = date('Y-m-d H:i:s');
-            $setting['modified'] = date('Y-m-d H:i:s');
-            $table->insert($setting);
-        }
-        $table->saveData();
     }
 
     public function down(): void

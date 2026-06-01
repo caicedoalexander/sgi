@@ -33,9 +33,6 @@ class ExtendInvoicePayments extends BaseMigration
                 'update' => 'NO_ACTION',
             ])
             ->update();
-
-        // Marcar pagos existentes como autorizados (datos previos al nuevo flujo)
-        $this->execute("UPDATE invoice_payments SET authorized = 1");
     }
 
     public function down(): void
