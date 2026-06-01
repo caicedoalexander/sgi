@@ -91,6 +91,7 @@ $navTabColor = fn(string $status) => match ($status) {
     default                           => 'var(--primary-color)',
 };
 ?>
+<?= $this->element('cdn_select2') ?>
 
 <div style="height:100vh;margin:-1.5rem;min-width:0;display:grid;grid-template-columns:320px 1fr;gap:0;overflow:hidden;align-items:stretch;">
 
@@ -203,20 +204,18 @@ $navTabColor = fn(string $status) => match ($status) {
                     <label class="sgi-label" for="emp-nav-position">Cargo</label>
                     <?= $this->Form->select('position_id', $positions, [
                         'empty' => 'Todos',
-                        'class' => 'form-select form-select-sm',
+                        'class' => 'form-select form-select-sm select2-enable',
                         'value' => $navPositionId,
                         'id' => 'emp-nav-position',
-                        'onchange' => 'this.form.submit()',
                     ]) ?>
                 </div>
                 <div class="mb-1">
                     <label class="sgi-label" for="emp-nav-opcenter">Centro de Operación</label>
                     <?= $this->Form->select('operation_center_id', $operationCenters, [
                         'empty' => 'Todos',
-                        'class' => 'form-select form-select-sm',
+                        'class' => 'form-select form-select-sm select2-enable',
                         'value' => $navOperationCenterId,
                         'id' => 'emp-nav-opcenter',
-                        'onchange' => 'this.form.submit()',
                     ]) ?>
                 </div>
             </div>
@@ -1012,4 +1011,13 @@ $navTabColor = fn(string $status) => match ($status) {
         t = setTimeout(function () { form.submit(); }, 400);
     });
 })();
+
+// Auto-submit de los filtros Cargo/Centro (select2). Vía jQuery porque Select2
+// dispara 'change' por jQuery; en DOMContentLoaded ya esta cargado (defer).
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof window.jQuery === 'undefined') return;
+    window.jQuery('#emp-nav-position, #emp-nav-opcenter').on('change', function () {
+        if (this.form) { this.form.submit(); }
+    });
+});
 </script>

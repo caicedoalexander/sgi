@@ -134,6 +134,7 @@ $readyForPaymentPills = [
 </div>
 
 <?php /* ════════════════════════ SEARCH + FILTROS ════════════════════════ */ ?>
+<?= $this->element('cdn_select2') ?>
 <?= $this->Form->create(null, [
     'type'         => 'get',
     'url'          => ['action' => $tabAction],
@@ -183,7 +184,7 @@ $readyForPaymentPills = [
                 <label class="input-label" for="filter-provider">Proveedor</label>
                 <?= $this->Form->select('provider_id', $providers, [
                     'empty' => 'Todos',
-                    'class' => 'form-select form-select-sm',
+                    'class' => 'form-select form-select-sm select2-enable',
                     'value' => $this->request->getQuery('provider_id', ''),
                     'id'    => 'filter-provider',
                 ]) ?>
@@ -192,7 +193,7 @@ $readyForPaymentPills = [
                 <label class="input-label" for="filter-opcenter">Centro Op.</label>
                 <?= $this->Form->select('operation_center_id', $operationCenters, [
                     'empty' => 'Todos',
-                    'class' => 'form-select form-select-sm',
+                    'class' => 'form-select form-select-sm select2-enable',
                     'value' => $this->request->getQuery('operation_center_id', ''),
                     'id'    => 'filter-opcenter',
                 ]) ?>
