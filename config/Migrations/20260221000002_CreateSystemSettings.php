@@ -31,6 +31,31 @@ class CreateSystemSettings extends BaseMigration
             ])
             ->addIndex(['setting_key'], ['unique' => true, 'name' => 'uq_system_settings_key'])
             ->create();
+
+        // Crea las keys de configuración con su identificador, SIN valor por
+        // defecto (todas en null). Los valores los define el usuario desde la UI.
+        $keys = [
+            'smtp_host',
+            'smtp_port',
+            'smtp_username',
+            'smtp_password',
+            'smtp_encryption',
+            'smtp_from_email',
+            'smtp_from_name',
+        ];
+
+        $table = $this->table('system_settings');
+        $now = date('Y-m-d H:i:s');
+        foreach ($keys as $key) {
+            $table->insert([
+                'setting_key' => $key,
+                'setting_value' => null,
+                'setting_group' => 'smtp',
+                'created' => $now,
+                'modified' => $now,
+            ]);
+        }
+        $table->saveData();
     }
 
     public function down(): void
