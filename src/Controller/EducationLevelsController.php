@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Controller\Trait\CatalogCrudTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class EducationLevelsController extends AppController
 {
+    use CatalogCrudTrait;
     use ExcelWizardTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -32,14 +34,14 @@ class EducationLevelsController extends AppController
     public function add()
     {
         $educationLevel = $this->EducationLevels->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $educationLevel = $this->EducationLevels->patchEntity($educationLevel, $this->request->getData());
-            if ($this->EducationLevels->save($educationLevel)) {
-                $this->Flash->success(__('El nivel educativo ha sido guardado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo guardar el nivel educativo. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->EducationLevels,
+            $educationLevel,
+            __('El nivel educativo ha sido guardado.'),
+            __('No se pudo guardar el nivel educativo. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('educationLevel'));
@@ -49,14 +51,14 @@ class EducationLevelsController extends AppController
     public function edit($id = null)
     {
         $educationLevel = $this->EducationLevels->get($id);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $educationLevel = $this->EducationLevels->patchEntity($educationLevel, $this->request->getData());
-            if ($this->EducationLevels->save($educationLevel)) {
-                $this->Flash->success(__('El nivel educativo ha sido actualizado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo actualizar el nivel educativo. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->EducationLevels,
+            $educationLevel,
+            __('El nivel educativo ha sido actualizado.'),
+            __('No se pudo actualizar el nivel educativo. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('educationLevel'));

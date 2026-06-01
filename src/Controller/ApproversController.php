@@ -4,9 +4,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Controller\Trait\CatalogCrudTrait;
 
 class ApproversController extends AppController
 {
+    use CatalogCrudTrait;
+
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     #[Permission(action: 'view')]
@@ -22,14 +25,15 @@ class ApproversController extends AppController
     public function add()
     {
         $approver = $this->Approvers->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $approver = $this->Approvers->patchEntity($approver, $this->request->getData());
-            if ($this->Approvers->save($approver)) {
-                $this->Flash->success('El aprobador ha sido guardado.');
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error('No se pudo guardar el aprobador.');
+        $approver->active = true;
+        $result = $this->_catalogSave(
+            $this->Approvers,
+            $approver,
+            'El aprobador ha sido guardado.',
+            'No se pudo guardar el aprobador.',
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $users = $this->Approvers->Users->find('list', limit: 200)->all();
@@ -42,14 +46,14 @@ class ApproversController extends AppController
     public function edit($id = null)
     {
         $approver = $this->Approvers->get($id, contain: ['Users', 'OperationCenters']);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $approver = $this->Approvers->patchEntity($approver, $this->request->getData());
-            if ($this->Approvers->save($approver)) {
-                $this->Flash->success('El aprobador ha sido actualizado.');
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error('No se pudo actualizar el aprobador.');
+        $result = $this->_catalogSave(
+            $this->Approvers,
+            $approver,
+            'El aprobador ha sido actualizado.',
+            'No se pudo actualizar el aprobador.',
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $users = $this->Approvers->Users->find('list', limit: 200)->all();

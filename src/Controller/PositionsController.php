@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Controller\Trait\CatalogCrudTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class PositionsController extends AppController
 {
+    use CatalogCrudTrait;
     use ExcelWizardTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -32,14 +34,14 @@ class PositionsController extends AppController
     public function add()
     {
         $position = $this->Positions->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $position = $this->Positions->patchEntity($position, $this->request->getData());
-            if ($this->Positions->save($position)) {
-                $this->Flash->success(__('El cargo ha sido guardado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo guardar el cargo. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->Positions,
+            $position,
+            __('El cargo ha sido guardado.'),
+            __('No se pudo guardar el cargo. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('position'));
@@ -49,14 +51,14 @@ class PositionsController extends AppController
     public function edit($id = null)
     {
         $position = $this->Positions->get($id);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $position = $this->Positions->patchEntity($position, $this->request->getData());
-            if ($this->Positions->save($position)) {
-                $this->Flash->success(__('El cargo ha sido actualizado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo actualizar el cargo. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->Positions,
+            $position,
+            __('El cargo ha sido actualizado.'),
+            __('No se pudo actualizar el cargo. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('position'));

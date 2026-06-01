@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Controller\Trait\CatalogCrudTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class MaritalStatusesController extends AppController
 {
+    use CatalogCrudTrait;
     use ExcelWizardTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -32,14 +34,14 @@ class MaritalStatusesController extends AppController
     public function add()
     {
         $maritalStatus = $this->MaritalStatuses->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $maritalStatus = $this->MaritalStatuses->patchEntity($maritalStatus, $this->request->getData());
-            if ($this->MaritalStatuses->save($maritalStatus)) {
-                $this->Flash->success(__('El estado civil ha sido guardado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo guardar el estado civil. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->MaritalStatuses,
+            $maritalStatus,
+            __('El estado civil ha sido guardado.'),
+            __('No se pudo guardar el estado civil. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('maritalStatus'));
@@ -49,14 +51,14 @@ class MaritalStatusesController extends AppController
     public function edit($id = null)
     {
         $maritalStatus = $this->MaritalStatuses->get($id);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $maritalStatus = $this->MaritalStatuses->patchEntity($maritalStatus, $this->request->getData());
-            if ($this->MaritalStatuses->save($maritalStatus)) {
-                $this->Flash->success(__('El estado civil ha sido actualizado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo actualizar el estado civil. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->MaritalStatuses,
+            $maritalStatus,
+            __('El estado civil ha sido actualizado.'),
+            __('No se pudo actualizar el estado civil. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('maritalStatus'));

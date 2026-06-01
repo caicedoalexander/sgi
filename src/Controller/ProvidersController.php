@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Controller\Trait\CatalogCrudTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class ProvidersController extends AppController
 {
+    use CatalogCrudTrait;
     use ExcelWizardTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -32,14 +34,14 @@ class ProvidersController extends AppController
     public function add()
     {
         $provider = $this->Providers->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $provider = $this->Providers->patchEntity($provider, $this->request->getData());
-            if ($this->Providers->save($provider)) {
-                $this->Flash->success(__('El proveedor ha sido guardado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo guardar el proveedor. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->Providers,
+            $provider,
+            __('El proveedor ha sido guardado.'),
+            __('No se pudo guardar el proveedor. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('provider'));
@@ -49,14 +51,14 @@ class ProvidersController extends AppController
     public function edit($id = null)
     {
         $provider = $this->Providers->get($id);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $provider = $this->Providers->patchEntity($provider, $this->request->getData());
-            if ($this->Providers->save($provider)) {
-                $this->Flash->success(__('El proveedor ha sido actualizado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo actualizar el proveedor. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->Providers,
+            $provider,
+            __('El proveedor ha sido actualizado.'),
+            __('No se pudo actualizar el proveedor. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('provider'));

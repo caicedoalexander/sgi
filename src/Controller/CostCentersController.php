@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Controller\Trait\CatalogCrudTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class CostCentersController extends AppController
 {
+    use CatalogCrudTrait;
     use ExcelWizardTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -32,14 +34,14 @@ class CostCentersController extends AppController
     public function add()
     {
         $costCenter = $this->CostCenters->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $costCenter = $this->CostCenters->patchEntity($costCenter, $this->request->getData());
-            if ($this->CostCenters->save($costCenter)) {
-                $this->Flash->success(__('El centro de costos ha sido guardado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo guardar el centro de costos. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->CostCenters,
+            $costCenter,
+            __('El centro de costos ha sido guardado.'),
+            __('No se pudo guardar el centro de costos. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('costCenter'));
@@ -49,14 +51,14 @@ class CostCentersController extends AppController
     public function edit($id = null)
     {
         $costCenter = $this->CostCenters->get($id);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $costCenter = $this->CostCenters->patchEntity($costCenter, $this->request->getData());
-            if ($this->CostCenters->save($costCenter)) {
-                $this->Flash->success(__('El centro de costos ha sido actualizado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo actualizar el centro de costos. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->CostCenters,
+            $costCenter,
+            __('El centro de costos ha sido actualizado.'),
+            __('No se pudo actualizar el centro de costos. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('costCenter'));

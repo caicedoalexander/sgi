@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Controller\Trait\CatalogCrudTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class DefaultFoldersController extends AppController
 {
+    use CatalogCrudTrait;
     use ExcelWizardTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -32,14 +34,14 @@ class DefaultFoldersController extends AppController
     public function add()
     {
         $defaultFolder = $this->DefaultFolders->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $defaultFolder = $this->DefaultFolders->patchEntity($defaultFolder, $this->request->getData());
-            if ($this->DefaultFolders->save($defaultFolder)) {
-                $this->Flash->success(__('La carpeta por defecto ha sido guardada.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo guardar la carpeta por defecto. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->DefaultFolders,
+            $defaultFolder,
+            __('La carpeta por defecto ha sido guardada.'),
+            __('No se pudo guardar la carpeta por defecto. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('defaultFolder'));
@@ -49,14 +51,14 @@ class DefaultFoldersController extends AppController
     public function edit($id = null)
     {
         $defaultFolder = $this->DefaultFolders->get($id);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $defaultFolder = $this->DefaultFolders->patchEntity($defaultFolder, $this->request->getData());
-            if ($this->DefaultFolders->save($defaultFolder)) {
-                $this->Flash->success(__('La carpeta por defecto ha sido actualizada.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo actualizar la carpeta por defecto. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->DefaultFolders,
+            $defaultFolder,
+            __('La carpeta por defecto ha sido actualizada.'),
+            __('No se pudo actualizar la carpeta por defecto. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('defaultFolder'));

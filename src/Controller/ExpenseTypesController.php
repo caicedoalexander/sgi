@@ -4,9 +4,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Controller\Trait\CatalogCrudTrait;
 
 class ExpenseTypesController extends AppController
 {
+    use CatalogCrudTrait;
+
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
     #[Permission(action: 'view')]
@@ -29,14 +32,14 @@ class ExpenseTypesController extends AppController
     public function add()
     {
         $expenseType = $this->ExpenseTypes->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $expenseType = $this->ExpenseTypes->patchEntity($expenseType, $this->request->getData());
-            if ($this->ExpenseTypes->save($expenseType)) {
-                $this->Flash->success(__('El tipo de gasto ha sido guardado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo guardar el tipo de gasto. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->ExpenseTypes,
+            $expenseType,
+            __('El tipo de gasto ha sido guardado.'),
+            __('No se pudo guardar el tipo de gasto. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('expenseType'));
@@ -46,14 +49,14 @@ class ExpenseTypesController extends AppController
     public function edit($id = null)
     {
         $expenseType = $this->ExpenseTypes->get($id);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $expenseType = $this->ExpenseTypes->patchEntity($expenseType, $this->request->getData());
-            if ($this->ExpenseTypes->save($expenseType)) {
-                $this->Flash->success(__('El tipo de gasto ha sido actualizado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo actualizar el tipo de gasto. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->ExpenseTypes,
+            $expenseType,
+            __('El tipo de gasto ha sido actualizado.'),
+            __('No se pudo actualizar el tipo de gasto. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('expenseType'));

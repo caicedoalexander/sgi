@@ -4,6 +4,18 @@
  * @var \App\Model\Entity\ExpenseType $expenseType
  */
 $this->assign('title', 'Editar Tipo de Gasto');
+
+// Render AJAX (modal): solo el fragmento del form.
+if ($this->request->is('ajax')) {
+    echo $this->element('catalog_modal_form', [
+        'entity' => $expenseType,
+        'fieldsElement' => 'forms/expense_types',
+        'title' => 'Editar Tipo de Gasto',
+        'submitLabel' => 'Actualizar',
+    ]);
+
+    return;
+}
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Editar Tipo de Gasto</span>
@@ -14,14 +26,7 @@ $this->assign('title', 'Editar Tipo de Gasto');
 
 <div class="sgi-card">
     <?= $this->Form->create($expenseType) ?>
-    <div class="mb-3">
-        <?= $this->Form->control('name', [
-            'class' => 'form-control',
-            'label' => ['text' => 'Nombre', 'class' => 'form-label'],
-        ]) ?>
-    </div>
-    <button type="submit" class="btn btn-primary">
-        <i class="bi bi-save me-1" aria-hidden="true"></i>Actualizar
-    </button>
+    <?= $this->element('forms/expense_types') ?>
+    <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-save me-1" aria-hidden="true"></i>Actualizar</button>
     <?= $this->Form->end() ?>
 </div>

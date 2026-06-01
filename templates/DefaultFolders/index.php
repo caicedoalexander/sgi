@@ -17,7 +17,7 @@ $gridCols  = '80px 1fr 120px 96px';
         <?= $this->Html->link(
             '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva Carpeta por Defecto',
             ['action' => 'add'],
-            ['class' => 'btn btn-primary', 'escape' => false]
+            ['class' => 'btn btn-primary', 'escape' => false, 'data-catalog-modal' => 'true']
         ) ?>
         <?php endif; ?>
     </div>
@@ -44,7 +44,7 @@ $gridCols  = '80px 1fr 120px 96px';
             <?php if ($canEdit): ?>
             <?= $this->Html->link('<i class="bi bi-pencil" aria-hidden="true"></i>',
                 ['action' => 'edit', $defaultFolder->id],
-                ['class' => 'btn-icon', 'escape' => false, 'title' => 'Editar']) ?>
+                ['class' => 'btn-icon', 'escape' => false, 'title' => 'Editar', 'data-catalog-modal' => 'true']) ?>
             <?php endif; ?>
             <?php if ($canDelete): ?>
             <?= $this->Form->postLink('<i class="bi bi-trash" aria-hidden="true"></i>',
@@ -73,3 +73,5 @@ $gridCols  = '80px 1fr 120px 96px';
     'downloadSlug' => 'carpetas_defecto',
     'importable' => true,
 ]) ?>
+
+<?= $this->element('catalog_modal') ?>

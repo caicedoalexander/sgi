@@ -4,6 +4,18 @@
  * @var \App\Model\Entity\CostCenter $costCenter
  */
 $this->assign('title', 'Nuevo Centro de Costos');
+
+// Render AJAX (modal): solo el fragmento del form.
+if ($this->request->is('ajax')) {
+    echo $this->element('catalog_modal_form', [
+        'entity' => $costCenter,
+        'fieldsElement' => 'forms/cost_centers',
+        'title' => 'Nuevo Centro de Costos',
+        'submitLabel' => 'Guardar',
+    ]);
+
+    return;
+}
 ?>
 <div class="sgi-page-header d-flex justify-content-between align-items-center">
     <span class="sgi-page-title">Nuevo Centro de Costos</span>
@@ -14,14 +26,7 @@ $this->assign('title', 'Nuevo Centro de Costos');
 
 <div class="sgi-card">
     <?= $this->Form->create($costCenter) ?>
-    <div class="row">
-        <div class="col-md-4 mb-3">
-            <?= $this->Form->control('code', ['class' => 'form-control', 'label' => ['text' => 'Código', 'class' => 'form-label'], 'placeholder' => 'Ej: CC-001']) ?>
-        </div>
-        <div class="col-md-8 mb-3">
-            <?= $this->Form->control('name', ['class' => 'form-control', 'label' => ['text' => 'Nombre', 'class' => 'form-label']]) ?>
-        </div>
-    </div>
-    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1" aria-hidden="true"></i>Guardar</button>
+    <?= $this->element('forms/cost_centers') ?>
+    <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-save me-1" aria-hidden="true"></i>Guardar</button>
     <?= $this->Form->end() ?>
 </div>

@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Controller\Trait\CatalogCrudTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class TemporaryOrganizationsController extends AppController
 {
+    use CatalogCrudTrait;
     use ExcelWizardTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -24,14 +26,14 @@ class TemporaryOrganizationsController extends AppController
     public function add()
     {
         $temporaryOrganization = $this->TemporaryOrganizations->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $temporaryOrganization = $this->TemporaryOrganizations->patchEntity($temporaryOrganization, $this->request->getData());
-            if ($this->TemporaryOrganizations->save($temporaryOrganization)) {
-                $this->Flash->success(__('La organización temporal ha sido guardada.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo guardar la organización temporal. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->TemporaryOrganizations,
+            $temporaryOrganization,
+            __('La organización temporal ha sido guardada.'),
+            __('No se pudo guardar la organización temporal. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('temporaryOrganization'));
@@ -41,14 +43,14 @@ class TemporaryOrganizationsController extends AppController
     public function edit($id = null)
     {
         $temporaryOrganization = $this->TemporaryOrganizations->get($id);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $temporaryOrganization = $this->TemporaryOrganizations->patchEntity($temporaryOrganization, $this->request->getData());
-            if ($this->TemporaryOrganizations->save($temporaryOrganization)) {
-                $this->Flash->success(__('La organización temporal ha sido actualizada.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo actualizar la organización temporal. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->TemporaryOrganizations,
+            $temporaryOrganization,
+            __('La organización temporal ha sido actualizada.'),
+            __('No se pudo actualizar la organización temporal. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('temporaryOrganization'));

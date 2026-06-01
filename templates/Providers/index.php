@@ -21,7 +21,7 @@ $gridCols  = '60px 130px 160px 1fr 110px 170px 96px';
         <?= $this->Html->link(
             '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Proveedor',
             ['action' => 'add'],
-            ['class' => 'btn btn-primary', 'escape' => false]
+            ['class' => 'btn btn-primary', 'escape' => false, 'data-catalog-modal' => 'true']
         ) ?>
         <?php endif; ?>
     </div>
@@ -54,7 +54,7 @@ $gridCols  = '60px 130px 160px 1fr 110px 170px 96px';
             <?php if ($canEdit): ?>
             <?= $this->Html->link('<i class="bi bi-pencil" aria-hidden="true"></i>',
                 ['action' => 'edit', $provider->id],
-                ['class' => 'btn-icon', 'escape' => false, 'title' => 'Editar']) ?>
+                ['class' => 'btn-icon', 'escape' => false, 'title' => 'Editar', 'data-catalog-modal' => 'true']) ?>
             <?php endif; ?>
             <?php if ($canDelete): ?>
             <?= $this->Form->postLink('<i class="bi bi-trash" aria-hidden="true"></i>',
@@ -83,3 +83,5 @@ $gridCols  = '60px 130px 160px 1fr 110px 170px 96px';
     'downloadSlug' => 'proveedores',
     'importable' => true,
 ]) ?>
+
+<?= $this->element('catalog_modal') ?>
