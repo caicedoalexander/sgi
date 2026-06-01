@@ -27,11 +27,20 @@ $initials = mb_strtoupper(
     mb_substr($employee->last_name1 ?? '', 0, 1)
 );
 
-// ─── Conteo de documentos (carpetas raíz + subcarpetas) ─────────────
+// ─── Conteo de documentos + lista plana para el navegador docs ──────
+// $allDocs aplana carpetas y subcarpetas en filas {doc, folderId, folderName}
+// para renderizar una única lista filtrable del lado del cliente.
 $totalDocs = 0;
+$allDocs = [];
 foreach ($folders as $folder) {
+    foreach ($folder->employee_documents as $doc) {
+        $allDocs[] = ['doc' => $doc, 'folderId' => $folder->id, 'folderName' => $folder->name];
+    }
     $totalDocs += count($folder->employee_documents);
     foreach ($folder->child_folders as $sf) {
+        foreach ($sf->employee_documents as $doc) {
+            $allDocs[] = ['doc' => $doc, 'folderId' => $sf->id, 'folderName' => $sf->name];
+        }
         $totalDocs += count($sf->employee_documents);
     }
 }
