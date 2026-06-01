@@ -35,132 +35,130 @@ $this->assign('title', 'Nueva Novedad');
     </div>
 </div>
 
-<div class="card card-primary">
-    <div class="card-body p-4">
-        <?= $this->Form->create($novelty, ['type' => 'file']) ?>
-        <input type="hidden" name="filing_date" value="<?= date('Y-m-d') ?>">
+<div class="sgi-card">
+    <?= $this->Form->create($novelty, ['type' => 'file']) ?>
+    <input type="hidden" name="filing_date" value="<?= date('Y-m-d') ?>">
 
-        <div class="row g-3">
-            <!-- Employee select (single) -->
-            <div class="col-md-6" id="employee-single-group">
-                <label class="form-label">Empleado</label>
-                <?= $this->Form->control('employee_id', [
-                    'label' => false,
-                    'options' => $employees,
-                    'empty' => '-- Seleccione --',
-                    'class' => 'form-select select2-enable',
-                    'value' => $preselectedEmployee,
-                ]) ?>
-            </div>
-
-            <!-- Employee multi-select (massive) -->
-            <div class="col-md-6" id="employee-massive-group" style="display:none;">
-                <label class="form-label">Empleados (Masiva)</label>
-                <select name="massive_employee_ids[]" id="massive-employees" class="form-select select2-enable" data-placeholder="Seleccione empleados..." data-allow-clear="true" multiple>
-                    <?php foreach ($employees as $empId => $empName): ?>
-                    <option value="<?= $empId ?>"><?= h($empName) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <!-- Custom name input -->
-            <div class="col-md-6" id="custom-name-group" style="display:none;">
-                <label class="form-label">Nombre</label>
-                <input type="text" name="custom_name" class="form-control" placeholder="Nombre libre">
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">Tipo de Novedad</label>
-                <?= $this->Form->control('novelty_type_id', [
-                    'label' => false,
-                    'options' => $noveltyTypes,
-                    'empty' => '-- Seleccione --',
-                    'class' => 'form-select',
-                    'id' => 'novelty-type-select',
-                ]) ?>
-            </div>
-
-            <!-- Approver select (shown when type requires boss approval) -->
-            <div class="col-md-6" id="approver-field" style="display:none;">
-                <label class="form-label">Aprobador (Jefe Inmediato)</label>
-                <?= $this->Form->control('approver_id', [
-                    'label' => false,
-                    'options' => $approversList ?? [],
-                    'empty' => '— Seleccione aprobador —',
-                    'class' => 'form-select select2',
-                ]) ?>
-            </div>
-
-            <!-- Conditional fields -->
-            <div class="col-md-4" id="permission-date-group">
-                <label class="form-label">Fecha del Permiso</label>
-                <input type="text" name="permission_date" class="form-control flatpickr-date"
-                       value="<?= h($novelty->permission_date?->format('Y-m-d') ?? '') ?>">
-            </div>
-            <div class="col-md-4" id="schedule-type-group">
-                <label class="form-label">Horario</label>
-                <select name="schedule_type" id="schedule-type-select" class="form-select">
-                    <option value="">-- Seleccione --</option>
-                    <option value="<?= NoveltyConstants::SCHEDULE_DAYS ?>" <?= ($novelty->schedule_type ?? '') === NoveltyConstants::SCHEDULE_DAYS ? 'selected' : '' ?>>Por días</option>
-                    <option value="<?= NoveltyConstants::SCHEDULE_HOURS ?>" <?= ($novelty->schedule_type ?? '') === NoveltyConstants::SCHEDULE_HOURS ? 'selected' : '' ?>>Por horas</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <div class="form-check mt-4">
-                    <input type="hidden" name="is_paid" value="0">
-                    <input type="checkbox" name="is_paid" value="1" class="form-check-input"
-                           id="paid-check" <?= !empty($novelty->is_paid) ? 'checked' : '' ?>>
-                    <label class="form-check-label" for="paid-check">Remunerado</label>
-                </div>
-            </div>
-
-            <!-- Days fields -->
-            <div class="col-md-4" id="start-date-group" style="display:none;">
-                <label class="form-label">Fecha Inicio</label>
-                <input type="text" name="start_date" class="form-control flatpickr-date"
-                       value="<?= h($novelty->start_date?->format('Y-m-d') ?? '') ?>">
-            </div>
-            <div class="col-md-4" id="end-date-group" style="display:none;">
-                <label class="form-label">Fecha Fin</label>
-                <input type="text" name="end_date" class="form-control flatpickr-date"
-                       value="<?= h($novelty->end_date?->format('Y-m-d') ?? '') ?>">
-            </div>
-
-            <!-- Hours fields -->
-            <div class="col-md-4" id="start-time-group" style="display:none;">
-                <label class="form-label">Hora Salida</label>
-                <input type="text" name="start_time" class="form-control flatpickr-time"
-                       placeholder="HH:MM" autocomplete="off"
-                       value="<?= $novelty->start_time ? h($novelty->start_time->format('H:i')) : '' ?>">
-            </div>
-            <div class="col-md-4" id="end-time-group" style="display:none;">
-                <label class="form-label">Hora Entrada</label>
-                <input type="text" name="end_time" class="form-control flatpickr-time"
-                       placeholder="HH:MM" autocomplete="off"
-                       value="<?= $novelty->end_time ? h($novelty->end_time->format('H:i')) : '' ?>">
-            </div>
-
-            <div class="col-12">
-                <label class="form-label">Motivo</label>
-                <?= $this->Form->control('reason', [
-                    'label' => false,
-                    'type' => 'textarea',
-                    'rows' => 3,
-                    'class' => 'form-control',
-                ]) ?>
-            </div>
-
+    <div class="row g-3">
+        <!-- Employee select (single) -->
+        <div class="col-md-6" id="employee-single-group">
+            <label class="input-label">Empleado</label>
+            <?= $this->Form->control('employee_id', [
+                'label' => false,
+                'options' => $employees,
+                'empty' => '-- Seleccione --',
+                'class' => 'form-select select2-enable',
+                'value' => $preselectedEmployee,
+            ]) ?>
         </div>
 
-        <div class="d-flex gap-2 pt-3 mt-3" style="border-top:1px solid var(--border-color);">
-            <button type="submit" class="btn btn-primary" id="btn-submit">
-                <i class="bi bi-save me-1" aria-hidden="true"></i>Registrar Novedad
-            </button>
-            <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>
+        <!-- Employee multi-select (massive) -->
+        <div class="col-md-6" id="employee-massive-group" style="display:none;">
+            <label class="input-label">Empleados (Masiva)</label>
+            <select name="massive_employee_ids[]" id="massive-employees" class="form-select select2-enable" data-placeholder="Seleccione empleados..." data-allow-clear="true" multiple>
+                <?php foreach ($employees as $empId => $empName): ?>
+                <option value="<?= $empId ?>"><?= h($empName) ?></option>
+                <?php endforeach; ?>
+            </select>
         </div>
 
-        <?= $this->Form->end() ?>
+        <!-- Custom name input -->
+        <div class="col-md-6" id="custom-name-group" style="display:none;">
+            <label class="input-label">Nombre</label>
+            <input type="text" name="custom_name" class="form-control" placeholder="Nombre libre">
+        </div>
+
+        <div class="col-md-6">
+            <label class="input-label">Tipo de Novedad</label>
+            <?= $this->Form->control('novelty_type_id', [
+                'label' => false,
+                'options' => $noveltyTypes,
+                'empty' => '-- Seleccione --',
+                'class' => 'form-select',
+                'id' => 'novelty-type-select',
+            ]) ?>
+        </div>
+
+        <!-- Approver select (shown when type requires boss approval) -->
+        <div class="col-md-6" id="approver-field" style="display:none;">
+            <label class="input-label">Aprobador (Jefe Inmediato)</label>
+            <?= $this->Form->control('approver_id', [
+                'label' => false,
+                'options' => $approversList ?? [],
+                'empty' => '— Seleccione aprobador —',
+                'class' => 'form-select select2-enable',
+            ]) ?>
+        </div>
+
+        <!-- Conditional fields -->
+        <div class="col-md-4" id="permission-date-group">
+            <label class="input-label">Fecha del Permiso</label>
+            <input type="text" name="permission_date" class="form-control flatpickr-date"
+                   value="<?= h($novelty->permission_date?->format('Y-m-d') ?? '') ?>">
+        </div>
+        <div class="col-md-4" id="schedule-type-group">
+            <label class="input-label">Horario</label>
+            <select name="schedule_type" id="schedule-type-select" class="form-select">
+                <option value="">-- Seleccione --</option>
+                <option value="<?= NoveltyConstants::SCHEDULE_DAYS ?>" <?= ($novelty->schedule_type ?? '') === NoveltyConstants::SCHEDULE_DAYS ? 'selected' : '' ?>>Por días</option>
+                <option value="<?= NoveltyConstants::SCHEDULE_HOURS ?>" <?= ($novelty->schedule_type ?? '') === NoveltyConstants::SCHEDULE_HOURS ? 'selected' : '' ?>>Por horas</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <div class="form-check mt-4">
+                <input type="hidden" name="is_paid" value="0">
+                <input type="checkbox" name="is_paid" value="1" class="form-check-input"
+                       id="paid-check" <?= !empty($novelty->is_paid) ? 'checked' : '' ?>>
+                <label class="form-check-label" for="paid-check">Remunerado</label>
+            </div>
+        </div>
+
+        <!-- Days fields -->
+        <div class="col-md-4" id="start-date-group" style="display:none;">
+            <label class="input-label">Fecha Inicio</label>
+            <input type="text" name="start_date" class="form-control flatpickr-date"
+                   value="<?= h($novelty->start_date?->format('Y-m-d') ?? '') ?>">
+        </div>
+        <div class="col-md-4" id="end-date-group" style="display:none;">
+            <label class="input-label">Fecha Fin</label>
+            <input type="text" name="end_date" class="form-control flatpickr-date"
+                   value="<?= h($novelty->end_date?->format('Y-m-d') ?? '') ?>">
+        </div>
+
+        <!-- Hours fields -->
+        <div class="col-md-4" id="start-time-group" style="display:none;">
+            <label class="input-label">Hora Salida</label>
+            <input type="text" name="start_time" class="form-control flatpickr-time"
+                   placeholder="HH:MM" autocomplete="off"
+                   value="<?= $novelty->start_time ? h($novelty->start_time->format('H:i')) : '' ?>">
+        </div>
+        <div class="col-md-4" id="end-time-group" style="display:none;">
+            <label class="input-label">Hora Entrada</label>
+            <input type="text" name="end_time" class="form-control flatpickr-time"
+                   placeholder="HH:MM" autocomplete="off"
+                   value="<?= $novelty->end_time ? h($novelty->end_time->format('H:i')) : '' ?>">
+        </div>
+
+        <div class="col-12">
+            <label class="input-label">Motivo</label>
+            <?= $this->Form->control('reason', [
+                'label' => false,
+                'type' => 'textarea',
+                'rows' => 3,
+                'class' => 'form-control',
+            ]) ?>
+        </div>
+
     </div>
+
+    <div class="d-flex gap-2 pt-3 mt-3" style="border-top:1px solid var(--rule);">
+        <button type="submit" class="btn btn-primary" id="btn-submit">
+            <i class="bi bi-save me-1" aria-hidden="true"></i>Registrar Novedad
+        </button>
+        <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-default']) ?>
+    </div>
+
+    <?= $this->Form->end() ?>
 </div>
 
 <script>

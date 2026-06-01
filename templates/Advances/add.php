@@ -34,143 +34,140 @@ $this->assign('title', 'Nuevo Anticipo');
     </div>
 </div>
 
-<div class="card card-primary">
-    <!-- Cabecera de la tarjeta -->
-    <div class="card-header d-flex align-items-center gap-3">
+<div class="sgi-card">
+    <div class="d-flex align-items-center gap-3" style="margin-bottom:20px;">
         <div class="sgi-icon-chip" style="font-size:.95rem;">
             <i class="bi bi-cash-coin" aria-hidden="true"></i>
         </div>
         <span style="font-size:var(--fs-title-card);font-weight:600;color:var(--text-default);">Información del Anticipo</span>
     </div>
 
-    <div class="card-body p-4">
-        <?= $this->Form->create($invoice) ?>
+    <?= $this->Form->create($invoice) ?>
 
-        <!-- Sección: Beneficiario -->
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Beneficiario</span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">Tipo de Beneficiario</label>
-                    <select id="beneficiary-type" class="form-select" required>
-                        <option value="">-- Seleccione --</option>
-                        <option value="provider">Proveedor</option>
-                        <option value="employee">Empleado</option>
-                    </select>
-                </div>
-                <div class="col-md-9 d-none" id="provider-wrapper">
-                    <?= $this->Form->control('provider_id', [
-                        'class'   => 'form-select select2-enable',
-                        'label'   => ['text' => 'Proveedor', 'class' => 'form-label'],
-                        'options' => $providers,
-                        'empty'   => '-- Seleccione --',
-                        'disabled' => true,
-                    ]) ?>
-                </div>
-                <div class="col-md-9 d-none" id="employee-wrapper">
-                    <?= $this->Form->control('employee_id', [
-                        'class'   => 'form-select select2-enable',
-                        'label'   => ['text' => 'Empleado', 'class' => 'form-label'],
-                        'options' => $employees,
-                        'empty'   => '-- Seleccione --',
-                        'disabled' => true,
-                    ]) ?>
-                </div>
-            </div>
+    <!-- Sección: Beneficiario -->
+    <div class="mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="text-uppercase fw-semibold flex-shrink-0"
+                  style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Beneficiario</span>
+            <div style="flex:1;height:1px;background:var(--rule);"></div>
         </div>
-
-        <!-- Sección: Fechas -->
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Fechas</span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="input-label">Tipo de Beneficiario</label>
+                <select id="beneficiary-type" class="form-select" required>
+                    <option value="">-- Seleccione --</option>
+                    <option value="provider">Proveedor</option>
+                    <option value="employee">Empleado</option>
+                </select>
             </div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <?= $this->Form->control('issue_date', [
-                        'type'  => 'text',
-                        'class' => 'form-control flatpickr-date',
-                        'label' => ['text' => 'Fecha de Emisión', 'class' => 'form-label'],
-                    ]) ?>
-                </div>
+            <div class="col-md-9 d-none" id="provider-wrapper">
+                <?= $this->Form->control('provider_id', [
+                    'class'   => 'form-select select2-enable',
+                    'label'   => ['text' => 'Proveedor', 'class' => 'input-label'],
+                    'options' => $providers,
+                    'empty'   => '-- Seleccione --',
+                    'disabled' => true,
+                ]) ?>
             </div>
-        </div>
-
-        <!-- Sección: Clasificación y Valor -->
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Clasificación y Valor</span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <?= $this->Form->control('operation_center_id', [
-                        'class'   => 'form-select select2-enable',
-                        'label'   => ['text' => 'Centro de Operación', 'class' => 'form-label'],
-                        'options' => $operationCenters,
-                        'empty'   => '-- Seleccione --',
-                    ]) ?>
-                </div>
-                <div class="col-md-3">
-                    <?= $this->Form->control('expense_type_id', [
-                        'class'   => 'form-select select2-enable',
-                        'label'   => ['text' => 'Tipo de Gasto', 'class' => 'form-label'],
-                        'options' => $expenseTypes,
-                        'empty'   => '-- Seleccione --',
-                    ]) ?>
-                </div>
-                <div class="col-md-3">
-                    <?= $this->Form->control('cost_center_id', [
-                        'class'   => 'form-select select2-enable',
-                        'label'   => ['text' => 'Centro de Costos', 'class' => 'form-label'],
-                        'options' => $costCenters,
-                        'empty'   => '-- Seleccione --',
-                    ]) ?>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Valor (COP)</label>
-                    <input type="text" name="amount" class="form-control currency-input"
-                           value="<?= h($invoice->amount ?? '') ?>" required>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sección: Descripción -->
-        <div class="mb-4">
-            <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="text-uppercase fw-semibold flex-shrink-0"
-                      style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Descripción</span>
-                <div style="flex:1;height:1px;background:var(--border-color);"></div>
-            </div>
-            <div>
-                <?= $this->Form->control('detail', [
-                    'type'  => 'textarea',
-                    'rows'  => 3,
-                    'class' => 'form-control',
-                    'label' => ['text' => 'Concepto / Detalle', 'class' => 'form-label'],
+            <div class="col-md-9 d-none" id="employee-wrapper">
+                <?= $this->Form->control('employee_id', [
+                    'class'   => 'form-select select2-enable',
+                    'label'   => ['text' => 'Empleado', 'class' => 'input-label'],
+                    'options' => $employees,
+                    'empty'   => '-- Seleccione --',
+                    'disabled' => true,
                 ]) ?>
             </div>
         </div>
-
-        <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Anticipo
-            </button>
-            <?= $this->Html->link(
-                'Cancelar',
-                ['action' => 'index'],
-                ['class' => 'btn btn-outline-secondary']
-            ) ?>
-        </div>
-
-        <?= $this->Form->end() ?>
     </div>
+
+    <!-- Sección: Fechas -->
+    <div class="mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="text-uppercase fw-semibold flex-shrink-0"
+                  style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Fechas</span>
+            <div style="flex:1;height:1px;background:var(--rule);"></div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <?= $this->Form->control('issue_date', [
+                    'type'  => 'text',
+                    'class' => 'form-control flatpickr-date',
+                    'label' => ['text' => 'Fecha de Emisión', 'class' => 'input-label'],
+                ]) ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección: Clasificación y Valor -->
+    <div class="mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="text-uppercase fw-semibold flex-shrink-0"
+                  style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Clasificación y Valor</span>
+            <div style="flex:1;height:1px;background:var(--rule);"></div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <?= $this->Form->control('operation_center_id', [
+                    'class'   => 'form-select select2-enable',
+                    'label'   => ['text' => 'Centro de Operación', 'class' => 'input-label'],
+                    'options' => $operationCenters,
+                    'empty'   => '-- Seleccione --',
+                ]) ?>
+            </div>
+            <div class="col-md-3">
+                <?= $this->Form->control('expense_type_id', [
+                    'class'   => 'form-select select2-enable',
+                    'label'   => ['text' => 'Tipo de Gasto', 'class' => 'input-label'],
+                    'options' => $expenseTypes,
+                    'empty'   => '-- Seleccione --',
+                ]) ?>
+            </div>
+            <div class="col-md-3">
+                <?= $this->Form->control('cost_center_id', [
+                    'class'   => 'form-select select2-enable',
+                    'label'   => ['text' => 'Centro de Costos', 'class' => 'input-label'],
+                    'options' => $costCenters,
+                    'empty'   => '-- Seleccione --',
+                ]) ?>
+            </div>
+            <div class="col-md-3">
+                <label class="input-label">Valor (COP)</label>
+                <input type="text" name="amount" class="form-control currency-input"
+                       value="<?= h($invoice->amount ?? '') ?>" required>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección: Descripción -->
+    <div class="mb-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="text-uppercase fw-semibold flex-shrink-0"
+                  style="font-size:var(--fs-micro);letter-spacing:.14em;color:var(--text-disabled);">Descripción</span>
+            <div style="flex:1;height:1px;background:var(--rule);"></div>
+        </div>
+        <div>
+            <?= $this->Form->control('detail', [
+                'type'  => 'textarea',
+                'rows'  => 3,
+                'class' => 'form-control',
+                'label' => ['text' => 'Concepto / Detalle', 'class' => 'input-label'],
+            ]) ?>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 pt-3" style="border-top:1px solid var(--rule);">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Anticipo
+        </button>
+        <?= $this->Html->link(
+            'Cancelar',
+            ['action' => 'index'],
+            ['class' => 'btn btn-default']
+        ) ?>
+    </div>
+
+    <?= $this->Form->end() ?>
 </div>
 
 <?php $this->start('script'); ?>
