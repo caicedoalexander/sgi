@@ -501,13 +501,18 @@ $navTabColor = fn(string $status) => match ($status) {
                     </div>
 
                     <div style="display:grid;grid-template-columns:260px 1fr;min-height:420px;">
+                        <style>
+                            .doc-tree-item { transition: background var(--t-fast) ease; }
+                            .doc-tree-item:hover { background: var(--bg-muted); }
+                            .doc-tree-item.is-active { background: var(--primary-soft); color: var(--primary-color); font-weight: 700; }
+                        </style>
                         <!-- ── Árbol de carpetas (izquierda) ── -->
-                        <div style="background:var(--bg-subtle);padding:12px 0;
+                        <div id="docTree" style="background:var(--bg-subtle);padding:12px 0;
                                     border-right:1px solid var(--rule);font-size:12px;">
                             <!-- Nodo raíz -->
-                            <div style="display:flex;align-items:center;gap:8px;padding:7px 14px;
-                                        color:var(--primary-color);font-weight:700;background:var(--primary-soft);">
-                                <i class="bi bi-chevron-down" style="font-size:11px;" aria-hidden="true"></i>
+                            <div class="doc-tree-item is-active" data-folder-id="all"
+                                 style="display:flex;align-items:center;gap:8px;padding:7px 14px;
+                                        cursor:pointer;font-weight:700;">
                                 <i class="bi bi-folder2-open" style="font-size:13px;" aria-hidden="true"></i>
                                 <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                     <?= h($employee->first_name . ' ' . ($employee->last_name1 ?? '')) ?>
@@ -517,19 +522,13 @@ $navTabColor = fn(string $status) => match ($status) {
                                 </span>
                             </div>
 
-                            <!-- Carpetas -->
+                            <!-- Carpetas + subcarpetas anidadas -->
                             <?php foreach ($folders as $folder):
                                 $folderDocCount = count($folder->employee_documents);
-                                foreach ($folder->child_folders as $sf) {
-                                    $folderDocCount += count($sf->employee_documents);
-                                }
                             ?>
-                            <a href="#folder-section-<?= $folder->id ?>"
-                               style="display:flex;align-items:center;gap:8px;padding:7px 14px 7px 24px;
-                                      text-decoration:none;color:var(--text-default);font-weight:500;
-                                      transition:background var(--t-fast) ease;"
-                               onmouseover="this.style.background='var(--bg-muted)'"
-                               onmouseout="this.style.background='transparent'">
+                            <div class="doc-tree-item" data-folder-id="<?= $folder->id ?>"
+                                 style="display:flex;align-items:center;gap:8px;padding:7px 14px 7px 24px;
+                                        cursor:pointer;color:var(--text-default);font-weight:500;">
                                 <i class="bi bi-folder" style="font-size:13px;color:var(--secondary-color);flex-shrink:0;" aria-hidden="true"></i>
                                 <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                     <?= h($folder->name) ?>
@@ -537,7 +536,20 @@ $navTabColor = fn(string $status) => match ($status) {
                                 <span class="mono" style="font-size:9.5px;color:var(--text-faint);font-weight:600;flex-shrink:0;">
                                     <?= $folderDocCount ?>
                                 </span>
-                            </a>
+                            </div>
+                            <?php foreach ($folder->child_folders as $subfolder): ?>
+                            <div class="doc-tree-item" data-folder-id="<?= $subfolder->id ?>"
+                                 style="display:flex;align-items:center;gap:8px;padding:6px 14px 6px 38px;
+                                        cursor:pointer;color:var(--text-muted);font-weight:500;">
+                                <i class="bi bi-folder" style="font-size:12px;color:var(--secondary-color);flex-shrink:0;" aria-hidden="true"></i>
+                                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    <?= h($subfolder->name) ?>
+                                </span>
+                                <span class="mono" style="font-size:9.5px;color:var(--text-faint);font-weight:600;flex-shrink:0;">
+                                    <?= count($subfolder->employee_documents) ?>
+                                </span>
+                            </div>
+                            <?php endforeach; ?>
                             <?php endforeach; ?>
                         </div>
 
