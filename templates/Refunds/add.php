@@ -31,8 +31,8 @@ $this->assign('title', 'Nuevo Reintegro');
     </div>
 </div>
 
-<div class="card card-primary">
-    <div class="card-header d-flex align-items-center gap-3">
+<div class="sgi-card">
+    <div class="d-flex align-items-center gap-3" style="margin-bottom:20px;">
         <div class="sgi-icon-chip">
             <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
         </div>
@@ -41,63 +41,62 @@ $this->assign('title', 'Nuevo Reintegro');
             <div style="font-size:.72rem;color:var(--text-disabled);">Seleccione el beneficiario del reintegro</div>
         </div>
     </div>
-    <div class="card-body p-4">
-        <?= $this->Form->create($record) ?>
 
-        <div class="mb-4">
-            <label class="form-label" for="refund-operation-center">Centro de Operación <span class="text-danger">*</span></label>
-            <select name="operation_center_id" id="refund-operation-center" class="form-select select2-enable" required>
-                <option value="">Selecciona un centro...</option>
-                <?php foreach ($operationCenters as $id => $name): ?>
-                    <option value="<?= (int)$id ?>"><?= h($name) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <small class="text-muted">El código se generará automáticamente como <code>REI-{año}-{centro}-{consecutivo}</code>.</small>
-        </div>
+    <?= $this->Form->create($record) ?>
 
-        <div class="mb-4">
-            <label class="form-label">Tipo de beneficiario <span class="text-danger">*</span></label>
-            <div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="beneficiary_type" id="bt-employee" value="employee">
-                    <label class="form-check-label" for="bt-employee">Empleado</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="beneficiary_type" id="bt-provider" value="provider">
-                    <label class="form-check-label" for="bt-provider">Proveedor</label>
-                </div>
+    <div class="mb-4">
+        <label class="input-label" for="refund-operation-center">Centro de Operación <span class="text-danger">*</span></label>
+        <select name="operation_center_id" id="refund-operation-center" class="form-select select2-enable" required>
+            <option value="">Selecciona un centro...</option>
+            <?php foreach ($operationCenters as $id => $name): ?>
+                <option value="<?= (int)$id ?>"><?= h($name) ?></option>
+            <?php endforeach; ?>
+        </select>
+        <small class="input-help">El código se generará automáticamente como <code>REI-{año}-{centro}-{consecutivo}</code>.</small>
+    </div>
+
+    <div class="mb-4">
+        <label class="input-label">Tipo de beneficiario <span class="text-danger">*</span></label>
+        <div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="beneficiary_type" id="bt-employee" value="employee">
+                <label class="form-check-label" for="bt-employee">Empleado</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="beneficiary_type" id="bt-provider" value="provider">
+                <label class="form-check-label" for="bt-provider">Proveedor</label>
             </div>
         </div>
-
-        <div class="mb-4 sgi-beneficiary-employee" style="display:none;">
-            <label class="form-label">Empleado</label>
-            <select name="beneficiary_employee_id" class="form-select select2-enable">
-                <option value="">Seleccione un empleado</option>
-                <?php foreach ($employees as $id => $name): ?>
-                <option value="<?= (int)$id ?>"><?= h($name) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="mb-4 sgi-beneficiary-provider" style="display:none;">
-            <label class="form-label">Proveedor</label>
-            <select name="beneficiary_provider_id" class="form-select select2-enable">
-                <option value="">Seleccione un proveedor</option>
-                <?php foreach ($providers as $id => $name): ?>
-                <option value="<?= (int)$id ?>"><?= h($name) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="d-flex gap-2 pt-2" style="border-top:1px solid var(--border-color);">
-            <button type="submit" class="btn-primary btn">
-                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear Reintegro
-            </button>
-            <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>
-        </div>
-
-        <?= $this->Form->end() ?>
     </div>
+
+    <div class="mb-4 sgi-beneficiary-employee" style="display:none;">
+        <label class="input-label">Empleado</label>
+        <select name="beneficiary_employee_id" class="form-select select2-enable">
+            <option value="">Seleccione un empleado</option>
+            <?php foreach ($employees as $id => $name): ?>
+            <option value="<?= (int)$id ?>"><?= h($name) ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <div class="mb-4 sgi-beneficiary-provider" style="display:none;">
+        <label class="input-label">Proveedor</label>
+        <select name="beneficiary_provider_id" class="form-select select2-enable">
+            <option value="">Seleccione un proveedor</option>
+            <?php foreach ($providers as $id => $name): ?>
+            <option value="<?= (int)$id ?>"><?= h($name) ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <div class="d-flex gap-2 pt-3" style="border-top:1px solid var(--rule);">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear Reintegro
+        </button>
+        <?= $this->Html->link('Cancelar', ['action' => 'index'], ['class' => 'btn btn-default']) ?>
+    </div>
+
+    <?= $this->Form->end() ?>
 </div>
 
 <script>
