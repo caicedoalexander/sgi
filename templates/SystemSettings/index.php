@@ -269,6 +269,11 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
                     <div class="cfg-pane-title">Configuración SMTP</div>
                     <div class="cfg-pane-sub">Servidor de correo saliente para las notificaciones del sistema.</div>
                 </div>
+                <?= $this->Html->link(
+                    '<i class="bi bi-envelope-paper" aria-hidden="true"></i> Ver correos enviados',
+                    ['controller' => 'EmailLogs', 'action' => 'index'],
+                    ['class' => 'btn btn-default btn-sm', 'escape' => false]
+                ) ?>
                 <?= $this->Form->create(null, ['url' => ['action' => 'testSmtp']]) ?>
                 <button type="submit" class="btn btn-default btn-sm">
                     <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Probar conexión

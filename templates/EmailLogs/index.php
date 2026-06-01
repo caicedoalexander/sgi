@@ -16,168 +16,192 @@ use App\Constants\EmailLogConstants;
 $this->assign('title', 'Logs de correo');
 
 $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' || $email !== '';
+
+// Fecha · Tipo·Destinatario · Asunto · Estado · Intentos · Acción
+$gridCols = '140px 1.6fr 1.7fr 1.1fr 70px 70px';
 ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Logs de correo</span>
+<!-- ═══ Header ═══ -->
+<div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
+    <div>
+        <span class="sgi-page-title">Logs de correo</span>
+        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
+            <span class="sgi-fg-muted"><?= $this->Paginator->counter('{{count}} correos') ?></span>
+        </div>
+    </div>
     <?= $this->Form->postLink(
-        '<i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Reintentar fallidos',
+        '<i class="bi bi-arrow-clockwise" aria-hidden="true"></i><span>Reintentar fallidos</span>',
         ['action' => 'retryAllFailed'],
         [
-            'class' => 'btn btn-outline-warning',
+            'class' => 'btn btn-default',
             'escape' => false,
             'confirm' => '¿Reintentar todos los correos fallidos? Se procesarán hasta 100 por click.',
         ],
     ) ?>
 </div>
 
-<div class="sgi-search-bar mb-3">
-    <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
-    <div class="d-flex gap-2">
-        <div class="flex-grow-1">
-            <?= $this->Form->control('email', [
-                'label' => false,
-                'type' => 'text',
-                'class' => 'form-control',
-                'placeholder' => 'Buscar por destinatario…',
-                'value' => $email,
-            ]) ?>
-        </div>
-        <button type="submit" class="btn btn-primary" aria-label="Buscar"><i class="bi bi-search" aria-hidden="true"></i></button>
-        <button type="button" class="btn btn-outline-dark" data-bs-toggle="collapse"
-                data-bs-target="#emailLogFilters" title="Filtros avanzados">
-            <i class="bi bi-funnel" aria-hidden="true"></i>
-        </button>
-        <?php if ($hasFilters): ?>
-            <?= $this->Html->link(
-                '<i class="bi bi-x-lg" aria-hidden="true"></i> Limpiar',
-                ['action' => 'index'],
-                ['class' => 'btn btn-outline-danger', 'escape' => false]
-            ) ?>
+<!-- ═══ Búsqueda + Filtros ═══ -->
+<?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
+<div class="d-flex align-items-stretch" style="gap:8px;margin-bottom:14px;">
+    <label class="input flex-grow-1" style="margin:0;">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input type="text" name="email" value="<?= h($email) ?>"
+               placeholder="Buscar por destinatario…" aria-label="Buscar correos">
+        <?php if ($email !== ''): ?>
+        <?= $this->Html->link(
+            '<i class="bi bi-x" aria-hidden="true"></i>',
+            ['action' => 'index'],
+            [
+                'escape' => false,
+                'style' => 'background:transparent;border:0;color:var(--text-faint);padding:4px;display:inline-flex;',
+                'title' => 'Limpiar búsqueda',
+            ]
+        ) ?>
         <?php endif; ?>
-    </div>
+    </label>
 
-    <div class="collapse <?= $hasFilters ? 'show' : '' ?>" id="emailLogFilters">
-        <div class="sgi-filters-section mt-2">
-            <div class="row g-2">
-                <div class="col-md-2">
-                    <label class="sgi-filter-label" for="filter-status">Estado</label>
-                    <?= $this->Form->select('status', $statusOptions, [
-                        'empty' => 'Todos',
-                        'class' => 'form-select form-select-sm',
-                        'value' => $status,
-                        'id'    => 'filter-status',
-                    ]) ?>
-                </div>
-                <div class="col-md-4">
-                    <label class="sgi-filter-label" for="filter-event">Tipo de evento</label>
-                    <?= $this->Form->select('event_type', $eventOptions, [
-                        'empty' => 'Todos',
-                        'class' => 'form-select form-select-sm',
-                        'value' => $eventType,
-                        'id'    => 'filter-event',
-                    ]) ?>
-                </div>
-                <div class="col-md-3">
-                    <label class="sgi-filter-label" for="el-range">Período</label>
-                    <?= $this->element('date_range_filter', [
-                        'id' => 'el-range',
-                        'fromName' => 'from',
-                        'toName' => 'to',
-                        'from' => $from,
-                        'to' => $to,
-                        'inputStyle' => 'width:100%;',
-                    ]) ?>
-                </div>
+    <button type="button" class="btn btn-default"
+            data-bs-toggle="collapse" data-bs-target="#emailLogFilters"
+            aria-expanded="<?= $hasFilters ? 'true' : 'false' ?>" aria-label="Filtros avanzados">
+        <i class="bi bi-funnel" aria-hidden="true"></i><span>Filtros</span>
+    </button>
+
+    <?php if ($hasFilters): ?>
+    <?= $this->Html->link(
+        '<i class="bi bi-x-lg" aria-hidden="true"></i><span>Limpiar</span>',
+        ['action' => 'index'],
+        ['class' => 'btn btn-ghost', 'escape' => false, 'style' => 'color:var(--danger-color);']
+    ) ?>
+    <?php endif; ?>
+</div>
+
+<div class="collapse <?= $hasFilters ? 'show' : '' ?>" id="emailLogFilters" style="margin-bottom:14px;">
+    <div class="sgi-card compact">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label class="input-label" for="filter-status">Estado</label>
+                <?= $this->Form->select('status', $statusOptions, [
+                    'empty' => 'Todos',
+                    'class' => 'form-select form-select-sm',
+                    'value' => $status,
+                    'id'    => 'filter-status',
+                ]) ?>
+            </div>
+            <div class="col-md-4">
+                <label class="input-label" for="filter-event">Tipo de evento</label>
+                <?= $this->Form->select('event_type', $eventOptions, [
+                    'empty' => 'Todos',
+                    'class' => 'form-select form-select-sm',
+                    'value' => $eventType,
+                    'id'    => 'filter-event',
+                ]) ?>
+            </div>
+            <div class="col-md-3">
+                <label class="input-label" for="el-range">Período</label>
+                <?= $this->element('date_range_filter', [
+                    'id' => 'el-range',
+                    'fromName' => 'from',
+                    'toName' => 'to',
+                    'from' => $from,
+                    'to' => $to,
+                    'inputStyle' => 'width:100%;',
+                ]) ?>
+            </div>
+            <div class="col-12 d-flex justify-content-end" style="margin-top:6px;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-funnel me-1" aria-hidden="true"></i>Aplicar filtros
+                </button>
             </div>
         </div>
     </div>
-    <?= $this->Form->end() ?>
 </div>
+<?= $this->Form->end() ?>
 
-<div class="card card-primary">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th style="width:60px;">#</th>
-                    <th style="width:140px;">Fecha</th>
-                    <th>Tipo</th>
-                    <th>Destinatario</th>
-                    <th>Asunto</th>
-                    <th style="width:130px;">Estado</th>
-                    <th style="width:80px;">Intentos</th>
-                    <th style="width:90px;" class="text-end">Acción</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($emailLogs as $log): ?>
-                    <?php
-                    $statusBadge = match ($log->status) {
-                        EmailLogConstants::STATUS_SENT    => 'pill-primary-soft',
-                        EmailLogConstants::STATUS_FAILED  => 'pill-danger-soft',
-                        EmailLogConstants::STATUS_PENDING => 'pill-warning-soft',
-                        default => 'pill-secondary-soft',
-                    };
-                    $isFailed = $log->status === EmailLogConstants::STATUS_FAILED;
-                    ?>
-                    <tr>
-                        <td style="font-size:var(--fs-body-lg);color:var(--text-faint);"><?= (int)$log->id ?></td>
-                        <td style="font-size:var(--fs-body-lg);color:var(--text-muted);white-space:nowrap;">
-                            <?= h($log->created->i18nFormat('dd/MM/yyyy HH:mm')) ?>
-                        </td>
-                        <td style="font-size:var(--fs-body-lg);">
-                            <?= h(EmailLogConstants::EVENT_LABELS[$log->event_type] ?? $log->event_type) ?>
-                        </td>
-                        <td style="font-size:var(--fs-body-lg);">
-                            <?= h($log->to_email) ?>
-                        </td>
-                        <td style="font-size:var(--fs-body-lg);color:var(--text-muted);">
-                            <?= h($log->subject) ?>
-                        </td>
-                        <td>
-                            <span class="pill <?= $statusBadge ?>">
-                                <?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
-                            </span>
-                            <?php if ($isFailed && !empty($log->last_error)): ?>
-                                <div class="text-danger mt-1" style="font-size:.7rem;line-height:1.3;">
-                                    <?= h(mb_substr($log->last_error, 0, 120)) ?>
-                                </div>
-                            <?php endif; ?>
-                        </td>
-                        <td style="font-size:var(--fs-body-lg);text-align:center;">
-                            <?= (int)$log->attempts ?>
-                        </td>
-                        <td class="text-end">
-                            <?php if ($isFailed): ?>
-                                <?= $this->Form->postLink(
-                                    '<i class="bi bi-arrow-clockwise" aria-hidden="true"></i>',
-                                    ['action' => 'retry', $log->id],
-                                    [
-                                        'class' => 'btn btn-sm btn-outline-primary',
-                                        'escape' => false,
-                                        'confirm' => '¿Reenviar este correo?',
-                                        'title' => 'Reintentar',
-                                    ],
-                                ) ?>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-
-                <?php if ($emailLogs->count() === 0): ?>
-                    <tr>
-                        <td colspan="8">
-                            <div class="sgi-doc-empty">
-                                <i class="bi bi-envelope-slash sgi-doc-empty-icon" aria-hidden="true"></i>
-                                Sin registros de correo con los filtros actuales.
-                            </div>
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+<!-- ═══ Tabla ═══ -->
+<div class="sgi-card" style="padding:0;">
+    <div class="row-fact head" style="grid-template-columns:<?= $gridCols ?>;" role="row">
+        <span>Fecha</span>
+        <span>Tipo · Destinatario</span>
+        <span>Asunto</span>
+        <span>Estado</span>
+        <span style="text-align:center;">Intentos</span>
+        <span style="text-align:right;">Acción</span>
     </div>
+
+    <?php if ($emailLogs->count() === 0): ?>
+    <div class="empty-state">
+        <div class="es-icon es-icon-neutral">
+            <i class="bi bi-envelope-slash" aria-hidden="true"></i>
+        </div>
+        <div class="es-title">Sin registros</div>
+        <div class="es-msg">Sin registros de correo con los filtros actuales.</div>
+    </div>
+    <?php else: ?>
+    <?php foreach ($emailLogs as $log):
+        $statusBadge = match ($log->status) {
+            EmailLogConstants::STATUS_SENT    => 'pill-primary-soft',
+            EmailLogConstants::STATUS_FAILED  => 'pill-danger-soft',
+            EmailLogConstants::STATUS_PENDING => 'pill-warning-soft',
+            default => 'pill-muted',
+        };
+        $isFailed = $log->status === EmailLogConstants::STATUS_FAILED;
+    ?>
+    <div class="row-fact" style="grid-template-columns:<?= $gridCols ?>;cursor:default;" role="row">
+        <!-- Fecha -->
+        <div class="mono" style="font-size:11.5px;color:var(--text-default);white-space:nowrap;">
+            <?= h($log->created->i18nFormat('dd/MM/yyyy HH:mm')) ?>
+        </div>
+
+        <!-- Tipo · Destinatario -->
+        <div style="min-width:0;">
+            <div style="font-size:12.5px;font-weight:600;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <?= h(EmailLogConstants::EVENT_LABELS[$log->event_type] ?? $log->event_type) ?>
+            </div>
+            <div class="mono" style="font-size:10.5px;color:var(--text-faint);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <?= h($log->to_email) ?>
+            </div>
+        </div>
+
+        <!-- Asunto -->
+        <div style="min-width:0;font-size:12px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            <?= h($log->subject) ?>
+        </div>
+
+        <!-- Estado -->
+        <div style="min-width:0;">
+            <span class="pill pill-sm <?= $statusBadge ?>">
+                <?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
+            </span>
+            <?php if ($isFailed && !empty($log->last_error)): ?>
+            <div class="text-danger" style="font-size:10px;line-height:1.3;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?= h($log->last_error) ?>">
+                <?= h(mb_substr($log->last_error, 0, 80)) ?>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Intentos -->
+        <div class="mono" style="text-align:center;font-size:12.5px;color:var(--text-default);">
+            <?= (int)$log->attempts ?>
+        </div>
+
+        <!-- Acción -->
+        <div style="text-align:right;">
+            <?php if ($isFailed): ?>
+            <?= $this->Form->postLink(
+                '<i class="bi bi-arrow-clockwise" aria-hidden="true"></i>',
+                ['action' => 'retry', $log->id],
+                [
+                    'class' => 'btn btn-default btn-sm btn-icon',
+                    'escape' => false,
+                    'confirm' => '¿Reenviar este correo?',
+                    'title' => 'Reintentar',
+                ],
+            ) ?>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endforeach; ?>
+    <?php endif; ?>
 
     <?= $this->element('pagination') ?>
 </div>
