@@ -76,9 +76,11 @@ git commit -m "feat(docs-empleado): aplanar documentos en \$allDocs para lista f
 **Files:**
 - Modify: `templates/Employees/view.php:496-533`
 
+> **IMPORTANTE (B1):** Reemplazar **el rango COMPLETO 496-533**, incluyendo la línea 496 (el `<div ...>` contenedor del árbol, que pasa a llevar `id="docTree"`). Si se deja el `<div>` de 496 fuera del reemplazo, el `id` no se aplica y queda un `<div>` duplicado. Además, el contador del nodo de carpeta padre cambia intencionalmente de "padre + subcarpetas" a "solo documentos propios del padre" (cada subcarpeta lleva su propio contador). Esto es lo deseado: cada nodo del árbol cuenta lo que filtra.
+
 - [ ] **Step 1: Reemplazar el panel izquierdo del árbol**
 
-Reemplazar el bloque del árbol de carpetas (desde el `<div>` del nodo raíz hasta el cierre del `foreach` de carpetas, ≈ líneas 496-533) por:
+Reemplazar el bloque COMPLETO del árbol de carpetas (líneas 496-533, desde `<!-- ── Árbol de carpetas (izquierda) ── -->` / `<div ... padding:12px 0; ...>` hasta su `</div>` de cierre) por:
 
 ```php
                         <!-- ── Árbol de carpetas (izquierda) ── -->
@@ -166,12 +168,13 @@ Reemplazar desde el `<!-- Header de columnas -->` hasta el cierre del cuerpo scr
 
 ```php
                             <!-- Header de columnas -->
-                            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 96px;padding:10px 18px;
+                            <div style="display:grid;grid-template-columns:2fr 1fr 0.8fr 1fr 96px;padding:10px 18px;
                                         background:var(--bg-muted);font-size:9.5px;font-weight:700;
                                         color:var(--text-faint);letter-spacing:0.7px;text-transform:uppercase;
                                         gap:12px;align-items:center;border-bottom:1px solid var(--rule);">
                                 <span>Documento</span>
                                 <span>Carpeta</span>
+                                <span>Tamaño</span>
                                 <span>Cargado</span>
                                 <span style="text-align:right;">Acciones</span>
                             </div>
@@ -182,7 +185,7 @@ Reemplazar desde el `<!-- Header de columnas -->` hasta el cierre del cuerpo scr
                                     $type = $this->DocumentIcon->typeLabel($doc->mime_type);
                                 ?>
                                 <div class="doc-row" data-folder-id="<?= $row['folderId'] ?>"
-                                     style="display:grid;grid-template-columns:2fr 1fr 1fr 96px;gap:12px;
+                                     style="display:grid;grid-template-columns:2fr 1fr 0.8fr 1fr 96px;gap:12px;
                                             align-items:center;padding:10px 18px;border-bottom:1px solid var(--rule);
                                             font-size:12px;">
                                     <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
@@ -199,6 +202,9 @@ Reemplazar desde el `<!-- Header de columnas -->` hasta el cierre del cuerpo scr
                                         <i class="bi bi-folder me-1" style="color:var(--secondary-color);" aria-hidden="true"></i><?= h($row['folderName']) ?>
                                     </span>
                                     <span style="color:var(--text-faint);font-size:.8rem;">
+                                        <?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?>
+                                    </span>
+                                    <span style="color:var(--text-faint);font-size:.8rem;">
                                         <?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?>
                                         <span style="color:var(--text-disabled);display:block;"><?= $doc->created?->format('d/m/Y H:i') ?></span>
                                     </span>
@@ -213,7 +219,7 @@ Reemplazar desde el `<!-- Header de columnas -->` hasta el cierre del cuerpo scr
                                             <?= $this->Form->postLink(
                                                 '<i class="bi bi-trash" aria-hidden="true"></i>',
                                                 ['action' => 'deleteDocument', $employee->id, $doc->id],
-                                                ['confirm' => '¿Eliminar este documento?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar']
+                                                ['confirm' => '¿Eliminar este documento?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar', 'style' => 'margin:0;display:inline;']
                                             ) ?>
                                             <?php endif; ?>
                                         </span>
@@ -252,11 +258,11 @@ git commit -m "feat(docs-empleado): panel derecho como lista plana con columna C
 ### Task 4: Script JS de filtrado maestro-detalle
 
 **Files:**
-- Modify: `templates/Employees/view.php` (insertar `<script>` justo después del cierre del grid de la sección de documentos, antes del `<?php endif; ?>` ≈ línea 616)
+- Modify: `templates/Employees/view.php` (insertar `<script>` entre el cierre del card de documentos (≈ línea 614, el `</div>` posterior al cierre del grid `260px 1fr` de la línea 613) y el `<?php endif; ?>` de la línea 616)
 
 - [ ] **Step 1: Insertar el script de filtrado**
 
-Justo después del `</div>` que cierra `<div style="display:grid;grid-template-columns:260px 1fr;...">` (el grid de dos columnas del gestor docs) y antes de `<?php endif; ?>`, insertar:
+Anclar la inserción de forma inequívoca: el grid de dos columnas (`grid-template-columns:260px 1fr`) cierra en `</div>` (≈613), y el card que lo contiene cierra en el `</div>` siguiente (≈614); el `<?php endif; ?>` está en ≈616. Insertar el bloque **entre el `</div>` de ≈614 y el `<?php endif; ?>` de ≈616**:
 
 ```php
                 <script>
@@ -323,8 +329,9 @@ Navegar a `/employees/view/{id}` de un empleado que tenga al menos un documento 
 4. Las subcarpetas aparecen indentadas bajo su padre y son seleccionables.
 5. Seleccionar una carpeta sin documentos muestra el empty-state "Esta carpeta no tiene documentos.", sin filas residuales.
 6. Los botones Abrir y Eliminar siguen funcionando.
+7. **(I1)** En la columna Acciones, el `<form>` que genera `Form->postLink` (botón Eliminar) queda alineado e inline junto al botón Abrir, sin salto de línea ni desalineación vertical (gracias a `style => 'margin:0;display:inline;'`). La columna Tamaño se muestra correctamente.
 
-Expected: los 6 puntos se cumplen.
+Expected: los 7 puntos se cumplen.
 
 - [ ] **Step 3: Verificar empleado sin carpetas**
 
