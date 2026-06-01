@@ -500,11 +500,16 @@ $navTabColor = fn(string $status) => match ($status) {
                         <?php endif; ?>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:260px 1fr;min-height:420px;">
+                    <div style="display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 410px);">
                         <style>
                             .doc-tree-item { transition: background var(--t-fast) ease; }
                             .doc-tree-item:hover { background: var(--bg-muted); }
                             .doc-tree-item.is-active { background: var(--primary-soft); color: var(--primary-color); font-weight: 700; }
+                            .doc-row { display: grid; grid-template-columns: 2fr 1fr 0.8fr 1fr 96px; gap: 12px;
+                                       align-items: center; padding: 11px 18px; border-bottom: 1px solid var(--rule);
+                                       font-size: 12px; transition: background var(--t-fast) ease; }
+                            .doc-row:hover { background: var(--bg-subtle); }
+                            .doc-row.is-hidden { display: none; }
                         </style>
                         <!-- ── Árbol de carpetas (izquierda) ── -->
                         <div id="docTree" style="background:var(--bg-subtle);padding:12px 0;
@@ -570,47 +575,41 @@ $navTabColor = fn(string $status) => match ($status) {
                             <div id="docList" style="flex:1;overflow:auto;">
                                 <?php foreach ($allDocs as $row):
                                     $doc = $row['doc'];
-                                    $type = $this->DocumentIcon->typeLabel($doc->mime_type);
                                 ?>
-                                <div class="doc-row" data-folder-id="<?= $row['folderId'] ?>"
-                                     style="display:grid;grid-template-columns:2fr 1fr 0.8fr 1fr 96px;gap:12px;
-                                            align-items:center;padding:10px 18px;border-bottom:1px solid var(--rule);
-                                            font-size:12px;">
-                                    <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                                        <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> me-1"
-                                           style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1rem;vertical-align:middle"></i>
+                                <div class="doc-row" data-folder-id="<?= $row['folderId'] ?>">
+                                    <span style="min-width:0;display:flex;align-items:center;gap:7px;overflow:hidden;">
+                                        <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?>"
+                                           style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.15rem;flex-shrink:0;"></i>
                                         <?= $this->Html->link(
                                             h($doc->name),
                                             ['action' => 'downloadDocument', $employee->id, $doc->id],
-                                            ['target' => '_blank', 'class' => 'text-decoration-none']
+                                            ['target' => '_blank', 'class' => 'text-decoration-none text-truncate']
                                         ) ?>
-                                        <span class="pill <?= h($this->DocumentIcon->badgeClass($type)) ?> ms-1"><?= h($type) ?></span>
                                     </span>
-                                    <span style="color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                                        <i class="bi bi-folder me-1" style="color:var(--secondary-color);" aria-hidden="true"></i><?= h($row['folderName']) ?>
+                                    <span style="color:var(--text-muted);display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;">
+                                        <i class="bi bi-folder" style="color:var(--secondary-color);flex-shrink:0;" aria-hidden="true"></i>
+                                        <span class="text-truncate"><?= h($row['folderName']) ?></span>
                                     </span>
                                     <span style="color:var(--text-faint);font-size:.8rem;">
                                         <?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?>
                                     </span>
-                                    <span style="color:var(--text-faint);font-size:.8rem;">
+                                    <span style="color:var(--text-faint);font-size:.8rem;line-height:1.35;">
                                         <?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?>
-                                        <span style="color:var(--text-disabled);display:block;"><?= $doc->created?->format('d/m/Y H:i') ?></span>
+                                        <span style="color:var(--text-disabled);display:block;font-size:.72rem;"><?= $doc->created?->format('d/m/Y H:i') ?></span>
                                     </span>
-                                    <span class="text-end">
-                                        <span class="d-flex gap-1 justify-content-end">
-                                            <?= $this->Html->link(
-                                                '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
-                                                ['action' => 'downloadDocument', $employee->id, $doc->id],
-                                                ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
-                                            ) ?>
-                                            <?php if (!empty($userPermissions['employees']['can_delete'])): ?>
-                                            <?= $this->Form->postLink(
-                                                '<i class="bi bi-trash" aria-hidden="true"></i>',
-                                                ['action' => 'deleteDocument', $employee->id, $doc->id],
-                                                ['confirm' => '¿Eliminar este documento?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar', 'style' => 'margin:0;display:inline;']
-                                            ) ?>
-                                            <?php endif; ?>
-                                        </span>
+                                    <span class="d-flex gap-1 justify-content-end">
+                                        <?= $this->Html->link(
+                                            '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
+                                            ['action' => 'downloadDocument', $employee->id, $doc->id],
+                                            ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
+                                        ) ?>
+                                        <?php if (!empty($userPermissions['employees']['can_delete'])): ?>
+                                        <?= $this->Form->postLink(
+                                            '<i class="bi bi-trash" aria-hidden="true"></i>',
+                                            ['action' => 'deleteDocument', $employee->id, $doc->id],
+                                            ['confirm' => '¿Eliminar este documento?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar', 'style' => 'margin:0;display:inline-flex;']
+                                        ) ?>
+                                        <?php endif; ?>
                                     </span>
                                 </div>
                                 <?php endforeach; ?>
@@ -648,7 +647,7 @@ $navTabColor = fn(string $status) => match ($status) {
                         var visible = 0;
                         rows.forEach(function (row) {
                             var show = (id === 'all') || (row.getAttribute('data-folder-id') === id);
-                            row.style.display = show ? '' : 'none';
+                            row.classList.toggle('is-hidden', !show);
                             if (show) { visible++; }
                         });
                         if (empty) { empty.style.display = visible === 0 ? '' : 'none'; }
