@@ -465,7 +465,7 @@ $canRegress = !empty($viewModel->canRegress);
                         'label' => false,
                         'options' => $viewModel->costCenters,
                         'empty' => '-- Seleccione --',
-                        'class' => 'form-select',
+                        'class' => 'form-select select2-enable',
                         'disabled' => !$canEdit('cost_center_id'),
                     ]) ?>
                 </div>

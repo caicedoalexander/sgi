@@ -153,7 +153,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
                 </div>
                 <div class="col-md-3">
                     <?= $this->Form->control('cost_center_id', [
-                        'class'   => 'form-select',
+                        'class'   => 'form-select select2-enable',
                         'label'   => ['text' => 'Centro de Costos', 'class' => 'form-label'],
                         'options' => $costCenters,
                         'empty'   => '-- Seleccione --',
