@@ -1958,50 +1958,40 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .template-field.selected .template-field-close { display: block; }
 
 
-/* ─── C.4 FLASH NOTIFICATIONS ───────────────────────────────────── */
+/* ─── C.4 FLASH TOASTS (Sistema de Diseño · .toast) ─────────────────
+   El flash usa el componente .toast (ver "Componentes v1.1"). Aquí solo
+   posiciona el stack abajo-derecha. Auto-dismiss + progreso viven en JS
+   (sgi-common.js · initToasts). */
 #sgi-flash-container {
     position: fixed;
-    top: 64px;
-    right: 24px;
+    bottom: 20px;
+    right: 20px;
     z-index: 1200;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    align-items: flex-end;
     pointer-events: none;
-    background-color: transparent;
 }
-#sgi-flash-container .alert {
+/* El `.toast` del Sistema de Diseño colisiona con el `.toast` de Bootstrap
+   (que aplica display:none vía .toast:not(.show), box-shadow, borde y radio).
+   Bajo el ID #sgi-flash-container ganamos por especificidad y re-imponemos el
+   look del diseño. Mismo patrón que .modal → .modal-stage. */
+#sgi-flash-container .toast {
     pointer-events: auto;
+    display: flex;
+    max-width: none;
     margin: 0;
-    overflow: hidden;
-    position: relative;
-    font-size: var(--fs-body-lg);
-    min-width: 280px;
-    background-color: #fff;
-    color: var(--text-default);
-    border-left: 3px solid var(--rule);
+    border: 0;
+    border-left: 3px solid var(--primary-color);
+    border-radius: 0;
+    box-shadow: none;
+    opacity: 1;
 }
-#sgi-flash-container .alert-success { border-left-color: var(--primary-color); color: #2d6e42; }
-#sgi-flash-container .alert-danger  { border-left-color: var(--danger-color);  color: #842029; }
-#sgi-flash-container .alert-warning { border-left-color: var(--warning-color); color: var(--warning-text); }
-#sgi-flash-container .alert-info    { border-left-color: var(--info-color);    color: var(--info-text); }
-#sgi-flash-container .alert .btn-close { display: none; }
-#sgi-flash-container .alert::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0;
-    height: 2px; width: 100%;
-    animation: sgi-flash-timer 4s linear forwards;
-}
-#sgi-flash-container .alert-success::after { background-color: var(--primary-color); }
-#sgi-flash-container .alert-danger::after  { background-color: var(--danger-color); }
-#sgi-flash-container .alert-warning::after { background-color: var(--warning-color); }
-#sgi-flash-container .alert-info::after    { background-color: var(--info-color); }
-
-@keyframes sgi-flash-timer {
-    from { width: 100%; }
-    to   { width: 0%; }
-}
+#sgi-flash-container .toast.success { border-left-color: var(--primary-color); }
+#sgi-flash-container .toast.danger  { border-left-color: var(--danger-color); }
+#sgi-flash-container .toast.warning { border-left-color: var(--warning-color); }
+#sgi-flash-container .toast.info    { border-left-color: var(--info-color); }
 
 /* =================================================================
    Componentes v1.1 — capa flotante y controles

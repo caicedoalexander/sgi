@@ -129,13 +129,15 @@ $this->assign('title', 'Nueva Novedad');
             <!-- Hours fields -->
             <div class="col-md-4" id="start-time-group" style="display:none;">
                 <label class="form-label">Hora Salida</label>
-                <input type="time" name="start_time" class="form-control"
-                       value="<?= h($novelty->start_time ?? '') ?>">
+                <input type="text" name="start_time" class="form-control flatpickr-time"
+                       placeholder="HH:MM" autocomplete="off"
+                       value="<?= $novelty->start_time ? h($novelty->start_time->format('H:i')) : '' ?>">
             </div>
             <div class="col-md-4" id="end-time-group" style="display:none;">
                 <label class="form-label">Hora Entrada</label>
-                <input type="time" name="end_time" class="form-control"
-                       value="<?= h($novelty->end_time ?? '') ?>">
+                <input type="text" name="end_time" class="form-control flatpickr-time"
+                       placeholder="HH:MM" autocomplete="off"
+                       value="<?= $novelty->end_time ? h($novelty->end_time->format('H:i')) : '' ?>">
             </div>
 
             <div class="col-12">

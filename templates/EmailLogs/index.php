@@ -79,20 +79,15 @@ $hasFilters = $status !== '' || $eventType !== '' || $from !== '' || $to !== '' 
                     ]) ?>
                 </div>
                 <div class="col-md-3">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label class="sgi-filter-label" for="filter-from">Desde</label>
-                            <input type="text" name="from" id="filter-from"
-                                   class="form-control form-control-sm flatpickr-date"
-                                   value="<?= h($from) ?>" placeholder="YYYY-MM-DD">
-                        </div>
-                        <div class="col-6">
-                            <label class="sgi-filter-label" for="filter-to">Hasta</label>
-                            <input type="text" name="to" id="filter-to"
-                                   class="form-control form-control-sm flatpickr-date"
-                                   value="<?= h($to) ?>" placeholder="YYYY-MM-DD">
-                        </div>
-                    </div>
+                    <label class="sgi-filter-label" for="el-range">Período</label>
+                    <?= $this->element('date_range_filter', [
+                        'id' => 'el-range',
+                        'fromName' => 'from',
+                        'toName' => 'to',
+                        'from' => $from,
+                        'to' => $to,
+                        'inputStyle' => 'width:100%;',
+                    ]) ?>
                 </div>
             </div>
         </div>

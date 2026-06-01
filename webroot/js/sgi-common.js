@@ -72,6 +72,7 @@ window.sgiInit = function (root) {
     if (typeof flatpickr !== 'undefined') {
         if (flatpickr.l10ns && flatpickr.l10ns.es) {
             flatpickr.localize(flatpickr.l10ns.es);
+            flatpickr.l10ns.es.rangeSeparator = ' → ';
         }
         root.querySelectorAll('input.flatpickr-date').forEach(function (el) {
             if (el._flatpickr) return; // evita doble init
@@ -81,6 +82,46 @@ window.sgiInit = function (root) {
                 altFormat: 'd/m/Y',
                 locale: 'es',
                 animate: true,
+                allowInput: true,
+            });
+        });
+
+        // Rango de fechas: UN solo input que escribe dos hidden inputs
+        // (data-from / data-to apuntan a sus selectores). Reemplaza los pares
+        // date_from / date_to sueltos.
+        root.querySelectorAll('input.flatpickr-range').forEach(function (el) {
+            // el guard !dataset.from descarta el altInput que clona Flatpickr (no lleva data-*).
+            if (el._flatpickr || !el.dataset.from) return;
+            var fromEl = el.dataset.from ? document.querySelector(el.dataset.from) : null;
+            var toEl = el.dataset.to ? document.querySelector(el.dataset.to) : null;
+            var def = [];
+            if (el.dataset.fromValue) def.push(el.dataset.fromValue);
+            if (el.dataset.toValue) def.push(el.dataset.toValue);
+            flatpickr(el, {
+                mode: 'range',
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd/m/Y',
+                locale: 'es',
+                animate: true,
+                defaultDate: def.length ? def : null,
+                onChange: function (dates, str, inst) {
+                    if (fromEl) fromEl.value = dates[0] ? inst.formatDate(dates[0], 'Y-m-d') : '';
+                    if (toEl) toEl.value = dates[1] ? inst.formatDate(dates[1], 'Y-m-d') : '';
+                },
+            });
+        });
+
+        // Hora: time picker 24h con pasos de 30 min (permite tipear valor exacto).
+        root.querySelectorAll('input.flatpickr-time').forEach(function (el) {
+            if (el._flatpickr) return;
+            flatpickr(el, {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: 'H:i',
+                time_24hr: true,
+                minuteIncrement: 15,
+                locale: 'es',
                 allowInput: true,
             });
         });
@@ -113,7 +154,53 @@ window.sgiInit = function (root) {
             });
         });
     }
+
+    initToasts(root);
 };
+
+/**
+ * Toasts del flash: auto-dismiss + barra de progreso + cierre manual.
+ * Los `.toast.danger` no se autocierran (solo cierre manual), como pide el
+ * Sistema de Diseño. Pausa el temporizador al pasar el mouse por encima.
+ */
+function initToasts(root) {
+    (root || document).querySelectorAll('#sgi-flash-container .toast').forEach(function (toast) {
+        if (toast.dataset.toastInit) return;
+        toast.dataset.toastInit = '1';
+
+        function dismiss() {
+            toast.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(12px)';
+            setTimeout(function () { toast.remove(); }, 200);
+        }
+
+        var closeBtn = toast.querySelector('.toast-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', dismiss);
+        }
+
+        // danger = persistente (sin auto-dismiss ni barra).
+        if (toast.classList.contains('danger')) return;
+
+        var duration = 5000;
+        var bar = toast.querySelector('.toast-progress');
+        if (bar) {
+            bar.style.transition = 'width ' + duration + 'ms linear';
+            requestAnimationFrame(function () { bar.style.width = '0%'; });
+        }
+
+        var timer = setTimeout(dismiss, duration);
+        // Pausa al hover: cancela el cierre y congela la barra.
+        toast.addEventListener('mouseenter', function () {
+            clearTimeout(timer);
+            if (bar) {
+                bar.style.transition = 'none';
+                bar.style.width = getComputedStyle(bar).width;
+            }
+        });
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     window.sgiInit(document);

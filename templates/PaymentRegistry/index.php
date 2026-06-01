@@ -22,184 +22,179 @@ $typeBadge = [
     'liquidation'   => 'pill-info-soft',
 ];
 
+$typeOptions = [
+    'invoice'     => 'Factura',
+    'advance'     => 'Anticipo',
+    'refund'      => 'Reintegro',
+    'debit_note'  => 'Nota Débito',
+    'receipt'     => 'Recibo',
+    'credit_card' => 'Tarjeta de Crédito',
+    'liquidation' => 'Liquidación',
+];
+
 $hasFilters = !empty(array_filter($filters, fn($v) => $v !== null && $v !== ''));
 $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
+
+// Solicitud · Entidad · Monto · Fechas · Estado · Registrado por
+$gridCols = '1.2fr 1.4fr 1fr 1fr 1.3fr 1fr';
 ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Registro de Pagos</span>
-    <span class="text-muted" style="font-size:.8rem;font-weight:500;">
-        <?= $total ?> pago<?= $total !== 1 ? 's' : '' ?>
-    </span>
+<!-- ═══ Header ═══ -->
+<div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
+    <div>
+        <span class="sgi-page-title">Registro de Pagos</span>
+        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
+            <span class="sgi-fg-muted"><?= $total ?> pago<?= $total !== 1 ? 's' : '' ?> · vista consolidada</span>
+        </div>
+    </div>
 </div>
 
-<!-- Filtros -->
-<div class="sgi-search-bar mb-4">
-    <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
-    <div class="row g-2 align-items-end">
-        <div class="col-md-2">
-            <label class="sgi-filter-label" for="filter-type">Tipo</label>
-            <select name="type" id="filter-type" class="form-select form-select-sm">
-                <option value="">Todos</option>
-                <option value="invoice"       <?= ($filters['type'] ?? '') === 'invoice'       ? 'selected' : '' ?>>Factura</option>
-                <option value="advance"       <?= ($filters['type'] ?? '') === 'advance'       ? 'selected' : '' ?>>Anticipo</option>
-                <option value="refund"        <?= ($filters['type'] ?? '') === 'refund'        ? 'selected' : '' ?>>Reintegro</option>
-                <option value="debit_note"    <?= ($filters['type'] ?? '') === 'debit_note'    ? 'selected' : '' ?>>Nota Débito</option>
-                <option value="receipt"       <?= ($filters['type'] ?? '') === 'receipt'       ? 'selected' : '' ?>>Recibo</option>
-                <option value="credit_card"   <?= ($filters['type'] ?? '') === 'credit_card'   ? 'selected' : '' ?>>Tarjeta de Crédito</option>
-                <option value="liquidation"   <?= ($filters['type'] ?? '') === 'liquidation'   ? 'selected' : '' ?>>Liquidación</option>
-            </select>
+<!-- ═══ Filtros (persistentes inline) ═══ -->
+<?= $this->Form->create(null, [
+    'type' => 'get',
+    'valueSources' => ['query'],
+    'class' => 'd-flex gap-2 align-items-center flex-wrap',
+    'style' => 'margin-bottom:14px;',
+]) ?>
+    <select name="type" class="form-select form-select-sm" style="max-width:190px;">
+        <option value="">Tipo: Todos</option>
+        <?php foreach ($typeOptions as $value => $label): ?>
+        <option value="<?= h($value) ?>" <?= ($filters['type'] ?? '') === $value ? 'selected' : '' ?>>
+            Tipo: <?= h($label) ?>
+        </option>
+        <?php endforeach; ?>
+    </select>
+    <select name="authorized" class="form-select form-select-sm" style="max-width:170px;">
+        <option value="">Estado: Todos</option>
+        <option value="yes" <?= ($filters['authorized'] ?? '') === 'yes' ? 'selected' : '' ?>>Estado: Autorizado</option>
+        <option value="no"  <?= ($filters['authorized'] ?? '') === 'no'  ? 'selected' : '' ?>>Estado: Pendiente</option>
+    </select>
+    <select name="banking_entity_id" class="form-select form-select-sm" style="max-width:220px;">
+        <option value="">Entidad: Todas</option>
+        <?php foreach ($bankingEntities as $beId => $beName): ?>
+        <option value="<?= h((string)$beId) ?>" <?= ($filters['banking_entity_id'] ?? '') == $beId ? 'selected' : '' ?>>
+            <?= h($beName) ?>
+        </option>
+        <?php endforeach; ?>
+    </select>
+    <div style="width:230px;">
+        <?= $this->element('date_range_filter', [
+            'id' => 'pr-range',
+            'from' => $filters['date_from'] ?? '',
+            'to' => $filters['date_to'] ?? '',
+            'inputStyle' => 'width:100%;',
+        ]) ?>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">
+        <i class="bi bi-funnel me-1" aria-hidden="true"></i>Aplicar filtros
+    </button>
+    <?php if ($hasFilters): ?>
+    <?= $this->Html->link(
+        '<i class="bi bi-x" aria-hidden="true"></i> Limpiar filtros',
+        ['action' => 'index'],
+        ['class' => 'btn btn-ghost btn-sm sgi-fg-secondary', 'escape' => false]
+    ) ?>
+    <?php endif; ?>
+<?= $this->Form->end() ?>
+
+<!-- ═══ Tabla ═══ -->
+<div class="sgi-card" style="padding:0;">
+    <div class="row-fact head" style="grid-template-columns:<?= $gridCols ?>;" role="row">
+        <span>Tipo · Referencia</span>
+        <span>Entidad · Origen</span>
+        <span style="text-align:right;">Monto</span>
+        <span>Fecha pago</span>
+        <span>Estado · Autorizado por</span>
+        <span>Registrado por</span>
+    </div>
+
+    <?php if (empty($payments)): ?>
+    <div class="empty-state">
+        <div class="es-icon es-icon-neutral">
+            <i class="bi bi-cash-stack" aria-hidden="true"></i>
         </div>
-        <div class="col-md-2">
-            <label class="sgi-filter-label" for="filter-authorized">Estado</label>
-            <select name="authorized" id="filter-authorized" class="form-select form-select-sm">
-                <option value="">Todos</option>
-                <option value="yes" <?= ($filters['authorized'] ?? '') === 'yes' ? 'selected' : '' ?>>Autorizado</option>
-                <option value="no"  <?= ($filters['authorized'] ?? '') === 'no'  ? 'selected' : '' ?>>Pendiente</option>
-            </select>
+        <div class="es-title">Sin pagos</div>
+        <div class="es-msg">No se encontraron pagos para los filtros aplicados.</div>
+    </div>
+    <?php else: ?>
+    <?php foreach ($payments as $p):
+        $hasSource = !empty($p['source_url']);
+        $tag = $hasSource ? 'a' : 'div';
+        $sourceIcon = match ($p['source_type'] ?? '') {
+            'scheduling' => 'calendar-check',
+            'petty_cash' => 'wallet2',
+            default => 'box-arrow-up-right',
+        };
+    ?>
+    <<?= $tag ?> class="row-fact" style="grid-template-columns:<?= $gridCols ?>;<?= $hasSource ? '' : 'cursor:default;' ?>"
+        <?= $hasSource ? 'href="' . h($this->Url->build($p['source_url'])) . '"' : '' ?> role="row">
+
+        <!-- Tipo · Referencia -->
+        <div style="min-width:0;">
+            <span class="pill pill-sm <?= h($typeBadge[$p['type']] ?? 'pill-muted') ?>">
+                <?= h($p['type_label']) ?>
+            </span>
+            <div class="mono" style="font-size:11.5px;font-weight:700;color:var(--text-strong);margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <?= h($p['reference']) ?>
+            </div>
         </div>
-        <div class="col-md-3">
-            <label class="sgi-filter-label" for="filter-banking-entity">Entidad Bancaria</label>
-            <select name="banking_entity_id" id="filter-banking-entity" class="form-select form-select-sm">
-                <option value="">Todas</option>
-                <?php foreach ($bankingEntities as $beId => $beName): ?>
-                <option value="<?= $beId ?>" <?= ($filters['banking_entity_id'] ?? '') == $beId ? 'selected' : '' ?>><?= h($beName) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="sgi-filter-label" for="filter-date-from">Desde</label>
-            <input type="text" name="date_from" id="filter-date-from"
-                   class="form-control form-control-sm flatpickr-date"
-                   value="<?= h($filters['date_from'] ?? '') ?>">
-        </div>
-        <div class="col-md-2">
-            <label class="sgi-filter-label" for="filter-date-to">Hasta</label>
-            <input type="text" name="date_to" id="filter-date-to"
-                   class="form-control form-control-sm flatpickr-date"
-                   value="<?= h($filters['date_to'] ?? '') ?>">
-        </div>
-        <div class="col-md-1 d-flex gap-1">
-            <button type="submit" class="btn btn-sm btn-primary flex-fill">
-                <i class="bi bi-search" aria-hidden="true"></i>
-            </button>
-            <?php if ($hasFilters): ?>
-            <?= $this->Html->link(
-                '<i class="bi bi-x-lg" aria-hidden="true"></i>',
-                ['action' => 'index'],
-                ['class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Limpiar filtros']
-            ) ?>
+
+        <!-- Entidad · Origen -->
+        <div style="min-width:0;">
+            <div style="font-size:12.5px;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <?= h($p['banking_entity']) ?: '—' ?>
+            </div>
+            <?php if ($hasSource): ?>
+            <div class="d-inline-flex align-items-center" style="gap:4px;font-size:10.5px;color:var(--text-faint);margin-top:3px;">
+                <i class="bi bi-<?= h($sourceIcon) ?>" aria-hidden="true"></i><?= h($p['source_label']) ?>
+            </div>
             <?php endif; ?>
         </div>
-    </div>
-    <?= $this->Form->end() ?>
-</div>
 
-<!-- Tabla -->
-<div class="card card-primary">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>Tipo</th>
-                    <th>Referencia</th>
-                    <th>Entidad Bancaria</th>
-                    <th class="text-end">Monto</th>
-                    <th>Fecha Pago</th>
-                    <th>Estado</th>
-                    <th>Autorizado por</th>
-                    <th>Registrado por</th>
-                    <th>Origen</th>
-                    <th>Fecha Registro</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (empty($payments)): ?>
-                <tr>
-                    <td colspan="10">
-                        <div class="sgi-doc-empty">
-                            <i class="bi bi-cash-stack sgi-doc-empty-icon" aria-hidden="true"></i>
-                            No se encontraron pagos.
-                        </div>
-                    </td>
-                </tr>
-                <?php else: ?>
-                <?php foreach ($payments as $p): ?>
-                <tr>
-                    <td>
-                        <span class="pill <?= $typeBadge[$p['type']] ?? 'pill-muted' ?>">
-                            <?= h($p['type_label']) ?>
-                        </span>
-                    </td>
-                    <td>
-                        <span class="mono" style="font-weight:600;font-size:.8rem;color:var(--text-strong);letter-spacing:-.01em;">
-                            <?= h($p['reference']) ?>
-                        </span>
-                    </td>
-                    <td style="font-size:var(--fs-body-lg);color:var(--text-muted);">
-                        <?= h($p['banking_entity']) ?>
-                    </td>
-                    <td class="text-end fw-semibold" style="white-space:nowrap;color:var(--primary-color);font-size:var(--fs-title-card);">
-                        $ <?= number_format($p['amount'], 0, ',', '.') ?>
-                    </td>
-                    <td style="font-size:var(--fs-body-lg);color:var(--text-muted);white-space:nowrap;">
-                        <?= $p['payment_date'] ? date('d/m/Y', strtotime($p['payment_date'])) : '—' ?>
-                    </td>
-                    <td>
-                        <?php if ($p['authorized']): ?>
-                        <span class="pill pill-primary-soft">
-                            <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Autorizado
-                        </span>
-                        <?php else: ?>
-                        <span class="pill pill-warning-soft">
-                            <i class="bi bi-clock me-1" aria-hidden="true"></i>Pendiente
-                        </span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if ($p['authorized_by']): ?>
-                        <div style="font-size:var(--fs-body-lg);font-weight:500;color:var(--text-default);line-height:1.3;">
-                            <?= h($p['authorized_by']) ?>
-                        </div>
-                        <?php if ($p['authorized_date']): ?>
-                        <div style="font-size:.7rem;color:var(--text-disabled);margin-top:.1rem;">
-                            <?= date('d/m/Y', strtotime($p['authorized_date'])) ?>
-                        </div>
-                        <?php endif; ?>
-                        <?php else: ?>
-                        <span style="color:#ddd;">—</span>
-                        <?php endif; ?>
-                    </td>
-                    <td style="font-size:var(--fs-body-lg);color:var(--text-muted);">
-                        <?= h($p['created_by']) ?>
-                    </td>
-                    <td>
-                        <?php if (!empty($p['source_url'])): ?>
-                            <?= $this->Html->link(
-                                '<i class="bi bi-' . h(match ($p['source_type']) {
-                                    'scheduling' => 'calendar-check',
-                                    'petty_cash' => 'wallet2',
-                                    default => 'box-arrow-up-right',
-                                }) . ' me-1" aria-hidden="true"></i>' . h($p['source_label']),
-                                $p['source_url'],
-                                ['class' => 'pill pill-muted text-decoration-none', 'escape' => false]
-                            ) ?>
-                        <?php else: ?>
-                        <span style="color:#ddd;">—</span>
-                        <?php endif; ?>
-                    </td>
-                    <td style="font-size:var(--fs-body-lg);color:var(--text-muted);white-space:nowrap;">
-                        <?= $p['created'] ? date('d/m/Y H:i', strtotime($p['created'])) : '—' ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
+        <!-- Monto -->
+        <div class="mono" style="text-align:right;font-weight:700;color:var(--primary-color);font-size:14px;white-space:nowrap;">
+            $ <?= number_format((float)$p['amount'], 0, ',', '.') ?>
+        </div>
+
+        <!-- Fecha pago + registro -->
+        <div class="mono" style="font-size:11.5px;color:var(--text-default);white-space:nowrap;">
+            <?= $p['payment_date'] ? date('d/m/Y', strtotime($p['payment_date'])) : '—' ?>
+            <?php if (!empty($p['created'])): ?>
+            <div style="font-size:10px;color:var(--text-faint);margin-top:2px;">
+                Reg. <?= date('d/m/Y H:i', strtotime($p['created'])) ?>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Estado · Autorizado por -->
+        <div style="min-width:0;">
+            <?php if ($p['authorized']): ?>
+            <span class="pill pill-sm pill-primary-soft">
+                <i class="bi bi-check" aria-hidden="true"></i>Autorizado
+            </span>
+            <?php else: ?>
+            <span class="pill pill-sm pill-warning-soft">
+                <i class="bi bi-clock" aria-hidden="true"></i>Pendiente
+            </span>
+            <?php endif; ?>
+            <div style="font-size:10px;color:var(--text-faint);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <?= $p['authorized_by'] ? h($p['authorized_by']) : '—' ?>
+                <?php if (!empty($p['authorized_date'])): ?>
+                · <?= date('d/m/Y', strtotime($p['authorized_date'])) ?>
                 <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
+            </div>
+        </div>
 
-    <!-- Paginación -->
-    <?php if ($totalPages > 1 || $total > 0): ?>
+        <!-- Registrado por -->
+        <div style="font-size:11.5px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            <?= h($p['created_by']) ?: '—' ?>
+        </div>
+    </<?= $tag ?>>
+    <?php endforeach; ?>
+    <?php endif; ?>
+
+    <!-- Paginación (manual: el servicio pagina cross-módulo en SQL) -->
+    <?php if ($total > 0): ?>
     <div class="card-footer d-flex justify-content-between align-items-center">
         <small class="text-muted">
             <?php

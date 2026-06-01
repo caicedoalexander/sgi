@@ -216,22 +216,13 @@ $readyForPaymentPills = [
                 ]) ?>
             </div>
             <div class="col-md-3">
-                <div class="row g-2">
-                    <div class="col-6">
-                        <label class="input-label" for="filter-date-from">Desde</label>
-                        <input type="text" name="date_from" id="filter-date-from"
-                               class="form-control form-control-sm flatpickr-date"
-                               value="<?= h($this->request->getQuery('date_from', '')) ?>"
-                               placeholder="Fecha desde">
-                    </div>
-                    <div class="col-6">
-                        <label class="input-label" for="filter-date-to">Hasta</label>
-                        <input type="text" name="date_to" id="filter-date-to"
-                               class="form-control form-control-sm flatpickr-date"
-                               value="<?= h($this->request->getQuery('date_to', '')) ?>"
-                               placeholder="Fecha hasta">
-                    </div>
-                </div>
+                <label class="input-label" for="inv-range">Período</label>
+                <?= $this->element('date_range_filter', [
+                    'id' => 'inv-range',
+                    'from' => $this->request->getQuery('date_from', ''),
+                    'to' => $this->request->getQuery('date_to', ''),
+                    'inputStyle' => 'width:100%;',
+                ]) ?>
             </div>
             <div class="col-12 d-flex justify-content-end" style="margin-top:6px;">
                 <button type="submit" class="btn btn-primary btn-sm">

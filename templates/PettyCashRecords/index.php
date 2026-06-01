@@ -157,18 +157,13 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 1.2fr 0.8fr 1.8fr 1fr 1.7
                 ]) ?>
             </div>
             <div class="col-md-3">
-                <label class="input-label" for="filter-date-from">Desde</label>
-                <input type="text" name="date_from" id="filter-date-from"
-                       class="form-control form-control-sm flatpickr-date"
-                       value="<?= h($this->request->getQuery('date_from', '')) ?>"
-                       placeholder="Fecha desde">
-            </div>
-            <div class="col-md-3">
-                <label class="input-label" for="filter-date-to">Hasta</label>
-                <input type="text" name="date_to" id="filter-date-to"
-                       class="form-control form-control-sm flatpickr-date"
-                       value="<?= h($this->request->getQuery('date_to', '')) ?>"
-                       placeholder="Fecha hasta">
+                <label class="input-label" for="pc-range">Período</label>
+                <?= $this->element('date_range_filter', [
+                    'id' => 'pc-range',
+                    'from' => $this->request->getQuery('date_from', ''),
+                    'to' => $this->request->getQuery('date_to', ''),
+                    'inputStyle' => 'width:100%;',
+                ]) ?>
             </div>
             <div class="col-md-3 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary btn-sm w-100">

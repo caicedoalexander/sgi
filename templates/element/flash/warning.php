@@ -7,8 +7,9 @@
 if (!isset($params['escape']) || $params['escape'] !== false) {
     $message = h($message);
 }
-?>
-<div class="alert alert-warning alert-dismissible fade show" role="alert">
-    <i class="bi bi-exclamation-circle me-2" aria-hidden="true"></i><?= $message ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
+echo $this->element('flash/_toast', [
+    'variant' => 'warning',
+    'title' => 'Atención',
+    'icon' => 'bi-exclamation-circle',
+    'message' => $message,
+]);

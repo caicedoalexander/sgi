@@ -147,18 +147,13 @@ $tabs = [
                 ]) ?>
             </div>
             <div class="col-md-3">
-                <label class="input-label" for="filter-date-from">Desde</label>
-                <input type="text" name="date_from" id="filter-date-from"
-                       class="form-control form-control-sm flatpickr-date"
-                       value="<?= h($this->request->getQuery('date_from', '')) ?>"
-                       placeholder="Fecha desde">
-            </div>
-            <div class="col-md-3">
-                <label class="input-label" for="filter-date-to">Hasta</label>
-                <input type="text" name="date_to" id="filter-date-to"
-                       class="form-control form-control-sm flatpickr-date"
-                       value="<?= h($this->request->getQuery('date_to', '')) ?>"
-                       placeholder="Fecha hasta">
+                <label class="input-label" for="ref-range">Período</label>
+                <?= $this->element('date_range_filter', [
+                    'id' => 'ref-range',
+                    'from' => $this->request->getQuery('date_from', ''),
+                    'to' => $this->request->getQuery('date_to', ''),
+                    'inputStyle' => 'width:100%;',
+                ]) ?>
             </div>
             <div class="col-md-3 d-flex align-items-end justify-content-end">
                 <button type="submit" class="btn btn-primary btn-sm">
