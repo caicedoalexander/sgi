@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Controller\Trait\CatalogCrudTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 
 class OperationCentersController extends AppController
 {
+    use CatalogCrudTrait;
     use ExcelWizardTrait;
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
@@ -32,14 +34,14 @@ class OperationCentersController extends AppController
     public function add()
     {
         $operationCenter = $this->OperationCenters->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $operationCenter = $this->OperationCenters->patchEntity($operationCenter, $this->request->getData());
-            if ($this->OperationCenters->save($operationCenter)) {
-                $this->Flash->success(__('El centro de operación ha sido guardado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo guardar el centro de operación. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->OperationCenters,
+            $operationCenter,
+            __('El centro de operación ha sido guardado.'),
+            __('No se pudo guardar el centro de operación. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('operationCenter'));
@@ -49,14 +51,14 @@ class OperationCentersController extends AppController
     public function edit($id = null)
     {
         $operationCenter = $this->OperationCenters->get($id);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $operationCenter = $this->OperationCenters->patchEntity($operationCenter, $this->request->getData());
-            if ($this->OperationCenters->save($operationCenter)) {
-                $this->Flash->success(__('El centro de operación ha sido actualizado.'));
-
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('No se pudo actualizar el centro de operación. Intente de nuevo.'));
+        $result = $this->_catalogSave(
+            $this->OperationCenters,
+            $operationCenter,
+            __('El centro de operación ha sido actualizado.'),
+            __('No se pudo actualizar el centro de operación. Intente de nuevo.'),
+        );
+        if ($result !== null) {
+            return $result;
         }
 
         $this->set(compact('operationCenter'));
