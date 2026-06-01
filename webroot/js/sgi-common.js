@@ -159,48 +159,130 @@ window.sgiInit = function (root) {
 };
 
 /**
- * Toasts del flash: auto-dismiss + barra de progreso + cierre manual.
- * Los `.toast.danger` no se autocierran (solo cierre manual), como pide el
- * Sistema de Diseño. Pausa el temporizador al pasar el mouse por encima.
+ * SgiToast — toasts del Sistema de Diseño (icon-box + título + mensaje + cierre
+ * + barra de progreso). Comparte apariencia y comportamiento con los flash de
+ * servidor (templates/element/flash/_toast.php): los `.toast.danger` son
+ * persistentes (solo cierre manual), el resto se autocierran a los 5s con pausa
+ * al pasar el mouse. Fuente única para los toasts disparados desde JS.
+ *
+ *   SgiToast.show('Mensaje', 'success'|'danger'|'warning'|'info', { title, icon, autoDismiss });
  */
-function initToasts(root) {
-    (root || document).querySelectorAll('#sgi-flash-container .toast').forEach(function (toast) {
-        if (toast.dataset.toastInit) return;
-        toast.dataset.toastInit = '1';
+var TOAST_ICONS = { success: 'bi-check-lg', danger: 'bi-exclamation-triangle', warning: 'bi-exclamation-circle', info: 'bi-info-circle' };
+var TOAST_TITLES = { success: 'Listo', danger: 'Error', warning: 'Atención', info: 'Información' };
 
-        function dismiss() {
-            toast.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(12px)';
-            setTimeout(function () { toast.remove(); }, 200);
-        }
+// Cablea auto-dismiss + barra + cierre sobre un `.toast` ya presente en el DOM.
+function bindToast(toast) {
+    if (toast.dataset.toastInit) return;
+    toast.dataset.toastInit = '1';
 
-        var closeBtn = toast.querySelector('.toast-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', dismiss);
-        }
+    function dismiss() {
+        toast.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(12px)';
+        setTimeout(function () { toast.remove(); }, 200);
+    }
 
-        // danger = persistente (sin auto-dismiss ni barra).
-        if (toast.classList.contains('danger')) return;
+    var closeBtn = toast.querySelector('.toast-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', dismiss);
+    }
 
-        var duration = 5000;
-        var bar = toast.querySelector('.toast-progress');
+    // danger = persistente (sin auto-dismiss ni barra).
+    if (toast.classList.contains('danger')) return;
+
+    var duration = 5000;
+    var bar = toast.querySelector('.toast-progress');
+    if (bar) {
+        bar.style.transition = 'width ' + duration + 'ms linear';
+        requestAnimationFrame(function () { bar.style.width = '0%'; });
+    }
+
+    var timer = setTimeout(dismiss, duration);
+    toast.addEventListener('mouseenter', function () {
+        clearTimeout(timer);
         if (bar) {
-            bar.style.transition = 'width ' + duration + 'ms linear';
-            requestAnimationFrame(function () { bar.style.width = '0%'; });
+            bar.style.transition = 'none';
+            bar.style.width = getComputedStyle(bar).width;
         }
-
-        var timer = setTimeout(dismiss, duration);
-        // Pausa al hover: cancela el cierre y congela la barra.
-        toast.addEventListener('mouseenter', function () {
-            clearTimeout(timer);
-            if (bar) {
-                bar.style.transition = 'none';
-                bar.style.width = getComputedStyle(bar).width;
-            }
-        });
     });
 }
+
+// Construye el markup de un toast (mismo que flash/_toast.php).
+function buildToast(message, variant, opts) {
+    opts = opts || {};
+    var icon = opts.icon || TOAST_ICONS[variant] || TOAST_ICONS.info;
+    var title = opts.title || TOAST_TITLES[variant] || TOAST_TITLES.info;
+
+    var toast = document.createElement('div');
+    toast.className = 'toast ' + variant;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+
+    var iconWrap = document.createElement('div');
+    iconWrap.className = 'toast-icon';
+    var iconEl = document.createElement('i');
+    iconEl.className = 'bi ' + icon;
+    iconEl.setAttribute('aria-hidden', 'true');
+    iconWrap.appendChild(iconEl);
+
+    var body = document.createElement('div');
+    body.className = 'toast-body';
+    var titleEl = document.createElement('div');
+    titleEl.className = 'toast-title';
+    titleEl.textContent = title;
+    var msgEl = document.createElement('div');
+    msgEl.className = 'toast-msg';
+    msgEl.textContent = message;
+    body.appendChild(titleEl);
+    body.appendChild(msgEl);
+
+    var closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'toast-close';
+    closeBtn.setAttribute('aria-label', 'Cerrar');
+    var closeIcon = document.createElement('i');
+    closeIcon.className = 'bi bi-x-lg';
+    closeIcon.setAttribute('aria-hidden', 'true');
+    closeBtn.appendChild(closeIcon);
+
+    toast.appendChild(iconWrap);
+    toast.appendChild(body);
+    toast.appendChild(closeBtn);
+
+    // La barra de progreso solo en toasts auto-descartables (danger nunca).
+    if (variant !== 'danger' && opts.autoDismiss !== false) {
+        var bar = document.createElement('div');
+        bar.className = 'toast-progress';
+        bar.style.width = '100%';
+        toast.appendChild(bar);
+    }
+    return toast;
+}
+
+function flashContainer() {
+    var c = document.getElementById('sgi-flash-container');
+    if (c) return c;
+    // Fallback defensivo: layouts (ajax/external) que no incluyen el container.
+    c = document.createElement('div');
+    c.id = 'sgi-flash-container';
+    document.body.appendChild(c);
+    return c;
+}
+
+// Dispara un toast desde JS.
+function showToast(message, variant, opts) {
+    var toast = buildToast(message, variant || 'info', opts);
+    flashContainer().appendChild(toast);
+    bindToast(toast);
+    return toast;
+}
+
+// Inicializa los toasts renderizados por el servidor (flash/_toast.php).
+function initToasts(root) {
+    (root || document).querySelectorAll('#sgi-flash-container .toast').forEach(bindToast);
+}
+
+window.SgiToast = { show: showToast, bind: bindToast };
 
 document.addEventListener('DOMContentLoaded', function () {
     window.sgiInit(document);
@@ -264,13 +346,6 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.setItem(storageKey, 'hide');
             btn.setAttribute('aria-expanded', 'false');
         });
-    });
-
-    // ── Auto-dismiss flash notifications ────────────────────────────────────
-    document.querySelectorAll('#sgi-flash-container .alert').forEach(function (el) {
-        setTimeout(function () {
-            bootstrap.Alert.getOrCreateInstance(el).close();
-        }, 4000);
     });
 
     // ── Click en fila/card para navegar ─────────────────────────────────────

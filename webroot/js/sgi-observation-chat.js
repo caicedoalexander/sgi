@@ -27,37 +27,12 @@
 (function (global) {
     'use strict';
 
-    function ensureToastContainer() {
-        var c = document.getElementById('sgi-toast-container');
-        if (c) return c;
-        c = document.createElement('div');
-        c.id = 'sgi-toast-container';
-        c.className = 'toast-container position-fixed top-0 end-0 p-3';
-        c.style.zIndex = '1090';
-        document.body.appendChild(c);
-        return c;
-    }
-
     function showToast(message, variant) {
-        if (!global.bootstrap || !global.bootstrap.Toast) {
-            global.alert(message);
+        if (global.SgiToast) {
+            global.SgiToast.show(message, variant || 'danger');
             return;
         }
-        variant = variant || 'danger';
-        var container = ensureToastContainer();
-        var toastEl = document.createElement('div');
-        toastEl.className = 'toast align-items-center text-bg-' + variant + ' border-0';
-        toastEl.setAttribute('role', 'alert');
-        toastEl.innerHTML =
-            '<div class="d-flex">' +
-              '<div class="toast-body"></div>' +
-              '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>' +
-            '</div>';
-        toastEl.querySelector('.toast-body').textContent = message;
-        container.appendChild(toastEl);
-        var t = new global.bootstrap.Toast(toastEl, { delay: 4500 });
-        toastEl.addEventListener('hidden.bs.toast', function () { toastEl.remove(); });
-        t.show();
+        global.alert(message);
     }
 
     function setSlot(root, slot, value) {

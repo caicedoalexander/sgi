@@ -85,49 +85,13 @@
         return '/' + trimmed;
     }
 
-    // ─── Flash notification (alineado con el sistema Flash de SGI) ──────────
-    // Reutiliza #sgi-flash-container del layout para que los mensajes AJAX
-    // tengan el mismo estilo, posición y animación que los Flash de servidor
-    // (templates/element/flash/*.php + #sgi-flash-container en styles.css).
-    var FLASH_ICONS = {
-        success: 'bi-check-circle',
-        danger:  'bi-exclamation-triangle',
-        warning: 'bi-exclamation-circle',
-        info:    'bi-info-circle',
-    };
-
-    function ensureFlashContainer() {
-        var c = document.getElementById('sgi-flash-container');
-        if (c) return c;
-        // Fallback: el layout no incluyó el container (no debería pasar en SGI).
-        c = document.createElement('div');
-        c.id = 'sgi-flash-container';
-        document.body.appendChild(c);
-        return c;
-    }
-
+    // ─── Flash notification (delega en SgiToast, fuente única de toasts) ─────
     function showToast(message, variant) {
-        variant = variant || 'danger';
-        var icon = FLASH_ICONS[variant] || FLASH_ICONS.info;
-        var container = ensureFlashContainer();
-        var alertEl = document.createElement('div');
-        alertEl.className = 'alert alert-' + variant + ' alert-dismissible fade show';
-        alertEl.setAttribute('role', 'alert');
-        alertEl.innerHTML =
-            '<i class="bi ' + icon + ' me-2"></i>' +
-            '<span data-slot="msg"></span>' +
-            '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>';
-        alertEl.querySelector('[data-slot="msg"]').textContent = message;
-        container.appendChild(alertEl);
-        // Coincide con la animación sgi-flash-timer (4s) en styles.css.
-        setTimeout(function () {
-            if (!alertEl.parentNode) return;
-            if (global.bootstrap && global.bootstrap.Alert) {
-                global.bootstrap.Alert.getOrCreateInstance(alertEl).close();
-            } else {
-                alertEl.remove();
-            }
-        }, 4000);
+        if (global.SgiToast) {
+            global.SgiToast.show(message, variant || 'danger');
+            return;
+        }
+        global.alert(message);
     }
 
     // Delegado en SgiDialogs (sgi-dialogs.js). Mantenemos un fallback local
