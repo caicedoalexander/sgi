@@ -70,6 +70,8 @@ var SGICalendar = (function () {
                 info.jsEvent.preventDefault();
                 if (info.event.url) window.location.href = info.event.url;
             },
+            dateClick: opts.dateClick || undefined,
+            eventsSet: opts.onEventsSet || undefined,
             eventDisplay: 'block',
             displayEventTime: false
         });
@@ -80,13 +82,16 @@ var SGICalendar = (function () {
         var calCss = document.querySelector('link[href*="sgi-calendar"]');
         if (calCss) document.head.appendChild(calCss);
 
-        // Bind filter changes
-        filterKeys.forEach(function (k) {
-            filterEls[k].addEventListener('change', function () {
-                calendar.refetchEvents();
-                updateClearBtn();
+        // Bind filter changes (a menos que el caller maneje los cambios él mismo,
+        // p.ej. cuando los filtros son select2 y/o se comparten con una vista lista).
+        if (opts.bindFilterChange !== false) {
+            filterKeys.forEach(function (k) {
+                filterEls[k].addEventListener('change', function () {
+                    calendar.refetchEvents();
+                    updateClearBtn();
+                });
             });
-        });
+        }
 
         // Clear button
         if (clearBtn) {

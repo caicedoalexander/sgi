@@ -3,8 +3,36 @@
  * @var \App\View\AppView $this
  * @var array $noveltyTypes
  * @var array $employees
+ * @var array<string, int> $tabCounts
  */
+use App\View\Presentation\NoveltyPresentation;
+
 $this->assign('title', 'Novedades Vigentes');
+
+$tabCounts = $tabCounts ?? ['mis' => 0, 'todas' => 0, 'rechazadas' => 0, 'vigentes' => 0, 'pendientes' => 0];
+
+$calendarColors = NoveltyPresentation::CALENDAR_COLORS;
+$calendarColorCount = count($calendarColors);
+$safeColor = function (?string $raw): string {
+    return preg_match('/^#[0-9A-Fa-f]{3,8}$/', (string)$raw) ? (string)$raw : '#6c757d';
+};
+$colorForType = function (?int $typeId) use ($calendarColors, $calendarColorCount, $safeColor): string {
+    if (!$typeId) {
+        return '#6c757d';
+    }
+    return $safeColor($calendarColors[($typeId - 1) % $calendarColorCount]);
+};
+$softFill = function (string $hex): string {
+    $hex = ltrim($hex, '#');
+    if (strlen($hex) === 3) {
+        $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+    }
+    $r = hexdec(substr($hex, 0, 2));
+    $g = hexdec(substr($hex, 2, 2));
+    $b = hexdec(substr($hex, 4, 2));
+
+    return "rgba($r,$g,$b,0.14)";
+};
 ?>
 <?= $this->element('cdn_select2') ?>
 
@@ -17,14 +45,14 @@ $this->assign('title', 'Novedades Vigentes');
 
 <!-- ═══ Sub-tabs (scope) ═══ -->
 <div class="d-flex" style="gap:4px;margin-bottom:12px;">
-    <?= $this->Html->link('Mis Novedades', ['action' => 'index'],
+    <?= $this->Html->link('Mis Novedades · ' . (int)$tabCounts['mis'], ['action' => 'index'],
         ['class' => 'chip']) ?>
-    <?= $this->Html->link('Todas', ['action' => 'all'],
+    <?= $this->Html->link('Todas las Novedades · ' . (int)$tabCounts['todas'], ['action' => 'all'],
         ['class' => 'chip']) ?>
-    <?= $this->Html->link('Rechazadas', ['action' => 'rejected'],
+    <?= $this->Html->link('Rechazadas · ' . (int)$tabCounts['rechazadas'], ['action' => 'rejected'],
         ['class' => 'chip']) ?>
     <?= $this->Html->link(
-        '<span class="dot" style="background:var(--primary-color);"></span>Vigentes',
+        '<span class="dot" style="background:var(--primary-color);"></span>Vigentes · ' . (int)$tabCounts['vigentes'],
         ['action' => 'active'],
         ['class' => 'chip is-active', 'escape' => false, 'style' => 'color:var(--primary-color)']
     ) ?>
@@ -54,6 +82,19 @@ $this->assign('title', 'Novedades Vigentes');
 <!-- Calendar -->
 <div class="sgi-card" style="padding:0;">
     <div id="calendar" class="sgi-calendar"></div>
+    <?php if (!empty($noveltyTypes)): ?>
+    <div class="sgi-cal-legend">
+        <span class="leg-title">Leyenda</span>
+        <?php foreach ($noveltyTypes as $tid => $tname):
+            $legColor = $colorForType((int)$tid);
+        ?>
+        <span class="leg-item">
+            <span class="leg-swatch" style="background:<?= $softFill($legColor) ?>;border-left:3px solid <?= $legColor ?>;"></span>
+            <span><?= h($tname) ?></span>
+        </span>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
 </div>
 
 <?= $this->element('fullcalendar_assets') ?>

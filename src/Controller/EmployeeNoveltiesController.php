@@ -73,20 +73,7 @@ class EmployeeNoveltiesController extends AppController
         $roleId = (int)$user->role_id;
         $visibleStatuses = $this->pipelineService->getVisibleStatuses($roleId);
 
-        $conditions = $this->_visibleStatusConditions('EmployeeNovelties.pipeline_status', $visibleStatuses);
-        // Exclude rejected from "Mis Novedades"
-        $conditions['EmployeeNovelties.pipeline_status !='] = NoveltyConstants::STATUS_RECHAZADA;
-
-        $query = $this->EmployeeNovelties->find()
-            ->contain(['Employees', 'NoveltyTypes', 'RegisteredByUsers'])
-            ->where($conditions)
-            ->where(function ($exp) {
-                // In contabilidad, only show novelties not yet linked to a liquidation doc
-                return $exp->or([
-                    'EmployeeNovelties.pipeline_status !=' => NoveltyConstants::STATUS_CONTABILIDAD,
-                    'EmployeeNovelties.liquidation_doc_id IS' => null,
-                ]);
-            })
+        $query = $this->_misNoveltiesQuery($visibleStatuses)
             ->orderBy(['EmployeeNovelties.created' => 'DESC']);
 
         $statusFilter = $this->request->getQuery('pipeline_status');
@@ -99,11 +86,18 @@ class EmployeeNoveltiesController extends AppController
             $query->where(['EmployeeNovelties.novelty_type_id' => $typeFilter]);
         }
 
+        $employeeFilter = $this->request->getQuery('employee_id');
+        if ($employeeFilter) {
+            $query->where(['EmployeeNovelties.employee_id' => $employeeFilter]);
+        }
+
         $novelties = $this->paginate($query);
 
         $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list')
             ->orderBy(['name' => 'ASC'])
             ->toArray();
+        $employees = $this->_employeeFilterList();
+        $tabCounts = $this->_buildTabCounts($roleId);
 
         [$upcomingNovelties, $typeDistribution] = $this->_buildSideRailData(clone $query);
 
@@ -111,11 +105,98 @@ class EmployeeNoveltiesController extends AppController
             'novelties',
             'statusFilter',
             'typeFilter',
+            'employeeFilter',
             'noveltyTypes',
+            'employees',
             'visibleStatuses',
             'upcomingNovelties',
             'typeDistribution',
+            'tabCounts',
         ));
+    }
+
+    /**
+     * Base query for "Mis Novedades" (role's visible statuses, excluding rejected
+     * and contabilidad novelties already linked to a liquidation doc). Compartido
+     * entre index() (paginación) y _buildTabCounts() (conteo) para evitar drift.
+     *
+     * @param array<string> $visibleStatuses Visible statuses for the role.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
+    private function _misNoveltiesQuery(array $visibleStatuses): SelectQuery
+    {
+        $conditions = $this->_visibleStatusConditions('EmployeeNovelties.pipeline_status', $visibleStatuses);
+        // Exclude rejected from "Mis Novedades"
+        $conditions['EmployeeNovelties.pipeline_status !='] = NoveltyConstants::STATUS_RECHAZADA;
+
+        return $this->EmployeeNovelties->find()
+            ->contain(['Employees', 'NoveltyTypes', 'RegisteredByUsers'])
+            ->where($conditions)
+            ->where(function ($exp) {
+                // In contabilidad, only show novelties not yet linked to a liquidation doc
+                return $exp->or([
+                    'EmployeeNovelties.pipeline_status !=' => NoveltyConstants::STATUS_CONTABILIDAD,
+                    'EmployeeNovelties.liquidation_doc_id IS' => null,
+                ]);
+            });
+    }
+
+    /**
+     * Employees dropdown options for the persistent filter row.
+     *
+     * @return array<int, string>
+     */
+    private function _employeeFilterList(): array
+    {
+        return $this->EmployeeNovelties->Employees->find('list', [
+            'keyField' => 'id',
+            'valueField' => 'full_name',
+        ])->orderBy(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
+    }
+
+    /**
+     * Conteos para las sub-tabs (Mis / Todas / Rechazadas / Vigentes) y el
+     * desglose del header (vigentes · pendientes de aprobación). Globales y
+     * estables entre scopes para que las tabs muestren los mismos números.
+     *
+     * @param int $roleId Current role id (for the "mis" scope).
+     * @return array{mis:int, todas:int, rechazadas:int, vigentes:int, pendientes:int}
+     */
+    private function _buildTabCounts(int $roleId): array
+    {
+        $visibleStatuses = $this->pipelineService->getVisibleStatuses($roleId);
+        $today = date('Y-m-d');
+        $table = $this->EmployeeNovelties;
+
+        // "Vigente" = en estado activo y hoy dentro del rango de la novedad.
+        $vigentes = $table->find()
+            ->where(['EmployeeNovelties.pipeline_status IN' => NoveltyConstants::ACTIVE_STATUSES])
+            ->where(function ($exp) use ($today) {
+                return $exp->or([
+                    $exp->and([
+                        'EmployeeNovelties.schedule_type' => NoveltyConstants::SCHEDULE_DAYS,
+                        'EmployeeNovelties.start_date <=' => $today,
+                        'EmployeeNovelties.end_date >=' => $today,
+                    ]),
+                    $exp->and([
+                        'EmployeeNovelties.schedule_type' => NoveltyConstants::SCHEDULE_HOURS,
+                        'EmployeeNovelties.permission_date' => $today,
+                    ]),
+                ]);
+            })
+            ->count();
+
+        return [
+            'mis' => $this->_misNoveltiesQuery($visibleStatuses)->count(),
+            'todas' => $table->find()->count(),
+            'rechazadas' => $table->find()
+                ->where(['EmployeeNovelties.pipeline_status' => NoveltyConstants::STATUS_RECHAZADA])
+                ->count(),
+            'vigentes' => $vigentes,
+            'pendientes' => $table->find()
+                ->where(['EmployeeNovelties.pipeline_status' => NoveltyConstants::STATUS_APROBACION])
+                ->count(),
+        ];
     }
 
     /**
@@ -190,17 +271,21 @@ class EmployeeNoveltiesController extends AppController
             $query->where(['EmployeeNovelties.novelty_type_id' => $typeFilter]);
         }
 
+        $employeeFilter = $this->request->getQuery('employee_id');
+        if ($employeeFilter) {
+            $query->where(['EmployeeNovelties.employee_id' => $employeeFilter]);
+        }
+
         $novelties = $this->paginate($query);
 
         $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list')
             ->orderBy(['name' => 'ASC'])
             ->toArray();
 
-        $employees = $this->EmployeeNovelties->Employees->find('list', [
-            'keyField' => 'id',
-            'valueField' => 'full_name',
-        ])->orderBy(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
+        $employees = $this->_employeeFilterList();
 
+        $user = $this->Authentication->getIdentity()->getOriginalData();
+        $tabCounts = $this->_buildTabCounts((int)$user->role_id);
         $visibleStatuses = [];
 
         [$upcomingNovelties, $typeDistribution] = $this->_buildSideRailData(clone $query);
@@ -209,11 +294,13 @@ class EmployeeNoveltiesController extends AppController
             'novelties',
             'statusFilter',
             'typeFilter',
+            'employeeFilter',
             'noveltyTypes',
             'employees',
             'visibleStatuses',
             'upcomingNovelties',
             'typeDistribution',
+            'tabCounts',
         ));
         $this->render('index');
     }
@@ -236,11 +323,20 @@ class EmployeeNoveltiesController extends AppController
             $query->where(['EmployeeNovelties.novelty_type_id' => $typeFilter]);
         }
 
+        $employeeFilter = $this->request->getQuery('employee_id');
+        if ($employeeFilter) {
+            $query->where(['EmployeeNovelties.employee_id' => $employeeFilter]);
+        }
+
         $novelties = $this->paginate($query);
 
         $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list')
             ->orderBy(['name' => 'ASC'])
             ->toArray();
+        $employees = $this->_employeeFilterList();
+
+        $user = $this->Authentication->getIdentity()->getOriginalData();
+        $tabCounts = $this->_buildTabCounts((int)$user->role_id);
 
         $statusFilter = null;
         $visibleStatuses = [];
@@ -251,10 +347,13 @@ class EmployeeNoveltiesController extends AppController
             'novelties',
             'statusFilter',
             'typeFilter',
+            'employeeFilter',
             'noveltyTypes',
+            'employees',
             'visibleStatuses',
             'upcomingNovelties',
             'typeDistribution',
+            'tabCounts',
         ));
         $this->render('index');
     }
@@ -272,12 +371,12 @@ class EmployeeNoveltiesController extends AppController
             'valueField' => 'name',
         ])->toArray();
 
-        $employees = $this->EmployeeNovelties->Employees->find('list', [
-            'keyField' => 'id',
-            'valueField' => 'full_name',
-        ])->orderBy(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
+        $employees = $this->_employeeFilterList();
 
-        $this->set(compact('noveltyTypes', 'employees'));
+        $user = $this->Authentication->getIdentity()->getOriginalData();
+        $tabCounts = $this->_buildTabCounts((int)$user->role_id);
+
+        $this->set(compact('noveltyTypes', 'employees', 'tabCounts'));
     }
 
     /**
@@ -429,6 +528,7 @@ class EmployeeNoveltiesController extends AppController
         $colors = NoveltyPresentation::CALENDAR_COLORS;
         $colorCount = count($colors);
         $statusLabels = NoveltyConstants::STATUS_LABELS;
+        $statusBadges = NoveltyPresentation::STATUS_BADGES;
 
         $events = [];
         foreach ($novelties as $novelty) {
@@ -436,13 +536,19 @@ class EmployeeNoveltiesController extends AppController
             $typeName = $novelty->novelty_type ? $novelty->novelty_type->name : 'Sin tipo';
             $color = $colors[($novelty->novelty_type_id - 1) % $colorCount];
 
+            $days = null;
             if ($novelty->schedule_type === NoveltyConstants::SCHEDULE_DAYS) {
                 $eventStart = $novelty->start_date->format('Y-m-d');
                 $eventEnd = $novelty->end_date->modify('+1 day')->format('Y-m-d');
+                $days = (int)$novelty->start_date->diffInDays($novelty->end_date) + 1;
             } else {
                 $eventStart = $novelty->permission_date->format('Y-m-d');
                 $eventEnd = $eventStart;
             }
+
+            $pill = $novelty->isRejected()
+                ? 'pill-danger-soft'
+                : ($statusBadges[$novelty->pipeline_status] ?? 'pill-muted');
 
             $events[] = [
                 'id' => $novelty->id,
@@ -453,6 +559,12 @@ class EmployeeNoveltiesController extends AppController
                 'url' => Router::url(['controller' => 'EmployeeNovelties', 'action' => 'view', $novelty->id]),
                 'extendedProps' => [
                     'status' => $statusLabels[$novelty->pipeline_status] ?? $novelty->pipeline_status,
+                    'pill' => $pill,
+                    'empName' => $employeeName,
+                    'typeName' => $typeName,
+                    'typeColor' => $color,
+                    'days' => $days,
+                    'code' => 'NV-' . str_pad((string)$novelty->id, 4, '0', STR_PAD_LEFT),
                 ],
             ];
         }

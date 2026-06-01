@@ -167,6 +167,42 @@
     color: var(--text-faint);
 }
 
+/* Día seleccionado — fondo bg-subtle (no pisa el verde de "hoy") */
+.sgi-calendar.fc .fc-day-selected:not(.fc-day-today) {
+    background-color: var(--bg-subtle);
+}
+.sgi-calendar.fc .fc-daygrid-day { cursor: pointer; }
+
+/* ─── Leyenda de tipos (pie del calendario) ────────── */
+.sgi-cal-legend {
+    padding: 10px 16px;
+    background-color: var(--bg-subtle);
+    border-top: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 10.5px;
+    color: var(--text-muted);
+}
+.sgi-cal-legend .leg-title {
+    font-weight: 700;
+    color: var(--text-faint);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-size: 9.5px;
+}
+.sgi-cal-legend .leg-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.sgi-cal-legend .leg-swatch {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+}
+
 /* Other-month days — fondo apagado + número desactivado */
 .sgi-calendar.fc .fc-day-other {
     background-color: var(--bg-muted);
