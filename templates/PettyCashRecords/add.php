@@ -52,7 +52,7 @@ $groupFilters = $groupFilters ?? [];
             </div>
             <div class="col-md-3">
                 <label class="form-label mb-1 sgi-filter-label">Centro de Operación</label>
-                <select name="operation_center_id" class="form-select form-select-sm">
+                <select name="operation_center_id" class="form-select form-select-sm select2-enable">
                     <option value="">Todos</option>
                     <?php foreach ($operationCenters as $id => $name): ?>
                     <option value="<?= $id ?>" <?= ($groupFilters['operation_center_id'] ?? '') == $id ? 'selected' : '' ?>><?= h($name) ?></option>

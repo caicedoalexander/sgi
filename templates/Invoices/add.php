@@ -137,7 +137,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
             <div class="row g-3">
                 <div class="col-md-3">
                     <?= $this->Form->control('operation_center_id', [
-                        'class'   => 'form-select',
+                        'class'   => 'form-select select2-enable',
                         'label'   => ['text' => 'Centro de Operación', 'class' => 'form-label'],
                         'options' => $operationCenters,
                         'empty'   => '-- Seleccione --',

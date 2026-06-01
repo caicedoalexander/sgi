@@ -445,7 +445,7 @@ $canRegress = !empty($viewModel->canRegress);
                         'label' => false,
                         'options' => $viewModel->operationCenters,
                         'empty' => '-- Seleccione --',
-                        'class' => 'form-select',
+                        'class' => 'form-select select2-enable',
                         'disabled' => !($canEdit('operation_center_id') && !$isAdvance),
                     ]) ?>
                 </div>
