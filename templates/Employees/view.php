@@ -634,6 +634,36 @@ $navTabColor = fn(string $status) => match ($status) {
                     </div>
                 </div>
 
+                <script>
+                (function () {
+                    var tree = document.getElementById('docTree');
+                    if (!tree) { return; }
+                    var rows = Array.prototype.slice.call(document.querySelectorAll('#docList .doc-row'));
+                    var empty = document.getElementById('docEmpty');
+
+                    function selectFolder(id) {
+                        tree.querySelectorAll('.doc-tree-item').forEach(function (el) {
+                            el.classList.toggle('is-active', el.getAttribute('data-folder-id') === id);
+                        });
+                        var visible = 0;
+                        rows.forEach(function (row) {
+                            var show = (id === 'all') || (row.getAttribute('data-folder-id') === id);
+                            row.style.display = show ? '' : 'none';
+                            if (show) { visible++; }
+                        });
+                        if (empty) { empty.style.display = visible === 0 ? '' : 'none'; }
+                    }
+
+                    tree.addEventListener('click', function (e) {
+                        var item = e.target.closest('.doc-tree-item');
+                        if (!item) { return; }
+                        selectFolder(item.getAttribute('data-folder-id'));
+                    });
+
+                    selectFolder('all');
+                })();
+                </script>
+
             <?php endif; ?>
         </div>
 
