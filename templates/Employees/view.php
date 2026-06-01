@@ -27,11 +27,20 @@ $initials = mb_strtoupper(
     mb_substr($employee->last_name1 ?? '', 0, 1)
 );
 
-// ─── Conteo de documentos (carpetas raíz + subcarpetas) ─────────────
+// ─── Conteo de documentos + lista plana para el navegador docs ──────
+// $allDocs aplana carpetas y subcarpetas en filas {doc, folderId, folderName}
+// para renderizar una única lista filtrable del lado del cliente.
 $totalDocs = 0;
+$allDocs = [];
 foreach ($folders as $folder) {
+    foreach ($folder->employee_documents as $doc) {
+        $allDocs[] = ['doc' => $doc, 'folderId' => $folder->id, 'folderName' => $folder->name];
+    }
     $totalDocs += count($folder->employee_documents);
     foreach ($folder->child_folders as $sf) {
+        foreach ($sf->employee_documents as $doc) {
+            $allDocs[] = ['doc' => $doc, 'folderId' => $sf->id, 'folderName' => $sf->name];
+        }
         $totalDocs += count($sf->employee_documents);
     }
 }
@@ -492,13 +501,18 @@ $navTabColor = fn(string $status) => match ($status) {
                     </div>
 
                     <div style="display:grid;grid-template-columns:260px 1fr;min-height:420px;">
+                        <style>
+                            .doc-tree-item { transition: background var(--t-fast) ease; }
+                            .doc-tree-item:hover { background: var(--bg-muted); }
+                            .doc-tree-item.is-active { background: var(--primary-soft); color: var(--primary-color); font-weight: 700; }
+                        </style>
                         <!-- ── Árbol de carpetas (izquierda) ── -->
-                        <div style="background:var(--bg-subtle);padding:12px 0;
+                        <div id="docTree" style="background:var(--bg-subtle);padding:12px 0;
                                     border-right:1px solid var(--rule);font-size:12px;">
                             <!-- Nodo raíz -->
-                            <div style="display:flex;align-items:center;gap:8px;padding:7px 14px;
-                                        color:var(--primary-color);font-weight:700;background:var(--primary-soft);">
-                                <i class="bi bi-chevron-down" style="font-size:11px;" aria-hidden="true"></i>
+                            <div class="doc-tree-item is-active" data-folder-id="all"
+                                 style="display:flex;align-items:center;gap:8px;padding:7px 14px;
+                                        cursor:pointer;font-weight:700;">
                                 <i class="bi bi-folder2-open" style="font-size:13px;" aria-hidden="true"></i>
                                 <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                     <?= h($employee->first_name . ' ' . ($employee->last_name1 ?? '')) ?>
@@ -508,19 +522,13 @@ $navTabColor = fn(string $status) => match ($status) {
                                 </span>
                             </div>
 
-                            <!-- Carpetas -->
+                            <!-- Carpetas + subcarpetas anidadas -->
                             <?php foreach ($folders as $folder):
                                 $folderDocCount = count($folder->employee_documents);
-                                foreach ($folder->child_folders as $sf) {
-                                    $folderDocCount += count($sf->employee_documents);
-                                }
                             ?>
-                            <a href="#folder-section-<?= $folder->id ?>"
-                               style="display:flex;align-items:center;gap:8px;padding:7px 14px 7px 24px;
-                                      text-decoration:none;color:var(--text-default);font-weight:500;
-                                      transition:background var(--t-fast) ease;"
-                               onmouseover="this.style.background='var(--bg-muted)'"
-                               onmouseout="this.style.background='transparent'">
+                            <div class="doc-tree-item" data-folder-id="<?= $folder->id ?>"
+                                 style="display:flex;align-items:center;gap:8px;padding:7px 14px 7px 24px;
+                                        cursor:pointer;color:var(--text-default);font-weight:500;">
                                 <i class="bi bi-folder" style="font-size:13px;color:var(--secondary-color);flex-shrink:0;" aria-hidden="true"></i>
                                 <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                     <?= h($folder->name) ?>
@@ -528,78 +536,91 @@ $navTabColor = fn(string $status) => match ($status) {
                                 <span class="mono" style="font-size:9.5px;color:var(--text-faint);font-weight:600;flex-shrink:0;">
                                     <?= $folderDocCount ?>
                                 </span>
-                            </a>
+                            </div>
+                            <?php foreach ($folder->child_folders as $subfolder): ?>
+                            <div class="doc-tree-item" data-folder-id="<?= $subfolder->id ?>"
+                                 style="display:flex;align-items:center;gap:8px;padding:6px 14px 6px 38px;
+                                        cursor:pointer;color:var(--text-muted);font-weight:500;">
+                                <i class="bi bi-folder" style="font-size:12px;color:var(--secondary-color);flex-shrink:0;" aria-hidden="true"></i>
+                                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                    <?= h($subfolder->name) ?>
+                                </span>
+                                <span class="mono" style="font-size:9.5px;color:var(--text-faint);font-weight:600;flex-shrink:0;">
+                                    <?= count($subfolder->employee_documents) ?>
+                                </span>
+                            </div>
+                            <?php endforeach; ?>
                             <?php endforeach; ?>
                         </div>
 
                         <!-- ── Lista de archivos (derecha) ── -->
                         <div style="min-width:0;display:flex;flex-direction:column;">
                             <!-- Header de columnas -->
-                            <div style="display:grid;grid-template-columns:2fr 1fr 96px;padding:10px 18px;
+                            <div style="display:grid;grid-template-columns:2fr 1fr 0.8fr 1fr 96px;padding:10px 18px;
                                         background:var(--bg-muted);font-size:9.5px;font-weight:700;
                                         color:var(--text-faint);letter-spacing:0.7px;text-transform:uppercase;
                                         gap:12px;align-items:center;border-bottom:1px solid var(--rule);">
                                 <span>Documento</span>
+                                <span>Carpeta</span>
+                                <span>Tamaño</span>
                                 <span>Cargado</span>
                                 <span style="text-align:right;">Acciones</span>
                             </div>
 
-                            <div style="flex:1;overflow:auto;">
-                                <?php foreach ($folders as $folder): ?>
-                                <div id="folder-section-<?= $folder->id ?>">
-                                    <!-- Encabezado de carpeta -->
-                                    <div style="display:flex;align-items:center;gap:8px;padding:9px 18px;
-                                                background:var(--bg-subtle);border-bottom:1px solid var(--rule);">
-                                        <i class="bi bi-folder2-open" style="font-size:13px;color:var(--secondary-color);" aria-hidden="true"></i>
-                                        <span style="font-size:12px;font-weight:700;color:var(--text-strong);">
-                                            <?= h($folder->name) ?>
+                            <div id="docList" style="flex:1;overflow:auto;">
+                                <?php foreach ($allDocs as $row):
+                                    $doc = $row['doc'];
+                                    $type = $this->DocumentIcon->typeLabel($doc->mime_type);
+                                ?>
+                                <div class="doc-row" data-folder-id="<?= $row['folderId'] ?>"
+                                     style="display:grid;grid-template-columns:2fr 1fr 0.8fr 1fr 96px;gap:12px;
+                                            align-items:center;padding:10px 18px;border-bottom:1px solid var(--rule);
+                                            font-size:12px;">
+                                    <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                        <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?> me-1"
+                                           style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1rem;vertical-align:middle"></i>
+                                        <?= $this->Html->link(
+                                            h($doc->name),
+                                            ['action' => 'downloadDocument', $employee->id, $doc->id],
+                                            ['target' => '_blank', 'class' => 'text-decoration-none']
+                                        ) ?>
+                                        <span class="pill <?= h($this->DocumentIcon->badgeClass($type)) ?> ms-1"><?= h($type) ?></span>
+                                    </span>
+                                    <span style="color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                        <i class="bi bi-folder me-1" style="color:var(--secondary-color);" aria-hidden="true"></i><?= h($row['folderName']) ?>
+                                    </span>
+                                    <span style="color:var(--text-faint);font-size:.8rem;">
+                                        <?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?>
+                                    </span>
+                                    <span style="color:var(--text-faint);font-size:.8rem;">
+                                        <?= $doc->has('uploaded_by_user') ? h($doc->uploaded_by_user->full_name) : '—' ?>
+                                        <span style="color:var(--text-disabled);display:block;"><?= $doc->created?->format('d/m/Y H:i') ?></span>
+                                    </span>
+                                    <span class="text-end">
+                                        <span class="d-flex gap-1 justify-content-end">
+                                            <?= $this->Html->link(
+                                                '<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>',
+                                                ['action' => 'downloadDocument', $employee->id, $doc->id],
+                                                ['class' => 'btn btn-sm btn-outline-primary', 'escape' => false, 'target' => '_blank', 'title' => 'Abrir']
+                                            ) ?>
+                                            <?php if (!empty($userPermissions['employees']['can_delete'])): ?>
+                                            <?= $this->Form->postLink(
+                                                '<i class="bi bi-trash" aria-hidden="true"></i>',
+                                                ['action' => 'deleteDocument', $employee->id, $doc->id],
+                                                ['confirm' => '¿Eliminar este documento?', 'class' => 'btn btn-sm btn-outline-danger', 'escape' => false, 'title' => 'Eliminar', 'style' => 'margin:0;display:inline;']
+                                            ) ?>
+                                            <?php endif; ?>
                                         </span>
-                                        <span class="mono" style="font-size:9.5px;color:var(--text-faint);font-weight:600;">
-                                            <?= count($folder->employee_documents) ?>
-                                        </span>
-                                    </div>
-
-                                    <?php if (!empty($folder->employee_documents)): ?>
-                                        <?= $this->element('employee_documents_table', [
-                                            'docs'       => $folder->employee_documents,
-                                            'employeeId' => $employee->id,
-                                            'canDelete'  => !empty($userPermissions['employees']['can_delete']),
-                                            'showHeader' => false,
-                                        ]) ?>
-                                    <?php else: ?>
-                                        <div style="padding:14px 18px;font-size:11.5px;color:var(--text-faint);
-                                                    font-style:italic;border-bottom:1px solid var(--rule);">
-                                            <i class="bi bi-file-earmark me-1" aria-hidden="true"></i>Carpeta vacía
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <?php foreach ($folder->child_folders as $subfolder): ?>
-                                    <div style="display:flex;align-items:center;gap:8px;padding:8px 18px 8px 34px;
-                                                background:var(--bg-subtle);border-bottom:1px solid var(--rule);">
-                                        <i class="bi bi-folder" style="font-size:12px;color:var(--secondary-color);" aria-hidden="true"></i>
-                                        <span style="font-size:11.5px;font-weight:600;color:var(--text-muted);">
-                                            <?= h($subfolder->name) ?>
-                                        </span>
-                                        <span class="mono" style="font-size:9.5px;color:var(--text-faint);font-weight:600;">
-                                            <?= count($subfolder->employee_documents) ?>
-                                        </span>
-                                    </div>
-                                    <?php if (!empty($subfolder->employee_documents)): ?>
-                                        <?= $this->element('employee_documents_table', [
-                                            'docs'       => $subfolder->employee_documents,
-                                            'employeeId' => $employee->id,
-                                            'canDelete'  => !empty($userPermissions['employees']['can_delete']),
-                                            'showHeader' => false,
-                                        ]) ?>
-                                    <?php else: ?>
-                                        <div style="padding:14px 18px 14px 34px;font-size:11.5px;color:var(--text-faint);
-                                                    font-style:italic;border-bottom:1px solid var(--rule);">
-                                            <i class="bi bi-file-earmark me-1" aria-hidden="true"></i>Subcarpeta vacía
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php endforeach; ?>
+                                    </span>
                                 </div>
                                 <?php endforeach; ?>
+
+                                <!-- Empty-state (lo muestra el JS cuando la carpeta no tiene docs) -->
+                                <div id="docEmpty" style="display:none;padding:28px 18px;text-align:center;
+                                            font-size:12px;color:var(--text-faint);font-style:italic;">
+                                    <i class="bi bi-folder2-open d-block" style="font-size:22px;margin-bottom:6px;" aria-hidden="true"></i>
+                                    Esta carpeta no tiene documentos.
+                                </div>
                             </div>
 
                             <!-- Footer de estado -->
@@ -612,6 +633,36 @@ $navTabColor = fn(string $status) => match ($status) {
                         </div>
                     </div>
                 </div>
+
+                <script>
+                (function () {
+                    var tree = document.getElementById('docTree');
+                    if (!tree) { return; }
+                    var rows = Array.prototype.slice.call(document.querySelectorAll('#docList .doc-row'));
+                    var empty = document.getElementById('docEmpty');
+
+                    function selectFolder(id) {
+                        tree.querySelectorAll('.doc-tree-item').forEach(function (el) {
+                            el.classList.toggle('is-active', el.getAttribute('data-folder-id') === id);
+                        });
+                        var visible = 0;
+                        rows.forEach(function (row) {
+                            var show = (id === 'all') || (row.getAttribute('data-folder-id') === id);
+                            row.style.display = show ? '' : 'none';
+                            if (show) { visible++; }
+                        });
+                        if (empty) { empty.style.display = visible === 0 ? '' : 'none'; }
+                    }
+
+                    tree.addEventListener('click', function (e) {
+                        var item = e.target.closest('.doc-tree-item');
+                        if (!item) { return; }
+                        selectFolder(item.getAttribute('data-folder-id'));
+                    });
+
+                    selectFolder('all');
+                })();
+                </script>
 
             <?php endif; ?>
         </div>
