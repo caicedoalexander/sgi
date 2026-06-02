@@ -21,7 +21,7 @@ class OperationCenterFactory extends BaseFactory
     {
         return [
             'name' => $generator->city(),
-            'code' => $generator->numerify('#########'),
+            'code' => (string)Seq::next(),
         ];
     }
 }

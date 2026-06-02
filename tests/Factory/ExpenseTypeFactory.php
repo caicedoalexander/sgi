@@ -20,7 +20,7 @@ class ExpenseTypeFactory extends BaseFactory
     public function definition(GeneratorInterface $generator): array
     {
         return [
-            'name' => $generator->numerify('Gasto-##########'),
+            'name' => 'Gasto-' . Seq::next(),
         ];
     }
 }

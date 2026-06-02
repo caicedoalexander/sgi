@@ -382,7 +382,13 @@ class RefundPaymentService
 
         $serviceResult = null;
 
-        $connection->transactional(function () use ($recordsTable, $recordId, $reason, &$serviceResult): bool {
+        $connection->transactional(function () use (
+            $recordsTable,
+            $recordId,
+            $reason,
+            $rejectedBy,
+            &$serviceResult,
+        ): bool {
             $record = $recordsTable->find()
                 ->where(['id' => $recordId])
                 ->epilog('FOR UPDATE')

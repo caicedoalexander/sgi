@@ -20,7 +20,7 @@ class RoleFactory extends BaseFactory
     public function definition(GeneratorInterface $generator): array
     {
         return [
-            'name' => $generator->numerify('Role-##########'),
+            'name' => 'Role-' . Seq::next(),
         ];
     }
 }

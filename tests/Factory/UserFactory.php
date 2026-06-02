@@ -29,10 +29,10 @@ class UserFactory extends BaseFactory
     public function definition(GeneratorInterface $generator): array
     {
         return [
-            'username' => $generator->numerify('user##########'),
+            'username' => 'user' . Seq::next(),
             'password' => $generator->password(),
             'full_name' => $generator->name(),
-            'email' => $generator->numerify('user##########') . '@test.local',
+            'email' => 'user' . Seq::next() . '@test.local',
         ];
     }
 }

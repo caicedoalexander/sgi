@@ -39,7 +39,7 @@ class InvoiceFactory extends BaseFactory
     public function definition(GeneratorInterface $generator): array
     {
         return [
-            'invoice_number' => $generator->numerify('F-#########'),
+            'invoice_number' => 'F-' . Seq::next(),
             'registration_date' => $generator->date(),
             'issue_date' => $generator->date(),
             'due_date' => $generator->date(),

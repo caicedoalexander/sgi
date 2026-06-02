@@ -30,7 +30,7 @@ class NoveltyLiquidationDocFactory extends BaseFactory
     public function definition(GeneratorInterface $generator): array
     {
         return [
-            'liquidation_number' => $generator->numerify('LIQ-#########'),
+            'liquidation_number' => 'LIQ-' . Seq::next(),
             'period' => NoveltyConstants::PERIOD_PRIMERA_QUINCENA,
             'document_date' => $generator->date(),
             'pipeline_status' => NoveltyConstants::STATUS_TESORERIA,

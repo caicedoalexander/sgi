@@ -31,7 +31,7 @@ class RefundFactory extends BaseFactory
     public function definition(GeneratorInterface $generator): array
     {
         return [
-            'code' => $generator->numerify('RE-#########'),
+            'code' => 'RE-' . Seq::next(),
             'status' => RefundConstants::STATUS_TESORERIA,
         ];
     }

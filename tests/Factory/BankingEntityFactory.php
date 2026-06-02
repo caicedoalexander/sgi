@@ -20,7 +20,7 @@ class BankingEntityFactory extends BaseFactory
     public function definition(GeneratorInterface $generator): array
     {
         return [
-            'code' => $generator->numerify('BANK#########'),
+            'code' => 'BANK' . Seq::next(),
             'name' => $generator->company(),
         ];
     }

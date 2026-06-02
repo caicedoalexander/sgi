@@ -20,7 +20,7 @@ class NoveltyTypeFactory extends BaseFactory
     public function definition(GeneratorInterface $generator): array
     {
         return [
-            'name' => $generator->numerify('Tipo-##########'),
+            'name' => 'Tipo-' . Seq::next(),
         ];
     }
 }
