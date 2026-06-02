@@ -2,45 +2,22 @@
 declare(strict_types=1);
 
 /**
- * PHPUnit bootstrap for unit tests.
+ * PHPUnit bootstrap.
  *
- * Loads the autoloader and minimal Cake bootstrap (without DB connection).
- * Tests must remain pure-unit — no DB queries, no fixtures.
+ * Carga el bootstrap completo de la app (config/bootstrap.php): define paths,
+ * funciones globales de Cake (h(), env(), ...), Configure (app + app_local +
+ * config/.env) y registra ConnectionManager con `default` y `test`.
+ *
+ * Los tests pure-unit siguen sin tocar BD (ConnectionManager es lazy). Los de
+ * integración usan la conexión `test`. Se aliasa `default` -> `test` como
+ * blindaje para que ningún test pueda tocar la base real.
  */
 
-use Cake\Core\Configure;
+use Cake\Datasource\ConnectionManager;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
+require dirname(__DIR__) . '/config/bootstrap.php';
 
-if (!defined('ROOT')) {
-    define('ROOT', dirname(__DIR__));
+if (in_array('test', ConnectionManager::configured(), true)) {
+    ConnectionManager::alias('test', 'default');
 }
-if (!defined('APP')) {
-    define('APP', ROOT . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR);
-}
-if (!defined('CONFIG')) {
-    define('CONFIG', ROOT . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR);
-}
-if (!defined('TESTS')) {
-    define('TESTS', ROOT . DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR);
-}
-if (!defined('TMP')) {
-    define('TMP', ROOT . DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR);
-}
-if (!defined('LOGS')) {
-    define('LOGS', ROOT . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR);
-}
-if (!defined('CACHE')) {
-    define('CACHE', TMP . 'cache' . DIRECTORY_SEPARATOR);
-}
-if (!defined('DS')) {
-    define('DS', DIRECTORY_SEPARATOR);
-}
-
-Configure::write('debug', true);
-Configure::write('App', [
-    'namespace' => 'App',
-    'paths' => [
-        'templates' => [ROOT . DS . 'templates' . DS],
-    ],
-]);

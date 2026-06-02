@@ -22,5 +22,6 @@ class InvoicePayment extends Entity
         'rejection_reason' => true,
         'created_by' => true,
         'is_refund' => true,
+        'idempotency_key' => true,
     ];
 }
