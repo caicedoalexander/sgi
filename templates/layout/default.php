@@ -91,7 +91,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
 <body>
     <div class="d-flex">
         <!-- Sidebar -->
-        <nav class="sidebar d-flex flex-column flex-shrink-0 py-3 bg-dark">
+        <nav class="sidebar d-flex flex-column flex-shrink-0 pt-3 bg-dark">
 
             <!-- Logo -->
             <div class="px-3">
@@ -101,7 +101,6 @@ $advancesMineCount = $advancesMineCount ?? 0;
                 <form method="get" action="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'all']) ?>" class="sb-search mb-2" role="search">
                     <i class="bi bi-search" aria-hidden="true"></i>
                     <input type="text" name="search" placeholder="Buscar facturas, empleados…" aria-label="Buscar" autocomplete="off">
-                    <span class="kbd">⌘K</span>
                 </form>
             </div>
 
