@@ -48,4 +48,24 @@ class AdvanceLegalizationFactory extends BaseFactory
     {
         return $this->setField('advance_invoice_id', $advance instanceof Invoice ? $advance->id : $advance);
     }
+
+    public function withCaseType(?string $caseType): static
+    {
+        return $this->setField('case_type', $caseType);
+    }
+
+    public function withShortageAmount(float $amount): static
+    {
+        return $this->setField('shortage_amount', $amount);
+    }
+
+    public function withSurplusAmount(float $amount): static
+    {
+        return $this->setField('surplus_amount', $amount);
+    }
+
+    public function withSurplusPaymentId(int $paymentId): static
+    {
+        return $this->setField('surplus_payment_id', $paymentId);
+    }
 }
