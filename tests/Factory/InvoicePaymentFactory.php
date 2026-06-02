@@ -25,6 +25,16 @@ class InvoicePaymentFactory extends BaseFactory
     }
 
     /**
+     * Auto-crea los parents NOT NULL banking_entity y created_by (user → role).
+     * `Invoices` se excluye: el test liga el pago con forInvoice() a un invoice
+     * existente.
+     */
+    public static function new(mixed $makeParameter = [], int $times = 1): static
+    {
+        return parent::new($makeParameter, $times)->withRequiredParents(['Invoices']);
+    }
+
+    /**
      * @param \CakephpFixtureFactories\Generator\GeneratorInterface $generator
      * @return array<string, mixed>
      */

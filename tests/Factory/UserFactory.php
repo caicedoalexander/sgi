@@ -14,6 +14,15 @@ class UserFactory extends BaseFactory
     }
 
     /**
+     * Auto-crea el parent NOT NULL role para que `UserFactory::new()->save()` sea
+     * autosuficiente.
+     */
+    public static function new(mixed $makeParameter = [], int $times = 1): static
+    {
+        return parent::new($makeParameter, $times)->withRequiredParents();
+    }
+
+    /**
      * @param \CakephpFixtureFactories\Generator\GeneratorInterface $generator
      * @return array<string, mixed>
      */

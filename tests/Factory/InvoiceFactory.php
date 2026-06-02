@@ -24,6 +24,15 @@ class InvoiceFactory extends BaseFactory
     }
 
     /**
+     * Auto-crea los parents NOT NULL (operation_center, expense_type, registered_by
+     * user → role) para que `InvoiceFactory::new()->save()` sea autosuficiente.
+     */
+    public static function new(mixed $makeParameter = [], int $times = 1): static
+    {
+        return parent::new($makeParameter, $times)->withRequiredParents();
+    }
+
+    /**
      * @param \CakephpFixtureFactories\Generator\GeneratorInterface $generator
      * @return array<string, mixed>
      */
