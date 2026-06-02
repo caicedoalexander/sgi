@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\Factory;
 
+use App\Constants\AdvanceConstants;
+use App\Test\Factory\AdvanceLegalizationFactory;
 use App\Test\Factory\EmployeeNoveltyFactory;
 use App\Test\Factory\InvoiceFactory;
 use App\Test\Factory\InvoicePaymentFactory;
@@ -94,5 +96,18 @@ final class FactorySmokeTest extends TestCase
 
         $this->assertNotEmpty($scheduling->id);
         $this->assertNotEmpty($scheduling->created_by);
+    }
+
+    public function testAdvanceLegalizationFactoryPersistsWithStatusAndParents(): void
+    {
+        $leg = AdvanceLegalizationFactory::new()
+            ->withStatus(AdvanceConstants::STATUS_REVISION_FIRMAS)
+            ->save();
+
+        $this->assertNotEmpty($leg->id);
+        $this->assertNotEmpty($leg->advance_invoice_id);
+        $this->assertNotEmpty($leg->created_by);
+        // status no es accesible en la entidad; fixture-factories debe setearlo igual.
+        $this->assertSame(AdvanceConstants::STATUS_REVISION_FIRMAS, $leg->status);
     }
 }

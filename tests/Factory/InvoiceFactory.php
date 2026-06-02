@@ -69,4 +69,9 @@ class InvoiceFactory extends BaseFactory
     {
         return $this->setField('document_type', InvoiceConstants::DOCTYPE_ANTICIPO);
     }
+
+    public function legalizacion(): static
+    {
+        return $this->setField('document_type', InvoiceConstants::DOCTYPE_LEGALIZACION);
+    }
 }
