@@ -8,6 +8,8 @@ use App\Test\Factory\InvoiceFactory;
 use App\Test\Factory\InvoicePaymentFactory;
 use App\Test\Factory\LiquidationDocPaymentFactory;
 use App\Test\Factory\NoveltyLiquidationDocFactory;
+use App\Test\Factory\PaymentSchedulingFactory;
+use App\Test\Factory\PettyCashRecordFactory;
 use App\Test\Factory\RefundFactory;
 use Cake\TestSuite\TestCase;
 
@@ -76,5 +78,21 @@ final class FactorySmokeTest extends TestCase
         $this->assertSame($doc->id, $payment->liquidation_doc_id);
         $this->assertNotEmpty($payment->banking_entity_id);
         $this->assertNotEmpty($payment->created_by);
+    }
+
+    public function testPettyCashRecordFactoryPersistsWithParents(): void
+    {
+        $record = PettyCashRecordFactory::new()->save();
+
+        $this->assertNotEmpty($record->id);
+        $this->assertNotEmpty($record->created_by);
+    }
+
+    public function testPaymentSchedulingFactoryPersistsWithParents(): void
+    {
+        $scheduling = PaymentSchedulingFactory::new()->save();
+
+        $this->assertNotEmpty($scheduling->id);
+        $this->assertNotEmpty($scheduling->created_by);
     }
 }
