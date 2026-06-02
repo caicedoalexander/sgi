@@ -12,6 +12,12 @@ use Cake\Core\Configure;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
+// Funciones globales de CakePHP (h(), env(), etc.) que algunos ViewModels usan
+// para escapar HTML. El autoload mínimo de la suite pura no las carga.
+if (!function_exists('h')) {
+    require dirname(__DIR__) . '/vendor/cakephp/cakephp/src/functions.php';
+}
+
 if (!defined('ROOT')) {
     define('ROOT', dirname(__DIR__));
 }
