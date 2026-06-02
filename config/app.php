@@ -473,6 +473,9 @@ return [
      */
     'TestSuite' => [
         'errorLevel' => null,
-        'fixtureStrategy' => null,
+        // Rollback transaccional por test (datos de factories + cambios de la app).
+        // No requiere listar $fixtures. Solo aplica a Cake\TestSuite\TestCase;
+        // los tests pure-unit (PHPUnit\Framework\TestCase) no se ven afectados.
+        'fixtureStrategy' => \CakephpFixtureFactories\TestSuite\FactoryTransactionStrategy::class,
     ],
 ];

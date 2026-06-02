@@ -2,51 +2,26 @@
 declare(strict_types=1);
 
 /**
- * PHPUnit bootstrap for unit tests.
+ * PHPUnit bootstrap.
  *
- * Loads the autoloader and minimal Cake bootstrap (without DB connection).
- * Tests must remain pure-unit — no DB queries, no fixtures.
+ * Carga el bootstrap completo de la aplicación (config/bootstrap.php), que define
+ * los paths, las funciones globales de Cake (h(), env(), ...), Configure (app +
+ * app_local + config/.env) y registra ConnectionManager con las conexiones
+ * `default` y `test`.
+ *
+ * Los tests pure-unit siguen funcionando sin tocar BD (ConnectionManager es lazy:
+ * no conecta hasta que se ejecuta una query). Los tests de integración usan la
+ * conexión `test`.
+ *
+ * Blindaje: se aliasa `default` → `test` para que ningún test pueda tocar la base
+ * de datos real por accidente, incluso si algún código pide la conexión `default`.
  */
 
-use Cake\Core\Configure;
+use Cake\Datasource\ConnectionManager;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
+require dirname(__DIR__) . '/config/bootstrap.php';
 
-// Funciones globales de CakePHP (h(), env(), etc.) que algunos ViewModels usan
-// para escapar HTML. El autoload mínimo de la suite pura no las carga.
-if (!function_exists('h')) {
-    require dirname(__DIR__) . '/vendor/cakephp/cakephp/src/functions.php';
+if (in_array('test', ConnectionManager::configured(), true)) {
+    ConnectionManager::alias('test', 'default');
 }
-
-if (!defined('ROOT')) {
-    define('ROOT', dirname(__DIR__));
-}
-if (!defined('APP')) {
-    define('APP', ROOT . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR);
-}
-if (!defined('CONFIG')) {
-    define('CONFIG', ROOT . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR);
-}
-if (!defined('TESTS')) {
-    define('TESTS', ROOT . DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR);
-}
-if (!defined('TMP')) {
-    define('TMP', ROOT . DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR);
-}
-if (!defined('LOGS')) {
-    define('LOGS', ROOT . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR);
-}
-if (!defined('CACHE')) {
-    define('CACHE', TMP . 'cache' . DIRECTORY_SEPARATOR);
-}
-if (!defined('DS')) {
-    define('DS', DIRECTORY_SEPARATOR);
-}
-
-Configure::write('debug', true);
-Configure::write('App', [
-    'namespace' => 'App',
-    'paths' => [
-        'templates' => [ROOT . DS . 'templates' . DS],
-    ],
-]);
