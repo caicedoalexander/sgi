@@ -19,6 +19,8 @@
         "cakephp/bake": "^3.6",
         "cakephp/cakephp-codesniffer": "^5.3",
         "cakephp/debug_kit": "^5.2",
+        "dereuromark/cakephp-fixture-factories": "^2.0",
+        "fakerphp/faker": "^1.24",
         "josegonzalez/dotenv": "^4.0",
         "phpunit/phpunit": "^13.1.8"
     },
