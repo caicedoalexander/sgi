@@ -10,9 +10,9 @@ $this->assign('title', 'Nuevo Empleado');
 ?>
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Nuevo Empleado</span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Nuevo Empleado</span>
+    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'index'], ['class' => 'btn btn-ghost-card btn-sm', 'escape' => false]) ?>
 </div>
 
 <?= $this->Form->create($employee, ['type' => 'file']) ?>
@@ -20,13 +20,11 @@ $this->assign('title', 'Nuevo Empleado');
 <?= $this->element('Employees/form', ['mode' => 'add']) ?>
 
 <!-- Imagen de Perfil -->
-<div class="card card-primary mb-4">
-    <div class="card-body">
-        <div class="col-md-3 mb-3">
-            <label class="form-label">Imagen de Perfil</label>
-            <input type="file" name="profile_image_file" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp">
-            <small class="text-muted">Max 2MB. JPEG, PNG, GIF o WebP</small>
-        </div>
+<div class="spi-card mb-3">
+    <div class="spi-label" style="margin-bottom:12px;">IMAGEN DE PERFIL</div>
+    <div class="col-md-3 mb-3">
+        <input type="file" name="profile_image_file" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp">
+        <small class="text-muted">Max 2MB. JPEG, PNG, GIF o WebP</small>
     </div>
 </div>
 

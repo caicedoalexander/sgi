@@ -15,7 +15,7 @@ final class HealthCheckResultTest extends TestCase
             name: 'database',
             status: HealthStatus::OK,
             critical: true,
-            details: ['latency_ms' => 12]
+            details: ['latency_ms' => 12],
         );
 
         $this->assertSame('database', $r->name);

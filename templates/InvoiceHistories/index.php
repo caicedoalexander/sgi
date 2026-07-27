@@ -5,8 +5,8 @@
  */
 $this->assign('title', 'Historial de Cambios');
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Historial de Cambios</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Historial de Cambios</span>
 </div>
 
 <div class="card card-primary">

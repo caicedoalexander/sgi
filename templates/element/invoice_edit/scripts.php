@@ -2,7 +2,7 @@
 /**
  * Scripts del template Invoices/edit. Tres bloques independientes
  * que el layout consolida en `fetch('script')`:
- *   1. SgiDocumentUploader init (subida/eliminación de soportes).
+ *   1. SpiDocumentUploader init (subida/eliminación de soportes).
  *   2. (Solo Anticipo) toggle de beneficiary-type entre provider/employee.
  *   3. Toggle del flujo de Recibo de Caja: doc_type → equivalent_doc_row
  *      + holder → employee/manual/provider wrappers.
@@ -55,16 +55,16 @@ use App\Constants\InvoiceConstants;
                     if (!item.id) return item.text;
                     var name = item.text;
                     var $chip = $(
-                        '<span class="sgi-approver-chip-inner">' +
+                        '<span class="spi-approver-chip-inner">' +
                         '<span class="av av-sm" style="background:' + colorFromName(name) + ';">' + initials(name) + '</span>' +
-                        '<span class="sgi-approver-chip-info">' +
-                        '<span class="sgi-approver-chip-name"></span>' +
-                        '<span class="sgi-approver-chip-meta">sin enviar</span>' +
+                        '<span class="spi-approver-chip-info">' +
+                        '<span class="spi-approver-chip-name"></span>' +
+                        '<span class="spi-approver-chip-meta">sin enviar</span>' +
                         '</span>' +
                         '<span class="pill pill-warning-soft"><i class="bi bi-clock" aria-hidden="true" style="font-size:9px;"></i>Pendiente</span>' +
                         '</span>'
                     );
-                    $chip.find('.sgi-approver-chip-name').text(name);
+                    $chip.find('.spi-approver-chip-name').text(name);
                     return $chip;
                 },
             });
@@ -120,7 +120,7 @@ use App\Constants\InvoiceConstants;
 <script>
 (function(){
     // ── Documents (upload + delete) via shared helper ──
-    SgiDocumentUploader.init({
+    SpiDocumentUploader.init({
         formSelector:        '#upload-doc-form',
         listSelector:        '#docs-list',
         emptySelector:       '#docs-empty-state',

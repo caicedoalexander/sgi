@@ -19,7 +19,7 @@ final class PettyCashPresentationTest extends TestCase
     {
         $row = PettyCashPresentation::forRow(new PettyCashRecord(['status' => PettyCashConstants::STATUS_CONTABILIDAD]));
 
-        $this->assertSame('pill-primary-soft', $row->statusBadgeClass);
+        $this->assertSame('pill-orange-soft', $row->statusBadgeClass);
         $this->assertSame(
             PettyCashConstants::STATUS_LABELS[PettyCashConstants::STATUS_CONTABILIDAD],
             $row->statusLabel,
@@ -53,8 +53,13 @@ final class PettyCashPresentationTest extends TestCase
 
     public function testPipelineVariantMapping(): void
     {
-        $this->assertSame('is-warning', PettyCashPresentation::pipelineVariant(PettyCashConstants::STATUS_TESORERIA));
-        $this->assertSame('is-orange', PettyCashPresentation::pipelineVariant(PettyCashConstants::STATUS_AGRUPACION));
-        $this->assertSame('', PettyCashPresentation::pipelineVariant(PettyCashConstants::STATUS_CONTABILIDAD));
+        // Esquema unificado (PipelineColorMap): mismo tipo de estado, mismo color
+        // en todos los módulos.
+        $this->assertSame('is-orange', PettyCashPresentation::pipelineVariant(PettyCashConstants::STATUS_CONTABILIDAD));
+        $this->assertSame('is-info', PettyCashPresentation::pipelineVariant(PettyCashConstants::STATUS_TESORERIA));
+        $this->assertSame('is-info', PettyCashPresentation::pipelineVariant(PettyCashConstants::STATUS_AGRUPACION));
+        $this->assertSame('is-warning', PettyCashPresentation::pipelineVariant(PettyCashConstants::STATUS_AUTORIZACION_PAGO));
+        $this->assertSame('is-accent', PettyCashPresentation::pipelineVariant(PettyCashConstants::STATUS_VERIFICACION_PAGO));
+        $this->assertSame('', PettyCashPresentation::pipelineVariant(PettyCashConstants::STATUS_PAGADA));
     }
 }

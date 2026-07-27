@@ -25,16 +25,31 @@ class InvoicePaymentsController extends AppController
         $this->actionPolicy = $container->get(InvoiceActionPolicy::class);
     }
 
+    /**
+     * Obtiene el usuario autenticado de la sesión.
+     *
+     * @return object
+     */
     private function _getCurrentUser(): object
     {
         return $this->Authentication->getIdentity()->getOriginalData();
     }
 
+    /**
+     * Obtiene el nombre del rol del usuario autenticado.
+     *
+     * @return string
+     */
     private function _getRoleName(): string
     {
         return $this->_getUserRoleName($this->_getCurrentUser());
     }
 
+    /**
+     * Obtiene el ID del rol del usuario autenticado.
+     *
+     * @return int
+     */
     private function _getRoleId(): int
     {
         return (int)$this->_getCurrentUser()->role_id;
@@ -45,7 +60,7 @@ class InvoicePaymentsController extends AppController
      * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_TESORERIA)]
-    public function addPayment($invoiceId = null)
+    public function addPayment(string|int|null $invoiceId = null)
     {
         $this->request->allowMethod(['post']);
         $invoicesTable = $this->fetchTable('Invoices');
@@ -70,10 +85,13 @@ class InvoicePaymentsController extends AppController
         );
 
         if ($result->success) {
+            // registerPayment siempre avanza la factura a autorizacion_pago.
             $this->Flash->success($result->data);
-        } else {
-            $this->Flash->error(implode(' ', (array)$result->errors));
+
+            return $this->_redirectForInvoice($invoice, 'index');
         }
+
+        $this->Flash->error(implode(' ', (array)$result->errors));
 
         return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);
     }
@@ -84,7 +102,7 @@ class InvoicePaymentsController extends AppController
      * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_TESORERIA)]
-    public function editPayment($invoiceId = null, $paymentId = null)
+    public function editPayment(string|int|null $invoiceId = null, string|int|null $paymentId = null)
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->fetchTable('Invoices')->get($invoiceId);
@@ -123,7 +141,7 @@ class InvoicePaymentsController extends AppController
      * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_AUTORIZACION_PAGO)]
-    public function authorizePayment($invoiceId = null, $paymentId = null)
+    public function authorizePayment(string|int|null $invoiceId = null, string|int|null $paymentId = null)
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->fetchTable('Invoices')->get($invoiceId);
@@ -142,9 +160,17 @@ class InvoicePaymentsController extends AppController
             } else {
                 $this->Flash->success('Pago autorizado. Factura devuelta a Tesorería (Pago Parcial).');
             }
-        } else {
-            $this->Flash->error('No se pudo autorizar el pago.');
+
+            // Cambio de estado (avance o devolución) → index; sin cambio
+            // (autorización de reintegro de anticipo) → edit.
+            if ($result['newPipelineStatus'] !== InvoiceConstants::STATUS_AUTORIZACION_PAGO) {
+                return $this->_redirectForInvoice((int)$invoiceId, 'index');
+            }
+
+            return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
         }
+
+        $this->Flash->error('No se pudo autorizar el pago.');
 
         return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
     }
@@ -157,7 +183,7 @@ class InvoicePaymentsController extends AppController
      * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_VERIFICACION_PAGO)]
-    public function confirmPayment($invoiceId = null)
+    public function confirmPayment(string|int|null $invoiceId = null)
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->fetchTable('Invoices')->get($invoiceId);
@@ -165,7 +191,9 @@ class InvoicePaymentsController extends AppController
         if (!$this->actionPolicy->canConfirmPayment($invoice, $this->_getRoleId())) {
             $this->Flash->error('No tiene permisos para confirmar este pago.');
 
-            return $this->_redirectForInvoice((int)$invoiceId, 'view', $invoiceId);
+            // Sin permiso: la factura sigue en verificacion_pago (no terminal),
+            // se queda en edit como el resto de payment-actions sin permiso.
+            return $this->_redirectForInvoice((int)$invoiceId, 'edit', $invoiceId);
         }
 
         $result = $this->paymentService->confirmPayment(
@@ -188,7 +216,7 @@ class InvoicePaymentsController extends AppController
      * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_AUTORIZACION_PAGO)]
-    public function rejectPayment($invoiceId = null, $paymentId = null)
+    public function rejectPayment(string|int|null $invoiceId = null, string|int|null $paymentId = null)
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->fetchTable('Invoices')->get($invoiceId);
@@ -221,7 +249,7 @@ class InvoicePaymentsController extends AppController
      * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES, step: InvoiceConstants::STATUS_TESORERIA)]
-    public function deletePayment($invoiceId = null, $paymentId = null)
+    public function deletePayment(string|int|null $invoiceId = null, string|int|null $paymentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $invoicesTable = $this->fetchTable('Invoices');

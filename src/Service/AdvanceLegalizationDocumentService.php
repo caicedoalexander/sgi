@@ -97,23 +97,30 @@ class AdvanceLegalizationDocumentService
     }
 
     /**
-     * Sube el comprobante de consignación del faltante.
+     * Sube un soporte general de la legalización a la tabla advance_legalization_documents.
      *
-     * Devuelve `ServiceResult::ok($filePath)` con la ruta relativa del archivo
-     * subido, o `ServiceResult::fail($error)` si la validación falla.
+     * @return \App\Model\Entity\AdvanceLegalizationDocument|string Entity en éxito, mensaje en error.
      */
-    public function attachShortageReceipt(AdvanceLegalization $leg, UploadedFile $file): ServiceResult
+    public function uploadDocument(int $legalizationId, UploadedFile $file, ?int $uploadedBy): object|string
     {
-        $info = $this->validateAndMoveUpload(
-            $file,
-            'advances/' . $leg->id,
-            'shortage_',
-        );
-        if (is_string($info)) {
-            return ServiceResult::fail($info);
+        return $this->uploadAndSave($file, 'AdvanceLegalizationDocuments', 'advances/' . $legalizationId, 'leg_', [
+            'legalization_id' => $legalizationId,
+            'uploaded_by' => $uploadedBy,
+        ]);
+    }
+
+    /**
+     * Elimina un soporte verificando que pertenezca a la legalización indicada
+     * (anti-IDOR: nunca se borra por documentId crudo).
+     */
+    public function deleteDocument(int $documentId, int $legalizationId): bool
+    {
+        $table = TableRegistry::getTableLocator()->get('AdvanceLegalizationDocuments');
+        if (!$table->exists(['id' => $documentId, 'legalization_id' => $legalizationId])) {
+            return false;
         }
 
-        return ServiceResult::ok($info['file_path']);
+        return $this->deleteDocumentRecord('AdvanceLegalizationDocuments', $documentId);
     }
 
     /**

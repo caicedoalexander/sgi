@@ -197,6 +197,57 @@ class EmployeeDocumentService
     }
 
     /**
+     * Subir múltiples documentos a una misma carpeta (best-effort).
+     *
+     * Filtra entradas sin archivo real (UPLOAD_ERR_NO_FILE), valida la carpeta
+     * una sola vez y delega cada archivo en uploadDocument(). Los archivos que
+     * fallan validación NO abortan el lote: se acumulan en 'failed'.
+     *
+     * @param array<int, \Laminas\Diactoros\UploadedFile> $files
+     * @return \App\Service\ServiceResult ok(['uploaded' => int, 'failed' => array{name,error}[]])
+     *                        o fail() si la carpeta es inválida / no hay archivos.
+     */
+    public function uploadDocuments(
+        int $employeeId,
+        int $folderId,
+        array $files,
+        ?int $uploadedBy,
+    ): ServiceResult {
+        $files = array_values(array_filter(
+            $files,
+            fn($file) => $file instanceof UploadedFile && $file->getError() !== UPLOAD_ERR_NO_FILE,
+        ));
+
+        if ($files === []) {
+            return ServiceResult::fail('No se recibió ningún archivo válido.');
+        }
+
+        try {
+            $this->assertFolderOwnership($employeeId, $folderId);
+        } catch (RecordNotFoundException) {
+            return ServiceResult::fail('La carpeta seleccionada no existe o no pertenece al empleado.');
+        }
+
+        $uploaded = 0;
+        $failed = [];
+        foreach ($files as $file) {
+            $result = $this->uploadDocument($employeeId, $folderId, $file, $uploadedBy);
+            if ($result->success) {
+                $uploaded++;
+                continue;
+            }
+
+            $name = $file->getClientFilename();
+            $failed[] = [
+                'name' => $name !== null && $name !== '' ? $name : '(archivo sin nombre)',
+                'error' => $result->firstError() ?? 'No se pudo subir el documento.',
+            ];
+        }
+
+        return ServiceResult::ok(['uploaded' => $uploaded, 'failed' => $failed]);
+    }
+
+    /**
      * Crear una carpeta para el empleado validando ownership del padre (si aplica).
      */
     public function createFolder(int $employeeId, ?string $name, ?int $parentId): ServiceResult
@@ -251,7 +302,7 @@ class EmployeeDocumentService
             @unlink($absolutePath);
         }
 
-        return ServiceResult::ok();
+        return ServiceResult::ok(['employee_folder_id' => (int)$document->employee_folder_id]);
     }
 
     /**

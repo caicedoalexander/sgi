@@ -1,4 +1,4 @@
-# SGI — Sistema de Gestión Interna
+# SPI — Sistema de Procesos Internos
 
 Sistema interno de gestión administrativa y financiera construido sobre CakePHP 5.3 y PHP 8.4+. Coordina pipelines de facturas, anticipos, reintegros, caja menor, novedades, programaciones de pago y legalizaciones, con auditoría completa, control de permisos RBAC y notificaciones por correo.
 
@@ -148,7 +148,7 @@ Permisos resueltos por `AuthorizationService` (CRUD por módulo) y `PipelineAuth
 - **Paginación** — 15 ítems por página en todos los controladores.
 - **Tablas** — Servicios acceden vía `TableRegistry::getTableLocator()->get('TableName')`.
 - **DI** — Constructor con parámetros nullable y fallback `?? new ServiceClass()`.
-- **CSS** — Prefijo `.sgi-` para clases custom. Orden de carga: Bootstrap → Bootstrap Icons → Flatpickr → `styles.css`.
+- **CSS** — Prefijo `.spi-` para clases custom. Orden de carga: Bootstrap → Bootstrap Icons → Flatpickr → `styles.css`.
 - **Slugs** — Estados visibles en español sin acentos (`aprobacion`, `pagada`); estados técnicos internos en inglés (`pending`, `authorized`).
 - **Migraciones** — Heredan de `Migrations\BaseMigration` (NO `AbstractMigration`).
 

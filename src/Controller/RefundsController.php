@@ -5,17 +5,23 @@ namespace App\Controller;
 
 use App\Attribute\Permission;
 use App\Attribute\PipelineAction;
+use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RefundConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\Refund;
+use App\Service\Approval\ApprovalUrlBuilder;
+use App\Service\Pipeline\Invoice\Policy\InvoiceFieldAccessPolicy;
 use App\Service\Pipeline\Refund\Policy\RefundActionPolicy;
+use App\Service\RefundApprovalGuard;
+use App\Service\RefundApprovalService;
 use App\Service\RefundDocumentService;
 use App\Service\RefundHistoryService;
 use App\Service\RefundPaymentService;
 use App\Service\RefundPipelineService;
 use App\Service\StructuredLogger;
+use App\ValueObject\UserContext;
 use App\ViewModel\RefundAddViewModel;
 use App\ViewModel\RefundEditViewModel;
 use App\ViewModel\RefundViewViewModel;
@@ -37,6 +43,7 @@ class RefundsController extends AppController
     private RefundDocumentService $documentService;
     private RefundActionPolicy $actionPolicy;
     private RefundHistoryService $historyService;
+    private RefundApprovalService $approvalService;
 
     /**
      * @return void
@@ -50,11 +57,23 @@ class RefundsController extends AppController
         $this->documentService = $container->get(RefundDocumentService::class);
         $this->actionPolicy = $container->get(RefundActionPolicy::class);
         $this->historyService = $container->get(RefundHistoryService::class);
+        $this->approvalService = $container->get(RefundApprovalService::class);
     }
 
+    /**
+     * @return object
+     */
     private function _getCurrentUser(): object
     {
         return $this->Authentication->getIdentity()->getOriginalData();
+    }
+
+    /**
+     * @return string
+     */
+    private function _getBaseUrl(): string
+    {
+        return ApprovalUrlBuilder::baseFromRequest($this->request);
     }
 
     /**
@@ -194,6 +213,10 @@ class RefundsController extends AppController
         }
     }
 
+    /**
+     * @param string $value
+     * @return bool
+     */
     private static function _isValidDate(string $value): bool
     {
         $d = DateTimeImmutable::createFromFormat('Y-m-d', $value);
@@ -201,8 +224,12 @@ class RefundsController extends AppController
         return $d !== false && $d->format('Y-m-d') === $value;
     }
 
+    /**
+     * @param string|null $id
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null): void
+    public function view(?string $id = null): void
     {
         $record = $this->Refunds->get($id, contain: [
             'CreatedByUsers',
@@ -212,7 +239,7 @@ class RefundsController extends AppController
             'BankingEntities',
             'PaymentCreatedByUsers',
             'PaymentAuthorizedByUsers',
-            'Invoices' => ['Providers'],
+            'Invoices' => ['Providers', 'Employees', 'InvoiceDocuments'],
             'RefundObservations' => [
                 'Users',
                 'sort' => ['RefundObservations.created' => 'ASC'],
@@ -220,9 +247,18 @@ class RefundsController extends AppController
             'RefundDocuments' => ['UploadedByUsers'],
         ]);
 
-        $this->set('viewModel', new RefundViewViewModel($record));
+        $gates = $this->_childActionGates();
+        $this->set('viewModel', new RefundViewViewModel(
+            $record,
+            (new RefundApprovalGuard())->childRequirements((int)$record->id),
+            $gates['canResolveDian'],
+            canUploadSupport: $gates['canUploadSupport'],
+        ));
     }
 
+    /**
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -280,6 +316,9 @@ class RefundsController extends AppController
         $this->set('viewModel', $vm);
     }
 
+    /**
+     * @return array
+     */
     private function _loadBeneficiaryLists(): array
     {
         $employeesTable = $this->fetchTable('Employees');
@@ -306,15 +345,19 @@ class RefundsController extends AppController
         return [$employees, $providers];
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $record = $this->Refunds->get($id, contain: [
             'CreatedByUsers',
             'OperationCenters',
             'BeneficiaryEmployees',
             'BeneficiaryProviders',
-            'Invoices' => ['Providers', 'OperationCenters'],
+            'Invoices' => ['Providers', 'Employees', 'OperationCenters', 'InvoiceDocuments'],
             'RefundObservations' => [
                 'Users',
                 'sort' => ['RefundObservations.created' => 'ASC'],
@@ -373,6 +416,39 @@ class RefundsController extends AppController
     }
 
     /**
+     * Gates para las acciones inline sobre las hijas de un reintegro (viven en
+     * `aprobacion`). `canResolveDian` es de 3 partes: además de operar el step y
+     * tener can_edit(invoices), el `InvoiceFieldAccessPolicy` del rol debe incluir
+     * `dian_validation` (invariante FieldAccessPolicy rol-aware). NO igualar a
+     * canUploadSupport. `updateDianInline` revalida server-side.
+     *
+     * @return array{canUploadSupport: bool, canResolveDian: bool}
+     */
+    private function _childActionGates(): array
+    {
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        $context = new UserContext($roleId);
+        $canOperateAprobacion = $this->authFacade->canOperate(
+            $context,
+            PipelineStepConstants::PIPELINE_INVOICES,
+            InvoiceConstants::STATUS_APROBACION,
+        );
+        $canEditInvoices = $this->_checkPermission('invoices', 'edit');
+        $fieldPolicy = new InvoiceFieldAccessPolicy($this->authFacade);
+        $canResolveDian = $canOperateAprobacion && $canEditInvoices
+            && in_array(
+                'dian_validation',
+                $fieldPolicy->getEditableFields($roleId, InvoiceConstants::STATUS_APROBACION),
+                true,
+            );
+
+        return [
+            'canUploadSupport' => $canOperateAprobacion && $canEditInvoices,
+            'canResolveDian' => $canResolveDian,
+        ];
+    }
+
+    /**
      * Builds the read-only view-model that `templates/Refunds/edit.php` consumes.
      *
      * @param \App\Model\Entity\Refund $record Loaded refund.
@@ -380,6 +456,7 @@ class RefundsController extends AppController
      */
     private function _buildEditViewModel(Refund $record, object $user): RefundEditViewModel
     {
+        $gates = $this->_childActionGates();
         $nextStatus = $this->refundService->getNextStatus($record->status);
         $advanceErrors = $nextStatus
             ? $this->refundService->validateTransitionRequirements($record)
@@ -390,6 +467,13 @@ class RefundsController extends AppController
         $roleName = $this->_getUserRoleName($user);
         $roleId = (int)$user->role_id;
         $userContext = $this->_userContext();
+
+        $isAprobacion = $record->status === RefundConstants::STATUS_APROBACION;
+        $currentApprovals = $isAprobacion ? $this->approvalService->getCurrentApprovals((int)$record->id) : [];
+        $approvalSummary = $this->approvalService->getApprovalSummary((int)$record->id);
+        $hasActive = $this->approvalService->hasAnyActiveApprovals((int)$record->id);
+        $approvers = $this->fetchTable('Users')->find('list', keyField: 'id', valueField: 'full_name')
+            ->where(['active' => true])->toArray();
 
         return new RefundEditViewModel(
             record: $record,
@@ -412,11 +496,23 @@ class RefundsController extends AppController
             syntheticPayments: $this->refundService->buildSyntheticPayments($record),
             roleName: $roleName,
             pipelineLabels: RefundConstants::STATUS_LABELS,
+            currentApprovals: $currentApprovals,
+            approvalSummary: $approvalSummary,
+            approvers: $approvers,
+            canSendLinks: $isAprobacion && !$hasActive,
+            hasPendingApprovals: $approvalSummary['pending'] > 0,
+            readiness: (new RefundApprovalGuard())->childRequirements((int)$record->id),
+            canUploadSupport: $gates['canUploadSupport'],
+            canResolveDian: $gates['canResolveDian'],
         );
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
-    public function advanceStatus($id = null)
+    public function advanceStatus(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->Refunds->get($id);
@@ -446,11 +542,16 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
-    public function regressStatus($id = null)
+    public function regressStatus(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->Refunds->get($id);
+        $statusBeforeRegress = $record->status;
 
         if (!$this->_ensureExpectedStatus($record->status)) {
             return $this->redirect(['action' => 'edit', $id]);
@@ -467,6 +568,10 @@ class RefundsController extends AppController
         );
 
         if ($result->success) {
+            if ($statusBeforeRegress === RefundConstants::STATUS_APROBACION) {
+                $this->approvalService->supersedeAll((int)$id);
+            }
+
             $previousStatus = $result->data['previousStatus'];
             $prevLabel = RefundConstants::STATUS_LABELS[$previousStatus] ?? $previousStatus;
             $this->Flash->success(sprintf('Registro regresado a: %s', $prevLabel));
@@ -479,8 +584,77 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
+    #[Permission(action: 'edit')]
+    public function sendApprovalLinks(?string $id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $record = $this->Refunds->get($id);
+        $user = $this->_getCurrentUser();
+
+        if ($record->status !== RefundConstants::STATUS_APROBACION) {
+            $this->Flash->error('Solo se envían enlaces en el estado Aprobación.');
+
+            return $this->redirect(['action' => 'edit', $id]);
+        }
+
+        $result = $this->approvalService->sendApprovalLinks(
+            $record,
+            (array)$this->request->getData('approver_ids'),
+            $this->_getBaseUrl(),
+            (int)$user->id,
+        );
+
+        if ($result->success) {
+            $this->Flash->success('Enlaces de aprobación enviados.');
+        } else {
+            foreach ($result->errors as $error) {
+                $this->Flash->error($error);
+            }
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
+    #[Permission(action: 'edit')]
+    public function modifyApprovers(?string $id = null)
+    {
+        $this->request->allowMethod(['post']);
+        $record = $this->Refunds->get($id);
+        $user = $this->_getCurrentUser();
+
+        $result = $this->approvalService->modifyApprovers(
+            $record,
+            (array)$this->request->getData('approver_ids'),
+            trim((string)$this->request->getData('reason')),
+            $this->_getBaseUrl(),
+            (int)$user->id,
+        );
+
+        if ($result->success) {
+            $this->Flash->success('Aprobadores actualizados. Se enviaron los nuevos enlaces.');
+        } else {
+            foreach ($result->errors as $error) {
+                $this->Flash->error($error);
+            }
+        }
+
+        return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS, step: RefundConstants::STATUS_TESORERIA)]
-    public function registerPayment($id = null)
+    public function registerPayment(?string $id = null)
     {
         $this->request->allowMethod(['post']);
 
@@ -500,16 +674,23 @@ class RefundsController extends AppController
         );
 
         if ($result->success) {
+            // registerPayment avanza el reintegro a autorizacion_pago.
             $this->Flash->success($result->data ?? 'Pago registrado.');
-        } else {
-            $this->Flash->error($result->firstError() ?? 'No se pudo registrar el pago.');
+
+            return $this->redirect(['action' => 'index']);
         }
+
+        $this->Flash->error($result->firstError() ?? 'No se pudo registrar el pago.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS, step: RefundConstants::STATUS_AUTORIZACION_PAGO)]
-    public function authorizePayment($id = null)
+    public function authorizePayment(?string $id = null)
     {
         $this->request->allowMethod(['post']);
 
@@ -521,10 +702,13 @@ class RefundsController extends AppController
         );
 
         if ($result->success) {
+            // authorizePayment avanza el reintegro a verificacion_pago.
             $this->Flash->success($result->data ?? 'Pago autorizado.');
-        } else {
-            $this->Flash->error($result->firstError() ?? 'No se pudo autorizar.');
+
+            return $this->redirect(['action' => 'index']);
         }
+
+        $this->Flash->error($result->firstError() ?? 'No se pudo autorizar.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
@@ -532,9 +716,11 @@ class RefundsController extends AppController
     /**
      * Tesorería confirma que el pago del reintegro se ejecutó.
      * Avanza reintegro y facturas hijas de verificacion_pago → pagada.
+     *
+     * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS, step: RefundConstants::STATUS_VERIFICACION_PAGO)]
-    public function confirmPayment($id = null)
+    public function confirmPayment(?string $id = null)
     {
         $this->request->allowMethod(['post']);
 
@@ -550,8 +736,12 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS, step: RefundConstants::STATUS_AUTORIZACION_PAGO)]
-    public function rejectPayment($id = null)
+    public function rejectPayment(?string $id = null)
     {
         $this->request->allowMethod(['post']);
 
@@ -571,16 +761,23 @@ class RefundsController extends AppController
         );
 
         if ($result->success) {
+            // rejectPayment regresa el reintegro a tesoreria.
             $this->Flash->success($result->data ?? 'Pago rechazado.');
-        } else {
-            $this->Flash->error($result->firstError() ?? 'No se pudo rechazar el pago.');
+
+            return $this->redirect(['action' => 'index']);
         }
+
+        $this->Flash->error($result->firstError() ?? 'No se pudo rechazar el pago.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $record = $this->Refunds->get($id);
@@ -617,8 +814,13 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    /**
+     * @param string|null $recordId
+     * @param string|null $invoiceId
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'edit')]
-    public function removeInvoice($recordId = null, $invoiceId = null)
+    public function removeInvoice(?string $recordId = null, ?string $invoiceId = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->Refunds->get($recordId);
@@ -642,8 +844,12 @@ class RefundsController extends AppController
         return $this->redirect(['action' => 'edit', $recordId]);
     }
 
+    /**
+     * @param string|null $recordId
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'edit')]
-    public function linkInvoices($recordId = null)
+    public function linkInvoices(?string $recordId = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->Refunds->get($recordId);
@@ -664,6 +870,14 @@ class RefundsController extends AppController
         $errors = $this->refundService->addInvoices($record, $invoiceIds);
         if (empty($errors)) {
             $this->_recordInvoicesLinked((int)$record->id, $invoiceIds);
+
+            // Una factura vinculada al grupo deja de usar el flujo individual;
+            // se invalidan sus aprobaciones individuales activas (defensivo).
+            TableRegistry::getTableLocator()->get('InvoiceApprovals')->updateAll(
+                ['status' => InvoiceConstants::APPROVER_STATUS_SUPERSEDED, 'token_hash' => null, 'token_expires_at' => null],
+                ['invoice_id IN' => $invoiceIds, 'status IN' => InvoiceConstants::APPROVER_STATUSES_ACTIVE],
+            );
+
             $this->Flash->success(sprintf('%d factura(s) vinculada(s).', count($invoiceIds)));
         } else {
             foreach ($errors as $err) {
@@ -726,8 +940,12 @@ class RefundsController extends AppController
         return (string)($invoice->invoice_number ?? $invoiceId);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'edit')]
-    public function addObservation($id = null)
+    public function addObservation(?string $id = null)
     {
         return $this->_handleAddObservation(
             'RefundObservations',
@@ -746,9 +964,11 @@ class RefundsController extends AppController
      * aplica gate CRUD de módulo. La validación se hace inline en `_documentGate()`,
      * que delega en `actionPolicy->canOperateStep($roleId, $record->status)` y
      * responde 403 si el rol no puede operar el step actual del reintegro.
+     *
+     * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
-    public function uploadDocument($id = null)
+    public function uploadDocument(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->Refunds->get($id);
@@ -821,9 +1041,11 @@ class RefundsController extends AppController
      * el reintegro está pagado (409) y exige `actionPolicy->canOperateStep` para el
      * step actual (403). El servicio además valida la pertenencia del documento al
      * refund (anti-IDOR: find filtrado por `id` + `refund_id`).
+     *
+     * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_REFUNDS)]
-    public function deleteDocument($refundId = null, $documentId = null)
+    public function deleteDocument(?string $refundId = null, ?string $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $record = $this->Refunds->get($refundId);

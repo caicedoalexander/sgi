@@ -13,12 +13,22 @@ class LeaveDocumentTemplatesController extends AppController
 
     private LeaveDocumentService $leaveDocumentService;
 
+    /**
+     * Configura componentes y servicios del controlador.
+     *
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
         $this->leaveDocumentService = $this->getContainer()->get(LeaveDocumentService::class);
     }
 
+    /**
+     * Lista las plantillas de documentos.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -31,6 +41,11 @@ class LeaveDocumentTemplatesController extends AppController
         $this->set(compact('templates'));
     }
 
+    /**
+     * Crea una plantilla de documento.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -92,8 +107,14 @@ class LeaveDocumentTemplatesController extends AppController
         $this->set(compact('template'));
     }
 
+    /**
+     * Edita una plantilla de documento.
+     *
+     * @param string|null $id ID de la plantilla.
+     * @return void
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $template = $this->LeaveDocumentTemplates->get($id, contain: ['LeaveTemplateFields']);
 
@@ -102,8 +123,14 @@ class LeaveDocumentTemplatesController extends AppController
         $this->set(compact('template', 'availableFields'));
     }
 
+    /**
+     * Elimina una plantilla de documento.
+     *
+     * @param string|null $id ID de la plantilla.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
 
@@ -120,8 +147,14 @@ class LeaveDocumentTemplatesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    /**
+     * Guarda los campos de una plantilla de documento.
+     *
+     * @param string|null $id ID de la plantilla.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function saveFields($id = null): ?Response
+    public function saveFields(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
         $this->autoRender = false;
@@ -161,8 +194,14 @@ class LeaveDocumentTemplatesController extends AppController
             ->withStringBody(json_encode(['success' => true, 'count' => count($fieldsData)]));
     }
 
+    /**
+     * Genera una vista previa de una plantilla de documento.
+     *
+     * @param string|null $id ID de la plantilla.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'view')]
-    public function preview($id = null): ?Response
+    public function preview(?string $id = null): ?Response
     {
         $this->autoRender = false;
 

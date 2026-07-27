@@ -41,6 +41,13 @@ class Invoice extends Entity
         'advance_id' => true,
     ];
 
+    /**
+     * Asigna el resultado de aprobación de área y, cuando es aprobada o
+     * rechazada, fija la fecha de aprobación al día de hoy.
+     *
+     * @param string $approval Resultado de aprobación de área a asignar.
+     * @return void
+     */
     public function setApprovalResult(string $approval): void
     {
         $this->area_approval = $approval;
@@ -49,26 +56,44 @@ class Invoice extends Entity
         }
     }
 
+    /** @return bool true si la factura está vinculada a una caja menor. */
     public function isInPettyCash(): bool
     {
         return !empty($this->petty_cash_record_id);
     }
 
+    /** @return bool true si el área rechazó la factura. */
     public function isRejected(): bool
     {
         return ($this->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED;
     }
 
+    /** @return bool true si el área aprobó la factura. */
     public function isApproved(): bool
     {
         return ($this->area_approval ?? '') === InvoiceConstants::APPROVAL_APPROVED;
     }
 
+    /** @return bool true si la factura está en estado pagada. */
     public function isPaid(): bool
     {
         return ($this->pipeline_status ?? '') === InvoiceConstants::STATUS_PAGADA;
     }
 
+    /**
+     * True si la factura usa la vista de legalización (pipeline reducido de 3 pasos,
+     * secciones de tesorería/pago ocultas): una Legalización, o un Recibo de Caja
+     * vinculado a un anticipo. Fuente única del criterio — consumida por
+     * InvoicePresentation y los banners de vista/edición.
+     */
+    public function usesLegalizationView(): bool
+    {
+        return $this->document_type === InvoiceConstants::DOCTYPE_LEGALIZACION
+            || ($this->document_type === InvoiceConstants::DOCTYPE_RECIBO_CAJA
+                && $this->advance_id !== null);
+    }
+
+    /** @return bool true si la factura está en un estado terminal (pagada o legalizada). */
     public function isInFinalState(): bool
     {
         return in_array($this->pipeline_status ?? '', [
@@ -77,11 +102,13 @@ class Invoice extends Entity
         ], true);
     }
 
+    /** @return bool true si la factura no está en un estado terminal. */
     public function isEditable(): bool
     {
         return !$this->isInFinalState();
     }
 
+    /** @return bool true si la factura sigue en Aprobación y el área aún no la aprobó. */
     public function requiresApproval(): bool
     {
         return ($this->pipeline_status ?? '') === InvoiceConstants::STATUS_APROBACION

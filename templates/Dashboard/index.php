@@ -63,7 +63,7 @@ $actionCount = (int)($invoiceStats['aprobacion'] ?? 0) + (int)($invoiceFinancial
 $sectionHead = function (string $icon, string $label) {
     echo '<div class="d-flex align-items-center gap-2 mb-3">'
        . '<i class="bi ' . $icon . '" style="color:var(--primary-color);font-size:1rem;" aria-hidden="true"></i>'
-       . '<span class="sgi-label">' . h($label) . '</span>'
+       . '<span class="spi-label">' . h($label) . '</span>'
        . '<div style="flex:1;height:1px;background:var(--rule);"></div>'
        . '</div>';
 };
@@ -74,9 +74,9 @@ $sectionHead = function (string $icon, string $label) {
     <div>
         <div class="d-flex align-items-center gap-2 mb-2">
             <span style="width:3px;height:12px;background:var(--primary-color);"></span>
-            <span class="sgi-label">Compañía Operadora Portuaria Cafetera S.A.</span>
+            <span class="spi-label">Compañía Operadora Portuaria Cafetera S.A.</span>
         </div>
-        <div class="sgi-page-title" style="font-size:1.5rem;">
+        <div class="spi-page-title" style="font-size:1.5rem;">
             <?php if ($firstName !== ''): ?>
                 <?= h($saludo) ?>, <span style="color:var(--primary-color);"><?= h($firstName) ?></span>
             <?php else: ?>
@@ -151,13 +151,13 @@ $attentionCards = [
     <div class="row g-3">
         <?php foreach ($attentionCards as $c): ?>
         <div class="col-12 col-md-4">
-            <div class="sgi-card h-100 d-flex flex-column" style="position:relative;gap:10px;min-height:158px;">
+            <div class="spi-card h-100 d-flex flex-column" style="position:relative;gap:10px;min-height:158px;">
                 <span class="accent-strip <?= $c['accent'] ?>"></span>
                 <div>
-                    <div class="sgi-display" style="color:<?= $c['color'] ?>;"><?= $fmtNum((float)$c['count']) ?></div>
-                    <div class="sgi-title-card" style="margin-top:6px;"><?= h($c['label']) ?></div>
+                    <div class="spi-display" style="color:<?= $c['color'] ?>;"><?= $fmtNum((float)$c['count']) ?></div>
+                    <div class="spi-title-card" style="margin-top:6px;"><?= h($c['label']) ?></div>
                 </div>
-                <div class="sgi-body-faint grow" style="line-height:1.5;"><?= h($c['context']) ?></div>
+                <div class="spi-body-faint grow" style="line-height:1.5;"><?= h($c['context']) ?></div>
                 <a href="<?= $c['url'] ?>" class="d-inline-flex align-items-center gap-1"
                    style="text-decoration:none;font-size:11.5px;font-weight:700;color:<?= $c['color'] ?>;">
                     <?= h($c['cta']) ?> <i class="bi bi-chevron-right" style="font-size:10px;"></i>
@@ -194,12 +194,12 @@ $attentionCards = [
          'sub' => 'por factura', 'color' => 'var(--text-default)'],
     ];
     ?>
-    <div class="sgi-card mb-3">
+    <div class="spi-card mb-3">
         <div class="row g-0">
             <?php foreach ($financialKpis as $i => $k): ?>
             <div class="col-6 col-lg-3">
                 <div style="<?= $i % 4 === 0 ? '' : 'padding-left:18px;' ?>padding-right:18px;<?= $i < 3 ? 'border-right:1px solid var(--rule);' : '' ?>min-width:0;">
-                    <div class="sgi-label" style="margin-bottom:6px;"><?= h($k['label']) ?></div>
+                    <div class="spi-label" style="margin-bottom:6px;"><?= h($k['label']) ?></div>
                     <div class="mono" style="font-size:21px;font-weight:800;letter-spacing:-0.5px;line-height:1.1;color:<?= $k['color'] ?>;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                         <?= h($k['value']) ?>
                     </div>
@@ -246,8 +246,8 @@ $attentionCards = [
     <div class="row g-3">
         <?php /* Distribución por estado — barra apilada CSS */ ?>
         <div class="col-12 col-lg-5">
-            <div class="sgi-card h-100">
-                <div class="sgi-label mb-2">Distribución por estado</div>
+            <div class="spi-card h-100">
+                <div class="spi-label mb-2">Distribución por estado</div>
                 <div class="d-flex align-items-baseline gap-2 mb-3">
                     <span class="mono" style="font-size:24px;font-weight:800;letter-spacing:-0.5px;color:var(--text-strong);">
                         <?= $fmtMoney($segTotalMonto) ?>
@@ -279,15 +279,15 @@ $attentionCards = [
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <div class="sgi-body-faint">Sin facturas registradas en el período.</div>
+                    <div class="spi-body-faint">Sin facturas registradas en el período.</div>
                 <?php endif; ?>
             </div>
         </div>
 
         <?php /* Facturación por mes — barras CSS */ ?>
         <div class="col-12 col-lg-7">
-            <div class="sgi-card h-100">
-                <div class="sgi-label mb-2">Facturación por mes</div>
+            <div class="spi-card h-100">
+                <div class="spi-label mb-2">Facturación por mes</div>
                 <?php if (!empty($monthly) && $maxMonthly > 0): ?>
                     <div class="d-flex align-items-baseline gap-2 mb-3">
                         <span class="mono" style="font-size:24px;font-weight:800;letter-spacing:-0.5px;color:var(--text-strong);">
@@ -316,7 +316,7 @@ $attentionCards = [
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <div class="sgi-body-faint">Sin facturación registrada en el período.</div>
+                    <div class="spi-body-faint">Sin facturación registrada en el período.</div>
                 <?php endif; ?>
             </div>
         </div>
@@ -328,8 +328,8 @@ $attentionCards = [
     <div class="card mt-3">
         <div class="d-flex align-items-center justify-content-between" style="padding:14px 18px;border-bottom:1px solid var(--rule);">
             <div>
-                <div class="sgi-title-card">Actividad reciente</div>
-                <div class="sgi-body-faint" style="margin-top:2px;">Últimas facturas modificadas</div>
+                <div class="spi-title-card">Actividad reciente</div>
+                <div class="spi-body-faint" style="margin-top:2px;">Últimas facturas modificadas</div>
             </div>
             <?= $this->Html->link(
                 'Ver todas <i class="bi bi-chevron-right" style="font-size:10px;"></i>',
@@ -358,7 +358,7 @@ $attentionCards = [
                 <div class="mono" style="font-size:12.5px;font-weight:700;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                     <?= h($invoice->invoice_number ?: '#' . $invoice->id) ?>
                 </div>
-                <div class="sgi-body-faint" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <div class="spi-body-faint" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                     <?= h($invoice->provider->name ?? '—') ?>
                 </div>
             </div>
@@ -404,12 +404,12 @@ $attentionCards = [
     $rrhhCount = count($rrhhKpis);
     ?>
     <?php if ($rrhhCount > 0): ?>
-    <div class="sgi-card mb-3">
+    <div class="spi-card mb-3">
         <div class="row g-3">
             <?php foreach ($rrhhKpis as $i => $k): ?>
             <div class="col-6 col-md-4 col-xl">
                 <div style="padding-right:18px;<?= $i < $rrhhCount - 1 ? 'border-right:1px solid var(--rule);' : '' ?>min-width:0;">
-                    <div class="sgi-label" style="margin-bottom:6px;"><?= h($k['label']) ?></div>
+                    <div class="spi-label" style="margin-bottom:6px;"><?= h($k['label']) ?></div>
                     <div class="mono" style="font-size:21px;font-weight:800;letter-spacing:-0.5px;line-height:1.1;color:<?= $k['color'] ?>;">
                         <?= h($k['value']) ?>
                     </div>
@@ -439,8 +439,8 @@ $attentionCards = [
         }
         ?>
         <div class="col-12 col-lg-5">
-            <div class="sgi-card h-100">
-                <div class="sgi-label mb-2">Distribución por contrato</div>
+            <div class="spi-card h-100">
+                <div class="spi-label mb-2">Distribución por contrato</div>
                 <div class="d-flex align-items-baseline gap-2 mb-3">
                     <span class="mono" style="font-size:24px;font-weight:800;letter-spacing:-0.5px;color:var(--text-strong);">
                         <?= $fmtNum((float)$contractTotal) ?>
@@ -472,7 +472,7 @@ $attentionCards = [
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <div class="sgi-body-faint">Sin empleados activos registrados.</div>
+                    <div class="spi-body-faint">Sin empleados activos registrados.</div>
                 <?php endif; ?>
             </div>
         </div>
@@ -484,8 +484,8 @@ $attentionCards = [
             <div class="card h-100">
                 <div class="d-flex align-items-center justify-content-between" style="padding:14px 18px;border-bottom:1px solid var(--rule);">
                     <div>
-                        <div class="sgi-title-card">Novedades recientes</div>
-                        <div class="sgi-body-faint" style="margin-top:2px;">Últimas novedades registradas</div>
+                        <div class="spi-title-card">Novedades recientes</div>
+                        <div class="spi-body-faint" style="margin-top:2px;">Últimas novedades registradas</div>
                     </div>
                     <?= $this->Html->link(
                         'Ver todas <i class="bi bi-chevron-right" style="font-size:10px;"></i>',
@@ -511,7 +511,7 @@ $attentionCards = [
                         <div style="font-size:12.5px;font-weight:700;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                             <?= h($empName !== '' ? $empName : '—') ?>
                         </div>
-                        <div class="sgi-body-faint" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <div class="spi-body-faint" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                             <?= h($novelty->novelty_type->name ?? '—') ?>
                         </div>
                     </div>
@@ -557,7 +557,7 @@ if (isset($adminStats['roles'])) {
 ?>
 <?php if (!empty($catalogLinks)): ?>
 <div class="card d-flex flex-row flex-wrap align-items-center" style="padding:14px 20px;gap:24px;">
-    <span class="sgi-label">Catálogos</span>
+    <span class="spi-label">Catálogos</span>
     <?php foreach ($catalogLinks as $link): ?>
         <?= $this->Html->link(
             '<span>' . h($link['label']) . '</span> '
@@ -574,12 +574,32 @@ if (isset($adminStats['roles'])) {
 </div>
 <?php endif; ?>
 
+<?php /* ═══════════════════════ 5 · ITAM ════════════════════════════ */ ?>
+<?php if ($canView('assets')): ?>
+<div>
+    <?php $sectionHead('bi-pc-display', 'Inventario de Activos (ITAM)'); ?>
+    <div class="row g-3">
+        <div class="col-12 col-md-4 col-lg-3">
+            <?= $this->Html->link(
+                '<div class="spi-card h-100" style="gap:6px;">'
+                . '<div class="spi-label"><i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>Alertas de inventario</div>'
+                . '<div class="mono" style="font-size:28px;font-weight:800;letter-spacing:-0.5px;color:var(--danger-color);">' . (int)($openAlertsCount ?? 0) . '</div>'
+                . '<div style="font-size:11px;color:var(--text-muted);">abiertas</div>'
+                . '</div>',
+                ['controller' => 'AssetAlerts', 'action' => 'index'],
+                ['escape' => false, 'style' => 'text-decoration:none;display:block;'],
+            ) ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <?php /* ── Estado vacío: sin permisos de visualización ────────────── */ ?>
 <?php if (empty($invoiceStats) && empty($rrhhStats) && empty($recentNovelties) && empty($catalogLinks)): ?>
-<div class="sgi-card text-center" style="padding:48px 20px;">
+<div class="spi-card text-center" style="padding:48px 20px;">
     <i class="bi bi-grid" style="font-size:1.6rem;color:var(--text-disabled);" aria-hidden="true"></i>
-    <div class="sgi-title-card" style="margin-top:10px;">No hay módulos disponibles</div>
-    <div class="sgi-body-faint" style="margin-top:4px;">El usuario no tiene permisos de visualización asignados.</div>
+    <div class="spi-title-card" style="margin-top:10px;">No hay módulos disponibles</div>
+    <div class="spi-body-faint" style="margin-top:4px;">El usuario no tiene permisos de visualización asignados.</div>
 </div>
 <?php endif; ?>
 

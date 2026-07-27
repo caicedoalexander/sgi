@@ -43,7 +43,7 @@ final class InvoicePipelineStateRegistryTest extends TestCase
         $registry = $this->makeRegistry();
         $keys = array_keys($registry->all());
         sort($keys);
-        $expected = array_map(fn (PipelineStatus $s) => $s->value, PipelineStatus::cases());
+        $expected = array_map(fn(PipelineStatus $s) => $s->value, PipelineStatus::cases());
         sort($expected);
         $this->assertSame($expected, $keys);
     }

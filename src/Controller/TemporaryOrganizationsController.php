@@ -14,6 +14,11 @@ class TemporaryOrganizationsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista las empresas temporales.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -22,6 +27,11 @@ class TemporaryOrganizationsController extends AppController
         $this->set(compact('temporaryOrganizations'));
     }
 
+    /**
+     * Crea una empresa temporal.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -39,8 +49,14 @@ class TemporaryOrganizationsController extends AppController
         $this->set(compact('temporaryOrganization'));
     }
 
+    /**
+     * Edita una empresa temporal.
+     *
+     * @param string|null $id ID de la empresa temporal.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $temporaryOrganization = $this->TemporaryOrganizations->get($id);
         $result = $this->_catalogSave(
@@ -56,8 +72,14 @@ class TemporaryOrganizationsController extends AppController
         $this->set(compact('temporaryOrganization'));
     }
 
+    /**
+     * Elimina una empresa temporal.
+     *
+     * @param string|null $id ID de la empresa temporal.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $temporaryOrganization = $this->TemporaryOrganizations->get($id);

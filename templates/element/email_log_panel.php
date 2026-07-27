@@ -7,6 +7,7 @@
  */
 
 use App\Constants\EmailLogConstants;
+use App\View\Presentation\EmailLogPresentation;
 use Cake\I18n\DateTime;
 
 if (empty($emailLogs)) {
@@ -16,12 +17,12 @@ if (empty($emailLogs)) {
 $now = new DateTime();
 $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
 ?>
-<div class="sgi-card">
+<div class="spi-card">
     <div class="d-flex align-items-center" style="margin-bottom:12px;">
-        <span class="sgi-label d-inline-flex align-items-center gap-2">
+        <span class="spi-label d-inline-flex align-items-center gap-2">
             <i class="bi bi-envelope-paper" aria-hidden="true"></i>
             Notificaciones de correo
-            <span class="sgi-folder-count"><?= count($emailLogs) ?></span>
+            <span class="spi-folder-count"><?= count($emailLogs) ?></span>
         </span>
     </div>
     <div class="table-responsive">
@@ -38,18 +39,8 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
             <tbody>
                 <?php foreach ($emailLogs as $log): ?>
                     <?php
-                    $statusBadge = match ($log->status) {
-                        EmailLogConstants::STATUS_SENT    => 'pill-primary-soft',
-                        EmailLogConstants::STATUS_FAILED  => 'pill-danger-soft',
-                        EmailLogConstants::STATUS_PENDING => 'pill-warning-soft',
-                        default => 'pill-secondary-soft',
-                    };
-                    $statusIcon = match ($log->status) {
-                        EmailLogConstants::STATUS_SENT    => 'bi-check-circle',
-                        EmailLogConstants::STATUS_FAILED  => 'bi-x-circle',
-                        EmailLogConstants::STATUS_PENDING => 'bi-hourglass-split',
-                        default => 'bi-question-circle',
-                    };
+                    $statusBadge = EmailLogPresentation::STATUS_BADGES[$log->status] ?? EmailLogPresentation::DEFAULT_BADGE;
+                    $statusIcon = EmailLogPresentation::STATUS_ICONS[$log->status] ?? EmailLogPresentation::DEFAULT_ICON;
 
                     $isOrphanPending = $log->status === EmailLogConstants::STATUS_PENDING
                         && $log->created !== null
@@ -65,7 +56,7 @@ $orphanThreshold = EmailLogConstants::ORPHAN_THRESHOLD_SECONDS;
                                 <i class="bi <?= $statusIcon ?> me-1" aria-hidden="true"></i><?= h(EmailLogConstants::STATUS_LABELS[$log->status] ?? $log->status) ?>
                             </span>
                             <?php if ($log->status === EmailLogConstants::STATUS_FAILED && !empty($log->last_error)): ?>
-                                <div class="sgi-fg-danger mt-1" style="font-size:var(--fs-meta);line-height:1.3;">
+                                <div class="spi-fg-danger mt-1" style="font-size:var(--fs-meta);line-height:1.3;">
                                     <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i><?= h($log->last_error) ?>
                                 </div>
                             <?php endif; ?>

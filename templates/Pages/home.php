@@ -1,10 +1,10 @@
 <?php
 /**
- * SGI - Sistema de Gestión Interna
+ * SPI - Sistema de Procesos Internos
  * Compañía Operadora Portuaria Cafetera S.A.
  *
  * @var \App\View\AppView $this
  */
 ?>
-<span class="sgi-page-title">SGI - Sistema de Gestión Interna</span>
+<span class="spi-page-title">SPI - Sistema de Procesos Internos</span>
 <p>Compañía Operadora Portuaria Cafetera S.A.</p>

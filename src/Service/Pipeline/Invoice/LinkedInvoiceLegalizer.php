@@ -9,15 +9,19 @@ use Cake\ORM\TableRegistry;
 use RuntimeException;
 
 /**
- * Promueve a `legalizada` todas las facturas tipo Legalización vinculadas al
- * Anticipo dado que estén actualmente en `contabilidad`. Disparado por el
- * subscriber LinkedInvoicesPromoterSubscriber al recibir AdvanceLegalizedEvent.
+ * Promueve a `legalizada` todas las facturas vinculadas al Anticipo dado
+ * (Legalización y Recibo de Caja — ver InvoiceConstants::ADVANCE_LINKABLE_DOCTYPES)
+ * que estén actualmente en `contabilidad`. Disparado por el subscriber
+ * LinkedInvoicesPromoterSubscriber al recibir AdvanceLegalizedEvent.
  *
  * Extraído de InvoicePipelineService como parte del Plan 5 (Domain Events)
  * para liberar al coordinador del conocimiento de Legalización.
  */
 final class LinkedInvoiceLegalizer
 {
+    /**
+     * @param \App\Service\InvoiceHistoryService $historyService Audit trail de facturas.
+     */
     public function __construct(
         private readonly InvoiceHistoryService $historyService,
     ) {
@@ -33,7 +37,7 @@ final class LinkedInvoiceLegalizer
         $linked = $invoicesTable->find()
             ->where([
                 'advance_id' => $advanceInvoiceId,
-                'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+                'document_type IN' => InvoiceConstants::ADVANCE_LINKABLE_DOCTYPES,
                 'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
             ])
             ->all();

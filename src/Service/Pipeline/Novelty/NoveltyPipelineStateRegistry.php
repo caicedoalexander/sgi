@@ -30,6 +30,17 @@ final class NoveltyPipelineStateRegistry
      */
     private array $states;
 
+    /**
+     * @param \App\Service\Pipeline\Novelty\State\AprobacionState|null $aprobacion State.
+     * @param \App\Service\Pipeline\Novelty\State\RrhhState|null $rrhh State.
+     * @param \App\Service\Pipeline\Novelty\State\ContabilidadState|null $contabilidad State.
+     * @param \App\Service\Pipeline\Novelty\State\RevisionFirmasState|null $revisionFirmas State.
+     * @param \App\Service\Pipeline\Novelty\State\GdpState|null $gdp State.
+     * @param \App\Service\Pipeline\Novelty\State\TesoreriaState|null $tesoreria State.
+     * @param \App\Service\Pipeline\Novelty\State\AutorizacionPagoState|null $autorizacionPago State.
+     * @param \App\Service\Pipeline\Novelty\State\VerificacionPagoState|null $verificacionPago State.
+     * @param \App\Service\Pipeline\Novelty\State\PagadaState|null $pagada State.
+     */
     public function __construct(
         ?AprobacionState $aprobacion = null,
         ?RrhhState $rrhh = null,
@@ -58,6 +69,13 @@ final class NoveltyPipelineStateRegistry
         }
     }
 
+    /**
+     * Resuelve el enum de estado a su State concreto.
+     *
+     * @param \App\Constants\Domain\Novelty\PipelineStatus $status Estado tipado.
+     * @return \App\Service\Pipeline\Novelty\NoveltyPipelineState
+     * @throws \InvalidArgumentException Si el estado no tiene State class (p. ej. registro/rechazada).
+     */
     public function get(PipelineStatus $status): NoveltyPipelineState
     {
         if (!isset($this->states[$status->value])) {

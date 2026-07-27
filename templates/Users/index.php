@@ -12,11 +12,11 @@ $canDelete = !empty($userPermissions['users']['can_delete']);
 // # · Usuario · Nombre Completo · Email · Rol · Estado · Acciones
 $gridCols = '60px 1fr 1.4fr 1.6fr 1fr 100px 110px';
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div>
-        <span class="sgi-page-title">Usuarios</span>
-        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
-            <span class="sgi-fg-muted"><?= $this->Paginator->counter('{{count}} usuarios') ?></span>
+        <span class="spi-page-title">Usuarios</span>
+        <div class="spi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
+            <span class="spi-fg-muted"><?= $this->Paginator->counter('{{count}} usuarios') ?></span>
         </div>
     </div>
     <?php if ($canCreate): ?>
@@ -28,7 +28,7 @@ $gridCols = '60px 1fr 1.4fr 1.6fr 1fr 100px 110px';
     <?php endif; ?>
 </div>
 
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div class="row-fact head" style="grid-template-columns:<?= $gridCols ?>;" role="row">
         <span><?= $this->Paginator->sort('id', '#') ?></span>
         <span><?= $this->Paginator->sort('username', 'Usuario') ?></span>

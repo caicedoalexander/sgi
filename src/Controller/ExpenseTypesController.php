@@ -12,6 +12,11 @@ class ExpenseTypesController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista los tipos de gasto.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -20,14 +25,25 @@ class ExpenseTypesController extends AppController
         $this->set(compact('expenseTypes'));
     }
 
+    /**
+     * Muestra un tipo de gasto.
+     *
+     * @param string|null $id Expense type id.
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $expenseType = $this->ExpenseTypes->get($id, contain: ['Invoices']);
 
         $this->set(compact('expenseType'));
     }
 
+    /**
+     * Crea un tipo de gasto.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -45,8 +61,14 @@ class ExpenseTypesController extends AppController
         $this->set(compact('expenseType'));
     }
 
+    /**
+     * Edita un tipo de gasto.
+     *
+     * @param string|null $id Expense type id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $expenseType = $this->ExpenseTypes->get($id);
         $result = $this->_catalogSave(
@@ -62,8 +84,14 @@ class ExpenseTypesController extends AppController
         $this->set(compact('expenseType'));
     }
 
+    /**
+     * Elimina un tipo de gasto.
+     *
+     * @param string|null $id Expense type id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $expenseType = $this->ExpenseTypes->get($id);

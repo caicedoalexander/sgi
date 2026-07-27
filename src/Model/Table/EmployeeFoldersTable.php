@@ -9,6 +9,12 @@ use Cake\Validation\Validator;
 
 class EmployeeFoldersTable extends Table
 {
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -40,6 +46,12 @@ class EmployeeFoldersTable extends Table
         ]);
     }
 
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -56,6 +68,13 @@ class EmployeeFoldersTable extends Table
         return $validator;
     }
 
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->existsIn('employee_id', 'Employees'), ['errorField' => 'employee_id']);

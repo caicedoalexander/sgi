@@ -6,6 +6,7 @@ namespace App\Test\TestCase\Service\Resilience;
 use App\Service\Resilience\RetryPolicy;
 use Exception;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use RuntimeException;
 
 final class RetryPolicyTest extends TestCase
@@ -38,7 +39,7 @@ final class RetryPolicyTest extends TestCase
 
     public function testFieldsAreReadOnly(): void
     {
-        $ref = new \ReflectionClass(RetryPolicy::class);
+        $ref = new ReflectionClass(RetryPolicy::class);
         foreach (['maxAttempts', 'baseDelayMs', 'retriableExceptions'] as $prop) {
             $this->assertTrue($ref->getProperty($prop)->isReadOnly());
         }

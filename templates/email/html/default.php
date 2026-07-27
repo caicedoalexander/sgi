@@ -18,5 +18,5 @@
 $lines = explode("\n", $content);
 
 foreach ($lines as $line) :
-    echo '<p> ' . $line . "</p>\n";
+    echo '<p style="margin:0 0 12px;color:#333;font-family:\'Inter\',system-ui,-apple-system,\'Segoe UI\',sans-serif;"> ' . $line . "</p>\n";
 endforeach;

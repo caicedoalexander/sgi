@@ -68,4 +68,14 @@ class AdvanceLegalizationFactory extends BaseFactory
     {
         return $this->setField('surplus_payment_id', $paymentId);
     }
+
+    public function withAccounting(
+        bool $accrued = true,
+        ?string $accrualDate = '2026-06-23',
+        ?string $readyForPayment = 'Si',
+    ): static {
+        return $this->setField('accrued', $accrued)
+            ->setField('accrual_date', $accrualDate)
+            ->setField('ready_for_payment', $readyForPayment);
+    }
 }

@@ -14,6 +14,11 @@ class MaritalStatusesController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista los estados civiles.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -22,14 +27,25 @@ class MaritalStatusesController extends AppController
         $this->set(compact('maritalStatuses'));
     }
 
+    /**
+     * Muestra un estado civil.
+     *
+     * @param string|null $id Marital status id.
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $maritalStatus = $this->MaritalStatuses->get($id);
 
         $this->set(compact('maritalStatus'));
     }
 
+    /**
+     * Crea un estado civil.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -47,8 +63,14 @@ class MaritalStatusesController extends AppController
         $this->set(compact('maritalStatus'));
     }
 
+    /**
+     * Edita un estado civil.
+     *
+     * @param string|null $id Marital status id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $maritalStatus = $this->MaritalStatuses->get($id);
         $result = $this->_catalogSave(
@@ -64,8 +86,14 @@ class MaritalStatusesController extends AppController
         $this->set(compact('maritalStatus'));
     }
 
+    /**
+     * Elimina un estado civil.
+     *
+     * @param string|null $id Marital status id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $maritalStatus = $this->MaritalStatuses->get($id);

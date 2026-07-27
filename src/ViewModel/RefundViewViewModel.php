@@ -5,6 +5,8 @@ namespace App\ViewModel;
 
 use App\Constants\RefundConstants;
 use App\Model\Entity\Refund;
+use App\Service\Dto\GroupReadinessReport;
+use App\View\Presentation\InvoicePresentation;
 use App\View\Presentation\RefundPresentation;
 
 /**
@@ -15,7 +17,9 @@ use App\View\Presentation\RefundPresentation;
 final readonly class RefundViewViewModel implements ViewViewModelInterface
 {
     public string $pageTitle;
-    /** @var array{0:string,1:string} */
+    /**
+     * @var array{0:string,1:string}
+     */
     public array $currentStatusBadge;
     public string $currentStatus;
 
@@ -25,18 +29,40 @@ final readonly class RefundViewViewModel implements ViewViewModelInterface
     public ?string $beneficiaryLabel;
     public float $totalAmount;
     public int $invoiceCount;
-    /** @var array<int,array{icon:string,html:string}> */
+    /**
+     * @var array<int,array{icon:string,html:string}>
+     */
     public array $registryLines;
-    /** @var list<array{doc:mixed,canDelete:bool,deleteUrl:null,showBadge:bool}> */
+    /**
+     * @var list<array{doc:mixed,canDelete:bool,deleteUrl:null,showBadge:bool}>
+     */
     public array $documentRows;
     public int $totalDocs;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $pipelineLabels;
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     public array $pipelineSteps;
+    /**
+     * @var list<\App\View\Presentation\GroupedInvoiceRowView>
+     */
+    public array $groupedRows;
 
-    public function __construct(public Refund $record)
-    {
+    /**
+     * @param \App\Model\Entity\Refund $record Reintegro a presentar.
+     * @param \App\Service\Dto\GroupReadinessReport|null $readiness Requisitos DIAN/soporte pendientes de las hijas.
+     * @param bool $canResolveDian Puede resolver la validación DIAN inline de las hijas.
+     * @param bool $canUploadSupport Puede subir soporte a las facturas hijas.
+     */
+    public function __construct(
+        public Refund $record,
+        public ?GroupReadinessReport $readiness = null,
+        bool $canResolveDian = false,
+        public bool $canUploadSupport = false,
+    ) {
         $status = $record->status;
         $labels = RefundConstants::STATUS_LABELS;
 
@@ -73,5 +99,11 @@ final readonly class RefundViewViewModel implements ViewViewModelInterface
         }
         $this->documentRows = $rows;
         $this->totalDocs    = count($rows);
+
+        $groupedRows = [];
+        foreach ($record->invoices ?? [] as $inv) {
+            $groupedRows[] = InvoicePresentation::forGroupedRow($inv, $canResolveDian);
+        }
+        $this->groupedRows = $groupedRows;
     }
 }

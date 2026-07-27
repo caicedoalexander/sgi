@@ -51,7 +51,7 @@ final class InvoicePresentationTest extends TestCase
         $this->assertSame('pill-danger-soft', $row->pillClass);
         $this->assertSame('is-danger', $row->pipelineVariant);
         // El badge del estado se conserva (independiente del pill rechazado).
-        $this->assertSame('pill-secondary-soft', $row->statusBadgeClass);
+        $this->assertSame('pill-orange-soft', $row->statusBadgeClass);
     }
 
     public function testForRowApprovedFlag(): void
@@ -134,10 +134,33 @@ final class InvoicePresentationTest extends TestCase
 
         $this->assertTrue($row->isLegalization);
         $this->assertSame(InvoiceConstants::PIPELINE_STATUSES_LEGALIZACION, $row->pipelineSteps);
-        $this->assertSame(
-            array_search(InvoiceConstants::STATUS_CONTABILIDAD, InvoiceConstants::PIPELINE_STATUSES_LEGALIZACION, true),
-            $row->stageIdx,
-        );
+        // Contabilidad es el índice 1 del pipeline reducido de legalización
+        // (aprobacion=0, contabilidad=1, legalizada=2). Literal a propósito:
+        // si el orden del pipeline cambia, este test debe fallar (anti-drift).
+        $this->assertSame(1, $row->stageIdx);
+    }
+
+    public function testForRowLinkedReciboDeCajaUsesShortPipeline(): void
+    {
+        $row = InvoicePresentation::forRow($this->invoice([
+            'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
+            'document_type' => InvoiceConstants::DOCTYPE_RECIBO_CAJA,
+            'advance_id' => 77,
+        ]));
+
+        $this->assertTrue($row->isLegalization);
+        $this->assertSame(InvoiceConstants::PIPELINE_STATUSES_LEGALIZACION, $row->pipelineSteps);
+    }
+
+    public function testForRowUnlinkedReciboDeCajaUsesFullPipeline(): void
+    {
+        $row = InvoicePresentation::forRow($this->invoice([
+            'pipeline_status' => InvoiceConstants::STATUS_TESORERIA,
+            'document_type' => InvoiceConstants::DOCTYPE_RECIBO_CAJA,
+        ]));
+
+        $this->assertFalse($row->isLegalization);
+        $this->assertSame(InvoiceConstants::PIPELINE_STATUSES, $row->pipelineSteps);
     }
 
     public function testForRowStandardPipelineStageIdx(): void
@@ -149,10 +172,10 @@ final class InvoicePresentationTest extends TestCase
 
         $this->assertFalse($row->isLegalization);
         $this->assertSame(InvoiceConstants::PIPELINE_STATUSES, $row->pipelineSteps);
-        $this->assertSame(
-            array_search(InvoiceConstants::STATUS_TESORERIA, InvoiceConstants::PIPELINE_STATUSES, true),
-            $row->stageIdx,
-        );
+        // Tesorería es el índice 2 del pipeline estándar de 6 estados
+        // (aprobacion=0, contabilidad=1, tesoreria=2, ...). Literal a propósito:
+        // si el orden del pipeline cambia, este test debe fallar (anti-drift).
+        $this->assertSame(2, $row->stageIdx);
     }
 
     public function testForRowUnknownStatusFallsBack(): void

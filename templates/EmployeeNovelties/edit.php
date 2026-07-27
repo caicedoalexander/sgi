@@ -42,14 +42,14 @@ $totalDocs          = $viewModel->totalDocs;
 <?php
 $novIdLabel = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
 ?>
-<div class="sgi-edit-shell">
+<div class="spi-edit-shell">
 
 <?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
-<div class="sgi-edit-shell-head">
+<div class="spi-edit-shell-head">
 <!-- Page header -->
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Novedades', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <?= $this->Html->link(h($novIdLabel), ['action' => 'view', $novelty->id]) ?>
@@ -57,8 +57,8 @@ $novIdLabel = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
             <span class="current">Editar</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Editar Novedad</span>
-            <span class="sgi-edit-id-chip">#<?= h((string)$novelty->id) ?></span>
+            <span class="spi-page-title">Editar Novedad</span>
+            <span class="spi-edit-id-chip">#<?= h((string)$novelty->id) ?></span>
             <?php if ($isRejected): ?>
                 <span class="pill pill-danger-soft">Rechazada</span>
             <?php else: ?>
@@ -80,9 +80,9 @@ $novIdLabel = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
     </div>
 </div>
 
-</div><?php /* fin .sgi-edit-shell-head */ ?>
+</div><?php /* fin .spi-edit-shell-head */ ?>
 
-<div class="sgi-edit-shell-body view-anim">
+<div class="spi-edit-shell-body view-anim">
 
 <!-- Grouped novelty alert -->
 <?php if ($novelty->isGrouped()): ?>
@@ -139,7 +139,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
 <div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
+    <aside class="col-lg-3 spi-edit-col d-flex flex-column gap-3">
         <?php
         $registryLines = [];
         if ($novelty->registered_by_user) {
@@ -176,16 +176,16 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
+    <main class="col-lg-9 spi-edit-col d-flex flex-column gap-3">
 
     <!-- Información de la novedad -->
-    <div class="sgi-card">
-        <div class="sgi-section-head" style="margin-bottom:12px;">
-            <span class="sgi-label">Información de la novedad</span>
+    <div class="spi-card">
+        <div class="spi-section-head" style="margin-bottom:12px;">
+            <span class="spi-label">Información de la novedad</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
             <div>
-                <div class="sgi-label" style="margin-bottom:6px;">Identificación</div>
+                <div class="spi-label" style="margin-bottom:6px;">Identificación</div>
                 <div class="field-row">
                     <span class="k">Empleado</span>
                     <span class="v"><?= h($novelty->custom_name ?: $novelty->employee->full_name ?? '—') ?></span>
@@ -200,7 +200,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
                 </div>
             </div>
             <div>
-                <div class="sgi-label" style="margin-bottom:6px;">Permiso y aprobación</div>
+                <div class="spi-label" style="margin-bottom:6px;">Permiso y aprobación</div>
                 <?php if ($novelty->permission_date): ?>
                 <div class="field-row">
                     <span class="k">Fecha del Permiso</span>
@@ -261,7 +261,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
             </div>
             <?php if ($novelty->reason): ?>
             <div style="grid-column:1 / -1;">
-                <div class="sgi-label" style="margin-bottom:6px;">Motivo</div>
+                <div class="spi-label" style="margin-bottom:6px;">Motivo</div>
                 <div class="field-row is-last">
                     <span class="v" style="white-space:normal;font-weight:400;font-size:.8rem;line-height:1.5;"><?= nl2br(h($novelty->reason)) ?></span>
                 </div>
@@ -270,7 +270,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         </div>
         <?php if (!empty($novelty->novelty_massive_employees)): ?>
         <div class="mt-3">
-            <span class="sgi-label">Empleados (Masiva)</span>
+            <span class="spi-label">Empleados (Masiva)</span>
             <div class="mt-1 d-flex flex-wrap gap-1">
                 <?php foreach ($novelty->novelty_massive_employees as $me): ?>
                     <span class="pill pill-muted"><?= h($me->employee->full_name ?? '—') ?></span>
@@ -280,7 +280,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <?php endif; ?>
     </div>
 
-    <div class="sgi-card">
+    <div class="spi-card">
 
         <?php $hasEditableFields = !empty($editableFields ?? []); ?>
         <?php if ($hasEditableFields): ?>
@@ -288,7 +288,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <?php if (in_array('rrhh', $sections)): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="sgi-label flex-shrink-0"><i class="bi bi-gear me-1" aria-hidden="true"></i>Gestión</span>
+                <span class="spi-label flex-shrink-0"><i class="bi bi-gear me-1" aria-hidden="true"></i>Gestión</span>
                 <div class="hr"></div>
             </div>
             <div class="row g-3">
@@ -336,7 +336,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <?php if (in_array('firmas', $sections) && $novelty->employee_signature): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="sgi-label flex-shrink-0"><i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas</span>
+                <span class="spi-label flex-shrink-0"><i class="bi bi-pen me-1" aria-hidden="true"></i>Firmas</span>
                 <div class="hr"></div>
             </div>
             <div class="row g-3">
@@ -355,7 +355,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <?php if (in_array('aprobacion', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_APROBACION && !$isRejected): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="sgi-label flex-shrink-0"><i class="bi bi-person-check me-1" aria-hidden="true"></i>Aprobación</span>
+                <span class="spi-label flex-shrink-0"><i class="bi bi-person-check me-1" aria-hidden="true"></i>Aprobación</span>
                 <div class="hr"></div>
             </div>
             <?= $this->Form->create(null, ['url' => ['action' => 'resendApproval', $novelty->id]]) ?>
@@ -366,7 +366,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
                         'label' => false,
                         'options' => $approversList ?? [],
                         'empty' => '— Seleccione —',
-                        'class' => 'form-select select2',
+                        'class' => 'form-select select2-enable',
                         'value' => $novelty->approver_id,
                     ]) ?>
                 </div>
@@ -402,7 +402,7 @@ $isNovTerminal = $currentStatus === NoveltyConstants::STATUS_PAGADA;
         <?php if (in_array('contabilidad', $sections) && $novelty->pipeline_status === NoveltyConstants::STATUS_CONTABILIDAD && !$novelty->isGrouped() && !$isRejected): ?>
         <div class="mb-4">
             <div class="d-flex align-items-center gap-3 mb-3">
-                <span class="sgi-label flex-shrink-0"><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Asignar a Documento de Liquidación</span>
+                <span class="spi-label flex-shrink-0"><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Asignar a Documento de Liquidación</span>
                 <div class="hr"></div>
             </div>
             <?= $this->Form->create(null, ['url' => ['action' => 'assignLiquidation', $novelty->id]]) ?>
@@ -493,7 +493,7 @@ foreach ($documentsByStatus as $status => $statusDocs) {
 
     </main>
 </div><?php /* fin .row */ ?>
-</div><?php /* fin .sgi-edit-shell-body */ ?>
+</div><?php /* fin .spi-edit-shell-body */ ?>
 
 <?php /* ═══════════════════ FOOTER (barra fija con avance de pipeline) ═══════════════════ */ ?>
 <?php
@@ -501,21 +501,21 @@ $showRrhhAdvance = ($novelty->pipeline_status === NoveltyConstants::STATUS_RRHH 
 $showGenericAdvance = ($canAdvance && !in_array($currentStatus, [NoveltyConstants::STATUS_RRHH, NoveltyConstants::STATUS_APROBACION]) && empty($transitionErrors));
 ?>
 <?php if ($showRrhhAdvance || $showGenericAdvance): ?>
-<div class="sgi-edit-footer">
-    <div class="sgi-edit-footer-meta">
+<div class="spi-edit-footer">
+    <div class="spi-edit-footer-meta">
         <span class="d-inline-flex align-items-center gap-1">
-            <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+            <i class="bi bi-person spi-fg-faint" aria-hidden="true"></i>
             Rol: <strong style="color:var(--text-default);"><?= h($roleName) ?></strong>
         </span>
         <?php if ($novelty->modified): ?>
         <span class="sep"></span>
         <span class="d-inline-flex align-items-center gap-1">
-            <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+            <i class="bi bi-clock spi-fg-faint" aria-hidden="true"></i>
             Última modificación: <span class="mono"><?= $novelty->modified->format('d/m/Y H:i') ?></span>
         </span>
         <?php endif; ?>
     </div>
-    <div class="sgi-edit-footer-actions">
+    <div class="spi-edit-footer-actions">
         <?php if ($showRrhhAdvance): ?>
         <button type="submit" form="novAdvanceFormRrhh" class="btn btn-primary">
             <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>Guardar y Avanzar a <?= $statusLabels[$nextStatus] ?? '' ?>
@@ -529,7 +529,7 @@ $showGenericAdvance = ($canAdvance && !in_array($currentStatus, [NoveltyConstant
 </div>
 <?php endif; ?>
 
-</div><?php /* fin .sgi-edit-shell */ ?>
+</div><?php /* fin .spi-edit-shell */ ?>
 
 <!-- Upload Document Modal -->
 <?php if ($showUploadSection): ?>
@@ -540,7 +540,7 @@ $showGenericAdvance = ($canAdvance && !in_array($currentStatus, [NoveltyConstant
 <?php endif; ?>
 
 <?= $this->element('document_row_template', ['showBadge' => true]) ?>
-<?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
+<?= $this->Html->script('spi-document-uploader', ['block' => true]) ?>
 <?= $this->element('observations/drawer', [
     'observations'    => $novelty->novelty_observations ?? [],
     'count'           => count($novelty->novelty_observations ?? []),
@@ -552,11 +552,11 @@ $showGenericAdvance = ($canAdvance && !in_array($currentStatus, [NoveltyConstant
 <?php $this->append('script') ?>
 <script>
 (function(){
-    SgiDocumentUploader.init({
+    SpiDocumentUploader.init({
         formSelector:        '#upload-doc-form',
         listSelector:        '#docs-list',
         emptySelector:       '#docs-empty-state',
-        counterSelector:     '.sgi-folder-count',
+        counterSelector:     '.spi-folder-count',
         rowTemplateSelector: '#doc-row-template',
         modalSelector:       '#uploadDocModal',
         csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>

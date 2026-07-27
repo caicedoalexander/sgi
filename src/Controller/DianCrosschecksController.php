@@ -13,6 +13,11 @@ class DianCrosschecksController extends AppController
 
     private DianCrosscheckService $crosscheckService;
 
+    /**
+     * Configura componentes y servicios del controlador.
+     *
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();

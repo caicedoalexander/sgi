@@ -39,45 +39,63 @@ $queryParams = array_filter($filters, fn($v) => $v !== null && $v !== '');
 $gridCols = '1.2fr 1.4fr 1fr 1fr 1.3fr 1fr';
 ?>
 
+<?= $this->element('cdn_select2') ?>
+<?php $filterCount = count($queryParams); ?>
+
 <!-- ═══ Header ═══ -->
 <div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
     <div>
-        <span class="sgi-page-title">Registro de Pagos</span>
-        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
-            <span class="sgi-fg-muted"><?= $total ?> pago<?= $total !== 1 ? 's' : '' ?> · vista consolidada</span>
+        <span class="spi-page-title">Registro de Pagos</span>
+        <div class="spi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
+            <span class="spi-fg-muted"><?= $total ?> pago<?= $total !== 1 ? 's' : '' ?> · vista consolidada</span>
         </div>
+    </div>
+    <div>
+        <button type="button" class="btn btn-default" data-filter-drawer-open aria-label="Filtros">
+            <i class="bi bi-funnel" aria-hidden="true"></i>
+            <span>Filtros<?php if ($filterCount > 0): ?> · <span style="color:var(--primary-color);font-weight:700;"><?= $filterCount ?></span><?php endif; ?></span>
+        </button>
     </div>
 </div>
 
-<!-- ═══ Filtros (persistentes inline) ═══ -->
+<!-- ═══ Filtros ═══ -->
 <?= $this->Form->create(null, [
     'type' => 'get',
     'valueSources' => ['query'],
-    'class' => 'd-flex gap-2 align-items-center flex-wrap',
-    'style' => 'margin-bottom:14px;',
 ]) ?>
-    <select name="type" class="form-select form-select-sm" style="max-width:190px;">
-        <option value="">Tipo: Todos</option>
-        <?php foreach ($typeOptions as $value => $label): ?>
-        <option value="<?= h($value) ?>" <?= ($filters['type'] ?? '') === $value ? 'selected' : '' ?>>
-            Tipo: <?= h($label) ?>
-        </option>
-        <?php endforeach; ?>
-    </select>
-    <select name="authorized" class="form-select form-select-sm" style="max-width:170px;">
-        <option value="">Estado: Todos</option>
-        <option value="yes" <?= ($filters['authorized'] ?? '') === 'yes' ? 'selected' : '' ?>>Estado: Autorizado</option>
-        <option value="no"  <?= ($filters['authorized'] ?? '') === 'no'  ? 'selected' : '' ?>>Estado: Pendiente</option>
-    </select>
-    <select name="banking_entity_id" class="form-select form-select-sm" style="max-width:220px;">
-        <option value="">Entidad: Todas</option>
-        <?php foreach ($bankingEntities as $beId => $beName): ?>
-        <option value="<?= h((string)$beId) ?>" <?= ($filters['banking_entity_id'] ?? '') == $beId ? 'selected' : '' ?>>
-            <?= h($beName) ?>
-        </option>
-        <?php endforeach; ?>
-    </select>
-    <div style="width:230px;">
+<?php ob_start(); ?>
+    <div class="filter-field">
+        <label class="input-label" for="pr-type">Tipo</label>
+        <select name="type" id="pr-type" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            <?php foreach ($typeOptions as $value => $label): ?>
+            <option value="<?= h($value) ?>" <?= ($filters['type'] ?? '') === $value ? 'selected' : '' ?>>
+                <?= h($label) ?>
+            </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="filter-field">
+        <label class="input-label" for="pr-authorized">Estado</label>
+        <select name="authorized" id="pr-authorized" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            <option value="yes" <?= ($filters['authorized'] ?? '') === 'yes' ? 'selected' : '' ?>>Autorizado</option>
+            <option value="no"  <?= ($filters['authorized'] ?? '') === 'no'  ? 'selected' : '' ?>>Pendiente</option>
+        </select>
+    </div>
+    <div class="filter-field">
+        <label class="input-label" for="pr-entity">Entidad</label>
+        <select name="banking_entity_id" id="pr-entity" class="form-select form-select-sm select2-enable">
+            <option value="">Todas</option>
+            <?php foreach ($bankingEntities as $beId => $beName): ?>
+            <option value="<?= h((string)$beId) ?>" <?= ($filters['banking_entity_id'] ?? '') == $beId ? 'selected' : '' ?>>
+                <?= h($beName) ?>
+            </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="filter-field">
+        <label class="input-label" for="pr-range">Período</label>
         <?= $this->element('date_range_filter', [
             'id' => 'pr-range',
             'from' => $filters['date_from'] ?? '',
@@ -85,20 +103,16 @@ $gridCols = '1.2fr 1.4fr 1fr 1fr 1.3fr 1fr';
             'inputStyle' => 'width:100%;',
         ]) ?>
     </div>
-    <button type="submit" class="btn btn-primary btn-sm">
-        <i class="bi bi-funnel me-1" aria-hidden="true"></i>Aplicar filtros
-    </button>
-    <?php if ($hasFilters): ?>
-    <?= $this->Html->link(
-        '<i class="bi bi-x" aria-hidden="true"></i> Limpiar filtros',
-        ['action' => 'index'],
-        ['class' => 'btn btn-ghost btn-sm sgi-fg-secondary', 'escape' => false]
-    ) ?>
-    <?php endif; ?>
+<?php $filterFields = ob_get_clean(); ?>
+<?= $this->element('filter_drawer', [
+    'body' => $filterFields,
+    'count' => $filterCount,
+    'clearUrl' => ['action' => 'index'],
+]) ?>
 <?= $this->Form->end() ?>
 
 <!-- ═══ Tabla ═══ -->
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div class="row-fact head" style="grid-template-columns:<?= $gridCols ?>;" role="row">
         <span>Tipo · Referencia</span>
         <span>Entidad · Origen</span>

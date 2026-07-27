@@ -14,6 +14,11 @@ class DefaultFoldersController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista las carpetas por defecto.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -22,14 +27,25 @@ class DefaultFoldersController extends AppController
         $this->set(compact('defaultFolders'));
     }
 
+    /**
+     * Muestra una carpeta por defecto.
+     *
+     * @param string|null $id Default folder id.
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $defaultFolder = $this->DefaultFolders->get($id);
 
         $this->set(compact('defaultFolder'));
     }
 
+    /**
+     * Crea una carpeta por defecto.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -47,8 +63,14 @@ class DefaultFoldersController extends AppController
         $this->set(compact('defaultFolder'));
     }
 
+    /**
+     * Edita una carpeta por defecto.
+     *
+     * @param string|null $id Default folder id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $defaultFolder = $this->DefaultFolders->get($id);
         $result = $this->_catalogSave(
@@ -64,8 +86,14 @@ class DefaultFoldersController extends AppController
         $this->set(compact('defaultFolder'));
     }
 
+    /**
+     * Elimina una carpeta por defecto.
+     *
+     * @param string|null $id Default folder id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $defaultFolder = $this->DefaultFolders->get($id);

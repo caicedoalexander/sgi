@@ -14,13 +14,18 @@ use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Event\Event;
 use Cake\Event\EventManagerInterface;
 use Cake\ORM\TableRegistry;
-use Laminas\Diactoros\UploadedFile;
 use Throwable;
 
 class AdvanceLegalizationService
 {
     private AdvanceLegalizationPipelineStateRegistry $stateRegistry;
 
+    /**
+     * @param \Cake\Event\EventManagerInterface $events Event manager para publicar los eventos de legalización.
+     * @param \App\Service\AdvanceLegalizationHistoryService $historyService Servicio de auditoría de la legalización.
+     * @param \App\Service\AdvanceLegalizationDocumentService $documentService Servicio de documentos de la legalización.
+     * @param \App\Service\Pipeline\Advance\AdvanceLegalizationPipelineStateRegistry|null $stateRegistry Registro de estados del pipeline.
+     */
     public function __construct(
         private readonly EventManagerInterface $events,
         private readonly AdvanceLegalizationHistoryService $historyService,
@@ -82,7 +87,37 @@ class AdvanceLegalizationService
     }
 
     /**
-     * Bulk-link Legalización invoices to this advance.
+     * Devuelve la legalización del anticipo si está en Validación (estado en que
+     * se puede vincular/crear-vinculado), o null. Usado por la creación directa
+     * (Fase 3) para validar el contexto.
+     */
+    public function legalizationInValidacion(int $advanceInvoiceId): ?AdvanceLegalization
+    {
+        $leg = TableRegistry::getTableLocator()->get('AdvanceLegalizations')
+            ->find()
+            ->where(['advance_invoice_id' => $advanceInvoiceId])
+            ->first();
+
+        return $leg !== null && $leg->status === AdvanceConstants::STATUS_VALIDACION ? $leg : null;
+    }
+
+    /**
+     * Registra en el historial de la legalización el vínculo de una factura creada
+     * directamente vinculada (Fase 3), en paridad con linkInvoices() (invoices_linked).
+     */
+    public function recordDirectLink(AdvanceLegalization $leg, Invoice $invoice, int $userId): void
+    {
+        $this->historyService->recordFieldChange(
+            $leg->id,
+            'invoices_linked',
+            null,
+            (string)($invoice->invoice_number ?? $invoice->id),
+            $userId,
+        );
+    }
+
+    /**
+     * Bulk-link Legalización y Recibo de Caja en `aprobacion` a este anticipo.
      *
      * @param array<int> $invoiceIds
      */
@@ -105,8 +140,13 @@ class AdvanceLegalizationService
                     ['advance_id' => $leg->advance_invoice_id],
                     [
                         'id IN' => $invoiceIds,
-                        'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
                         'advance_id IS' => null,
+                        'petty_cash_record_id IS' => null,
+                        'pipeline_status' => InvoiceConstants::STATUS_APROBACION,
+                        'document_type IN' => [
+                            InvoiceConstants::DOCTYPE_LEGALIZACION,
+                            InvoiceConstants::DOCTYPE_RECIBO_CAJA,
+                        ],
                     ],
                 );
 
@@ -209,17 +249,15 @@ class AdvanceLegalizationService
     }
 
     /**
-     * Advance from validacion → revision_firmas. Requires ≥1 linked invoice, a relation
-     * document, and that every linked invoice is at least in `contabilidad`.
+     * Advance validacion → aprobacion. Requiere ≥1 factura vinculada y el PDF de
+     * relación (ValidacionState, MA-006 ya subsumida). Arma el grupo para la
+     * aprobación de área en lote.
      */
-    public function moveToRevisionFirmas(AdvanceLegalization $leg, int $userId): ServiceResult
+    public function moveToAprobacion(AdvanceLegalization $leg, int $userId): ServiceResult
     {
-        if (!$leg->canMoveToRevision()) {
+        if (!$leg->canMoveToAprobacion()) {
             return ServiceResult::fail('La legalización no está en Validación.');
         }
-
-        // Los requirements (≥1 factura vinculada, todas en CONTABILIDAD, doc PDF)
-        // viven en ValidacionState::validateAdvance — audit MA-010 / SU-001.
         $statusEnum = AdvancePipelineStatus::tryFrom((string)$leg->status);
         if ($statusEnum === null) {
             return ServiceResult::fail("Estado inválido: {$leg->status}");
@@ -229,7 +267,77 @@ class AdvanceLegalizationService
             return ServiceResult::fail($errors[0]);
         }
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_REVISION_FIRMAS, $userId);
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_APROBACION, $userId);
+    }
+
+    /**
+     * Regresa aprobacion → validacion para editar el grupo (vincular/desvincular).
+     * El controller invalida las aprobaciones activas (supersedeAll) tras esta llamada.
+     */
+    public function returnToValidacionFromAprobacion(AdvanceLegalization $leg, int $userId): ServiceResult
+    {
+        if (!$leg->canReturnFromAprobacion()) {
+            return ServiceResult::fail('La legalización no está en Aprobación.');
+        }
+
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_VALIDACION, $userId);
+    }
+
+    /**
+     * Consolidate aprobacion → revision_firmas. Gate: quórum de aprobadores +
+     * DIAN por hija (AprobacionState). Efecto: mueve cada factura hija de
+     * invoice-aprobacion a invoice-contabilidad + area_approval=Aprobada
+     * (propagación leg→facturas; MA-006 garantizada por construcción).
+     */
+    public function moveToRevisionFirmas(AdvanceLegalization $leg, int $userId): ServiceResult
+    {
+        if (!$leg->canConsolidateApproval()) {
+            return ServiceResult::fail('La legalización no está en Aprobación.');
+        }
+
+        $statusEnum = AdvancePipelineStatus::tryFrom((string)$leg->status);
+        if ($statusEnum === null) {
+            return ServiceResult::fail("Estado inválido: {$leg->status}");
+        }
+        $errors = $this->stateRegistry->get($statusEnum)->validateAdvance($leg);
+        if (!empty($errors)) {
+            return ServiceResult::fail($errors[0]);
+        }
+
+        $invoices = TableRegistry::getTableLocator()->get('Invoices');
+        $legTable = TableRegistry::getTableLocator()->get('AdvanceLegalizations');
+
+        $result = null;
+        $legTable->getConnection()->transactional(
+            function () use ($leg, $userId, $invoices, &$result): bool {
+                // Propagación leg→facturas: mueve las hijas en invoice-aprobacion a
+                // invoice-contabilidad + area_approval (MA-006 como efecto).
+                $invoices->updateAll(
+                    [
+                        'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
+                        'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
+                        'area_approval_date' => date('Y-m-d H:i:s'),
+                    ],
+                    [
+                        'advance_id' => $leg->advance_invoice_id,
+                        'document_type IN' => InvoiceConstants::ADVANCE_LINKABLE_DOCTYPES,
+                        'pipeline_status' => InvoiceConstants::STATUS_APROBACION,
+                    ],
+                );
+
+                $inner = $this->_setStatus($leg, AdvanceConstants::STATUS_REVISION_FIRMAS, $userId);
+                if (!$inner->success) {
+                    $result = $inner;
+
+                    return false;
+                }
+                $result = $inner;
+
+                return true;
+            },
+        );
+
+        return $result ?? ServiceResult::fail('La transacción falló.');
     }
 
     /**
@@ -282,11 +390,14 @@ class AdvanceLegalizationService
     }
 
     /**
-     * Reject signature and bounce back to validacion with a reason.
+     * Rechaza la firma y devuelve la legalización a Aprobación (paso anterior)
+     * con un motivo. Inverso de la consolidación: reversa la propagación de las
+     * facturas hijas (invoice-contabilidad → invoice-aprobacion), conservando su
+     * `area_approval` y los aprobadores del grupo para poder re-consolidar.
      */
-    public function returnToValidacion(AdvanceLegalization $leg, string $reason, int $userId): ServiceResult
+    public function returnToAprobacion(AdvanceLegalization $leg, string $reason, int $userId): ServiceResult
     {
-        if (!$leg->canReturnToValidacion()) {
+        if (!$leg->canReturnToAprobacion()) {
             return ServiceResult::fail('La legalización no está en Revisión y Firmas.');
         }
         if (trim($reason) === '') {
@@ -294,10 +405,11 @@ class AdvanceLegalizationService
         }
 
         $sigTable = TableRegistry::getTableLocator()->get('AdvanceLegalizationSignatures');
+        $invoices = TableRegistry::getTableLocator()->get('Invoices');
 
         $result = null;
         $sigTable->getConnection()->transactional(
-            function () use ($leg, $reason, $userId, $sigTable, &$result): bool {
+            function () use ($leg, $reason, $userId, $sigTable, $invoices, &$result): bool {
                 $pending = $sigTable->find()
                     ->where([
                         'legalization_id' => $leg->id,
@@ -324,7 +436,19 @@ class AdvanceLegalizationService
                     );
                 }
 
-                $inner = $this->_setStatus($leg, AdvanceConstants::STATUS_VALIDACION, $userId);
+                // Inverso de moveToRevisionFirmas: reversa las hijas consolidadas
+                // a invoice-aprobacion. Solo el pipeline_status; area_approval se
+                // conserva (lo fijó onAllApproved en aprobacion, no la consolidación).
+                $invoices->updateAll(
+                    ['pipeline_status' => InvoiceConstants::STATUS_APROBACION],
+                    [
+                        'advance_id' => $leg->advance_invoice_id,
+                        'document_type IN' => InvoiceConstants::ADVANCE_LINKABLE_DOCTYPES,
+                        'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
+                    ],
+                );
+
+                $inner = $this->_setStatus($leg, AdvanceConstants::STATUS_APROBACION, $userId);
                 if (!$inner->success) {
                     $result = $inner;
 
@@ -341,7 +465,7 @@ class AdvanceLegalizationService
     }
 
     /**
-     * Sum of amounts of linked Legalización invoices.
+     * Sum of amounts of linked invoices (Legalización and Recibo de Caja).
      */
     public function getLinkedTotal(AdvanceLegalization $leg): float
     {
@@ -350,7 +474,7 @@ class AdvanceLegalizationService
         return (float)$invoices->find()
             ->where([
                 'advance_id' => $leg->advance_invoice_id,
-                'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+                'document_type IN' => InvoiceConstants::ADVANCE_LINKABLE_DOCTYPES,
             ])
             ->all()
             ->sumOf('amount');
@@ -380,9 +504,12 @@ class AdvanceLegalizationService
     }
 
     /**
-     * Close as caso exacto when difference is zero.
+     * Close as caso exacto when difference is zero. La causación del paso
+     * Contabilidad es obligatoria (gate en ContabilidadState).
+     *
+     * @param array{accrued?: bool, accrual_date?: string|null, ready_for_payment?: string|null} $accounting
      */
-    public function markExact(AdvanceLegalization $leg, int $userId): ServiceResult
+    public function markExact(AdvanceLegalization $leg, array $accounting, int $userId): ServiceResult
     {
         if (!$leg->canMarkExact()) {
             return ServiceResult::fail('La legalización no permite marcarse como exacta.');
@@ -392,20 +519,32 @@ class AdvanceLegalizationService
             return ServiceResult::fail('La diferencia no es cero. Use Faltante o Sobrante.');
         }
 
+        $applied = $this->_applyAccounting($leg, $accounting);
+        if (!empty($applied['errors'])) {
+            return ServiceResult::fail($applied['errors'][0]);
+        }
+
         $leg->case_type = AdvanceConstants::CASE_EXACTO;
         $leg->legalized_at = date('Y-m-d H:i:s');
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_LEGALIZADA, $userId, [
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_LEGALIZADA, $userId, array_merge([
             'case_type' => [null, AdvanceConstants::CASE_EXACTO],
-        ]);
+        ], $applied['changes']));
     }
 
     /**
      * Contabilidad declares a shortage (anticipo > linked invoices). The legalization
-     * jumps to Tesorería awaiting the beneficiary's deposit.
+     * jumps to Tesorería awaiting the beneficiary's deposit. La causación del paso
+     * es obligatoria (gate en ContabilidadState).
+     *
+     * @param array{accrued?: bool, accrual_date?: string|null, ready_for_payment?: string|null} $accounting
      */
-    public function registerShortage(AdvanceLegalization $leg, float $amount, int $userId): ServiceResult
-    {
+    public function registerShortage(
+        AdvanceLegalization $leg,
+        float $amount,
+        array $accounting,
+        int $userId,
+    ): ServiceResult {
         // canRegisterShortage cubre status=contabilidad + case_type=null (MA-005).
         if (!$leg->canRegisterShortage()) {
             return ServiceResult::fail('La legalización no permite declarar un faltante.');
@@ -414,13 +553,18 @@ class AdvanceLegalizationService
             return ServiceResult::fail('El monto del faltante debe ser mayor a cero.');
         }
 
+        $applied = $this->_applyAccounting($leg, $accounting);
+        if (!empty($applied['errors'])) {
+            return ServiceResult::fail($applied['errors'][0]);
+        }
+
         $leg->case_type = AdvanceConstants::CASE_FALTANTE;
         $leg->shortage_amount = $amount;
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId, [
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId, array_merge([
             'case_type' => [null, AdvanceConstants::CASE_FALTANTE],
             'shortage_amount' => [null, (string)$amount],
-        ]);
+        ], $applied['changes']));
     }
 
     /**
@@ -429,9 +573,8 @@ class AdvanceLegalizationService
      * @param array{
      *     receipt_number?: string,
      *     received_at?: string,
-     *     receipt_file?: \Laminas\Diactoros\UploadedFile|null,
      * } $data Payload del form: receipt_number es obligatorio, received_at en
-     *     formato Y-m-d (opcional, default hoy), receipt_file opcional.
+     *     formato Y-m-d (opcional, default hoy; si viene y no es parseable, falla).
      */
     public function confirmShortageReceipt(AdvanceLegalization $leg, array $data, int $userId): ServiceResult
     {
@@ -443,18 +586,20 @@ class AdvanceLegalizationService
             return ServiceResult::fail('El número de comprobante es obligatorio.');
         }
 
-        $leg->shortage_receipt_number = $number;
-        $leg->shortage_received_at = !empty($data['received_at'])
-            ? date('Y-m-d H:i:s', strtotime($data['received_at']))
-            : date('Y-m-d H:i:s');
-
-        if (!empty($data['receipt_file']) && $data['receipt_file'] instanceof UploadedFile) {
-            $upload = $this->documentService->attachShortageReceipt($leg, $data['receipt_file']);
-            if (!$upload->success) {
-                return $upload;
+        // Se valida antes de mutar la entidad: una fecha no parseable no debe
+        // dejar cambios parciales en la legalización.
+        $rawReceivedAt = trim((string)($data['received_at'] ?? ''));
+        $receivedAt = date('Y-m-d H:i:s');
+        if ($rawReceivedAt !== '') {
+            $timestamp = strtotime($rawReceivedAt);
+            if ($timestamp === false) {
+                return ServiceResult::fail('La fecha de consignación no es válida.');
             }
-            $leg->shortage_receipt_path = $upload->data;
+            $receivedAt = date('Y-m-d H:i:s', $timestamp);
         }
+
+        $leg->shortage_receipt_number = $number;
+        $leg->shortage_received_at = $receivedAt;
 
         $leg->legalized_at = date('Y-m-d H:i:s');
 
@@ -466,9 +611,16 @@ class AdvanceLegalizationService
     /**
      * Contabilidad declares a surplus (linked invoices > anticipo). The legalization
      * jumps to Tesorería awaiting the company's refund payment to the beneficiary.
+     * La causación del paso es obligatoria (gate en ContabilidadState).
+     *
+     * @param array{accrued?: bool, accrual_date?: string|null, ready_for_payment?: string|null} $accounting
      */
-    public function registerSurplus(AdvanceLegalization $leg, float $amount, int $userId): ServiceResult
-    {
+    public function registerSurplus(
+        AdvanceLegalization $leg,
+        float $amount,
+        array $accounting,
+        int $userId,
+    ): ServiceResult {
         // canRegisterSurplus cubre status=contabilidad + case_type=null (MA-005).
         if (!$leg->canRegisterSurplus()) {
             return ServiceResult::fail('La legalización no permite declarar un sobrante.');
@@ -477,13 +629,18 @@ class AdvanceLegalizationService
             return ServiceResult::fail('El monto del sobrante debe ser mayor a cero.');
         }
 
+        $applied = $this->_applyAccounting($leg, $accounting);
+        if (!empty($applied['errors'])) {
+            return ServiceResult::fail($applied['errors'][0]);
+        }
+
         $leg->case_type = AdvanceConstants::CASE_SOBRANTE;
         $leg->surplus_amount = $amount;
 
-        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId, [
+        return $this->_setStatus($leg, AdvanceConstants::STATUS_TESORERIA, $userId, array_merge([
             'case_type' => [null, AdvanceConstants::CASE_SOBRANTE],
             'surplus_amount' => [null, (string)$amount],
-        ]);
+        ], $applied['changes']));
     }
 
     /**
@@ -585,10 +742,12 @@ class AdvanceLegalizationService
         if (!$leg) {
             return ServiceResult::fail('No hay legalización vinculada al pago.');
         }
-        if (in_array($leg->status, [
+        if (
+            in_array($leg->status, [
             AdvanceConstants::STATUS_VERIFICACION_PAGO,
             AdvanceConstants::STATUS_LEGALIZADA,
-        ], true)) {
+            ], true)
+        ) {
             return ServiceResult::ok($leg);
         }
         if ($leg->status !== AdvanceConstants::STATUS_AUTORIZACION_PAGO) {
@@ -675,6 +834,57 @@ class AdvanceLegalizationService
         });
 
         return $flat[0] ?? 'Error de validación.';
+    }
+
+    /**
+     * Asigna los campos de causación del paso Contabilidad sobre la legalización
+     * y devuelve los errores del gate más los cambios listos para el audit trail.
+     *
+     * Los 3 campos son non-accessible (MI-002): se asignan por propiedad directa.
+     *
+     * Los valores originales se capturan ANTES de mutar. `recordFieldChange()`
+     * descarta los cambios donde old === new, así que leerlos después de asignar
+     * dejaría el historial vacío sin ningún error visible.
+     *
+     * @param array{accrued?: bool, accrual_date?: string|null, ready_for_payment?: string|null} $accounting
+     * @return array{errors: array<string>, changes: array<string, array{0: scalar|null, 1: scalar|null}>}
+     */
+    private function _applyAccounting(AdvanceLegalization $leg, array $accounting): array
+    {
+        $oldAccrued = (bool)($leg->accrued ?? false);
+        $oldDate = $leg->accrual_date;
+        $oldReady = $leg->ready_for_payment;
+
+        $newAccrued = (bool)($accounting['accrued'] ?? false);
+        $rawDate = trim((string)($accounting['accrual_date'] ?? ''));
+        $newDate = null;
+        if ($rawDate !== '') {
+            $ts = strtotime($rawDate);
+            if ($ts !== false) {
+                $newDate = date('Y-m-d', $ts);
+            }
+        }
+        $rawReady = trim((string)($accounting['ready_for_payment'] ?? ''));
+        $newReady = $rawReady !== '' ? $rawReady : null;
+
+        $leg->accrued = $newAccrued;
+        $leg->accrual_date = $newDate;
+        $leg->ready_for_payment = $newReady;
+
+        $oldDateStr = $oldDate === null
+            ? null
+            : (is_string($oldDate) ? $oldDate : $oldDate->format('Y-m-d'));
+
+        return [
+            'errors' => $this->stateRegistry
+                ->get(AdvancePipelineStatus::CONTABILIDAD)
+                ->validateAdvance($leg),
+            'changes' => [
+                'accrued' => [$oldAccrued ? 'Sí' : 'No', $newAccrued ? 'Sí' : 'No'],
+                'accrual_date' => [$oldDateStr, $newDate],
+                'ready_for_payment' => [$oldReady, $newReady],
+            ],
+        ];
     }
 
     /**

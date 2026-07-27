@@ -34,6 +34,13 @@ use Cake\TestSuite\TestCase;
  */
 final class AdvanceLegalizationSurplusTest extends TestCase
 {
+    /** Payload de causación válido para las salidas del paso Contabilidad. */
+    private const ACCOUNTING = [
+        'accrued' => true,
+        'accrual_date' => '2026-06-23',
+        'ready_for_payment' => 'Si',
+    ];
+
     /**
      * Construye el servicio con un EventManager aislado y los history/document
      * services reales. El stateRegistry queda en su default.
@@ -64,7 +71,7 @@ final class AdvanceLegalizationSurplusTest extends TestCase
             ->withStatus(AdvanceConstants::STATUS_CONTABILIDAD)->save();
         $user = UserFactory::new()->save();
 
-        $result = $this->buildService()->registerSurplus($leg, 250.0, $user->id);
+        $result = $this->buildService()->registerSurplus($leg, 250.0, self::ACCOUNTING, $user->id);
 
         $this->assertTrue($result->success);
 
@@ -72,6 +79,86 @@ final class AdvanceLegalizationSurplusTest extends TestCase
         $this->assertSame(AdvanceConstants::CASE_SOBRANTE, $persisted->case_type);
         $this->assertSame(250.0, (float)$persisted->surplus_amount);
         $this->assertSame(AdvanceConstants::STATUS_TESORERIA, $persisted->status);
+    }
+
+    /**
+     * registerSurplus persiste los 3 campos de causación y deja una fila de
+     * historial por cada uno. Si el service leyera el `oldValue` DESPUÉS de
+     * mutar la entidad, recordFieldChange() los descartaría en silencio por
+     * old === new y estas 3 filas no existirían.
+     */
+    public function testRegisterSurplusPersistsAccountingAndAuditsEachField(): void
+    {
+        $anticipo = InvoiceFactory::new()->anticipo()
+            ->withAmount(1000.0)->withStatus(InvoiceConstants::STATUS_PAGADA)->save();
+        $leg = AdvanceLegalizationFactory::new()->forAdvance($anticipo)
+            ->withStatus(AdvanceConstants::STATUS_CONTABILIDAD)->save();
+        $user = UserFactory::new()->save();
+
+        $result = $this->buildService()->registerSurplus($leg, 250.0, self::ACCOUNTING, $user->id);
+        $this->assertTrue($result->success);
+
+        $persisted = $this->fetchTable('AdvanceLegalizations')->get($leg->id);
+        $this->assertTrue((bool)$persisted->accrued);
+        $this->assertSame('2026-06-23', $persisted->accrual_date->format('Y-m-d'));
+        $this->assertSame('Si', $persisted->ready_for_payment);
+
+        $audited = $this->fetchTable('AdvanceLegalizationHistories')->find()
+            ->where(['legalization_id' => $leg->id])
+            ->all()
+            ->extract('field_changed')
+            ->toList();
+        $this->assertContains('accrued', $audited);
+        $this->assertContains('accrual_date', $audited);
+        $this->assertContains('ready_for_payment', $audited);
+    }
+
+    /**
+     * registerSurplus con causación incompleta falla contra el gate del
+     * ContabilidadState y no mueve la legalización.
+     */
+    public function testRegisterSurplusFailsWhenAccountingIsIncomplete(): void
+    {
+        $anticipo = InvoiceFactory::new()->anticipo()
+            ->withAmount(1000.0)->withStatus(InvoiceConstants::STATUS_PAGADA)->save();
+        $leg = AdvanceLegalizationFactory::new()->forAdvance($anticipo)
+            ->withStatus(AdvanceConstants::STATUS_CONTABILIDAD)->save();
+        $user = UserFactory::new()->save();
+
+        $incomplete = ['accrued' => true, 'accrual_date' => null, 'ready_for_payment' => 'Si'];
+        $result = $this->buildService()->registerSurplus($leg, 250.0, $incomplete, $user->id);
+
+        $this->assertFalse($result->success);
+        $this->assertSame('Fecha de Causación es requerida', $result->firstError());
+
+        $persisted = $this->fetchTable('AdvanceLegalizations')->get($leg->id);
+        $this->assertSame(AdvanceConstants::STATUS_CONTABILIDAD, $persisted->status);
+        $this->assertNull($persisted->case_type);
+    }
+
+    /**
+     * registerSurplus con accrual_date en un formato que strtotime() no puede
+     * parsear (p. ej. lo que un usuario tipea si flatpickr no cargó) debe fallar
+     * contra el gate del ContabilidadState en lugar de persistir 1970-01-01
+     * en silencio (strtotime devuelve false, el cast (int) lo vuelve 0).
+     */
+    public function testRegisterSurplusFailsWhenAccrualDateIsUnparseable(): void
+    {
+        $anticipo = InvoiceFactory::new()->anticipo()
+            ->withAmount(1000.0)->withStatus(InvoiceConstants::STATUS_PAGADA)->save();
+        $leg = AdvanceLegalizationFactory::new()->forAdvance($anticipo)
+            ->withStatus(AdvanceConstants::STATUS_CONTABILIDAD)->save();
+        $user = UserFactory::new()->save();
+
+        $unparseable = ['accrued' => true, 'accrual_date' => '23/06/2026', 'ready_for_payment' => 'Si'];
+        $result = $this->buildService()->registerSurplus($leg, 250.0, $unparseable, $user->id);
+
+        $this->assertFalse($result->success);
+        $this->assertSame('Fecha de Causación es requerida', $result->firstError());
+
+        $persisted = $this->fetchTable('AdvanceLegalizations')->get($leg->id);
+        $this->assertSame(AdvanceConstants::STATUS_CONTABILIDAD, $persisted->status);
+        $this->assertNull($persisted->case_type);
     }
 
     /**
@@ -92,7 +179,7 @@ final class AdvanceLegalizationSurplusTest extends TestCase
         $user = UserFactory::new()->save();
         $service = $this->buildService();
 
-        $surplus = $service->registerSurplus($leg, 300.0, $user->id);
+        $surplus = $service->registerSurplus($leg, 300.0, self::ACCOUNTING, $user->id);
         $this->assertTrue($surplus->success);
 
         $bank = BankingEntityFactory::new()->save();
@@ -133,7 +220,7 @@ final class AdvanceLegalizationSurplusTest extends TestCase
         $service = $this->buildService();
 
         $bank = BankingEntityFactory::new()->save();
-        $this->assertTrue($service->registerSurplus($leg, 200.0, $user->id)->success);
+        $this->assertTrue($service->registerSurplus($leg, 200.0, self::ACCOUNTING, $user->id)->success);
         $this->assertTrue($service->registerRefundPayment($leg, ['banking_entity_id' => $bank->id], $user->id)->success);
 
         $paymentId = (int)$this->fetchTable('AdvanceLegalizations')->get($leg->id)->surplus_payment_id;
@@ -169,7 +256,7 @@ final class AdvanceLegalizationSurplusTest extends TestCase
         $service = $this->buildService();
 
         $bank = BankingEntityFactory::new()->save();
-        $this->assertTrue($service->registerSurplus($leg, 150.0, $user->id)->success);
+        $this->assertTrue($service->registerSurplus($leg, 150.0, self::ACCOUNTING, $user->id)->success);
         $this->assertTrue($service->registerRefundPayment($leg, ['banking_entity_id' => $bank->id], $user->id)->success);
 
         $paymentId = (int)$this->fetchTable('AdvanceLegalizations')->get($leg->id)->surplus_payment_id;

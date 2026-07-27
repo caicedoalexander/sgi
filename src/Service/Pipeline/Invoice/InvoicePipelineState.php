@@ -24,17 +24,11 @@ interface InvoicePipelineState
     public function getPreviousStatus(): ?PipelineStatus;
 
     /**
-     * Errores de requirement de este estado para avanzar al siguiente.
+     * Errores de requirement de este estado para avanzar al siguiente,
+     * KEYED por requisito (key de InvoiceTransitionValidator::REQUIREMENT_FIELDS).
      * No incluye rejection ni doctype block — el coordinador los compone.
      *
-     * @return array<string>
+     * @return array<string, string>
      */
     public function validateAdvance(object $invoice): array;
-
-    /**
-     * Reglas crudas (campo + etiqueta) para UI. No evalúa contra el invoice.
-     *
-     * @return array<int, array{field: string, label: string}>
-     */
-    public function getTransitionRules(): array;
 }

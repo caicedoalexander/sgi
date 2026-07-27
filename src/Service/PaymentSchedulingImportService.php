@@ -9,13 +9,16 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class PaymentSchedulingImportService
 {
+    /**
+     * @param \App\Service\InvoicePaymentService $paymentService Servicio de pagos de facturas.
+     */
     public function __construct(
         private readonly InvoicePaymentService $paymentService,
     ) {
     }
 
     /**
-     * Transforma número de factura de formato Siesa al formato SGI.
+     * Transforma número de factura de formato Siesa al formato SPI.
      * Ej: "FVE-00080933-00" → "FVE80933", "-00006755-00" → "6755"
      */
     private function _normalizeSiesaInvoiceNumber(string $raw): string
@@ -110,7 +113,7 @@ class PaymentSchedulingImportService
                     ->first();
 
                 if (!$currentProvider) {
-                    $errors[] = "Fila {$rowNum}: Proveedor con NIT '{$currentNit}' no encontrado en SGI.";
+                    $errors[] = "Fila {$rowNum}: Proveedor con NIT '{$currentNit}' no encontrado en SPI.";
                     $currentProvider = null;
                 }
 

@@ -9,7 +9,6 @@ use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
-use App\Service\Pipeline\Invoice\Policy\InvoiceFieldAccessPolicy;
 use App\ValueObject\UserContext;
 
 /**
@@ -22,17 +21,33 @@ use App\ValueObject\UserContext;
  */
 final class InvoiceTransitionValidator
 {
-    /** Mapeo requirement-field → campos del form que lo resuelven. */
+    /**
+     * Mapeo requirement-key → campos del form que lo resuelven. Responsable `[]`
+     * significa "nadie lo resuelve tecleando un campo del form" (se resuelve
+     * aprobando, subiendo un documento o registrando un pago): su visibilidad la
+     * gobierna `canOperate` del status.
+     */
     private const REQUIREMENT_FIELDS = [
-        'area_approval'        => [],
-        'dian_validation'      => ['dian_validation'],
-        'accrued'              => ['accrued', 'accrual_date'],
-        'accrual_date'         => ['accrual_date'],
-        'ready_for_payment'    => ['ready_for_payment'],
+        'area_approval' => [],
+        'dian_validation' => ['dian_validation'],
+        'support_document' => [],
+        'accrued' => ['accrued', 'accrual_date'],
+        'accrual_date' => ['accrual_date'],
+        'ready_for_payment' => ['ready_for_payment'],
         '_has_pending_payment' => [],
-        '_payment_authorized'  => [],
+        '_payment_authorized' => [],
+        '_payment_executed' => [],
     ];
 
+    /** Keys compuestas por el propio validator: no las resuelve ningún campo, siempre se muestran. */
+    private const ALWAYS_VISIBLE_KEYS = ['_rejected', '_doctype_block', '_invalid_status'];
+
+    /**
+     * @param \App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry $states Registro de States del pipeline.
+     * @param \App\Service\Pipeline\Invoice\DocumentTypePolicyFactory $policies Factory de policies por document_type.
+     * @param \App\Service\Pipeline\Invoice\Policy\InvoiceFieldAccessPolicy $fieldPolicy Policy de campos editables por paso.
+     * @param \App\Authorization\AuthorizationFacade $auth Authorization facade.
+     */
     public function __construct(
         private readonly InvoicePipelineStateRegistry $states,
         private readonly DocumentTypePolicyFactory $policies,
@@ -45,7 +60,7 @@ final class InvoiceTransitionValidator
      * Errores de avance: rejection + doctype block + state validation.
      *
      * @param array<string, mixed> $overrides Campos pendientes de guardar a evaluar como si ya estuvieran en el invoice.
-     * @return array<string>
+     * @return array<string, string> Errores keyed por requisito.
      */
     public function validateAdvance(object $invoice, string $fromStatus, array $overrides = []): array
     {
@@ -58,12 +73,12 @@ final class InvoiceTransitionValidator
         }
 
         if (($subject->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED) {
-            return ['La factura fue rechazada. El flujo ha terminado.'];
+            return ['_rejected' => 'La factura fue rechazada. El flujo ha terminado.'];
         }
 
         $fromEnum = PipelineStatus::tryFrom($fromStatus);
         if ($fromEnum === null) {
-            return ["Estado de origen inválido: {$fromStatus}"];
+            return ['_invalid_status' => "Estado de origen inválido: {$fromStatus}"];
         }
 
         $state = $this->states->get($fromEnum);
@@ -71,31 +86,17 @@ final class InvoiceTransitionValidator
 
         $blockMsg = $policy->blocksAdvance($state, $subject);
         if ($blockMsg !== null) {
-            return [$blockMsg];
+            return ['_doctype_block' => $blockMsg];
         }
 
         return $state->validateAdvance($subject);
     }
 
     /**
-     * @return array<int, array{field: string, label: string}>
-     */
-    public function getTransitionRules(string $fromStatus): array
-    {
-        $fromEnum = PipelineStatus::tryFrom($fromStatus);
-        if ($fromEnum === null) {
-            return [];
-        }
-
-        return $this->states->get($fromEnum)->getTransitionRules();
-    }
-
-    /**
-     * @param array<string> $errors
-     * @param array<int, array{field: string, label: string}> $rules
+     * @param array<string, string> $errors Errores keyed por requisito.
      * @return array<string>
      */
-    public function filterErrorsForRole(array $errors, array $rules, int $roleId, string $status): array
+    public function filterErrorsForRole(array $errors, int $roleId, string $status): array
     {
         $editable = $this->fieldPolicy->getEditableFields($roleId, $status);
         $statusVisible = $this->auth->canOperate(
@@ -105,22 +106,22 @@ final class InvoiceTransitionValidator
         );
 
         $filtered = [];
-        foreach ($rules as $i => $rule) {
-            if (!isset($errors[$i])) {
+        foreach ($errors as $key => $message) {
+            if (in_array($key, self::ALWAYS_VISIBLE_KEYS, true)) {
+                $filtered[] = $message;
                 continue;
             }
-            $field = $rule['field'];
-            $responsible = self::REQUIREMENT_FIELDS[$field] ?? [$field];
+            $responsible = self::REQUIREMENT_FIELDS[$key] ?? [$key];
 
             if ($responsible === []) {
                 if ($statusVisible) {
-                    $filtered[] = $errors[$i];
+                    $filtered[] = $message;
                 }
                 continue;
             }
 
             if (array_intersect($responsible, $editable)) {
-                $filtered[] = $errors[$i];
+                $filtered[] = $message;
             }
         }
 

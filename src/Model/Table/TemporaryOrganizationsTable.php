@@ -14,6 +14,12 @@ class TemporaryOrganizationsTable extends Table implements ExcelExportableInterf
 {
     use ExcelExportableTrait;
 
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -29,6 +35,12 @@ class TemporaryOrganizationsTable extends Table implements ExcelExportableInterf
         ]);
     }
 
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -45,6 +57,13 @@ class TemporaryOrganizationsTable extends Table implements ExcelExportableInterf
         return $validator;
     }
 
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->isUnique(['name'], message: 'El nombre ya existe.'), [
@@ -54,6 +73,12 @@ class TemporaryOrganizationsTable extends Table implements ExcelExportableInterf
         return $rules;
     }
 
+    /**
+     * Custom finder: arma la lista clave-valor (id => etiqueta) para poblar selects.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query The query builder.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
     public function findCodeList(SelectQuery $query): SelectQuery
     {
         return $query->select(['id', 'name', 'nit'])
@@ -76,11 +101,21 @@ class TemporaryOrganizationsTable extends Table implements ExcelExportableInterf
         ];
     }
 
+    /**
+     * Título de la hoja al exportar/importar el catálogo en Excel.
+     *
+     * @return string
+     */
     public function getExcelSheetTitle(): string
     {
         return 'Organizaciones Temporales';
     }
 
+    /**
+     * Slug del archivo al descargar la plantilla Excel del catálogo.
+     *
+     * @return string
+     */
     public function getExcelDownloadSlug(): string
     {
         return 'temporales';

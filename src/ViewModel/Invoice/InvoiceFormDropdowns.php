@@ -10,6 +10,15 @@ namespace App\ViewModel\Invoice;
  */
 final readonly class InvoiceFormDropdowns
 {
+    /**
+     * @param mixed $providers Listado de proveedores.
+     * @param mixed $operationCenters Listado de centros de operación.
+     * @param mixed $expenseTypes Listado de tipos de gasto.
+     * @param mixed $costCenters Listado de centros de costo.
+     * @param mixed $approvers Listado de aprobadores.
+     * @param mixed $employees Listado de empleados.
+     * @param mixed $bankingEntities Listado de entidades bancarias.
+     */
     public function __construct(
         public mixed $providers,
         public mixed $operationCenters,

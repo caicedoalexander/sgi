@@ -1,5 +1,5 @@
 /* =================================================================
-   SGI · COPCSA — Sistema de Diseño · components.css
+   SPI · COPCSA — Sistema de Diseño · components.css
 
    Catálogo completo de componentes alineado con el Sistema de Diseño
    (ver docs/design/). `styles.css` aporta tokens + base;
@@ -8,9 +8,9 @@
      A. Bootstrap overrides — para que cualquier vista nueva con clases
         Bootstrap (btn-primary, card, modal, form-control, etc.) reciba
         automáticamente el look del sistema sin escribir CSS extra.
-     B. Componentes SGI canónicos (.pill, .input, .av, .doc, .row-fact,
+     B. Componentes SPI canónicos (.pill, .input, .av, .doc, .row-fact,
         .pipeline-*, .sb-*, .cal, .field-row, .tab, .chip, .segmented,
-        .empty-state, .dropzone, .sgi-topbar, .sgi-card, etc.).
+        .empty-state, .dropzone, .spi-topbar, .spi-card, etc.).
      C. Excepciones documentadas (chat bubbles, folder count, template
         editor, flash notifications).
 
@@ -552,7 +552,7 @@ textarea.form-control.auto-resize {
 /* Checkbox / radio */
 .form-check { display: flex; align-items: center; gap: 8px; padding: 0; min-height: auto; }
 /* Bootstrap aplica float:left + margin-left:-1.5em a `.form-check .form-check-input`
-   (especificidad 0,2,0). El layout SGI es flex con gap — se neutraliza igualando
+   (especificidad 0,2,0). El layout SPI es flex con gap — se neutraliza igualando
    la especificidad para que el checkbox no se desplace fuera de su columna. */
 .form-check .form-check-input { margin: 0; float: none; }
 .form-check-input {
@@ -799,21 +799,21 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 
 
 /* ═══════════════════════════════════════════════════════════════════
-   B. COMPONENTES SGI CANÓNICOS
+   B. COMPONENTES SPI CANÓNICOS
    ═══════════════════════════════════════════════════════════════════ */
 
 
-/* ─── B.1 .sgi-card ─────────────────────────────────────────────── */
-.sgi-card {
+/* ─── B.1 .spi-card ─────────────────────────────────────────────── */
+.spi-card {
     background-color: #fff;
     padding: 20px;
     border-radius: 0;
 }
-.sgi-card.compact { padding: 16px; }
+.spi-card.compact { padding: 16px; }
 
 
-/* ─── B.2 .sgi-topbar (barra superior 52px) ─────────────────────── */
-.sgi-topbar {
+/* ─── B.2 .spi-topbar (barra superior 52px) ─────────────────────── */
+.spi-topbar {
     height: 52px;
     display: flex;
     align-items: center;
@@ -822,26 +822,26 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     background-color: #fff;
     flex-shrink: 0;
 }
-.sgi-topbar-crumb {
+.spi-topbar-crumb {
     display: flex; align-items: center; gap: 12px;
     font-size: var(--fs-body-lg);
     font-weight: 600;
     color: var(--text-default);
 }
-.sgi-topbar-accent {
+.spi-topbar-accent {
     width: 3px; height: 18px;
     background-color: var(--primary-color);
     display: inline-block;
 }
-.sgi-topbar-right {
+.spi-topbar-right {
     display: flex; align-items: center; gap: 14px;
 }
-.sgi-topbar-date {
+.spi-topbar-date {
     display: flex; align-items: center; gap: 6px;
     font-size: 11.5px;
     color: var(--text-faint);
 }
-.sgi-topbar-date .bi { font-size: 13px; }
+.spi-topbar-date .bi { font-size: 13px; }
 
 
 /* ─── B.3 PILLS ─────────────────────────────────────────────────── */
@@ -871,6 +871,9 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .pill-info-soft      { background-color: var(--info-soft);      color: var(--info-text); }
 .pill-muted          { background-color: var(--background-color); color: var(--text-muted); }
 
+/* Referencia (programación): acompaña al pipeline en vez de reemplazarlo. */
+.pill-ref            { background-color: transparent; color: var(--text-muted); border: 1px dashed var(--border-color); }
+
 /* Solid — uso restringido a hero / sidebar / headers oscuros */
 .pill-primary   { background-color: var(--primary-color);   color: #fff; }
 .pill-orange    { background-color: var(--secondary-color); color: #fff; }
@@ -878,7 +881,7 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 .pill-dark      { background-color: var(--bg-dark);         color: #fff; }
 
 
-/* ─── B.4 .input (alternativa SGI a .form-control) ──────────────── */
+/* ─── B.4 .input (alternativa SPI a .form-control) ──────────────── */
 .input {
     display: flex;
     align-items: center;
@@ -1000,9 +1003,9 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
    Campo token-input para asignar aprobadores. Contenedor outlined que
    agrupa los chips. Cuando contiene el picker de Select2 el contenedor lo
    aporta Select2 (.select2-selection--multiple) y este se neutraliza —
-   ver `.sgi-approvers-widget:has(.select2-container)` en
-   sgi-select2-overrides.css. */
-.sgi-approvers-widget {
+   ver `.spi-approvers-widget:has(.select2-container)` en
+   spi-select2-overrides.css. */
+.spi-approvers-widget {
     align-items: center;
     min-height: 48px;
     padding: 5px;
@@ -1013,10 +1016,10 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 }
 
 /* Chip de aprobador (render server-side: element invoice_edit/_approver_chip).
-   El picker rico de Select2 reutiliza .sgi-approver-chip-info/-name/-meta
-   dentro de .sgi-approver-chip-inner (estilado en sgi-select2-overrides.css);
+   El picker rico de Select2 reutiliza .spi-approver-chip-info/-name/-meta
+   dentro de .spi-approver-chip-inner (estilado en spi-select2-overrides.css);
    ambos chips comparten métricas para verse idénticos. */
-.sgi-approver-chip {
+.spi-approver-chip {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -1025,22 +1028,22 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     background: var(--bg-subtle);
     border-radius: var(--radius-sm);
 }
-.sgi-approver-chip-info {
+.spi-approver-chip-info {
     display: flex;
     flex-direction: column;
     min-width: 0;
     line-height: 1.3;
 }
-.sgi-approver-chip-name {
+.spi-approver-chip-name {
     font-size: 12.5px;
     font-weight: 600;
     color: var(--text-default);
 }
-.sgi-approver-chip-meta {
+.spi-approver-chip-meta {
     font-size: 11px;
     color: var(--text-faint);
 }
-.sgi-approver-chip-remove {
+.spi-approver-chip-remove {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1053,7 +1056,7 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     border-radius: var(--radius-sm);
     cursor: pointer;
 }
-.sgi-approver-chip-remove:hover {
+.spi-approver-chip-remove:hover {
     color: var(--danger-color);
     background: var(--danger-soft);
 }
@@ -1111,8 +1114,8 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 
 /* Field-rows dentro de un layout de 2 columnas (.row.g-0 > col-*): padding
    horizontal para que el valor (alineado a la derecha) no colisione con la
-   columna vecina/divisor y para alinear con el .sgi-section-head (18px).
-   No afecta a las field-rows dentro de .sgi-card (single-column, canon Invoice). */
+   columna vecina/divisor y para alinear con el .spi-section-head (18px).
+   No afecta a las field-rows dentro de .spi-card (single-column, canon Invoice). */
 .row.g-0 > [class*="col-"] > .field-row {
     padding-left: 18px;
     padding-right: 18px;
@@ -1264,6 +1267,8 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 /* Color del estado actual */
 .pipeline-mini.is-warning > div.on { background-color: var(--warning-color); }
 .pipeline-mini.is-orange  > div.on { background-color: var(--secondary-color); }
+.pipeline-mini.is-info    > div.on { background-color: var(--info-text); }
+.pipeline-mini.is-accent  > div.on { background-color: var(--accent-color); }
 .pipeline-mini.is-danger  > div.on { background-color: var(--danger-color); }
 
 
@@ -1712,7 +1717,7 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 
 
 /* ─── C.1 CHAT BUBBLES (radio asimétrico 10/2) ──────────────────── */
-.sgi-obs-list {
+.spi-obs-list {
     min-height: 100px;
     max-height: 340px;
     overflow-y: auto;
@@ -1722,7 +1727,7 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     flex-direction: column;
     gap: 14px;
 }
-.sgi-obs-empty {
+.spi-obs-empty {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1733,25 +1738,25 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     gap: 8px;
     background-color: var(--bg-muted);
 }
-.sgi-obs-empty.is-hidden, .sgi-obs-empty[hidden] { display: none !important; }
+.spi-obs-empty.is-hidden, .spi-obs-empty[hidden] { display: none !important; }
 
-.sgi-obs-input-bar {
+.spi-obs-input-bar {
     padding: 10px 14px;
     background-color: #fff;
     border-top: 1px solid var(--rule);
 }
-.sgi-obs-compose {
+.spi-obs-compose {
     display: flex;
     align-items: stretch;
     background-color: var(--bg-muted);
     border-left: 3px solid var(--rule);
     transition: border-left-color var(--t-fast) ease, background-color var(--t-fast) ease;
 }
-.sgi-obs-compose:focus-within {
+.spi-obs-compose:focus-within {
     border-left-color: var(--primary-color);
     background-color: #fff;
 }
-.sgi-obs-compose textarea {
+.spi-obs-compose textarea {
     flex: 1;
     background: transparent;
     border: 0;
@@ -1765,8 +1770,8 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     min-height: 0;
     font-family: inherit;
 }
-.sgi-obs-compose textarea::placeholder { color: var(--text-disabled); }
-.sgi-obs-compose-send {
+.spi-obs-compose textarea::placeholder { color: var(--text-disabled); }
+.spi-obs-compose-send {
     padding: 7px 12px 8px;
     background: transparent;
     border: 0;
@@ -1778,55 +1783,55 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     flex-shrink: 0;
     transition: background-color var(--t-fast) ease, color var(--t-fast) ease;
 }
-.sgi-obs-compose:focus-within .sgi-obs-compose-send { color: var(--primary-color); }
-.sgi-obs-compose-send:hover {
+.spi-obs-compose:focus-within .spi-obs-compose-send { color: var(--primary-color); }
+.spi-obs-compose-send:hover {
     background-color: var(--primary-color);
     color: #fff;
 }
 
-.sgi-obs-bubble {
+.spi-obs-bubble {
     display: flex;
     flex-direction: column;
     gap: 3px;
     max-width: 92%;
 }
-.sgi-obs-bubble.is-mine  { align-self: flex-end;   align-items: flex-end; }
-.sgi-obs-bubble.is-other { align-self: flex-start; align-items: flex-start; }
-.sgi-obs-bubble-name {
+.spi-obs-bubble.is-mine  { align-self: flex-end;   align-items: flex-end; }
+.spi-obs-bubble.is-other { align-self: flex-start; align-items: flex-start; }
+.spi-obs-bubble-name {
     font-size: 10px;
     color: var(--text-disabled);
     font-weight: 500;
 }
-.sgi-obs-bubble.is-mine  .sgi-obs-bubble-name { padding-right: 5px; }
-.sgi-obs-bubble.is-other .sgi-obs-bubble-name { padding-left:  5px; }
-.sgi-obs-bubble-body {
+.spi-obs-bubble.is-mine  .spi-obs-bubble-name { padding-right: 5px; }
+.spi-obs-bubble.is-other .spi-obs-bubble-name { padding-left:  5px; }
+.spi-obs-bubble-body {
     padding: 9px 13px;
     font-size: var(--fs-body-lg);
     line-height: 1.5;
     word-break: break-word;
 }
 /* Excepción documentada — radio asimétrico 10/2 */
-.sgi-obs-bubble.is-mine  .sgi-obs-bubble-body {
+.spi-obs-bubble.is-mine  .spi-obs-bubble-body {
     background-color: var(--primary-color);
     color: #fff;
     border-radius: 10px 10px 2px 10px;
 }
-.sgi-obs-bubble.is-other .sgi-obs-bubble-body {
+.spi-obs-bubble.is-other .spi-obs-bubble-body {
     background-color: #fff;
     color: var(--text-default);
     border-radius: 10px 10px 10px 2px;
 }
-.sgi-obs-bubble-time {
+.spi-obs-bubble-time {
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--border-faint);
 }
-.sgi-obs-bubble.is-mine  .sgi-obs-bubble-time { padding-right: 5px; }
-.sgi-obs-bubble.is-other .sgi-obs-bubble-time { padding-left:  5px; }
+.spi-obs-bubble.is-mine  .spi-obs-bubble-time { padding-right: 5px; }
+.spi-obs-bubble.is-other .spi-obs-bubble-time { padding-left:  5px; }
 
 
 /* ─── C.2 FOLDER COUNT (radius 10 — pill efecto contador) ───────── */
-.sgi-folder-count {
+.spi-folder-count {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1842,7 +1847,7 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     border-radius: 10px;
     vertical-align: middle;
 }
-.accordion-button:not(.collapsed) .sgi-folder-count {
+.accordion-button:not(.collapsed) .spi-folder-count {
     background-color: var(--primary-soft-strong);
     color: var(--primary-color);
 }
@@ -1961,8 +1966,8 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 /* ─── C.4 FLASH TOASTS (Sistema de Diseño · .toast) ─────────────────
    El flash usa el componente .toast (ver "Componentes v1.1"). Aquí solo
    posiciona el stack abajo-derecha. Auto-dismiss + progreso viven en JS
-   (sgi-common.js · initToasts). */
-#sgi-flash-container {
+   (spi-common.js · initToasts). */
+#spi-flash-container {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -1975,9 +1980,9 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 }
 /* El `.toast` del Sistema de Diseño colisiona con el `.toast` de Bootstrap
    (que aplica display:none vía .toast:not(.show), box-shadow, borde y radio).
-   Bajo el ID #sgi-flash-container ganamos por especificidad y re-imponemos el
+   Bajo el ID #spi-flash-container ganamos por especificidad y re-imponemos el
    look del diseño. Mismo patrón que .modal → .modal-stage. */
-#sgi-flash-container .toast {
+#spi-flash-container .toast {
     pointer-events: auto;
     display: flex;
     max-width: none;
@@ -1988,10 +1993,10 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     box-shadow: none;
     opacity: 1;
 }
-#sgi-flash-container .toast.success { border-left-color: var(--primary-color); }
-#sgi-flash-container .toast.danger  { border-left-color: var(--danger-color); }
-#sgi-flash-container .toast.warning { border-left-color: var(--warning-color); }
-#sgi-flash-container .toast.info    { border-left-color: var(--info-color); }
+#spi-flash-container .toast.success { border-left-color: var(--primary-color); }
+#spi-flash-container .toast.danger  { border-left-color: var(--danger-color); }
+#spi-flash-container .toast.warning { border-left-color: var(--warning-color); }
+#spi-flash-container .toast.info    { border-left-color: var(--info-color); }
 
 /* =================================================================
    Componentes v1.1 — capa flotante y controles
@@ -2270,41 +2275,41 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 /* Restaurado: el CSS de estas clases fue borrado por error en 962be2f.
    Lo usan EmployeeNovelties, Refunds, PaymentSchedulings, Advances y
    NoveltyLiquidationDocs (vistas view/edit con pipeline_sidebar). */
-.sgi-invoice-view-grid {
+.spi-invoice-view-grid {
     display: grid;
     grid-template-columns: 340px 1fr;
     gap: 14px;
     align-items: start;
 }
-.sgi-invoice-view-left,
-.sgi-invoice-view-right {
+.spi-invoice-view-left,
+.spi-invoice-view-right {
     display: flex;
     flex-direction: column;
     gap: 14px;
     min-width: 0;
 }
 
-.sgi-section-head {
+.spi-section-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 14px;
 }
-.sgi-section-head .sgi-label { margin: 0; }
+.spi-section-head .spi-label { margin: 0; }
 
 @media (max-width: 991.98px) {
-    .sgi-invoice-view-grid { grid-template-columns: 1fr; }
+    .spi-invoice-view-grid { grid-template-columns: 1fr; }
 }
 
 /* Empty state de soportes (dropzone sin archivos) */
-.sgi-dropzone-empty {
+.spi-dropzone-empty {
     padding: 24px 20px;
     text-align: center;
     background: var(--bg-muted);
     font-size: 12.5px;
     color: var(--text-faint);
 }
-.sgi-dropzone-empty .bi {
+.spi-dropzone-empty .bi {
     font-size: 20px;
     color: var(--text-disabled);
     display: block;
@@ -2312,7 +2317,7 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 }
 
 /* --- Footer de edición (barra fija) --- */
-.sgi-edit-footer {
+.spi-edit-footer {
     position: fixed;
     left: var(--sidebar-width, 260px);
     right: 0;
@@ -2326,7 +2331,7 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     border-top: 1px solid var(--rule);
     z-index: 20;
 }
-.sgi-edit-footer-meta {
+.spi-edit-footer-meta {
     display: flex;
     align-items: center;
     gap: 14px;
@@ -2334,23 +2339,113 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     color: var(--text-muted);
     flex-wrap: wrap;
 }
-.sgi-edit-footer-meta .sep { width: 1px; height: 14px; background: var(--rule); }
-.sgi-edit-footer-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.spi-edit-footer-meta .sep { width: 1px; height: 14px; background: var(--rule); }
+.spi-edit-footer-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 @media (max-width: 767.98px) {
-    .sgi-edit-footer { flex-direction: column; align-items: stretch; }
-    .sgi-edit-footer-actions { justify-content: flex-end; }
+    .spi-edit-footer { flex-direction: column; align-items: stretch; }
+    .spi-edit-footer-actions { justify-content: flex-end; }
 }
-.content-wrapper:has(.sgi-edit-footer) { padding-bottom: 88px; }
+.content-wrapper:has(.spi-edit-footer) { padding-bottom: 88px; }
+
+/* --- Filter drawer (panel lateral de filtros) ---
+   Overlay fijo real (distinto del .drawer de preview, que es demo con
+   min-height). Se renderiza dentro del <form> GET del índice: el panel es
+   position:fixed pero descendiente del form, así sus campos se envían igual.
+   Abrir/cerrar lo maneja spi-common.js (data-filter-drawer-open/-close). */
+.filter-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(33, 37, 41, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.22s ease, visibility 0.22s ease;
+    z-index: 1045;
+}
+.filter-drawer-backdrop.is-open { opacity: 1; visibility: visible; }
+
+.filter-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 440px;
+    max-width: 90vw;
+    background: #fff;
+    border-left: 3px solid var(--primary-color);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.22s ease;
+    z-index: 1046;
+}
+.filter-drawer.is-open { transform: translateX(0); }
+
+.filter-drawer-head {
+    flex-shrink: 0;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--rule);
+}
+.filter-drawer-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-strong);
+}
+.filter-drawer-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+}
+.filter-drawer-close:hover { background: var(--bg-subtle); color: var(--text-default); }
+
+.filter-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+}
+.filter-field { margin-bottom: 16px; }
+.filter-field:last-child { margin-bottom: 0; }
+
+.filter-drawer-foot {
+    flex-shrink: 0;
+    padding: 14px 20px;
+    border-top: 1px solid var(--rule);
+    background: var(--bg-muted);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* Select2 dentro del drawer flota sobre el panel (dropdownParent lo fija
+   spi-common.js al .filter-drawer). */
+.filter-drawer .select2-container { z-index: 1047; }
+
+@media (max-width: 575.98px) {
+    .filter-drawer { width: 100%; max-width: 100%; }
+}
 
 /* --- Shell de edición: header fijo + paneles con scroll independiente --- */
 /* Desde lg (>=992px) la edición de factura ocupa el viewport: header y footer
    fijos, y las dos columnas scrollean de forma independiente. Por debajo de lg
    degrada al scroll de página normal (footer fixed como en el resto de vistas). */
-.sgi-edit-shell-head { padding-bottom: 8px; }
+.spi-edit-shell-head { padding-bottom: 8px; }
 
 @media (min-width: 992px) {
-    .sgi-edit-shell {
+    .spi-edit-shell {
         position: fixed;
         top: 0;
         left: var(--sidebar-width, 260px);
@@ -2360,40 +2455,40 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
         flex-direction: column;
         background: var(--background-color);
     }
-    .sgi-edit-shell-head {
+    .spi-edit-shell-head {
         flex-shrink: 0;
         padding: 16px 24px 12px;
         border-bottom: 1px solid var(--rule);
     }
-    .sgi-edit-shell-form {
+    .spi-edit-shell-form {
         flex: 1;
         min-height: 0;
         display: flex;
         flex-direction: column;
     }
-    .sgi-edit-shell-body {
+    .spi-edit-shell-body {
         flex: 1;
         min-height: 0;
         display: flex;
         flex-direction: column;
         padding: 16px 24px 0;
     }
-    .sgi-edit-shell-body > .row {
+    .spi-edit-shell-body > .row {
         flex: 1;
         min-height: 0;
         flex-wrap: nowrap;
     }
-    .sgi-edit-col {
+    .spi-edit-col {
         min-height: 0;
         height: 100%;
         overflow-y: auto;
         padding-bottom: 24px;
     }
-    .sgi-edit-shell .sgi-edit-footer {
+    .spi-edit-shell .spi-edit-footer {
         position: static;
         flex-shrink: 0;
     }
-    .content-wrapper:has(.sgi-edit-shell) { padding-bottom: 0; }
+    .content-wrapper:has(.spi-edit-shell) { padding-bottom: 0; }
 }
 
 
@@ -2403,7 +2498,7 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
    pestaña flotante fija al borde derecho del viewport. */
 
 /* Disparador: pestaña fija al borde derecho, centrada verticalmente. */
-.sgi-obs-trigger {
+.spi-obs-trigger {
     position: fixed;
     right: 0;
     top: 50%;
@@ -2420,9 +2515,9 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     cursor: pointer;
     transition: padding-right var(--t-fast) ease;
 }
-.sgi-obs-trigger:hover { padding-right: 18px; }
-.sgi-obs-trigger > .bi { font-size: 16px; }
-.sgi-obs-trigger-badge {
+.spi-obs-trigger:hover { padding-right: 18px; }
+.spi-obs-trigger > .bi { font-size: 16px; }
+.spi-obs-trigger-badge {
     min-width: 18px;
     height: 18px;
     padding: 0 5px;
@@ -2437,17 +2532,17 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 }
 
 /* Drawer: Bootstrap Offcanvas restilizado como `.drawer` del sistema. */
-.sgi-obs-drawer.offcanvas {
+.spi-obs-drawer.offcanvas {
     --bs-offcanvas-width: 440px;
     border-left: 3px solid var(--primary-color);
     box-shadow: none;
 }
 /* Header del drawer = `.chat-head` del sistema de diseño. */
-.sgi-obs-drawer .offcanvas-header {
+.spi-obs-drawer .offcanvas-header {
     padding: 14px 18px;
     border-bottom: 1px solid var(--rule);
 }
-.sgi-obs-drawer .offcanvas-title {
+.spi-obs-drawer .offcanvas-title {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -2455,7 +2550,7 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
     font-weight: 700;
     color: var(--text-strong);
 }
-.sgi-obs-drawer .offcanvas-body {
+.spi-obs-drawer .offcanvas-body {
     padding: 0;
     display: flex;
     flex-direction: column;
@@ -2463,14 +2558,14 @@ input.currency-input:focus { color: var(--primary-color); font-weight: 600; }
 /* Adaptaciones del componente `.chat` (definido arriba, §"Chat de
    observaciones") al drawer de Invoices/edit. */
 /* El timeline ocupa el alto disponible del panel y scrollea. */
-.sgi-obs-drawer .chat-list {
+.spi-obs-drawer .chat-list {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
 }
 /* El composer solo lleva el botón Publicar (los tools del componente quedan
    fuera de alcance): alinear a la derecha en vez del space-between base. */
-.sgi-obs-drawer .chat-composer-toolbar { justify-content: flex-end; }
+.spi-obs-drawer .chat-composer-toolbar { justify-content: flex-end; }
 /* Cadenas largas (URLs) no deben desbordar el panel de 440px. */
-.sgi-obs-drawer .chat-text { overflow-wrap: anywhere; }
-.sgi-obs-drawer .chat-composer-input::placeholder { color: var(--text-disabled); }
+.spi-obs-drawer .chat-text { overflow-wrap: anywhere; }
+.spi-obs-drawer .chat-composer-input::placeholder { color: var(--text-disabled); }

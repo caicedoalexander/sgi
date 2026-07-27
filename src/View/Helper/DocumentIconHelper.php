@@ -10,7 +10,7 @@ class DocumentIconHelper extends Helper
     /**
      * Reglas MIME → ícono/color. Fuente única para PHP y para el cliente JS
      * (vía `rulesJson()` que se inyecta como `<script type="application/json"
-     * id="sgi-doc-icon-rules">` en el layout — ver audit CR-202).
+     * id="spi-doc-icon-rules">` en el layout — ver audit CR-202).
      *
      * Se evalúan en orden; el primer match gana. La última entrada (`matches: []`)
      * es el default y debe quedar al final.
@@ -43,6 +43,13 @@ class DocumentIconHelper extends Helper
         ['exts' => ['txt'],                       'icon' => 'bi-file-earmark-text',  'color' => '#aaa'],
     ];
 
+    /**
+     * Resuelve la regla MIME → ícono/color/label; la primera coincidencia gana y
+     * la entrada con `matches` vacío actúa como default.
+     *
+     * @param string|null $mime Tipo MIME del documento.
+     * @return array Regla con claves matches/icon/color/label.
+     */
     private function resolveByMime(?string $mime): array
     {
         $mime ??= '';
@@ -60,21 +67,37 @@ class DocumentIconHelper extends Helper
         return end(self::MIME_RULES); // unreachable: empty matches actúa como default.
     }
 
+    /**
+     * @param string|null $mime Tipo MIME del documento.
+     * @return string Clase Bootstrap Icons del ícono.
+     */
     public function iconClass(?string $mime): string
     {
         return $this->resolveByMime($mime)['icon'];
     }
 
+    /**
+     * @param string|null $mime Tipo MIME del documento.
+     * @return string Color del ícono (hex o var() CSS).
+     */
     public function iconColor(?string $mime): string
     {
         return $this->resolveByMime($mime)['color'];
     }
 
+    /**
+     * @param string|null $mime Tipo MIME del documento.
+     * @return string Etiqueta corta de tipo para el badge.
+     */
     public function typeLabel(?string $mime): string
     {
         return $this->resolveByMime($mime)['label'];
     }
 
+    /**
+     * @param string $type Etiqueta de tipo (PDF, JPG, WORD, EXCEL, …).
+     * @return string Clase de pill del badge según el tipo.
+     */
     public function badgeClass(string $type): string
     {
         return match ($type) {
@@ -86,6 +109,13 @@ class DocumentIconHelper extends Helper
         };
     }
 
+    /**
+     * Resuelve la regla ícono/color por la extensión final del archivo, o null si
+     * no hay extensión reconocida.
+     *
+     * @param string|null $name Nombre del archivo.
+     * @return array|null Regla con claves exts/icon/color, o null.
+     */
     private function resolveByExt(?string $name): ?array
     {
         $name = strtolower($name ?? '');
@@ -120,8 +150,8 @@ class DocumentIconHelper extends Helper
     }
 
     /**
-     * Reglas serializadas para consumo cliente (sgi-document-uploader.js).
-     * Se inyectan vía `<script type="application/json" id="sgi-doc-icon-rules">`
+     * Reglas serializadas para consumo cliente (spi-document-uploader.js).
+     * Se inyectan vía `<script type="application/json" id="spi-doc-icon-rules">`
      * en el layout. JSON_HEX_TAG previene cierre prematuro del script.
      */
     public function rulesJson(): string

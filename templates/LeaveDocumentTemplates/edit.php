@@ -24,8 +24,8 @@ $groupIcons = [
 ];
 ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Editor: <?= h($template->name) ?></span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Editor: <?= h($template->name) ?></span>
     <div class="d-flex gap-2">
         <button type="button" id="btn-save-fields" class="btn btn-primary btn-sm">
             <i class="bi bi-save me-1" aria-hidden="true"></i>Guardar Campos

@@ -22,17 +22,32 @@ use Cake\Event\EventListenerInterface;
  */
 final class LegalizationInitializerSubscriber implements EventListenerInterface
 {
+    /**
+     * @param \App\Service\AdvanceLegalizationService $legalizationService Servicio de legalización de anticipos.
+     * @param \App\Service\Pipeline\Invoice\DocumentTypePolicyFactory $documentTypePolicies Factory de policies por tipo de documento.
+     */
     public function __construct(
         private readonly AdvanceLegalizationService $legalizationService,
         private readonly DocumentTypePolicyFactory $documentTypePolicies,
     ) {
     }
 
+    /**
+     * Mapea los eventos suscritos a sus handlers.
+     *
+     * @return array
+     */
     public function implementedEvents(): array
     {
         return ['Invoice.paid' => 'onInvoicePaid'];
     }
 
+    /**
+     * Handler de Invoice.paid: inicializa la legalización del anticipo si la policy lo dispara.
+     *
+     * @param \Cake\Event\EventInterface $event Evento con el payload InvoicePaidEvent.
+     * @return void
+     */
     public function onInvoicePaid(EventInterface $event): void
     {
         /** @var \App\Event\InvoicePaidEvent $payload */

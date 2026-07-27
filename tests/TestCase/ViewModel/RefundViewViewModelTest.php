@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Test\TestCase\ViewModel;
 
 use App\Constants\RefundConstants;
+use App\Model\Entity\Invoice;
 use App\Model\Entity\Refund;
 use App\View\Presentation\RefundPresentation;
 use App\ViewModel\RefundViewViewModel;
@@ -54,16 +55,19 @@ final class RefundViewViewModelTest extends TestCase
 
     public function testCountsTotalAndBeneficiaryLabel(): void
     {
+        // El VM ahora deriva groupedRows vía InvoicePresentation::forGroupedRow(Invoice),
+        // así que las hijas deben ser entidades Invoice reales (no stdClass).
         $vm = new RefundViewViewModel($this->refund([
             'id' => 1,
             'code' => 'RE-1',
             'status' => RefundConstants::STATUS_AGRUPACION,
             'total_amount' => 5000,
-            'invoices' => [new stdClass(), new stdClass()],
+            'invoices' => [new Invoice(['id' => 1]), new Invoice(['id' => 2])],
             'refund_documents' => [new stdClass()],
         ]));
 
         $this->assertSame(2, $vm->invoiceCount);
+        $this->assertCount(2, $vm->groupedRows);
         $this->assertSame(5000.0, $vm->totalAmount);
         $this->assertSame(1, $vm->totalDocs);
         $this->assertCount(1, $vm->documentRows);

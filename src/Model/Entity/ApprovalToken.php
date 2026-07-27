@@ -8,7 +8,7 @@ use Cake\ORM\Entity;
 class ApprovalToken extends Entity
 {
     protected array $_accessible = [
-        'token' => true,
+        'token_hash' => true,
         'entity_type' => true,
         'entity_id' => true,
         'created_by' => true,
@@ -20,4 +20,6 @@ class ApprovalToken extends Entity
         'user_agent' => true,
         'approved_by_user_id' => true,
     ];
+
+    protected array $_hidden = ['token_hash'];
 }

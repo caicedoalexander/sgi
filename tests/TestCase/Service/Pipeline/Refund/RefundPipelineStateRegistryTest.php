@@ -9,10 +9,10 @@ use PHPUnit\Framework\TestCase;
 
 final class RefundPipelineStateRegistryTest extends TestCase
 {
-    public function testRegistryHasSixStates(): void
+    public function testRegistryHasSevenStates(): void
     {
         $registry = new RefundPipelineStateRegistry();
-        $this->assertCount(6, $registry->all());
+        $this->assertCount(7, $registry->all());
     }
 
     public function testGetReturnsStateForEveryEnumCase(): void
@@ -29,7 +29,7 @@ final class RefundPipelineStateRegistryTest extends TestCase
         $registry = new RefundPipelineStateRegistry();
         $keys = array_keys($registry->all());
         sort($keys);
-        $expected = array_map(fn (PipelineStatus $s) => $s->value, PipelineStatus::cases());
+        $expected = array_map(fn(PipelineStatus $s) => $s->value, PipelineStatus::cases());
         sort($expected);
         $this->assertSame($expected, $keys);
     }

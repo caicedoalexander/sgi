@@ -21,6 +21,13 @@ final class PaymentSchedulingPipelineStateRegistry
      */
     private array $states;
 
+    /**
+     * @param \App\Service\Pipeline\PaymentScheduling\State\BorradorState|null $borrador State.
+     * @param \App\Service\Pipeline\PaymentScheduling\State\TesoreriaState|null $tesoreria State.
+     * @param \App\Service\Pipeline\PaymentScheduling\State\AutorizacionPagoState|null $autorizacionPago State.
+     * @param \App\Service\Pipeline\PaymentScheduling\State\VerificacionPagoState|null $verificacionPago State.
+     * @param \App\Service\Pipeline\PaymentScheduling\State\PagadaState|null $pagada State.
+     */
     public function __construct(
         ?BorradorState $borrador = null,
         ?TesoreriaState $tesoreria = null,
@@ -41,6 +48,12 @@ final class PaymentSchedulingPipelineStateRegistry
         }
     }
 
+    /**
+     * Resuelve el enum de estado a su State concreto.
+     *
+     * @param \App\Constants\Domain\PaymentScheduling\PipelineStatus $status Estado tipado.
+     * @return \App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineState
+     */
     public function get(PipelineStatus $status): PaymentSchedulingPipelineState
     {
         return $this->states[$status->value];

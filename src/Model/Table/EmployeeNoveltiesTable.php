@@ -24,6 +24,7 @@ class EmployeeNoveltiesTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+        $this->addBehavior('SidebarCache');
 
         $this->belongsTo('Employees', [
             'foreignKey' => 'employee_id',
@@ -52,7 +53,7 @@ class EmployeeNoveltiesTable extends Table
             'foreignKey' => 'rrhh_by',
             'joinType' => 'LEFT',
         ]);
-        $this->belongsTo('Approvers', [
+        $this->belongsTo('ApproverUsers', [
             'className' => 'Users',
             'foreignKey' => 'approver_id',
             'joinType' => 'LEFT',
@@ -173,7 +174,7 @@ class EmployeeNoveltiesTable extends Table
             'allowNullableNulls' => true,
         ]);
         $rules->add($rules->existsIn('registered_by', 'RegisteredByUsers'), ['errorField' => 'registered_by']);
-        $rules->add($rules->existsIn('approver_id', 'Approvers'), [
+        $rules->add($rules->existsIn('approver_id', 'ApproverUsers'), [
             'errorField' => 'approver_id',
             'allowNullableNulls' => true,
         ]);

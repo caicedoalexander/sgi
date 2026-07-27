@@ -6,6 +6,7 @@ namespace App\Constants\Domain\Advance;
 enum PipelineStatus: string
 {
     case VALIDACION = 'validacion';
+    case APROBACION = 'aprobacion';
     case REVISION_FIRMAS = 'revision_firmas';
     case CONTABILIDAD = 'contabilidad';
     case TESORERIA = 'tesoreria';
@@ -20,6 +21,7 @@ enum PipelineStatus: string
     {
         return match ($this) {
             self::VALIDACION => 'Validación',
+            self::APROBACION => 'Aprobación',
             self::REVISION_FIRMAS => 'Revisión y Firmas',
             self::CONTABILIDAD => 'Contabilidad',
             self::TESORERIA => 'Tesorería',
@@ -36,7 +38,8 @@ enum PipelineStatus: string
     public function next(): ?self
     {
         return match ($this) {
-            self::VALIDACION => self::REVISION_FIRMAS,
+            self::VALIDACION => self::APROBACION,
+            self::APROBACION => self::REVISION_FIRMAS,
             self::REVISION_FIRMAS => self::CONTABILIDAD,
             self::CONTABILIDAD, self::TESORERIA => null,
             self::AUTORIZACION_PAGO => self::VERIFICACION_PAGO,
@@ -52,7 +55,8 @@ enum PipelineStatus: string
     {
         return match ($this) {
             self::VALIDACION, self::LEGALIZADA => null,
-            self::REVISION_FIRMAS => self::VALIDACION,
+            self::APROBACION => self::VALIDACION,
+            self::REVISION_FIRMAS => self::APROBACION,
             self::CONTABILIDAD => self::REVISION_FIRMAS,
             self::TESORERIA => self::CONTABILIDAD,
             self::AUTORIZACION_PAGO => self::TESORERIA,

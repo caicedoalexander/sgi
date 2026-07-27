@@ -15,26 +15,42 @@ use App\View\Presentation\PaymentSchedulingPresentation;
 final readonly class PaymentSchedulingViewViewModel implements ViewViewModelInterface
 {
     public string $pageTitle;
-    /** @var array{0:string,1:string} */
+    /**
+     * @var array{0:string,1:string}
+     */
     public array $currentStatusBadge;
     public string $currentStatus;
 
     public string $code;
-    public bool   $isTerminal;
-    public int    $itemCount;
-    public float  $total;
-    /** @var array<int,array{icon:string,html:string}> */
+    public bool $isTerminal;
+    public int $itemCount;
+    public float $total;
+    /**
+     * @var array<int,array{icon:string,html:string}>
+     */
     public array $registryLines;
-    /** @var list<mixed> */
+    /**
+     * @var list<mixed>
+     */
     public array $documents;
-    /** @var list<array{doc:mixed,canDelete:bool,deleteUrl:?string,showBadge:bool}> */
+    /**
+     * @var list<array{doc:mixed,canDelete:bool,deleteUrl:?string,showBadge:bool}>
+     */
     public array $documentRows;
-    public int   $totalDocs;
-    /** @var array<string,string> */
+    public int $totalDocs;
+    /**
+     * @var array<string,string>
+     */
     public array $pipelineLabels;
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     public array $pipelineSteps;
 
+    /**
+     * @param \App\Model\Entity\PaymentScheduling $record Programación de pago a presentar.
+     * @param float $total Total acumulado de la programación.
+     */
     public function __construct(public PaymentScheduling $record, float $total)
     {
         $status = $record->pipeline_status;

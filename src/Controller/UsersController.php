@@ -5,19 +5,37 @@ namespace App\Controller;
 
 use App\Attribute\NoAuthGate;
 use App\Attribute\Permission;
+use App\Service\LoginThrottleService;
 use Cake\Event\EventInterface;
-use Cake\ORM\TableRegistry;
 
 class UsersController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Mensaje único para la cuenta bloqueada: idéntico para éxito y fallo
+     * durante el bloqueo, de modo que la respuesta no revele si las
+     * credenciales eran correctas (oráculo cerrado).
+     */
+    private const BLOCKED_MESSAGE = 'Demasiados intentos fallidos para esta cuenta. Intentá de nuevo en unos minutos.';
+
+    /**
+     * Configura el acceso previo a las acciones.
+     *
+     * @param \Cake\Event\EventInterface $event Evento del ciclo de vida.
+     * @return void
+     */
     public function beforeFilter(EventInterface $event): void
     {
         parent::beforeFilter($event);
         $this->Authentication->allowUnauthenticated(['login']);
     }
 
+    /**
+     * Autentica a un usuario en el sistema.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[NoAuthGate(reason: 'External flow before authentication')]
     public function login()
     {
@@ -25,18 +43,40 @@ class UsersController extends AppController
         $this->request->allowMethod(['get', 'post']);
 
         $result = $this->Authentication->getResult();
+        /** @var \App\Service\LoginThrottleService $throttle */
+        $throttle = $this->getContainer()->get(LoginThrottleService::class);
 
-        // B-7: lockout por email (defensa frente a credential stuffing distribuido,
-        // donde el rate limit por IP del middleware no aplica). Ventana de 15 min.
-        $email = strtolower(trim((string)$this->request->getData('email', '')));
-        $buckets = TableRegistry::getTableLocator()->get('RateLimitBuckets');
-        $window = 900;
-        $windowStart = (int)floor(time() / $window) * $window;
-        $emailKey = hash('sha256', 'login_email|' . $email . '|' . $windowStart);
-        $maxFailures = 10;
+        if ($this->request->is('post')) {
+            $username = trim((string)$this->request->getData('username'));
 
-        if ($email !== '' && $buckets->getCount($emailKey) >= $maxFailures) {
-            $this->Flash->error('Demasiados intentos fallidos para esta cuenta. Intentá de nuevo en unos minutos.');
+            // Enforcement: cuenta bloqueada → denegar todo intento (éxito o fallo)
+            // con el mismo mensaje. Cierra el oráculo éxito/fallo.
+            if ($username !== '' && $throttle->isBlocked($username)) {
+                if ($result && $result->isValid()) {
+                    $this->Authentication->logout();
+                }
+                $this->Flash->error(self::BLOCKED_MESSAGE);
+
+                return null;
+            }
+
+            if ($result && $result->isValid()) {
+                if ($username !== '') {
+                    $throttle->clear($username);
+                }
+
+                return $this->redirect($this->_safeLoginRedirect());
+            }
+
+            if ($username !== '') {
+                $throttle->registerFailure($username);
+            }
+
+            if ($username !== '' && $throttle->isBlocked($username)) {
+                $this->Flash->error(self::BLOCKED_MESSAGE);
+            } else {
+                $this->Flash->error('Usuario o contraseña incorrectos.');
+            }
 
             return null;
         }
@@ -45,12 +85,7 @@ class UsersController extends AppController
             return $this->redirect($this->_safeLoginRedirect());
         }
 
-        if ($this->request->is('post') && !$result->isValid()) {
-            if ($email !== '') {
-                $buckets->incrementAndGet($emailKey, $windowStart);
-            }
-            $this->Flash->error('Usuario o contraseña incorrectos.');
-        }
+        return null;
     }
 
     /**
@@ -76,6 +111,11 @@ class UsersController extends AppController
         return ['controller' => 'Dashboard', 'action' => 'index'];
     }
 
+    /**
+     * Cierra la sesión del usuario.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[NoAuthGate(reason: 'Always available to authenticated users')]
     public function logout()
     {
@@ -87,6 +127,11 @@ class UsersController extends AppController
         return $this->redirect(['action' => 'login']);
     }
 
+    /**
+     * Lista los usuarios.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index(): void
     {
@@ -96,14 +141,25 @@ class UsersController extends AppController
         $this->set(compact('users'));
     }
 
+    /**
+     * Muestra un usuario.
+     *
+     * @param string|null $id ID del usuario.
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null): void
+    public function view(?string $id = null): void
     {
         $user = $this->Users->get($id, contain: ['Roles']);
 
         $this->set(compact('user'));
     }
 
+    /**
+     * Crea un usuario.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -122,8 +178,14 @@ class UsersController extends AppController
         $this->set(compact('user', 'roles'));
     }
 
+    /**
+     * Edita un usuario.
+     *
+     * @param string|null $id ID del usuario.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $user = $this->Users->get($id);
         if ($this->request->is(['patch', 'post', 'put'])) {
@@ -144,8 +206,14 @@ class UsersController extends AppController
         $this->set(compact('user', 'roles'));
     }
 
+    /**
+     * Elimina un usuario.
+     *
+     * @param string|null $id ID del usuario.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $user = $this->Users->get($id);

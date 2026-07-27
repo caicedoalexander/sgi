@@ -20,7 +20,7 @@ El veredicto en tres puntos:
 
 2. **El problema real no es la dualidad: es la cobertura asimétrica por acción.** La frontera presentación↔`.php` está **sana en `edit`** (delega bien vía VM + `Support/*` + `Presentation` consts) y **rota en `view`/`index`** en los 6 módulos por igual. La acción `view` es el *offender transversal*: sin VM, re-deriva mapas estado→pill inline, re-pinta documentos/pagos a mano teniendo elements. Las dos decisiones que cierran la asimetría — **C1 (VM para `view`)** y **C2 (`RowView` generalizado)** — son las de mayor impacto.
 
-3. **Invoice es el outlier de layout, no la referencia.** Es el único con `RowView`+`forRow()` (canon de *Presentation*), pero su `edit.php` usa `sgi-edit-shell-body` en vez del canon `sgi-invoice-view-grid`, su `view.php` (731 líneas) es el peor del sistema (sin VM, docs inline, pills triplicados), y `add` ni siquiera pasa el VM al template. Para `edit`/`view` de layout, **Refund y PettyCash son mejores referentes**. Para el patrón estado→pill bien hecho, **Novelty/edit es el contraejemplo virtuoso** (consume `currentStatusBadge` del VM).
+3. **Invoice es el outlier de layout, no la referencia.** Es el único con `RowView`+`forRow()` (canon de *Presentation*), pero su `edit.php` usa `spi-edit-shell-body` en vez del canon `spi-invoice-view-grid`, su `view.php` (731 líneas) es el peor del sistema (sin VM, docs inline, pills triplicados), y `add` ni siquiera pasa el VM al template. Para `edit`/`view` de layout, **Refund y PettyCash son mejores referentes**. Para el patrón estado→pill bien hecho, **Novelty/edit es el contraejemplo virtuoso** (consume `currentStatusBadge` del VM).
 
 > **Reconciliación con el doc previo (A9 estructural).** La auditoría 2026-05-29 marcó que `AdvanceLegalizationViewModel` **no** implementaba `EditViewModelInterface` (`AdvanceLegalizationViewModel.php:24`). El estado vivo hoy lo **contradice**: sí la implementa (`:24`, verificado en infra y por el adversarial P5). O se remedió entre auditorías, o el hallazgo previo era impreciso. Lo que persiste es el naming sin sufijo `EditViewModel` y el `set($vm->build())` (ver A-entry / B-naming).
 
@@ -59,7 +59,7 @@ Leyenda: ✅ presente/canónico · ⚠️ presente pero divergente · ❌ ausent
 |---|---|---|---|---|---|---|
 | `index` grid | `$gridStyle` 7-col `:291` | EN **side-rail `1fr 320px`** `:207` 🔵 / NLD 7-col `:70` | 7-col `:76` | 7-col `:91` | 7-col `:197` | 7-col `:170` |
 | `add` | `card card-primary` `:25` 🔵 legacy | `:38` 🔵 / (sin add 🔵) | `:37` 🔵 | `:35` 🔵 | `:34` 🔵 | `:29` 🔵 |
-| `edit` | ⚠️ **`sgi-edit-shell-body`** `:224` | ✅ `sgi-invoice-view-grid` `:132` / `:92` | 🔵 (vía Invoices) → `legalization.php:88` ✅ | ✅ `:151` | ✅ `:109` | ✅ `:69` |
+| `edit` | ⚠️ **`spi-edit-shell-body`** `:224` | ✅ `spi-invoice-view-grid` `:132` / `:92` | 🔵 (vía Invoices) → `legalization.php:88` ✅ | ✅ `:151` | ✅ `:109` | ✅ `:69` |
 | `view` | ⚠️ **inline `340px 1fr`** `:158` | ✅ `:91` / `:70` | ✅ `:63` | ⚠️ **inline `340px 1fr`** `:91` | ✅ `:65` | ✅ `:54` |
 
 ### Tabla D — Elements compartidos consumidos (✅ delega · ⚠️ inline/manual · ❌ no aplica)
@@ -72,7 +72,7 @@ Leyenda: ✅ presente/canónico · ⚠️ presente pero divergente · ❌ ausent
 | `confirm_payment_card` | 🔵 (lo embebe en payment_section) | ❌ / ✅ | ✅ legalization | ✅ | ✅ | ✅ |
 | `regress_status_modal` | ✅ | 🔵 (Novelty usa `reject` terminal) | 🔵 | ✅ | ✅ | ✅ |
 | `email_log_panel` | ✅ edit | ✅ EN edit / ❌ NLD | ❌ | ❌ | ❌ | ❌ |
-| `document_row` + `_template` (acoplados a `sgi-document-uploader.js`) | ✅ | ✅ / ✅ | 🔵 bespoke | ✅ | ✅ | ✅ |
+| `document_row` + `_template` (acoplados a `spi-document-uploader.js`) | ✅ | ✅ / ✅ | 🔵 bespoke | ✅ | ✅ | ✅ |
 
 ### Tabla E — Infraestructura compartida
 
@@ -121,8 +121,8 @@ src/View/Presentation/
 templates/{Controller}/
   index.php   ← {Modulo}RowView vía Presentation::forRow(); CERO derivación de fila en .php
   add.php     ← legacy card (aceptado); set('viewModel', $vm) uniforme
-  edit.php    ← sgi-invoice-view-grid + pipeline_sidebar; lee $viewModel->*; NUNCA re-deriva pills
-  view.php    ← sgi-invoice-view-grid; $viewModel (read-only); documents_section/payment_section
+  edit.php    ← spi-invoice-view-grid + pipeline_sidebar; lee $viewModel->*; NUNCA re-deriva pills
+  view.php    ← spi-invoice-view-grid; $viewModel (read-only); documents_section/payment_section
 ```
 
 **Contrato de datos VM/Presentation → template:**
@@ -148,11 +148,11 @@ templates/{Controller}/
 
 ### Eje 2 — Reutilización de elements vs markup bespoke
 **8 elements sanos, delegación fuerte en `edit`, débil en `view`.**
-- **Bespoke legítimo (B):** `Advances/legalization` Soportes (`:459-624`) y `NLD/edit` doc-de-liquidación renderizan estado de **firma** (`isSigned()`, `signed_by_user`, pill "Firmado · X") — fuera del slot-contract de `document_row.php:8-27`, que no tiene noción de firma y está acoplado a `sgi-document-uploader.js`. Documentado en CLAUDE.md; confirmado por el adversarial (P8).
+- **Bespoke legítimo (B):** `Advances/legalization` Soportes (`:459-624`) y `NLD/edit` doc-de-liquidación renderizan estado de **firma** (`isSigned()`, `signed_by_user`, pill "Firmado · X") — fuera del slot-contract de `document_row.php:8-27`, que no tiene noción de firma y está acoplado a `spi-document-uploader.js`. Documentado en CLAUDE.md; confirmado por el adversarial (P8).
 - **Deriva accidental (A):** `NLD/view.php:248-303` re-implementa la tabla de pagos a mano teniendo `payment_section` mode `'view'` (que su propio `edit` usa, `:339`). `Invoice/view` docs/pagos inline. Historial de Novelty duplicado cross-template → candidato a **nuevo element compartido**.
 
 ### Eje 3 — Layout/grid y estructura de index/add/edit/view
-**Mayormente convergido al canon `sgi-invoice-view-grid` + `pipeline_sidebar`.** Outlier confirmado: **Invoice** (su `edit` usa `sgi-edit-shell-body:224`, su `view` grid inline `340px 1fr:158`); **PettyCash/view** también inline `:91`. `index` es div-grid (no `<table>`) con la misma mecánica en los 5 no-Novelty; EN/index usa side-rail calendario (esencial, B). `add` legacy en los 6 (canon aceptado, B).
+**Mayormente convergido al canon `spi-invoice-view-grid` + `pipeline_sidebar`.** Outlier confirmado: **Invoice** (su `edit` usa `spi-edit-shell-body:224`, su `view` grid inline `340px 1fr:158`); **PettyCash/view** también inline `:91`. `index` es div-grid (no `<table>`) con la misma mecánica en los 5 no-Novelty; EN/index usa side-rail calendario (esencial, B). `add` legacy en los 6 (canon aceptado, B).
 
 ### Eje 4 — Nomenclatura
 **Sólida.** Sufijos `*AddViewModel`/`*EditViewModel`/`*Presentation`/`*RowView` con 0 divergencias accidentales de nombre de clase ni de template. Única excepción de sufijo: `AdvanceLegalizationViewModel` (esencial, B — entidad `AdvanceLegalization`, no "edit de Advance"). **Única deriva real: el método de entrada al template** — 3 mecanismos para lo mismo (`set('viewModel')` mayoritario vs `get_object_vars` en PettyCash vs `set('invoice',$vm->invoice)` en Invoice/Advance add vs `build()` solo en Advance legalization).
@@ -175,7 +175,7 @@ templates/{Controller}/
 | A6 | **Método de entrada del VM triple** (`get_object_vars` / `set('invoice',$vm->invoice)` / `build()`) vs `set('viewModel',$vm)` mayoritario | `PettyCashRecordsController:248,315`; `InvoicesController:255,262`; `AdvancesController:206,226`; `legalization.php:15` | Ninguno; unificar a `set('viewModel',$vm)` + props directas |
 | A7 ✅ docs hecho (2026-05-30) | **`view` re-pinta docs/pagos a mano** teniendo elements | `NLD/view.php:248-303` vs `payment_section` mode `'view'`; `Invoice/view.php:613-681` vs `documents_section` | **Docs: cerrado.** `PettyCash/view` + `PaymentScheduling/view` migrados a `documents_section` read-only (VMs exponen `documentRows`); Refund/NLD/EN ya delegaban. Toda `view` delega salvo Invoice (outlier). Pagos a mano = otra sub-tabla, fuera de alcance |
 | A8 | **Historial de cambios duplicado a mano** entre los 2 `view.php` de Novelty | `EN/view.php:349-372` ≈ `NLD/view.php:351-441` | Ninguno; candidato a **extraer element `change_history`** |
-| ~~A9~~ → **B** (reclasificado 2026-05-30) | **`Invoices/edit.php` usa `sgi-edit-shell-body`** en vez de `sgi-invoice-view-grid` | `edit.php:224` | **NO migrar.** La validación visual refutó la premisa "template viejo": `sgi-edit-shell` es un app-shell de altura completa (header **fijo** + body con scroll interno + footer sticky) **más sofisticado** que el grid canónico para el form más pesado. Migrarlo perdería el header fijo (regresión UX). Diferencia esencial, no deriva. Alinear "al revés" (los otros edits al shell) sería decisión de diseño mayor, fuera de alcance. |
+| ~~A9~~ → **B** (reclasificado 2026-05-30) | **`Invoices/edit.php` usa `spi-edit-shell-body`** en vez de `spi-invoice-view-grid` | `edit.php:224` | **NO migrar.** La validación visual refutó la premisa "template viejo": `spi-edit-shell` es un app-shell de altura completa (header **fijo** + body con scroll interno + footer sticky) **más sofisticado** que el grid canónico para el form más pesado. Migrarlo perdería el header fijo (regresión UX). Diferencia esencial, no deriva. Alinear "al revés" (los otros edits al shell) sería decisión de diseño mayor, fuera de alcance. |
 | A10 ✅ hecho (`f0a6911`) | **`Invoices/view.php` + `PettyCashRecords/view.php` grid inline `340px 1fr`** | `Invoice/view.php:158`, `PettyCash/view.php:91` | Ninguno; mismo `pipeline_sidebar`, solo difiere el contenedor. CSS de la clase equivalente. |
 | A11 | **`operationCenters` over-fetch en AddVM** no consumido | `PaymentScheduling _buildAddViewModel:144`, `add.php` no lo usa | Ninguno; query DB + props muertas |
 | A12 | **`view()` setea `linkedInvoices`/`linkedTotal` muertos** | `AdvancesController:260-261` | Ninguno. **Muerte por no-consumo, NO por inalcanzabilidad** (adversarial P2: `view.php` SÍ se alcanza para anticipos sin legalización) |
@@ -191,7 +191,7 @@ templates/{Controller}/
 | B4 | **`add.php` legacy (`card card-primary`) en los 6** | Canon explícito ("add.php es legacy en todos"); la entidad aún no existe → sin pipeline ni sidebar | — |
 | B5 | **`EmployeeNovelties/index` side-rail `1fr 320px`** | Panel "Próximas/Distribución" + FullCalendar; el módulo tiene dimensión temporal/calendario que los otros listados no tienen (`index.php:207`) | Rompería una función de dominio |
 | B6 | **`Advances` sin `edit.php`** (edita vía redirect a `Invoices::edit`) | Anticipo = Invoice (documentado). El "edit" real es `legalization.php` que sí usa el canon (`:88`) | Rompería el modelo de dos entidades |
-| B7 | **Soportes bespoke en `Advances/legalization` + `NLD/edit`** | Docs con firma/estado/AJAX inline fuera del contrato `document_row`↔`sgi-document-uploader.js` (`legalization.php:485-492` vs `document_row.php:8-27`) | Rompería el gemelo `document_row`↔`_template`↔JS |
+| B7 | **Soportes bespoke en `Advances/legalization` + `NLD/edit`** | Docs con firma/estado/AJAX inline fuera del contrato `document_row`↔`spi-document-uploader.js` (`legalization.php:485-492` vs `document_row.php:8-27`) | Rompería el gemelo `document_row`↔`_template`↔JS |
 | B8 | **`confirm_payment_card` no usado por Invoice** | Invoice cierra el flujo dentro de `payment_section`; no re-pinta el card. Asimetría de cierre, no duplicado | Cambio funcional |
 | B9 | **`regress_status_modal` ausente en Novelty** | Novelty usa `reject()` terminal, no `regress()` (documentado); no hay markup de regresión que duplicar | — |
 | B10 | **Forms-por-estado en template** (`NLD/edit.php:251-313` switch de 4 forms; `legalization.php:235-454` if/elseif 7 ramas) | Cada estado (GDP/CONTABILIDAD/REVISION_FIRMAS/RRHH; estado×case_type) renderiza un form estructuralmente distinto; el VM entrega datos, la rama de UI por caso es lógica de flujo legítima | Defecto funcional |
@@ -225,7 +225,7 @@ templates/{Controller}/
 4. **C2 (decisión) — `RowView` generalizado** a los 6, moviendo la lógica de fila DENTRO de `forRow()` (no solo crear el DTO — caveat P9). Cubre A13 y los `periodLabel`/`pageTotal` inline.
 
 **Ola 3 — Convergencia de layout y mecanismo.** Esfuerzo bajo, riesgo bajo.
-5. **A10** (hecho 2026-05-30, `f0a6911`) — migrar `Invoices/view` + `PettyCash/view` a `sgi-invoice-view-grid`. **A9 descartado**: la validación visual mostró que `sgi-edit-shell` es esencial (header fijo), no deriva — reclasificado a (B).
+5. **A10** (hecho 2026-05-30, `f0a6911`) — migrar `Invoices/view` + `PettyCash/view` a `spi-invoice-view-grid`. **A9 descartado**: la validación visual mostró que `spi-edit-shell` es esencial (header fijo), no deriva — reclasificado a (B).
 6. **A6** — unificar el método de entrada a `set('viewModel', $vm)` (PettyCash, Invoice/add, Advance/add, Advance/legalization).
 7. **A8** — extraer un element `change_history` compartido (Novelty `view` × 2; reutilizable por los demás).
 
@@ -258,7 +258,7 @@ Remediación implementada en `main`, validada visualmente con Playwright (índic
 | 3 | A8 (element `change_history`), docblock `InvoicePresentation`, A10 (`Invoices/view`+`PettyCash/view`→grid) | `88aeb00` + `f0a6911` | ✅ |
 
 **Reclasificaciones por evidencia visual/de coste (divergen del análisis original):**
-- **A9 → (B) esencial** — `sgi-edit-shell` (Invoice/edit) es un app-shell superior (header fijo), no deriva. NO migrar.
+- **A9 → (B) esencial** — `spi-edit-shell` (Invoice/edit) es un app-shell superior (header fijo), no deriva. NO migrar.
 - **A6 → skip recomendado** — uniformar el método de entrada en `add` es churn de bajo valor sobre forms legacy (Invoice exigiría rediseñar `InvoiceAddViewModel`).
 - **A3 → no-deriva** — `statusBadgeMap`/`badgeColors` cumplen dos roles distintos (pill de header vs pills de documentos), no son alias muertos.
 

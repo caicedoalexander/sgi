@@ -25,19 +25,21 @@ interface DocumentTypePolicy
     public function blocksAdvance(InvoicePipelineState $state, object $invoice): ?string;
 
     /**
-     * Estados visuales del pipeline (Standard/Anticipo: 5; Legalización: 3).
+     * Estados visuales del pipeline (Standard/Anticipo: 6; Legalización: 3).
+     * Un doctype puede depender del invoice (p. ej. Recibo de Caja vinculado).
      *
      * @return array<string>
      */
-    public function getPipelineStatusesForView(): array;
+    public function getPipelineStatusesForView(?object $invoice = null): array;
 
     /**
-     * Filtra secciones visibles que no aplican a este doctype.
+     * Filtra secciones visibles que no aplican a este doctype. Puede depender del
+     * invoice (p. ej. Recibo de Caja vinculado oculta tesorería/pago).
      *
      * @param array<string> $sections
      * @return array<string>
      */
-    public function filterVisibleSections(array $sections): array;
+    public function filterVisibleSections(array $sections, ?object $invoice = null): array;
 
     /** ¿Avanzar a $newStatus dispara auto-init de la legalización? Sólo Anticipo cuando newStatus = PAGADA. */
     public function triggersAutoLegalization(PipelineStatus $newStatus): bool;
@@ -47,4 +49,10 @@ interface DocumentTypePolicy
 
     /** ¿Permite is_refund=true en sus pagos? Sólo Anticipo. */
     public function allowsRefundPayments(): bool;
+
+    /** ¿El avance aprobacion→contabilidad exige dian_validation='Aprobada'? Flag de clase (no depende de la instancia). */
+    public static function requiresDianValidation(): bool;
+
+    /** ¿El avance aprobacion→contabilidad exige ≥1 documento en invoice_documents? Flag de clase. */
+    public static function requiresSupportDocument(): bool;
 }

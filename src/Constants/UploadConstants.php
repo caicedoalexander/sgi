@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Constants;
 
 /**
- * Configuración canónica de uploads de archivos en el SGI.
+ * Configuración canónica de uploads de archivos en el SPI.
  *
  * Fuente única para:
  * - Límite de tamaño en bytes (validación server-side en DocumentUploadTrait,

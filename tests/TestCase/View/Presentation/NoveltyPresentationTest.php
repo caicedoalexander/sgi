@@ -61,7 +61,7 @@ final class NoveltyPresentationTest extends TestCase
 
         $row = NoveltyPresentation::forLiquidationDocRow($doc);
 
-        $this->assertSame('pill-primary-soft', $row->statusBadgeClass);
+        $this->assertSame('pill-orange-soft', $row->statusBadgeClass);
         $this->assertSame('Primera Quincena', $row->periodLabel);
         $this->assertSame(2, $row->noveltyCount);
     }

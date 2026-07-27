@@ -8,6 +8,19 @@ use DateTime;
 
 class RateLimitBucketsTable extends Table
 {
+    /**
+     * Piso de retención de la GC. Los buckets de limitadores con ventanas más
+     * largas (p. ej. el throttle de login, 900 s) deben sobrevivir toda su
+     * ventana aunque un limitador de ventana corta dispare la GC.
+     */
+    private const MIN_RETENTION_SECONDS = 3600;
+
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -56,12 +69,23 @@ class RateLimitBucketsTable extends Table
     }
 
     /**
-     * Delete bucket rows whose window started more than $olderThanSeconds ago.
+     * Delete bucket rows whose window started more than $olderThanSeconds ago,
+     * never borrando buckets más recientes que MIN_RETENTION_SECONDS.
      */
     public function garbageCollect(int $olderThanSeconds): int
     {
-        $cutoff = (new DateTime())->modify("-{$olderThanSeconds} seconds")->format('Y-m-d H:i:s');
+        $effective = max($olderThanSeconds, self::MIN_RETENTION_SECONDS);
+        $cutoff = (new DateTime())->modify("-{$effective} seconds")->format('Y-m-d H:i:s');
 
         return $this->deleteAll(['window_start <' => $cutoff]);
+    }
+
+    /**
+     * Delete the single bucket row for the given key. Usado por el throttle de
+     * login para resetear el contador de una cuenta tras un login exitoso.
+     */
+    public function clearKey(string $bucketKey): int
+    {
+        return $this->deleteAll(['bucket_key' => $bucketKey]);
     }
 }

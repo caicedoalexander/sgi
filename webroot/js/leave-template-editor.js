@@ -334,8 +334,8 @@
     });
 
     function showFlash(msg, type) {
-        if (window.SgiToast) {
-            window.SgiToast.show(msg, type || 'info');
+        if (window.SpiToast) {
+            window.SpiToast.show(msg, type || 'info');
             return;
         }
         window.alert(msg);

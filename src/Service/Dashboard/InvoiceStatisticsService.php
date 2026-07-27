@@ -15,6 +15,9 @@ class InvoiceStatisticsService
 {
     private StructuredLogger $logger;
 
+    /**
+     * Inicializa el logger estructurado de las estadísticas de facturas.
+     */
     public function __construct()
     {
         $this->logger = new StructuredLogger('Dashboard.InvoiceStats');

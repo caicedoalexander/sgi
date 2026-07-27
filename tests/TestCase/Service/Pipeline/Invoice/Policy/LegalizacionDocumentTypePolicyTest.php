@@ -43,7 +43,7 @@ final class LegalizacionDocumentTypePolicyTest extends TestCase
     {
         $this->assertSame(
             InvoiceConstants::PIPELINE_STATUSES_LEGALIZACION,
-            $this->policy->getPipelineStatusesForView()
+            $this->policy->getPipelineStatusesForView(),
         );
     }
 

@@ -1,15 +1,15 @@
 services:
   app:
     build: .
-    container_name: sgi-app
-    restart: unless-stopped
-    env_file: .env
+    container_name: sgi
     ports:
-      - "80:80"
+      - 8081:80
     volumes:
       - app_files:/var/www/html/webroot/files
       - app_uploads:/var/www/html/webroot/uploads
+      - app_storage:/var/www/html/storage
 
 volumes:
   app_files:
   app_uploads:
+  app_storage:

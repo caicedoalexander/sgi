@@ -17,6 +17,12 @@ use Cake\Http\Response;
  */
 class NotificationsController extends AppController
 {
+    /**
+     * Configura el acceso previo a las acciones.
+     *
+     * @param \Cake\Event\EventInterface $event Evento del ciclo de vida.
+     * @return void
+     */
     public function beforeFilter(EventInterface $event): void
     {
         // Saltarse el flujo del AppController (auth de sesión, sidebar counters,
@@ -32,6 +38,11 @@ class NotificationsController extends AppController
         }
     }
 
+    /**
+     * Devuelve las notificaciones pendientes en formato JSON.
+     *
+     * @return \Cake\Http\Response
+     */
     #[NoAuthGate(reason: 'API endpoint autenticado por X-Api-Key en beforeFilter; sin gate de módulo')]
     public function pending(): Response
     {

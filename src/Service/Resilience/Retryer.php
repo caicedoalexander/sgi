@@ -16,6 +16,10 @@ final class Retryer
 {
     private readonly StructuredLogger $logger;
 
+    /**
+     * @param \App\Service\Resilience\RetryPolicy $policy Política de reintentos (intentos, delay y excepciones).
+     * @param string $context Etiqueta de contexto para el logging.
+     */
     public function __construct(
         private readonly RetryPolicy $policy,
         private readonly string $context = 'retry',
@@ -59,6 +63,12 @@ final class Retryer
         );
     }
 
+    /**
+     * Indica si la excepción es instancia de alguna clase retriable de la policy.
+     *
+     * @param \Throwable $e Excepción capturada.
+     * @return bool
+     */
     private function isRetriable(Throwable $e): bool
     {
         foreach ($this->policy->retriableExceptions as $class) {

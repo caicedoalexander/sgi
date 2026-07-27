@@ -12,7 +12,7 @@ use Cake\Http\Exception\ForbiddenException;
 if (isset($error) && $error instanceof ForbiddenException):
     $this->setLayout('default');
 ?>
-    <div class="sgi-forbidden-page">
+    <div class="spi-forbidden-page">
         <h1>Acceso restringido</h1>
         <p><?= h($error->getMessage()) ?></p>
         <p>Si crees que es un error, contacta al administrador.</p>
@@ -58,7 +58,7 @@ $code = isset($error) && method_exists($error, 'getCode') ? (int)$error->getCode
     margin-bottom: 1.5rem;
 ">Error del cliente</div>
 
-<div class="sgi-error-divider"></div>
+<div class="spi-error-divider"></div>
 
 <p style="
     font-size: .95rem;

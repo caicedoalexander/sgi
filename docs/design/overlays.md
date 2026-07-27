@@ -1,4 +1,4 @@
-# Sistema de Diseño SGI · COPCSA — Capa flotante (overlays)
+﻿# Sistema de Diseño SPI · COPCSA — Capa flotante (overlays)
 
 Componentes que flotan sobre la página: toasts, banner, modal, drawer, tooltip, command palette y la familia de menús (select, kebab, usuario, notificaciones).
 

@@ -5,8 +5,8 @@
  */
 $this->assign('title', 'Nivel Educativo: ' . $educationLevel->name);
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Detalle</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Detalle</span>
     <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['education_levels']['can_edit'])): ?>
         <?= $this->Html->link('<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
@@ -24,7 +24,7 @@ $this->assign('title', 'Nivel Educativo: ' . $educationLevel->name);
     </div>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <div class="field-row">
         <span class="k">ID</span>
         <span class="v mono"><?= $this->Number->format($educationLevel->id) ?></span>

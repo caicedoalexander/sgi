@@ -17,6 +17,9 @@ final class InvoiceLockPolicy
 {
     private InvoiceLockGuard $guard;
 
+    /**
+     * @param \App\Service\InvoiceLockGuard|null $guard IO de bloqueos (petty cash / scheduling); stubbeable en tests.
+     */
     public function __construct(?InvoiceLockGuard $guard = null)
     {
         $this->guard = $guard ?? new InvoiceLockGuard();

@@ -11,15 +11,15 @@ $groupFilters = $groupFilters ?? [];
 ?>
 <?= $this->element('cdn_select2') ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Caja Menor', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span class="current">Nuevo Registro</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Nuevo Registro de Caja Menor</span>
+            <span class="spi-page-title">Nuevo Registro de Caja Menor</span>
         </div>
     </div>
     <div class="d-flex gap-2 flex-shrink-0">
@@ -32,10 +32,10 @@ $groupFilters = $groupFilters ?? [];
 </div>
 
 <!-- Filtros de agrupación -->
-<div class="sgi-card compact" style="margin-bottom:14px;">
+<div class="spi-card compact" style="margin-bottom:14px;">
     <div class="d-flex align-items-center gap-2" style="margin-bottom:12px;">
         <i class="bi bi-funnel" aria-hidden="true" style="color:var(--text-muted);"></i>
-        <span class="sgi-label">Filtrar facturas para agrupar</span>
+        <span class="spi-label">Filtrar facturas para agrupar</span>
     </div>
     <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
     <div class="row g-2 align-items-end">
@@ -72,21 +72,21 @@ $groupFilters = $groupFilters ?? [];
             <?= $this->Html->link('Limpiar', ['action' => 'add'], ['class' => 'btn btn-sm btn-default']) ?>
         </div>
     </div>
-    <div class="mt-2 sgi-hint">
+    <div class="mt-2 spi-hint">
         <i class="bi bi-info-circle" aria-hidden="true"></i>
         Por defecto se muestran facturas emitidas en los últimos 90 días. Use "Fecha Desde" para ampliar el rango.
     </div>
     <?= $this->Form->end() ?>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <div class="d-flex align-items-center gap-3" style="margin-bottom:20px;">
-        <div class="sgi-icon-chip">
+        <div class="spi-icon-chip">
             <i class="bi bi-wallet2" aria-hidden="true"></i>
         </div>
         <div>
-            <div class="sgi-card-title">Crear Registro</div>
-            <div class="sgi-card-subtitle">El código se autogenera</div>
+            <div class="spi-card-title">Crear Registro</div>
+            <div class="spi-card-subtitle">El código se autogenera</div>
         </div>
     </div>
 
@@ -110,11 +110,11 @@ $groupFilters = $groupFilters ?? [];
 
     <div class="mb-4">
         <div class="d-flex align-items-center gap-3 mb-3">
-            <span class="sgi-label flex-shrink-0">
+            <span class="spi-label flex-shrink-0">
                 <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Disponibles
             </span>
-            <div class="sgi-flex-divider"></div>
-            <span class="sgi-folder-count"><?= count($availableInvoices) ?></span>
+            <div class="spi-flex-divider"></div>
+            <span class="spi-folder-count"><?= count($availableInvoices) ?></span>
         </div>
 
         <?php if (empty($availableInvoices) || count($availableInvoices) === 0): ?>

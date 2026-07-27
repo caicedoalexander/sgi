@@ -156,6 +156,35 @@ final class InvoicePipelineServiceTest extends TestCase
         );
     }
 
+    public function testGetNextStatusBlockedForReciboCajaVinculadoEnContabilidad(): void
+    {
+        $service = $this->buildService();
+
+        // RC vinculado (advance_id != null) en contabilidad: congelado.
+        $this->assertNull(
+            $service->getNextStatus(
+                InvoiceConstants::STATUS_CONTABILIDAD,
+                InvoiceConstants::DOCTYPE_RECIBO_CAJA,
+                123,
+            ),
+        );
+    }
+
+    public function testGetNextStatusAllowsReciboCajaSinVincular(): void
+    {
+        $service = $this->buildService();
+
+        // RC sin vincular: avanza por el pipeline normal.
+        $this->assertSame(
+            InvoiceConstants::STATUS_TESORERIA,
+            $service->getNextStatus(
+                InvoiceConstants::STATUS_CONTABILIDAD,
+                InvoiceConstants::DOCTYPE_RECIBO_CAJA,
+                null,
+            ),
+        );
+    }
+
     // --- getPreviousStatus ---
 
     public function testGetPreviousStatusReturnsNullForInvalidStatus(): void

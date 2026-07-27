@@ -10,26 +10,53 @@ use App\Service\Pipeline\Novelty\NoveltyPipelineState;
 
 final class AutorizacionPagoState implements NoveltyPipelineState
 {
+    /**
+     * Estado canónico `autorizacion_pago` de este State.
+     *
+     * @return \App\Constants\Domain\Novelty\PipelineStatus
+     */
     public function getStatus(): PipelineStatus
     {
         return PipelineStatus::AUTORIZACION_PAGO;
     }
 
+    /**
+     * Estado siguiente base del pipeline (sin saltos condicionales); delega en el enum. Null si es terminal.
+     *
+     * @return \App\Constants\Domain\Novelty\PipelineStatus|null
+     */
     public function getNextStatus(): ?PipelineStatus
     {
         return $this->getStatus()->next();
     }
 
+    /**
+     * Estado anterior del pipeline; delega en el enum. Null si es el primero.
+     *
+     * @return \App\Constants\Domain\Novelty\PipelineStatus|null
+     */
     public function getPreviousStatus(): ?PipelineStatus
     {
         return $this->getStatus()->previous();
     }
 
+    /**
+     * Autorización de Pago solo avanza desde el documento de liquidación grupal, no como novedad individual.
+     *
+     * @param \App\Model\Entity\EmployeeNovelty $novelty Novedad individual.
+     * @return array<string>
+     */
     public function validateAdvanceIndividual(EmployeeNovelty $novelty): array
     {
         return ['Esta etapa solo avanza desde el documento de liquidación grupal.'];
     }
 
+    /**
+     * El avance desde Autorización de Pago lo gestiona la sección de pagos, no el advance directo.
+     *
+     * @param \App\Model\Entity\NoveltyLiquidationDoc $doc Documento de liquidación grupal.
+     * @return array<string>
+     */
     public function validateAdvanceGroup(NoveltyLiquidationDoc $doc): array
     {
         return ['La autorización de pago se gestiona desde la sección de pagos.'];

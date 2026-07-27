@@ -21,11 +21,19 @@ use Cake\Event\EventListenerInterface;
  */
 final class RefundOutcomeSubscriber implements EventListenerInterface
 {
+    /**
+     * @param \App\Service\AdvanceLegalizationService $legalizationService Servicio de legalización de anticipos.
+     */
     public function __construct(
         private readonly AdvanceLegalizationService $legalizationService,
     ) {
     }
 
+    /**
+     * Mapea los eventos suscritos a sus handlers.
+     *
+     * @return array
+     */
     public function implementedEvents(): array
     {
         return [
@@ -34,6 +42,12 @@ final class RefundOutcomeSubscriber implements EventListenerInterface
         ];
     }
 
+    /**
+     * Handler de Invoice.refundAuthorized: cierra la legalización al autorizar el sobrante.
+     *
+     * @param \Cake\Event\EventInterface $event Evento con el payload InvoiceRefundAuthorizedEvent.
+     * @return void
+     */
     public function onRefundAuthorized(EventInterface $event): void
     {
         /** @var \App\Event\InvoiceRefundAuthorizedEvent $payload */
@@ -54,6 +68,12 @@ final class RefundOutcomeSubscriber implements EventListenerInterface
         }
     }
 
+    /**
+     * Handler de Invoice.refundRejected: reabre la legalización al rechazar el sobrante.
+     *
+     * @param \Cake\Event\EventInterface $event Evento con el payload InvoiceRefundRejectedEvent.
+     * @return void
+     */
     public function onRefundRejected(EventInterface $event): void
     {
         /** @var \App\Event\InvoiceRefundRejectedEvent $payload */

@@ -1,4 +1,4 @@
-# Sistema de Diseño SGI · COPCSA — Fundamentos
+# Sistema de Diseño SPI · COPCSA — Fundamentos
 
 Tokens base del sistema: colores, tipografía, espaciado y superficies, iconografía.
 
@@ -85,13 +85,13 @@ Tres colores de marca + escala de grises + semánticos. Cada color tiene una var
 
 | Token | Tamaño | Weight | Uso | Clase utility |
 |-------|--------|--------|-----|---------------|
-| `--fs-display` | 30px | 800 | Moneda hero, número grande | `.sgi-display` (mono · letter-spacing -1px) |
-| `--fs-title-page` | 22px | 700 | Título de página (h1) | `.sgi-title-page` |
-| `--fs-title-card` | 14px | 700 | Título de card (h2/h3) | `.sgi-title-card` |
+| `--fs-display` | 30px | 800 | Moneda hero, número grande | `.spi-display` (mono · letter-spacing -1px) |
+| `--fs-title-page` | 22px | 700 | Título de página (h1) | `.spi-title-page` |
+| `--fs-title-card` | 14px | 700 | Título de card (h2/h3) | `.spi-title-card` |
 | `--fs-body-lg` | 13px | 400–500 | Cuerpo grande | — |
 | `--fs-body` | 12.5px | 400–500 | Body por defecto | — |
-| `--fs-body-sm` | 12px | 500–600 | Body pequeño / faint | `.sgi-body-faint` |
-| `--fs-label` | 10.5px | 700 | Uppercase labels | `.sgi-label` / `.label-up` |
+| `--fs-body-sm` | 12px | 500–600 | Body pequeño / faint | `.spi-body-faint` |
+| `--fs-label` | 10.5px | 700 | Uppercase labels | `.spi-label` / `.label-up` |
 | `--fs-meta` | 10px | 600 | Meta mono | — |
 | `--fs-micro` | 9.5px | 700 | Pills sm | — |
 
@@ -114,7 +114,7 @@ Tres colores de marca + escala de grises + semánticos. Cada color tiene una var
 
 ## 03 · Espaciado & superficies
 
-Múltiplos de 4. Escala efectiva del SGI: **4, 8, 12, 14, 16, 20, 24, 28**.
+Múltiplos de 4. Escala efectiva del SPI: **4, 8, 12, 14, 16, 20, 24, 28**.
 
 ```css
 --space-1:4px;   --space-2:8px;   --space-3:12px;  --space-4:16px;
@@ -141,7 +141,7 @@ Múltiplos de 4. Escala efectiva del SGI: **4, 8, 12, 14, 16, 20, 24, 28**.
 --radius-md:   4px;   /* botones, inputs, chips */
 ```
 
-> El SGI prefiere **ángulos rectos** para sensación de "operativo". No introducir radii arbitrarios.
+> El SPI prefiere **ángulos rectos** para sensación de "operativo". No introducir radii arbitrarios.
 
 ### Bordes y separadores — qué se permite
 
@@ -184,7 +184,7 @@ Set propio estilo **Lucide simplificado**. SVG `viewBox 0 0 24 24`, `stroke="cur
 
 `Home`, `File`, `Wallet`, `Users`, `User`, `Doc`, `Clock`, `Calendar`, `Search`, `Filter`, `Plus`, `Check`, `X`, `ChevronRight`, `ChevronDown`, `ArrowLeft`, `Download`, `Upload`, `Edit`, `Eye`, `Star`, `Clip`, `Mail`, `Pin`, `Alert`, `Building`, `Refresh`, `Bank`.
 
-En el proyecto SGI: Bootstrap Icons (`bi-*`) se usa como fallback. Si un icono no está en BI, agregar SVG inline siguiendo el patrón Lucide.
+En el proyecto SPI: Bootstrap Icons (`bi-*`) se usa como fallback. Si un icono no está en BI, agregar SVG inline siguiendo el patrón Lucide.
 
 ---
 

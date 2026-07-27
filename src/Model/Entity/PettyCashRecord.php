@@ -28,31 +28,37 @@ class PettyCashRecord extends Entity
         'created_by' => true,
     ];
 
+    /** @return bool true si la caja menor está en estado Agrupación. */
     public function isAgrupacion(): bool
     {
         return ($this->status ?? '') === PettyCashConstants::STATUS_AGRUPACION;
     }
 
+    /** @return bool true si la caja menor está en estado Contabilidad. */
     public function isContabilidad(): bool
     {
         return ($this->status ?? '') === PettyCashConstants::STATUS_CONTABILIDAD;
     }
 
+    /** @return bool true si la caja menor está en estado Tesorería. */
     public function isTesoreria(): bool
     {
         return ($this->status ?? '') === PettyCashConstants::STATUS_TESORERIA;
     }
 
+    /** @return bool true si la caja menor está en estado Autorización de pago. */
     public function isAutorizacionPago(): bool
     {
         return ($this->status ?? '') === PettyCashConstants::STATUS_AUTORIZACION_PAGO;
     }
 
+    /** @return bool true si la caja menor está en estado Verificación de pago. */
     public function isVerificacionPago(): bool
     {
         return ($this->status ?? '') === PettyCashConstants::STATUS_VERIFICACION_PAGO;
     }
 
+    /** @return bool true si la caja menor está en estado pagada. */
     public function isPagada(): bool
     {
         return ($this->status ?? '') === PettyCashConstants::STATUS_PAGADA;

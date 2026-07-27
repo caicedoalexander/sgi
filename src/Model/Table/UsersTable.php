@@ -10,6 +10,12 @@ use Cake\Validation\Validator;
 
 class UsersTable extends Table
 {
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -29,6 +35,12 @@ class UsersTable extends Table
         ]);
     }
 
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -67,6 +79,13 @@ class UsersTable extends Table
         return $validator;
     }
 
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->isUnique(['username']), ['errorField' => 'username']);
@@ -76,6 +95,13 @@ class UsersTable extends Table
         return $rules;
     }
 
+    /**
+     * Custom finder de autenticación: usuarios activos con su rol contenido.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query The query builder.
+     * @param array<string, mixed> $options Finder options.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
     public function findAuth(SelectQuery $query, array $options = []): SelectQuery
     {
         return $query

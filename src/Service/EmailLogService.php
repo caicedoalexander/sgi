@@ -16,6 +16,9 @@ class EmailLogService
     private EmailLogsTable $emailLogsTable;
     private StructuredLogger $logger;
 
+    /**
+     * @param \Closure $notificationFactory Factory que construye el NotificationService bajo demanda.
+     */
     public function __construct(
         private readonly Closure $notificationFactory,
     ) {
@@ -88,6 +91,16 @@ class EmailLogService
         $log->last_attempt_at = $now;
         $log->sent_at = $now;
         $log->last_error = null;
+
+        // Seguridad: tras un envío exitoso el payload ya no se reutiliza (retry solo
+        // aplica a correos no enviados), así que purgamos viewVars para no dejar
+        // datos sensibles en reposo —p. ej. el secreto del token de aprobación en
+        // approvalUrl— en email_logs.
+        $payload = $log->payload ?? [];
+        if (is_array($payload) && isset($payload['viewVars'])) {
+            unset($payload['viewVars']);
+            $log->payload = $payload;
+        }
 
         $this->emailLogsTable->save($log);
     }

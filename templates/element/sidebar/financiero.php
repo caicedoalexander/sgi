@@ -191,7 +191,7 @@ if (empty($facturacionItems)) {
             </li>
             <li>
                 <?= $this->Html->link(
-                    '<span class="ic"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span><span class="grow">Pendientes</span>' .
+                    '<span class="ic"><i class="bi bi-file-earmark-check" aria-hidden="true"></i></span><span class="grow">Legalizaciones</span>' .
                     (!empty($advancesPendingLegalizationCount) ? '<span class="sb-badge is-warning">' . $advancesPendingLegalizationCount . '</span>' : ''),
                     ['controller' => 'Advances', 'action' => 'pendingLegalization'],
                     ['class' => $navLink('Advances', 'pendingLegalization'), 'escape' => false],
@@ -199,15 +199,6 @@ if (empty($facturacionItems)) {
             </li>
         </ul>
     </div>
-</li>
-    <?php endif; ?>
-    <?php if ($canView('payment_registry')) : ?>
-<li>
-        <?= $this->Html->link(
-            '<span class="ic"><i class="bi bi-cash-stack" aria-hidden="true"></i></span><span class="grow">Registro de Pagos</span>',
-            ['controller' => 'PaymentRegistry', 'action' => 'index'],
-            ['class' => $navLink('PaymentRegistry'), 'escape' => false],
-        ) ?>
 </li>
     <?php endif; ?>
     <?php if ($canView('novelty_liquidation_docs')) : ?>

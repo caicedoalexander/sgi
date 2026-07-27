@@ -12,7 +12,7 @@
  *
  * Select2 depende de jQuery: gracias a `defer`, los scripts se ejecutan en el
  * orden de aparición ANTES de DOMContentLoaded, así que jQuery siempre estará
- * disponible cuando Select2 se evalúe. `webroot/js/sgi-common.js` inicializa
+ * disponible cuando Select2 se evalúe. `webroot/js/spi-common.js` inicializa
  * `.select2-enable` dentro de DOMContentLoaded — para entonces ambos están listos.
  *
  * @var \App\View\AppView $this
@@ -21,7 +21,7 @@ $this->Html->css(
     $this->Url->build('/vendor/select2/select2.min.css'),
     ['block' => 'css'],
 );
-$this->Html->css('sgi-select2-overrides', ['block' => 'css']);
+$this->Html->css('spi-select2-overrides', ['block' => 'css']);
 $this->Html->script(
     $this->Url->build('/vendor/jquery/jquery.min.js'),
     ['block' => 'script', 'defer' => true],

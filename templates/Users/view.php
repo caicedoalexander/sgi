@@ -8,11 +8,11 @@ $this->assign('title', 'Usuario: ' . $user->full_name);
 $canEdit   = !empty($userPermissions['users']['can_edit']);
 $canDelete = !empty($userPermissions['users']['can_delete']);
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div>
-        <span class="sgi-page-title">Detalle del Usuario</span>
-        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
-            <span class="mono sgi-fg-muted"><?= h($user->username) ?></span>
+        <span class="spi-page-title">Detalle del Usuario</span>
+        <div class="spi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
+            <span class="mono spi-fg-muted"><?= h($user->username) ?></span>
         </div>
     </div>
     <div class="d-flex gap-2 flex-shrink-0">
@@ -25,7 +25,7 @@ $canDelete = !empty($userPermissions['users']['can_delete']);
         <?= $this->Form->postLink(
             '<i class="bi bi-trash me-1" aria-hidden="true"></i>Eliminar',
             ['action' => 'delete', $user->id],
-            ['confirm' => '¿Está seguro de eliminar este usuario?', 'class' => 'btn btn-default btn-sm sgi-fg-danger', 'escape' => false]
+            ['confirm' => '¿Está seguro de eliminar este usuario?', 'class' => 'btn btn-default btn-sm spi-fg-danger', 'escape' => false]
         ) ?>
         <?php endif; ?>
         <?php if ($canEdit): ?>
@@ -38,7 +38,7 @@ $canDelete = !empty($userPermissions['users']['can_delete']);
     </div>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 28px;">
         <div class="field-row"><span class="k">ID</span><span class="v mono"><?= $this->Number->format($user->id) ?></span></div>
         <div class="field-row"><span class="k">Usuario</span><span class="v mono"><?= h($user->username) ?></span></div>

@@ -1,4 +1,4 @@
-# Sistema de Diseño SGI · COPCSA — Layout y tablas
+# Sistema de Diseño SPI · COPCSA — Layout y tablas
 
 Cards y superficies, avatares, tablas.
 
@@ -6,10 +6,10 @@ Cards y superficies, avatares, tablas.
 
 ## 09 · Cards y superficies
 
-Toda card SGI es:
+Toda card SPI es:
 
 ```css
-.sgi-card, .card {
+.spi-card, .card {
   background: #fff;
   padding: 20px;     /* o 16–18 si es compacta */
   border-radius: 0;
@@ -20,14 +20,14 @@ Toda card SGI es:
 ### Anatomía típica
 
 ```html
-<div class="sgi-card">
+<div class="spi-card">
   <header class="card-head">
-    <div class="sgi-title-card">Pagos Registrados</div>
+    <div class="spi-title-card">Pagos Registrados</div>
     <button class="btn btn-ghost btn-sm">+ Agregar pago</button>
   </header>
 
   <!-- meta opcional -->
-  <div class="sgi-body-faint">1 movimiento · Total $ 120.000</div>
+  <div class="spi-body-faint">1 movimiento · Total $ 120.000</div>
 
   <!-- body -->
   <div class="card-body">…</div>
@@ -41,32 +41,32 @@ Toda card SGI es:
 
 **Card básica** — label + valor + meta:
 ```html
-<div class="sgi-card">
-  <div class="sgi-label">PROVEEDOR</div>
+<div class="spi-card">
+  <div class="spi-label">PROVEEDOR</div>
   <div style="font-size:14px;font-weight:600;margin-top:6px">AGROPECUARIA ORGANICA TATAMA</div>
-  <div class="sgi-body-faint" style="margin-top:4px">BUENAVENTURA SPRBUN</div>
+  <div class="spi-body-faint" style="margin-top:4px">BUENAVENTURA SPRBUN</div>
 </div>
 ```
 
 **Card con valor hero** (KPI):
 ```html
-<div class="sgi-card">
-  <div class="sgi-label">VALOR FACTURA</div>
-  <div class="sgi-display sgi-fg-primary" style="margin-top:6px">$ 120.000</div>
+<div class="spi-card">
+  <div class="spi-label">VALOR FACTURA</div>
+  <div class="spi-display spi-fg-primary" style="margin-top:6px">$ 120.000</div>
   <div class="row-flex gap-6" style="margin-top:6px; color: var(--text-muted)">
-    <i class="bi bi-check-circle sgi-fg-primary"></i> Pagado · 13/05/2026
+    <i class="bi bi-check-circle spi-fg-primary"></i> Pagado · 13/05/2026
   </div>
 </div>
 ```
 
 **Card con acento** (barra 3px izquierda):
 ```html
-<div class="sgi-card" style="position:relative">
+<div class="spi-card" style="position:relative">
   <div class="accent-strip accent-orange"></div>
   <div style="padding-left:8px">
-    <div class="sgi-label">EN APROBACIÓN</div>
-    <div class="sgi-display sgi-fg-secondary" style="margin-top:6px">3</div>
-    <div class="sgi-body-faint" style="margin-top:6px">facturas pendientes</div>
+    <div class="spi-label">EN APROBACIÓN</div>
+    <div class="spi-display spi-fg-secondary" style="margin-top:6px">3</div>
+    <div class="spi-body-faint" style="margin-top:6px">facturas pendientes</div>
   </div>
 </div>
 ```
@@ -82,9 +82,9 @@ Toda card SGI es:
 ### Card compleja (head + sub-superficie + footer)
 
 ```html
-<div class="sgi-card">
+<div class="spi-card">
   <header class="card-head">
-    <div class="sgi-title-card">Pagos Registrados</div>
+    <div class="spi-title-card">Pagos Registrados</div>
     <button class="btn btn-ghost btn-sm">+ Agregar pago</button>
   </header>
 
@@ -95,10 +95,10 @@ Toda card SGI es:
     </div>
     <div class="grow">
       <div style="font-weight:600">Davivienda</div>
-      <div class="mono sgi-body-faint">13/05/2026 · por Alexander Caicedo</div>
+      <div class="mono spi-body-faint">13/05/2026 · por Alexander Caicedo</div>
     </div>
     <span class="pill pill-primary-soft">AUTORIZADO</span>
-    <div class="mono sgi-fg-primary" style="font-size:14px;font-weight:700">$ 120.000</div>
+    <div class="mono spi-fg-primary" style="font-size:14px;font-weight:700">$ 120.000</div>
   </div>
 </div>
 ```
@@ -117,10 +117,10 @@ Patrones canónicos con clase CSS asociada. Toda vista nueva debe componerse a p
 
 | Primitiva | Función | Clase / patrón CSS |
 |-----------|---------|--------------------|
-| `KV` | Label uppercase 10.5px + valor 12.5px 600 en columna | `.sgi-label` + valor; gap 3px |
+| `KV` | Label uppercase 10.5px + valor 12.5px 600 en columna | `.spi-label` + valor; gap 3px |
 | `SectionHead` | Label uppercase + acción a la derecha, margin-bottom 14px | `.card-head` (ver "Anatomía típica") |
 | `FieldRow` | Fila key/value con `border-bottom: 1px solid --rule`, último sin border | `.field-row` (ver abajo) |
-| `TopBar` | Barra superior 52px (ver sección 13) | `.sgi-topbar` |
+| `TopBar` | Barra superior 52px (ver sección 13) | `.spi-topbar` |
 | `fmtMoney(120000)` | Formatea como `$ 120.000` (es-CO, sin decimales) | helper PHP/JS |
 
 ### FieldRow — patrón canónico
@@ -136,7 +136,7 @@ Patrones canónicos con clase CSS asociada. Toda vista nueva debe componerse a p
 </div>
 <div class="field-row is-last">
   <span class="k">Valor</span>
-  <span class="v mono sgi-fg-primary">$ 120.000</span>
+  <span class="v mono spi-fg-primary">$ 120.000</span>
 </div>
 ```
 
@@ -201,7 +201,7 @@ El componente `Avatar` soporta `shape: 'circle'` además del cuadrado por defect
   <div class="av av-lg" style="background:#469D61">JA</div>
   <div class="grow">
     <div style="font-size:14px;font-weight:700">JHON FREDDY ACOSTA MONTAÑO</div>
-    <div class="mono sgi-body-faint">
+    <div class="mono spi-body-faint">
       CC 1006193265 · jhondeian04@gmail.com · Ingreso 01/03/2024
     </div>
   </div>
@@ -248,14 +248,14 @@ Header con `--bg-subtle`, fila con bg `#fff`, hover con `--bg-muted`, separador 
 <div class="row-fact">
   <div>
     <div class="mono" style="font-weight:700">E008113522</div>
-    <div class="sgi-label" style="margin-top:2px">REINTEGRO</div>
+    <div class="spi-label" style="margin-top:2px">REINTEGRO</div>
   </div>
   <div>
     <div style="font-weight:600">AGROPECUARIA ORGANICA TATAMA</div>
-    <div class="sgi-body-faint" style="margin-top:2px">BUENAVENTURA SPRBUN</div>
+    <div class="spi-body-faint" style="margin-top:2px">BUENAVENTURA SPRBUN</div>
   </div>
   <div class="mono">19/05/2026</div>
-  <div class="mono sgi-fg-primary" style="font-size:13.5px;font-weight:700;text-align:right">$ 120.000</div>
+  <div class="mono spi-fg-primary" style="font-size:13.5px;font-weight:700;text-align:right">$ 120.000</div>
   <div>
     <div class="pipeline-mini" style="margin-bottom:5px">
       <div class="on"></div><div class="on"></div><div class="on"></div>
@@ -306,7 +306,7 @@ Para listados largos (más de 50 filas). Siempre visibles: primera, anterior, p�
 </div>
 ```
 
-> **Nota:** la app SGI usa **15 ítems por página fijo** (ver `CLAUDE.md`). El selector de tamaño de página de la propuesta original queda como componente disponible pero no cableado.
+> **Nota:** la app SPI usa **15 ítems por página fijo** (ver `CLAUDE.md`). El selector de tamaño de página de la propuesta original queda como componente disponible pero no cableado.
 
 ---
 

@@ -17,6 +17,11 @@ use PDOException;
 
 class InvoicePaymentService
 {
+    /**
+     * @param \App\Service\InvoiceHistoryService $historyService Servicio de auditoría de facturas.
+     * @param \App\Service\Pipeline\Invoice\DocumentTypePolicyFactory $docTypePolicies Factory de policies por tipo de documento.
+     * @param \Cake\Event\EventManagerInterface $events Event manager para publicar eventos de pago.
+     */
     public function __construct(
         private readonly InvoiceHistoryService $historyService,
         private readonly DocumentTypePolicyFactory $docTypePolicies,

@@ -31,7 +31,7 @@ $importable = $importable ?? true;
                 <div id="exportError" class="text-danger mt-2" style="display:none;font-size:var(--fs-body-lg)"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="exportBtn">
                     <i class="bi bi-download me-1" aria-hidden="true"></i>Exportar
                 </button>
@@ -87,8 +87,8 @@ $importable = $importable ?? true;
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-outline-secondary" id="importBackBtn" style="display:none">
+                <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-ghost" id="importBackBtn" style="display:none">
                     <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver
                 </button>
                 <button type="button" class="btn btn-primary" id="importUploadBtn">

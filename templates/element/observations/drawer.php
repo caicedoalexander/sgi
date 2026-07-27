@@ -7,9 +7,9 @@
  * Disparador fijo al borde derecho del viewport + Bootstrap Offcanvas con el
  * chat renderizado con el componente `.chat` del sistema de diseño.
  *
- * Autocontenido: emite su propio <template> e inicializa SgiObservationChat.
+ * Autocontenido: emite su propio <template> e inicializa SpiObservationChat.
  * Conserva los IDs estándar (#obs-form, #obs-chat-scroll, #obs-empty-state,
- * #obs-count) del contrato de webroot/js/sgi-observation-chat.js.
+ * #obs-count) del contrato de webroot/js/spi-observation-chat.js.
  *
  * Restricciones de uso: incluir este element FUERA del formulario principal de
  * la vista (tiene su propio <form>); la vista anfitriona no debe renderizar
@@ -27,15 +27,15 @@ $emptyMessage = $emptyMessage ?? 'Sin observaciones aún';
 $observations = $observations ?? [];
 $count        = $count ?? 0;
 ?>
-<button type="button" class="sgi-obs-trigger"
+<button type="button" class="spi-obs-trigger"
         data-bs-toggle="offcanvas" data-bs-target="#obsDrawer"
         aria-label="Abrir observaciones">
     <i class="bi bi-chat-left-text" aria-hidden="true"></i>
-    <span id="obs-count" class="sgi-obs-trigger-badge"
+    <span id="obs-count" class="spi-obs-trigger-badge"
           <?= $count === 0 ? 'style="display:none;"' : '' ?>><?= $count ?></span>
 </button>
 
-<div class="offcanvas offcanvas-end sgi-obs-drawer" id="obsDrawer" tabindex="-1"
+<div class="offcanvas offcanvas-end spi-obs-drawer" id="obsDrawer" tabindex="-1"
      aria-labelledby="obsDrawerTitle">
     <div class="offcanvas-header">
         <h2 class="offcanvas-title" id="obsDrawerTitle">
@@ -76,8 +76,8 @@ $count        = $count ?? 0;
 </div>
 
 <?php /* Gemelo estructural de observations/chat_item.php; el avatar es del
-         usuario actual (SgiObservationChat marca cada mensaje nuevo como propio). */ ?>
-<template id="sgi-obs-chat-item">
+         usuario actual (SpiObservationChat marca cada mensaje nuevo como propio). */ ?>
+<template id="spi-obs-chat-item">
     <div class="chat-item" data-obs-id="">
         <?= $this->element('observations/chat_avatar', ['name' => $currentUserName]) ?>
         <div class="chat-body">
@@ -90,7 +90,7 @@ $count        = $count ?? 0;
     </div>
 </template>
 
-<?= $this->Html->script('sgi-observation-chat', ['block' => true]) ?>
+<?= $this->Html->script('spi-observation-chat', ['block' => true]) ?>
 
 <?php $this->append('script') ?>
 <script>
@@ -122,13 +122,13 @@ $count        = $count ?? 0;
         }).observe(triggerCount, { childList: true, characterData: true, subtree: true });
     }
 
-    if (window.SgiObservationChat) {
-        SgiObservationChat.init({
+    if (window.SpiObservationChat) {
+        SpiObservationChat.init({
             formSelector:           '#obs-form',
             listSelector:           '#obs-chat-scroll',
             emptySelector:          '#obs-empty-state',
             counterSelector:        '#obs-count',
-            bubbleTemplateSelector: '#sgi-obs-chat-item',
+            bubbleTemplateSelector: '#spi-obs-chat-item',
             csrfToken:              <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>,
         });
     }

@@ -17,14 +17,14 @@ if ($this->request->is('ajax')) {
     return;
 }
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Editar Cargo</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Editar Cargo</span>
     <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
         ['class' => 'btn btn-ghost-card btn-sm', 'escape' => false]) ?>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <?= $this->Form->create($position) ?>
     <?= $this->element('forms/positions') ?>
     <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-save me-1" aria-hidden="true"></i>Actualizar</button>

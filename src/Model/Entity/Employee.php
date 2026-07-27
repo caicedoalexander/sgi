@@ -45,6 +45,12 @@ class Employee extends Entity
         'profile_image' => true,
     ];
 
+    /**
+     * Virtual property: $employee->full_name.
+     * Concatena nombre y apellidos, ignorando los que estén vacíos.
+     *
+     * @return string
+     */
     protected function _getFullName(): string
     {
         return trim(($this->first_name ?? '') . ' ' . ($this->last_name1 ?? '') . ' ' . ($this->last_name2 ?? ''));
@@ -122,6 +128,15 @@ class Employee extends Entity
         return null;
     }
 
+    /**
+     * Determina si una novedad está vigente en la fecha indicada: no rechazada y
+     * con `permission_date` de un solo día igual a hoy, o con hoy dentro del rango
+     * [start_date, end_date].
+     *
+     * @param \App\Model\Entity\EmployeeNovelty $novelty Novedad a evaluar.
+     * @param string $today Fecha de referencia en formato `Y-m-d`.
+     * @return bool
+     */
     private function _isNoveltyActiveOn(EmployeeNovelty $novelty, string $today): bool
     {
         if ($novelty->pipeline_status === NoveltyConstants::STATUS_RECHAZADA) {
@@ -145,6 +160,12 @@ class Employee extends Entity
         return false;
     }
 
+    /**
+     * Virtual property: $employee->age.
+     * Calcula la edad en años a partir de birth_date, o null si no hay fecha.
+     *
+     * @return int|null
+     */
     protected function _getAge(): ?int
     {
         $birthDate = $this->birth_date;

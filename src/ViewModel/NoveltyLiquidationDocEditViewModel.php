@@ -17,19 +17,33 @@ final readonly class NoveltyLiquidationDocEditViewModel implements EditViewModel
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
     public string $pageTitle;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $statusLabels;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $periodLabels;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $signerLabels;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $paymentLabels;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $statusBadgeMap;
-    /** @var array{0:string,1:string} */
+    /**
+     * @var array{0:string,1:string}
+     */
     public array $currentStatusBadge;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $badgeColors;
     public bool $isRejected;
     public bool $isPaid;
@@ -59,7 +73,7 @@ final readonly class NoveltyLiquidationDocEditViewModel implements EditViewModel
         public bool $canAuthorizePayment,
         public bool $canConfirmPayment,
     ) {
-        $this->pageTitle    = 'Editar Liquidación: ' . ($doc->liquidation_number ?? ('#' . $doc->id));
+        $this->pageTitle    = 'Editar Liquidación: ' . ($doc->liquidation_number ?? '#' . $doc->id);
         $this->statusLabels = NoveltyConstants::STATUS_LABELS;
         $this->periodLabels  = NoveltyConstants::PERIOD_LABELS;
         $this->signerLabels  = NoveltyConstants::SIGNER_LABELS;

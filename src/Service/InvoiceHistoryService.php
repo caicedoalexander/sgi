@@ -64,6 +64,14 @@ class InvoiceHistoryService implements HistoryServiceInterface
         'payment_status', 'full_payment_date', 'pipeline_status',
     ];
 
+    /**
+     * Registra en el historial cada campo rastreado que cambió entre dos versiones.
+     *
+     * @param \App\Model\Entity\Invoice $original Factura antes de los cambios.
+     * @param \App\Model\Entity\Invoice $modified Factura después de los cambios.
+     * @param int $userId Id del usuario que realizó los cambios.
+     * @return void
+     */
     public function recordChanges(Invoice $original, Invoice $modified, int $userId): void
     {
         $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
@@ -97,6 +105,16 @@ class InvoiceHistoryService implements HistoryServiceInterface
         }
     }
 
+    /**
+     * Registra el cambio de un único campo en el historial de la factura.
+     *
+     * @param int $invoiceId Id de la factura.
+     * @param string $field Nombre del campo modificado.
+     * @param string|null $oldValue Valor anterior.
+     * @param string|null $newValue Valor nuevo.
+     * @param int $userId Id del usuario que realizó el cambio.
+     * @return void
+     */
     public function recordFieldChange(int $invoiceId, string $field, ?string $oldValue, ?string $newValue, int $userId): void
     {
         $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');
@@ -110,6 +128,15 @@ class InvoiceHistoryService implements HistoryServiceInterface
         $historiesTable->save($history);
     }
 
+    /**
+     * Registra en el historial una transición de estado del pipeline (con labels).
+     *
+     * @param int $invoiceId Id de la factura.
+     * @param string $fromStatus Estado de origen.
+     * @param string $toStatus Estado de destino.
+     * @param int $userId Id del usuario que ejecutó la transición.
+     * @return void
+     */
     public function recordStatusChange(int $invoiceId, string $fromStatus, string $toStatus, int $userId): void
     {
         $historiesTable = TableRegistry::getTableLocator()->get('InvoiceHistories');

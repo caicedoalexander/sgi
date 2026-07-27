@@ -30,6 +30,59 @@ final class InvoiceConstants
         self::DOCTYPE_ANTICIPO,
     ];
 
+    /**
+     * Tipos de documento vinculables a la legalización de un anticipo.
+     * Fuente única de las LECTURAS de facturas vinculadas (guard de validación,
+     * getLinkedTotal, lista de la vista — con `IN`). Las queries de SELECCIÓN/ESCRITURA
+     * (linkCandidates, linkInvoices) NO consumen esta constante: usan un `OR` con
+     * restricción de estado por doctype (RC solo en Contabilidad) que una lista plana
+     * no puede expresar. Ver spec 2026-06-30 (Fase 1).
+     */
+    public const ADVANCE_LINKABLE_DOCTYPES = [
+        self::DOCTYPE_LEGALIZACION,
+        self::DOCTYPE_RECIBO_CAJA,
+    ];
+
+    /**
+     * Claves foráneas de CONTENCIÓN: un registro padre gobierna el pipeline de
+     * la factura, escribiendo su pipeline_status con updateAll (PettyCashService,
+     * RefundPipelineService, AdvanceLegalizationService). Esas facturas no se
+     * operan desde el módulo de Facturas.
+     *
+     * Fuente única de InvoicesTable::findWithoutParent().
+     *
+     * La programación de pagos NO va aquí: es una REFERENCIA (solo agenda el
+     * pago, no toca el estado) y su vínculo vive en payment_scheduling_items,
+     * no en invoices.
+     *
+     * @var list<string>
+     */
+    public const PARENT_FOREIGN_KEYS = [
+        'petty_cash_record_id',
+        'refund_id',
+        'advance_id',
+    ];
+
+    /**
+     * Tipos de documento con fecha de vencimiento real. Los demás copian
+     * issue_date en due_date solo para satisfacer el NOT NULL
+     * (InvoicesController::add), de modo que sin esta lista blanca aparecerían
+     * como "vencidos" al día siguiente de emitirse.
+     *
+     * OJO: 'Recibo' (DOCTYPE_RECIBO) sí vence. 'Recibo de Caja'
+     * (DOCTYPE_RECIBO_CAJA) NO — está excluido a propósito: es un documento de
+     * legalización de anticipo y no tiene plazo. Añadirlo aquí reintroduce el
+     * bug de "legalizaciones vencidas".
+     *
+     * @var list<string>
+     */
+    public const DOCTYPES_WITH_DUE_DATE = [
+        self::DOCTYPE_FACTURA,
+        self::DOCTYPE_NOTA_DEBITO,
+        self::DOCTYPE_TARJETA_CREDITO,
+        self::DOCTYPE_RECIBO,
+    ];
+
     // Estados de aprobacion de area
     public const APPROVAL_PENDING = 'Pendiente';
     public const APPROVAL_APPROVED = 'Aprobada';
@@ -67,7 +120,8 @@ final class InvoiceConstants
     public const STATUS_AUTORIZACION_PAGO = PipelineStatus::AUTORIZACION_PAGO->value;
     public const STATUS_VERIFICACION_PAGO = PipelineStatus::VERIFICACION_PAGO->value;
     public const STATUS_PAGADA = PipelineStatus::PAGADA->value;
-    // Estado terminal exclusivo para document_type = Legalización.
+    // Estado terminal de legalización. Lo alcanzan las Legalización y los Recibo de Caja
+    // VINCULADOS a un anticipo (advance_id != null) al legalizarse el anticipo.
     // No participa en PIPELINE_STATUSES (flujo normal). Ver self::ALL_STATUSES.
     public const STATUS_LEGALIZADA = PipelineStatus::LEGALIZADA->value;
 

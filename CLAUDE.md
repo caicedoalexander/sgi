@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SGI (Sistema de Gestión Interna) — internal management system built with CakePHP 5.3 on PHP 8.4+ (`composer.json` requires `>=8.4`). Manages invoices (6-state pipeline + estado terminal `legalizada`), employees, petty cash, legalizations, novelties, payment schedulings, refunds, advances, and catalog modules. MySQL/MariaDB backend. Spanish-language UI.
+SPI (Sistema de Procesos Internos) — internal management system built with CakePHP 5.3 on PHP 8.4+ (`composer.json` requires `>=8.4`). Manages invoices (6-state pipeline + estado terminal `legalizada`), employees, petty cash, legalizations, novelties, payment schedulings, refunds, advances, and catalog modules. MySQL/MariaDB backend. Spanish-language UI.
 
 ## Commands
 
@@ -57,13 +57,14 @@ Sistema de diseño: ver la sección [Sistema de Diseño](#sistema-de-diseño) m�
 | `InvoicePaymentService` | Payment registration, authorization, partial payment recalculation. `registerPayment()` siempre avanza la factura a `autorizacion_pago`. `editPayment()` requiere motivo. `rejectPayment()` persiste `rejection_reason` (no elimina) |
 | `InvoiceApprovalService` | Invoice approval operations. `sendApprovalLinks()`, `modifyApprovers()` (con motivo obligatorio), `resetFlow()` cuando `area_approval='Rechazada'` |
 | `InvoiceFilterService` / `EmployeeFilterService` | Filtros de listados (extends `Filter/BaseFilterService`) |
-| `GroupedInvoiceService` | Grouped invoice batch operations |
+| `GroupedInvoiceService` | Grouped invoice batch operations. `documentType` y `linkableStatus` aceptan un valor o **lista** (constructor); Caja Menor vincula hijas `Caja menor` **y** `Recibo de Caja` desde `aprobacion`/`contabilidad`. `addInvoices()` escribe con `updateAll` condicional (`{fkField} IS null` + `advance_id IS null` + dedup) — exclusividad atómica: un Recibo de Caja pertenece a un anticipo **o** a una caja menor, nunca a ambos (el lado inverso lo cierra `AdvanceLegalizationService::linkInvoices`/`AdvancesController::linkCandidates` con `petty_cash_record_id IS null`) |
+| `GroupReadinessQuery` | Query compartida de requisitos pendientes (DIAN + soporte) de las facturas hijas de un padre (Refund/PettyCash/Advance). Exenciones por doctype vía `DocumentTypePolicyFactory`; retorna `GroupReadinessReport` — fuente única del gate de avance de grupo y del checklist de la vista |
 | `NoveltyPipelineService` | Workflow del pipeline de novedades (delega a `NoveltyPipelineStateRegistry`) |
 | `PaymentSchedulingPipelineService` | Payment scheduling pipeline (5 estados: borrador → tesoreria → autorizacion_pago → verificacion_pago → pagada) y management de registros |
 | `AdvanceLegalizationService` | Pipeline de legalizaciones de anticipos (validacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → revision_firmas → legalizada) |
-| `RefundPipelineService` | Pipeline de reintegros (agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada) y outcomes |
+| `RefundPipelineService` | Pipeline de reintegros (agrupacion → aprobacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada) y outcomes |
 | `RefundPaymentService` | Registro/edición/rechazo de pagos individuales del módulo de reintegros |
-| `PettyCashPipelineService` | Pipeline de caja menor (agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada) |
+| `PettyCashPipelineService` | Pipeline de caja menor (agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada). `addInvoices()` auto-avanza transaccionalmente las hijas en `aprobacion` a `contabilidad` al vincular (el vínculo certifica la aprobación); desvincular no regresa el estado |
 | `LiquidationDocPaymentService` | Pagos de documentos de liquidación de novedades |
 | `PaymentRegistryService` | Vista consolidada del registro de pagos cross-módulo |
 | `AuthorizationService` | RBAC via `permissions` table. Admin **solo** bypassa los módulos en `ADMIN_BYPASS_MODULES = ['users', 'roles']`; en los demás módulos el rol Administrador pasa por el lookup normal en la tabla `permissions`. |
@@ -71,7 +72,7 @@ Sistema de diseño: ver la sección [Sistema de Diseño](#sistema-de-diseño) m�
 | `InvoiceHistoryService` / `EmployeeHistoryService` / `PettyCashHistoryService` / `RefundHistoryService` / `AdvanceLegalizationHistoryService` / `NoveltyHistoryService` | Audit trail field-by-field por dominio |
 | `*DocumentService` (`InvoiceDocumentService`, `EmployeeDocumentService`, `PettyCashDocumentService`, `RefundDocumentService`, `AdvanceLegalizationDocumentService`, `PaymentSchedulingDocumentService`, `NoveltyDocumentService`, `LeaveDocumentService`) | Gestión de uploads/eliminación de documentos por dominio (usan `Trait/DocumentUploadTrait`) |
 | `NoveltyObservationService` | Observaciones del pipeline de novedades |
-| `ApprovalTokenService` | External approval via SHA256 tokens (48h TTL) |
+| `Approval/ExternalApprovalService` | Consumo de aprobación externa genérica single-entity (`approval_tokens`); resuelve/consume el token y delega en la Strategy. Tokens hasheados en reposo (SHA256, columna `token_hash`, 48h TTL) |
 | `NotificationService` | Email para links de aprobación, notificaciones del pipeline y prueba SMTP. Usa `CircuitBreaker`. |
 | `PendingNotificationsService` | Cálculo de notificaciones pendientes para el sidebar/badges |
 | `EmailLogService` | Persistencia y consulta del log de correos enviados (`email_logs`) |
@@ -93,11 +94,11 @@ Sistema de diseño: ver la sección [Sistema de Diseño](#sistema-de-diseño) m�
 - `Service/Strategy/` — `ApprovalStrategyInterface`, `InvoiceApprovalStrategy`, `NoveltyApprovalStrategy` (strategy pattern para lógica de aprobación externa)
 - `Service/Trait/` — `DocumentUploadTrait`, `HistoryNormalizationTrait`
 - `Service/Filter/` — `BaseFilterService` (clase base para filtros de listados)
-- `Service/Dto/` — `BulkPaymentView` (DTOs ligeros)
+- `Service/Dto/` — `BulkPaymentView`, `GroupReadinessReport` (DTOs ligeros)
 - `Service/Dashboard/` — `EmployeeStatisticsService`, `InvoiceStatisticsService`
 - `Service/Pipeline/` — State pattern por módulo. Cada submódulo expone `{Modulo}PipelineState` (interfaz/abstracta), `{Modulo}PipelineStateRegistry` (resuelve enum → State) y `State/` con un archivo por estado:
-  - `Pipeline/Invoice/` — `InvoicePipelineState`, `InvoicePipelineStateRegistry`, `State/` (Aprobacion, Contabilidad, Tesoreria, AutorizacionPago, VerificacionPago, Pagada, Legalizada), `DocumentTypePolicy` + `DocumentTypePolicyFactory`, `LinkedInvoiceLegalizer`, y `Policy/` con las 3 DocumentTypePolicy (`StandardDocumentTypePolicy`, `AnticipoDocumentTypePolicy`, `LegalizacionDocumentTypePolicy`) **y** las policies de campos/locks/transición/acciones (`InvoiceFieldAccessPolicy`, `InvoiceLockPolicy`, `InvoiceTransitionValidator`, `InvoiceActionPolicy`)
-  - `Pipeline/Novelty/`, `Pipeline/Advance/`, `Pipeline/PettyCash/`, `Pipeline/Refund/`, `Pipeline/PaymentScheduling/` — misma estructura (Registry + States), con `Policy/` propio cuando aplica (p. ej. `Advance/Policy/AdvanceLegalizationActionPolicy`)
+  - `Pipeline/Invoice/` — `InvoicePipelineState`, `InvoicePipelineStateRegistry`, `State/` (Aprobacion, Contabilidad, Tesoreria, AutorizacionPago, VerificacionPago, Pagada, Legalizada), `DocumentTypePolicy` + `DocumentTypePolicyFactory`, `LinkedInvoiceLegalizer`, `Guard/InvoiceGuard` (IO de documentos que los States puros necesitan), y `Policy/` con las 4 DocumentTypePolicy (`StandardDocumentTypePolicy`, `AnticipoDocumentTypePolicy`, `LegalizacionDocumentTypePolicy`, `ReciboCajaDocumentTypePolicy`) **y** las policies de campos/locks/transición/acciones (`InvoiceFieldAccessPolicy`, `InvoiceLockPolicy`, `InvoiceTransitionValidator`, `InvoiceActionPolicy`)
+  - `Pipeline/Novelty/`, `Pipeline/Advance/`, `Pipeline/PettyCash/` (con `Guard/PettyCashGuard`), `Pipeline/Refund/`, `Pipeline/PaymentScheduling/` — misma estructura (Registry + States), con `Policy/` propio cuando aplica (p. ej. `Advance/Policy/AdvanceLegalizationActionPolicy`)
 - `Service/HealthCheck/` — `HealthCheckInterface`, `HealthCheckResult`, `HealthStatus` + implementaciones (`Database`, `Cache`, `EmailLog`, `CircuitBreaker`)
 - `Service/Resilience/` — `Retryer`, `RetryPolicy` (retry con backoff)
 - `Service/Subscriber/` — Event subscribers (`LegalizationInitializerSubscriber`, `LinkedInvoicesPromoterSubscriber`, `RefundOutcomeSubscriber`)
@@ -117,6 +118,7 @@ Located in `src/Middleware/`:
 - Roles (ver `RoleConstants.php`): Administrador, Contabilidad, Tesorería, Registro/Revisión, Contador, Auxiliar de Personal, Asistente de Personal, Coordinador Administrativo y Financiero.
 - **Admin bypass acotado**: `AuthorizationService::ADMIN_BYPASS_MODULES = ['users', 'roles']`. Para cualquier otro módulo el rol Administrador pasa por el lookup normal en la tabla `permissions`.
 - **Pipeline permissions**: `PipelineAuthorizationService` resuelve permisos por (rol, pipeline, step) contra la tabla `pipeline_permissions`. Espejo del flujo CRUD pero por paso de pipeline.
+- **Invariante "operar implica ver"**: las 2 tablas de permisos son independientes, pero `can_view` (CRUD) gobierna si el link/bandeja del sidebar se renderiza y `pipeline_permissions` gobierna qué cuenta el badge y lista el index. Un rol con pasos operables pero sin `can_view` del módulo mapeado tendría una **bandeja invisible**. El vínculo pipeline→módulo es `PipelineStepConstants::MODULE_BY_PIPELINE` (fuente única; ojo a los 3 slugs divergentes: `legalizations`→`advances`, `novelties`→`employee_novelties`, `liquidation_docs`→`novelty_liquidation_docs`). Se garantiza al guardar vía `Authorization\PipelineViewCoercion::apply()` en `RolesController::add/edit` (marcar ≥1 step fuerza `can_view`). El comando `bin/cake permissions_audit` (read-only, exit 1 si hay desajuste) lo verifica para CI/pre-deploy.
 - **Contador** ve y autoriza pagos en estado `autorizacion_pago` del pipeline de facturas; en `verificacion_pago` se valida la ejecución del pago antes de pasar a `pagada`.
 - **`FieldAccessPolicy` debe ser rol-aware**: heredar de `PipelineFieldPolicy` (un rol sin `canOperate` del paso obtiene patch vacío). **No** usar `unset($roleId)` (filtrado role-blind). Los 6 módulos cumplen — `PettyCash`/`Refund` gatean la escritura con `if (getEditableFields($roleId,$step) === [])`.
 
@@ -125,16 +127,19 @@ Located in `src/Middleware/`:
 States (fuente única: `App\Constants\Domain\Invoice\PipelineStatus` enum, espejado en `InvoiceConstants::PIPELINE_STATUSES`):
 `aprobacion` → `contabilidad` → `tesoreria` → `autorizacion_pago` → `verificacion_pago` → `pagada` (6 estados).
 
-- Existe además un estado terminal `legalizada`, exclusivo de `document_type = 'Legalización'`. **No** participa en `PIPELINE_STATUSES`; vive en `ALL_STATUSES`. Pipeline visual reducido (`PIPELINE_STATUSES_LEGALIZACION`): `aprobacion` → `contabilidad` → `legalizada` (3 pasos).
+- Existe además un estado terminal `legalizada`, exclusivo de las facturas que usan la vista de legalización: `Legalización` y `Recibo de Caja` vinculado (`advance_id != null`). **No** participa en `PIPELINE_STATUSES`; vive en `ALL_STATUSES`. Pipeline visual reducido (`PIPELINE_STATUSES_LEGALIZACION`): `aprobacion` → `contabilidad` → `legalizada` (3 pasos).
 - Tesorería registra pagos → avanza a `autorizacion_pago` (requiere ≥1 pago pendiente vía `InvoicePaymentService`)
 - Contador autoriza en `autorizacion_pago` → avanza a `verificacion_pago`
 - En `verificacion_pago` se valida la ejecución/conciliación del pago → avanza a `pagada`
 - Pago parcial tras autorización → **regresa automáticamente** a `tesoreria`
 - Facturas rechazadas (`area_approval='Rechazada'`) bloquean todo avance; Registro puede `resetFlow` para reiniciar
 - En `autorizacion_pago` el Contador autoriza/rechaza cada pago; al quedar todos autorizados, la factura puede avanzar. Los soportes de pago se cargan como documentos normales del pipeline en `tesoreria` (`InvoiceDocuments`)
-- Facturas en `pagada` redireccionan a `view` para no-admins
+- Facturas en estado terminal (`pagada` o `legalizada`) redirigen a `view` desde el guard de `edit()` (`InvoicesController::edit`) — **rol-agnóstico** (aplica a todos los roles, incluido Administrador). No existe redirección dependiente de rol en ningún módulo; `_redirectForInvoice` ramifica solo por `document_type` (Anticipo → `Advances`, resto → `Invoices`)
 - Secciones del formulario controladas por `InvoiceFieldAccessPolicy` (const privada `SECTIONS_BY_STEP`, expuesta vía `getVisibleSections()`): `ledger` (siempre visible), `revision` (aprobacion), `accounting` (contabilidad), `treasury` (tesoreria), `payment_authorization` (autorizacion_pago **y** verificacion_pago — esta última reusa la misma sección read-only). Las plantillas además exponen secciones estructurales `general`, `dates`, `classification`.
 - Estados de un pago individual (`invoice_payments.status`, slugs en inglés por convención): `pending`, `authorized`, `rejected`
+- DIAN y soporte documental son **condicionales por doctype**: `DocumentTypePolicyFactory::requiresDianFor()/requiresSupportFor()` delegan a los flags estáticos `DocumentTypePolicy::requiresDianValidation()/requiresSupportDocument()` de cada policy concreta (Recibo de Caja exento de DIAN, exige soporte). Misma fuente de `dianExemptDocumentTypes()/supportExemptDocumentTypes()` usados por `GroupReadinessQuery`.
+- `InvoicePipelineState::validateAdvance(object $invoice): array` retorna errores de avance **KEYED** por nombre de requisito (`array<string,string>`, keys = `InvoiceTransitionValidator::REQUIREMENT_FIELDS`); el coordinador filtra por rol vía `filterAdvanceErrorsForRole()` antes de exponerlos. No incluye rejection ni doctype-block (los compone el coordinador).
+- `InvoicesController::updateDianInline()` resuelve `dian_validation` inline desde la tabla de hijas de un padre (Refund/PettyCash/Advance): RBAC (rol debe operar `aprobacion` y tener `dian_validation` editable), anti-IDOR (`parent_field` contra whitelist `PARENT_FOREIGN_KEYS`, la factura debe pertenecer al padre indicado) y 409 si la factura ya salió de `aprobacion` (evita escritura sobre tabla stale).
 
 ### Paridad de módulos de flujo
 
@@ -194,6 +199,8 @@ DEFAULT obligatorio. Dos capas que COEXISTEN con dirección de dependencia únic
 - **`src/ViewModel/{Modulo}{Add,Edit,View}ViewModel.php`** = agregado per-request, `final readonly class`. `Edit`/`View` implementan `EditViewModelInterface`/`ViewViewModelInterface`. Derivan de UNA entidad + permisos + dropdowns. Pueden importar `Presentation`.
 - **`src/View/Presentation/{Modulo}RowView.php`** = DTO de fila de listado para `index`, producido por `Presentation::forRow()`.
 - **`src/ViewModel/Support/`** (`PaymentOptions`, `PipelineEditFlags`, `SubmitButton`) = derivación cross-módulo del VM.
+- **Tabla de hijas de un padre** (Refund/PettyCash/Advance): `InvoicePresentation::forGroupedRow()` + const `SUPPORT_BADGES` producen `GroupedInvoiceRowView` (DTO de fila), consumido por el element compartido `templates/element/grouped_invoices_table.php` y los sub-elements `grouped_cells/_dian.php`/`grouped_cells/_support.php` (parametrizados por `$wrapper` td/span para reusarse fuera de una tabla). El DTO expone **`beneficiaryName`** (columna **Beneficiario** — resuelta vía `App\View\Presentation\InvoiceBeneficiary::label()`: proveedor externo, empleado, o titular de Recibo de Caja; **requiere `contain('Employees')` en el query de las hijas** — los 4 puntos PettyCash/Refund view+edit; Advances ya lo tenía. Sin ese contain el beneficiario-empleado cae a `'—'`) y **`documentType`** (columna **Tipo**, va tras `# Factura`, texto plano con fallback `?: '—'`, NO badge). La tabla bespoke de Anticipos (`element/advance_legalization/_linked_invoices.php`, CSS grid) consume el MISMO DTO: misma columna Tipo y `$rowView->beneficiaryName` (no reimplementa `InvoiceBeneficiary::label` inline).
+  El element `grouped_invoices_table` tiene un modo editable opcional (`editable`, `headerActionsHtml`, `unlinkAction`, `totalAmount`) que las `edit.php` de Caja Menor y Reintegros usan en la etapa Agrupación (columna desvincular + footer de total + botón Vincular en el header), reusando las mismas celdas inline de DIAN/soporte que la `view.php`. El `<tfoot>` de total se liga a `totalAmount !== null`, no a `editable`. La navegación de fila (click → `/invoices/view/{id}`) la maneja un handler **scoped** en `webroot/js/spi-grouped-invoices.js`, NO el `.clickable-row` global de `spi-common.js`: ese aborta con `closest('a, button, form')` y dentro del `<form>` de `edit.php` nunca navega (se veía el `cursor:pointer` pero no redirigía). Las celdas DIAN/soporte/desvincular hacen `stopPropagation`, así que el handler scoped no las secuestra.
 
 Regla de oro (cero drift): el mapeo **estado→pill/icono vive SOLO en `{Modulo}Presentation` (const)**. CERO arrays literales inline en los `.php`. El VM expone `currentStatusBadge` derivado de Presentation; si un template lo recomputa es **bug de drift**. Toda derivación de fila (`stageIdx`, pill, pipeline-mini, labels ES, totales) va **dentro de `forRow()`**, no en `index.php`. El controller pasa `$viewModel` (uniforme `set('viewModel', $vm)`), no `compact()` crudo.
 
@@ -216,9 +223,9 @@ Excepción (B): `AdvanceLegalizationViewModel` conserva el sufijo de entidad (no
 - **Private methods:** Prefixed with underscore: `_buildInvoiceQuery()`.
 - **Services get tables via:** `TableRegistry::getTableLocator()->get('TableName')`, never `$this->TableName`.
 - **Dependency injection:** Constructor with nullable params and `?? new ServiceClass()` fallback.
-- **CSS class prefix:** `.sgi-` for custom classes (`.sgi-stat-card`, `.sgi-btn-primary`, etc.).
+- **CSS class prefix:** `.spi-` for custom classes (`.spi-stat-card`, `.spi-btn-primary`, etc.).
 - **CSS load order:** Bootstrap → Bootstrap Icons → Flatpickr → `styles.css` (always this order).
-- **JS auto-init classes:** `.flatpickr-date` (datepicker), `.flatpickr-range` (rango → escribe 2 hidden inputs `date_from`/`date_to`; ver `element('date_range_filter')`), `.flatpickr-time` (hora 24h), `.currency-input` (AutoNumeric COP), `.select2-enable` (dropdown buscable — **es esta clase, NO `.select2` que es no-op**), `.clickable-row` (row click via `data-href`). Toasts client-side vía `window.SgiToast.show(msg, variant)`.
+- **JS auto-init classes:** `.flatpickr-date` (datepicker), `.flatpickr-range` (rango → escribe 2 hidden inputs `date_from`/`date_to`; ver `element('date_range_filter')`), `.flatpickr-time` (hora 24h), `.currency-input` (AutoNumeric COP), `.select2-enable` (dropdown buscable — **es esta clase, NO `.select2` que es no-op**), `.clickable-row` (row click via `data-href`). Toasts client-side vía `window.SpiToast.show(msg, variant)`.
 - **select2 — regla de uso (selectiva, NO en todos los selects):** un `<select>` con **≥7 opciones** o `multiple` → `class="...form-select select2-enable"` (buscable); enum **≤6 opciones** (sí/no, estado, tipo) → `form-select` plano (el buscador no aparece con <7 → sería código muerto + bloat de jQuery/Select2). Requiere que la página cargue `element('cdn_select2')`; en modales AJAX, el index debe cargarlo antes (p. ej. `catalog_modal` con `withSelect2`).
 - **Routes:** Custom routes go before `$builder->fallbacks()` in `config/routes.php`.
 - **Mapeo estado→pill/icono — anti-drift:** vive SOLO en `src/View/Presentation/{Modulo}Presentation` (const `STATUS_BADGES`/`STATUS_ICONS`). Los templates lo consumen vía `$viewModel->currentStatusBadge` o `Presentation::forRow()`. **Prohibido** redeclarar mapas estado→pill como literales en el `.php`. Dirección de dependencia única: **VM → Presentation** (Presentation nunca importa VM).
@@ -257,14 +264,14 @@ Antes de crear o editar cualquier vista, lee siempre `reglas-copy.md` + `fundame
 En HTML/CSS puro, **Invoice = canon de APARIENCIA a replicar** (eje opuesto al backend/vista, donde es outlier — no mezclar criterios). Estilos inline one-off (header de página, `$gridStyle` N-col, grids de campos, slots `ob_start` del sidebar, `color:var(--primary-color)` sobre `.mono`) son convención canónica, NO deriva.
 
 Tres esqueletos obligatorios:
-- **INDEX** (sin shell): HEADER `.d-flex` (título + única `.btn-primary` "Nueva …") + Form(get) con `.input`+`.btn-default` toggle filtros + `.chip[role=tablist]` + TABLA `.sgi-card[style="padding:0"]` con `<a class="row-fact">` como ANCLA (NO `<table>`), `.pipeline-mini`/`.pill-*-soft`, `.empty-state`, `element('pagination')`.
-- **EDIT** (`.sgi-edit-shell`): `.sgi-edit-shell-head` (fijo) → `Form` `.sgi-edit-shell-form` → `.sgi-edit-shell-body` (scroll) → `.row.gx-3` con `aside.col-lg-3.sgi-edit-col` (`element('pipeline_sidebar')`) + `main.col-lg-9.sgi-edit-col` (ambos `d-flex flex-column gap-3`) → `.sgi-edit-footer` sticky (meta + única `.btn-primary` submit). Split izq/der = Bootstrap `.col-lg-3`/`.col-lg-9`, NO `340px 1fr`.
-- **VIEW** (`.sgi-invoice-view-grid`, grid `340px 1fr`): `.sgi-invoice-view-left` (`pipeline_sidebar`) + `.sgi-invoice-view-right` (`.sgi-card` con campos en `.field-row` `.k`/`.v`/`.v.mono` dentro de grid inline `1fr 1fr;gap:28px`).
+- **INDEX** (sin shell): HEADER `.d-flex` (título + única `.btn-primary` "Nueva …") + Form(get) con `.input`+`.btn-default` toggle filtros + `.chip[role=tablist]` + TABLA `.spi-card[style="padding:0"]` con `<a class="row-fact">` como ANCLA (NO `<table>`), `.pipeline-mini`/`.pill-*-soft`, `.empty-state`, `element('pagination')`.
+- **EDIT** (`.spi-edit-shell`): `.spi-edit-shell-head` (fijo) → `Form` `.spi-edit-shell-form` → `.spi-edit-shell-body` (scroll) → `.row.gx-3` con `aside.col-lg-3.spi-edit-col` (`element('pipeline_sidebar')`) + `main.col-lg-9.spi-edit-col` (ambos `d-flex flex-column gap-3`) → `.spi-edit-footer` sticky (meta + única `.btn-primary` submit). Split izq/der = Bootstrap `.col-lg-3`/`.col-lg-9`, NO `340px 1fr`.
+- **VIEW** (`.spi-invoice-view-grid`, grid `340px 1fr`): `.spi-invoice-view-left` (`pipeline_sidebar`) + `.spi-invoice-view-right` (`.spi-card` con campos en `.field-row` `.k`/`.v`/`.v.mono` dentro de grid inline `1fr 1fr;gap:28px`).
 
 Reglas duras:
-- **Vocabulario de átomos — nunca a mano:** `.btn`(+`-primary/-default/-ghost/-secondary/-danger/-subtle/-sm/-icon`), `.pill`(+`-*-soft`/`-sm`/`-lg`), `.input`, `.av`, `.doc`, `.chip`, `.field-row`, `.pipeline-mini`/`.pipeline-v`, `.empty-state`/`.es-*`, `.sgi-card`(+`.compact`), `.mono`, `.accent-strip`.
-- **Campos = `.field-row` en grid inline `1fr 1fr;gap:28px`**, NO `.sgi-info-grid` (eliminado).
-- **Header:** breadcrumb + `.sgi-page-title` (NO `.sgi-title-page`, eliminado) + `.sgi-edit-id-chip`; acciones de header en `.btn-default`.
+- **Vocabulario de átomos — nunca a mano:** `.btn`(+`-primary/-default/-ghost/-secondary/-danger/-subtle/-sm/-icon`), `.pill`(+`-*-soft`/`-sm`/`-lg`), `.input`, `.av`, `.doc`, `.chip`, `.field-row`, `.pipeline-mini`/`.pipeline-v`, `.empty-state`/`.es-*`, `.spi-card`(+`.compact`), `.mono`, `.accent-strip`.
+- **Campos = `.field-row` en grid inline `1fr 1fr;gap:28px`**, NO `.spi-info-grid` (eliminado).
+- **Header:** breadcrumb + `.spi-page-title` (NO `.spi-title-page`, eliminado) + `.spi-edit-id-chip`; acciones de header en `.btn-default`.
 - **Modales:** los modales reales son Bootstrap `.modal.fade` — usar `element('upload_doc_modal')` compartido. El componente *modal* del sistema de diseño vive scopeado bajo `.modal-stage` (`.modal-stage .modal { … }`) porque la clase `.modal` pelada colisionaba con Bootstrap. **Nunca** estilar `.modal` sin el scope `.modal-stage`.
 
 Excepciones (B) — markup bespoke legítimo, NO alinear: tablas agrupadas de dominio, soportes con firma (`Advances/legalization`, NLD — fuera del slot-contract de `document_row`), side-rail de calendario en `EmployeeNovelties/index`, forms por-estado. `add.php` sigue legacy `.card.card-primary` (DEUDA → modal `.modal-stage` / stepper, decisión por módulo pendiente).
@@ -274,9 +281,9 @@ Excepciones (B) — markup bespoke legítimo, NO alinear: tablas agrupadas de do
 - Font: Inter Variable (local, `webroot/fonts/Inter-Variable.woff2`).
 - Design: Borders instead of shadows. 2px top border on stat cards. No box-shadow.
 - Colors: dark (#212529), green (#469D61), orange (#CD6A15).
-- JS common: `webroot/js/sgi-common.js` auto-initializes Flatpickr, AutoNumeric, Select2.
+- JS common: `webroot/js/spi-common.js` auto-initializes Flatpickr, AutoNumeric, Select2.
 - PDF: TCPDF + FPDI. Excel: PhpSpreadsheet.
-- Pipeline elements: **todos** los módulos de flujo (incluido NoveltyLiquidationDocs) usan el sidebar vertical via `element/pipeline_sidebar.php` (hero + pipeline vertical + registro + acciones), dentro del layout `sgi-invoice-view-grid > sgi-invoice-view-left + sgi-invoice-view-right`.
+- Pipeline elements: **todos** los módulos de flujo (incluido NoveltyLiquidationDocs) usan el sidebar vertical via `element/pipeline_sidebar.php` (hero + pipeline vertical + registro + acciones), dentro del layout `spi-invoice-view-grid > spi-invoice-view-left + spi-invoice-view-right`.
 
 ## New Module Checklist
 

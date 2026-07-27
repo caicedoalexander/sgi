@@ -13,13 +13,16 @@ use App\Model\Entity\Invoice;
  */
 final class AdvancePresentation
 {
+    // Pills unificados vía PipelineColorMap (un color por tipo de estado en
+    // todos los módulos). Test guard: PipelineColorConsistencyTest.
     public const STATUS_BADGES = [
         AdvanceConstants::STATUS_VALIDACION        => 'pill-info-soft',
-        AdvanceConstants::STATUS_REVISION_FIRMAS   => 'pill-primary-soft',
-        AdvanceConstants::STATUS_CONTABILIDAD      => 'pill-warning-soft',
-        AdvanceConstants::STATUS_TESORERIA         => 'pill-warning-soft',
+        AdvanceConstants::STATUS_APROBACION        => 'pill-warning-soft',
+        AdvanceConstants::STATUS_REVISION_FIRMAS   => 'pill-info-soft',
+        AdvanceConstants::STATUS_CONTABILIDAD      => 'pill-orange-soft',
+        AdvanceConstants::STATUS_TESORERIA         => 'pill-info-soft',
         AdvanceConstants::STATUS_AUTORIZACION_PAGO => 'pill-warning-soft',
-        AdvanceConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
+        AdvanceConstants::STATUS_VERIFICACION_PAGO => 'pill-accent-soft',
         AdvanceConstants::STATUS_LEGALIZADA        => 'pill-primary-soft',
     ];
 
@@ -40,24 +43,28 @@ final class AdvancePresentation
             : false;
 
         return new AdvanceRowView(
-            idLabel:             $record->invoice_number ?: '#' . $record->id,
-            beneficiaryName:     $record->provider->name ?? ($record->employee->full_name ?? null),
+            idLabel: $record->invoice_number ?: '#' . $record->id,
+            beneficiaryName: $record->provider->name ?? ($record->employee->full_name ?? null),
             operationCenterName: $record->hasValue('operation_center') ? $record->operation_center->name : null,
-            amount:              (float)$record->amount,
-            isPaid:              $status === InvoiceConstants::STATUS_PAGADA,
-            pipelineIdx:         $pipelineIdx === false ? -1 : $pipelineIdx,
-            pipelineLength:      count(InvoiceConstants::PIPELINE_STATUSES),
-            statusLabel:         InvoiceConstants::STATUS_LABELS[$status] ?? $status,
-            statusBadgeClass:    InvoicePresentation::STATUS_BADGES[$status] ?? 'pill-muted',
-            hasLegalization:     $legalization !== null,
-            legalizationIdx:     $legalizationIdx === false ? -1 : $legalizationIdx,
-            legalizationLength:  count(AdvanceConstants::PIPELINE_STATUSES),
-            legalizationLabel:   $legalization
+            amount: (float)$record->amount,
+            isPaid: $status === InvoiceConstants::STATUS_PAGADA,
+            pipelineIdx: $pipelineIdx === false ? -1 : $pipelineIdx,
+            pipelineLength: count(InvoiceConstants::PIPELINE_STATUSES),
+            statusLabel: InvoiceConstants::STATUS_LABELS[$status] ?? $status,
+            statusBadgeClass: InvoicePresentation::STATUS_BADGES[$status] ?? 'pill-muted',
+            pipelineVariant: PipelineColorMap::variant($status),
+            hasLegalization: $legalization !== null,
+            legalizationIdx: $legalizationIdx === false ? -1 : $legalizationIdx,
+            legalizationLength: count(AdvanceConstants::PIPELINE_STATUSES),
+            legalizationLabel: $legalization
                 ? (AdvanceConstants::STATUS_LABELS[$legalization->status] ?? $legalization->status)
                 : '',
             legalizationBadgeClass: $legalization
                 ? (self::STATUS_BADGES[$legalization->status] ?? 'pill-muted')
                 : 'pill-muted',
+            legalizationVariant: $legalization
+                ? PipelineColorMap::variant($legalization->status)
+                : '',
         );
     }
 }

@@ -5,6 +5,7 @@ namespace App\Service\Pipeline\Refund;
 
 use App\Constants\Domain\Refund\PipelineStatus;
 use App\Service\Pipeline\Refund\State\AgrupacionState;
+use App\Service\Pipeline\Refund\State\AprobacionState;
 use App\Service\Pipeline\Refund\State\AutorizacionPagoState;
 use App\Service\Pipeline\Refund\State\ContabilidadState;
 use App\Service\Pipeline\Refund\State\PagadaState;
@@ -24,6 +25,7 @@ final class RefundPipelineStateRegistry
 
     /**
      * @param \App\Service\Pipeline\Refund\State\AgrupacionState|null $agrupacion State.
+     * @param \App\Service\Pipeline\Refund\State\AprobacionState|null $aprobacion State.
      * @param \App\Service\Pipeline\Refund\State\ContabilidadState|null $contabilidad State.
      * @param \App\Service\Pipeline\Refund\State\TesoreriaState|null $tesoreria State.
      * @param \App\Service\Pipeline\Refund\State\AutorizacionPagoState|null $autorizacionPago State.
@@ -31,6 +33,7 @@ final class RefundPipelineStateRegistry
      */
     public function __construct(
         ?AgrupacionState $agrupacion = null,
+        ?AprobacionState $aprobacion = null,
         ?ContabilidadState $contabilidad = null,
         ?TesoreriaState $tesoreria = null,
         ?AutorizacionPagoState $autorizacionPago = null,
@@ -39,6 +42,7 @@ final class RefundPipelineStateRegistry
     ) {
         $list = [
             $agrupacion ?? new AgrupacionState(),
+            $aprobacion ?? new AprobacionState(),
             $contabilidad ?? new ContabilidadState(),
             $tesoreria ?? new TesoreriaState(),
             $autorizacionPago ?? new AutorizacionPagoState(),
@@ -51,6 +55,12 @@ final class RefundPipelineStateRegistry
         }
     }
 
+    /**
+     * Resuelve el enum de estado a su State concreto.
+     *
+     * @param \App\Constants\Domain\Refund\PipelineStatus $status Estado tipado.
+     * @return \App\Service\Pipeline\Refund\RefundPipelineState
+     */
     public function get(PipelineStatus $status): RefundPipelineState
     {
         return $this->states[$status->value];

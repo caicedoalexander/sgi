@@ -34,21 +34,25 @@ class EmployeeNovelty extends Entity
         'custom_name' => true,
     ];
 
+    /** @return bool true si la novedad está en estado rechazada del pipeline. */
     public function isRejected(): bool
     {
         return $this->pipeline_status === NoveltyConstants::STATUS_RECHAZADA;
     }
 
+    /** @return bool true si la novedad está en estado pagada del pipeline. */
     public function isPaid(): bool
     {
         return $this->pipeline_status === NoveltyConstants::STATUS_PAGADA;
     }
 
+    /** @return bool true si la novedad está agrupada en un documento de liquidación. */
     public function isGrouped(): bool
     {
         return $this->liquidation_doc_id !== null;
     }
 
+    /** @return bool true si el área rechazó la novedad. */
     public function isApprovalRejected(): bool
     {
         return $this->area_approval === NoveltyConstants::APPROVAL_REJECTED;

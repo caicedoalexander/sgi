@@ -11,6 +11,7 @@ final class PipelineStatusTest extends TestCase
     public function testValues(): void
     {
         $this->assertSame('validacion', PipelineStatus::VALIDACION->value);
+        $this->assertSame('aprobacion', PipelineStatus::APROBACION->value);
         $this->assertSame('revision_firmas', PipelineStatus::REVISION_FIRMAS->value);
         $this->assertSame('contabilidad', PipelineStatus::CONTABILIDAD->value);
         $this->assertSame('tesoreria', PipelineStatus::TESORERIA->value);
@@ -22,6 +23,7 @@ final class PipelineStatusTest extends TestCase
     public function testLabels(): void
     {
         $this->assertSame('Validación', PipelineStatus::VALIDACION->label());
+        $this->assertSame('Aprobación', PipelineStatus::APROBACION->label());
         $this->assertSame('Revisión y Firmas', PipelineStatus::REVISION_FIRMAS->label());
         $this->assertSame('Contabilidad', PipelineStatus::CONTABILIDAD->label());
         $this->assertSame('Tesorería', PipelineStatus::TESORERIA->label());
@@ -32,7 +34,8 @@ final class PipelineStatusTest extends TestCase
 
     public function testNextLinearPath(): void
     {
-        $this->assertSame(PipelineStatus::REVISION_FIRMAS, PipelineStatus::VALIDACION->next());
+        $this->assertSame(PipelineStatus::APROBACION, PipelineStatus::VALIDACION->next());
+        $this->assertSame(PipelineStatus::REVISION_FIRMAS, PipelineStatus::APROBACION->next());
         $this->assertSame(PipelineStatus::CONTABILIDAD, PipelineStatus::REVISION_FIRMAS->next());
         $this->assertSame(PipelineStatus::VERIFICACION_PAGO, PipelineStatus::AUTORIZACION_PAGO->next());
         $this->assertSame(PipelineStatus::LEGALIZADA, PipelineStatus::VERIFICACION_PAGO->next());
@@ -55,7 +58,8 @@ final class PipelineStatusTest extends TestCase
     {
         $this->assertNull(PipelineStatus::VALIDACION->previous());
         $this->assertNull(PipelineStatus::LEGALIZADA->previous());
-        $this->assertSame(PipelineStatus::VALIDACION, PipelineStatus::REVISION_FIRMAS->previous());
+        $this->assertSame(PipelineStatus::APROBACION, PipelineStatus::REVISION_FIRMAS->previous());
+        $this->assertSame(PipelineStatus::VALIDACION, PipelineStatus::APROBACION->previous());
         $this->assertSame(PipelineStatus::REVISION_FIRMAS, PipelineStatus::CONTABILIDAD->previous());
         $this->assertSame(PipelineStatus::CONTABILIDAD, PipelineStatus::TESORERIA->previous());
         $this->assertSame(PipelineStatus::TESORERIA, PipelineStatus::AUTORIZACION_PAGO->previous());

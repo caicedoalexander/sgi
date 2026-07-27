@@ -11,8 +11,8 @@ $canDelete = !empty($userPermissions['novelty_types']['can_delete']);
 $gridCols  = '1fr 2fr 180px 148px';
 ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Tipos de Novedad</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Tipos de Novedad</span>
     <?php if ($canCreate): ?>
     <?= $this->Html->link(
         '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Tipo',
@@ -22,7 +22,7 @@ $gridCols  = '1fr 2fr 180px 148px';
     <?php endif; ?>
 </div>
 
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div class="row-fact head" style="grid-template-columns:<?= $gridCols ?>;" role="row">
         <span>Nombre</span>
         <span>Subtipos</span>

@@ -37,6 +37,7 @@ $upcomingNovelties = $upcomingNovelties ?? [];
 $typeDistribution  = $typeDistribution ?? [];
 
 $hasFilters = !empty($statusFilter) || !empty($typeFilter) || !empty($employeeFilter);
+$filterCount = (int)!empty($statusFilter) + (int)!empty($typeFilter) + (int)!empty($employeeFilter);
 
 // Defensa contra CSS injection: solo aceptar hex (#RGB|#RRGGBB|#RRGGBBAA).
 $safeColor = function (?string $raw): string {
@@ -126,9 +127,9 @@ $scopeTabs = [
 <!-- ═══ Header ═══ -->
 <div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
     <div>
-        <span class="sgi-page-title"><?= h($pageTitle) ?></span>
-        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
-            <span class="sgi-fg-muted"><?= $this->Paginator->counter('{{count}} solicitudes') ?>
+        <span class="spi-page-title"><?= h($pageTitle) ?></span>
+        <div class="spi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
+            <span class="spi-fg-muted"><?= $this->Paginator->counter('{{count}} solicitudes') ?>
                 · <?= (int)$tabCounts['vigentes'] ?> vigentes
                 · <?= (int)$tabCounts['pendientes'] ?> pendientes de aprobación</span>
         </div>
@@ -138,9 +139,8 @@ $scopeTabs = [
             <i class="bi bi-download me-1" aria-hidden="true"></i>Exportar
         </button>
         <button type="button" class="btn btn-default" id="btn-toggle-filters"
-                data-bs-toggle="collapse" data-bs-target="#noveltyFiltersPanel"
-                aria-expanded="true">
-            <i class="bi bi-funnel me-1" aria-hidden="true"></i>Filtros
+                data-filter-drawer-open aria-label="Filtros">
+            <i class="bi bi-funnel me-1" aria-hidden="true"></i><span>Filtros<?php if ($filterCount > 0): ?> · <span style="color:var(--primary-color);font-weight:700;"><?= $filterCount ?></span><?php endif; ?></span>
         </button>
         <?php if (!empty($userPermissions['employee_novelties']['can_create'])): ?>
         <?= $this->Html->link(
@@ -183,43 +183,57 @@ $scopeTabs = [
     <?php endif; ?>
 </div>
 
-<!-- ═══ Filtros (persistentes inline, sueltos sobre el canvas como el mock) ═══ -->
-<div class="collapse show" id="noveltyFiltersPanel" style="margin-bottom:14px;">
-    <form method="get" id="novelty-filters" class="d-flex gap-2 align-items-center flex-wrap">
-        <?php if ($isCalendarScope): ?>
-        <input type="hidden" name="view" id="flt-view" value="<?= h($initialView) ?>">
-        <?php endif; ?>
+<!-- ═══ Filtros ═══ -->
+<form method="get" id="novelty-filters">
+    <?php if ($isCalendarScope): ?>
+    <input type="hidden" name="view" id="flt-view" value="<?= h($initialView) ?>">
+    <?php endif; ?>
+    <?php ob_start(); ?>
         <?php if ($action !== 'rejected'): ?>
-        <select name="pipeline_status" id="flt-status" class="form-select form-select-sm" style="max-width:200px;">
-            <option value="">Estado: Todos</option>
-            <?php foreach (NoveltyConstants::ALL_STATUSES as $s): ?>
-            <option value="<?= h($s) ?>" <?= ($statusFilter ?? '') === $s ? 'selected' : '' ?>>
-                Estado: <?= h($statusLabels[$s] ?? ucfirst($s)) ?>
-            </option>
-            <?php endforeach; ?>
-        </select>
+        <div class="filter-field">
+            <label class="input-label" for="flt-status">Estado</label>
+            <select name="pipeline_status" id="flt-status" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                <?php foreach (NoveltyConstants::ALL_STATUSES as $s): ?>
+                <option value="<?= h($s) ?>" <?= ($statusFilter ?? '') === $s ? 'selected' : '' ?>>
+                    <?= h($statusLabels[$s] ?? ucfirst($s)) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
         <?php endif; ?>
-        <select name="novelty_type_id" id="flt-type" class="form-select form-select-sm" style="max-width:220px;">
-            <option value="">Tipo: Todos</option>
-            <?php foreach ($noveltyTypes as $id => $name): ?>
-            <option value="<?= h($id) ?>" <?= ($typeFilter ?? '') == $id ? 'selected' : '' ?>>
-                Tipo: <?= h($name) ?>
-            </option>
-            <?php endforeach; ?>
-        </select>
-        <select name="employee_id" id="flt-employee" class="form-select form-select-sm" style="max-width:260px;">
-            <option value="">Empleado: Todos</option>
-            <?php foreach (($employees ?? []) as $id => $name): ?>
-            <option value="<?= h($id) ?>" <?= ($employeeFilter ?? '') == $id ? 'selected' : '' ?>>
-                Empleado: <?= h($name) ?>
-            </option>
-            <?php endforeach; ?>
-        </select>
-        <button type="button" id="flt-clear" class="btn btn-ghost btn-sm sgi-fg-secondary" style="display:none;">
+        <div class="filter-field">
+            <label class="input-label" for="flt-type">Tipo</label>
+            <select name="novelty_type_id" id="flt-type" class="form-select form-select-sm select2-enable">
+                <option value="">Todos</option>
+                <?php foreach ($noveltyTypes as $id => $name): ?>
+                <option value="<?= h($id) ?>" <?= ($typeFilter ?? '') == $id ? 'selected' : '' ?>>
+                    <?= h($name) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="filter-field">
+            <label class="input-label" for="flt-employee">Empleado</label>
+            <select name="employee_id" id="flt-employee" class="form-select form-select-sm select2-enable">
+                <option value="">Todos</option>
+                <?php foreach (($employees ?? []) as $id => $name): ?>
+                <option value="<?= h($id) ?>" <?= ($employeeFilter ?? '') == $id ? 'selected' : '' ?>>
+                    <?= h($name) ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <button type="button" id="flt-clear" class="btn btn-ghost btn-sm spi-fg-secondary" style="display:none;">
             <i class="bi bi-x" aria-hidden="true"></i> Limpiar filtros
         </button>
-    </form>
-</div>
+    <?php $filterFields = ob_get_clean(); ?>
+    <?= $this->element('filter_drawer', [
+        'body' => $filterFields,
+        'count' => $filterCount,
+        'clearUrl' => null,
+    ]) ?>
+</form>
 
 <!-- ═══ Grid principal: contenido + side rail ═══ -->
 <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:flex-start;">
@@ -233,7 +247,7 @@ $scopeTabs = [
             // Solicitud · Empleado · Tipo · Período · Días · Estado·Aprobador
             $gridCols = '110px 1.6fr 1fr 1fr 0.6fr 1fr';
             ?>
-            <div class="sgi-card" style="padding:0;">
+            <div class="spi-card" style="padding:0;">
                 <div class="row-fact head" style="grid-template-columns:<?= $gridCols ?>;" role="row">
                     <span>Solicitud</span>
                     <span>Empleado</span>
@@ -340,10 +354,10 @@ $scopeTabs = [
         <?php if ($isCalendarScope): ?>
         <!-- Vista calendario -->
         <div id="view-calendar"<?= $initialView === 'list' ? ' style="display:none;"' : '' ?>>
-            <div class="sgi-card" style="padding:0;">
-                <div id="all-calendar" class="sgi-calendar"></div>
+            <div class="spi-card" style="padding:0;">
+                <div id="all-calendar" class="spi-calendar"></div>
                 <?php if (!empty($noveltyTypes)): ?>
-                <div class="sgi-cal-legend">
+                <div class="spi-cal-legend">
                     <span class="leg-title">Leyenda</span>
                     <?php foreach ($noveltyTypes as $tid => $tname):
                         $legColor = $colorForType((int)$tid);
@@ -366,10 +380,10 @@ $scopeTabs = [
 
         <?php if ($isCalendarScope): ?>
         <!-- Día seleccionado (solo vista calendario) -->
-        <div class="sgi-card" id="nov-day-panel"<?= $initialView === 'list' ? ' style="display:none;"' : '' ?>>
+        <div class="spi-card" id="nov-day-panel"<?= $initialView === 'list' ? ' style="display:none;"' : '' ?>>
             <div class="d-flex align-items-start justify-content-between" style="margin-bottom:10px;">
                 <div>
-                    <div class="sgi-label">Día seleccionado</div>
+                    <div class="spi-label">Día seleccionado</div>
                     <div id="nov-day-title" style="font-size:18px;font-weight:800;color:var(--text-strong);margin-top:4px;letter-spacing:-.3px;">—</div>
                 </div>
                 <span id="nov-day-count" class="mono" style="padding:3px 8px;font-size:10px;font-weight:700;background:var(--bg-subtle);color:var(--text-faint);border-radius:3px;white-space:nowrap;">0 eventos</span>
@@ -379,8 +393,8 @@ $scopeTabs = [
         <?php endif; ?>
 
         <!-- Próximas Novedades -->
-        <div class="sgi-card">
-            <div class="sgi-label" style="margin-bottom:14px;">Próximas Novedades</div>
+        <div class="spi-card">
+            <div class="spi-label" style="margin-bottom:14px;">Próximas Novedades</div>
             <?php if (empty($upcomingNovelties)): ?>
             <div style="padding:14px 0;text-align:center;color:var(--text-faint);font-size:11.5px;">
                 Sin novedades próximas.
@@ -436,8 +450,8 @@ $scopeTabs = [
         </div>
 
         <!-- Distribución del mes -->
-        <div class="sgi-card">
-            <div class="sgi-label" style="margin-bottom:14px;">Distribución del mes</div>
+        <div class="spi-card">
+            <div class="spi-label" style="margin-bottom:14px;">Distribución del mes</div>
             <?php if (empty($typeDistribution)): ?>
             <div style="padding:14px 0;text-align:center;color:var(--text-faint);font-size:11.5px;">
                 Sin datos para mostrar.
@@ -644,7 +658,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btnCal.classList.add('is-active');
         history.replaceState(null, '', updateViewParam('calendar'));
         if (!calendarInstance) {
-            calendarInstance = SGICalendar.init(calendarConfig());
+            calendarInstance = SPICalendar.init(calendarConfig());
         } else {
             calendarInstance.updateSize();
         }

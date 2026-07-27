@@ -29,6 +29,13 @@ use Cake\TestSuite\TestCase;
  */
 final class AdvanceLegalizationTransitionsTest extends TestCase
 {
+    /** Payload de causación válido para las salidas del paso Contabilidad. */
+    private const ACCOUNTING = [
+        'accrued' => true,
+        'accrual_date' => '2026-06-23',
+        'ready_for_payment' => 'Si',
+    ];
+
     /**
      * Construye el servicio con un EventManager aislado y los history/document
      * services reales. El stateRegistry queda en su default.
@@ -63,7 +70,7 @@ final class AdvanceLegalizationTransitionsTest extends TestCase
             ->withStatus(AdvanceConstants::STATUS_CONTABILIDAD)->save();
         $user = UserFactory::new()->save();
 
-        $result = $this->buildService()->markExact($leg, $user->id);
+        $result = $this->buildService()->markExact($leg, self::ACCOUNTING, $user->id);
 
         $this->assertTrue($result->success);
 
@@ -89,7 +96,7 @@ final class AdvanceLegalizationTransitionsTest extends TestCase
             ->withStatus(AdvanceConstants::STATUS_CONTABILIDAD)->save();
         $user = UserFactory::new()->save();
 
-        $result = $this->buildService()->markExact($leg, $user->id);
+        $result = $this->buildService()->markExact($leg, self::ACCOUNTING, $user->id);
 
         $this->assertFalse($result->success);
 
@@ -99,18 +106,43 @@ final class AdvanceLegalizationTransitionsTest extends TestCase
     }
 
     /**
-     * returnToValidacion: desde Revisión y Firmas con un motivo no vacío,
-     * devuelve la legalización a Validación (persistido en BD).
+     * markExact con causación incompleta falla contra el gate del
+     * ContabilidadState aunque la diferencia sea cero.
+     */
+    public function testMarkExactFailsWhenAccountingIsIncomplete(): void
+    {
+        $anticipo = InvoiceFactory::new()->anticipo()
+            ->withAmount(1000.0)->withStatus(InvoiceConstants::STATUS_PAGADA)->save();
+        InvoiceFactory::new(['advance_id' => $anticipo->id])->legalizacion()
+            ->withAmount(1000.0)->withStatus(InvoiceConstants::STATUS_CONTABILIDAD)->save();
+        $leg = AdvanceLegalizationFactory::new()->forAdvance($anticipo)
+            ->withStatus(AdvanceConstants::STATUS_CONTABILIDAD)->save();
+        $user = UserFactory::new()->save();
+
+        $incomplete = ['accrued' => true, 'accrual_date' => '2026-06-23', 'ready_for_payment' => null];
+        $result = $this->buildService()->markExact($leg, $incomplete, $user->id);
+
+        $this->assertFalse($result->success);
+        $this->assertSame('Campo "Lista para Pago" es requerido', $result->firstError());
+
+        $persisted = $this->fetchTable('AdvanceLegalizations')->get($leg->id);
+        $this->assertSame(AdvanceConstants::STATUS_CONTABILIDAD, $persisted->status);
+        $this->assertNull($persisted->case_type);
+    }
+
+    /**
+     * returnToAprobacion: desde Revisión y Firmas con un motivo no vacío,
+     * devuelve la legalización a Aprobación (paso anterior; persistido en BD).
      *
      * @return void
      */
-    public function testReturnToValidacionBouncesBackWithReason(): void
+    public function testReturnToAprobacionBouncesBackWithReason(): void
     {
         $leg = AdvanceLegalizationFactory::new()
             ->withStatus(AdvanceConstants::STATUS_REVISION_FIRMAS)->save();
         $user = UserFactory::new()->save();
 
-        $result = $this->buildService()->returnToValidacion(
+        $result = $this->buildService()->returnToAprobacion(
             $leg,
             'La relación de facturas tiene un error de monto.',
             $user->id,
@@ -119,22 +151,22 @@ final class AdvanceLegalizationTransitionsTest extends TestCase
         $this->assertTrue($result->success);
 
         $persisted = $this->fetchTable('AdvanceLegalizations')->get($leg->id);
-        $this->assertSame(AdvanceConstants::STATUS_VALIDACION, $persisted->status);
+        $this->assertSame(AdvanceConstants::STATUS_APROBACION, $persisted->status);
     }
 
     /**
-     * returnToValidacion: con motivo vacío falla y la legalización permanece en
+     * returnToAprobacion: con motivo vacío falla y la legalización permanece en
      * Revisión y Firmas.
      *
      * @return void
      */
-    public function testReturnToValidacionFailsWithEmptyReason(): void
+    public function testReturnToAprobacionFailsWithEmptyReason(): void
     {
         $leg = AdvanceLegalizationFactory::new()
             ->withStatus(AdvanceConstants::STATUS_REVISION_FIRMAS)->save();
         $user = UserFactory::new()->save();
 
-        $result = $this->buildService()->returnToValidacion($leg, '   ', $user->id);
+        $result = $this->buildService()->returnToAprobacion($leg, '   ', $user->id);
 
         $this->assertFalse($result->success);
 
@@ -143,23 +175,23 @@ final class AdvanceLegalizationTransitionsTest extends TestCase
     }
 
     /**
-     * moveToRevisionFirmas (CAMINO DE ERROR): en Validación sin requisitos
-     * cumplidos (sin facturas vinculadas y sin documento de relación pendiente),
-     * validateAdvance retorna errores y la legalización NO avanza.
+     * moveToAprobacion (CAMINO DE ERROR): en Validación sin requisitos cumplidos
+     * (sin facturas vinculadas y sin documento de relación pendiente),
+     * ValidacionState::validateAdvance retorna errores y la legalización NO avanza
+     * a `aprobacion`.
      *
-     * El happy path requiere sembrar una factura vinculada en Contabilidad y un
-     * documento de relación pendiente vía guard (hasPendingRelationDocument);
-     * se cubre el camino de error por pragmatismo (ver notes).
+     * (En el flujo nuevo `validacion → revision_firmas` directo ya no existe: el
+     * salto que gatea Validación y corre ValidacionState es `moveToAprobacion`.)
      *
      * @return void
      */
-    public function testMoveToRevisionFirmasFailsWhenRequirementsAreNotMet(): void
+    public function testMoveToAprobacionFailsWhenRequirementsAreNotMet(): void
     {
         $leg = AdvanceLegalizationFactory::new()
             ->withStatus(AdvanceConstants::STATUS_VALIDACION)->save();
         $user = UserFactory::new()->save();
 
-        $result = $this->buildService()->moveToRevisionFirmas($leg, $user->id);
+        $result = $this->buildService()->moveToAprobacion($leg, $user->id);
 
         $this->assertFalse($result->success);
         $this->assertNotEmpty($result->errors);

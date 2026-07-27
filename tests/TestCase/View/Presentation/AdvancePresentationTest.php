@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\View\Presentation;
 
+use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
 use App\View\Presentation\AdvancePresentation;
-use App\View\Presentation\InvoicePresentation;
 use Cake\ORM\Entity;
 use PHPUnit\Framework\TestCase;
 
@@ -36,14 +36,11 @@ final class AdvancePresentationTest extends TestCase
     {
         $row = AdvancePresentation::forRow($this->advance());
 
-        $this->assertSame(
-            InvoicePresentation::STATUS_BADGES[InvoiceConstants::STATUS_TESORERIA],
-            $row->statusBadgeClass,
-        );
-        $this->assertSame(
-            array_search(InvoiceConstants::STATUS_TESORERIA, InvoiceConstants::PIPELINE_STATUSES, true),
-            $row->pipelineIdx,
-        );
+        // Tesorería: badge fijo 'pill-info-soft' e índice 2 del pipeline estándar
+        // de 6 estados. Literales a propósito: si el mapeo estado→pill o el orden
+        // del pipeline cambian, este test debe fallar (anti-drift, CLAUDE.md).
+        $this->assertSame('pill-info-soft', $row->statusBadgeClass);
+        $this->assertSame(2, $row->pipelineIdx);
         $this->assertSame('ANT-1', $row->idLabel);
         $this->assertSame('ACME', $row->beneficiaryName);
         $this->assertFalse($row->isPaid);
@@ -71,5 +68,16 @@ final class AdvancePresentationTest extends TestCase
         $row = AdvancePresentation::forRow($this->advance(['pipeline_status' => InvoiceConstants::STATUS_PAGADA]));
 
         $this->assertTrue($row->isPaid);
+    }
+
+    public function testStatusBadgesHasWarningPillForAprobacion(): void
+    {
+        // Anti-drift: 'aprobacion' debe ser 'pill-warning-soft' en todos los
+        // módulos (PipelineColorMap), verificado también por
+        // PipelineColorConsistencyTest.
+        $this->assertSame(
+            'pill-warning-soft',
+            AdvancePresentation::STATUS_BADGES[AdvanceConstants::STATUS_APROBACION],
+        );
     }
 }

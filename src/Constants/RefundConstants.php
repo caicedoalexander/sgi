@@ -8,8 +8,9 @@ use App\Constants\Domain\Refund\PipelineStatus;
 final class RefundConstants
 {
     // Pipeline statuses — fuente única en App\Constants\Domain\Refund\PipelineStatus.
-    // Flujo: agrupacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada.
+    // Flujo: agrupacion → aprobacion → contabilidad → tesoreria → autorizacion_pago → verificacion_pago → pagada.
     public const STATUS_AGRUPACION = PipelineStatus::AGRUPACION->value;
+    public const STATUS_APROBACION = PipelineStatus::APROBACION->value;
     public const STATUS_CONTABILIDAD = PipelineStatus::CONTABILIDAD->value;
     public const STATUS_TESORERIA = PipelineStatus::TESORERIA->value;
     public const STATUS_AUTORIZACION_PAGO = PipelineStatus::AUTORIZACION_PAGO->value;
@@ -18,6 +19,7 @@ final class RefundConstants
 
     public const STATUSES = [
         self::STATUS_AGRUPACION,
+        self::STATUS_APROBACION,
         self::STATUS_CONTABILIDAD,
         self::STATUS_TESORERIA,
         self::STATUS_AUTORIZACION_PAGO,
@@ -27,6 +29,7 @@ final class RefundConstants
 
     public const STATUS_LABELS = [
         self::STATUS_AGRUPACION => 'Agrupación',
+        self::STATUS_APROBACION => 'Aprobación',
         self::STATUS_CONTABILIDAD => 'Contabilidad',
         self::STATUS_TESORERIA => 'Tesorería',
         self::STATUS_AUTORIZACION_PAGO => 'Autorización de pago',

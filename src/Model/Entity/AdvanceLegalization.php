@@ -21,9 +21,11 @@ class AdvanceLegalization extends Entity
         'case_type' => false,
         'shortage_amount' => false,
         'surplus_amount' => false,
+        'accrued' => false,
+        'accrual_date' => false,
+        'ready_for_payment' => false,
         'shortage_received_at' => false,
         'shortage_receipt_number' => false,
-        'shortage_receipt_path' => false,
         'surplus_payment_id' => false,
         'legalized_at' => false,
         'created_by' => true,
@@ -31,6 +33,7 @@ class AdvanceLegalization extends Entity
         'advance_invoice' => true,
         'linked_invoices' => true,
         'advance_legalization_signatures' => true,
+        'advance_legalization_documents' => true,
     ];
 
     /**
@@ -72,10 +75,22 @@ class AdvanceLegalization extends Entity
         return $this->status === AdvanceConstants::STATUS_VALIDACION;
     }
 
-    /** @return bool true cuando el estado permite avanzar a Revisión y Firmas. */
-    public function canMoveToRevision(): bool
+    /** @return bool true cuando el estado permite enviar el grupo a aprobación de área. */
+    public function canMoveToAprobacion(): bool
     {
         return $this->status === AdvanceConstants::STATUS_VALIDACION;
+    }
+
+    /** @return bool true cuando el estado permite consolidar la aprobación de área. */
+    public function canConsolidateApproval(): bool
+    {
+        return $this->status === AdvanceConstants::STATUS_APROBACION;
+    }
+
+    /** @return bool true cuando el estado permite regresar el grupo a Validación para editarlo. */
+    public function canReturnFromAprobacion(): bool
+    {
+        return $this->status === AdvanceConstants::STATUS_APROBACION;
     }
 
     /** @return bool true cuando el estado permite (re)subir la relación de facturas. */
@@ -94,8 +109,8 @@ class AdvanceLegalization extends Entity
         return $this->status === AdvanceConstants::STATUS_REVISION_FIRMAS;
     }
 
-    /** @return bool true cuando el estado permite devolver a Validación con motivo. */
-    public function canReturnToValidacion(): bool
+    /** @return bool true cuando el estado permite devolver a Aprobación con motivo. */
+    public function canReturnToAprobacion(): bool
     {
         return $this->status === AdvanceConstants::STATUS_REVISION_FIRMAS;
     }
@@ -128,6 +143,12 @@ class AdvanceLegalization extends Entity
             && $this->case_type === AdvanceConstants::CASE_FALTANTE;
     }
 
+    /** @return bool true cuando el estado permite gestionar (subir/eliminar) soportes generales. */
+    public function canManageDocuments(): bool
+    {
+        return !$this->isLegalized();
+    }
+
     /** @return bool true cuando Tesorería puede registrar reintegro (sin pago previo). */
     public function canRegisterRefund(): bool
     {
@@ -136,6 +157,7 @@ class AdvanceLegalization extends Entity
             && empty($this->surplus_payment_id);
     }
 
+    /** @return bool true cuando la legalización está en Verificación de pago. */
     public function isVerificacionPago(): bool
     {
         return ($this->status ?? '') === AdvanceConstants::STATUS_VERIFICACION_PAGO;

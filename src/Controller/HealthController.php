@@ -21,6 +21,11 @@ class HealthController extends AppController
         EmailLogHealthCheck::class,
     ];
 
+    /**
+     * Configura componentes y servicios del controlador.
+     *
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();

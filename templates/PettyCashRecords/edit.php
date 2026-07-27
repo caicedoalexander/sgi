@@ -63,6 +63,7 @@
  * @var array $groupFilters
  */
 
+use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\View\Presentation\PettyCashPresentation;
 
@@ -115,13 +116,13 @@ $totalDocs = count($docs);
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
 
-<div class="sgi-edit-shell">
+<div class="spi-edit-shell">
 
 <?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
-<div class="sgi-edit-shell-head">
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-edit-shell-head">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Caja Menor', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <?= $this->Html->link(h($record->code), ['action' => 'view', $record->id]) ?>
@@ -129,8 +130,8 @@ $totalDocs = count($docs);
             <span class="current">Editar</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Editar Caja Menor</span>
-            <span class="sgi-edit-id-chip"><?= h($record->code) ?></span>
+            <span class="spi-page-title">Editar Caja Menor</span>
+            <span class="spi-edit-id-chip"><?= h($record->code) ?></span>
             <span class="pill <?= h($pcStatusPill) ?>"><?= h($pcStatusLabel) ?></span>
         </div>
     </div>
@@ -148,16 +149,16 @@ $totalDocs = count($docs);
     </div>
 </div>
 
-</div><?php /* fin .sgi-edit-shell-head */ ?>
+</div><?php /* fin .spi-edit-shell-head */ ?>
 
-<?= $this->Form->create($record, ['id' => 'pettyCashEditForm', 'class' => 'sgi-edit-shell-form']) ?>
+<?= $this->Form->create($record, ['id' => 'pettyCashEditForm', 'class' => 'spi-edit-shell-form']) ?>
 <?= $this->Form->hidden('expected_status', ['value' => $record->status]) ?>
 
-<div class="sgi-edit-shell-body view-anim">
+<div class="spi-edit-shell-body view-anim">
 <div class="row gx-3">
 
     <?php /* ═══════════════════ COLUMNA IZQUIERDA ═══════════════════ */ ?>
-    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
+    <aside class="col-lg-3 spi-edit-col d-flex flex-column gap-3">
         <?php
         // Acciones del sidebar (regresión) — element compartido
         $actionsHtml = !empty($canRegress)
@@ -202,7 +203,7 @@ $totalDocs = count($docs);
     </aside>
 
     <?php /* ═══════════════════ COLUMNA DERECHA ═══════════════════ */ ?>
-    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
+    <main class="col-lg-9 spi-edit-col d-flex flex-column gap-3">
 
         <?php /* ── Banner: requisitos para avanzar ─────────────── */ ?>
         <?php if ($canAdvance && !empty($advanceErrors)): ?>
@@ -229,13 +230,34 @@ $totalDocs = count($docs);
         </div>
         <?php endif; ?>
 
+        <?php /* ── Facturas agrupadas: card top-level (paridad con view.php + Legalizaciones) ── */ ?>
+        <?php
+        $linkBtnHtml = null;
+        if ($record->isAgrupacion()) {
+            $linkBtnHtml = '<button type="button" class="btn btn-secondary btn-sm" '
+                . 'data-bs-toggle="modal" data-bs-target="#linkPettyCashInvoicesModal">'
+                . '<i class="bi bi-link-45deg" aria-hidden="true"></i>Vincular facturas</button>';
+        }
+        ?>
+        <?= $this->element('grouped_invoices_table', [
+            'rows' => $groupedRows,
+            'readiness' => $readiness,
+            'parentField' => 'petty_cash_record_id',
+            'parentId' => (int)$record->id,
+            'canUploadSupport' => $canUploadSupport,
+            'uploadModalId' => $canUploadSupport ? 'groupedUploadModal' : null,
+            'editable' => $record->isAgrupacion(),
+            'headerActionsHtml' => $linkBtnHtml,
+            'unlinkAction' => 'removeInvoice',
+            'totalAmount' => (float)$record->total_amount,
+        ]) ?>
+
         <?php
         // ── Section reordering: editable sections first ──
         $sections = [];
         if ($record->isAgrupacion() || $record->isContabilidad()) {
             $sections[] = ['key' => 'notes', 'editable' => true];
         }
-        $sections[] = ['key' => 'invoices', 'editable' => $record->isAgrupacion()];
         if ($showAccounting) {
             $sections[] = ['key' => 'accounting', 'editable' => $canEditAccounting];
         }
@@ -247,11 +269,11 @@ $totalDocs = count($docs);
 
         <?php /* ── Información del registro: secciones del pipeline ── */ ?>
         <?php if (!empty($sections)): ?>
-        <div class="sgi-card" style="position:relative;">
+        <div class="spi-card" style="position:relative;">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2" style="margin-bottom:14px;">
                 <div>
-                    <div class="sgi-label" style="color:var(--text-faint);">Etapa actual</div>
-                    <div class="sgi-title-card d-inline-flex align-items-center gap-2" style="margin-top:4px;">
+                    <div class="spi-label" style="color:var(--text-faint);">Etapa actual</div>
+                    <div class="spi-title-card d-inline-flex align-items-center gap-2" style="margin-top:4px;">
                         <?= h($pcStatusLabel) ?>
                         <?php if ($nextLabel && !$isTerminal): ?>
                             <span style="font-size:11px;color:var(--text-faint);font-weight:500;">
@@ -274,92 +296,10 @@ $totalDocs = count($docs);
                 </div>
                 <?php endif; ?>
 
-                <?php /* ── Facturas agrupadas ──────────────────── */ ?>
-                <?php if ($section['key'] === 'invoices'): ?>
-                <div class="mb-4">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                        <span class="sgi-label d-inline-flex align-items-center gap-2">
-                            <i class="bi bi-receipt" aria-hidden="true"></i>
-                            Facturas Agrupadas
-                            <span class="sgi-folder-count"><?= $invoiceCount ?></span>
-                        </span>
-                        <?php if ($record->isAgrupacion()): ?>
-                        <button type="button" class="btn btn-secondary btn-sm"
-                                data-bs-toggle="modal" data-bs-target="#linkPettyCashInvoicesModal">
-                            <i class="bi bi-link-45deg" aria-hidden="true"></i>Vincular facturas
-                        </button>
-                        <?php endif; ?>
-                    </div>
-
-                    <?php if (!empty($record->invoices)): ?>
-                    <div class="table-responsive mb-2">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th># Factura</th>
-                                    <th>Proveedor</th>
-                                    <th style="text-align:right;">Monto</th>
-                                    <?php if ($record->isAgrupacion()): ?>
-                                    <th style="text-align:center;width:60px;"></th>
-                                    <?php endif; ?>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($record->invoices as $inv): ?>
-                                <tr>
-                                    <td>
-                                        <?= $this->Html->link(
-                                            $inv->invoice_number ?? '#' . $inv->id,
-                                            ['controller' => 'Invoices', 'action' => 'view', $inv->id],
-                                            ['class' => 'mono', 'style' => 'font-weight:600;']
-                                        ) ?>
-                                    </td>
-                                    <td><?= $inv->hasValue('provider') ? h($inv->provider->name) : '—' ?></td>
-                                    <td class="mono" style="text-align:right;">$ <?= number_format((float)$inv->amount, 0, ',', '.') ?></td>
-                                    <?php if ($record->isAgrupacion()): ?>
-                                    <td style="text-align:center;">
-                                        <?= $this->Form->postLink(
-                                            '<i class="bi bi-x-lg" aria-hidden="true"></i>',
-                                            ['action' => 'removeInvoice', $record->id, $inv->id],
-                                            [
-                                                'confirm' => '¿Remover esta factura del registro?',
-                                                'class'   => 'btn-icon',
-                                                'escape'  => false,
-                                                'title'   => 'Quitar',
-                                                'block'   => true,
-                                            ]
-                                        ) ?>
-                                    </td>
-                                    <?php endif; ?>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="2" style="text-align:right;font-weight:700;">Total:</td>
-                                    <td class="mono" style="text-align:right;font-weight:700;color:var(--primary-color);">
-                                        $ <?= number_format($totalAmount, 0, ',', '.') ?>
-                                    </td>
-                                    <?php if ($record->isAgrupacion()): ?>
-                                    <td></td>
-                                    <?php endif; ?>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    <?php else: ?>
-                    <div class="alert alert-warning d-flex align-items-start gap-2 mb-0">
-                        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true" style="flex-shrink:0;margin-top:1px;"></i>
-                        <div>No hay facturas agrupadas. Agregue al menos una factura para poder avanzar.</div>
-                    </div>
-                    <?php endif; ?>
-                </div>
-                <?php endif; ?>
-
                 <?php /* ── Contabilidad ────────────────────────── */ ?>
                 <?php if ($section['key'] === 'accounting'): ?>
                 <div class="mb-4">
-                    <div class="sgi-label d-inline-flex align-items-center gap-2 mb-3">
+                    <div class="spi-label d-inline-flex align-items-center gap-2 mb-3">
                         <i class="bi bi-calculator" aria-hidden="true"></i>Contabilidad
                     </div>
                     <div class="row g-2 g-md-3">
@@ -470,31 +410,31 @@ $totalDocs = count($docs);
 
     </main>
 </div><?php /* fin .row */ ?>
-</div><?php /* fin .sgi-edit-shell-body */ ?>
+</div><?php /* fin .spi-edit-shell-body */ ?>
 
         <?php /* ── Footer de acciones (barra fija) ──────────────── */ ?>
         <?php if ($canSave || !empty($canRegress)): ?>
-        <div class="sgi-edit-footer">
-            <div class="sgi-edit-footer-meta">
+        <div class="spi-edit-footer">
+            <div class="spi-edit-footer-meta">
                 <span class="d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+                    <i class="bi bi-person spi-fg-faint" aria-hidden="true"></i>
                     Rol: <strong style="color:var(--text-default);"><?= h($roleName) ?></strong>
                 </span>
                 <?php if ($record->modified): ?>
                 <span class="sep"></span>
                 <span class="d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+                    <i class="bi bi-clock spi-fg-faint" aria-hidden="true"></i>
                     Última modificación: <span class="mono"><?= $record->modified->format('d/m/Y H:i') ?></span>
                 </span>
                 <?php endif; ?>
             </div>
-            <div class="sgi-edit-footer-actions">
+            <div class="spi-edit-footer-actions">
                 <?php if ($record->isAgrupacion() && !empty($userPermissions['petty_cash']['can_delete'])): ?>
                 <?= $this->Form->postLink(
                     '<i class="bi bi-trash" aria-hidden="true"></i>Eliminar',
                     ['action' => 'delete', $record->id],
                     [
-                        'class'   => 'btn btn-ghost-card sgi-fg-danger',
+                        'class'   => 'btn btn-ghost-card spi-fg-danger',
                         'escape'  => false,
                         'confirm' => '¿Eliminar este registro? Las facturas agrupadas quedarán libres.',
                         'block'   => true,
@@ -513,7 +453,7 @@ $totalDocs = count($docs);
 
 <?= $this->Form->end() ?>
 
-</div><?php /* fin .sgi-edit-shell */ ?>
+</div><?php /* fin .spi-edit-shell */ ?>
 
 <?= $this->element('observations/drawer', [
     'observations'    => $record->petty_cash_observations ?? [],
@@ -530,11 +470,13 @@ $totalDocs = count($docs);
     'formUrl'    => ['action' => 'linkInvoices', $record->id],
     'candidates' => $availableInvoices,
     'title'      => 'Vincular facturas — Caja Menor',
-    'helpText'   => 'Filtre por fecha, centro de operación o proveedor. Por defecto, últimos 90 días.',
+    'helpText'   => 'Filtre por fecha, centro de operación o proveedor. Por defecto, últimos 90 días. '
+        . 'Las facturas en Aprobación se avanzarán automáticamente a Contabilidad al vincularse.',
     'filterUrl'  => ['action' => 'edit', $record->id],
     'filters'    => $groupFilters,
     'operationCenters' => $operationCenters,
     'providers'  => $providers ?? [],
+    'autoAdvanceStatuses' => [InvoiceConstants::STATUS_APROBACION],
 ]) ?>
 <?php endif; ?>
 
@@ -546,17 +488,27 @@ $totalDocs = count($docs);
 ]) ?>
 <?php endif; ?>
 
+<?php // Modal compartido para subir soporte a una hija; el JS (SpiGroupedInvoices) fija su URL por fila. ?>
+<?php if ($canUploadSupport): ?>
+<?= $this->element('upload_doc_modal', [
+    'modalId' => 'groupedUploadModal',
+    'uploadUrl' => '',
+    'formId' => 'grouped-upload-form',
+    'showDocumentType' => true,
+]) ?>
+<?php endif; ?>
+
 <?= $this->element('document_row_template', ['showBadge' => false]) ?>
-<?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
+<?= $this->Html->script('spi-document-uploader', ['block' => true]) ?>
 
 <?php $this->append('script') ?>
 <script>
 (function(){
-    SgiDocumentUploader.init({
+    SpiDocumentUploader.init({
         formSelector:        '#upload-doc-form',
         listSelector:        '#docs-list',
         emptySelector:       '#docs-empty-state',
-        counterSelector:     '.sgi-folder-count',
+        counterSelector:     '.spi-folder-count',
         rowTemplateSelector: '#doc-row-template',
         modalSelector:       '#uploadPcDocModal',
         csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>

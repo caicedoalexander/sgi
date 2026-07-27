@@ -8,6 +8,7 @@ use App\Constants\InvoiceConstants;
 use App\Service\AdvanceLegalizationService;
 use App\Service\Pipeline\Invoice\Policy\AnticipoDocumentTypePolicy;
 use App\Service\Pipeline\Invoice\State\AprobacionState;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
@@ -34,7 +35,7 @@ final class AnticipoDocumentTypePolicyTest extends TestCase
     {
         $this->assertSame(
             InvoiceConstants::PIPELINE_STATUSES,
-            $this->makePolicy()->getPipelineStatusesForView()
+            $this->makePolicy()->getPipelineStatusesForView(),
         );
     }
 
@@ -43,20 +44,30 @@ final class AnticipoDocumentTypePolicyTest extends TestCase
         $sections = ['ledger', 'revision', 'accounting', 'treasury'];
         $this->assertSame(
             ['ledger', 'accounting', 'treasury'],
-            $this->makePolicy()->filterVisibleSections($sections)
+            $this->makePolicy()->filterVisibleSections($sections),
         );
     }
 
-    public function testTriggersAutoLegalizationOnlyWhenAdvancingToPagada(): void
+    #[DataProvider('autoLegalizationCases')]
+    public function testTriggersAutoLegalizationOnlyForPagada(PipelineStatus $status, bool $expected): void
     {
-        $policy = $this->makePolicy();
-        $this->assertTrue($policy->triggersAutoLegalization(PipelineStatus::PAGADA));
+        $this->assertSame($expected, $this->makePolicy()->triggersAutoLegalization($status), $status->value);
+    }
 
-        foreach (PipelineStatus::cases() as $case) {
-            if ($case !== PipelineStatus::PAGADA) {
-                $this->assertFalse($policy->triggersAutoLegalization($case), $case->value);
-            }
-        }
+    /**
+     * @return array<string, array{PipelineStatus, bool}>
+     */
+    public static function autoLegalizationCases(): array
+    {
+        return [
+            'aprobacion' => [PipelineStatus::APROBACION, false],
+            'contabilidad' => [PipelineStatus::CONTABILIDAD, false],
+            'tesoreria' => [PipelineStatus::TESORERIA, false],
+            'autorizacion_pago' => [PipelineStatus::AUTORIZACION_PAGO, false],
+            'verificacion_pago' => [PipelineStatus::VERIFICACION_PAGO, false],
+            'pagada' => [PipelineStatus::PAGADA, true],
+            'legalizada' => [PipelineStatus::LEGALIZADA, false],
+        ];
     }
 
     public function testRegressionLockReasonNullWhenNoIdOnInvoice(): void

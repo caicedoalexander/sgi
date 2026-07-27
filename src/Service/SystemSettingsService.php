@@ -27,6 +27,12 @@ class SystemSettingsService
 
     private array $cache = [];
 
+    /**
+     * Retorna el valor de un ajuste (descifrando las claves sensibles), con cache per-request.
+     *
+     * @param string $key Clave del ajuste.
+     * @return string|null
+     */
     public function get(string $key): ?string
     {
         if (array_key_exists($key, $this->cache)) {
@@ -49,6 +55,14 @@ class SystemSettingsService
         return $value;
     }
 
+    /**
+     * Persiste (upsert) el valor de un ajuste, cifrando las claves sensibles.
+     *
+     * @param string $key Clave del ajuste.
+     * @param string|null $value Valor a guardar.
+     * @param string $group Grupo del ajuste.
+     * @return bool
+     */
     public function set(string $key, ?string $value, string $group = 'general'): bool
     {
         $table = TableRegistry::getTableLocator()->get('SystemSettings');
@@ -81,6 +95,12 @@ class SystemSettingsService
         return $saved;
     }
 
+    /**
+     * Retorna todos los ajustes de un grupo, descifrando las claves sensibles.
+     *
+     * @param string $group Grupo de ajustes.
+     * @return array
+     */
     public function getGroup(string $group): array
     {
         $table = TableRegistry::getTableLocator()->get('SystemSettings');
@@ -103,6 +123,13 @@ class SystemSettingsService
         return $result;
     }
 
+    /**
+     * Persiste un conjunto de ajustes de un grupo.
+     *
+     * @param string $group Grupo de ajustes.
+     * @param array $values Pares clave-valor a guardar.
+     * @return void
+     */
     public function setGroup(string $group, array $values): void
     {
         foreach ($values as $key => $value) {

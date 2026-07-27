@@ -4,11 +4,11 @@ declare(strict_types=1);
 namespace App\Test\TestCase\ViewModel;
 
 use App\Constants\RefundConstants;
+use App\Model\Entity\Invoice;
 use App\Model\Entity\Refund;
 use App\View\Presentation\RefundPresentation;
 use App\ViewModel\RefundEditViewModel;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 /**
  * Unit tests para RefundEditViewModel — derivaciones de la vista de edición.
@@ -99,6 +99,23 @@ final class RefundEditViewModelTest extends TestCase
         $this->assertTrue($vm->canSave);
     }
 
+    public function testPipelineFlagsAtAprobacion(): void
+    {
+        $record = new Refund(['id' => 1, 'status' => RefundConstants::STATUS_APROBACION]);
+
+        $vm = $this->buildVm($record);
+
+        $this->assertSame(
+            array_search(RefundConstants::STATUS_APROBACION, RefundConstants::STATUSES, true),
+            $vm->statusIndex,
+        );
+        $this->assertFalse($vm->showAccounting);
+        $this->assertFalse($vm->showTreasury);
+        // aprobacion no es agrupacion/contabilidad/tesoreria, así que canSave es false;
+        // el guardado en ese paso lo maneja el panel de aprobación (Task 11).
+        $this->assertFalse($vm->canSave);
+    }
+
     public function testSubmitButtonAdvancesWhenAllowed(): void
     {
         $record = new Refund(['id' => 1, 'status' => RefundConstants::STATUS_CONTABILIDAD]);
@@ -110,10 +127,12 @@ final class RefundEditViewModelTest extends TestCase
 
     public function testInvoiceCount(): void
     {
+        // El VM ahora deriva groupedRows vía InvoicePresentation::forGroupedRow(Invoice),
+        // así que las hijas deben ser entidades Invoice reales (no stdClass).
         $record = new Refund([
             'id' => 1,
             'status' => RefundConstants::STATUS_AGRUPACION,
-            'invoices' => [new stdClass(), new stdClass()],
+            'invoices' => [new Invoice(['id' => 1]), new Invoice(['id' => 2])],
         ]);
 
         $this->assertSame(2, $this->buildVm($record)->invoiceCount);

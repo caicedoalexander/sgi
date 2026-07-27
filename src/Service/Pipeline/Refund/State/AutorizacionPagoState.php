@@ -9,11 +9,21 @@ use App\Service\Pipeline\Refund\RefundPipelineState;
 
 final class AutorizacionPagoState implements RefundPipelineState
 {
+    /**
+     * Estado canónico `autorizacion_pago` de este State.
+     *
+     * @return \App\Constants\Domain\Refund\PipelineStatus
+     */
     public function getStatus(): PipelineStatus
     {
         return PipelineStatus::AUTORIZACION_PAGO;
     }
 
+    /**
+     * Estado siguiente del pipeline; delega en el enum. Null si es terminal.
+     *
+     * @return \App\Constants\Domain\Refund\PipelineStatus|null
+     */
     public function getNextStatus(): ?PipelineStatus
     {
         return $this->getStatus()->next();

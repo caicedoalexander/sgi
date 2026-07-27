@@ -62,6 +62,10 @@ class AuthorizationService
         'payment_schedulings' => 'Programación',
         'payment_registry' => 'Registro de Pagos',
         'email_logs' => 'Logs de correo',
+        'assets' => 'Activos',
+        'consumables' => 'Consumibles',
+        'asset_categories' => 'Categorías de Activos',
+        'asset_alerts' => 'Alertas de Inventario',
     ];
 
     /**
@@ -92,10 +96,22 @@ class AuthorizationService
         'Sistema' => [
             'system_settings', 'default_folders', 'email_logs',
         ],
+        'Inventario TI' => [
+            'assets', 'consumables', 'asset_categories', 'asset_alerts',
+        ],
     ];
 
     private array $cache = [];
 
+    /**
+     * Determina si un rol puede ejecutar una acción CRUD sobre un módulo.
+     *
+     * @param int $roleId Id del rol.
+     * @param string $roleName Nombre del rol (para el admin bypass acotado).
+     * @param string $module Slug del módulo.
+     * @param string $action Acción solicitada (view|index|add|edit|delete).
+     * @return bool
+     */
     public function isAllowed(int $roleId, string $roleName, string $module, string $action): bool
     {
         // Admin bypass solo para módulos en ADMIN_BYPASS_MODULES.
@@ -120,6 +136,12 @@ class AuthorizationService
         };
     }
 
+    /**
+     * Retorna los permisos de un rol indexados por módulo (cache per-request).
+     *
+     * @param int $roleId Id del rol.
+     * @return array
+     */
     public function getPermissionsForRole(int $roleId): array
     {
         if (isset($this->cache[$roleId])) {
@@ -146,6 +168,13 @@ class AuthorizationService
         return $result;
     }
 
+    /**
+     * Retorna los permisos de un rol como matriz completa de todos los módulos,
+     * con los módulos ausentes en false.
+     *
+     * @param int $roleId Id del rol.
+     * @return array
+     */
     public function getPermissionsForRoleAsMatrix(int $roleId): array
     {
         $permissions = $this->getPermissionsForRole($roleId);
@@ -163,6 +192,13 @@ class AuthorizationService
         return $matrix;
     }
 
+    /**
+     * Persiste (upsert por módulo) los permisos de un rol e invalida la cache.
+     *
+     * @param int $roleId Id del rol.
+     * @param array $data Datos de permisos indexados por módulo.
+     * @return void
+     */
     public function savePermissionsForRole(int $roleId, array $data): void
     {
         $permissionsTable = TableRegistry::getTableLocator()->get('Permissions');

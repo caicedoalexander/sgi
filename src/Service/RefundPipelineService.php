@@ -18,6 +18,7 @@ use App\Service\Pipeline\Refund\Policy\RefundTransitionValidator;
 use App\Service\Pipeline\Refund\RefundPipelineStateRegistry;
 use App\ValueObject\UserContext;
 use Cake\I18n\Date;
+use Cake\I18n\DateTime;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use DateTimeInterface;
@@ -56,6 +57,7 @@ class RefundPipelineService
             recordTableName: 'Refunds',
             fkLabel: 'Reintegro',
             historyService: $historyService,
+            linkableStatus: InvoiceConstants::STATUS_APROBACION,
         );
         $this->auth = $auth;
         $this->fieldPolicy = $fieldPolicy ?? new RefundFieldAccessPolicy($this->auth);
@@ -382,8 +384,16 @@ class RefundPipelineService
             $updateData = [];
 
             if ($nextStatus === RefundConstants::STATUS_CONTABILIDAD) {
+                // Self-heal: replica el efecto de RefundApprovalService::onAllApproved
+                // sobre area_approval/area_approval_date. contabilidad solo se
+                // alcanza desde aprobacion, así que esto siempre es correcto aquí
+                // aunque, por una condición de carrera rara, el gate de aprobación
+                // (RefundApprovalGuard::allApproved, sobre filas) y el efecto de
+                // onAllApproved hubieran divergido.
                 $updateData = [
                     'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
+                    'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
+                    'area_approval_date' => new DateTime(),
                 ];
             } elseif ($nextStatus === RefundConstants::STATUS_TESORERIA) {
                 // Snapshot bajo lock — evita propagar valores stale si otro
@@ -599,6 +609,7 @@ class RefundPipelineService
         // Map child invoice status. agrupacion no aplica (hijas sin pipeline alineado).
         // aut_pago tampoco aplica (en avance tesoreria→aut_pago las hijas no cambiaron).
         $childPipelineMap = [
+            RefundConstants::STATUS_APROBACION => InvoiceConstants::STATUS_APROBACION,
             RefundConstants::STATUS_CONTABILIDAD => InvoiceConstants::STATUS_CONTABILIDAD,
             RefundConstants::STATUS_TESORERIA => InvoiceConstants::STATUS_TESORERIA,
         ];

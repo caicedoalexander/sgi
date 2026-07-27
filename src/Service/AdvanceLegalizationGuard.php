@@ -18,8 +18,8 @@ use Cake\ORM\TableRegistry;
 class AdvanceLegalizationGuard
 {
     /**
-     * Facturas de legalización vinculadas al anticipo. Devuelve datos crudos
-     * para que el State itere y decida (necesita invoice_number/id para el mensaje).
+     * Facturas vinculadas al anticipo (Legalización y Recibo de Caja). Devuelve datos
+     * crudos para que el State itere y decida (necesita invoice_number/id para el mensaje).
      *
      * @return list<\App\Model\Entity\Invoice>
      */
@@ -29,7 +29,7 @@ class AdvanceLegalizationGuard
             ->find()
             ->where([
                 'advance_id' => $advanceInvoiceId,
-                'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+                'document_type IN' => InvoiceConstants::ADVANCE_LINKABLE_DOCTYPES,
             ])
             ->all()
             ->toList();

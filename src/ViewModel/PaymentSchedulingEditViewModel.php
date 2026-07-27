@@ -15,7 +15,9 @@ final readonly class PaymentSchedulingEditViewModel implements EditViewModelInte
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
     public string $pageTitle;
-    /** @var array{0:string,1:string} Pareja [label, class] para el currentStatus. */
+    /**
+     * @var array{0:string,1:string} Pareja [label, class] para el currentStatus.
+     */
     public array $currentStatusBadge;
     public int $itemCount;
     public bool $isBorrador;
@@ -41,7 +43,7 @@ final readonly class PaymentSchedulingEditViewModel implements EditViewModelInte
         public array $pipelineLabels,
         public mixed $bankingEntities,
     ) {
-        $this->pageTitle = 'Programación ' . ($record->code ?? ('#' . $record->id));
+        $this->pageTitle = 'Programación ' . ($record->code ?? '#' . $record->id);
 
         $this->currentStatusBadge = [
             $pipelineLabels[$currentStatus] ?? 'Desconocido',

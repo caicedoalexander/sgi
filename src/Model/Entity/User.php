@@ -20,6 +20,12 @@ class User extends Entity
         'password',
     ];
 
+    /**
+     * Mutator: hashea la contraseña con password_hash() antes de persistirla.
+     *
+     * @param string $password Contraseña en texto plano.
+     * @return string Hash de la contraseña.
+     */
     protected function _setPassword(string $password): string
     {
         return password_hash($password, PASSWORD_DEFAULT);

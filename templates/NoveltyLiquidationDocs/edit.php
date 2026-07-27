@@ -38,14 +38,14 @@ $noveltyCount      = $viewModel->noveltyCount;
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
 
-<div class="sgi-edit-shell">
+<div class="spi-edit-shell">
 
 <?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
-<div class="sgi-edit-shell-head">
+<div class="spi-edit-shell-head">
 <!-- Page header -->
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Liquidaciones', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <?= $this->Html->link(h($doc->liquidation_number), ['action' => 'view', $doc->id]) ?>
@@ -53,8 +53,8 @@ $noveltyCount      = $viewModel->noveltyCount;
             <span class="current">Editar</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Editar Liquidación</span>
-            <span class="sgi-edit-id-chip"><?= h($doc->liquidation_number) ?></span>
+            <span class="spi-page-title">Editar Liquidación</span>
+            <span class="spi-edit-id-chip"><?= h($doc->liquidation_number) ?></span>
             <?php if ($isRejected): ?>
                 <span class="pill pill-danger-soft">Rechazada</span>
             <?php else: ?>
@@ -76,9 +76,9 @@ $noveltyCount      = $viewModel->noveltyCount;
     </div>
 </div>
 
-</div><?php /* fin .sgi-edit-shell-head */ ?>
+</div><?php /* fin .spi-edit-shell-head */ ?>
 
-<div class="sgi-edit-shell-body view-anim">
+<div class="spi-edit-shell-body view-anim">
 
 <!-- Advance warning -->
 <?php if (!$isFinal && !empty($groupErrors)): ?>
@@ -100,7 +100,7 @@ $noveltyCount      = $viewModel->noveltyCount;
 <div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
+    <aside class="col-lg-3 spi-edit-col d-flex flex-column gap-3">
         <?php
         $registryLines = [
             ['icon' => 'bi-person', 'html' => 'Rol: <strong style="color:var(--text-default);">' . h($roleName) . '</strong>'],
@@ -152,15 +152,15 @@ $noveltyCount      = $viewModel->noveltyCount;
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
+    <main class="col-lg-9 spi-edit-col d-flex flex-column gap-3">
 
         <!-- Novedades Asociadas -->
-        <div class="sgi-card">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+        <div class="spi-card">
+            <div class="spi-section-head" style="margin-bottom:12px;">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-people" aria-hidden="true"></i>
                     Novedades Asociadas
-                    <span class="sgi-folder-count"><?= $noveltyCount ?></span>
+                    <span class="spi-folder-count"><?= $noveltyCount ?></span>
                 </span>
             </div>
             <?php if (!empty($doc->employee_novelties)): ?>
@@ -184,7 +184,7 @@ $noveltyCount      = $viewModel->noveltyCount;
                 <?php endforeach; ?>
             </div>
             <?php else: ?>
-            <div class="text-center sgi-fg-faint py-3" style="font-size:var(--fs-body);">
+            <div class="text-center spi-fg-faint py-3" style="font-size:var(--fs-body);">
                 <i class="bi bi-inbox me-1" aria-hidden="true"></i>No hay novedades asociadas.
             </div>
             <?php endif; ?>
@@ -200,9 +200,9 @@ $noveltyCount      = $viewModel->noveltyCount;
         ];
         ?>
         <?php if (in_array($currentStatus, $signaturesVisibleStatuses) || ($isRejected && !empty($doc->novelty_liquidation_signatures))): ?>
-        <div class="sgi-card">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+        <div class="spi-card">
+            <div class="spi-section-head" style="margin-bottom:12px;">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-pen" aria-hidden="true"></i>Firmas
                 </span>
             </div>
@@ -210,7 +210,7 @@ $noveltyCount      = $viewModel->noveltyCount;
                 <?php foreach ($doc->novelty_liquidation_signatures as $sig): ?>
                 <div class="col-md-6 col-lg-3">
                     <div style="background:var(--bg-subtle);padding:14px;text-align:center;height:100%;">
-                        <div class="sgi-label" style="margin-bottom:6px;"><?= $signerLabels[$sig->signer_type] ?? h($sig->signer_type) ?></div>
+                        <div class="spi-label" style="margin-bottom:6px;"><?= $signerLabels[$sig->signer_type] ?? h($sig->signer_type) ?></div>
                         <?php if ($sig->signature_path): ?>
                             <span class="pill pill-primary-soft"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Firmado</span>
                             <div class="mt-2" style="font-size:var(--fs-body-sm);color:var(--text-muted);line-height:1.4;">
@@ -314,9 +314,9 @@ $noveltyCount      = $viewModel->noveltyCount;
         ?>
 
         <?php if ($stageFormHtml !== ''): ?>
-        <div class="sgi-card">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+        <div class="spi-card">
+            <div class="spi-section-head" style="margin-bottom:12px;">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>Acción del paso actual
                 </span>
             </div>
@@ -335,7 +335,7 @@ $noveltyCount      = $viewModel->noveltyCount;
         ]);
         ?>
         <?php if ($showPayments): ?>
-        <div class="sgi-card">
+        <div class="spi-card">
         <?= $this->element('payment_section', [
             'payments'           => $doc->liquidation_doc_payments ?? [],
             'bankingEntities'    => $bankingEntities,
@@ -364,9 +364,9 @@ $noveltyCount      = $viewModel->noveltyCount;
             NoveltyConstants::STATUS_GDP,
         ]);
         ?>
-        <div class="sgi-card d-flex flex-column">
+        <div class="spi-card d-flex flex-column">
             <div class="d-flex align-items-center" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
                     Documento de Liquidación
                 </span>
@@ -382,7 +382,7 @@ $noveltyCount      = $viewModel->noveltyCount;
                          style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                         <?= h($liquidationDocument->file_name) ?>
                     </div>
-                    <div class="row-flex gap-6 mono sgi-body-faint" style="margin-top:2px;">
+                    <div class="row-flex gap-6 mono spi-body-faint" style="margin-top:2px;">
                         <span><?= $liquidationDocument->created?->format('d/m/Y H:i') ?></span>
                         <?php if ($liquidationDocument->file_size): ?>
                         <span>· <?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
@@ -418,7 +418,7 @@ $noveltyCount      = $viewModel->noveltyCount;
                     <i class="bi bi-file-earmark-x" style="color:var(--text-disabled);font-size:18px;" aria-hidden="true"></i>
                 </div>
                 <div class="grow">
-                    <span class="sgi-body-faint" style="font-size:var(--fs-body-sm);">Sin documento</span>
+                    <span class="spi-body-faint" style="font-size:var(--fs-body-sm);">Sin documento</span>
                 </div>
                 <?= $this->Form->create(null, [
                     'url' => ['action' => 'uploadLiquidationDocument', $doc->id],
@@ -477,25 +477,25 @@ $noveltyCount      = $viewModel->noveltyCount;
 
     </main>
 </div><?php /* fin .row */ ?>
-</div><?php /* fin .sgi-edit-shell-body */ ?>
+</div><?php /* fin .spi-edit-shell-body */ ?>
 
 <!-- Sticky footer con acción de avance del pipeline -->
 <?php if (!$isFinal && $stageAdvanceLabel !== ''): ?>
-<div class="sgi-edit-footer">
-    <div class="sgi-edit-footer-meta">
+<div class="spi-edit-footer">
+    <div class="spi-edit-footer-meta">
         <span class="d-inline-flex align-items-center gap-1">
-            <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+            <i class="bi bi-person spi-fg-faint" aria-hidden="true"></i>
             Rol: <strong style="color:var(--text-default);"><?= h($roleName) ?></strong>
         </span>
         <?php if ($doc->modified): ?>
         <span class="sep"></span>
         <span class="d-inline-flex align-items-center gap-1">
-            <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+            <i class="bi bi-clock spi-fg-faint" aria-hidden="true"></i>
             Última modificación: <span class="mono"><?= $doc->modified->format('d/m/Y H:i') ?></span>
         </span>
         <?php endif; ?>
     </div>
-    <div class="sgi-edit-footer-actions">
+    <div class="spi-edit-footer-actions">
         <button type="submit" form="docAdvanceForm" class="btn btn-primary">
             <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i><?= $stageAdvanceLabel ?>
         </button>
@@ -503,7 +503,7 @@ $noveltyCount      = $viewModel->noveltyCount;
 </div>
 <?php endif; ?>
 
-</div><?php /* fin .sgi-edit-shell */ ?>
+</div><?php /* fin .spi-edit-shell */ ?>
 
 <?= $this->element('observations/drawer', [
     'observations'    => $doc->novelty_observations ?? [],
@@ -521,12 +521,12 @@ $noveltyCount      = $viewModel->noveltyCount;
 <?php endif; ?>
 
 <?= $this->element('document_row_template', ['showBadge' => true]) ?>
-<?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
+<?= $this->Html->script('spi-document-uploader', ['block' => true]) ?>
 
 <?php $this->append('script') ?>
 <script>
 (function(){
-    SgiDocumentUploader.init({
+    SpiDocumentUploader.init({
         formSelector:        '#upload-doc-form',
         listSelector:        '#docs-list',
         emptySelector:       '#docs-empty-state',

@@ -19,33 +19,55 @@ use App\ViewModel\Support\SubmitButton;
 final readonly class InvoiceEditViewModel implements EditViewModelInterface
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $documentTypes;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $approvalOptions;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $dianOptions;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $readyForPaymentOptions;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $paymentStatusOptions;
 
     public bool $isAdvance;
     public string $pageTitle;
 
-    /** @var array{0:string,1:string} Pareja [label, class] para el currentStatus. */
+    /**
+     * @var array{0:string,1:string} Pareja [label, class] para el currentStatus.
+     */
     public array $currentStatusBadge;
 
-    /** @var array<string,string[]> Sección → campos editables que la habilitan. */
+    /**
+     * @var array<string,string[]> Sección → campos editables que la habilitan.
+     */
     public array $sectionFieldMap;
-    /** @var string[] */
+    /**
+     * @var array<string>
+     */
     public array $editableSectionKeys;
-    /** @var string[] */
+    /**
+     * @var array<string>
+     */
     public array $readOnlySectionKeys;
-    /** @var string[] Render order: non-collapsible editable → collapsible editable → read-only. */
+    /**
+     * @var array<string>  Render order: non-collapsible editable → collapsible editable → read-only.
+     */
     public array $renderOrder;
 
-    /** HTML pre-renderizado (ícono + texto). El template lo imprime raw. */
+    /**
+     * HTML pre-renderizado (ícono + texto). El template lo imprime raw.
+     */
     public string $submitButtonHtml;
     public string $submitButtonClass;
 
@@ -59,7 +81,9 @@ final readonly class InvoiceEditViewModel implements EditViewModelInterface
     public bool $isRejected;
     public bool $isApproved;
 
-    /** @var array<int, mixed> */
+    /**
+     * @var array<int, mixed>
+     */
     public array $currentApprovals;
     public bool $hasPendingApprovals;
     public bool $canSendLinks;
@@ -73,32 +97,44 @@ final readonly class InvoiceEditViewModel implements EditViewModelInterface
     public mixed $employees;
     public mixed $bankingEntities;
 
+    /**
+     * @param \App\Model\Entity\Invoice $invoice Factura a editar.
+     * @param string $currentStatus Estado actual del pipeline.
+     * @param string $roleName Rol del usuario actual.
+     * @param array $editableFields Campos editables en el paso actual.
+     * @param array $visibleSections Secciones visibles del formulario.
+     * @param array $advanceErrors Errores que bloquean el avance.
+     * @param string|null $nextStatus Siguiente estado del pipeline, o null.
+     * @param string|null $previousStatus Estado anterior del pipeline, o null.
+     * @param string|null $regressLockMessage Motivo por el que no se puede regresar, o null.
+     * @param array $pipelineStatuses Estados del pipeline visual.
+     * @param array $pipelineLabels Etiquetas ES por estado del pipeline.
+     * @param float $paymentsTotal Total pagado acumulado.
+     * @param array $emailLogs Registro de correos enviados.
+     * @param \App\ViewModel\Invoice\InvoiceEditPermissions $permissions Bundle de capacidades rol×estado.
+     * @param \App\ViewModel\Invoice\InvoiceApprovalState $approvalState Estado de aprobación de área.
+     * @param \App\ViewModel\Invoice\InvoiceFormDropdowns $dropdowns Listados para los <select> del form.
+     */
     public function __construct(
         // Entidad principal
         public Invoice $invoice,
         public string $currentStatus,
         public string $roleName,
-
         // Campos editables y secciones
         public array $editableFields,
         public array $visibleSections,
-
         // Avance / retroceso
         public array $advanceErrors,
         public ?string $nextStatus,
         public ?string $previousStatus,
         public ?string $regressLockMessage,
-
         // Pipeline visual
         public array $pipelineStatuses,
         public array $pipelineLabels,
-
         // Pagos
         public float $paymentsTotal,
-
         // Email logs
         public array $emailLogs,
-
         // Bundles de DTOs
         InvoiceEditPermissions $permissions,
         InvoiceApprovalState $approvalState,
@@ -130,10 +166,10 @@ final readonly class InvoiceEditViewModel implements EditViewModelInterface
         // ── Tipo de documento ────────────────────────────────────────────
         $this->isAdvance = ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_ANTICIPO;
 
-        $idLabel = $invoice->invoice_number ?? ('#' . $invoice->id);
+        $idLabel = $invoice->invoice_number ?? '#' . $invoice->id;
         $this->pageTitle = $this->isAdvance
-            ? ('Editar Anticipo #' . $invoice->id)
-            : ('Editar Factura ' . $idLabel);
+            ? 'Editar Anticipo #' . $invoice->id
+            : 'Editar Factura ' . $idLabel;
 
         // ── Opciones de dropdowns derivadas de constantes ────────────────
         $this->documentTypes   = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstants::DOCUMENT_TYPES);
@@ -188,11 +224,19 @@ final readonly class InvoiceEditViewModel implements EditViewModelInterface
         );
     }
 
+    /**
+     * @param string $section Clave de la sección del formulario.
+     * @return bool true si la sección se renderiza en modo solo lectura.
+     */
     public function isReadOnlySection(string $section): bool
     {
         return in_array($section, $this->readOnlySectionKeys, true);
     }
 
+    /**
+     * @param string $field Nombre del campo del formulario.
+     * @return bool true si el campo es editable en el paso actual.
+     */
     public function canEditField(string $field): bool
     {
         return in_array($field, $this->editableFields, true);

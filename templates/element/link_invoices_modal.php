@@ -20,7 +20,12 @@
  * @var iterable|null $operationCenters  Lista [id => name] para filtro de centro op (opcional)
  * @var iterable|null $providers       Lista [id => name] para filtro de proveedor (opcional)
  * @var bool|null $fragmentOnly       true = renderizar solo el contenido del .modal-content (AJAX)
+ * @var array|null $autoAdvanceStatuses  pipeline_status que se auto-avanzarán al vincular
+ *                                       (nota por-fila); default [] = sin nota.
  */
+
+use App\View\Presentation\InvoiceBeneficiary;
+
 $title       = $title       ?? 'Vincular Facturas';
 $helpText    = $helpText    ?? null;
 $filterUrl   = $filterUrl   ?? null;
@@ -28,6 +33,7 @@ $filters     = $filters     ?? [];
 $operationCenters = $operationCenters ?? [];
 $providers   = $providers   ?? [];
 $fragmentOnly = $fragmentOnly ?? false;
+$autoAdvanceStatuses = $autoAdvanceStatuses ?? [];
 $filterFormId = $modalId . 'Filter';
 ?>
 <?php if (!$fragmentOnly): ?>
@@ -61,7 +67,7 @@ $filterFormId = $modalId . 'Filter';
                         <?php if (!empty($operationCenters)): ?>
                         <div class="col-md-3">
                             <label class="form-label mb-1" style="font-size:.7rem;color:var(--text-faint);">Centro Op.</label>
-                            <select form="<?= h($filterFormId) ?>" name="operation_center_id" class="form-select form-select-sm">
+                            <select form="<?= h($filterFormId) ?>" name="operation_center_id" class="form-select form-select-sm select2-enable">
                                 <option value="">Todos</option>
                                 <?php foreach ($operationCenters as $ocId => $ocName): ?>
                                 <option value="<?= (int)$ocId ?>" <?= ($filters['operation_center_id'] ?? '') == $ocId ? 'selected' : '' ?>><?= h($ocName) ?></option>
@@ -72,7 +78,7 @@ $filterFormId = $modalId . 'Filter';
                         <?php if (!empty($providers)): ?>
                         <div class="col-md-3">
                             <label class="form-label mb-1" style="font-size:.7rem;color:var(--text-faint);">Proveedor</label>
-                            <select form="<?= h($filterFormId) ?>" name="provider_id" class="form-select form-select-sm">
+                            <select form="<?= h($filterFormId) ?>" name="provider_id" class="form-select form-select-sm select2-enable">
                                 <option value="">Todos</option>
                                 <?php foreach ($providers as $pId => $pName): ?>
                                 <option value="<?= (int)$pId ?>" <?= ($filters['provider_id'] ?? '') == $pId ? 'selected' : '' ?>><?= h($pName) ?></option>
@@ -81,7 +87,7 @@ $filterFormId = $modalId . 'Filter';
                         </div>
                         <?php endif; ?>
                         <div class="col-md-3">
-                            <button type="submit" form="<?= h($filterFormId) ?>" class="btn btn-sm btn-outline-primary w-100">
+                            <button type="submit" form="<?= h($filterFormId) ?>" class="btn btn-sm btn-default w-100">
                                 <i class="bi bi-search me-1" aria-hidden="true"></i>Buscar
                             </button>
                         </div>
@@ -105,8 +111,15 @@ $filterFormId = $modalId . 'Filter';
                         <?php $hasAny = false; foreach ($candidates as $c): $hasAny = true; ?>
                             <tr>
                                 <td><?= $this->Form->checkbox('invoice_ids[]', ['value' => $c->id, 'hiddenField' => false]) ?></td>
-                                <td class="mono" style="font-weight:600;"><?= h($c->invoice_number ?: '#' . $c->id) ?></td>
-                                <td><?= h($c->provider->name ?? ($c->employee->full_name ?? '—')) ?></td>
+                                <td class="mono" style="font-weight:600;">
+                                    <?= h($c->invoice_number ?: '#' . $c->id) ?>
+                                    <?php if (in_array($c->pipeline_status, $autoAdvanceStatuses, true)): ?>
+                                    <span class="d-block spi-fg-faint" style="font-size:10.5px;font-weight:400;">
+                                        <i class="bi bi-arrow-right-short" aria-hidden="true"></i>Se avanzará a Contabilidad
+                                    </span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?= h(InvoiceBeneficiary::label($c)) ?></td>
                                 <td><?= h($c->operation_center->name ?? '—') ?></td>
                                 <td><?= $c->issue_date ? $c->issue_date->format('d/m/Y') : '—' ?></td>
                                 <td class="text-end">$ <?= number_format((float)$c->amount, 0, ',', '.') ?></td>
@@ -122,7 +135,7 @@ $filterFormId = $modalId . 'Filter';
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" class="btn btn-primary"><i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Vincular seleccionadas</button>
             </div>
             <?= $this->Form->end() ?>

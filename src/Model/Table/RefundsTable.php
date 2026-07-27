@@ -14,6 +14,12 @@ use Cake\Validation\Validator;
 
 class RefundsTable extends Table
 {
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -23,6 +29,7 @@ class RefundsTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+        $this->addBehavior('SidebarCache');
 
         $this->belongsTo('CreatedByUsers', [
             'className' => 'Users',
@@ -71,6 +78,12 @@ class RefundsTable extends Table
         ]);
     }
 
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -118,6 +131,13 @@ class RefundsTable extends Table
         return $validator;
     }
 
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->isUnique(['code'], 'El código ya existe.'), ['errorField' => 'code', 'allowNullableNulls' => true]);
@@ -169,6 +189,14 @@ class RefundsTable extends Table
         return $rules;
     }
 
+    /**
+     * Genera el código secuencial de la entidad antes de crearla.
+     *
+     * @param \Cake\Event\EventInterface $event The event that was fired.
+     * @param \Cake\Datasource\EntityInterface $entity The entity being saved.
+     * @param \ArrayObject $options The options passed to the save operation.
+     * @return void
+     */
     public function beforeSave(EventInterface $event, EntityInterface $entity, ArrayObject $options): void
     {
         if (!$entity->isNew() || !empty($entity->code)) {

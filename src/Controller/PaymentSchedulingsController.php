@@ -18,6 +18,7 @@ use App\Service\Pipeline\PaymentScheduling\Policy\PaymentSchedulingActionPolicy;
 use App\ViewModel\PaymentSchedulingAddViewModel;
 use App\ViewModel\PaymentSchedulingEditViewModel;
 use App\ViewModel\PaymentSchedulingViewViewModel;
+use Cake\Http\Response;
 use Cake\Routing\Router;
 
 class PaymentSchedulingsController extends AppController
@@ -37,6 +38,11 @@ class PaymentSchedulingsController extends AppController
 
     private PaymentSchedulingHistoryService $historyService;
 
+    /**
+     * Resuelve los servicios del contenedor de dependencias.
+     *
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
@@ -48,16 +54,31 @@ class PaymentSchedulingsController extends AppController
         $this->historyService = $container->get(PaymentSchedulingHistoryService::class);
     }
 
+    /**
+     * Usuario autenticado actual.
+     *
+     * @return object
+     */
     private function _getCurrentUser(): object
     {
         return $this->Authentication->getIdentity()->getOriginalData();
     }
 
+    /**
+     * Nombre del rol del usuario autenticado.
+     *
+     * @return string
+     */
     private function _getRoleName(): string
     {
         return $this->_getUserRoleName($this->_getCurrentUser());
     }
 
+    /**
+     * Listado de programaciones visibles para el rol.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -83,8 +104,14 @@ class PaymentSchedulingsController extends AppController
         $this->set(compact('records'));
     }
 
+    /**
+     * Detalle de una programación de pago.
+     *
+     * @param string|null $id Programación id.
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $record = $this->PaymentSchedulings->get($id, contain: [
             'CreatedByUsers',
@@ -107,6 +134,11 @@ class PaymentSchedulingsController extends AppController
         $this->set('viewModel', new PaymentSchedulingViewViewModel($record, (float)$total));
     }
 
+    /**
+     * Crea una programación de pago en estado borrador.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -138,6 +170,12 @@ class PaymentSchedulingsController extends AppController
         $this->set('viewModel', $vm);
     }
 
+    /**
+     * Construye el view-model del formulario de creación.
+     *
+     * @param \App\Model\Entity\PaymentScheduling $record Programación nueva.
+     * @return \App\ViewModel\PaymentSchedulingAddViewModel
+     */
     private function _buildAddViewModel(PaymentScheduling $record): PaymentSchedulingAddViewModel
     {
         return new PaymentSchedulingAddViewModel(
@@ -145,8 +183,14 @@ class PaymentSchedulingsController extends AppController
         );
     }
 
+    /**
+     * Edición de una programación de pago.
+     *
+     * @param string|null $id Programación id.
+     * @return void
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $record = $this->PaymentSchedulings->get($id, contain: [
             'CreatedByUsers',
@@ -171,6 +215,14 @@ class PaymentSchedulingsController extends AppController
         $this->set('viewModel', $vm);
     }
 
+    /**
+     * Construye el view-model de la vista de edición.
+     *
+     * @param \App\Model\Entity\PaymentScheduling $record Programación cargada.
+     * @param int $roleId Rol del usuario actual.
+     * @param string $roleName Nombre del rol del usuario actual.
+     * @return \App\ViewModel\PaymentSchedulingEditViewModel
+     */
     private function _buildEditViewModel(
         PaymentScheduling $record,
         int $roleId,
@@ -204,8 +256,14 @@ class PaymentSchedulingsController extends AppController
         );
     }
 
+    /**
+     * Avanza la programación al siguiente paso del pipeline.
+     *
+     * @param string|null $id Programación id.
+     * @return \Cake\Http\Response|null
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS)]
-    public function advance($id = null)
+    public function advance(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
@@ -242,8 +300,14 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    /**
+     * Rechaza la programación y la devuelve a Tesorería.
+     *
+     * @param string|null $id Programación id.
+     * @return \Cake\Http\Response|null
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS)]
-    public function reject($id = null)
+    public function reject(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
@@ -259,16 +323,25 @@ class PaymentSchedulingsController extends AppController
         $result = $this->schedulingService->reject($record, (int)$user->id);
 
         if ($result->success) {
+            // reject regresa la programación a tesoreria.
             $this->Flash->warning('Programación devuelta a Tesorería para corrección.');
-        } else {
-            $this->Flash->error($result->firstError() ?? 'No se pudo rechazar la programación.');
+
+            return $this->redirect(['action' => 'index']);
         }
+
+        $this->Flash->error($result->firstError() ?? 'No se pudo rechazar la programación.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * Regresa la programación al paso anterior del pipeline.
+     *
+     * @param string|null $id Programación id.
+     * @return \Cake\Http\Response|null
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS)]
-    public function regressStatus($id = null)
+    public function regressStatus(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
@@ -298,9 +371,11 @@ class PaymentSchedulingsController extends AppController
     /**
      * Tesorería confirma que los pagos de la programación ya se ejecutaron.
      * Avanza scheduling y facturas hijas de verificacion_pago → pagada.
+     *
+     * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS, step: PaymentSchedulingConstants::STATUS_VERIFICACION_PAGO)]
-    public function confirmPayment($id = null)
+    public function confirmPayment(?string $id = null)
     {
         $this->request->allowMethod(['post']);
 
@@ -318,8 +393,14 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
+    /**
+     * Recibe el archivo Excel y prepara la previsualización de importación.
+     *
+     * @param string|null $id Programación id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
-    public function importExcel($id = null)
+    public function importExcel(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
@@ -347,8 +428,14 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'previewImport', $id]);
     }
 
+    /**
+     * Previsualiza el resultado de la importación de Excel.
+     *
+     * @param string|null $id Programación id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
-    public function previewImport($id = null)
+    public function previewImport(?string $id = null)
     {
         $record = $this->PaymentSchedulings->get($id);
         $result = $this->request->getSession()->read("import_preview_{$id}");
@@ -362,8 +449,14 @@ class PaymentSchedulingsController extends AppController
         $this->set(compact('record', 'result'));
     }
 
+    /**
+     * Confirma y vincula las facturas válidas de la importación.
+     *
+     * @param string|null $id Programación id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
-    public function confirmImport($id = null)
+    public function confirmImport(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
@@ -395,8 +488,14 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * Vincula una factura a la programación.
+     *
+     * @param string|null $id Programación id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
-    public function addItem($id = null)
+    public function addItem(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
@@ -432,8 +531,15 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * Desvincula una factura de la programación.
+     *
+     * @param string|null $id Programación id.
+     * @param string|null $itemId Item id a eliminar.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function removeItem($id = null, $itemId = null)
+    public function removeItem(?string $id = null, ?string $itemId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $record = $this->PaymentSchedulings->get($id);
@@ -464,11 +570,22 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
-    #[Permission(action: 'add')]
-    public function uploadDocument($id = null)
+    /**
+     * Sube un soporte a la programación.
+     *
+     * @param string|null $id Programación id.
+     * @return \Cake\Http\Response|null
+     */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS)]
+    public function uploadDocument(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PaymentSchedulings->get($id);
+
+        $gate = $this->_documentGate($record, 'subir');
+        if ($gate !== null) {
+            return $gate;
+        }
 
         $file = $this->request->getUploadedFile('file');
         if (!$file) {
@@ -522,19 +639,22 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
-    #[Permission(action: 'delete')]
-    public function deleteDocument($id = null, $documentId = null)
+    /**
+     * Elimina un soporte de la programación.
+     *
+     * @param string|null $id Programación id.
+     * @param string|null $documentId Soporte id.
+     * @return \Cake\Http\Response|null
+     */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PAYMENT_SCHEDULINGS)]
+    public function deleteDocument(?string $id = null, ?string $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
 
         $record = $this->PaymentSchedulings->get($id);
-        if ($record->pipeline_status === PaymentSchedulingConstants::STATUS_PAGADA) {
-            if ($this->_isJsonRequest()) {
-                return $this->_jsonResponse(['success' => false, 'error' => 'No se pueden eliminar soportes de una programación pagada.']);
-            }
-            $this->Flash->error('No se pueden eliminar soportes de una programación pagada.');
-
-            return $this->redirect(['action' => 'edit', $id]);
+        $gate = $this->_documentGate($record, 'eliminar');
+        if ($gate !== null) {
+            return $gate;
         }
 
         $documentsTable = $this->fetchTable('PaymentSchedulingDocuments');
@@ -580,8 +700,59 @@ class PaymentSchedulingsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * Gate compartido de soportes: 409 si la programación está pagada, 403 si el
+     * rol no puede operar el paso actual del pipeline de programación de pagos.
+     */
+    private function _documentGate(PaymentScheduling $record, string $blockedActionLabel): ?Response
+    {
+        if ($record->isPagada()) {
+            return $this->_documentGateError(
+                sprintf('No se puede %s un soporte de una programación pagada.', $blockedActionLabel),
+                (int)$record->id,
+                409,
+            );
+        }
+
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        if (!$this->actionPolicy->canOperateStep($roleId, (string)$record->pipeline_status)) {
+            return $this->_documentGateError(
+                'No tiene permisos para gestionar soportes en este paso.',
+                (int)$record->id,
+                403,
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * Construye la respuesta de error del gate de documentos.
+     *
+     * @param string $message Mensaje de error.
+     * @param int $recordId Programación id.
+     * @param int $statusCode Código HTTP para la respuesta JSON.
+     * @return \Cake\Http\Response
+     */
+    private function _documentGateError(string $message, int $recordId, int $statusCode): Response
+    {
+        if ($this->_isJsonRequest()) {
+            return $this->_jsonResponse(['success' => false, 'error' => $message], $statusCode);
+        }
+
+        $this->Flash->error($message);
+
+        return $this->redirect(['action' => 'edit', $recordId]);
+    }
+
+    /**
+     * Agrega una observación a la programación.
+     *
+     * @param string|null $id Programación id.
+     * @return \Cake\Http\Response
+     */
     #[Permission(action: 'edit')]
-    public function addObservation($id = null)
+    public function addObservation(?string $id = null)
     {
         return $this->_handleAddObservation(
             'PaymentSchedulingObservations',

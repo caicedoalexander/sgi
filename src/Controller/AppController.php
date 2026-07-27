@@ -10,6 +10,7 @@ use App\Authorization\AuthorizationFacade;
 use App\Authorization\CrudAction;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
+use App\Service\ApprovalInboxService;
 use App\Service\AuthorizationService;
 use App\Service\SidebarCounterService;
 use App\ValueObject\UserContext;
@@ -31,6 +32,8 @@ class AppController extends Controller
     protected SidebarCounterService $counterService;
 
     protected AuthorizationFacade $authFacade;
+
+    protected ApprovalInboxService $inboxService;
 
     /**
      * Stash the application container so controllers can resolve services on demand.
@@ -54,6 +57,11 @@ class AppController extends Controller
         return self::$appContainer;
     }
 
+    /**
+     * Inicializa componentes y middleware del controlador base.
+     *
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
@@ -61,6 +69,7 @@ class AppController extends Controller
         $this->authService = $this->getContainer()->get(AuthorizationService::class);
         $this->counterService = $this->getContainer()->get(SidebarCounterService::class);
         $this->authFacade = $this->getContainer()->get(AuthorizationFacade::class);
+        $this->inboxService = $this->getContainer()->get(ApprovalInboxService::class);
 
         $this->loadComponent('Flash');
         $this->loadComponent('Authentication.Authentication');
@@ -97,12 +106,23 @@ class AppController extends Controller
         'BankingEntities' => 'banking_entities',
         'InvoicePayments' => 'invoices',
         'LiquidationDocPayments' => 'novelty_liquidation_docs',
+        'AdvanceRefundPayments' => 'advances',
         'PaymentSchedulings' => 'payment_schedulings',
         'PaymentRegistry' => 'payment_registry',
         'Advances' => 'advances',
         'EmailLogs' => 'email_logs',
+        'Assets' => 'assets',
+        'Consumables' => 'consumables',
+        'AssetCategories' => 'asset_categories',
+        'AssetAlerts' => 'asset_alerts',
     ];
 
+    /**
+     * Aplica autenticación y control de permisos antes de cada acción.
+     *
+     * @param \Cake\Event\EventInterface $event Evento del ciclo de vida.
+     * @return void
+     */
     public function beforeFilter(EventInterface $event): void
     {
         parent::beforeFilter($event);
@@ -146,6 +166,15 @@ class AppController extends Controller
                 ];
             }
         }
+
+        // Entrada sintética: la bandeja personal de aprobaciones no es un módulo
+        // RBAC; su visibilidad depende de pertenecer al catálogo approvers.
+        $perms['approvals_inbox'] = [
+            'can_view' => $this->inboxService->isApprover((int)$user->id),
+            'can_create' => false,
+            'can_edit' => false,
+            'can_delete' => false,
+        ];
 
         $this->set('userPermissions', $perms);
     }
@@ -293,6 +322,12 @@ class AppController extends Controller
         return [$field . ' IN' => $statuses];
     }
 
+    /**
+     * Calcula y expone los contadores del sidebar.
+     *
+     * @param object $user Usuario autenticado.
+     * @return void
+     */
     protected function _setSidebarCounters(object $user): void
     {
         $counters = $this->counterService->getCounters((int)$user->role_id);
@@ -302,6 +337,11 @@ class AppController extends Controller
         }
     }
 
+    /**
+     * Verifica que exista un usuario autenticado.
+     *
+     * @return void
+     */
     protected function _requireAuth(): void
     {
         $identity = $this->Authentication->getIdentity();
@@ -311,6 +351,13 @@ class AppController extends Controller
         }
     }
 
+    /**
+     * Comprueba si el usuario tiene permiso sobre un módulo y acción.
+     *
+     * @param string $module Slug del módulo.
+     * @param string $action Acción solicitada.
+     * @return bool
+     */
     protected function _checkPermission(string $module, string $action): bool
     {
         $context = $this->_userContext();
@@ -321,12 +368,24 @@ class AppController extends Controller
         return $this->authFacade->canCrud($context, $module, CrudAction::from($action));
     }
 
+    /**
+     * Indica si la petición espera una respuesta JSON.
+     *
+     * @return bool
+     */
     protected function _isJsonRequest(): bool
     {
         return $this->request->is('ajax')
             || str_contains($this->request->getHeaderLine('Accept'), 'application/json');
     }
 
+    /**
+     * Construye una respuesta JSON con el estado indicado.
+     *
+     * @param array $data Datos a serializar.
+     * @param int $status Código de estado HTTP.
+     * @return \Cake\Http\Response
+     */
     protected function _jsonResponse(array $data, int $status = 200): Response
     {
         $this->autoRender = false;

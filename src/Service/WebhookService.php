@@ -29,6 +29,9 @@ class WebhookService
     private Retryer $retryer;
     private StructuredLogger $logger;
 
+    /**
+     * Inicializa el cliente HTTP, el circuit breaker, el retryer y el logger.
+     */
     public function __construct()
     {
         $this->client = new Client();
@@ -128,6 +131,12 @@ class WebhookService
         );
     }
 
+    /**
+     * Normaliza una respuesta HTTP al arreglo de resultado del webhook.
+     *
+     * @param \Cake\Http\Client\Response $response Respuesta HTTP.
+     * @return array
+     */
     private function shape(Response $response): array
     {
         return [

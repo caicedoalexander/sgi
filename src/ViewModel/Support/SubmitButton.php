@@ -47,6 +47,7 @@ final class SubmitButton
         if ($canAdvance && empty($advanceErrors) && $nextStatusLabel !== null) {
             return self::forAdvance($nextStatusLabel);
         }
+
         return self::forSave();
     }
 }

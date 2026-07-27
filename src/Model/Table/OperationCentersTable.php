@@ -14,6 +14,12 @@ class OperationCentersTable extends Table implements ExcelExportableInterface
 {
     use ExcelExportableTrait;
 
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -32,6 +38,12 @@ class OperationCentersTable extends Table implements ExcelExportableInterface
         ]);
     }
 
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -52,6 +64,13 @@ class OperationCentersTable extends Table implements ExcelExportableInterface
         return $validator;
     }
 
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->isUnique(['code'], message: 'El código ya existe.'), [
@@ -62,6 +81,12 @@ class OperationCentersTable extends Table implements ExcelExportableInterface
         return $rules;
     }
 
+    /**
+     * Custom finder: arma la lista clave-valor (id => etiqueta) para poblar selects.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query The query builder.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
     public function findCodeList(SelectQuery $query): SelectQuery
     {
         return $query->select(['id', 'code', 'name'])
@@ -83,11 +108,21 @@ class OperationCentersTable extends Table implements ExcelExportableInterface
         ];
     }
 
+    /**
+     * Título de la hoja al exportar/importar el catálogo en Excel.
+     *
+     * @return string
+     */
     public function getExcelSheetTitle(): string
     {
         return 'Centros de Operación';
     }
 
+    /**
+     * Slug del archivo al descargar la plantilla Excel del catálogo.
+     *
+     * @return string
+     */
     public function getExcelDownloadSlug(): string
     {
         return 'centros_operacion';

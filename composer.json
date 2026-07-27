@@ -56,6 +56,8 @@
         ],
         "cs-check": "phpcs --colors -p",
         "cs-fix": "phpcbf --colors -p",
+        "cs-diff": "php bin/cs-diff.php",
+        "hooks:install": "git config core.hooksPath hooks",
         "test": "phpunit --colors=always"
     }
 }

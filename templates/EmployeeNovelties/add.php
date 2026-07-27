@@ -15,15 +15,15 @@ $this->assign('title', 'Nueva Novedad');
 ?>
 <?= $this->element('cdn_select2') ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Novedades', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span class="current">Nueva</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Nueva Novedad</span>
+            <span class="spi-page-title">Nueva Novedad</span>
         </div>
     </div>
     <div class="d-flex gap-2 flex-shrink-0">
@@ -35,7 +35,7 @@ $this->assign('title', 'Nueva Novedad');
     </div>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <?= $this->Form->create($novelty, ['type' => 'file']) ?>
     <input type="hidden" name="filing_date" value="<?= date('Y-m-d') ?>">
 
@@ -74,7 +74,7 @@ $this->assign('title', 'Nueva Novedad');
                 'label' => false,
                 'options' => $noveltyTypes,
                 'empty' => '-- Seleccione --',
-                'class' => 'form-select',
+                'class' => 'form-select select2-enable',
                 'id' => 'novelty-type-select',
             ]) ?>
         </div>
@@ -92,7 +92,7 @@ $this->assign('title', 'Nueva Novedad');
 
         <!-- Conditional fields -->
         <div class="col-md-4" id="permission-date-group">
-            <label class="input-label">Fecha del Permiso</label>
+            <label class="input-label">Fecha de la solicitud</label>
             <input type="text" name="permission_date" class="form-control flatpickr-date"
                    value="<?= h($novelty->permission_date?->format('Y-m-d') ?? '') ?>">
         </div>

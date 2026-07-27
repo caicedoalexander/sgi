@@ -1,19 +1,19 @@
 <?php
 /**
- * Sección de Soportes — element compartido. Card `.sgi-card` con header
+ * Sección de Soportes — element compartido. Card `.spi-card` con header
  * (contador + botón "Subir" opcional), empty state (dropzone si hay subida
  * habilitada, si no `.empty-state`) y lista de `document_row` agrupada
  * opcionalmente por estado.
  *
  * Conserva los IDs #docs-list, #docs-empty-state, #docs-folder-count (contrato
- * de webroot/js/sgi-document-uploader.js). El host emite aparte el
+ * de webroot/js/spi-document-uploader.js). El host emite aparte el
  * `document_row_template` cuando hay subida.
  *
  * @var \App\View\AppView $this
  * @var array   $groups        Lista de grupos. Cada grupo:
  *                              ['label'=>?string, 'pillKind'=>?string, 'rows'=>array].
  *                              Cada row es el array de params de element('document_row').
- * @var int     $totalDocs     Conteo total para el .sgi-folder-count.
+ * @var int     $totalDocs     Conteo total para el .spi-folder-count.
  * @var bool    $canUpload     true → empty state como .dropzone; false → .empty-state.
  * @var ?string $uploadModalId Id del modal de subida (target del botón y la dropzone).
  * @var ?string $emptyTitle    Título del empty state. Default: "Sin soportes adjuntos".
@@ -30,12 +30,12 @@ foreach ($groups as $g) {
 }
 $showUpload = $canUpload && $uploadModalId !== null;
 ?>
-<div class="sgi-card card d-flex flex-column">
+<div class="spi-card card d-flex flex-column">
     <div class="d-flex align-items-center justify-content-between" style="margin-bottom:12px;">
-        <span class="sgi-label d-inline-flex align-items-center gap-2">
+        <span class="spi-label d-inline-flex align-items-center gap-2">
             <i class="bi bi-paperclip" aria-hidden="true"></i>
             Soportes
-            <span id="docs-folder-count" class="sgi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
+            <span id="docs-folder-count" class="spi-folder-count"><?= $totalDocs ?> doc<?= $totalDocs !== 1 ? 's' : '' ?></span>
         </span>
         <?php if ($showUpload): ?>
         <button type="button" class="btn btn-default btn-sm"

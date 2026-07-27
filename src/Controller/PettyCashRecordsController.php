@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Attribute\Permission;
 use App\Attribute\PipelineAction;
+use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
 use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
@@ -15,11 +16,14 @@ use App\Service\PettyCashDocumentService;
 use App\Service\PettyCashHistoryService;
 use App\Service\PettyCashPaymentService;
 use App\Service\PettyCashPipelineService;
+use App\Service\Pipeline\PettyCash\Guard\PettyCashGuard;
 use App\Service\Pipeline\PettyCash\Policy\PettyCashActionPolicy;
 use App\Service\StructuredLogger;
+use App\ValueObject\UserContext;
 use App\ViewModel\PettyCashAddViewModel;
 use App\ViewModel\PettyCashEditViewModel;
 use App\ViewModel\PettyCashViewViewModel;
+use Cake\Http\Response;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
@@ -55,6 +59,9 @@ class PettyCashRecordsController extends AppController
         $this->historyService = $container->get(PettyCashHistoryService::class);
     }
 
+    /**
+     * @return \App\Model\Entity\User
+     */
     private function _getCurrentUser(): User
     {
         return $this->Authentication->getIdentity()->getOriginalData();
@@ -168,15 +175,19 @@ class PettyCashRecordsController extends AppController
         }
     }
 
+    /**
+     * @param string|null $id
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null): void
+    public function view(?string $id = null): void
     {
         $record = $this->PettyCashRecords->get($id, contain: [
             'CreatedByUsers',
             'BankingEntities',
             'PaymentCreatedByUsers',
             'PaymentAuthorizedByUsers',
-            'Invoices' => ['Providers'],
+            'Invoices' => ['Providers', 'Employees', 'InvoiceDocuments'],
             'PettyCashDocuments' => [
                 'UploadedByUsers',
                 'sort' => ['PettyCashDocuments.created' => 'DESC'],
@@ -187,9 +198,16 @@ class PettyCashRecordsController extends AppController
             ],
         ]);
 
-        $this->set('viewModel', new PettyCashViewViewModel($record));
+        $this->set('viewModel', new PettyCashViewViewModel(
+            $record,
+            (new PettyCashGuard())->childRequirements((int)$record->id),
+            canUploadSupport: $this->_canUploadChildSupport(),
+        ));
     }
 
+    /**
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -217,7 +235,7 @@ class PettyCashRecordsController extends AppController
                     (int)$user->id,
                 );
                 if (!empty($invoiceIds)) {
-                    $errors = $this->pettyCashService->addInvoices($record, $invoiceIds);
+                    $errors = $this->pettyCashService->addInvoices($record, $invoiceIds, (int)$user->id);
                     foreach ($errors as $err) {
                         $this->Flash->warning($err);
                     }
@@ -249,13 +267,17 @@ class PettyCashRecordsController extends AppController
         $this->set(get_object_vars($vm));
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $record = $this->PettyCashRecords->get($id, contain: [
             'CreatedByUsers',
             'OperationCenters',
-            'Invoices' => ['Providers', 'OperationCenters'],
+            'Invoices' => ['Providers', 'Employees', 'OperationCenters', 'InvoiceDocuments'],
             'PettyCashDocuments' => [
                 'UploadedByUsers',
                 'sort' => ['PettyCashDocuments.created' => 'DESC'],
@@ -317,6 +339,24 @@ class PettyCashRecordsController extends AppController
     }
 
     /**
+     * Gate para pintar el atajo de subir soporte en las hijas. Las hijas de un
+     * registro de Caja Menor viven en `contabilidad` (saltan `aprobacion` por
+     * diseño — sin DIAN), así que el gate se resuelve contra ese step. Es un
+     * PROXY visual; `Invoices::uploadDocument` revalida server-side.
+     */
+    private function _canUploadChildSupport(): bool
+    {
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        $context = new UserContext($roleId);
+
+        return $this->authFacade->canOperate(
+            $context,
+            PipelineStepConstants::PIPELINE_INVOICES,
+            InvoiceConstants::STATUS_CONTABILIDAD,
+        ) && $this->_checkPermission('invoices', 'edit');
+    }
+
+    /**
      * Build the read-side view model for `edit()`. Encapsulates dropdown
      * loading, permission flags, advance/regress state, and synthetic payment
      * adaptation for the shared `payment_section` element.
@@ -359,11 +399,17 @@ class PettyCashRecordsController extends AppController
             providers: $this->fetchTable('Providers')->find('list')->orderBy(['name' => 'ASC'])->toArray(),
             bankingEntities: $this->fetchTable('BankingEntities')->find('list')->toArray(),
             groupFilters: $this->request->getQueryParams(),
+            readiness: (new PettyCashGuard())->childRequirements((int)$record->id),
+            canUploadSupport: $this->_canUploadChildSupport(),
         );
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH)]
-    public function regressStatus($id = null)
+    public function regressStatus(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PettyCashRecords->get($id);
@@ -390,8 +436,12 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH, step: PettyCashConstants::STATUS_TESORERIA)]
-    public function registerPayment($id = null)
+    public function registerPayment(?string $id = null)
     {
         $this->request->allowMethod(['post']);
 
@@ -411,16 +461,23 @@ class PettyCashRecordsController extends AppController
         );
 
         if ($result->success) {
+            // registerPayment avanza el registro a autorizacion_pago.
             $this->Flash->success($result->data ?? 'Pago registrado.');
-        } else {
-            $this->Flash->error($result->firstError() ?? 'No se pudo registrar el pago.');
+
+            return $this->redirect(['action' => 'index']);
         }
+
+        $this->Flash->error($result->firstError() ?? 'No se pudo registrar el pago.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH, step: PettyCashConstants::STATUS_AUTORIZACION_PAGO)]
-    public function authorizePayment($id = null)
+    public function authorizePayment(?string $id = null)
     {
         $this->request->allowMethod(['post']);
 
@@ -432,10 +489,13 @@ class PettyCashRecordsController extends AppController
         );
 
         if ($result->success) {
+            // authorizePayment avanza el registro a verificacion_pago.
             $this->Flash->success($result->data ?? 'Pago autorizado.');
-        } else {
-            $this->Flash->error($result->firstError() ?? 'No se pudo autorizar.');
+
+            return $this->redirect(['action' => 'index']);
         }
+
+        $this->Flash->error($result->firstError() ?? 'No se pudo autorizar.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
@@ -443,9 +503,11 @@ class PettyCashRecordsController extends AppController
     /**
      * Tesorería confirma que el pago del record ya se ejecutó.
      * Avanza record y facturas hijas de verificacion_pago → pagada.
+     *
+     * @return \Cake\Http\Response|null
      */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH, step: PettyCashConstants::STATUS_VERIFICACION_PAGO)]
-    public function confirmPayment($id = null)
+    public function confirmPayment(?string $id = null)
     {
         $this->request->allowMethod(['post']);
 
@@ -461,8 +523,12 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'view', $id]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH, step: PettyCashConstants::STATUS_AUTORIZACION_PAGO)]
-    public function rejectPayment($id = null)
+    public function rejectPayment(?string $id = null)
     {
         $this->request->allowMethod(['post']);
 
@@ -482,16 +548,23 @@ class PettyCashRecordsController extends AppController
         );
 
         if ($result->success) {
+            // rejectPayment regresa el registro a tesoreria.
             $this->Flash->success($result->data ?? 'Pago rechazado.');
-        } else {
-            $this->Flash->error($result->firstError() ?? 'No se pudo rechazar el pago.');
+
+            return $this->redirect(['action' => 'index']);
         }
+
+        $this->Flash->error($result->firstError() ?? 'No se pudo rechazar el pago.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $record = $this->PettyCashRecords->get($id);
@@ -519,8 +592,13 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    /**
+     * @param string|null $recordId
+     * @param string|null $invoiceId
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'edit')]
-    public function removeInvoice($recordId = null, $invoiceId = null)
+    public function removeInvoice(?string $recordId = null, ?string $invoiceId = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PettyCashRecords->get($recordId);
@@ -544,8 +622,12 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $recordId]);
     }
 
+    /**
+     * @param string|null $recordId
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'edit')]
-    public function linkInvoices($recordId = null)
+    public function linkInvoices(?string $recordId = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PettyCashRecords->get($recordId);
@@ -556,14 +638,18 @@ class PettyCashRecordsController extends AppController
             return $this->redirect(['action' => 'edit', $recordId]);
         }
 
-        $invoiceIds = array_map('intval', array_filter((array)$this->request->getData('invoice_ids', [])));
+        $invoiceIds = array_unique(array_map('intval', array_filter((array)$this->request->getData('invoice_ids', []))));
         if (empty($invoiceIds)) {
             $this->Flash->warning('Seleccione al menos una factura para vincular.');
 
             return $this->redirect(['action' => 'edit', $recordId]);
         }
 
-        $errors = $this->pettyCashService->addInvoices($record, $invoiceIds);
+        $errors = $this->pettyCashService->addInvoices(
+            $record,
+            $invoiceIds,
+            (int)$this->_getCurrentUser()->id,
+        );
         if (empty($errors)) {
             $this->_recordInvoicesLinked((int)$record->id, $invoiceIds);
             $this->Flash->success(sprintf('%d factura(s) vinculada(s).', count($invoiceIds)));
@@ -628,11 +714,20 @@ class PettyCashRecordsController extends AppController
         return (string)($invoice->invoice_number ?? $invoiceId);
     }
 
-    #[Permission(action: 'add')]
-    public function uploadDocument($id = null)
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH)]
+    public function uploadDocument(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $record = $this->PettyCashRecords->get($id);
+
+        $gate = $this->_documentGate($record, 'subir');
+        if ($gate !== null) {
+            return $gate;
+        }
 
         $file = $this->request->getUploadedFile('file');
         if (!$file) {
@@ -687,8 +782,12 @@ class PettyCashRecordsController extends AppController
         return $this->redirect(['action' => 'edit', $id]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'edit')]
-    public function addObservation($id = null)
+    public function addObservation(?string $id = null)
     {
         return $this->_handleAddObservation(
             'PettyCashObservations',
@@ -699,19 +798,20 @@ class PettyCashRecordsController extends AppController
         );
     }
 
-    #[Permission(action: 'delete')]
-    public function deleteDocument($recordId = null, $documentId = null)
+    /**
+     * @param string|null $recordId
+     * @param string|null $documentId
+     * @return \Cake\Http\Response|null|void
+     */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_PETTY_CASH)]
+    public function deleteDocument(?string $recordId = null, ?string $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $record = $this->PettyCashRecords->get($recordId);
 
-        if ($record->isPagada()) {
-            if ($this->_isJsonRequest()) {
-                return $this->_jsonResponse(['success' => false, 'error' => 'No se puede eliminar un soporte de un registro pagado.']);
-            }
-            $this->Flash->error('No se puede eliminar un soporte de un registro pagado.');
-
-            return $this->redirect(['action' => 'edit', $recordId]);
+        $gate = $this->_documentGate($record, 'eliminar');
+        if ($gate !== null) {
+            return $gate;
         }
 
         $documentsTable = TableRegistry::getTableLocator()->get('PettyCashDocuments');
@@ -745,6 +845,47 @@ class PettyCashRecordsController extends AppController
         } else {
             $this->Flash->error('No se pudo eliminar el soporte.');
         }
+
+        return $this->redirect(['action' => 'edit', $recordId]);
+    }
+
+    /**
+     * Gate compartido de soportes: 409 si el registro está pagado, 403 si el rol
+     * no puede operar el paso actual del pipeline de caja menor.
+     */
+    private function _documentGate(PettyCashRecord $record, string $blockedActionLabel): ?Response
+    {
+        if ($record->isPagada()) {
+            return $this->_documentGateError(
+                sprintf('No se puede %s un soporte de un registro pagado.', $blockedActionLabel),
+                (int)$record->id,
+                409,
+            );
+        }
+
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        if (!$this->actionPolicy->canOperateStep($roleId, (string)$record->status)) {
+            return $this->_documentGateError(
+                'No tiene permisos para gestionar soportes en este paso.',
+                (int)$record->id,
+                403,
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * Construye la respuesta de error del gate de documentos. JSON con status
+     * HTTP apropiado para AJAX, redirect con flash para POST tradicional.
+     */
+    private function _documentGateError(string $message, int $recordId, int $statusCode): Response
+    {
+        if ($this->_isJsonRequest()) {
+            return $this->_jsonResponse(['success' => false, 'error' => $message], $statusCode);
+        }
+
+        $this->Flash->error($message);
 
         return $this->redirect(['action' => 'edit', $recordId]);
     }

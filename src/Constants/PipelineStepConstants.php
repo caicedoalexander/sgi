@@ -31,6 +31,30 @@ final class PipelineStepConstants
     ];
 
     /**
+     * Mapa pipeline → módulo CRUD (`permissions.module` / AuthorizationService::MODULES)
+     * cuya bandeja muestra los registros de ese pipeline.
+     *
+     * Fuente única del vínculo entre las dos tablas de permisos: un rol que
+     * puede operar pasos de un pipeline necesita `can_view` del módulo mapeado,
+     * de lo contrario el link del sidebar no se renderiza y su bandeja queda
+     * invisible. Nótese que el slug del pipeline NO siempre coincide con el del
+     * módulo (legalizations→advances, novelties→employee_novelties,
+     * liquidation_docs→novelty_liquidation_docs) — ver "Split de naming Advance"
+     * y la convención de slugs en CLAUDE.md.
+     *
+     * @var array<string, string>
+     */
+    public const MODULE_BY_PIPELINE = [
+        self::PIPELINE_INVOICES => 'invoices',
+        self::PIPELINE_NOVELTIES => 'employee_novelties',
+        self::PIPELINE_PAYMENT_SCHEDULINGS => 'payment_schedulings',
+        self::PIPELINE_REFUNDS => 'refunds',
+        self::PIPELINE_PETTY_CASH => 'petty_cash',
+        self::PIPELINE_LEGALIZATIONS => 'advances',
+        self::PIPELINE_LIQUIDATION_DOCS => 'novelty_liquidation_docs',
+    ];
+
+    /**
      * Pasos válidos por pipeline. La lista debe coincidir con los estados que
      * los services de cada dominio usan para autorización (no necesariamente
      * con todos los estados del pipeline — se excluyen estados terminales sin
@@ -62,6 +86,7 @@ final class PipelineStepConstants
         ],
         self::PIPELINE_REFUNDS => [
             RefundConstants::STATUS_AGRUPACION,
+            RefundConstants::STATUS_APROBACION,
             RefundConstants::STATUS_CONTABILIDAD,
             RefundConstants::STATUS_TESORERIA,
             RefundConstants::STATUS_AUTORIZACION_PAGO,
@@ -76,6 +101,7 @@ final class PipelineStepConstants
         ],
         self::PIPELINE_LEGALIZATIONS => [
             AdvanceConstants::STATUS_VALIDACION,
+            AdvanceConstants::STATUS_APROBACION,
             AdvanceConstants::STATUS_REVISION_FIRMAS,
             AdvanceConstants::STATUS_CONTABILIDAD,
             AdvanceConstants::STATUS_TESORERIA,
@@ -128,6 +154,7 @@ final class PipelineStepConstants
         ],
         self::PIPELINE_REFUNDS => [
             RefundConstants::STATUS_AGRUPACION => RefundConstants::STATUS_LABELS[RefundConstants::STATUS_AGRUPACION],
+            RefundConstants::STATUS_APROBACION => RefundConstants::STATUS_LABELS[RefundConstants::STATUS_APROBACION],
             RefundConstants::STATUS_CONTABILIDAD => RefundConstants::STATUS_LABELS[RefundConstants::STATUS_CONTABILIDAD],
             RefundConstants::STATUS_TESORERIA => RefundConstants::STATUS_LABELS[RefundConstants::STATUS_TESORERIA],
             RefundConstants::STATUS_AUTORIZACION_PAGO => RefundConstants::STATUS_LABELS[RefundConstants::STATUS_AUTORIZACION_PAGO],
@@ -142,6 +169,7 @@ final class PipelineStepConstants
         ],
         self::PIPELINE_LEGALIZATIONS => [
             AdvanceConstants::STATUS_VALIDACION => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_VALIDACION],
+            AdvanceConstants::STATUS_APROBACION => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_APROBACION],
             AdvanceConstants::STATUS_REVISION_FIRMAS => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_REVISION_FIRMAS],
             AdvanceConstants::STATUS_CONTABILIDAD => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_CONTABILIDAD],
             AdvanceConstants::STATUS_TESORERIA => AdvanceConstants::STATUS_LABELS[AdvanceConstants::STATUS_TESORERIA],

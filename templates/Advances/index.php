@@ -143,7 +143,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.2fr 2fr 1.2fr 1.1fr 1.7fr 1.7
 <?php endif; ?>
 
 <?php /* ════════════════════════ TABLA DE ANTICIPOS ════════════════════════ */ ?>
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div style="<?= $gridStyle ?>padding:12px 18px;background:var(--bg-subtle);font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:0.8px;text-transform:uppercase;" role="row">
         <span>Anticipo</span>
         <span>Beneficiario</span>
@@ -199,7 +199,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.2fr 2fr 1.2fr 1.1fr 1.7fr 1.7
             <?php /* 5. Pago · Pipeline */ ?>
             <div style="min-width:0;">
                 <?php if ($row->pipelineIdx >= 0): ?>
-                    <div class="pipeline-mini" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
+                    <div class="pipeline-mini <?= h($row->pipelineVariant) ?>" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
                         <?php for ($s = 0; $s < $row->pipelineLength; $s++): ?>
                             <div class="<?= $s <= $row->pipelineIdx ? 'on' : '' ?>"></div>
                         <?php endfor; ?>
@@ -217,7 +217,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.2fr 2fr 1.2fr 1.1fr 1.7fr 1.7
             <div style="min-width:0;">
                 <?php if ($row->hasLegalization): ?>
                     <?php if ($row->legalizationIdx >= 0): ?>
-                        <div class="pipeline-mini" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
+                        <div class="pipeline-mini <?= h($row->legalizationVariant) ?>" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
                             <?php for ($s = 0; $s < $row->legalizationLength; $s++): ?>
                                 <div class="<?= $s <= $row->legalizationIdx ? 'on' : '' ?>"></div>
                             <?php endfor; ?>

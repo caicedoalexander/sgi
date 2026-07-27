@@ -49,7 +49,7 @@ endif;
     margin-bottom: 1.5rem;
 ">Error interno del servidor</div>
 
-<div class="sgi-error-divider"></div>
+<div class="spi-error-divider"></div>
 
 <p style="
     font-size: .95rem;

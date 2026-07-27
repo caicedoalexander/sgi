@@ -8,6 +8,11 @@ use Throwable;
 
 final class DatabaseHealthCheck implements HealthCheckInterface
 {
+    /**
+     * Verifica la conexión a la base de datos con un SELECT 1.
+     *
+     * @return \App\Service\HealthCheck\HealthCheckResult
+     */
     public function check(): HealthCheckResult
     {
         try {

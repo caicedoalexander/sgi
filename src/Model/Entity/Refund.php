@@ -44,21 +44,25 @@ class Refund extends Entity
         'refund_observations' => false,
     ];
 
+    /** @return bool true si el reintegro está en estado Agrupación. */
     public function isAgrupacion(): bool
     {
         return $this->status === RefundConstants::STATUS_AGRUPACION;
     }
 
+    /** @return bool true si el reintegro está en estado Contabilidad. */
     public function isContabilidad(): bool
     {
         return $this->status === RefundConstants::STATUS_CONTABILIDAD;
     }
 
+    /** @return bool true si el reintegro está en estado Tesorería. */
     public function isTesoreria(): bool
     {
         return $this->status === RefundConstants::STATUS_TESORERIA;
     }
 
+    /** @return bool true si el reintegro está en estado pagada. */
     public function isPagada(): bool
     {
         return $this->status === RefundConstants::STATUS_PAGADA;
@@ -72,6 +76,7 @@ class Refund extends Entity
         return $this->status === RefundConstants::STATUS_AUTORIZACION_PAGO;
     }
 
+    /** @return bool true si el reintegro está en estado Verificación de pago. */
     public function isVerificacionPago(): bool
     {
         return $this->status === RefundConstants::STATUS_VERIFICACION_PAGO;
@@ -136,6 +141,13 @@ class Refund extends Entity
         return $this->isVerificacionPago();
     }
 
+    /**
+     * Nombre del beneficiario del reintegro: nombre completo del empleado o
+     * razón social del proveedor según `beneficiary_type`; null si no aplica o
+     * la asociación no fue cargada.
+     *
+     * @return string|null
+     */
     public function getBeneficiaryName(): ?string
     {
         if ($this->beneficiary_type === RefundConstants::BENEFICIARY_TYPE_EMPLOYEE) {

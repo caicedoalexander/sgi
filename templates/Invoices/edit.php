@@ -144,22 +144,22 @@ $canRegress = !empty($viewModel->canRegress);
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
 
-<div class="sgi-edit-shell">
+<div class="spi-edit-shell">
 
 <?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
-<div class="sgi-edit-shell-head">
+<div class="spi-edit-shell-head">
 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 view-anim">
     <div style="min-width:0;">
         <div class="d-flex align-items-center flex-wrap gap-1"
              style="font-size:var(--fs-body-sm);color:var(--text-faint);margin-bottom:6px;">
-            <?= $this->Html->link(h($listLabel), $indexUrl, ['class' => 'sgi-fg-faint', 'style' => 'text-decoration:none;']) ?>
+            <?= $this->Html->link(h($listLabel), $indexUrl, ['class' => 'spi-fg-faint', 'style' => 'text-decoration:none;']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
-            <?= $this->Html->link(h($idLabel), $viewUrl, ['class' => 'sgi-fg-faint', 'style' => 'text-decoration:none;']) ?>
+            <?= $this->Html->link(h($idLabel), $viewUrl, ['class' => 'spi-fg-faint', 'style' => 'text-decoration:none;']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span style="color:var(--text-default);">Editar</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title"><?= h($titleLabel) ?></span>
+            <span class="spi-page-title"><?= h($titleLabel) ?></span>
             <span class="mono" style="font-size:var(--fs-body-lg);color:var(--text-muted);padding:3px 8px;background:var(--bg-subtle);border-radius:var(--radius-sm);">
                 <?= h($idLabel) ?>
             </span>
@@ -176,7 +176,7 @@ $canRegress = !empty($viewModel->canRegress);
                       && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL): ?>
                 <span class="pill pill-warning-soft">Pago Parcial</span>
             <?php endif; ?>
-            <span class="d-inline-flex align-items-center gap-1 sgi-fg-secondary"
+            <span class="d-inline-flex align-items-center gap-1 spi-fg-secondary"
                   data-dirty-indicator hidden
                   style="font-size:var(--fs-label);font-weight:600;">
                 <span style="width:6px;height:6px;background:var(--secondary-color);border-radius:50%;"></span>
@@ -198,7 +198,7 @@ $canRegress = !empty($viewModel->canRegress);
     </div>
 </div>
 
-</div><?php /* fin .sgi-edit-shell-head */ ?>
+</div><?php /* fin .spi-edit-shell-head */ ?>
 
 <?php /* ── Formulario oculto para "Enviar links de aprobación" ── */ ?>
 <?php if ($viewModel->canSendLinks): ?>
@@ -210,10 +210,10 @@ $canRegress = !empty($viewModel->canRegress);
 <?= $this->Form->end() ?>
 <?php endif; ?>
 
-<?= $this->Form->create($invoice, ['id' => 'invoiceEditForm', 'class' => 'sgi-edit-shell-form']) ?>
+<?= $this->Form->create($invoice, ['id' => 'invoiceEditForm', 'class' => 'spi-edit-shell-form']) ?>
 <?= $this->Form->hidden('expected_status', ['value' => $invoice->pipeline_status]) ?>
 
-<div class="sgi-edit-shell-body view-anim">
+<div class="spi-edit-shell-body view-anim">
 
 <?php /* ── Banner: factura rechazada en aprobación de área ────── */ ?>
 <?php if ($viewModel->isRejected): ?>
@@ -226,12 +226,12 @@ $canRegress = !empty($viewModel->canRegress);
 </div>
 <?php endif; ?>
 
-<?php /* ── Alerta: legalización vinculada a un anticipo ───────── */ ?>
-<?php if (($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_LEGALIZACION && !empty($invoice->advance_id)): ?>
+<?php /* ── Alerta: factura vinculada a un anticipo ───────── */ ?>
+<?php if (!empty($invoice->advance_id) && $invoice->usesLegalizationView()): ?>
 <div class="alert alert-info d-flex justify-content-between align-items-center">
     <div>
         <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
-        Esta factura es una <strong>Legalización</strong> vinculada al
+        Esta factura (<strong><?= h($invoice->document_type) ?></strong>) está vinculada al
         <?= $this->Html->link('Anticipo #' . h($invoice->advance_id), ['controller' => 'Advances', 'action' => 'view', $invoice->advance_id]) ?>.
     </div>
 </div>
@@ -240,7 +240,7 @@ $canRegress = !empty($viewModel->canRegress);
 <div class="row gx-3">
 
     <?php /* ═══════════════════ COLUMNA IZQUIERDA ═══════════════════ */ ?>
-    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
+    <aside class="col-lg-3 spi-edit-col d-flex flex-column gap-3">
 
     <?php
     // Bloque Pagado/Saldo bajo el monto del hero (cuando aplica).
@@ -249,13 +249,13 @@ $canRegress = !empty($viewModel->canRegress);
         ob_start(); ?>
         <div class="d-flex" style="gap:18px;margin-top:12px;">
             <div>
-                <div class="sgi-label" style="font-size:var(--fs-micro);">Pagado</div>
+                <div class="spi-label" style="font-size:var(--fs-micro);">Pagado</div>
                 <div class="mono" style="font-size:var(--fs-body-lg);font-weight:700;color:var(--primary-color);margin-top:2px;">
                     $ <?= number_format($totalPagado, 0, ',', '.') ?>
                 </div>
             </div>
             <div>
-                <div class="sgi-label" style="font-size:var(--fs-micro);">Saldo</div>
+                <div class="spi-label" style="font-size:var(--fs-micro);">Saldo</div>
                 <div class="mono" style="font-size:var(--fs-body-lg);font-weight:700;margin-top:2px;color:<?= $saldo > 0 ? 'var(--secondary-color)' : 'var(--primary-color)' ?>;">
                     $ <?= number_format(max(0, $saldo), 0, ',', '.') ?>
                 </div>
@@ -323,7 +323,7 @@ $canRegress = !empty($viewModel->canRegress);
     </aside>
 
     <?php /* ═══════════════════ COLUMNA DERECHA ═══════════════════ */ ?>
-    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
+    <main class="col-lg-9 spi-edit-col d-flex flex-column gap-3">
 
         <?php /* ── Banner: requisitos para avanzar ─────────────── */ ?>
         <?php if ($showAdvanceBanner): ?>
@@ -351,9 +351,9 @@ $canRegress = !empty($viewModel->canRegress);
         <?php endif; ?>
 
         <?php /* ── Datos Generales (siempre visible) ───────────── */ ?>
-        <div class="sgi-card">
+        <div class="spi-card">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2" style="margin-bottom:14px;">
-                <span class="sgi-label">Datos Generales</span>
+                <span class="spi-label">Datos Generales</span>
                 <span style="font-size:11px;color:var(--text-faint);font-style:italic;">
                     Estos campos no cambian con la etapa
                 </span>
@@ -455,7 +455,7 @@ $canRegress = !empty($viewModel->canRegress);
                         'label' => false,
                         'options' => $viewModel->expenseTypes,
                         'empty' => '-- Seleccione --',
-                        'class' => 'form-select',
+                        'class' => 'form-select select2-enable',
                         'disabled' => !$canEdit('expense_type_id'),
                     ]) ?>
                 </div>
@@ -577,12 +577,12 @@ $canRegress = !empty($viewModel->canRegress);
 
         <?php /* ── Etapa actual: campos editables por estado ───── */ ?>
         <?php if (!empty($visibleStageSections)): ?>
-        <div class="sgi-card" style="position:relative;">
+        <div class="spi-card" style="position:relative;">
             <span class="accent-strip <?= $stageAccent ?>"></span>
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2" style="margin-bottom:14px;">
                 <div>
-                    <div class="sgi-label" style="color:var(--text-faint);">Etapa actual · editable</div>
-                    <div class="sgi-title-card d-inline-flex align-items-center gap-2" style="margin-top:4px;">
+                    <div class="spi-label" style="color:var(--text-faint);">Etapa actual · editable</div>
+                    <div class="spi-title-card d-inline-flex align-items-center gap-2" style="margin-top:4px;">
                         <?= h($currentLabel) ?>
                         <?php if ($nextLabel && !$viewModel->isRejected): ?>
                             <span style="font-size:11px;color:var(--text-faint);font-weight:500;">
@@ -636,9 +636,9 @@ $canRegress = !empty($viewModel->canRegress);
                                 <div>
                                     <strong>Rechazada por <?= h($rejector->user->full_name ?? $rejector->user->username ?? 'Aprobador') ?></strong>
                                     <?php if ($rejector->observations): ?>
-                                        <div class="mt-1 sgi-fg-muted" style="font-size:.85rem;"><?= h($rejector->observations) ?></div>
+                                        <div class="mt-1 spi-fg-muted" style="font-size:.85rem;"><?= h($rejector->observations) ?></div>
                                     <?php endif; ?>
-                                    <div class="mt-1 sgi-fg-faint" style="font-size:.8rem;">
+                                    <div class="mt-1 spi-fg-faint" style="font-size:.8rem;">
                                         Corrija los datos y re-asigne aprobadores para reiniciar el flujo.
                                     </div>
                                 </div>
@@ -646,7 +646,7 @@ $canRegress = !empty($viewModel->canRegress);
                         </div>
                         <?php endif; ?>
 
-                        <div class="sgi-approvers-widget d-flex flex-wrap gap-2" id="approvers-widget">
+                        <div class="spi-approvers-widget d-flex flex-wrap gap-2" id="approvers-widget">
                             <?php if (!empty($viewModel->currentApprovals)): ?>
                                 <?php foreach ($viewModel->currentApprovals as $a):
                                     echo $this->element('invoice_edit/_approver_chip', [
@@ -679,7 +679,7 @@ $canRegress = !empty($viewModel->canRegress);
                         <?php if ($viewModel->canSendLinks): ?>
                         <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
                             <button type="submit" form="sendApprovalLinksForm" class="btn btn-primary btn-sm"
-                                    data-sgi-confirm="¿Enviar enlaces de aprobación a los aprobadores seleccionados?">
+                                    data-spi-confirm="¿Enviar enlaces de aprobación a los aprobadores seleccionados?">
                                 <i class="bi bi-send" aria-hidden="true"></i>Enviar links de aprobación
                             </button>
                             <span class="input-help">Se envía independiente del botón Guardar</span>
@@ -712,7 +712,7 @@ $canRegress = !empty($viewModel->canRegress);
                               action="<?= $this->Url->build(['action' => 'resetFlow', $invoice->id]) ?>">
                             <?= $this->Form->hidden('_csrfToken', ['value' => $this->request->getAttribute('csrfToken')]) ?>
                             <button type="submit" class="btn btn-sm btn-outline-dark"
-                                    data-sgi-confirm="¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.">
+                                    data-spi-confirm="¿Reiniciar flujo? Se limpiarán aprobaciones y se permitirá reenviar enlaces.">
                                 <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reiniciar flujo
                             </button>
                         </form>
@@ -822,8 +822,8 @@ $canRegress = !empty($viewModel->canRegress);
         <?php /* ── Cierre de flujo (Verificación de pago) ──────── */ ?>
         <?php if ($viewModel->canConfirmPayment
                   && $currentStatus === InvoiceConstants::STATUS_VERIFICACION_PAGO): ?>
-        <div class="sgi-card" style="position:relative;">
-            <span class="sgi-label">Cierre de flujo</span>
+        <div class="spi-card" style="position:relative;">
+            <span class="spi-label">Cierre de flujo</span>
             <p style="font-size:var(--fs-body);color:var(--text-muted);margin:8px 0 12px;">
                 El pago fue autorizado por el Contador. Verifique que todos los soportes estén
                 cargados y cierre el flujo.
@@ -880,31 +880,31 @@ foreach ($documentsByStatus as $status => $docs) {
 
     </main>
 </div><?php /* fin .row */ ?>
-</div><?php /* fin .sgi-edit-shell-body */ ?>
+</div><?php /* fin .spi-edit-shell-body */ ?>
 
 <?php /* ── Footer de acciones ──────────────────────────── */ ?>
 <?php if (!empty($viewModel->editableFields) || $canRegress): ?>
-<div class="sgi-edit-footer">
-    <div class="sgi-edit-footer-meta">
+<div class="spi-edit-footer">
+    <div class="spi-edit-footer-meta">
         <span class="d-inline-flex align-items-center gap-1">
-            <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+            <i class="bi bi-person spi-fg-faint" aria-hidden="true"></i>
             Rol: <strong style="color:var(--text-default);"><?= h($viewModel->roleName) ?></strong>
         </span>
         <?php if ($invoice->modified): ?>
         <span style="width:1px;height:14px;background:var(--rule);"></span>
         <span class="d-inline-flex align-items-center gap-1">
-            <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+            <i class="bi bi-clock spi-fg-faint" aria-hidden="true"></i>
             Última modificación: <span class="mono"><?= $invoice->modified->format('d/m/Y H:i') ?></span>
         </span>
         <?php endif; ?>
         <span style="width:1px;height:14px;background:var(--rule);" data-dirty-indicator hidden></span>
-        <span class="d-inline-flex align-items-center gap-1 sgi-fg-secondary"
+        <span class="d-inline-flex align-items-center gap-1 spi-fg-secondary"
               data-dirty-indicator hidden style="font-weight:600;">
             <span style="width:6px;height:6px;background:var(--secondary-color);border-radius:50%;"></span>
             Hay cambios sin guardar
         </span>
     </div>
-    <div class="sgi-edit-footer-actions">
+    <div class="spi-edit-footer-actions">
         <?= $this->Html->link('Cancelar', $viewUrl, ['class' => 'btn btn-ghost']) ?>
         <?php if (!empty($viewModel->editableFields)): ?>
             <button type="submit" class="<?= h($viewModel->submitButtonClass) ?>">
@@ -917,7 +917,7 @@ foreach ($documentsByStatus as $status => $docs) {
 
 <?= $this->Form->end() ?>
 
-</div><?php /* fin .sgi-edit-shell */ ?>
+</div><?php /* fin .spi-edit-shell */ ?>
 
 <?php /* ═══════════════════ MODALES ═══════════════════ */ ?>
 <?php if ($canRegress && empty($viewModel->regressLockMessage)): ?>
@@ -950,8 +950,8 @@ foreach ($documentsByStatus as $status => $docs) {
 ]) ?>
 
 <?= $this->element('document_row_template', ['showBadge' => true]) ?>
-<?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
+<?= $this->Html->script('spi-document-uploader', ['block' => true]) ?>
 
 <?php /* El chat de observaciones es autocontenido en observations/drawer.php
-         (emite su <template> e inicializa SgiObservationChat). */ ?>
+         (emite su <template> e inicializa SpiObservationChat). */ ?>
 <?= $this->element('invoice_edit/scripts', ['isAdvance' => $isAdvance]) ?>

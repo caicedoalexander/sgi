@@ -47,11 +47,12 @@ class PettyCashPipelineService
         ?PettyCashLockPolicy $lockPolicy = null,
     ) {
         $this->grouped = new GroupedInvoiceService(
-            documentType: InvoiceConstants::DOCTYPE_CAJA_MENOR,
+            documentType: [InvoiceConstants::DOCTYPE_CAJA_MENOR, InvoiceConstants::DOCTYPE_RECIBO_CAJA],
             fkField: 'petty_cash_record_id',
             recordTableName: 'PettyCashRecords',
             fkLabel: 'Caja Menor',
             historyService: $historyService,
+            linkableStatus: [InvoiceConstants::STATUS_APROBACION, InvoiceConstants::STATUS_CONTABILIDAD],
         );
         $this->auth = $auth;
         $this->fieldPolicy = $fieldPolicy;
@@ -81,13 +82,83 @@ class PettyCashPipelineService
     }
 
     /**
+     * Vincula facturas al registro. Las hijas que estén en `aprobacion` se
+     * auto-avanzan a `contabilidad` en la MISMA transacción (patrón
+     * "PO-backed": el vínculo a Caja Menor certifica la aprobación; ver spec
+     * 2026-07-14 §3.5). Desvincular NO regresa el estado (asimetría deliberada).
+     *
      * @param \App\Model\Entity\PettyCashRecord $record Record.
      * @param array $invoiceIds Invoice IDs.
-     * @return array
+     * @param int $userId Usuario que vincula (auditoría del auto-avance).
+     * @return array Errores (vacío = éxito).
      */
-    public function addInvoices(PettyCashRecord $record, array $invoiceIds): array
+    public function addInvoices(PettyCashRecord $record, array $invoiceIds, int $userId): array
     {
-        return $this->grouped->addInvoices($record, $invoiceIds);
+        $errors = $this->grouped->validateGrouping($invoiceIds);
+        if (!empty($errors)) {
+            return $errors;
+        }
+
+        $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
+
+        $linkErrors = [];
+        $ok = $invoicesTable->getConnection()->transactional(
+            function () use ($record, $invoiceIds, $invoicesTable, $userId, &$linkErrors): bool {
+                // Snapshot dentro de la transacción: las hijas que están en
+                // `aprobacion` justo antes de vincular son las que se promueven.
+                $toPromote = $invoicesTable->find()
+                    ->select(['id'])
+                    ->where([
+                        'id IN' => $invoiceIds,
+                        'pipeline_status' => InvoiceConstants::STATUS_APROBACION,
+                    ])
+                    ->all()
+                    ->extract('id')
+                    ->toList();
+
+                $linkErrors = $this->grouped->addInvoices($record, $invoiceIds);
+                if (!empty($linkErrors)) {
+                    return false;
+                }
+
+                if (!empty($toPromote)) {
+                    $invoicesTable->updateAll(
+                        ['pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD],
+                        ['id IN' => $toPromote, 'pipeline_status' => InvoiceConstants::STATUS_APROBACION],
+                    );
+
+                    foreach ($toPromote as $invoiceId) {
+                        $this->grouped->getHistoryService()->recordStatusChange(
+                            (int)$invoiceId,
+                            InvoiceConstants::STATUS_APROBACION,
+                            InvoiceConstants::STATUS_CONTABILIDAD,
+                            $userId,
+                        );
+                    }
+
+                    $this->history->recordFieldChange(
+                        (int)$record->id,
+                        'invoices_auto_advanced',
+                        null,
+                        sprintf(
+                            'Avance automático a Contabilidad por vinculación a Caja Menor %s (%d %s)',
+                            (string)$record->code,
+                            count($toPromote),
+                            count($toPromote) === 1 ? 'factura' : 'facturas',
+                        ),
+                        $userId,
+                    );
+                }
+
+                return true;
+            },
+        );
+
+        if (!$ok) {
+            return !empty($linkErrors) ? $linkErrors : ['No se pudo vincular las facturas.'];
+        }
+
+        return [];
     }
 
     /**
@@ -211,7 +282,7 @@ class PettyCashPipelineService
         if ($record->isAgrupacion() && !empty($data['invoice_ids'])) {
             $invoiceIds = array_map('intval', array_filter((array)$data['invoice_ids']));
             if (!empty($invoiceIds)) {
-                $linkWarnings = $this->addInvoices($record, $invoiceIds);
+                $linkWarnings = $this->addInvoices($record, $invoiceIds, $userId);
                 if (empty($linkWarnings)) {
                     $this->_recordInvoicesLinked((int)$record->id, $invoiceIds, $userId);
                 }

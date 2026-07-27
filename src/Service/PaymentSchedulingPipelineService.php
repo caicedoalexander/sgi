@@ -26,6 +26,14 @@ class PaymentSchedulingPipelineService
     private PaymentSchedulingHistoryService $schedulingHistory;
     private ?EventManagerInterface $events;
 
+    /**
+     * @param \App\Service\InvoicePaymentService $paymentService Servicio de pagos de facturas.
+     * @param \App\Authorization\AuthorizationFacade $auth Fachada de autorización de pasos de pipeline.
+     * @param \App\Service\Pipeline\PaymentScheduling\PaymentSchedulingPipelineStateRegistry|null $stateRegistry Registro de estados del pipeline.
+     * @param \App\Service\InvoiceHistoryService|null $historyService Servicio de auditoría de facturas.
+     * @param \Cake\Event\EventManagerInterface|null $events Event manager para publicar eventos.
+     * @param \App\Service\PaymentSchedulingHistoryService|null $schedulingHistory Servicio de auditoría de programaciones.
+     */
     public function __construct(
         private readonly InvoicePaymentService $paymentService,
         AuthorizationFacade $auth,
@@ -41,6 +49,12 @@ class PaymentSchedulingPipelineService
         $this->events = $events ?? EventManager::instance();
     }
 
+    /**
+     * Retorna los estados del pipeline que el rol puede operar.
+     *
+     * @param int $roleId Id del rol.
+     * @return array
+     */
     public function getVisibleStatuses(int $roleId): array
     {
         return $this->auth->operableSteps(
@@ -49,11 +63,23 @@ class PaymentSchedulingPipelineService
         );
     }
 
+    /**
+     * Resuelve el siguiente estado del pipeline, o null si es terminal.
+     *
+     * @param string $currentStatus Estado actual.
+     * @return string|null
+     */
     public function getNextStatus(string $currentStatus): ?string
     {
         return PipelineStatus::tryFrom($currentStatus)?->next()?->value;
     }
 
+    /**
+     * Resuelve el estado anterior del pipeline, o null si es el primero.
+     *
+     * @param string $currentStatus Estado actual.
+     * @return string|null
+     */
     public function getPreviousStatus(string $currentStatus): ?string
     {
         return PipelineStatus::tryFrom($currentStatus)?->previous()?->value;
@@ -103,6 +129,13 @@ class PaymentSchedulingPipelineService
         return null;
     }
 
+    /**
+     * Valida los requisitos de avance de la programación desde un estado.
+     *
+     * @param \App\Model\Entity\PaymentScheduling $scheduling Programación de pago.
+     * @param string $fromStatus Estado de origen.
+     * @return array
+     */
     public function validateTransitionRequirements(PaymentScheduling $scheduling, string $fromStatus): array
     {
         $fromEnum = PipelineStatus::tryFrom($fromStatus);
@@ -113,6 +146,12 @@ class PaymentSchedulingPipelineService
         return $this->stateRegistry->get($fromEnum)->validateAdvance($scheduling);
     }
 
+    /**
+     * Retorna el mensaje de bloqueo de regresión, o null si puede regresar.
+     *
+     * @param \App\Model\Entity\PaymentScheduling $scheduling Programación de pago.
+     * @return string|null
+     */
     public function getRegressionLockMessage(PaymentScheduling $scheduling): ?string
     {
         return null;

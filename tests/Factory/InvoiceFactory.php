@@ -74,4 +74,9 @@ class InvoiceFactory extends BaseFactory
     {
         return $this->setField('document_type', InvoiceConstants::DOCTYPE_LEGALIZACION);
     }
+
+    public function reciboDeCaja(): static
+    {
+        return $this->setField('document_type', InvoiceConstants::DOCTYPE_RECIBO_CAJA);
+    }
 }

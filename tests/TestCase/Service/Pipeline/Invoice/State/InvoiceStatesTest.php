@@ -5,7 +5,9 @@ namespace App\Test\TestCase\Service\Pipeline\Invoice\State;
 
 use App\Constants\Domain\Invoice\PipelineStatus;
 use App\Constants\InvoiceConstants;
+use App\Model\Entity\Invoice;
 use App\Service\InvoicePaymentService;
+use App\Service\Pipeline\Invoice\Guard\InvoiceGuard;
 use App\Service\Pipeline\Invoice\State\AprobacionState;
 use App\Service\Pipeline\Invoice\State\AutorizacionPagoState;
 use App\Service\Pipeline\Invoice\State\ContabilidadState;
@@ -18,9 +20,21 @@ use stdClass;
 
 final class InvoiceStatesTest extends TestCase
 {
+    /**
+     * AprobacionState con un InvoiceGuard stubbeado: la suite es pura (sin DB) y
+     * el guard real consultaría `invoice_documents` vía TableRegistry.
+     */
+    private function aprobacionState(bool $hasDocument): AprobacionState
+    {
+        $guard = $this->createStub(InvoiceGuard::class);
+        $guard->method('hasAnyDocument')->willReturn($hasDocument);
+
+        return new AprobacionState($guard);
+    }
+
     public function testAprobacionStatus(): void
     {
-        $s = new AprobacionState();
+        $s = $this->aprobacionState(true);
         $this->assertSame(PipelineStatus::APROBACION, $s->getStatus());
         $this->assertSame(PipelineStatus::CONTABILIDAD, $s->getNextStatus());
         $this->assertNull($s->getPreviousStatus());
@@ -28,10 +42,14 @@ final class InvoiceStatesTest extends TestCase
 
     public function testAprobacionValidateAdvanceAllErrorsWhenInvoiceIsBlank(): void
     {
-        $errors = (new AprobacionState())->validateAdvance(new stdClass());
-        $this->assertCount(2, $errors);
-        $this->assertStringContainsString('aprobadores', $errors[0]);
-        $this->assertStringContainsString('DIAN', $errors[1]);
+        $errors = $this->aprobacionState(true)->validateAdvance(new stdClass());
+        $this->assertSame(
+            [
+                'area_approval' => 'Todos los aprobadores deben haber aprobado',
+                'dian_validation' => 'Validación DIAN debe ser "Aprobada"',
+            ],
+            $errors,
+        );
     }
 
     public function testAprobacionValidateAdvancePassesWhenApprovedAndDian(): void
@@ -40,15 +58,54 @@ final class InvoiceStatesTest extends TestCase
         $invoice->area_approval = InvoiceConstants::APPROVAL_APPROVED;
         $invoice->dian_validation = InvoiceConstants::DIAN_APPROVED;
 
-        $this->assertSame([], (new AprobacionState())->validateAdvance($invoice));
+        $this->assertSame([], $this->aprobacionState(true)->validateAdvance($invoice));
     }
 
-    public function testAprobacionTransitionRules(): void
+    public function testAprobacionKeysErrorsByRequirement(): void
     {
-        $rules = (new AprobacionState())->getTransitionRules();
-        $fields = array_column($rules, 'field');
-        $this->assertContains('area_approval', $fields);
-        $this->assertContains('dian_validation', $fields);
+        $state = $this->aprobacionState(false);
+
+        $invoice = new Invoice([
+            'id' => 1,
+            'document_type' => InvoiceConstants::DOCTYPE_FACTURA,
+            'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
+            'dian_validation' => InvoiceConstants::DIAN_PENDING,
+        ]);
+
+        $errors = $state->validateAdvance($invoice);
+        $this->assertArrayHasKey('dian_validation', $errors);
+        $this->assertArrayHasKey('support_document', $errors);
+        $this->assertArrayNotHasKey('area_approval', $errors);
+    }
+
+    public function testAprobacionReciboCajaSkipsDianButNotSupport(): void
+    {
+        $state = $this->aprobacionState(false);
+
+        $invoice = new Invoice([
+            'id' => 1,
+            'document_type' => InvoiceConstants::DOCTYPE_RECIBO_CAJA,
+            'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
+            'dian_validation' => InvoiceConstants::DIAN_PENDING,
+        ]);
+
+        $errors = $state->validateAdvance($invoice);
+        $this->assertArrayNotHasKey('dian_validation', $errors);
+        $this->assertArrayHasKey('support_document', $errors);
+    }
+
+    public function testAprobacionPassesWithDianAndDocument(): void
+    {
+        $state = $this->aprobacionState(true);
+
+        $invoice = new Invoice([
+            'id' => 1,
+            'document_type' => InvoiceConstants::DOCTYPE_FACTURA,
+            'area_approval' => InvoiceConstants::APPROVAL_APPROVED,
+            'dian_validation' => InvoiceConstants::DIAN_APPROVED,
+        ]);
+
+        $this->assertSame([], $state->validateAdvance($invoice));
     }
 
     public function testContabilidadStatus(): void
@@ -62,7 +119,14 @@ final class InvoiceStatesTest extends TestCase
     public function testContabilidadValidateAdvanceAllErrors(): void
     {
         $errors = (new ContabilidadState())->validateAdvance(new stdClass());
-        $this->assertCount(3, $errors);
+        $this->assertSame(
+            [
+                'accrued' => 'La factura debe estar marcada como Causada',
+                'accrual_date' => 'Fecha de Causación es requerida',
+                'ready_for_payment' => 'Campo "Lista para Pago" es requerido',
+            ],
+            $errors,
+        );
     }
 
     public function testContabilidadValidateAdvancePassesWhenAllRequiredSet(): void
@@ -81,7 +145,10 @@ final class InvoiceStatesTest extends TestCase
         $invoice->accrual_date = '';
         $invoice->ready_for_payment = false;
         $errors = (new ContabilidadState())->validateAdvance($invoice);
-        $this->assertCount(3, $errors);
+        $this->assertSame(
+            ['accrued', 'accrual_date', 'ready_for_payment'],
+            array_keys($errors),
+        );
     }
 
     public function testTesoreriaState(): void
@@ -104,8 +171,8 @@ final class InvoiceStatesTest extends TestCase
         $invoice = new stdClass();
         $invoice->id = 1;
         $errors = $state->validateAdvance($invoice);
-        $this->assertCount(1, $errors);
-        $this->assertStringContainsString('Debe registrar', $errors[0]);
+        $this->assertArrayHasKey('_has_pending_payment', $errors);
+        $this->assertStringContainsString('Debe registrar', $errors['_has_pending_payment']);
     }
 
     public function testTesoreriaValidateAdvancePassesWhenPaymentPending(): void
@@ -131,8 +198,8 @@ final class InvoiceStatesTest extends TestCase
         $invoice = new stdClass();
         $invoice->id = 7;
         $errors = $state->validateAdvance($invoice);
-        $this->assertCount(1, $errors);
-        $this->assertStringContainsString('Contador', $errors[0]);
+        $this->assertArrayHasKey('_payment_authorized', $errors);
+        $this->assertStringContainsString('Contador', $errors['_payment_authorized']);
     }
 
     public function testAutorizacionPagoAdvancesWhenAllAuthorized(): void
@@ -154,11 +221,8 @@ final class InvoiceStatesTest extends TestCase
         $this->assertSame(PipelineStatus::AUTORIZACION_PAGO, $state->getPreviousStatus());
 
         $errors = $state->validateAdvance(new stdClass());
-        $this->assertCount(1, $errors);
-        $this->assertStringContainsString('sección de pagos', $errors[0]);
-
-        $rules = $state->getTransitionRules();
-        $this->assertSame('_payment_executed', $rules[0]['field']);
+        $this->assertArrayHasKey('_payment_executed', $errors);
+        $this->assertStringContainsString('sección de pagos', $errors['_payment_executed']);
     }
 
     public function testPagadaIsTerminalNoPrevious(): void
@@ -168,7 +232,6 @@ final class InvoiceStatesTest extends TestCase
         $this->assertNull($state->getNextStatus());
         $this->assertNull($state->getPreviousStatus());
         $this->assertSame([], $state->validateAdvance(new stdClass()));
-        $this->assertSame([], $state->getTransitionRules());
     }
 
     public function testLegalizadaIsTerminalNoPrevious(): void
@@ -178,6 +241,5 @@ final class InvoiceStatesTest extends TestCase
         $this->assertNull($state->getNextStatus());
         $this->assertNull($state->getPreviousStatus());
         $this->assertSame([], $state->validateAdvance(new stdClass()));
-        $this->assertSame([], $state->getTransitionRules());
     }
 }

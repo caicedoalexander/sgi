@@ -20,6 +20,11 @@ class EmailLogsController extends AppController
 {
     private EmailLogService $emailLogService;
 
+    /**
+     * Configura componentes y servicios del controlador.
+     *
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();

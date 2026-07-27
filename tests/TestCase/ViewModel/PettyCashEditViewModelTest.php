@@ -3,12 +3,13 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\ViewModel;
 
+use App\Constants\InvoiceConstants;
 use App\Constants\PettyCashConstants;
+use App\Model\Entity\Invoice;
 use App\Model\Entity\PettyCashRecord;
 use App\View\Presentation\PettyCashPresentation;
 use App\ViewModel\PettyCashEditViewModel;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 /**
  * Unit tests para PettyCashEditViewModel — derivaciones de la vista de edición
@@ -102,7 +103,14 @@ final class PettyCashEditViewModelTest extends TestCase
         $record = new PettyCashRecord([
             'id' => 1,
             'status' => PettyCashConstants::STATUS_AGRUPACION,
-            'invoices' => [new stdClass()],
+            'invoices' => [new Invoice([
+                'id' => 5,
+                'invoice_number' => 'CM-5',
+                'amount' => 100,
+                'document_type' => InvoiceConstants::DOCTYPE_CAJA_MENOR,
+                'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
+                'invoice_documents' => [],
+            ])],
         ]);
 
         $this->assertSame(1, $this->buildVm($record)->invoiceCount);

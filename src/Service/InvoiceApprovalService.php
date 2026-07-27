@@ -7,7 +7,10 @@ use App\Constants\ApprovalConstants;
 use App\Constants\InvoiceConstants;
 use App\Model\Entity\Invoice;
 use App\Model\Entity\InvoiceApproval;
+use App\Service\Approval\ApprovalTokenManager;
+use App\Service\Approval\ApprovalUrlBuilder;
 use Cake\I18n\DateTime;
+use Cake\ORM\Table;
 use Cake\ORM\TableRegistry;
 use Exception;
 
@@ -18,21 +21,64 @@ use Exception;
  * (all must approve), and rejection cascading. Uses SELECT FOR UPDATE
  * to prevent TOCTOU race conditions on token consumption.
  *
- * For generic single-entity external approvals, see ApprovalTokenService
- * which uses the approval_tokens table.
+ * For generic single-entity external approval consumption, see
+ * ExternalApprovalService which uses the approval_tokens table.
  */
 class InvoiceApprovalService
 {
-    private $invoiceApprovalsTable;
+    private Table $invoiceApprovalsTable;
 
     private InvoiceHistoryService $historyService;
 
+    /**
+     * @param \App\Service\NotificationService $notificationService Servicio de notificaciones por correo.
+     * @param \App\Service\InvoiceHistoryService|null $historyService Servicio de auditoría de facturas.
+     */
     public function __construct(
         private readonly NotificationService $notificationService,
         ?InvoiceHistoryService $historyService = null,
     ) {
         $this->invoiceApprovalsTable = TableRegistry::getTableLocator()->get('InvoiceApprovals');
         $this->historyService = $historyService ?? new InvoiceHistoryService();
+    }
+
+    /**
+     * Aplica un token fresco a una aprobación: regenera el secreto, persiste su
+     * hash y renueva la expiración. Devuelve el secreto en claro (para construir
+     * el enlace /approve). Puro: muta la entidad, no toca BD.
+     */
+    public function applyFreshToken(InvoiceApproval $approval): string
+    {
+        $secret = ApprovalTokenManager::generateSecret();
+        $approval->token_hash = ApprovalTokenManager::hashSecret($secret);
+        $approval->token_expires_at = new DateTime('+' . InvoiceConstants::APPROVAL_TOKEN_HOURS . ' hours');
+
+        return $secret;
+    }
+
+    /**
+     * Regenera el token de la fila PENDIENTE del aprobador para una factura y
+     * devuelve el secreto en claro, o null si no existe una aprobación pendiente
+     * suya (ya resuelta, ajena o inexistente). Usado por la bandeja autenticada
+     * para llevar al aprobador al panel /approve sin reusar el link del correo.
+     */
+    public function regeneratePendingToken(int $invoiceId, int $userId): ?string
+    {
+        $approval = $this->invoiceApprovalsTable->find()
+            ->where([
+                'invoice_id' => $invoiceId,
+                'user_id' => $userId,
+                'status' => InvoiceConstants::APPROVER_STATUS_PENDING,
+            ])
+            ->first();
+
+        if ($approval === null) {
+            return null;
+        }
+
+        $secret = $this->applyFreshToken($approval);
+
+        return $this->invoiceApprovalsTable->save($approval) ? $secret : null;
     }
 
     /**
@@ -81,12 +127,12 @@ class InvoiceApprovalService
         $expiresAt = new DateTime('+' . InvoiceConstants::APPROVAL_TOKEN_HOURS . ' hours');
 
         foreach ($approverUserIds as $userId) {
-            $token = bin2hex(random_bytes(32));
+            $secret = ApprovalTokenManager::generateSecret();
 
             $approval = $this->invoiceApprovalsTable->newEntity([
                 'invoice_id' => $invoice->id,
                 'user_id' => (int)$userId,
-                'token' => $token,
+                'token_hash' => ApprovalTokenManager::hashSecret($secret),
                 'token_expires_at' => $expiresAt,
                 'status' => InvoiceConstants::APPROVER_STATUS_PENDING,
             ]);
@@ -99,7 +145,7 @@ class InvoiceApprovalService
             $approvals[] = $approval;
             $pending[] = [
                 'userId' => (int)$userId,
-                'approvalUrl' => $baseUrl . '/approve/' . $token,
+                'approvalUrl' => ApprovalUrlBuilder::approveUrl($baseUrl, $secret),
             ];
         }
 
@@ -195,7 +241,7 @@ class InvoiceApprovalService
     {
         return $this->invoiceApprovalsTable->find()
             ->where([
-                'token' => $token,
+                'token_hash' => ApprovalTokenManager::hashSecret($token),
                 'status' => InvoiceConstants::APPROVER_STATUS_PENDING,
                 'token_expires_at >' => new DateTime(),
             ])
@@ -221,7 +267,7 @@ class InvoiceApprovalService
             // Lock the row to prevent concurrent consumption (FOR UPDATE)
             $approval = $this->invoiceApprovalsTable->find()
                 ->where([
-                    'token' => $token,
+                    'token_hash' => ApprovalTokenManager::hashSecret($token),
                     'status' => InvoiceConstants::APPROVER_STATUS_PENDING,
                     'token_expires_at >' => new DateTime(),
                 ])
@@ -242,7 +288,7 @@ class InvoiceApprovalService
             $approval->observations = $observations;
             $approval->ip_address = $ipAddress;
             $approval->user_agent = $userAgent;
-            $approval->token = null;
+            $approval->token_hash = null;
 
             if (!$this->invoiceApprovalsTable->save($approval)) {
                 return ServiceResult::fail(['Error al guardar respuesta']);
@@ -472,7 +518,7 @@ class InvoiceApprovalService
             $this->invoiceApprovalsTable->updateAll(
                 [
                     'status' => InvoiceConstants::APPROVER_STATUS_SUPERSEDED,
-                    'token' => null,
+                    'token_hash' => null,
                     'token_expires_at' => null,
                 ],
                 [
@@ -572,7 +618,7 @@ class InvoiceApprovalService
         }
 
         $this->invoiceApprovalsTable->updateAll(
-            ['token' => null, 'token_expires_at' => null],
+            ['token_hash' => null, 'token_expires_at' => null],
             $conditions,
         );
     }

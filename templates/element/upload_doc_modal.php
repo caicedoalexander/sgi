@@ -1,13 +1,13 @@
 <?php
 /**
  * Modal compartido "Subir Soporte" para los módulos de flujo. El form lo
- * consume SgiDocumentUploader (ver el bloque <script> de cada edit). DRY de
+ * consume SpiDocumentUploader (ver el bloque <script> de cada edit). DRY de
  * los modales antes duplicados en Refunds/PettyCash/EmployeeNovelties/
  * NoveltyLiquidationDocs/PaymentSchedulings edit (audit paridad visual, A7).
  *
  * @var \App\View\AppView $this
  * @var string $modalId   id del modal; debe coincidir con el uploadModalId pasado a documents_section
- * @var string $uploadUrl URL destino del upload (data-url leído por SgiDocumentUploader)
+ * @var string $uploadUrl URL destino del upload (data-url leído por SpiDocumentUploader)
  * @var string $formId    id del form (default 'upload-doc-form')
  * @var string $accept    atributo accept del input file
  * @var bool   $showDocumentType  muestra el input opcional "Tipo de Documento" (default false)

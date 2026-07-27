@@ -6,15 +6,15 @@
 $this->assign('title', 'Nueva Programación');
 ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Programación de Pagos', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span class="current">Nueva</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Nueva Programación</span>
+            <span class="spi-page-title">Nueva Programación</span>
         </div>
     </div>
     <div class="d-flex gap-2 flex-shrink-0">

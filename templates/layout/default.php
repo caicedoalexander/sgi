@@ -20,13 +20,14 @@ $liquidationMineCount = $liquidationMineCount ?? 0;
 $liquidationRejectedCount = $liquidationRejectedCount ?? 0;
 $pettyCashMineCount = $pettyCashMineCount ?? 0;
 $advancesMineCount = $advancesMineCount ?? 0;
+$myPendingTotal = $myPendingTotal ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= $this->fetch('title') ?> | SGI · COPCSA</title>
+    <title><?= $this->fetch('title') ?> | SPI · COPCSA</title>
     <link rel="icon" type="image/png" href="<?= $this->Url->build('/img/copcsa.png') ?>">
     <?php /*
         Preload de fuentes variables WOFF2 (Inter para UI, JetBrains Mono para
@@ -41,7 +42,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <link href="<?= $this->Url->build('/vendor/bootstrap/bootstrap.min.css') ?>" rel="stylesheet">
     <link href="<?= $this->Url->build('/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>" rel="stylesheet">
     <link rel="stylesheet" href="<?= $this->Url->build('/vendor/flatpickr/flatpickr.min.css') ?>">
-    <?= $this->Html->css('sgi-flatpickr-overrides') ?>
+    <?= $this->Html->css('spi-flatpickr-overrides') ?>
     <!-- Select2 CSS se carga bajo demanda via element/cdn_select2.php -->
     <?= $this->Html->css('styles') ?>
     <?= $this->Html->css('components') ?>
@@ -52,17 +53,17 @@ $advancesMineCount = $advancesMineCount ?? 0;
         Tamaño máximo de upload para validación client-side. Fuente única en
         App\Constants\UploadConstants (espejo del límite enforced en backend por
         DocumentUploadTrait y EmployeeDocumentService, y del límite de nginx para
-        evitar 413). sgi-common.js consume estos meta en window.SGI_MAX_UPLOAD_BYTES/LABEL.
+        evitar 413). spi-common.js consume estos meta en window.SPI_MAX_UPLOAD_BYTES/LABEL.
     */ ?>
-    <meta name="sgi-max-upload-bytes" content="<?= UploadConstants::MAX_BYTES ?>">
-    <meta name="sgi-max-upload-label" content="<?= h(UploadConstants::MAX_BYTES_LABEL) ?>">
+    <meta name="spi-max-upload-bytes" content="<?= UploadConstants::MAX_BYTES ?>">
+    <meta name="spi-max-upload-label" content="<?= h(UploadConstants::MAX_BYTES_LABEL) ?>">
     <?php /*
-        Reglas MIME → ícono/color para sgi-document-uploader.js (audit CR-202).
+        Reglas MIME → ícono/color para spi-document-uploader.js (audit CR-202).
         Fuente única en App\View\Helper\DocumentIconHelper::MIME_RULES; el JS lee
         este JSON para evitar duplicar el match expression en cliente. El JSON está
         escapado con JSON_HEX_TAG/AMP/APOS/QUOT — seguro insertar inline.
     */ ?>
-    <script type="application/json" id="sgi-doc-icon-rules"><?= $this->DocumentIcon->rulesJson() ?></script>
+    <script type="application/json" id="spi-doc-icon-rules"><?= $this->DocumentIcon->rulesJson() ?></script>
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
     <style>
@@ -95,7 +96,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
 
             <!-- Logo -->
             <div class="px-3">
-                <?= $this->element('sgi_logo') ?>
+                <?= $this->element('spi_logo') ?>
 
                 <!-- Buscador global -->
                 <form method="get" action="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'all']) ?>" class="sb-search mb-2" role="search">
@@ -131,6 +132,17 @@ $advancesMineCount = $advancesMineCount ?? 0;
                         ['class' => $navLink('Dashboard'), 'escape' => false],
                     ) ?>
                 </li>
+                <li>
+                    <?= $this->Html->link(
+                        '<span class="ic"><i class="bi bi-check2-square" aria-hidden="true"></i></span>'
+                        . '<span class="grow">Mis Pendientes</span>'
+                        . (($myPendingTotal ?? 0) > 0
+                            ? '<span class="sb-badge is-primary">' . (int)$myPendingTotal . '</span>'
+                            : ''),
+                        ['controller' => 'Pending', 'action' => 'index'],
+                        ['class' => $navLink('Pending'), 'escape' => false],
+                    ) ?>
+                </li>
 
                 <?= $this->element('sidebar/financiero', [
                     'canView' => $canView,
@@ -143,6 +155,8 @@ $advancesMineCount = $advancesMineCount ?? 0;
                     'currentController' => $currentController,
                 ]) ?>
                 <?= $this->element('sidebar/catalogos', ['canView' => $canView, 'navLink' => $navLink]) ?>
+                <?= $this->element('sidebar/itam', ['canView' => $canView, 'navLink' => $navLink, 'openAlertsCount' => $openAlertsCount ?? 0]) ?>
+                <?= $this->element('sidebar/otros', ['canView' => $canView, 'navLink' => $navLink]) ?>
                 <?= $this->element('sidebar/administracion', ['canView' => $canView, 'navLink' => $navLink]) ?>
             </ul>
             </div>
@@ -177,8 +191,8 @@ $advancesMineCount = $advancesMineCount ?? 0;
             (línea ~616) se renderice. Necesario porque .sidebar usa width:max-content (depende del
             nav-item más largo) y el fallback --sidebar-width:260px del <head> rara vez coincide.
             Sin este sync hay flash de .content-wrapper mal posicionada hasta que ResizeObserver
-            dispara su callback inicial post-DOMContentLoaded (sgi-common.js). NO es duplicado de
-            sgi-common.js — distintos timings: este es para el primer paint, el ResizeObserver
+            dispara su callback inicial post-DOMContentLoaded (spi-common.js). NO es duplicado de
+            spi-common.js — distintos timings: este es para el primer paint, el ResizeObserver
             para resizes runtime (fuentes, colapso de subnav, resize de ventana).
         */ ?>
         <script>(function(){var s=document.querySelector('.sidebar');if(s)document.documentElement.style.setProperty('--sidebar-width',s.offsetWidth+'px');})();</script>
@@ -196,7 +210,7 @@ $advancesMineCount = $advancesMineCount ?? 0;
     </div>
 
     <!-- Flash notifications fijas -->
-    <div id="sgi-flash-container">
+    <div id="spi-flash-container">
         <?= $this->Flash->render() ?>
     </div>
 
@@ -206,8 +220,8 @@ $advancesMineCount = $advancesMineCount ?? 0;
     <!-- jQuery, Select2 JS + i18n se cargan bajo demanda via element/cdn_select2.php.
          AutoNumeric se carga bajo demanda desde templates específicos
          (ver element/cdn_autonumeric.php). -->
-    <?= $this->Html->script('sgi-dialogs', ['block' => false]) ?>
-    <?= $this->Html->script('sgi-common', ['block' => false]) ?>
+    <?= $this->Html->script('spi-dialogs', ['block' => false]) ?>
+    <?= $this->Html->script('spi-common', ['block' => false]) ?>
     <?= $this->fetch('script') ?>
 </body>
 </html>

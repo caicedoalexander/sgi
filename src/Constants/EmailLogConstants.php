@@ -30,14 +30,20 @@ final class EmailLogConstants
 
     public const EVENT_INVOICE_APPROVAL_REQUEST = 'invoice_approval_request';
     public const EVENT_NOVELTY_APPROVAL_REQUEST = 'novelty_approval_request';
+    public const EVENT_REFUND_APPROVAL_REQUEST = 'refund_approval_request';
+    public const EVENT_ADVANCE_APPROVAL_REQUEST = 'advance_approval_request';
 
     public const EVENT_LABELS = [
         self::EVENT_INVOICE_APPROVAL_REQUEST => 'Solicitud de aprobación de factura',
         self::EVENT_NOVELTY_APPROVAL_REQUEST => 'Solicitud de aprobación de novedad',
+        self::EVENT_REFUND_APPROVAL_REQUEST => 'Solicitud de aprobación de reintegro',
+        self::EVENT_ADVANCE_APPROVAL_REQUEST => 'Solicitud de aprobación (Anticipo)',
     ];
 
     public const ENTITY_INVOICE = 'invoice';
     public const ENTITY_NOVELTY = 'employee_novelty';
+    public const ENTITY_REFUND = 'refund';
+    public const ENTITY_ADVANCE_LEGALIZATION = 'advance_legalization';
 
     /** Tras este tiempo, una fila 'pending' se considera huérfana (proceso interrumpido). */
     public const ORPHAN_THRESHOLD_SECONDS = 300;

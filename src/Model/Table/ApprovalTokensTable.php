@@ -9,12 +9,18 @@ use Cake\Validation\Validator;
 
 class ApprovalTokensTable extends Table
 {
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
 
         $this->setTable('approval_tokens');
-        $this->setDisplayField('token');
+        $this->setDisplayField('token_hash');
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp', [
@@ -36,13 +42,19 @@ class ApprovalTokensTable extends Table
         ]);
     }
 
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
-            ->scalar('token')
-            ->maxLength('token', 64)
-            ->requirePresence('token', 'create')
-            ->notEmptyString('token');
+            ->scalar('token_hash')
+            ->maxLength('token_hash', 64)
+            ->requirePresence('token_hash', 'create')
+            ->notEmptyString('token_hash');
 
         $validator
             ->scalar('entity_type')
@@ -58,6 +70,13 @@ class ApprovalTokensTable extends Table
         return $validator;
     }
 
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->existsIn('created_by', 'CreatedByUsers'), ['errorField' => 'created_by']);

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Service\Pipeline\Advance\State;
 
 use App\Constants\Domain\Advance\PipelineStatus;
-use App\Constants\InvoiceConstants;
 use App\Model\Entity\AdvanceLegalization;
 use App\Service\AdvanceLegalizationGuard;
 use App\Service\Pipeline\Advance\AdvanceLegalizationPipelineState;
@@ -21,21 +20,43 @@ final class ValidacionState implements AdvanceLegalizationPipelineState
         $this->guard = $guard ?? new AdvanceLegalizationGuard();
     }
 
+    /**
+     * Estado canónico tipado de este State.
+     *
+     * @return \App\Constants\Domain\Advance\PipelineStatus
+     */
     public function getStatus(): PipelineStatus
     {
         return PipelineStatus::VALIDACION;
     }
 
+    /**
+     * Estado siguiente natural en el avance lineal; null si es terminal o bifurcante.
+     *
+     * @return \App\Constants\Domain\Advance\PipelineStatus|null
+     */
     public function getNextStatus(): ?PipelineStatus
     {
         return $this->getStatus()->next();
     }
 
+    /**
+     * Estado anterior; null si es el primero o si la regresión está bloqueada.
+     *
+     * @return \App\Constants\Domain\Advance\PipelineStatus|null
+     */
     public function getPreviousStatus(): ?PipelineStatus
     {
         return $this->getStatus()->previous();
     }
 
+    /**
+     * Requisitos del paso Validación: al menos una factura vinculada y la relación
+     * de facturas (PDF) adjunta.
+     *
+     * @param \App\Model\Entity\AdvanceLegalization $leg Legalización a validar.
+     * @return array<string>
+     */
     public function validateAdvance(AdvanceLegalization $leg): array
     {
         $errors = [];
@@ -43,16 +64,6 @@ final class ValidacionState implements AdvanceLegalizationPipelineState
 
         if (count($linked) === 0) {
             $errors[] = 'Vincule al menos una factura antes de avanzar.';
-        }
-
-        // MA-006 — toda factura vinculada debe estar en CONTABILIDAD para que
-        // LinkedInvoiceLegalizer pueda promoverla al cierre.
-        foreach ($linked as $li) {
-            if ($li->pipeline_status !== InvoiceConstants::STATUS_CONTABILIDAD) {
-                $errors[] = 'Todas las facturas vinculadas deben estar en Contabilidad. '
-                    . 'Falta: factura ' . ($li->invoice_number ?: '#' . $li->id);
-                break;
-            }
         }
 
         if (!$this->guard->hasPendingRelationDocument((int)$leg->id)) {

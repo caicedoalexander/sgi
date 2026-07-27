@@ -14,16 +14,18 @@ use App\Model\Entity\NoveltyLiquidationDoc;
  */
 final class NoveltyPresentation
 {
+    // Pills unificados vía PipelineColorMap (un color por tipo de estado en
+    // todos los módulos). Test guard: PipelineColorConsistencyTest.
     public const STATUS_BADGES = [
         NoveltyConstants::STATUS_REGISTRO         => 'pill-muted',
         NoveltyConstants::STATUS_APROBACION       => 'pill-warning-soft',
         NoveltyConstants::STATUS_RRHH             => 'pill-accent-soft',
-        NoveltyConstants::STATUS_CONTABILIDAD     => 'pill-primary-soft',
-        NoveltyConstants::STATUS_REVISION_FIRMAS  => 'pill-warning-soft',
+        NoveltyConstants::STATUS_CONTABILIDAD     => 'pill-orange-soft',
+        NoveltyConstants::STATUS_REVISION_FIRMAS  => 'pill-info-soft',
         NoveltyConstants::STATUS_GDP              => 'pill-muted',
         NoveltyConstants::STATUS_TESORERIA        => 'pill-info-soft',
-        NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'pill-info-soft',
-        NoveltyConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
+        NoveltyConstants::STATUS_AUTORIZACION_PAGO => 'pill-warning-soft',
+        NoveltyConstants::STATUS_VERIFICACION_PAGO => 'pill-accent-soft',
         NoveltyConstants::STATUS_PAGADA           => 'pill-primary-soft',
         NoveltyConstants::STATUS_RECHAZADA        => 'pill-danger-soft',
     ];
@@ -61,9 +63,9 @@ final class NoveltyPresentation
         $isRejected = $record->isRejected();
 
         return new EmployeeNoveltyRowView(
-            isRejected:       $isRejected,
-            isPaid:           $status === NoveltyConstants::STATUS_PAGADA,
-            statusLabel:      NoveltyConstants::STATUS_LABELS[$status] ?? $status,
+            isRejected: $isRejected,
+            isPaid: $status === NoveltyConstants::STATUS_PAGADA,
+            statusLabel: NoveltyConstants::STATUS_LABELS[$status] ?? $status,
             statusBadgeClass: $isRejected
                 ? 'pill-danger-soft'
                 : (self::STATUS_BADGES[$status] ?? 'pill-muted'),
@@ -78,10 +80,10 @@ final class NoveltyPresentation
         $status = (string)$record->pipeline_status;
 
         return new NoveltyLiquidationDocRowView(
-            statusLabel:      NoveltyConstants::STATUS_LABELS[$status] ?? $status,
+            statusLabel: NoveltyConstants::STATUS_LABELS[$status] ?? $status,
             statusBadgeClass: self::STATUS_BADGES[$status] ?? 'pill-muted',
-            periodLabel:      NoveltyConstants::PERIOD_LABELS[$record->period] ?? (string)$record->period,
-            noveltyCount:     count($record->employee_novelties ?? []),
+            periodLabel: NoveltyConstants::PERIOD_LABELS[$record->period] ?? (string)$record->period,
+            noveltyCount: count($record->employee_novelties ?? []),
         );
     }
 }

@@ -1,4 +1,4 @@
-# Sistema de Diseño SGI · COPCSA — Botones y badges
+﻿# Sistema de Diseño SPI · COPCSA — Botones y badges
 
 Componentes de acción y estado: botones (variantes, tamaños, estados) y badges/pills.
 

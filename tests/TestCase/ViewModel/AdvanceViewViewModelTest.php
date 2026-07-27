@@ -3,10 +3,13 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\ViewModel;
 
+use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
+use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
 use App\View\Presentation\InvoicePresentation;
 use App\ViewModel\AdvanceViewViewModel;
+use App\ViewModel\Support\LegalizationSummary;
 use Cake\ORM\Entity;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
@@ -75,5 +78,35 @@ final class AdvanceViewViewModelTest extends TestCase
 
         $this->assertCount(2, $vm->registryLines);
         $this->assertStringContainsString('Creado', $vm->registryLines[0]['html']);
+    }
+
+    public function testNoLegalizationByDefault(): void
+    {
+        $vm = new AdvanceViewViewModel($this->advance(['amount' => 1000]));
+
+        $this->assertFalse($vm->hasLegalization);
+        $this->assertNull($vm->legalizationSummary);
+        $this->assertSame(0, $vm->totalDocs);
+        $this->assertSame([], $vm->documentRows);
+    }
+
+    public function testLegalizationSummaryDerivedWhenPresent(): void
+    {
+        $leg = new AdvanceLegalization([
+            'id' => 1,
+            'status' => AdvanceConstants::STATUS_CONTABILIDAD,
+            'case_type' => null,
+            'advance_legalization_signatures' => [],
+        ]);
+        $vm = new AdvanceViewViewModel(
+            $this->advance(['amount' => 1000]),
+            $leg,
+            [new Entity(['amount' => 700])],
+        );
+
+        $this->assertTrue($vm->hasLegalization);
+        $this->assertInstanceOf(LegalizationSummary::class, $vm->legalizationSummary);
+        $this->assertSame(700.0, $vm->legalizationSummary->linkedTotal);
+        $this->assertSame(300.0, $vm->legalizationSummary->diff);
     }
 }

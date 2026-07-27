@@ -122,7 +122,7 @@ $navTabColor = fn(string $status) => match ($status) {
 <!-- ═════════ COLUMNA DERECHA · DETALLE ═════════ -->
 <section style="overflow:auto;padding:20px 24px;background:var(--background-color);
                 display:flex;flex-direction:column;">
-    <div class="sgi-card">
+    <div class="spi-card">
         <div class="empty-state" style="padding:64px 32px;">
             <div class="es-icon es-icon-primary">
                 <i class="bi bi-person" aria-hidden="true"></i>

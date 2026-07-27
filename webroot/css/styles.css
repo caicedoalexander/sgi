@@ -1,5 +1,5 @@
 /* =================================================================
-   SGI · COPCSA — Sistema de Diseño · styles.css
+   SPI · COPCSA — Sistema de Diseño · styles.css
 
    Foundation: tokens + tipografía + base + utilidades + animaciones.
    Los componentes viven en `components.css` (cargado después).
@@ -135,7 +135,7 @@ body {
 
 
 /* ─── 4. TIPOGRAFÍA / UTILIDADES DE TEXTO ───────────────────────── */
-.sgi-display {
+.spi-display {
     font-family: var(--font-mono);
     font-size: var(--fs-display);
     font-weight: 800;
@@ -144,22 +144,22 @@ body {
     color: var(--text-strong);
 }
 
-.sgi-page-header { margin-bottom: 16px; }
+.spi-page-header { margin-bottom: 16px; }
 
-.sgi-breadcrumb {
+.spi-breadcrumb {
     display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
     font-size: var(--fs-body-sm); color: var(--text-faint); margin-bottom: 6px;
 }
-.sgi-breadcrumb a { color: inherit; text-decoration: none; }
-.sgi-breadcrumb a:hover { color: var(--text-default); }
-.sgi-breadcrumb .current { color: var(--text-default); }
+.spi-breadcrumb a { color: inherit; text-decoration: none; }
+.spi-breadcrumb a:hover { color: var(--text-default); }
+.spi-breadcrumb .current { color: var(--text-default); }
 
-.sgi-page-title {
+.spi-page-title {
     font-size: var(--fs-title-page); font-weight: 700; letter-spacing: -0.2px;
     color: var(--text-strong); margin: 0; line-height: 1.15;
 }
 
-.sgi-edit-id-chip {
+.spi-edit-id-chip {
     display: inline-flex; align-items: center;
     font-family: var(--font-mono); font-size: var(--fs-body-lg);
     color: var(--text-muted); padding: 3px 8px;
@@ -167,15 +167,15 @@ body {
     white-space: nowrap;
 }
 
-.sgi-title-card {
+.spi-title-card {
     font-size: var(--fs-title-card);
     font-weight: 700;
     color: var(--text-strong);
     letter-spacing: -0.01em;
 }
-.sgi-title-card.mono { font-family: var(--font-mono); }
+.spi-title-card.mono { font-family: var(--font-mono); }
 
-.sgi-label,
+.spi-label,
 .label-up {
     font-size: var(--fs-label);
     font-weight: 700;
@@ -185,25 +185,25 @@ body {
     line-height: 1.2;
 }
 
-.sgi-body-muted { font-size: var(--fs-body);    color: var(--text-muted); }
-.sgi-body-faint { font-size: var(--fs-body-sm); color: var(--text-faint); }
-.sgi-hint       { font-size: 0.7rem;            color: var(--text-faint); line-height: 1.4; }
+.spi-body-muted { font-size: var(--fs-body);    color: var(--text-muted); }
+.spi-body-faint { font-size: var(--fs-body-sm); color: var(--text-faint); }
+.spi-hint       { font-size: 0.7rem;            color: var(--text-faint); line-height: 1.4; }
 
-.mono, .sgi-mono { font-family: var(--font-mono); }
+.mono, .spi-mono { font-family: var(--font-mono); }
 
 
 /* ─── 5. UTILIDADES DE COLOR (texto) ────────────────────────────── */
-.sgi-fg-primary   { color: var(--primary-color); }
-.sgi-fg-secondary { color: var(--secondary-color); }
-.sgi-fg-accent    { color: var(--accent-color); }
-.sgi-fg-danger    { color: var(--danger-color); }
-.sgi-fg-warning   { color: var(--warning-text); }
-.sgi-fg-info      { color: var(--info-text); }
-.sgi-fg-strong    { color: var(--text-strong); }
-.sgi-fg-default   { color: var(--text-default); }
-.sgi-fg-muted     { color: var(--text-muted); }
-.sgi-fg-faint     { color: var(--text-faint); }
-.sgi-fg-disabled  { color: var(--text-disabled); }
+.spi-fg-primary   { color: var(--primary-color); }
+.spi-fg-secondary { color: var(--secondary-color); }
+.spi-fg-accent    { color: var(--accent-color); }
+.spi-fg-danger    { color: var(--danger-color); }
+.spi-fg-warning   { color: var(--warning-text); }
+.spi-fg-info      { color: var(--info-text); }
+.spi-fg-strong    { color: var(--text-strong); }
+.spi-fg-default   { color: var(--text-default); }
+.spi-fg-muted     { color: var(--text-muted); }
+.spi-fg-faint     { color: var(--text-faint); }
+.spi-fg-disabled  { color: var(--text-disabled); }
 
 
 /* ─── 6. UTILIDADES DE LAYOUT ───────────────────────────────────── */
@@ -249,11 +249,11 @@ body {
 
 
 /* ─── 8. ANIMACIONES ────────────────────────────────────────────── */
-@keyframes sgi-fade-in {
+@keyframes spi-fade-in {
     from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: none; }
 }
-.view-anim { animation: sgi-fade-in var(--t-view) ease; }
+.view-anim { animation: spi-fade-in var(--t-view) ease; }
 
 
 /* ─── 9. SCROLLBAR GLOBAL ───────────────────────────────────────── */

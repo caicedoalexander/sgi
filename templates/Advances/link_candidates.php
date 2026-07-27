@@ -22,6 +22,6 @@ echo $this->element('link_invoices_modal', [
     'operationCenters' => $operationCenters,
     'providers' => $providers,
     'title' => 'Vincular facturas — Legalización',
-    'helpText' => 'Facturas tipo "Legalización" sin anticipo asignado.',
+    'helpText' => 'Facturas tipo "Legalización", o "Recibo de Caja" en Contabilidad, sin anticipo asignado.',
     'fragmentOnly' => true,
 ]);

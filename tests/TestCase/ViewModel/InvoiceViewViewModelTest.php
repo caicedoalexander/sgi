@@ -116,6 +116,24 @@ final class InvoiceViewViewModelTest extends TestCase
         $this->assertTrue($this->vm($invoice)->isLinkedLegalization);
     }
 
+    public function testIsLinkedLegalizationForLinkedReciboDeCaja(): void
+    {
+        $invoice = new Invoice([
+            'document_type' => InvoiceConstants::DOCTYPE_RECIBO_CAJA,
+            'advance_id' => 88,
+        ]);
+        $this->assertTrue($this->vm($invoice)->isLinkedLegalization);
+    }
+
+    public function testIsNotLinkedLegalizationForUnlinkedLegalizacion(): void
+    {
+        $invoice = new Invoice([
+            'document_type' => InvoiceConstants::DOCTYPE_LEGALIZACION,
+            'advance_id' => null,
+        ]);
+        $this->assertFalse($this->vm($invoice)->isLinkedLegalization);
+    }
+
     public function testProviderNameForManualReciboDeCaja(): void
     {
         $invoice = new Invoice([

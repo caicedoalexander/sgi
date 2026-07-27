@@ -13,7 +13,7 @@ $smtpEnc   = (string)($smtpSettings['smtp_encryption'] ?? 'tls');
 $smtpUser  = (string)($smtpSettings['smtp_username'] ?? '');
 $smtpHasPw = !empty($smtpSettings['smtp_password']);
 $smtpFromE = (string)($smtpSettings['smtp_from_email'] ?? '');
-$smtpFromN = (string)($smtpSettings['smtp_from_name'] ?? 'SGI');
+$smtpFromN = (string)($smtpSettings['smtp_from_name'] ?? 'SPI');
 $smtpOn    = $smtpHost !== '';
 
 $n8nWebhook = (string)($n8nSettings['n8n_webhook_dian_crosscheck'] ?? '');
@@ -212,11 +212,11 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
 <div class="mb-4">
     <div class="d-flex align-items-center gap-2 mb-2">
         <span style="width:3px;height:12px;background:var(--primary-color);"></span>
-        <span class="sgi-label">Administración</span>
+        <span class="spi-label">Administración</span>
         <i class="bi bi-chevron-right" style="font-size:8px;color:var(--text-disabled);" aria-hidden="true"></i>
-        <span class="sgi-label">Configuración</span>
+        <span class="spi-label">Configuración</span>
     </div>
-    <div class="sgi-page-title">Configuración del Sistema</div>
+    <div class="spi-page-title">Configuración del Sistema</div>
     <div class="mt-2" style="font-size:var(--fs-body);color:var(--text-muted);">
         Servidor de correo, webhooks de n8n y credenciales de la API interna.
     </div>
@@ -227,7 +227,7 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
     <?php /* ──────────────── RAIL DE SECCIONES ──────────────── */ ?>
     <div class="card cfg-rail">
         <div class="cfg-rail-head">
-            <span class="sgi-label">Secciones</span>
+            <span class="spi-label">Secciones</span>
         </div>
 
         <a href="#smtp" class="cfg-nav-item" data-section="smtp">
@@ -286,20 +286,20 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
             <div class="cfg-pane-body">
 
                 <div class="cfg-block">
-                    <div class="cfg-subhead"><span class="sgi-label">Servidor</span></div>
+                    <div class="cfg-subhead"><span class="spi-label">Servidor</span></div>
                     <div class="cfg-row-3">
                         <div class="cfg-field">
-                            <label class="sgi-label" for="smtp_host">Host SMTP</label>
+                            <label class="spi-label" for="smtp_host">Host SMTP</label>
                             <input type="text" id="smtp_host" name="smtp_host" class="form-control mono"
                                    value="<?= h($smtpHost) ?>" placeholder="smtp.gmail.com">
                         </div>
                         <div class="cfg-field">
-                            <label class="sgi-label" for="smtp_port">Puerto</label>
+                            <label class="spi-label" for="smtp_port">Puerto</label>
                             <input type="text" id="smtp_port" name="smtp_port" class="form-control mono"
                                    value="<?= h($smtpPort) ?>" placeholder="587">
                         </div>
                         <div class="cfg-field">
-                            <label class="sgi-label" for="smtp_encryption">Encriptación</label>
+                            <label class="spi-label" for="smtp_encryption">Encriptación</label>
                             <select id="smtp_encryption" name="smtp_encryption" class="form-select">
                                 <option value="tls" <?= $smtpEnc === 'tls' ? 'selected' : '' ?>>TLS / STARTTLS</option>
                                 <option value="ssl" <?= $smtpEnc === 'ssl' ? 'selected' : '' ?>>SSL</option>
@@ -310,10 +310,10 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
                 </div>
 
                 <div class="cfg-block">
-                    <div class="cfg-subhead"><span class="sgi-label">Autenticación</span></div>
+                    <div class="cfg-subhead"><span class="spi-label">Autenticación</span></div>
                     <div class="cfg-row-2">
                         <div class="cfg-field">
-                            <label class="sgi-label" for="smtp_username">Usuario</label>
+                            <label class="spi-label" for="smtp_username">Usuario</label>
                             <div class="cfg-input">
                                 <i class="bi bi-person cfg-input-prefix" aria-hidden="true"></i>
                                 <input type="text" id="smtp_username" name="smtp_username"
@@ -323,7 +323,7 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
                         </div>
                         <div class="cfg-field">
                             <div class="cfg-label-row">
-                                <label class="sgi-label" for="smtp_password">Contraseña</label>
+                                <label class="spi-label" for="smtp_password">Contraseña</label>
                                 <span class="cfg-hint">Vacío = mantener actual</span>
                             </div>
                             <input type="password" id="smtp_password" name="smtp_password"
@@ -334,10 +334,10 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
                 </div>
 
                 <div class="cfg-block">
-                    <div class="cfg-subhead"><span class="sgi-label">Remitente</span></div>
+                    <div class="cfg-subhead"><span class="spi-label">Remitente</span></div>
                     <div class="cfg-row-2">
                         <div class="cfg-field">
-                            <label class="sgi-label" for="smtp_from_email">Email remitente</label>
+                            <label class="spi-label" for="smtp_from_email">Email remitente</label>
                             <div class="cfg-input">
                                 <i class="bi bi-envelope cfg-input-prefix" aria-hidden="true"></i>
                                 <input type="email" id="smtp_from_email" name="smtp_from_email"
@@ -346,9 +346,9 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
                             </div>
                         </div>
                         <div class="cfg-field">
-                            <label class="sgi-label" for="smtp_from_name">Nombre remitente</label>
+                            <label class="spi-label" for="smtp_from_name">Nombre remitente</label>
                             <input type="text" id="smtp_from_name" name="smtp_from_name"
-                                   class="form-control" value="<?= h($smtpFromN) ?>" placeholder="SGI">
+                                   class="form-control" value="<?= h($smtpFromN) ?>" placeholder="SPI">
                         </div>
                     </div>
                 </div>
@@ -375,7 +375,7 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
                 <span class="cfg-pane-icon"><i class="bi bi-diagram-3" aria-hidden="true"></i></span>
                 <div class="cfg-pane-headings">
                     <div class="cfg-pane-title">Integración n8n</div>
-                    <div class="cfg-pane-sub">URL del webhook que el SGI invoca para automatizaciones externas.</div>
+                    <div class="cfg-pane-sub">URL del webhook que el SPI invoca para automatizaciones externas.</div>
                 </div>
             </div>
 
@@ -430,7 +430,7 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
 
             <div class="cfg-pane-body">
                 <div class="cfg-block">
-                    <div class="cfg-subhead"><span class="sgi-label">Endpoint</span></div>
+                    <div class="cfg-subhead"><span class="spi-label">Endpoint</span></div>
                     <div class="cfg-endpoint">
                         <span class="pill pill-primary-soft">GET</span>
                         <span class="cfg-endpoint-path">/api/notifications/pending</span>
@@ -441,8 +441,8 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
 
                 <?php if (!$apiOn): ?>
                     <div class="cfg-block">
-                        <div class="cfg-subhead"><span class="sgi-label">Token</span></div>
-                        <p class="sgi-body-muted mb-3">
+                        <div class="cfg-subhead"><span class="spi-label">Token</span></div>
+                        <p class="spi-body-muted mb-3">
                             Aún no hay API key generada. Generá una para activar el flujo de notificaciones en n8n.
                         </p>
                         <?= $this->Form->create(null, ['url' => ['action' => 'regenerateApiKey']]) ?>
@@ -453,7 +453,7 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
                     </div>
                 <?php else: ?>
                     <div class="cfg-block">
-                        <div class="cfg-subhead"><span class="sgi-label">Token activo</span></div>
+                        <div class="cfg-subhead"><span class="spi-label">Token activo</span></div>
                         <div class="cfg-token">
                             <i class="bi bi-shield-lock" style="color:var(--text-faint);" aria-hidden="true"></i>
                             <span class="cfg-token-value" id="cfg-token-value"
@@ -475,7 +475,7 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
                         <div class="cfg-danger">
                             <span class="cfg-danger-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
                             <div class="cfg-danger-body">
-                                <div class="sgi-title-card">Regenerar API Key</div>
+                                <div class="spi-title-card">Regenerar API Key</div>
                                 <div class="mt-1" style="font-size:11.5px;color:var(--text-muted);line-height:1.5;">
                                     La key actual se invalida de inmediato. Toda integración que la use dejará de
                                     funcionar hasta actualizar la credencial en n8n.
@@ -507,7 +507,7 @@ $dotColor = fn(bool $on): string => $on ? 'var(--primary-color)' : 'var(--text-d
 (function () {
     'use strict';
     var VALID = ['smtp', 'n8n', 'apikey'];
-    var STORE_KEY = 'sgi-cfg-section';
+    var STORE_KEY = 'spi-cfg-section';
     var items = document.querySelectorAll('.cfg-nav-item');
     var panes = document.querySelectorAll('.cfg-pane');
 

@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\Constants;
 
+use App\Constants\AdvanceConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
+use App\Constants\RefundConstants;
 use PHPUnit\Framework\TestCase;
 
 final class PipelineStepConstantsTest extends TestCase
@@ -42,11 +44,11 @@ final class PipelineStepConstantsTest extends TestCase
     {
         $this->assertTrue(PipelineStepConstants::isValid(
             PipelineStepConstants::PIPELINE_INVOICES,
-            InvoiceConstants::STATUS_APROBACION
+            InvoiceConstants::STATUS_APROBACION,
         ));
         $this->assertTrue(PipelineStepConstants::isValid(
             PipelineStepConstants::PIPELINE_INVOICES,
-            InvoiceConstants::STATUS_VERIFICACION_PAGO
+            InvoiceConstants::STATUS_VERIFICACION_PAGO,
         ));
     }
 
@@ -55,7 +57,7 @@ final class PipelineStepConstantsTest extends TestCase
         // PAGADA es estado terminal y NO está en STEPS_BY_PIPELINE para invoices.
         $this->assertFalse(PipelineStepConstants::isValid(
             PipelineStepConstants::PIPELINE_INVOICES,
-            InvoiceConstants::STATUS_PAGADA
+            InvoiceConstants::STATUS_PAGADA,
         ));
     }
 
@@ -69,7 +71,33 @@ final class PipelineStepConstantsTest extends TestCase
         // borrador pertenece a payment_schedulings, no a invoices
         $this->assertFalse(PipelineStepConstants::isValid(
             PipelineStepConstants::PIPELINE_INVOICES,
-            'borrador'
+            'borrador',
         ));
+    }
+
+    public function testAprobacionIsAValidRefundStep(): void
+    {
+        $this->assertTrue(PipelineStepConstants::isValid(
+            PipelineStepConstants::PIPELINE_REFUNDS,
+            RefundConstants::STATUS_APROBACION,
+        ));
+        $this->assertArrayHasKey(
+            RefundConstants::STATUS_APROBACION,
+            PipelineStepConstants::STEP_LABELS[PipelineStepConstants::PIPELINE_REFUNDS],
+        );
+    }
+
+    public function testAprobacionIsAValidLegalizationStep(): void
+    {
+        // Legalizations pasó de 6 a 7 steps al declarar 'aprobacion' (espejo de 'validacion').
+        $this->assertCount(7, PipelineStepConstants::STEPS_BY_PIPELINE[PipelineStepConstants::PIPELINE_LEGALIZATIONS]);
+        $this->assertTrue(PipelineStepConstants::isValid(
+            PipelineStepConstants::PIPELINE_LEGALIZATIONS,
+            AdvanceConstants::STATUS_APROBACION,
+        ));
+        $this->assertArrayHasKey(
+            AdvanceConstants::STATUS_APROBACION,
+            PipelineStepConstants::STEP_LABELS[PipelineStepConstants::PIPELINE_LEGALIZATIONS],
+        );
     }
 }

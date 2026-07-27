@@ -17,6 +17,9 @@ enum DenialReason: string
     case REQUIRES_PAYMENT = 'requires_payment';
     case MANAGED_ELSEWHERE = 'managed_elsewhere';
 
+    /**
+     * @return string Mensaje legible del motivo de denegación.
+     */
     public function message(): string
     {
         return match ($this) {

@@ -30,20 +30,24 @@ WORKDIR /var/www/html
 
 # Install dependencies
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+RUN composer install --no-scripts --no-autoloader --prefer-dist
 
 # Copy application
 COPY . .
-RUN composer dump-autoload --optimize --no-dev
+RUN composer dump-autoload --optimize
 
 # Generate app_local.php from example (uses env vars at runtime)
 RUN cp config/app_local.example.php config/app_local.php
 
 # Create directories and set permissions
 RUN mkdir -p tmp/cache/models tmp/cache/persistent tmp/cache/views \
-    tmp/debug_kit tmp/sessions tmp/tests logs webroot/files webroot/uploads storage \
+    tmp/debug_kit tmp/sessions tmp/tests logs webroot/files webroot/uploads storage/employees \
     && chown -R www-data:www-data tmp logs webroot/files webroot/uploads storage \
-    && chmod -R 775 tmp logs webroot/files webroot/uploads storage
+    && chmod -R 775 tmp logs webroot/files webroot/uploads storage \
+    && chown -R www-data:www-data /var/www/html/vendor \
+    && chown -R www-data:www-data /var/www/html/composer.json \
+    && chown -R www-data:www-data /var/www/html/composer.lock
+
 
 # Nginx and PHP config
 COPY docker/nginx/default.conf /etc/nginx/sites-available/default
@@ -53,6 +57,6 @@ COPY docker/php/php-production.ini /usr/local/etc/php/conf.d/99-production.ini
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-EXPOSE 80
+EXPOSE 8081
 
 ENTRYPOINT ["entrypoint.sh"]

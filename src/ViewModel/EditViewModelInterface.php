@@ -15,15 +15,23 @@ namespace App\ViewModel;
  */
 interface EditViewModelInterface
 {
-    /** Título de la página (header del browser y/o de la vista). */
+    /**
+     * Título de la página (header del browser y/o de la vista).
+     */
     public string $pageTitle { get; }
 
-    /** @var array{0:string,1:string} Pareja [label, class-Bootstrap] para el badge del estado actual. */
+    /**
+     * @var array{0:string,1:string} Pareja [label, class-Bootstrap] para el badge del estado actual.
+     */
     public array $currentStatusBadge { get; }
 
-    /** Nombre del rol del usuario actual (para gating visual). */
+    /**
+     * Nombre del rol del usuario actual (para gating visual).
+     */
     public string $roleName { get; }
 
-    /** Slug del estado actual del pipeline. */
+    /**
+     * Slug del estado actual del pipeline.
+     */
     public string $currentStatus { get; }
 }

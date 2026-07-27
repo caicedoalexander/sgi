@@ -30,8 +30,8 @@ $kpiCards = [
 <!-- ═══ Header ═══ -->
 <div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
     <div>
-        <span class="sgi-page-title">Roles del sistema</span>
-        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
+        <span class="spi-page-title">Roles del sistema</span>
+        <div class="spi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
             Define qué módulos, acciones y pasos del pipeline puede operar cada usuario.
         </div>
     </div>
@@ -47,10 +47,10 @@ $kpiCards = [
 <!-- ═══ KPIs ═══ -->
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
     <?php foreach ($kpiCards as [$label, $value, $sub, $color, $icon]): ?>
-    <div class="sgi-card" style="padding:14px 16px;position:relative;overflow:hidden;">
+    <div class="spi-card" style="padding:14px 16px;position:relative;overflow:hidden;">
         <span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:<?= $color ?>;"></span>
         <div class="d-flex justify-content-between align-items-start">
-            <div class="sgi-label" style="margin:0;"><?= h($label) ?></div>
+            <div class="spi-label" style="margin:0;"><?= h($label) ?></div>
             <i class="bi <?= h($icon) ?>" style="color:<?= $color ?>;opacity:.7;font-size:14px;" aria-hidden="true"></i>
         </div>
         <div class="mono" style="font-size:24px;font-weight:800;color:<?= $color ?>;margin-top:4px;letter-spacing:-0.5px;line-height:1.05;">
@@ -63,7 +63,7 @@ $kpiCards = [
 
 <!-- ═══ Buscador + filtros ═══ -->
 <div class="d-flex gap-2 align-items-center" style="margin-bottom:14px;">
-    <div class="sgi-card compact d-flex align-items-center" style="flex:1;gap:10px;padding:0 14px;">
+    <div class="spi-card compact d-flex align-items-center" style="flex:1;gap:10px;padding:0 14px;">
         <i class="bi bi-search" style="color:var(--text-faint);" aria-hidden="true"></i>
         <input type="text" id="roles-search" autocomplete="off"
                placeholder="Buscar rol por nombre o descripción…"
@@ -86,7 +86,7 @@ $kpiCards = [
 </div>
 
 <!-- ═══ Tabla de roles ═══ -->
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div class="row-fact head" style="grid-template-columns:<?= $gridCols ?>;" role="row">
         <span>Rol</span>
         <span>Descripción</span>

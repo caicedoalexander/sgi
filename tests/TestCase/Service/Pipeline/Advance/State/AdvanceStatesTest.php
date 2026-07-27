@@ -34,7 +34,7 @@ final class AdvanceStatesTest extends TestCase
 
         $this->assertSame(PipelineStatus::REVISION_FIRMAS, $s->getStatus());
         $this->assertSame(PipelineStatus::CONTABILIDAD, $s->getNextStatus());
-        $this->assertSame(PipelineStatus::VALIDACION, $s->getPreviousStatus());
+        $this->assertSame(PipelineStatus::APROBACION, $s->getPreviousStatus());
         $this->assertSame([], $s->validateAdvance($this->leg()));
     }
 
@@ -45,7 +45,39 @@ final class AdvanceStatesTest extends TestCase
         $this->assertSame(PipelineStatus::CONTABILIDAD, $s->getStatus());
         $this->assertNull($s->getNextStatus());
         $this->assertSame(PipelineStatus::REVISION_FIRMAS, $s->getPreviousStatus());
-        $this->assertSame([], $s->validateAdvance($this->leg()));
+    }
+
+    public function testContabilidadRequiresAllThreeAccountingFields(): void
+    {
+        $errors = (new ContabilidadState())->validateAdvance($this->leg());
+
+        $this->assertSame([
+            'La legalización debe estar marcada como Causada',
+            'Fecha de Causación es requerida',
+            'Campo "Lista para Pago" es requerido',
+        ], $errors);
+    }
+
+    public function testContabilidadReportsOnlyTheMissingField(): void
+    {
+        // Los 3 campos son non-accessible: se asignan por propiedad directa.
+        $leg = $this->leg();
+        $leg->accrued = true;
+        $leg->accrual_date = '2026-06-23';
+
+        $errors = (new ContabilidadState())->validateAdvance($leg);
+
+        $this->assertSame(['Campo "Lista para Pago" es requerido'], $errors);
+    }
+
+    public function testContabilidadPassesWhenAccountingIsComplete(): void
+    {
+        $leg = $this->leg();
+        $leg->accrued = true;
+        $leg->accrual_date = '2026-06-23';
+        $leg->ready_for_payment = 'Si';
+
+        $this->assertSame([], (new ContabilidadState())->validateAdvance($leg));
     }
 
     public function testTesoreriaBranchesSoNextIsNull(): void

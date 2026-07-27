@@ -29,6 +29,17 @@ use Cake\ORM\TableRegistry;
  */
 class InvoicePipelineService
 {
+    /**
+     * @param \App\Service\Interface\HistoryServiceInterface $historyService Servicio de auditoría de facturas.
+     * @param \App\Service\InvoicePaymentService $paymentService Servicio de pagos de facturas.
+     * @param \App\Service\Pipeline\Invoice\Policy\InvoiceFieldAccessPolicy $fieldPolicy Policy de campos/secciones editables por paso.
+     * @param \App\Service\Pipeline\Invoice\Policy\InvoiceLockPolicy $lockPolicy Policy de bloqueo de edición/regresión.
+     * @param \App\Service\Pipeline\Invoice\Policy\InvoiceTransitionValidator $transitionValidator Validador de requisitos de avance.
+     * @param \App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry $states Registro de estados del pipeline.
+     * @param \App\Service\Pipeline\Invoice\DocumentTypePolicyFactory $docTypePolicies Factory de policies por tipo de documento.
+     * @param \Cake\Event\EventManagerInterface $events Event manager para publicar eventos del pipeline.
+     * @param \App\Authorization\AuthorizationFacade $auth Fachada de autorización de pasos de pipeline.
+     */
     public function __construct(
         private readonly HistoryServiceInterface $historyService,
         private readonly InvoicePaymentService $paymentService,
@@ -44,6 +55,12 @@ class InvoicePipelineService
 
     public const STATUSES = InvoiceConstants::PIPELINE_STATUSES;
 
+    /**
+     * Retorna los estados del pipeline que el rol puede operar.
+     *
+     * @param int $roleId Id del rol.
+     * @return array
+     */
     public function getVisibleStatuses(int $roleId): array
     {
         return $this->auth->operableSteps(
@@ -52,23 +69,52 @@ class InvoicePipelineService
         );
     }
 
-    public function getPipelineStatusesFor(?string $documentType = null): array
+    /**
+     * Retorna los estados de pipeline visibles para un tipo de documento.
+     *
+     * @param string|null $documentType Tipo de documento de la factura.
+     * @param object|null $invoice Factura (para resolver variantes por vínculo).
+     * @return array
+     */
+    public function getPipelineStatusesFor(?string $documentType = null, ?object $invoice = null): array
     {
-        return $this->docTypePolicies->for($documentType)->getPipelineStatusesForView();
+        return $this->docTypePolicies->for($documentType)->getPipelineStatusesForView($invoice);
     }
 
+    /**
+     * Retorna los campos editables por un rol en un estado dado.
+     *
+     * @param int $roleId Id del rol.
+     * @param string $status Estado del pipeline.
+     * @return array
+     */
     public function getEditableFields(int $roleId, string $status): array
     {
         return $this->fieldPolicy->getEditableFields($roleId, $status);
     }
 
-    public function getVisibleSections(int $roleId, string $status, ?string $documentType = null): array
+    /**
+     * Retorna las secciones del formulario visibles por rol, estado y tipo de documento.
+     *
+     * @param int $roleId Id del rol.
+     * @param string $status Estado del pipeline.
+     * @param string|null $documentType Tipo de documento de la factura.
+     * @param object|null $invoice Factura (para filtrar secciones por vínculo).
+     * @return array
+     */
+    public function getVisibleSections(int $roleId, string $status, ?string $documentType = null, ?object $invoice = null): array
     {
         $sections = $this->fieldPolicy->getVisibleSections($roleId, $status);
 
-        return $this->docTypePolicies->for($documentType)->filterVisibleSections($sections);
+        return $this->docTypePolicies->for($documentType)->filterVisibleSections($sections, $invoice);
     }
 
+    /**
+     * Indica si la factura está rechazada en la aprobación de área.
+     *
+     * @param object $invoice Factura o entidad equivalente.
+     * @return bool
+     */
     public function isRejected(object $invoice): bool
     {
         if ($invoice instanceof Invoice) {
@@ -78,21 +124,45 @@ class InvoicePipelineService
         return ($invoice->area_approval ?? '') === InvoiceConstants::APPROVAL_REJECTED;
     }
 
+    /**
+     * Indica si la factura está bloqueada por una programación de pago pagada.
+     *
+     * @param int $invoiceId Id de la factura.
+     * @return bool
+     */
     public function isLockedByPaidScheduling(int $invoiceId): bool
     {
         return $this->lockPolicy->isLockedByPaidScheduling($invoiceId);
     }
 
+    /**
+     * Indica si la factura está bloqueada por pertenecer a una caja menor.
+     *
+     * @param object $invoice Factura o entidad equivalente.
+     * @return bool
+     */
     public function isLockedByPettyCash(object $invoice): bool
     {
         return $this->lockPolicy->isLockedByPettyCash($invoice);
     }
 
+    /**
+     * Retorna el mensaje de bloqueo de edición, o null si la factura es editable.
+     *
+     * @param object $invoice Factura o entidad equivalente.
+     * @return string|null
+     */
     public function getEditLockMessage(object $invoice): ?string
     {
         return $this->lockPolicy->getEditLockMessage($invoice);
     }
 
+    /**
+     * Retorna el mensaje de bloqueo de regresión, o null si puede regresar.
+     *
+     * @param object $invoice Factura o entidad equivalente.
+     * @return string|null
+     */
     public function getRegressionLockMessage(object $invoice): ?string
     {
         $lockMsg = $this->lockPolicy->getRegressionLockMessage($invoice);
@@ -103,19 +173,30 @@ class InvoicePipelineService
         return $this->docTypePolicies->for($invoice->document_type ?? null)->getRegressionLockReason($invoice);
     }
 
+    /**
+     * Valida los requisitos de avance desde un estado y retorna los errores por requisito.
+     *
+     * @param object $invoice Factura o entidad equivalente.
+     * @param string $fromStatus Estado de origen.
+     * @param array $overrides Valores sobreescritos a validar (datos del formulario).
+     * @return array
+     */
     public function validateTransitionRequirements(object $invoice, string $fromStatus, array $overrides = []): array
     {
         return $this->transitionValidator->validateAdvance($invoice, $fromStatus, $overrides);
     }
 
-    public function getTransitionRules(string $fromStatus): array
+    /**
+     * Filtra los errores de avance dejando solo los del rol para el estado dado.
+     *
+     * @param array $errors Errores keyed por requisito.
+     * @param int $roleId Id del rol.
+     * @param string $status Estado del pipeline.
+     * @return array
+     */
+    public function filterAdvanceErrorsForRole(array $errors, int $roleId, string $status): array
     {
-        return $this->transitionValidator->getTransitionRules($fromStatus);
-    }
-
-    public function filterAdvanceErrorsForRole(array $errors, array $rules, int $roleId, string $status): array
-    {
-        return $this->transitionValidator->filterErrorsForRole($errors, $rules, $roleId, $status);
+        return $this->transitionValidator->filterErrorsForRole($errors, $roleId, $status);
     }
 
     /**
@@ -123,7 +204,7 @@ class InvoicePipelineService
      */
     public function denialReasonForAdvance(Invoice $invoice, int $roleId): ?DenialReason
     {
-        if ($this->getNextStatus($invoice->pipeline_status, $invoice->document_type) === null) {
+        if ($this->getNextStatus($invoice->pipeline_status, $invoice->document_type, $invoice->advance_id) === null) {
             return DenialReason::TERMINAL_STATE;
         }
 
@@ -144,7 +225,15 @@ class InvoicePipelineService
         return null;
     }
 
-    public function getNextStatus(string $currentStatus, ?string $documentType = null): ?string
+    /**
+     * Resuelve el siguiente estado del pipeline, o null si es terminal o la policy lo bloquea.
+     *
+     * @param string $currentStatus Estado actual.
+     * @param string|null $documentType Tipo de documento de la factura.
+     * @param int|null $advanceId Id del anticipo vinculado (para el freeze del Recibo de Caja).
+     * @return string|null
+     */
+    public function getNextStatus(string $currentStatus, ?string $documentType = null, ?int $advanceId = null): ?string
     {
         $currentEnum = PipelineStatus::tryFrom($currentStatus);
         if ($currentEnum === null) {
@@ -155,8 +244,13 @@ class InvoicePipelineService
         $policy = $this->docTypePolicies->for($documentType);
 
         // Cuando la policy bloquea el avance del estado, el next efectivo es null.
-        // Pasamos un stdClass con document_type para mantener compat con la firma de blocksAdvance.
-        $stub = (object)['document_type' => $documentType, 'pipeline_status' => $currentStatus];
+        // El stub lleva advance_id para que el freeze del Recibo de Caja vinculado
+        // (ReciboCajaDocumentTypePolicy::blocksAdvance) pueda evaluarlo.
+        $stub = (object)[
+            'document_type' => $documentType,
+            'pipeline_status' => $currentStatus,
+            'advance_id' => $advanceId,
+        ];
         if ($policy->blocksAdvance($state, $stub) !== null) {
             return null;
         }
@@ -164,11 +258,25 @@ class InvoicePipelineService
         return $state->getNextStatus()?->value;
     }
 
+    /**
+     * Filtra los datos de entrada dejando solo los campos editables por el rol en el estado.
+     *
+     * @param array $data Datos del formulario.
+     * @param int $roleId Id del rol.
+     * @param string $status Estado del pipeline.
+     * @return array
+     */
     public function filterEntityData(array $data, int $roleId, string $status): array
     {
         return $this->fieldPolicy->filterEntityData($data, $roleId, $status)->patch;
     }
 
+    /**
+     * Resuelve el estado anterior del pipeline, o null si es el primero.
+     *
+     * @param string $currentStatus Estado actual.
+     * @return string|null
+     */
     public function getPreviousStatus(string $currentStatus): ?string
     {
         $currentEnum = PipelineStatus::tryFrom($currentStatus);
@@ -208,7 +316,7 @@ class InvoicePipelineService
     /**
      * Save invoice fields, optionally advance the pipeline, and record history.
      *
-     * @return \App\Service\ServiceResult on success: data = ['advanced' => bool, 'nextStatus' => ?string, 'advanceErrors' => string[]]
+     * @return \App\Service\ServiceResult on success: data = ['advanced' => bool, 'nextStatus' => ?string, 'advanceErrors' => array<string, string>]
      */
     public function saveAndAdvance(
         Invoice $invoice,
@@ -240,7 +348,11 @@ class InvoicePipelineService
         if ($canAdvance) {
             $postAdvanceErrors = $this->validateTransitionRequirements($invoice, $currentStatus, $filteredData);
             if (empty($postAdvanceErrors)) {
-                $advanceNextStatus = $this->getNextStatus($currentStatus, $invoice->document_type);
+                $advanceNextStatus = $this->getNextStatus(
+                    $currentStatus,
+                    $invoice->document_type,
+                    $invoice->advance_id,
+                );
             }
         }
 

@@ -13,6 +13,10 @@ use App\Model\Entity\InvoicePayment;
  */
 final readonly class InvoiceRefundAuthorizedEvent
 {
+    /**
+     * @param \App\Model\Entity\InvoicePayment $payment Pago de reintegro autorizado.
+     * @param int $actorUserId ID del usuario que autorizó el pago.
+     */
     public function __construct(
         public InvoicePayment $payment,
         public int $actorUserId,

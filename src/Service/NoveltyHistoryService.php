@@ -94,6 +94,16 @@ class NoveltyHistoryService implements HistoryServiceInterface
         $table->save($entry);
     }
 
+    /**
+     * Registra el cambio de un único campo en el historial de la novedad.
+     *
+     * @param int $noveltyId Id de la novedad.
+     * @param string $field Nombre del campo modificado.
+     * @param string|null $oldValue Valor anterior.
+     * @param string|null $newValue Valor nuevo.
+     * @param int $userId Id del usuario que realizó el cambio.
+     * @return void
+     */
     public function recordFieldChange(int $noveltyId, string $field, ?string $oldValue, ?string $newValue, int $userId): void
     {
         $table = TableRegistry::getTableLocator()->get('NoveltyHistories');

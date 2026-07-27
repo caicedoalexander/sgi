@@ -8,6 +8,11 @@ use Throwable;
 
 final class CacheHealthCheck implements HealthCheckInterface
 {
+    /**
+     * Verifica el cache escribiendo, leyendo y borrando una clave de sonda.
+     *
+     * @return \App\Service\HealthCheck\HealthCheckResult
+     */
     public function check(): HealthCheckResult
     {
         $key = 'health_probe_' . bin2hex(random_bytes(4));

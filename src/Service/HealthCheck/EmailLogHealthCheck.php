@@ -8,6 +8,11 @@ use Throwable;
 
 final class EmailLogHealthCheck implements HealthCheckInterface
 {
+    /**
+     * Reporta como degradado si existen correos en estado 'failed'.
+     *
+     * @return \App\Service\HealthCheck\HealthCheckResult
+     */
     public function check(): HealthCheckResult
     {
         try {

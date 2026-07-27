@@ -11,6 +11,11 @@ class NoveltyTypesController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista los tipos de novedad.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -27,6 +32,11 @@ class NoveltyTypesController extends AppController
         $this->set(compact('noveltyTypes'));
     }
 
+    /**
+     * Crea un tipo de novedad.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -55,8 +65,14 @@ class NoveltyTypesController extends AppController
         $this->set(compact('noveltyType', 'parentTypes'));
     }
 
+    /**
+     * Edita un tipo de novedad.
+     *
+     * @param string|null $id ID del tipo de novedad.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $noveltyType = $this->NoveltyTypes->get($id, contain: ['NoveltyTypeContractTemplates']);
 
@@ -83,8 +99,14 @@ class NoveltyTypesController extends AppController
         $this->set(compact('noveltyType', 'parentTypes'));
     }
 
+    /**
+     * Devuelve las banderas de un tipo de novedad en formato JSON.
+     *
+     * @param string|null $id ID del tipo de novedad.
+     * @return \Cake\Http\Response
+     */
     #[Permission(action: 'view')]
-    public function getFlags($id = null)
+    public function getFlags(?string $id = null)
     {
         $this->request->allowMethod(['get']);
         $this->autoRender = false;
@@ -105,8 +127,14 @@ class NoveltyTypesController extends AppController
             ]));
     }
 
+    /**
+     * Elimina un tipo de novedad.
+     *
+     * @param string|null $id ID del tipo de novedad.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $noveltyType = $this->NoveltyTypes->get($id);
@@ -130,6 +158,11 @@ class NoveltyTypesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    /**
+     * Expone los datos auxiliares del formulario.
+     *
+     * @return void
+     */
     private function _setFormData(): void
     {
         $documentTemplates = TableRegistry::getTableLocator()->get('LeaveDocumentTemplates')
@@ -148,6 +181,12 @@ class NoveltyTypesController extends AppController
         $this->set(compact('documentTemplates', 'temporaryOrganizations', 'contractTypes'));
     }
 
+    /**
+     * Depura las plantillas de contrato del formulario.
+     *
+     * @param array $data Datos del formulario.
+     * @return array
+     */
     private function _cleanContractTemplates(array $data): array
     {
         if (empty($data['novelty_type_contract_templates'])) {

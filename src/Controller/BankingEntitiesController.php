@@ -12,6 +12,11 @@ class BankingEntitiesController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista las entidades bancarias.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -20,6 +25,11 @@ class BankingEntitiesController extends AppController
         $this->set(compact('bankingEntities'));
     }
 
+    /**
+     * Crea una entidad bancaria.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -37,8 +47,14 @@ class BankingEntitiesController extends AppController
         $this->set(compact('bankingEntity'));
     }
 
+    /**
+     * Edita una entidad bancaria.
+     *
+     * @param string|null $id ID de la entidad bancaria.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $bankingEntity = $this->BankingEntities->get($id);
         $result = $this->_catalogSave(
@@ -54,8 +70,14 @@ class BankingEntitiesController extends AppController
         $this->set(compact('bankingEntity'));
     }
 
+    /**
+     * Elimina una entidad bancaria.
+     *
+     * @param string|null $id ID de la entidad bancaria.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $bankingEntity = $this->BankingEntities->get($id);

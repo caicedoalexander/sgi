@@ -9,8 +9,8 @@ use App\View\Presentation\InvoicePresentation;
 
 $this->assign('title', 'Proveedor: ' . $provider->name);
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Detalle del Proveedor</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Detalle del Proveedor</span>
     <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['providers']['can_edit'])): ?>
         <?= $this->Html->link('<i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar',
@@ -28,7 +28,7 @@ $this->assign('title', 'Proveedor: ' . $provider->name);
     </div>
 </div>
 
-<div class="sgi-card mb-4">
+<div class="spi-card mb-4">
     <div class="field-row">
         <span class="k">ID</span>
         <span class="v mono"><?= $this->Number->format($provider->id) ?></span>
@@ -60,7 +60,7 @@ $this->assign('title', 'Proveedor: ' . $provider->name);
 </div>
 
 <?php if (!empty($provider->invoices)): ?>
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div style="padding:16px 20px 12px;font-weight:600;color:var(--text-strong);border-bottom:1px solid var(--rule);">
         Facturas del Proveedor
     </div>

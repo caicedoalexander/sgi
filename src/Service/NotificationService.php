@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Constants\EmailLogConstants;
+use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
+use App\Model\Entity\Refund;
 use App\Service\Interface\MailerInterface;
 use Cake\ORM\TableRegistry;
 use Exception;
@@ -14,6 +16,11 @@ class NotificationService
     private CircuitBreaker $smtpCircuitBreaker;
     private StructuredLogger $logger;
 
+    /**
+     * @param \App\Service\SystemSettingsService $settings Servicio de ajustes del sistema (config SMTP).
+     * @param \App\Service\Interface\MailerInterface $mailer Adaptador de envío de correo.
+     * @param \App\Service\EmailLogService $emailLogService Servicio de registro de correos enviados.
+     */
     public function __construct(
         private readonly SystemSettingsService $settings,
         private readonly MailerInterface $mailer,
@@ -51,7 +58,7 @@ class NotificationService
         }
 
         $invoiceNumber = $invoice->invoice_number ?: '#' . $invoice->id;
-        $subject = "SGI-COPCSA - Solicitud de Aprobación: Factura {$invoiceNumber}";
+        $subject = "SPI-COPCSA - Solicitud de Aprobación: Factura {$invoiceNumber}";
 
         foreach ($recipients as $recipient) {
             if (empty($recipient->email)) {
@@ -87,6 +94,62 @@ class NotificationService
     }
 
     /**
+     * Envía el link de aprobación de un grupo (Reintegro) a un aprobador.
+     * Espejo de sendApprovalLinkNotification a nivel de grupo.
+     */
+    public function sendRefundApprovalLinkNotification(
+        Refund $refund,
+        string $approvalUrl,
+        int $approverUserId,
+        ?int $createdBy = null,
+    ): void {
+        $smtpConfig = $this->settings->getGroup('smtp');
+        if (empty($smtpConfig['smtp_host']) || empty($smtpConfig['smtp_from_email'])) {
+            throw new Exception('SMTP no configurado. Configure el correo en Ajustes del Sistema.');
+        }
+
+        $recipients = $this->getApproverRecipient($approverUserId);
+        if (empty($recipients)) {
+            throw new Exception('El aprobador asignado no tiene un usuario activo o no tiene correo.');
+        }
+
+        $code = $refund->code ?: '#' . $refund->id;
+        $subject = "SPI-COPCSA - Solicitud de Aprobación: Reintegro {$code}";
+
+        foreach ($recipients as $recipient) {
+            if (empty($recipient->email)) {
+                throw new Exception("El aprobador '{$recipient->full_name}' no tiene correo electrónico configurado.");
+            }
+
+            $viewVars = [
+                'refundCode' => $code,
+                'beneficiaryName' => $refund->getBeneficiaryName() ?: '—',
+                'amount' => $refund->total_amount,
+                'approvalUrl' => $approvalUrl,
+                'recipientName' => $recipient->full_name ?? $recipient->username ?? '',
+            ];
+
+            $this->deliverWithLog(
+                eventType: EmailLogConstants::EVENT_REFUND_APPROVAL_REQUEST,
+                entityType: EmailLogConstants::ENTITY_REFUND,
+                entityId: (int)$refund->id,
+                to: $recipient->email,
+                subject: $subject,
+                template: 'refund_approval_request',
+                viewVars: $viewVars,
+                layout: 'default',
+                createdBy: $createdBy,
+            );
+
+            $this->logger->info('approval_link_sent', [
+                'recipient' => $recipient->email,
+                'refund_id' => $refund->id,
+                'context' => 'refund',
+            ]);
+        }
+    }
+
+    /**
      * Envía link de aprobación de novedad. Registra cada intento y propaga
      * excepciones (cambio: antes se tragaban).
      */
@@ -109,7 +172,7 @@ class NotificationService
         $employeeName = $novelty->custom_name ?? ($novelty->employee->full_name ?? '—');
         $noveltyTypeName = $novelty->novelty_type->name ?? '—';
 
-        $subject = "SGI-COPCSA - Solicitud de Aprobación: Novedad de {$employeeName}";
+        $subject = "SPI-COPCSA - Solicitud de Aprobación: Novedad de {$employeeName}";
 
         $viewVars = [
             'employeeName' => $employeeName,
@@ -136,6 +199,65 @@ class NotificationService
             'novelty_id' => $novelty->id,
             'context' => 'novelty',
         ]);
+    }
+
+    /**
+     * Envía el link de aprobación de un grupo (Legalización de Anticipo) a un aprobador.
+     * Espejo de sendRefundApprovalLinkNotification a nivel de grupo.
+     */
+    public function sendAdvanceLegalizationApprovalLinkNotification(
+        AdvanceLegalization $leg,
+        string $approvalUrl,
+        int $approverUserId,
+        ?int $createdBy = null,
+    ): void {
+        $smtpConfig = $this->settings->getGroup('smtp');
+        if (empty($smtpConfig['smtp_host']) || empty($smtpConfig['smtp_from_email'])) {
+            throw new Exception('SMTP no configurado. Configure el correo en Ajustes del Sistema.');
+        }
+
+        $recipients = $this->getApproverRecipient($approverUserId);
+        if (empty($recipients)) {
+            throw new Exception('El aprobador asignado no tiene un usuario activo o no tiene correo.');
+        }
+
+        $invoices = TableRegistry::getTableLocator()->get('Invoices');
+        $anticipo = $invoices->get($leg->advance_invoice_id, contain: ['Providers', 'Employees']);
+        $code = $anticipo->invoice_number ?: '#' . $anticipo->id;
+        $beneficiary = $anticipo->provider->name ?? ($anticipo->employee->full_name ?? '—');
+        $subject = "SPI-COPCSA - Solicitud de Aprobación: Legalización de Anticipo {$code}";
+
+        foreach ($recipients as $recipient) {
+            if (empty($recipient->email)) {
+                throw new Exception("El aprobador '{$recipient->full_name}' no tiene correo electrónico configurado.");
+            }
+
+            $viewVars = [
+                'advanceCode' => $code,
+                'beneficiaryName' => $beneficiary,
+                'amount' => $anticipo->amount,
+                'approvalUrl' => $approvalUrl,
+                'recipientName' => $recipient->full_name ?? $recipient->username ?? '',
+            ];
+
+            $this->deliverWithLog(
+                eventType: EmailLogConstants::EVENT_ADVANCE_APPROVAL_REQUEST,
+                entityType: EmailLogConstants::ENTITY_ADVANCE_LEGALIZATION,
+                entityId: (int)$leg->id,
+                to: $recipient->email,
+                subject: $subject,
+                template: 'advance_approval_request',
+                viewVars: $viewVars,
+                layout: 'default',
+                createdBy: $createdBy,
+            );
+
+            $this->logger->info('approval_link_sent', [
+                'recipient' => $recipient->email,
+                'advance_legalization_id' => $leg->id,
+                'context' => 'advance_legalization',
+            ]);
+        }
     }
 
     /**
@@ -198,6 +320,12 @@ class NotificationService
         }
     }
 
+    /**
+     * Resuelve el destinatario aprobador activo como arreglo de usuarios (vacío si no existe).
+     *
+     * @param int $approverId Id del usuario aprobador.
+     * @return array
+     */
     private function getApproverRecipient(int $approverId): array
     {
         $usersTable = TableRegistry::getTableLocator()->get('Users');
@@ -208,6 +336,11 @@ class NotificationService
         return $approver ? [$approver] : [];
     }
 
+    /**
+     * Envía un correo de prueba para validar la conexión SMTP configurada.
+     *
+     * @return array
+     */
     public function testSmtpConnection(): array
     {
         $smtpConfig = $this->settings->getGroup('smtp');
@@ -221,7 +354,7 @@ class NotificationService
         try {
             $this->mailer->send(
                 $fromEmail,
-                'SGI - Prueba de conexión SMTP',
+                'SPI - Prueba de conexión SMTP',
                 'smtp_test',
                 [],
             );

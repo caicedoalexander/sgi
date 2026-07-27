@@ -9,6 +9,7 @@ final class AdvanceConstants
 {
     // Phase 2 pipeline statuses — fuente única en App\Constants\Domain\Advance\PipelineStatus.
     public const STATUS_VALIDACION = PipelineStatus::VALIDACION->value;
+    public const STATUS_APROBACION = PipelineStatus::APROBACION->value;
     public const STATUS_REVISION_FIRMAS = PipelineStatus::REVISION_FIRMAS->value;
     public const STATUS_CONTABILIDAD = PipelineStatus::CONTABILIDAD->value;
     public const STATUS_TESORERIA = PipelineStatus::TESORERIA->value;
@@ -18,6 +19,7 @@ final class AdvanceConstants
 
     public const PIPELINE_STATUSES = [
         self::STATUS_VALIDACION,
+        self::STATUS_APROBACION,
         self::STATUS_REVISION_FIRMAS,
         self::STATUS_CONTABILIDAD,
         self::STATUS_TESORERIA,
@@ -32,6 +34,7 @@ final class AdvanceConstants
     // confirmShortageReceipt (5 pasos) y registerSurplus + flujo de pago (7).
     public const PIPELINE_STATUSES_EXACTO = [
         self::STATUS_VALIDACION,
+        self::STATUS_APROBACION,
         self::STATUS_REVISION_FIRMAS,
         self::STATUS_CONTABILIDAD,
         self::STATUS_LEGALIZADA,
@@ -39,6 +42,7 @@ final class AdvanceConstants
 
     public const PIPELINE_STATUSES_FALTANTE = [
         self::STATUS_VALIDACION,
+        self::STATUS_APROBACION,
         self::STATUS_REVISION_FIRMAS,
         self::STATUS_CONTABILIDAD,
         self::STATUS_TESORERIA,
@@ -55,6 +59,7 @@ final class AdvanceConstants
 
     public const STATUS_LABELS = [
         self::STATUS_VALIDACION        => 'Validación',
+        self::STATUS_APROBACION        => 'Aprobación',
         self::STATUS_REVISION_FIRMAS   => 'Revisión y Firmas',
         self::STATUS_CONTABILIDAD      => 'Contabilidad',
         self::STATUS_TESORERIA         => 'Tesorería',

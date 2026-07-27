@@ -108,12 +108,22 @@ final class InvoiceActionPolicy
      * @param string $step Pipeline step.
      * @return bool
      */
-    private function _canOperate(int $roleId, string $step): bool
+    public function canOperateStep(int $roleId, string $step): bool
     {
         return $this->auth->canOperate(
             new UserContext($roleId),
             PipelineStepConstants::PIPELINE_INVOICES,
             $step,
         );
+    }
+
+    /**
+     * @param int $roleId Role ID.
+     * @param string $step Pipeline step.
+     * @return bool
+     */
+    private function _canOperate(int $roleId, string $step): bool
+    {
+        return $this->canOperateStep($roleId, $step);
     }
 }

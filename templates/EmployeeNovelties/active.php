@@ -39,7 +39,7 @@ $softFill = function (string $hex): string {
 <!-- ═══ Header ═══ -->
 <div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
     <div>
-        <span class="sgi-page-title">Novedades Vigentes</span>
+        <span class="spi-page-title">Novedades Vigentes</span>
     </div>
 </div>
 
@@ -59,15 +59,15 @@ $softFill = function (string $hex): string {
 </div>
 
 <!-- Filters -->
-<div class="sgi-card compact" style="margin-bottom:14px;">
+<div class="spi-card compact" style="margin-bottom:14px;">
     <div class="d-flex gap-3 align-items-center flex-wrap">
-            <select id="filter-novelty-type" class="form-select form-select-sm select2" style="max-width:220px;" data-placeholder="Tipo: Todos">
+            <select id="filter-novelty-type" class="form-select form-select-sm select2-enable" style="max-width:220px;" data-placeholder="Tipo: Todos">
                 <option value="">Tipo: Todos</option>
                 <?php foreach ($noveltyTypes as $id => $name): ?>
                     <option value="<?= $id ?>"><?= h($name) ?></option>
                 <?php endforeach; ?>
             </select>
-            <select id="filter-employee" class="form-select form-select-sm select2" style="max-width:260px;" data-placeholder="Empleado: Todos">
+            <select id="filter-employee" class="form-select form-select-sm select2-enable" style="max-width:260px;" data-placeholder="Empleado: Todos">
                 <option value="">Empleado: Todos</option>
                 <?php foreach ($employees as $id => $name): ?>
                     <option value="<?= $id ?>"><?= h($name) ?></option>
@@ -80,10 +80,10 @@ $softFill = function (string $hex): string {
 </div>
 
 <!-- Calendar -->
-<div class="sgi-card" style="padding:0;">
-    <div id="calendar" class="sgi-calendar"></div>
+<div class="spi-card" style="padding:0;">
+    <div id="calendar" class="spi-calendar"></div>
     <?php if (!empty($noveltyTypes)): ?>
-    <div class="sgi-cal-legend">
+    <div class="spi-cal-legend">
         <span class="leg-title">Leyenda</span>
         <?php foreach ($noveltyTypes as $tid => $tname):
             $legColor = $colorForType((int)$tid);
@@ -100,7 +100,7 @@ $softFill = function (string $hex): string {
 <?= $this->element('fullcalendar_assets') ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    SGICalendar.init({
+    SPICalendar.init({
         el: '#calendar',
         eventsUrl: '/employee-novelties/active-events',
         filters: {

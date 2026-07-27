@@ -12,6 +12,11 @@ class PaymentRegistryController extends AppController
 
     private PaymentRegistryService $registryService;
 
+    /**
+     * Configura componentes y servicios del controlador.
+     *
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();

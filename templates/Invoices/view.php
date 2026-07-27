@@ -55,28 +55,12 @@ $initialsOf = static function (?string $name): string {
 };
 ?>
 
-<?php if ($viewModel->isLinkedLegalization): ?>
-    <div class="alert alert-info d-flex justify-content-between align-items-center">
-        <div>
-            <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
-            Esta factura es una <strong>Legalización</strong> vinculada al
-            <?= $this->Html->link('Anticipo #' . h($invoice->advance_id), ['controller' => 'Advances', 'action' => 'view', $invoice->advance_id]) ?>.
-        </div>
-    </div>
-<?php endif; ?>
-
-<?php if (!empty($showPettyCashLock)): ?>
-<div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
-    <i class="bi bi-lock-fill fs-5" aria-hidden="true"></i>
-    <div>
-        Factura bloqueada: pertenece al registro de Caja Menor
-        <strong><?= $this->Html->link(
-            h($invoice->petty_cash_record->code ?? '#' . $invoice->petty_cash_record_id),
-            ['controller' => 'PettyCashRecords', 'action' => 'view', $invoice->petty_cash_record_id],
-            ['class' => 'alert-link']
-        ) ?></strong>. Los cambios se gestionan desde allí.
-    </div>
-</div>
+<?php $parentBadge = \App\View\Presentation\InvoicePresentation::parentBadge($invoice); ?>
+<?php if ($parentBadge !== null): ?>
+    <?= $this->element('invoice_parent_notice', [
+        'badge' => $parentBadge,
+        'locked' => !empty($showPettyCashLock),
+    ]) ?>
 <?php endif; ?>
 
 <?php if (!empty($showSchedulingLock)): ?>
@@ -96,7 +80,7 @@ $initialsOf = static function (?string $name): string {
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:10px;"></i>
             <span style="color:var(--text-default);">Ver Factura</span>
         </div>
-        <h1 class="sgi-page-title">Ver Factura</h1>
+        <h1 class="spi-page-title">Ver Factura</h1>
     </div>
     <div class="d-flex gap-2">
         <?= $this->Html->link(
@@ -120,10 +104,10 @@ $initialsOf = static function (?string $name): string {
 </div>
 
 <!-- ─── Grid principal (340px + 1fr) ──────────────────────────────── -->
-<div class="sgi-invoice-view-grid view-anim">
+<div class="spi-invoice-view-grid view-anim">
 
     <!-- ═════════════════════════ COLUMNA IZQUIERDA ═════════════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <aside class="spi-invoice-view-left">
 
         <?php
     // Slot del hero: divisor + fechas (Emisión / Vencimiento / Registro).
@@ -206,13 +190,13 @@ $initialsOf = static function (?string $name): string {
     </aside>
 
     <!-- ═════════════════════════ COLUMNA DERECHA ═════════════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <main class="spi-invoice-view-right">
 
         <!-- Datos generales (Documento + Clasificación) -->
-        <div class="sgi-card">
+        <div class="spi-card">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
                 <div>
-                    <div class="sgi-label" style="margin-bottom:6px;">Documento</div>
+                    <div class="spi-label" style="margin-bottom:6px;">Documento</div>
                     <div class="field-row">
                         <span class="k">Fecha Registro</span>
                         <span class="v mono"><?= $invoice->registration_date?->format('d/m/Y') ?? '—' ?></span>
@@ -235,7 +219,7 @@ $initialsOf = static function (?string $name): string {
                     </div>
                 </div>
                 <div>
-                    <div class="sgi-label" style="margin-bottom:6px;">Clasificación</div>
+                    <div class="spi-label" style="margin-bottom:6px;">Clasificación</div>
                     <div class="field-row">
                         <span class="k">Titular</span>
                         <span class="v"><?= h($providerName) ?></span>
@@ -269,7 +253,7 @@ $initialsOf = static function (?string $name): string {
 
             <?php if ($invoice->detail): ?>
             <div class="hr"></div>
-            <div class="sgi-label" style="margin-bottom:8px;">Detalle</div>
+            <div class="spi-label" style="margin-bottom:8px;">Detalle</div>
             <div style="font-size:var(--fs-body-lg);color:var(--text-default);line-height:1.5;">
                 <?= nl2br(h($invoice->detail)) ?>
             </div>
@@ -277,11 +261,11 @@ $initialsOf = static function (?string $name): string {
         </div>
 
         <!-- Revisión + Contabilidad + Tesorería -->
-        <div class="sgi-card">
+        <div class="spi-card">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;">
                 <!-- Revisión -->
                 <div>
-                    <div class="sgi-label" style="margin-bottom:6px;">Revisión</div>
+                    <div class="spi-label" style="margin-bottom:6px;">Revisión</div>
                     <div class="field-row">
                         <span class="k">Aprobador</span>
                         <?php if ($invoice->hasValue('approver_user')): ?>
@@ -338,7 +322,7 @@ $initialsOf = static function (?string $name): string {
 
                 <!-- Contabilidad -->
                 <div>
-                    <div class="sgi-label" style="margin-bottom:6px;">Contabilidad</div>
+                    <div class="spi-label" style="margin-bottom:6px;">Contabilidad</div>
                     <div class="field-row">
                         <span class="k">Causada</span>
                         <span class="v">
@@ -372,7 +356,7 @@ $initialsOf = static function (?string $name): string {
 
                 <!-- Tesorería -->
                 <div>
-                    <div class="sgi-label" style="margin-bottom:6px;">Tesorería</div>
+                    <div class="spi-label" style="margin-bottom:6px;">Tesorería</div>
                     <div class="field-row">
                         <span class="k">Estado Pago</span>
                         <span class="v">
@@ -399,10 +383,10 @@ $initialsOf = static function (?string $name): string {
 
         <!-- Pagos Registrados -->
         <?php if ($pagosCount > 0): ?>
-        <div class="sgi-card" style="padding:0;overflow:hidden;">
+        <div class="spi-card" style="padding:0;overflow:hidden;">
             <div class="d-flex justify-content-between align-items-center" style="padding:18px 20px 14px;">
                 <div>
-                    <div class="sgi-title-card">Pagos Registrados</div>
+                    <div class="spi-title-card">Pagos Registrados</div>
                     <div style="font-size:11px;color:var(--text-faint);margin-top:2px;">
                         <?= $pagosCount ?> movimiento<?= $pagosCount === 1 ? '' : 's' ?> · Total
                         <span class="mono">$ <?= number_format($pagosTotal, 0, ',', '.') ?></span>
@@ -490,12 +474,12 @@ $initialsOf = static function (?string $name): string {
         $obsCount = is_array($invoice->invoice_observations ?? null) ? count($invoice->invoice_observations) : 0;
         $statusLabelsMap = InvoiceConstants::STATUS_LABELS;
         ?>
-        <div class="sgi-card">
+        <div class="spi-card">
             <div class="d-flex justify-content-between align-items-center" style="margin-bottom:14px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-chat-square-text" aria-hidden="true"></i>
                     Observaciones
-                    <span class="sgi-folder-count"><?= $obsCount ?></span>
+                    <span class="spi-folder-count"><?= $obsCount ?></span>
                 </span>
             </div>
 
@@ -554,12 +538,12 @@ $initialsOf = static function (?string $name): string {
         </div>
 
         <!-- Documentos / Soportes -->
-        <div class="sgi-card">
+        <div class="spi-card">
             <div class="d-flex justify-content-between align-items-center" style="margin-bottom:14px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-paperclip" aria-hidden="true"></i>
                     Soportes
-                    <span class="sgi-folder-count"><?= $totalDocs ?></span>
+                    <span class="spi-folder-count"><?= $totalDocs ?></span>
                 </span>
                 <button type="button" class="btn btn-default btn-sm" disabled>
                     <i class="bi bi-upload" aria-hidden="true"></i>Subir
@@ -626,12 +610,12 @@ $initialsOf = static function (?string $name): string {
 
         <!-- Historial de cambios -->
         <?php $histCount = count($invoice->invoice_histories ?? []); ?>
-        <div class="sgi-card">
+        <div class="spi-card">
             <div class="d-flex justify-content-between align-items-center" style="margin-bottom:14px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-clock-history" aria-hidden="true"></i>
                     Historial de Cambios
-                    <span class="sgi-folder-count"><?= $histCount ?></span>
+                    <span class="spi-folder-count"><?= $histCount ?></span>
                 </span>
             </div>
 

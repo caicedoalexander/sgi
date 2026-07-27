@@ -10,11 +10,17 @@ namespace App\View\Presentation;
  */
 final readonly class NoveltyLiquidationDocRowView
 {
+    /**
+     * @param string $statusLabel Etiqueta ES del estado.
+     * @param string $statusBadgeClass Clase de badge del estado.
+     * @param string $periodLabel Etiqueta del período de liquidación.
+     * @param int $noveltyCount Número de novedades agrupadas.
+     */
     public function __construct(
         public string $statusLabel,
         public string $statusBadgeClass,
         public string $periodLabel,
-        public int    $noveltyCount,
+        public int $noveltyCount,
     ) {
     }
 }

@@ -21,6 +21,7 @@
  */
 
 use App\Constants\InvoiceConstants;
+use App\View\Presentation\InvoiceBeneficiary;
 use App\View\Presentation\InvoicePresentation;
 
 /* ─────────── Contexto de la vista ─────────── */
@@ -161,78 +162,65 @@ $readyForPaymentPills = [
     </label>
 
     <button type="button" class="btn btn-default"
-            data-bs-toggle="collapse" data-bs-target="#invoiceFilters"
-            aria-expanded="<?= $filterCount > 0 ? 'true' : 'false' ?>"
+            data-filter-drawer-open
             aria-label="Filtros avanzados">
         <i class="bi bi-funnel" aria-hidden="true"></i>
         <span>Filtros<?php if ($filterCount > 0): ?> · <span style="color:var(--primary-color);font-weight:700;"><?= $filterCount ?></span><?php endif; ?></span>
     </button>
-
-    <?php if ($filterCount > 0): ?>
-        <?= $this->Html->link(
-            '<i class="bi bi-x-lg" aria-hidden="true"></i><span>Limpiar</span>',
-            ['action' => $tabAction],
-            ['class' => 'btn btn-ghost', 'escape' => false, 'style' => 'color:var(--danger-color);']
-        ) ?>
-    <?php endif; ?>
 </div>
 
-<div class="collapse <?= $filterCount > 0 ? 'show' : '' ?>" id="invoiceFilters" style="margin-bottom:14px;">
-    <div class="sgi-card compact">
-        <div class="row g-2">
-            <div class="col-md-3">
-                <label class="input-label" for="filter-provider">Proveedor</label>
-                <?= $this->Form->select('provider_id', $providers, [
-                    'empty' => 'Todos',
-                    'class' => 'form-select form-select-sm select2-enable',
-                    'value' => $this->request->getQuery('provider_id', ''),
-                    'id'    => 'filter-provider',
-                ]) ?>
-            </div>
-            <div class="col-md-2">
-                <label class="input-label" for="filter-opcenter">Centro Op.</label>
-                <?= $this->Form->select('operation_center_id', $operationCenters, [
-                    'empty' => 'Todos',
-                    'class' => 'form-select form-select-sm select2-enable',
-                    'value' => $this->request->getQuery('operation_center_id', ''),
-                    'id'    => 'filter-opcenter',
-                ]) ?>
-            </div>
-            <div class="col-md-2">
-                <label class="input-label" for="filter-expense">Tipo Gasto</label>
-                <?= $this->Form->select('expense_type_id', $expenseTypes, [
-                    'empty' => 'Todos',
-                    'class' => 'form-select form-select-sm',
-                    'value' => $this->request->getQuery('expense_type_id', ''),
-                    'id'    => 'filter-expense',
-                ]) ?>
-            </div>
-            <div class="col-md-2">
-                <label class="input-label" for="filter-status">Estado</label>
-                <?= $this->Form->select('pipeline_status', $pipelineOptions, [
-                    'empty' => 'Todos',
-                    'class' => 'form-select form-select-sm',
-                    'value' => $activeStatus,
-                    'id'    => 'filter-status',
-                ]) ?>
-            </div>
-            <div class="col-md-3">
-                <label class="input-label" for="inv-range">Período</label>
-                <?= $this->element('date_range_filter', [
-                    'id' => 'inv-range',
-                    'from' => $this->request->getQuery('date_from', ''),
-                    'to' => $this->request->getQuery('date_to', ''),
-                    'inputStyle' => 'width:100%;',
-                ]) ?>
-            </div>
-            <div class="col-12 d-flex justify-content-end" style="margin-top:6px;">
-                <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="bi bi-check2" aria-hidden="true"></i><span>Aplicar filtros</span>
-                </button>
-            </div>
-        </div>
+<?php ob_start(); ?>
+    <div class="filter-field">
+        <label class="input-label" for="filter-provider">Proveedor</label>
+        <?= $this->Form->select('provider_id', $providers, [
+            'empty' => 'Todos',
+            'class' => 'form-select form-select-sm select2-enable',
+            'value' => $this->request->getQuery('provider_id', ''),
+            'id'    => 'filter-provider',
+        ]) ?>
     </div>
-</div>
+    <div class="filter-field">
+        <label class="input-label" for="filter-opcenter">Centro Op.</label>
+        <?= $this->Form->select('operation_center_id', $operationCenters, [
+            'empty' => 'Todos',
+            'class' => 'form-select form-select-sm select2-enable',
+            'value' => $this->request->getQuery('operation_center_id', ''),
+            'id'    => 'filter-opcenter',
+        ]) ?>
+    </div>
+    <div class="filter-field">
+        <label class="input-label" for="filter-expense">Tipo Gasto</label>
+        <?= $this->Form->select('expense_type_id', $expenseTypes, [
+            'empty' => 'Todos',
+            'class' => 'form-select form-select-sm',
+            'value' => $this->request->getQuery('expense_type_id', ''),
+            'id'    => 'filter-expense',
+        ]) ?>
+    </div>
+    <div class="filter-field">
+        <label class="input-label" for="filter-status">Estado</label>
+        <?= $this->Form->select('pipeline_status', $pipelineOptions, [
+            'empty' => 'Todos',
+            'class' => 'form-select form-select-sm',
+            'value' => $activeStatus,
+            'id'    => 'filter-status',
+        ]) ?>
+    </div>
+    <div class="filter-field">
+        <label class="input-label" for="inv-range">Período</label>
+        <?= $this->element('date_range_filter', [
+            'id' => 'inv-range',
+            'from' => $this->request->getQuery('date_from', ''),
+            'to' => $this->request->getQuery('date_to', ''),
+            'inputStyle' => 'width:100%;',
+        ]) ?>
+    </div>
+<?php $invFilterFields = ob_get_clean(); ?>
+<?= $this->element('filter_drawer', [
+    'body' => $invFilterFields,
+    'count' => $filterCount,
+    'clearUrl' => ['action' => $tabAction],
+]) ?>
 <?= $this->Form->end() ?>
 
 <?php /* ════════════════════════ CHIPS POR ESTADO ════════════════════════ */ ?>
@@ -261,7 +249,7 @@ $readyForPaymentPills = [
 /* Grid 7-col compartido entre header y filas (alineado al spec lista-facturas). */
 $gridStyle = 'display:grid;grid-template-columns:1.3fr 2.4fr 1fr 1fr 1.1fr 1.7fr 36px;gap:14px;align-items:center;';
 ?>
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <?php /* — Header de columnas — */ ?>
     <div style="<?= $gridStyle ?>padding:12px 18px;background:var(--bg-subtle);font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:0.8px;text-transform:uppercase;" role="row">
         <span>Factura</span>
@@ -298,9 +286,10 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2.4fr 1fr 1fr 1.1fr 1.7fr
             <?php /* 2. Proveedor + centro */ ?>
             <div style="min-width:0;">
                 <div style="font-size:12.5px;font-weight:600;color:var(--text-default);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                    <?= $invoice->hasValue('provider')
-                        ? h($invoice->provider->name)
-                        : '<span style="color:var(--text-faint);">—</span>' ?>
+                    <?php $beneficiario = InvoiceBeneficiary::label($invoice); ?>
+                    <?= $beneficiario === '—'
+                        ? '<span style="color:var(--text-faint);">—</span>'
+                        : h($beneficiario) ?>
                 </div>
                 <?php if ($invoice->hasValue('operation_center')): ?>
                     <div style="font-size:10.5px;color:var(--text-faint);margin-top:2px;display:inline-flex;align-items:center;gap:4px;">
@@ -339,6 +328,13 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2.4fr 1fr 1fr 1.1fr 1.7fr
                     </div>
                 <?php endif; ?>
                 <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                    <?php if ($row->linkBadge !== null): ?>
+                        <span class="pill <?= h($row->linkBadge->pillClass) ?> pill-sm"
+                              title="<?= h($row->linkBadge->label) ?> <?= h($row->linkBadge->code) ?>">
+                            <i class="bi <?= h($row->linkBadge->icon) ?>" style="font-size:9px;" aria-hidden="true"></i>
+                            <?= h($row->linkBadge->code) ?>
+                        </span>
+                    <?php endif; ?>
                     <?php if ($row->isRejected): ?>
                         <span class="pill pill-danger-soft pill-sm">RECHAZADA</span>
                     <?php else: ?>

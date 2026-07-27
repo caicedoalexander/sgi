@@ -18,18 +18,25 @@ use App\View\Presentation\NoveltyPresentation;
 final readonly class NoveltyLiquidationDocViewViewModel implements ViewViewModelInterface
 {
     public string $pageTitle;
-    /** @var array{0:string,1:string} */
+    /**
+     * @var array{0:string,1:string}
+     */
     public array $currentStatusBadge;
     public string $currentStatus;
 
-    public bool   $isRejected;
-    public bool   $isTerminal;
+    public bool $isRejected;
+    public bool $isTerminal;
     public string $periodLabel;
-    public int    $noveltyCount;
+    public int $noveltyCount;
     public string $extraPillHtml;
-    /** @var array<int,array{icon:string,html:string}> */
+    /**
+     * @var array<int,array{icon:string,html:string}>
+     */
     public array $registryLines;
 
+    /**
+     * @param \App\Model\Entity\NoveltyLiquidationDoc $record Documento de liquidación a presentar.
+     */
     public function __construct(public NoveltyLiquidationDoc $record)
     {
         $status        = (string)$record->pipeline_status;

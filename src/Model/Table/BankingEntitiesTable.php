@@ -9,6 +9,12 @@ use Cake\Validation\Validator;
 
 class BankingEntitiesTable extends Table
 {
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -24,6 +30,12 @@ class BankingEntitiesTable extends Table
         ]);
     }
 
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -44,6 +56,12 @@ class BankingEntitiesTable extends Table
         return $validator;
     }
 
+    /**
+     * Custom finder: arma la lista clave-valor (id => etiqueta) para poblar selects.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query The query builder.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
     public function findCodeList(SelectQuery $query): SelectQuery
     {
         return $query

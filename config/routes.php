@@ -55,9 +55,12 @@ return function (RouteBuilder $routes): void {
             'rateLimit',
             new RateLimitMiddleware(10, 60),
         );
+        // Borde anti-DoS/flooding por IP en /login. El anti-fuerza-bruta fino
+        // por cuenta vive en el controller vía LoginThrottleService, así que
+        // este límite es holgado para no penalizar el flujo legítimo (NAT).
         $builder->registerMiddleware(
             'rateLimitLogin',
-            new RateLimitMiddleware(5, 300),
+            new RateLimitMiddleware(30, 300),
         );
         $builder->registerMiddleware(
             'rateLimitUpload',
@@ -454,6 +457,18 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
 
+        // Refund approval workflow
+        $builder->connect(
+            '/refunds/send-approval-links/{id}',
+            ['controller' => 'Refunds', 'action' => 'sendApprovalLinks'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/refunds/modify-approvers/{id}',
+            ['controller' => 'Refunds', 'action' => 'modifyApprovers'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+
         // Payment Schedulings (Programación)
         $builder->connect(
             '/payment-schedulings/advance/{id}',
@@ -543,8 +558,38 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
+            '/advances/upload-legalization-document/{id}',
+            ['controller' => 'Advances', 'action' => 'uploadLegalizationDocument'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/delete-legalization-document/{id}/{documentId}',
+            ['controller' => 'Advances', 'action' => 'deleteLegalizationDocument'],
+            ['id' => '\d+', 'documentId' => '\d+', 'pass' => ['id', 'documentId']],
+        );
+        $builder->connect(
             '/advances/move-to-revision/{id}',
             ['controller' => 'Advances', 'action' => 'moveToRevision'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/move-to-aprobacion/{id}',
+            ['controller' => 'Advances', 'action' => 'moveToAprobacion'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/return-from-aprobacion/{id}',
+            ['controller' => 'Advances', 'action' => 'returnFromAprobacion'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/send-approval-links/{id}',
+            ['controller' => 'Advances', 'action' => 'sendApprovalLinks'],
+            ['id' => '\d+', 'pass' => ['id']],
+        );
+        $builder->connect(
+            '/advances/modify-approvers/{id}',
+            ['controller' => 'Advances', 'action' => 'modifyApprovers'],
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
@@ -553,8 +598,8 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
-            '/advances/return-to-validacion/{id}',
-            ['controller' => 'Advances', 'action' => 'returnToValidacion'],
+            '/advances/return-to-aprobacion/{id}',
+            ['controller' => 'Advances', 'action' => 'returnToAprobacion'],
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
@@ -583,9 +628,41 @@ return function (RouteBuilder $routes): void {
             ['id' => '\d+', 'pass' => ['id']],
         );
         $builder->connect(
-            '/advances/confirm-refund-payment/{id}',
-            ['controller' => 'Advances', 'action' => 'confirmRefundPayment'],
-            ['id' => '\d+', 'pass' => ['id']],
+            '/advances/confirm-refund-payment/{advanceId}',
+            ['controller' => 'AdvanceRefundPayments', 'action' => 'confirmPayment'],
+            ['advanceId' => '\d+', 'pass' => ['advanceId']],
+        );
+        $builder->connect(
+            '/advances/authorize-refund-payment/{advanceId}/{paymentId}',
+            ['controller' => 'AdvanceRefundPayments', 'action' => 'authorizePayment'],
+            ['pass' => ['advanceId', 'paymentId']],
+        );
+        $builder->connect(
+            '/advances/reject-refund-payment/{advanceId}/{paymentId}',
+            ['controller' => 'AdvanceRefundPayments', 'action' => 'rejectPayment'],
+            ['pass' => ['advanceId', 'paymentId']],
+        );
+
+        // Bandeja personal de aprobaciones (acceso por catálogo approvers)
+        $builder->connect(
+            '/approvals',
+            ['controller' => 'Approvals', 'action' => 'index'],
+        );
+        $builder->connect(
+            '/approvals/view/{module}/{id}',
+            ['controller' => 'Approvals', 'action' => 'view'],
+            ['pass' => ['module', 'id'], 'id' => '\d+', 'module' => 'invoice|novelty'],
+        );
+        $builder->connect(
+            '/approvals/approve/{module}/{id}',
+            ['controller' => 'Approvals', 'action' => 'approve'],
+            ['pass' => ['module', 'id'], 'id' => '\d+', 'module' => 'invoice|novelty'],
+        );
+
+        // Bandeja personal "Mis Pendientes" (acceso autenticado; filtrado por rol).
+        $builder->connect(
+            '/pendientes',
+            ['controller' => 'Pending', 'action' => 'index'],
         );
 
         $builder->fallbacks();

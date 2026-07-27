@@ -1,4 +1,4 @@
-# Sistema de Diseño SGI · COPCSA — Gestión documental y empty states
+# Sistema de Diseño SPI · COPCSA — Gestión documental y empty states
 
 Gestión documental (códigos de documento, filas, indicadores de completitud) y empty states.
 
@@ -37,7 +37,7 @@ Categorías: Identificación · Seguridad social · Contractual · Pagos · Méd
 ```html
 <div class="row-flex" style="justify-content:space-between; margin-bottom:12px">
   <div>
-    <div class="sgi-label">12<span style="color:var(--text-faint);font-weight:500">/14 · 86%</span></div>
+    <div class="spi-label">12<span style="color:var(--text-faint);font-weight:500">/14 · 86%</span></div>
     <div class="row-flex gap-4 mono" style="font-size:11px;color:var(--text-muted);margin-top:6px">
       <span class="row-flex gap-4"><span style="width:10px;height:10px;background:var(--primary-color)"></span>11 vigentes</span>
       <span class="row-flex gap-4"><span style="width:10px;height:10px;background:var(--warning-color)"></span>1 por vencer</span>
@@ -59,15 +59,15 @@ Categorías: Identificación · Seguridad social · Contractual · Pagos · Méd
   <div class="doc warn">ARL</div>
   <div class="grow">
     <div style="font-weight:600">ARL · SURA</div>
-    <div class="mono sgi-body-faint">arl_2025.pdf · 623 KB</div>
+    <div class="mono spi-body-faint">arl_2025.pdf · 623 KB</div>
   </div>
   <div class="col-flex gap-2">
-    <div class="sgi-label">CARGADO</div>
+    <div class="spi-label">CARGADO</div>
     <div class="mono">03/02/2025</div>
   </div>
   <div class="col-flex gap-2">
-    <div class="sgi-label">VENCE</div>
-    <div class="mono sgi-fg-warning" style="font-weight:600">01/06/2026</div>
+    <div class="spi-label">VENCE</div>
+    <div class="mono spi-fg-warning" style="font-weight:600">01/06/2026</div>
   </div>
   <span class="pill pill-warning-soft"><i class="bi bi-clock"></i>Vence en 16d</span>
   <div class="row-flex gap-4">

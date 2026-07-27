@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Constants\EmployeeStatusConstants;
 use App\Controller\Trait\ExcelWizardTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Service\EmployeeDocumentService;
@@ -28,6 +29,9 @@ class EmployeesController extends AppController
 
     private EmployeeHistoryService $historyService;
 
+    /**
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
@@ -41,6 +45,9 @@ class EmployeesController extends AppController
         $employeesTable->setHistoryService($this->historyService);
     }
 
+    /**
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -69,8 +76,12 @@ class EmployeesController extends AppController
         ]);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $employee = $this->Employees->get($id, contain: [
             'MaritalStatuses',
@@ -111,6 +122,32 @@ class EmployeesController extends AppController
             ->orderBy(['EmployeeFolders.name' => 'ASC'])
             ->all();
 
+        // ─── Carpeta activa del gestor documental ───────────────────────────
+        // El aplanado recorre $folders en el MISMO orden en que la vista pinta el
+        // árbol (raíz, sus hijas, siguiente raíz), para que el primer id del array
+        // sea siempre el primer ítem pintado.
+        $folderIds = [];
+        $folderNames = [];
+        foreach ($folders as $folder) {
+            $folderIds[] = (string)$folder->id;
+            $folderNames[(string)$folder->id] = $folder->name;
+            foreach ($folder->child_folders as $childFolder) {
+                $folderIds[] = (string)$childFolder->id;
+                $folderNames[(string)$childFolder->id] = $childFolder->name;
+            }
+        }
+
+        // El id que llega por ?folder= no se confía: se valida contra las carpetas
+        // del empleado y cae a la primera si no coincide. Ambos lados son string
+        // porque el query llega como string y los ids son int: con comparación
+        // estricta, in_array('7', [7], true) sería false.
+        $requestedFolder = $this->request->getQuery('folder');
+        $requestedFolder = is_scalar($requestedFolder) ? (string)$requestedFolder : '';
+        $selectedFolderId = in_array($requestedFolder, $folderIds, true)
+            ? $requestedFolder
+            : ($folderIds[0] ?? null);
+        $selectedFolderName = $selectedFolderId !== null ? $folderNames[$selectedFolderId] : '';
+
         // Novedad activa hoy: el getter virtual current_novelty filtra en memoria
         // sobre employee_novelties (CR-007 / CR-009).
         $currentNovelty = $employee->current_novelty;
@@ -127,7 +164,7 @@ class EmployeesController extends AppController
         $this->filterService->apply($navQuery, $this->request->getQueryParams());
 
         $navEmployees = $this->paginate($navQuery, ['scope' => 'nav']);
-        $navStatus = $this->request->getQuery('status') ?: \App\Constants\EmployeeStatusConstants::ACTIVO;
+        $navStatus = $this->request->getQuery('status') ?: EmployeeStatusConstants::ACTIVO;
         $navSearch = (string)$this->request->getQuery('search', '');
         $navPositionId = (string)$this->request->getQuery('position_id', '');
         $navOperationCenterId = (string)$this->request->getQuery('operation_center_id', '');
@@ -139,6 +176,8 @@ class EmployeesController extends AppController
         $this->set(compact(
             'employee',
             'folders',
+            'selectedFolderId',
+            'selectedFolderName',
             'currentNovelty',
             'navEmployees',
             'navStatus',
@@ -151,6 +190,9 @@ class EmployeesController extends AppController
         $this->set('fieldLabels', EmployeeHistoryService::FIELD_LABELS);
     }
 
+    /**
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -172,8 +214,12 @@ class EmployeesController extends AppController
         $this->set(compact('employee'));
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $employee = $this->Employees->get($id);
         if ($this->request->is(['patch', 'post', 'put'])) {
@@ -194,8 +240,12 @@ class EmployeesController extends AppController
         $this->set(compact('employee'));
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $employee = $this->Employees->get($id);
@@ -212,8 +262,12 @@ class EmployeesController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    /**
+     * @param string|null $id
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'edit')]
-    public function addObservation($id = null)
+    public function addObservation(?string $id = null)
     {
         $userId = (int)$this->Authentication->getIdentity()->getIdentifier();
         $user = $this->fetchTable('Users')->get($userId);
@@ -227,8 +281,12 @@ class EmployeesController extends AppController
         );
     }
 
+    /**
+     * @param string|null $employeeId
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'add')]
-    public function addFolder($employeeId = null)
+    public function addFolder(?string $employeeId = null)
     {
         $this->request->allowMethod(['post']);
         $employee = $this->Employees->get($employeeId);
@@ -242,45 +300,65 @@ class EmployeesController extends AppController
 
         if (!$result->success) {
             $this->Flash->error(__($result->firstError() ?? 'No se pudo crear la carpeta.'));
-        } else {
-            $this->Flash->success(__('La carpeta ha sido creada.'));
-        }
-
-        return $this->redirect(['action' => 'view', $employeeId]);
-    }
-
-    #[Permission(action: 'add')]
-    public function uploadDocument($employeeId = null)
-    {
-        $this->request->allowMethod(['post']);
-        $this->Employees->get($employeeId);
-
-        $file = $this->request->getUploadedFile('file');
-        if (!$file) {
-            $this->Flash->error(__('No se recibió ningún archivo válido.'));
 
             return $this->redirect(['action' => 'view', $employeeId]);
         }
 
+        $this->Flash->success(__('La carpeta ha sido creada.'));
+
+        return $this->redirect(['action' => 'view', $employeeId, '?' => ['folder' => $result->data->id]]);
+    }
+
+    /**
+     * @param string|null $employeeId
+     * @return \Cake\Http\Response|null|void
+     */
+    #[Permission(action: 'add')]
+    public function uploadDocument(?string $employeeId = null)
+    {
+        $this->request->allowMethod(['post']);
+        $this->Employees->get($employeeId);
+
+        $uploaded = $this->request->getUploadedFiles()['file'] ?? [];
+        $files = is_array($uploaded) ? $uploaded : [$uploaded];
+
         $identity = $this->Authentication->getIdentity();
-        $result = $this->documentService->uploadDocument(
+        $folderId = (int)$this->request->getData('employee_folder_id');
+        $result = $this->documentService->uploadDocuments(
             (int)$employeeId,
-            (int)$this->request->getData('employee_folder_id'),
-            $file,
+            $folderId,
+            $files,
             $identity ? (int)$identity->getIdentifier() : null,
         );
 
         if (!$result->success) {
             $this->Flash->error(__($result->firstError() ?? 'No se pudo subir el documento.'));
-        } else {
-            $this->Flash->success(__('El documento ha sido subido.'));
+
+            return $this->redirect(['action' => 'view', $employeeId]);
         }
 
-        return $this->redirect(['action' => 'view', $employeeId]);
+        $data = $result->data;
+        if ($data['uploaded'] >= 1) {
+            $this->Flash->success(__n('{0} documento subido.', '{0} documentos subidos.', $data['uploaded'], $data['uploaded']));
+        }
+        if (!empty($data['failed'])) {
+            $lines = array_map(
+                fn($f) => $f['name'] . ' (' . $f['error'] . ')',
+                $data['failed'],
+            );
+            $this->Flash->error(__('No se pudieron subir: {0}', implode(', ', $lines)));
+        }
+
+        return $this->redirect(['action' => 'view', $employeeId, '?' => ['folder' => $folderId]]);
     }
 
+    /**
+     * @param string|null $employeeId
+     * @param string|null $documentId
+     * @return \Cake\Http\Response|null|void
+     */
     #[Permission(action: 'delete')]
-    public function deleteDocument($employeeId = null, $documentId = null)
+    public function deleteDocument(?string $employeeId = null, ?string $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $this->Employees->get($employeeId);
@@ -288,11 +366,17 @@ class EmployeesController extends AppController
         $result = $this->documentService->deleteDocument((int)$employeeId, (int)$documentId);
         if (!$result->success) {
             $this->Flash->error(__($result->firstError() ?? 'No se pudo eliminar el documento.'));
-        } else {
-            $this->Flash->success(__('El documento ha sido eliminado.'));
+
+            return $this->redirect(['action' => 'view', $employeeId]);
         }
 
-        return $this->redirect(['action' => 'view', $employeeId]);
+        $this->Flash->success(__('El documento ha sido eliminado.'));
+
+        return $this->redirect([
+            'action' => 'view',
+            $employeeId,
+            '?' => ['folder' => $result->data['employee_folder_id']],
+        ]);
     }
 
     /**
@@ -301,7 +385,7 @@ class EmployeesController extends AppController
      * webroot; documentos legacy aún pueden estar bajo webroot/uploads/.
      */
     #[Permission(action: 'view')]
-    public function downloadDocument($employeeId = null, $documentId = null): Response
+    public function downloadDocument(?string $employeeId = null, ?string $documentId = null): Response
     {
         $this->Employees->get($employeeId);
 
@@ -388,9 +472,12 @@ class EmployeesController extends AppController
         }
     }
 
+    /**
+     * @return void
+     */
     protected function _setFormDropdowns(): void
     {
-        $employeeStatuses = \App\Constants\EmployeeStatusConstants::STATUS_LABELS;
+        $employeeStatuses = EmployeeStatusConstants::STATUS_LABELS;
         $maritalStatuses = $this->Employees->MaritalStatuses->find('list')->all();
         $educationLevels = $this->Employees->EducationLevels->find('list')->all();
         $positions = $this->Employees->Positions->find('codeList')->all();

@@ -59,7 +59,8 @@ final class PipelineStatusTest extends TestCase
         $this->assertTrue(PipelineStatus::PAGADA->isTerminal());
         $this->assertTrue(PipelineStatus::RECHAZADA->isTerminal());
 
-        foreach ([
+        foreach (
+            [
             PipelineStatus::REGISTRO,
             PipelineStatus::APROBACION,
             PipelineStatus::RRHH,
@@ -69,7 +70,8 @@ final class PipelineStatusTest extends TestCase
             PipelineStatus::TESORERIA,
             PipelineStatus::AUTORIZACION_PAGO,
             PipelineStatus::VERIFICACION_PAGO,
-        ] as $case) {
+            ] as $case
+        ) {
             $this->assertFalse($case->isTerminal(), "{$case->value} should NOT be terminal");
         }
     }

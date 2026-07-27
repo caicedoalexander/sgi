@@ -6,6 +6,7 @@ namespace App\Constants\Domain\Refund;
 enum PipelineStatus: string
 {
     case AGRUPACION = 'agrupacion';
+    case APROBACION = 'aprobacion';
     case CONTABILIDAD = 'contabilidad';
     case TESORERIA = 'tesoreria';
     case AUTORIZACION_PAGO = 'autorizacion_pago';
@@ -19,6 +20,7 @@ enum PipelineStatus: string
     {
         return match ($this) {
             self::AGRUPACION => 'Agrupación',
+            self::APROBACION => 'Aprobación',
             self::CONTABILIDAD => 'Contabilidad',
             self::TESORERIA => 'Tesorería',
             self::AUTORIZACION_PAGO => 'Autorización de pago',
@@ -33,7 +35,8 @@ enum PipelineStatus: string
     public function next(): ?self
     {
         return match ($this) {
-            self::AGRUPACION => self::CONTABILIDAD,
+            self::AGRUPACION => self::APROBACION,
+            self::APROBACION => self::CONTABILIDAD,
             self::CONTABILIDAD => self::TESORERIA,
             self::TESORERIA => self::AUTORIZACION_PAGO,
             self::AUTORIZACION_PAGO => self::VERIFICACION_PAGO,
@@ -49,7 +52,8 @@ enum PipelineStatus: string
     {
         return match ($this) {
             self::AGRUPACION => null,
-            self::CONTABILIDAD => self::AGRUPACION,
+            self::APROBACION => self::AGRUPACION,
+            self::CONTABILIDAD => self::APROBACION,
             self::TESORERIA => self::CONTABILIDAD,
             self::AUTORIZACION_PAGO => self::TESORERIA,
             self::VERIFICACION_PAGO => self::AUTORIZACION_PAGO,

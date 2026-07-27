@@ -14,15 +14,16 @@ $record = $viewModel->record;
 $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PAGADA;
 ?>
 <?= $this->element('cdn_autonumeric') ?>
+<?= $this->element('cdn_select2') ?>
 
-<div class="sgi-edit-shell">
+<div class="spi-edit-shell">
 
 <?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
-<div class="sgi-edit-shell-head">
+<div class="spi-edit-shell-head">
 <!-- Page header -->
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Programación de Pagos', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <?= $this->Html->link(h($record->code), ['action' => 'view', $record->id]) ?>
@@ -30,8 +31,8 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
             <span class="current">Editar</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Editar Programación</span>
-            <span class="sgi-edit-id-chip"><?= h($record->code) ?></span>
+            <span class="spi-page-title">Editar Programación</span>
+            <span class="spi-edit-id-chip"><?= h($record->code) ?></span>
             <span class="pill <?= $psStatusPill ?>"><?= h($psStatusLabel) ?></span>
         </div>
     </div>
@@ -49,9 +50,9 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
     </div>
 </div>
 
-</div><?php /* fin .sgi-edit-shell-head */ ?>
+</div><?php /* fin .spi-edit-shell-head */ ?>
 
-<div class="sgi-edit-shell-body view-anim">
+<div class="spi-edit-shell-body view-anim">
 
 <!-- Alerta de avance pendiente -->
 <?php if ($viewModel->canAdvance && !empty($viewModel->advanceErrors)): ?>
@@ -73,7 +74,7 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
 <div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
+    <aside class="col-lg-3 spi-edit-col d-flex flex-column gap-3">
         <?php
         // Acciones del sidebar (regresión) — element compartido
         $actionsHtml = !empty($viewModel->canRegress)
@@ -118,15 +119,15 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
+    <main class="col-lg-9 spi-edit-col d-flex flex-column gap-3">
 
         <!-- Facturas Vinculadas -->
-        <div class="sgi-card">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+        <div class="spi-card">
+            <div class="spi-section-head" style="margin-bottom:12px;">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-receipt" aria-hidden="true"></i>
                     Facturas Vinculadas
-                    <span class="sgi-folder-count"><?= $viewModel->itemCount ?></span>
+                    <span class="spi-folder-count"><?= $viewModel->itemCount ?></span>
                 </span>
                 <?php if ($viewModel->isBorrador): ?>
                 <div class="d-flex gap-2 ms-auto">
@@ -152,7 +153,7 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
                         </div>
                         <div class="col-md-3">
                             <label class="form-label mb-1" style="font-size:var(--fs-body-sm);">Banco</label>
-                            <select name="banking_entity_id" class="form-select form-select-sm" required>
+                            <select name="banking_entity_id" class="form-select form-select-sm select2-enable" required>
                                 <option value="">-- Seleccione --</option>
                                 <?php foreach ($viewModel->bankingEntities as $beId => $beName): ?>
                                 <option value="<?= $beId ?>"><?= h($beName) ?></option>
@@ -202,7 +203,7 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
                                 <?= $this->Form->postLink(
                                     '<i class="bi bi-x-lg" aria-hidden="true"></i>',
                                     ['action' => 'removeItem', $record->id, $item->id],
-                                    ['confirm' => '¿Desvincular esta factura?', 'class' => 'btn-icon sgi-fg-danger', 'escape' => false, 'title' => 'Desvincular']
+                                    ['confirm' => '¿Desvincular esta factura?', 'class' => 'btn-icon spi-fg-danger', 'escape' => false, 'title' => 'Desvincular']
                                 ) ?>
                             </td>
                             <?php endif; ?>
@@ -221,7 +222,7 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
                 </table>
             </div>
             <?php else: ?>
-            <div class="text-center sgi-fg-faint py-3" style="font-size:var(--fs-body);">
+            <div class="text-center spi-fg-faint py-3" style="font-size:var(--fs-body);">
                 <i class="bi bi-receipt me-1" aria-hidden="true"></i>No hay facturas vinculadas
             </div>
             <?php endif; ?>
@@ -258,30 +259,30 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
 
     </main>
 </div><?php /* fin .row */ ?>
-</div><?php /* fin .sgi-edit-shell-body */ ?>
+</div><?php /* fin .spi-edit-shell-body */ ?>
 
 <!-- Sticky footer con acciones del pipeline -->
 <?php if ($viewModel->canAdvance || $viewModel->canReject || !empty($viewModel->canRegress)): ?>
-        <div class="sgi-edit-footer">
-            <div class="sgi-edit-footer-meta">
+        <div class="spi-edit-footer">
+            <div class="spi-edit-footer-meta">
                 <span class="d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+                    <i class="bi bi-person spi-fg-faint" aria-hidden="true"></i>
                     Rol: <strong style="color:var(--text-default);"><?= h($viewModel->roleName) ?></strong>
                 </span>
                 <?php if ($record->modified): ?>
                 <span class="sep"></span>
                 <span class="d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+                    <i class="bi bi-clock spi-fg-faint" aria-hidden="true"></i>
                     Última modificación: <span class="mono"><?= $record->modified->format('d/m/Y H:i') ?></span>
                 </span>
                 <?php endif; ?>
             </div>
-            <div class="sgi-edit-footer-actions">
+            <div class="spi-edit-footer-actions">
                 <?php if ($viewModel->canReject): ?>
                 <?= $this->Form->postLink(
                     '<i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Devolver a Tesorería',
                     ['action' => 'reject', $record->id],
-                    ['confirm' => '¿Devolver la programación a Tesorería?', 'class' => 'btn btn-ghost-card sgi-fg-warning', 'escape' => false]
+                    ['confirm' => '¿Devolver la programación a Tesorería?', 'class' => 'btn btn-ghost-card spi-fg-warning', 'escape' => false]
                 ) ?>
                 <?php endif; ?>
                 <?php if ($viewModel->canAdvance && empty($viewModel->advanceErrors) && $viewModel->nextStatus): ?>
@@ -300,7 +301,7 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
         </div>
         <?php endif; ?>
 
-</div><?php /* fin .sgi-edit-shell */ ?>
+</div><?php /* fin .spi-edit-shell */ ?>
 
 <?php /* ═══════════════════ MODALES ═══════════════════ */ ?>
 <?php if ($viewModel->isBorrador): ?>
@@ -345,7 +346,7 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
 <?php endif; ?>
 
 <?= $this->element('document_row_template', ['showBadge' => false]) ?>
-<?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
+<?= $this->Html->script('spi-document-uploader', ['block' => true]) ?>
 <?= $this->element('observations/drawer', [
     'observations'    => $record->payment_scheduling_observations ?? [],
     'count'           => count($record->payment_scheduling_observations ?? []),
@@ -366,7 +367,7 @@ $isTerminal = $record->pipeline_status === PaymentSchedulingConstants::STATUS_PA
 <?php $this->append('script') ?>
 <script>
 (function () {
-    SgiDocumentUploader.init({
+    SpiDocumentUploader.init({
         formSelector:        '#upload-doc-form',
         listSelector:        '#docs-list',
         emptySelector:       '#docs-empty-state',

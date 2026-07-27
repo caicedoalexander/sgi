@@ -9,6 +9,11 @@ class InvoiceHistoriesController extends AppController
 {
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista el historial de facturas.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -20,8 +25,14 @@ class InvoiceHistoriesController extends AppController
         $this->set(compact('invoiceHistories'));
     }
 
+    /**
+     * Muestra un registro del historial de facturas.
+     *
+     * @param string|null $id ID del registro de historial.
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $invoiceHistory = $this->InvoiceHistories->get($id, contain: ['Invoices', 'Users']);
 

@@ -9,6 +9,7 @@ use App\Model\Entity\Invoice;
 use App\Service\AdvanceLegalizationService;
 use App\Service\InvoicePaymentService;
 use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
+use App\Service\Pipeline\Invoice\Guard\InvoiceGuard;
 use App\Service\Pipeline\Invoice\InvoicePipelineStateRegistry;
 use App\Service\Pipeline\Invoice\Policy\AnticipoDocumentTypePolicy;
 use App\Service\Pipeline\Invoice\Policy\InvoiceFieldAccessPolicy;
@@ -29,14 +30,16 @@ use PHPUnit\Framework\TestCase;
  * y filtrado de errores por rol.
  *
  * Cubre:
- *  - validateAdvance(): rechazo bloquea todo, estado de origen inválido, bloqueo por
- *    DocumentTypePolicy (Legalización en contabilidad) y aplicación de overrides.
- *  - getTransitionRules(): estado inválido → [].
- *  - filterErrorsForRole(): error con responsable=[] gobernado por canOperate del
- *    status; error con campo responsable gobernado por los editables del rol.
+ *  - validateAdvance(): rechazo bloquea todo, estado de origen inválido y bloqueo por
+ *    DocumentTypePolicy (Legalización en contabilidad) — los 3 con key reservada —
+ *    y aplicación de overrides.
+ *  - filterErrorsForRole(): errores KEYED por requisito; key con responsable=[]
+ *    gobernada por canOperate del status; key con campo responsable gobernada por los
+ *    editables del rol; keys reservadas siempre visibles.
  *
  * Suite pura (sin DB): registry, factory y fieldPolicy REALES (in-memory);
- * AuthorizationFacade mockeado para controlar canOperate/operableSteps.
+ * AuthorizationFacade mockeado para controlar canOperate/operableSteps; InvoiceGuard
+ * stubbeado (el real consultaría `invoice_documents`).
  */
 final class InvoiceTransitionValidatorTest extends TestCase
 {
@@ -44,8 +47,11 @@ final class InvoiceTransitionValidatorTest extends TestCase
     {
         $payment = $this->createStub(InvoicePaymentService::class);
 
+        $guard = $this->createStub(InvoiceGuard::class);
+        $guard->method('hasAnyDocument')->willReturn(true);
+
         $registry = new InvoicePipelineStateRegistry(
-            new AprobacionState(),
+            new AprobacionState($guard),
             new ContabilidadState(),
             new TesoreriaState($payment),
             new AutorizacionPagoState($payment),
@@ -84,7 +90,7 @@ final class InvoiceTransitionValidatorTest extends TestCase
 
         $errors = $validator->validateAdvance($invoice, InvoiceConstants::STATUS_APROBACION);
 
-        $this->assertSame(['La factura fue rechazada. El flujo ha terminado.'], $errors);
+        $this->assertSame(['_rejected' => 'La factura fue rechazada. El flujo ha terminado.'], $errors);
     }
 
     public function testValidateAdvanceRejectsInvalidFromStatus(): void
@@ -94,8 +100,8 @@ final class InvoiceTransitionValidatorTest extends TestCase
 
         $errors = $validator->validateAdvance($invoice, 'estado_inexistente');
 
-        $this->assertCount(1, $errors);
-        $this->assertStringContainsString('Estado de origen inválido', $errors[0]);
+        $this->assertArrayHasKey('_invalid_status', $errors);
+        $this->assertStringContainsString('Estado de origen inválido', $errors['_invalid_status']);
     }
 
     public function testValidateAdvanceBlockedByLegalizacionPolicyInContabilidad(): void
@@ -105,8 +111,8 @@ final class InvoiceTransitionValidatorTest extends TestCase
 
         $errors = $validator->validateAdvance($invoice, InvoiceConstants::STATUS_CONTABILIDAD);
 
-        $this->assertCount(1, $errors);
-        $this->assertStringContainsString('automáticamente', $errors[0]);
+        $this->assertArrayHasKey('_doctype_block', $errors);
+        $this->assertStringContainsString('automáticamente', $errors['_doctype_block']);
     }
 
     public function testValidateAdvanceAppliesOverridesToSubject(): void
@@ -121,61 +127,93 @@ final class InvoiceTransitionValidatorTest extends TestCase
             ['area_approval' => InvoiceConstants::APPROVAL_REJECTED],
         );
 
-        $this->assertSame(['La factura fue rechazada. El flujo ha terminado.'], $errors);
+        $this->assertSame(['_rejected' => 'La factura fue rechazada. El flujo ha terminado.'], $errors);
         // El invoice original no se muta (overrides operan sobre un clon).
         $this->assertSame(InvoiceConstants::APPROVAL_PENDING, $invoice->area_approval);
-    }
-
-    // --- getTransitionRules ---
-
-    public function testGetTransitionRulesReturnsEmptyForInvalidStatus(): void
-    {
-        $validator = $this->buildValidator($this->createStub(AuthorizationFacade::class));
-
-        $this->assertSame([], $validator->getTransitionRules('estado_inexistente'));
     }
 
     // --- filterErrorsForRole ---
 
     public function testFilterErrorsForRoleWithResponsiblelessErrorGatedByStatusOperability(): void
     {
-        // Regla sin campos responsables (area_approval): se muestra solo si el rol
+        // Requisito sin campos responsables (area_approval): se muestra solo si el rol
         // opera el status.
-        $rules = [['field' => 'area_approval', 'label' => 'Aprobación']];
-        $errors = ['Falta la aprobación del área.'];
+        $errors = ['area_approval' => 'Falta la aprobación del área.'];
 
         $authVisible = $this->createMock(AuthorizationFacade::class);
         $authVisible->method('canOperate')->willReturn(true);
         $shown = $this->buildValidator($authVisible)
-            ->filterErrorsForRole($errors, $rules, 5, InvoiceConstants::STATUS_APROBACION);
-        $this->assertSame($errors, $shown);
+            ->filterErrorsForRole($errors, 5, InvoiceConstants::STATUS_APROBACION);
+        $this->assertSame(['Falta la aprobación del área.'], $shown);
 
         $authHidden = $this->createMock(AuthorizationFacade::class);
         $authHidden->method('canOperate')->willReturn(false);
         $hidden = $this->buildValidator($authHidden)
-            ->filterErrorsForRole($errors, $rules, 5, InvoiceConstants::STATUS_APROBACION);
+            ->filterErrorsForRole($errors, 5, InvoiceConstants::STATUS_APROBACION);
         $this->assertSame([], $hidden);
     }
 
     public function testFilterErrorsForRoleWithFieldErrorGatedByEditableFields(): void
     {
-        // Regla con campo responsable (dian_validation): se muestra solo si el campo
+        // Requisito con campo responsable (dian_validation): se muestra solo si el campo
         // está entre los editables del rol en el status.
-        $rules = [['field' => 'dian_validation', 'label' => 'Validación DIAN']];
-        $errors = ['Falta la validación DIAN.'];
+        $errors = ['dian_validation' => 'Falta la validación DIAN.'];
 
         // canOperate=true → editables de aprobacion incluyen dian_validation → se muestra.
         $authEditable = $this->createMock(AuthorizationFacade::class);
         $authEditable->method('canOperate')->willReturn(true);
         $shown = $this->buildValidator($authEditable)
-            ->filterErrorsForRole($errors, $rules, 3, InvoiceConstants::STATUS_APROBACION);
-        $this->assertSame($errors, $shown);
+            ->filterErrorsForRole($errors, 3, InvoiceConstants::STATUS_APROBACION);
+        $this->assertSame(['Falta la validación DIAN.'], $shown);
 
         // canOperate=false → editables vacíos → se oculta.
         $authNotEditable = $this->createMock(AuthorizationFacade::class);
         $authNotEditable->method('canOperate')->willReturn(false);
         $hidden = $this->buildValidator($authNotEditable)
-            ->filterErrorsForRole($errors, $rules, 3, InvoiceConstants::STATUS_APROBACION);
+            ->filterErrorsForRole($errors, 3, InvoiceConstants::STATUS_APROBACION);
+        $this->assertSame([], $hidden);
+    }
+
+    public function testFilterErrorsDoesNotMisattributeWhenOneRequirementPasses(): void
+    {
+        // area pasa, dian falla: el error DIAN debe seguir gobernado por dian_validation
+        // (con el contrato posicional viejo se atribuía a area_approval).
+        $errors = ['dian_validation' => 'Falta la validación DIAN.'];
+
+        $authNotEditable = $this->createMock(AuthorizationFacade::class);
+        $authNotEditable->method('canOperate')->willReturn(false);
+        $hidden = $this->buildValidator($authNotEditable)
+            ->filterErrorsForRole($errors, 3, InvoiceConstants::STATUS_APROBACION);
+        $this->assertSame([], $hidden);
+    }
+
+    public function testReservedKeysAlwaysPassTheFilter(): void
+    {
+        $errors = ['_rejected' => 'La factura fue rechazada. El flujo ha terminado.'];
+        $auth = $this->createMock(AuthorizationFacade::class);
+        $auth->method('canOperate')->willReturn(false);
+
+        $shown = $this->buildValidator($auth)
+            ->filterErrorsForRole($errors, 3, InvoiceConstants::STATUS_APROBACION);
+        $this->assertSame(['La factura fue rechazada. El flujo ha terminado.'], $shown);
+    }
+
+    public function testFilterErrorsShowsSupportDocumentWhenRoleOperatesStatus(): void
+    {
+        // support_document tiene responsable [] (se resuelve subiendo un documento, no
+        // tecleando un campo) → su visibilidad la gobierna canOperate del status.
+        $errors = ['support_document' => 'Debe cargar al menos un soporte de la factura'];
+
+        $authVisible = $this->createMock(AuthorizationFacade::class);
+        $authVisible->method('canOperate')->willReturn(true);
+        $shown = $this->buildValidator($authVisible)
+            ->filterErrorsForRole($errors, 5, InvoiceConstants::STATUS_APROBACION);
+        $this->assertSame(['Debe cargar al menos un soporte de la factura'], $shown);
+
+        $authHidden = $this->createMock(AuthorizationFacade::class);
+        $authHidden->method('canOperate')->willReturn(false);
+        $hidden = $this->buildValidator($authHidden)
+            ->filterErrorsForRole($errors, 5, InvoiceConstants::STATUS_APROBACION);
         $this->assertSame([], $hidden);
     }
 }

@@ -6,7 +6,7 @@
  * bg-subtle + .bank-chip + pill soft + monto mono; §16 empty-state cuando no
  * hay pagos; §06 pills soft para estado del pago).
  *
- * JS contract — `webroot/js/sgi-payment.js` depends on (must be preserved):
+ * JS contract — `webroot/js/spi-payment.js` depends on (must be preserved):
  *   container: [data-payment-section], data-add-url, data-remaining-amount,
  *              data-force-full-amount
  *   inputs:    [data-pay-bank], [data-pay-amount], [data-pay-date], [data-pay-full]
@@ -84,7 +84,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
 
     <!-- Section header -->
     <div class="row-flex gap-12 mb-3">
-        <span class="sgi-label row-flex gap-4 grow">
+        <span class="spi-label row-flex gap-4 grow">
             <i class="bi <?= h($sectionIcon) ?>" aria-hidden="true"></i><?= h($sectionTitle) ?>
         </span>
         <?php if ($paymentStatus !== null): ?>
@@ -106,8 +106,8 @@ $addUrl = $this->Url->build($addPaymentUrl);
     <?php if ($totalAmount > 0): ?>
     <div class="row-flex gap-12 mb-3" style="flex-wrap:wrap;">
         <div style="background:var(--bg-subtle);padding:10px 14px;min-width:150px;">
-            <div class="sgi-label">Total pagado</div>
-            <div class="mono sgi-fg-strong" style="font-size:15px;font-weight:700;margin-top:3px;">
+            <div class="spi-label">Total pagado</div>
+            <div class="mono spi-fg-strong" style="font-size:15px;font-weight:700;margin-top:3px;">
                 $ <?= number_format($paymentsTotal, 0, ',', '.') ?>
             </div>
         </div>
@@ -115,8 +115,8 @@ $addUrl = $this->Url->build($addPaymentUrl);
         <div style="background:var(--bg-subtle);padding:10px 14px;min-width:150px;position:relative;">
             <span class="accent-strip accent-orange"></span>
             <div style="padding-left:8px;">
-                <div class="sgi-label">Saldo restante</div>
-                <div class="mono sgi-fg-secondary" style="font-size:15px;font-weight:700;margin-top:3px;">
+                <div class="spi-label">Saldo restante</div>
+                <div class="mono spi-fg-secondary" style="font-size:15px;font-weight:700;margin-top:3px;">
                     $ <?= number_format($remainingAmount, 0, ',', '.') ?>
                 </div>
             </div>
@@ -128,7 +128,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
     <!-- Payments list sub-section -->
     <div class="mt-2">
         <div class="row-flex gap-12 mb-2">
-            <span class="sgi-label row-flex gap-4 grow">
+            <span class="spi-label row-flex gap-4 grow">
                 <i class="bi bi-credit-card" aria-hidden="true"></i>Pagos Registrados
             </span>
             <?php if ($showAddButton): ?>
@@ -145,7 +145,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
             <div style="background:var(--bg-subtle);padding:16px;">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="sgi-label d-block mb-1">Entidad Bancaria</label>
+                        <label class="spi-label d-block mb-1">Entidad Bancaria</label>
                         <select data-pay-bank class="form-select select2-enable" required>
                             <option value="">— Seleccione —</option>
                             <?php foreach ($bankingEntities as $beId => $beName): ?>
@@ -155,19 +155,19 @@ $addUrl = $this->Url->build($addPaymentUrl);
                     </div>
                     <?php if ($forceFullAmount): ?>
                     <div class="col-md-3">
-                        <label class="sgi-label d-block mb-1">Monto (COP)</label>
+                        <label class="spi-label d-block mb-1">Monto (COP)</label>
                         <input type="text" data-pay-amount class="form-control currency-input mono"
                                value="<?= $totalAmount ?>" readonly>
-                        <div class="sgi-body-faint" style="margin-top:4px;">Pago total del registro.</div>
+                        <div class="spi-body-faint" style="margin-top:4px;">Pago total del registro.</div>
                     </div>
                     <?php else: ?>
                     <div class="col-md-3">
-                        <label class="sgi-label d-block mb-1">Monto (COP)</label>
+                        <label class="spi-label d-block mb-1">Monto (COP)</label>
                         <input type="text" data-pay-amount class="form-control currency-input mono" required>
                     </div>
                     <?php endif; ?>
                     <div class="col-md-3">
-                        <label class="sgi-label d-block mb-1">Fecha de Pago</label>
+                        <label class="spi-label d-block mb-1">Fecha de Pago</label>
                         <input type="text" data-pay-date class="form-control flatpickr-date mono" required>
                     </div>
                     <?php if (!$forceFullAmount && $remainingAmount > 0): ?>
@@ -215,7 +215,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                     <div style="font-size:var(--fs-body-lg);font-weight:600;color:var(--text-strong);">
                         <?= h($payment->banking_entity->name ?? '—') ?>
                     </div>
-                    <div class="mono sgi-body-faint" style="margin-top:2px;">
+                    <div class="mono spi-body-faint" style="margin-top:2px;">
                         <?= $payment->payment_date?->format('d/m/Y') ?? '—' ?>
                         · por <?= h($payment->created_by_user->full_name ?? $payment->created_by_user->username ?? '—') ?>
                     </div>
@@ -237,13 +237,13 @@ $addUrl = $this->Url->build($addPaymentUrl);
                     </div>
                     <?php endif; ?>
                     <?php if ($pStatus === 'authorized' && $payment->authorized_by_user): ?>
-                    <div class="mono sgi-body-faint" style="margin-top:4px;">
+                    <div class="mono spi-body-faint" style="margin-top:4px;">
                         Autorizado por <?= h($payment->authorized_by_user->full_name ?? $payment->authorized_by_user->username ?? '') ?>
                         · <?= $payment->authorized_date?->format('d/m/Y') ?? '' ?>
                     </div>
                     <?php elseif ($pStatus === 'rejected' && !empty($payment->rejection_reason)): ?>
-                    <div class="sgi-body-faint" style="margin-top:4px;">
-                        <i class="bi bi-exclamation-triangle sgi-fg-danger" aria-hidden="true"></i>
+                    <div class="spi-body-faint" style="margin-top:4px;">
+                        <i class="bi bi-exclamation-triangle spi-fg-danger" aria-hidden="true"></i>
                         <?= h($payment->rejection_reason) ?>
                     </div>
                     <?php endif; ?>
@@ -262,7 +262,7 @@ $addUrl = $this->Url->build($addPaymentUrl);
                             <i class="bi bi-clock" aria-hidden="true"></i>PENDIENTE
                         </span>
                     <?php endif; ?>
-                    <div class="mono sgi-fg-strong" style="font-size:14px;font-weight:700;">
+                    <div class="mono spi-fg-strong" style="font-size:14px;font-weight:700;">
                         $ <?= number_format((float)$payment->amount, 0, ',', '.') ?>
                     </div>
                 </div>
@@ -298,8 +298,8 @@ $addUrl = $this->Url->build($addPaymentUrl);
 
             <!-- Total -->
             <div class="row-flex gap-12" style="background:var(--bg-muted);padding:10px 14px;">
-                <span class="sgi-label grow">Total Pagado</span>
-                <span class="mono sgi-fg-strong" style="font-size:14px;font-weight:700;">
+                <span class="spi-label grow">Total Pagado</span>
+                <span class="mono spi-fg-strong" style="font-size:14px;font-weight:700;">
                     $ <?= number_format($paymentsTotal, 0, ',', '.') ?>
                 </span>
             </div>
@@ -315,4 +315,4 @@ $addUrl = $this->Url->build($addPaymentUrl);
         <?php endif; ?>
     </div>
 </div>
-<?php $this->Html->script('sgi-payment', ['block' => true]); ?>
+<?php $this->Html->script('spi-payment', ['block' => true]); ?>

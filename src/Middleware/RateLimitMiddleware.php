@@ -25,6 +25,13 @@ class RateLimitMiddleware implements MiddlewareInterface
     ) {
     }
 
+    /**
+     * Aplica el límite de peticiones por IP y ruta.
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request Petición entrante.
+     * @param \Psr\Http\Server\RequestHandlerInterface $handler Manejador de la petición.
+     * @return \Psr\Http\Message\ResponseInterface
+     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $ip = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';

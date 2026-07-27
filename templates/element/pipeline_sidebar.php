@@ -4,7 +4,7 @@
  *
  * Renderiza cards apiladas: Hero (icono + ID + estado + entidad + monto),
  * Pipeline vertical, Acciones (opcional) y Registro (opcional). Usa las clases
- * v2 del sistema de diseño (.sgi-card, .pipeline-v / .pv-step).
+ * v2 del sistema de diseño (.spi-card, .pipeline-v / .pv-step).
  *
  * El element es agnóstico a la grilla: la vista anfitriona aporta la columna.
  *
@@ -65,7 +65,7 @@ $amountDec = $amount !== null
 ?>
 
 <!-- Hero -->
-<div class="sgi-card" style="position:relative;">
+<div class="spi-card" style="position:relative;">
     <div class="d-flex align-items-start" style="gap:12px;margin-bottom:16px;">
         <div style="width:40px;height:40px;background:var(--primary-soft-strong);color:var(--primary-color);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <i class="bi bi-<?= h($icon) ?>" aria-hidden="true" style="font-size:18px;"></i>
@@ -89,7 +89,7 @@ $amountDec = $amount !== null
     </div>
 
     <?php if (!empty($entityLabel)): ?>
-    <div class="sgi-label"><?= h($entityLabel) ?></div>
+    <div class="spi-label"><?= h($entityLabel) ?></div>
     <div style="font-size:var(--fs-body);font-weight:600;color:var(--text-default);margin-top:4px;line-height:1.3;">
         <?= h($entityValue ?? '—') ?>
     </div>
@@ -103,13 +103,13 @@ $amountDec = $amount !== null
 
     <?php if ($amountLabel !== null): ?>
     <div class="hr"></div>
-    <div class="sgi-label"><?= h($amountLabel) ?></div>
+    <div class="spi-label"><?= h($amountLabel) ?></div>
     <div class="d-flex align-items-baseline" style="gap:4px;margin-top:4px;">
         <?php if ($amount !== null && $amount > 0): ?>
-            <span class="sgi-display">$ <?= $amountInt ?></span>
+            <span class="spi-display">$ <?= $amountInt ?></span>
             <span style="font-size:13px;color:var(--text-faint);font-weight:500;"><?= $amountDec ?></span>
         <?php else: ?>
-            <span class="sgi-display" style="color:var(--text-disabled);">$ —</span>
+            <span class="spi-display" style="color:var(--text-disabled);">$ —</span>
         <?php endif; ?>
     </div>
     <?= $amountExtraHtml ?>
@@ -120,8 +120,8 @@ $amountDec = $amount !== null
 
 <!-- Pipeline vertical -->
 <?php if (!empty($pipelineSteps)): ?>
-<div class="sgi-card compact">
-    <span class="sgi-label">Pipeline</span>
+<div class="spi-card compact">
+    <span class="spi-label">Pipeline</span>
     <div class="pipeline-v" style="margin-top:8px;">
         <?php foreach ($pipelineSteps as $idx => $stepKey):
             $isDone    = $idx < $currentIdx || ($isTerminal && $idx === $currentIdx);
@@ -165,8 +165,8 @@ $amountDec = $amount !== null
 
 <!-- Acciones (opcional) -->
 <?php if ($actionsHtml): ?>
-<div class="sgi-card compact">
-    <span class="sgi-label">Acciones</span>
+<div class="spi-card compact">
+    <span class="spi-label">Acciones</span>
     <div class="d-flex flex-column gap-1" style="margin-top:10px;">
         <?= $actionsHtml ?>
     </div>
@@ -175,11 +175,11 @@ $amountDec = $amount !== null
 
 <!-- Registro / Auditoría (opcional) -->
 <?php if (!empty($registryLines)): ?>
-<div class="sgi-card compact">
-    <span class="sgi-label" style="margin-bottom:8px;display:block;">Registro</span>
+<div class="spi-card compact">
+    <span class="spi-label" style="margin-bottom:8px;display:block;">Registro</span>
     <?php foreach ($registryLines as $line): ?>
     <div class="d-flex align-items-center gap-2 mb-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-        <i class="bi <?= h($line['icon'] ?? 'bi-info-circle') ?> sgi-fg-faint" aria-hidden="true"></i>
+        <i class="bi <?= h($line['icon'] ?? 'bi-info-circle') ?> spi-fg-faint" aria-hidden="true"></i>
         <span><?= $line['html'] ?? '' ?></span>
     </div>
     <?php endforeach; ?>

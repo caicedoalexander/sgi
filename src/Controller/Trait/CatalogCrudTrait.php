@@ -17,7 +17,7 @@ use Cake\ORM\Table;
  *                    página → flash de error y re-render normal.
  *  - GET AJAX:       layout 'ajax' para devolver solo el fragmento del form (se inyecta en el modal).
  *
- * El JS (webroot/js/sgi-catalog-modal.js) distingue éxito (JSON) de error (HTML)
+ * El JS (webroot/js/spi-catalog-modal.js) distingue éxito (JSON) de error (HTML)
  * por content-type; en éxito recarga el index (el flash de sesión muestra el toast).
  */
 trait CatalogCrudTrait

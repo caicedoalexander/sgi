@@ -42,7 +42,7 @@ class CakeMailerAdapter implements MailerInterface
         $mailer->setTransport('sgi_dynamic');
         $mailer->setFrom(
             $smtpConfig['smtp_from_email'],
-            $smtpConfig['smtp_from_name'] ?? 'SGI',
+            $smtpConfig['smtp_from_name'] ?? 'SPI',
         );
         $mailer->setTo($to);
         $mailer->setSubject($subject);

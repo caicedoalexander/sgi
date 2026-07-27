@@ -1,4 +1,4 @@
-# Sistema de Diseño SGI · COPCSA — Navegación
+# Sistema de Diseño SPI · COPCSA — Navegación
 
 Patrones de navegación: TopBar, sidebar y pipeline.
 
@@ -9,14 +9,14 @@ Patrones de navegación: TopBar, sidebar y pipeline.
 Estructura común a todas las vistas: 52px de alto, fondo `#fff`, breadcrumb a la izquierda (con accent strip verde 3×18px), fecha mono a la derecha.
 
 ```html
-<div class="sgi-topbar">
-  <div class="sgi-topbar-crumb">
-    <span class="sgi-topbar-accent"></span>
+<div class="spi-topbar">
+  <div class="spi-topbar-crumb">
+    <span class="spi-topbar-accent"></span>
     <span>Todas las Facturas</span>
   </div>
-  <div class="sgi-topbar-right">
+  <div class="spi-topbar-right">
     <button class="btn btn-ghost btn-sm"><i class="bi bi-bell"></i></button>
-    <div class="sgi-topbar-date">
+    <div class="spi-topbar-date">
       <i class="bi bi-calendar3"></i>
       <span>Viernes, 15 de Mayo del 2026</span>
     </div>
@@ -25,25 +25,25 @@ Estructura común a todas las vistas: 52px de alto, fondo `#fff`, breadcrumb a l
 ```
 
 ```css
-.sgi-topbar {
+.spi-topbar {
   height: 52px;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 24px;
   background: #fff;
   flex-shrink: 0;
 }
-.sgi-topbar-crumb {
+.spi-topbar-crumb {
   display: flex; align-items: center; gap: 12px;
   font-size: 13px; font-weight: 600; color: var(--text-default);
 }
-.sgi-topbar-accent {
+.spi-topbar-accent {
   width: 3px; height: 18px;
   background: var(--primary-color);
 }
-.sgi-topbar-right {
+.spi-topbar-right {
   display: flex; align-items: center; gap: 14px;
 }
-.sgi-topbar-date {
+.spi-topbar-date {
   font-size: 11.5px; color: var(--text-faint);
   display: flex; align-items: center; gap: 6px;
 }
@@ -252,9 +252,9 @@ Glifo 32×32 fondo `--primary-color`, icono triangular (cumbre/pirámide) en `#f
     <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 3 2 20h20z"/></svg>
   </div>
   <div>
-    <div style="font-weight:700; font-size:13px; color:#fff; letter-spacing:0.3px">SGI · COPCSA</div>
+    <div style="font-weight:700; font-size:13px; color:#fff; letter-spacing:0.3px">SPI · COPCSA</div>
     <div style="font-size:8.5px; color:rgba(255,255,255,0.55); letter-spacing:1px;
-                text-transform:uppercase; margin-top:2px">Sistema de Gestión Interna</div>
+                text-transform:uppercase; margin-top:2px">Sistema de Procesos Internos</div>
   </div>
 </div>
 ```
@@ -303,7 +303,7 @@ Cada paso = marker + label + timestamp en mono.
     <div class="pv-marker"><i class="bi bi-check"></i></div>
     <div>
       <div class="pv-label">Aprobación</div>
-      <div class="mono sgi-body-faint">13/05 09:35</div>
+      <div class="mono spi-body-faint">13/05 09:35</div>
     </div>
   </div>
 
@@ -311,7 +311,7 @@ Cada paso = marker + label + timestamp en mono.
     <div class="pv-marker"><span class="dot"></span></div>
     <div>
       <div class="pv-label">Tesorería</div>
-      <div class="mono sgi-body-faint">en curso</div>
+      <div class="mono spi-body-faint">en curso</div>
     </div>
   </div>
 
@@ -319,7 +319,7 @@ Cada paso = marker + label + timestamp en mono.
     <div class="pv-marker"></div>
     <div>
       <div class="pv-label">Autorización de pago</div>
-      <div class="mono sgi-body-faint">Pendiente</div>
+      <div class="mono spi-body-faint">Pendiente</div>
     </div>
   </div>
 </div>

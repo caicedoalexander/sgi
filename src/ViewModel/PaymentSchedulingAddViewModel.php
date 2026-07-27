@@ -10,6 +10,9 @@ use App\Model\Entity\PaymentScheduling;
  */
 final readonly class PaymentSchedulingAddViewModel
 {
+    /**
+     * @param \App\Model\Entity\PaymentScheduling $record Entidad nueva o parcheada.
+     */
     public function __construct(
         public PaymentScheduling $record,
     ) {

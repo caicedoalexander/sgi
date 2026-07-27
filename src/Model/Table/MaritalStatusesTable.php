@@ -13,6 +13,12 @@ class MaritalStatusesTable extends Table implements ExcelExportableInterface
 {
     use ExcelExportableTrait;
 
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -28,6 +34,12 @@ class MaritalStatusesTable extends Table implements ExcelExportableInterface
         ]);
     }
 
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -39,6 +51,13 @@ class MaritalStatusesTable extends Table implements ExcelExportableInterface
         return $validator;
     }
 
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->isUnique(['name'], message: 'El nombre ya existe.'), [
@@ -58,11 +77,21 @@ class MaritalStatusesTable extends Table implements ExcelExportableInterface
         ];
     }
 
+    /**
+     * Título de la hoja al exportar/importar el catálogo en Excel.
+     *
+     * @return string
+     */
     public function getExcelSheetTitle(): string
     {
         return 'Estados Civiles';
     }
 
+    /**
+     * Slug del archivo al descargar la plantilla Excel del catálogo.
+     *
+     * @return string
+     */
     public function getExcelDownloadSlug(): string
     {
         return 'estados_civiles';

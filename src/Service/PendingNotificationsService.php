@@ -96,6 +96,12 @@ class PendingNotificationsService
                 'route' => ['controller' => 'Advances', 'action' => 'index'],
             ],
             [
+                'key' => 'legalizations',
+                'label' => 'Legalización de Anticipos',
+                'count' => (int)($counters['advancesPendingLegalizationCount'] ?? 0),
+                'route' => ['controller' => 'Advances', 'action' => 'pendingLegalization'],
+            ],
+            [
                 'key' => 'petty_cash',
                 'label' => 'Caja Menor',
                 'count' => (int)($counters['pettyCashMineCount'] ?? 0),
@@ -137,7 +143,7 @@ class PendingNotificationsService
                 'key' => $row['key'],
                 'label' => $row['label'],
                 'count' => $row['count'],
-                'url' => $base . Router::url($row['route']),
+                'url' => $base . Router::url(['prefix' => false] + $row['route']),
             ];
         }
 

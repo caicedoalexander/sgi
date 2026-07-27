@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\Service\Resilience;
 
-use App\Service\Resilience\RetryPolicy;
 use App\Service\Resilience\Retryer;
+use App\Service\Resilience\RetryPolicy;
 use Cake\Log\Log;
 use InvalidArgumentException;
 use LogicException;
@@ -30,6 +30,7 @@ final class RetryerTest extends TestCase
         $calls = 0;
         $result = $r->run(function () use (&$calls) {
             $calls++;
+
             return 'ok';
         });
         $this->assertSame('ok', $result);
@@ -50,6 +51,7 @@ final class RetryerTest extends TestCase
             if ($calls < 3) {
                 throw new RuntimeException("attempt {$calls} failed");
             }
+
             return 'finally';
         });
 

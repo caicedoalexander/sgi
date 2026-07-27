@@ -37,7 +37,9 @@ $canSave             = $viewModel->canSave;
 $canAdvance          = $viewModel->canAdvance;
 $btnLabel            = $viewModel->submitButtonHtml;
 $btnClass            = $viewModel->submitButtonClass;
-$invoiceCount        = $viewModel->invoiceCount;
+$groupedRows      = $viewModel->groupedRows;
+$readiness        = $viewModel->readiness;
+$canUploadSupport = $viewModel->canUploadSupport;
 
 $rfStatusPills = RefundPresentation::STATUS_BADGES;
 $rfStatusPill  = $rfStatusPills[$record->status] ?? 'pill-muted';
@@ -50,14 +52,14 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
 
-<div class="sgi-edit-shell">
+<div class="spi-edit-shell">
 
 <?php /* ═══════════════════ HEADER DE PÁGINA (barra fija) ═══════════════════ */ ?>
-<div class="sgi-edit-shell-head">
+<div class="spi-edit-shell-head">
 <!-- Page header -->
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Reintegros', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <?= $this->Html->link(h($record->code), ['action' => 'view', $record->id]) ?>
@@ -65,8 +67,8 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
             <span class="current">Editar</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Editar Reintegro</span>
-            <span class="sgi-edit-id-chip"><?= h($record->code) ?></span>
+            <span class="spi-page-title">Editar Reintegro</span>
+            <span class="spi-edit-id-chip"><?= h($record->code) ?></span>
             <span class="pill <?= $rfStatusPill ?>"><?= h($rfStatusLabel) ?></span>
         </div>
     </div>
@@ -84,12 +86,22 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
     </div>
 </div>
 
-</div><?php /* fin .sgi-edit-shell-head */ ?>
+</div><?php /* fin .spi-edit-shell-head */ ?>
 
-<?= $this->Form->create($record, ['id' => 'refundEditForm', 'class' => 'sgi-edit-shell-form']) ?>
+<?php /* ── Formulario oculto para "Enviar links de aprobación" ── */ ?>
+<?php if ($viewModel->canSendLinks): ?>
+<?= $this->Form->create(null, [
+    'url' => ['action' => 'sendApprovalLinks', $record->id],
+    'id' => 'sendApprovalLinksForm',
+    'style' => 'display:none',
+]) ?>
+<?= $this->Form->end() ?>
+<?php endif; ?>
+
+<?= $this->Form->create($record, ['id' => 'refundEditForm', 'class' => 'spi-edit-shell-form']) ?>
 <?= $this->Form->hidden('expected_status', ['value' => $record->status]) ?>
 
-<div class="sgi-edit-shell-body view-anim">
+<div class="spi-edit-shell-body view-anim">
 
 <!-- Alerta de avance pendiente -->
 <?php if ($canAdvance && !empty($advanceErrors)): ?>
@@ -111,7 +123,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
 <div class="row gx-3">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="col-lg-3 sgi-edit-col d-flex flex-column gap-3">
+    <aside class="col-lg-3 spi-edit-col d-flex flex-column gap-3">
         <?php
         // Acciones del sidebar (regresión) — element compartido
         $actionsHtml = !empty($canRegress)
@@ -162,12 +174,14 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="col-lg-9 sgi-edit-col d-flex flex-column gap-3">
+    <main class="col-lg-9 spi-edit-col d-flex flex-column gap-3">
 
         <?php
         $sections = [];
         $sections[] = ['key' => 'beneficiary', 'editable' => $record->isAgrupacion()];
-        $sections[] = ['key' => 'invoices',    'editable' => $record->isAgrupacion()];
+        if ($record->status === RefundConstants::STATUS_APROBACION) {
+            $sections[] = ['key' => 'approval', 'editable' => true];
+        }
         if ($showAccounting) {
             $sections[] = ['key' => 'accounting', 'editable' => $canEditAccounting];
         }
@@ -177,9 +191,31 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
         usort($sections, fn($a, $b) => $b['editable'] <=> $a['editable']);
         ?>
 
+        <?php /* ── Facturas agrupadas: card top-level (paridad con view.php + Legalizaciones) ── */ ?>
+        <?php
+        $linkBtnHtml = null;
+        if ($record->isAgrupacion()) {
+            $linkBtnHtml = '<button type="button" class="btn btn-sm btn-primary" '
+                . 'data-bs-toggle="modal" data-bs-target="#linkRefundInvoicesModal">'
+                . '<i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Vincular facturas</button>';
+        }
+        ?>
+        <?= $this->element('grouped_invoices_table', [
+            'rows' => $groupedRows,
+            'readiness' => $readiness,
+            'parentField' => 'refund_id',
+            'parentId' => (int)$record->id,
+            'canUploadSupport' => $canUploadSupport,
+            'uploadModalId' => $canUploadSupport ? 'groupedUploadModal' : null,
+            'editable' => $record->isAgrupacion(),
+            'headerActionsHtml' => $linkBtnHtml,
+            'unlinkAction' => 'removeInvoice',
+            'totalAmount' => (float)$record->total_amount,
+        ]) ?>
+
         <div class="card" style="padding:20px;">
-            <div class="sgi-section-head" style="margin-bottom:16px;">
-                <span class="sgi-label">Información del reintegro</span>
+            <div class="spi-section-head" style="margin-bottom:16px;">
+                <span class="spi-label">Información del reintegro</span>
             </div>
 
             <?php foreach ($sections as $section): ?>
@@ -188,7 +224,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                 <!-- Beneficiario (editable solo en agrupación) -->
                 <div class="mb-4">
                     <div class="d-flex align-items-center gap-3 mb-3">
-                        <span class="sgi-label flex-shrink-0">
+                        <span class="spi-label flex-shrink-0">
                             <i class="bi bi-person-badge me-1" aria-hidden="true"></i>Beneficiario
                         </span>
                         <div class="hr"></div>
@@ -208,7 +244,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                             </div>
                         </div>
                     </div>
-                    <div class="mb-3 sgi-beneficiary-employee" <?= $record->beneficiary_type === 'employee' ? '' : 'style="display:none;"' ?>>
+                    <div class="mb-3 spi-beneficiary-employee" <?= $record->beneficiary_type === 'employee' ? '' : 'style="display:none;"' ?>>
                         <label class="input-label">Empleado</label>
                         <select name="beneficiary_employee_id" class="form-select select2-enable">
                             <option value="">Seleccione un empleado</option>
@@ -217,7 +253,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="mb-3 sgi-beneficiary-provider" <?= $record->beneficiary_type === 'provider' ? '' : 'style="display:none;"' ?>>
+                    <div class="mb-3 spi-beneficiary-provider" <?= $record->beneficiary_type === 'provider' ? '' : 'style="display:none;"' ?>>
                         <label class="input-label">Proveedor</label>
                         <select name="beneficiary_provider_id" class="form-select select2-enable">
                             <option value="">Seleccione un proveedor</option>
@@ -229,90 +265,15 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
                 </div>
                 <?php endif; ?>
 
-                <?php if ($section['key'] === 'invoices'): ?>
-                <!-- Facturas agrupadas -->
-                <div class="mb-4">
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        <span class="sgi-label flex-shrink-0">
-                            <i class="bi bi-receipt me-1" aria-hidden="true"></i>Facturas Agrupadas
-                        </span>
-                        <div class="hr"></div>
-                        <span class="sgi-folder-count"><?= $invoiceCount ?></span>
-                    </div>
-
-                    <?php if (!empty($record->invoices)): ?>
-                    <div class="table-responsive mb-3">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th># Factura</th>
-                                    <th>Proveedor</th>
-                                    <th class="text-end">Monto</th>
-                                    <?php if ($record->isAgrupacion()): ?>
-                                    <th class="text-center" style="width:60px;"></th>
-                                    <?php endif; ?>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($record->invoices as $inv): ?>
-                                <tr>
-                                    <td>
-                                        <?= $this->Html->link(
-                                            $inv->invoice_number ?? '#' . $inv->id,
-                                            ['controller' => 'Invoices', 'action' => 'view', $inv->id],
-                                            ['class' => 'mono', 'style' => 'font-weight:600;']
-                                        ) ?>
-                                    </td>
-                                    <td><?= $inv->hasValue('provider') ? h($inv->provider->name) : '—' ?></td>
-                                    <td class="text-end mono">$ <?= number_format((float)$inv->amount, 0, ',', '.') ?></td>
-                                    <?php if ($record->isAgrupacion()): ?>
-                                    <td class="text-center">
-                                        <?= $this->Form->postLink(
-                                            '<i class="bi bi-x-lg" aria-hidden="true"></i>',
-                                            ['action' => 'removeInvoice', $record->id, $inv->id],
-                                            ['confirm' => '¿Remover esta factura del registro?', 'class' => 'btn-icon sgi-fg-danger', 'escape' => false, 'title' => 'Quitar', 'block' => true]
-                                        ) ?>
-                                    </td>
-                                    <?php endif; ?>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="2" class="text-end fw-bold">Total:</td>
-                                    <td class="text-end fw-bold mono" style="color:var(--primary-color);">
-                                        $ <?= number_format((float)$record->total_amount, 0, ',', '.') ?>
-                                    </td>
-                                    <?php if ($record->isAgrupacion()): ?>
-                                    <td></td>
-                                    <?php endif; ?>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    <?php else: ?>
-                    <div class="alert alert-warning mb-3">
-                        <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
-                        No hay facturas agrupadas. Agregue al menos una factura para poder avanzar.
-                    </div>
-                    <?php endif; ?>
-
-                    <?php if ($record->isAgrupacion()): ?>
-                    <div class="mt-2">
-                        <button type="button" class="btn btn-sm btn-primary"
-                                data-bs-toggle="modal" data-bs-target="#linkRefundInvoicesModal">
-                            <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Vincular facturas
-                        </button>
-                    </div>
-                    <?php endif; ?>
-                </div>
+                <?php if ($section['key'] === 'approval'): ?>
+                <?= $this->element('refund_edit/_approval_panel', ['viewModel' => $viewModel, 'record' => $record]) ?>
                 <?php endif; ?>
 
                 <?php if ($section['key'] === 'accounting'): ?>
                 <!-- Contabilidad -->
                 <div class="mb-4">
                     <div class="d-flex align-items-center gap-3 mb-3">
-                        <span class="sgi-label flex-shrink-0">
+                        <span class="spi-label flex-shrink-0">
                             <i class="bi bi-calculator me-1" aria-hidden="true"></i>Contabilidad
                         </span>
                         <div class="hr"></div>
@@ -424,30 +385,30 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
 
     </main>
 </div><?php /* fin .row */ ?>
-</div><?php /* fin .sgi-edit-shell-body */ ?>
+</div><?php /* fin .spi-edit-shell-body */ ?>
 
         <!-- Sticky footer -->
         <?php if ($canSave || !empty($canRegress)): ?>
-        <div class="sgi-edit-footer">
-            <div class="sgi-edit-footer-meta">
+        <div class="spi-edit-footer">
+            <div class="spi-edit-footer-meta">
                 <span class="d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+                    <i class="bi bi-person spi-fg-faint" aria-hidden="true"></i>
                     Rol: <strong style="color:var(--text-default);"><?= h($roleName) ?></strong>
                 </span>
                 <?php if ($record->modified): ?>
                 <span class="sep"></span>
                 <span class="d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-clock sgi-fg-faint" aria-hidden="true"></i>
+                    <i class="bi bi-clock spi-fg-faint" aria-hidden="true"></i>
                     Última modificación: <span class="mono"><?= $record->modified->format('d/m/Y H:i') ?></span>
                 </span>
                 <?php endif; ?>
             </div>
-            <div class="sgi-edit-footer-actions">
+            <div class="spi-edit-footer-actions">
                 <?php if ($record->isAgrupacion() && !empty($userPermissions['refunds']['can_delete'])): ?>
                 <?= $this->Form->postLink(
                     '<i class="bi bi-trash" aria-hidden="true"></i>Eliminar',
                     ['action' => 'delete', $record->id],
-                    ['class' => 'btn btn-ghost-card sgi-fg-danger', 'escape' => false, 'confirm' => '¿Eliminar este registro? Las facturas agrupadas quedarán libres.', 'block' => true]
+                    ['class' => 'btn btn-ghost-card spi-fg-danger', 'escape' => false, 'confirm' => '¿Eliminar este registro? Las facturas agrupadas quedarán libres.', 'block' => true]
                 ) ?>
                 <?php endif; ?>
                 <?= $this->Html->link('Cancelar', ['action' => 'view', $record->id], ['class' => 'btn btn-ghost-card']) ?>
@@ -462,7 +423,7 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
 
 <?= $this->Form->end() ?>
 
-</div><?php /* fin .sgi-edit-shell */ ?>
+</div><?php /* fin .spi-edit-shell */ ?>
 
 <?= $this->element('observations/drawer', [
     'observations'    => $record->refund_observations ?? [],
@@ -493,17 +454,27 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
 ]) ?>
 <?php endif; ?>
 
+<?php // Modal compartido para subir soporte a una hija; el JS (SpiGroupedInvoices) fija su URL por fila. ?>
+<?php if ($canUploadSupport): ?>
+<?= $this->element('upload_doc_modal', [
+    'modalId' => 'groupedUploadModal',
+    'uploadUrl' => '',
+    'formId' => 'grouped-upload-form',
+    'showDocumentType' => true,
+]) ?>
+<?php endif; ?>
+
 <?= $this->element('document_row_template', ['showBadge' => false]) ?>
-<?= $this->Html->script('sgi-document-uploader', ['block' => true]) ?>
+<?= $this->Html->script('spi-document-uploader', ['block' => true]) ?>
 
 <?php $this->append('script') ?>
 <script>
 (function(){
-    SgiDocumentUploader.init({
+    SpiDocumentUploader.init({
         formSelector:        '#upload-doc-form',
         listSelector:        '#docs-list',
         emptySelector:       '#docs-empty-state',
-        counterSelector:     '.sgi-folder-count',
+        counterSelector:     '.spi-folder-count',
         rowTemplateSelector: '#doc-row-template',
         modalSelector:       '#uploadRefundDocModal',
         csrfToken:           <?= json_encode($this->request->getAttribute('csrfToken') ?? '') ?>
@@ -515,8 +486,8 @@ $bLabel = RefundConstants::BENEFICIARY_TYPES_LABELS[$record->beneficiary_type] ?
     // Beneficiary radio toggle (only present when in agrupacion)
     var bRadios = document.querySelectorAll('input[name="beneficiary_type"]');
     if (bRadios.length > 0) {
-        var empBlock = document.querySelector('.sgi-beneficiary-employee');
-        var provBlock = document.querySelector('.sgi-beneficiary-provider');
+        var empBlock = document.querySelector('.spi-beneficiary-employee');
+        var provBlock = document.querySelector('.spi-beneficiary-provider');
         function syncBeneficiary() {
             var checked = document.querySelector('input[name="beneficiary_type"]:checked');
             var val = checked ? checked.value : null;

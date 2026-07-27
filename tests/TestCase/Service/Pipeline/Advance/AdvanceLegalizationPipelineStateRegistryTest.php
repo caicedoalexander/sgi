@@ -9,10 +9,10 @@ use PHPUnit\Framework\TestCase;
 
 final class AdvanceLegalizationPipelineStateRegistryTest extends TestCase
 {
-    public function testRegistryHasSevenStates(): void
+    public function testRegistryHasEightStates(): void
     {
         $registry = new AdvanceLegalizationPipelineStateRegistry();
-        $this->assertCount(7, $registry->all());
+        $this->assertCount(8, $registry->all());
     }
 
     public function testGetResolvesEveryEnumCase(): void

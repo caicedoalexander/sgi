@@ -10,10 +10,12 @@ use App\Middleware\CorrelationIdMiddleware;
 use App\Middleware\HostHeaderMiddleware;
 use App\Service\Adapter\CakeMailerAdapter;
 use App\Service\Adapter\PhpSpreadsheetAdapter;
+use App\Service\AdvanceLegalizationApprovalService;
 use App\Service\AdvanceLegalizationDocumentService;
 use App\Service\AdvanceLegalizationHistoryService;
 use App\Service\AdvanceLegalizationService;
-use App\Service\ApprovalTokenService;
+use App\Service\Approval\ExternalApprovalService;
+use App\Service\ApprovalInboxService;
 use App\Service\AuthorizationService;
 use App\Service\Dashboard\EmployeeStatisticsService;
 use App\Service\Dashboard\InvoiceStatisticsService;
@@ -40,8 +42,11 @@ use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
 use App\Service\LeaveDocumentService;
 use App\Service\LiquidationDocPaymentService;
+use App\Service\LoginThrottleService;
+use App\Service\MyPendingService;
 use App\Service\N8nService;
 use App\Service\NotificationService;
+use App\Service\NoveltyApprovalService;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
@@ -67,6 +72,7 @@ use App\Service\Pipeline\Invoice\Policy\InvoiceFieldAccessPolicy;
 use App\Service\Pipeline\Invoice\Policy\InvoiceLockPolicy;
 use App\Service\Pipeline\Invoice\Policy\InvoiceTransitionValidator;
 use App\Service\Pipeline\Invoice\Policy\LegalizacionDocumentTypePolicy;
+use App\Service\Pipeline\Invoice\Policy\ReciboCajaDocumentTypePolicy;
 use App\Service\Pipeline\Invoice\Policy\StandardDocumentTypePolicy;
 use App\Service\Pipeline\Invoice\State\AprobacionState;
 use App\Service\Pipeline\Invoice\State\AutorizacionPagoState;
@@ -87,6 +93,7 @@ use App\Service\Pipeline\Refund\Policy\RefundActionPolicy;
 use App\Service\Pipeline\Refund\Policy\RefundFieldAccessPolicy;
 use App\Service\Pipeline\Refund\RefundPipelineStateRegistry;
 use App\Service\PipelineAuthorizationService;
+use App\Service\RefundApprovalService;
 use App\Service\RefundDocumentService;
 use App\Service\RefundHistoryService;
 use App\Service\RefundPaymentService;
@@ -123,6 +130,11 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class Application extends BaseApplication implements AuthenticationServiceProviderInterface
 {
+    /**
+     * Load all the application configuration and bootstrap logic.
+     *
+     * @return void
+     */
     public function bootstrap(): void
     {
         parent::bootstrap();
@@ -132,6 +144,12 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $this->addPlugin('Authentication');
     }
 
+    /**
+     * Setup the middleware queue your application will use.
+     *
+     * @param \Cake\Http\MiddlewareQueue $middlewareQueue The middleware queue to setup.
+     * @return \Cake\Http\MiddlewareQueue The updated middleware queue.
+     */
     public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
     {
         $middlewareQueue
@@ -153,6 +171,12 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         return $middlewareQueue;
     }
 
+    /**
+     * Returns the authentication service instance for the given request.
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request The request to authenticate.
+     * @return \Authentication\AuthenticationServiceInterface
+     */
     public function getAuthenticationService(ServerRequestInterface $request): AuthenticationServiceInterface
     {
         $service = new AuthenticationService();
@@ -189,6 +213,12 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         return $service;
     }
 
+    /**
+     * Register application container services.
+     *
+     * @param \Cake\Core\ContainerInterface $container The Container to update.
+     * @return void
+     */
     public function services(ContainerInterface $container): void
     {
         // Expose container to AppController + traits via static accessor.
@@ -202,6 +232,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(SpreadsheetReaderInterface::class, PhpSpreadsheetAdapter::class);
 
         // === Auth / Authorization ===
+        $container->addShared(LoginThrottleService::class);
         $container->addShared(AuthorizationService::class);
         $container->addShared(PipelineAuthorizationService::class);
         $container->addShared(AuthorizationFacade::class, DefaultAuthorizationFacade::class)
@@ -209,7 +240,7 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 AuthorizationService::class,
                 PipelineAuthorizationService::class,
             ]);
-        $container->addShared(ApprovalTokenService::class)
+        $container->addShared(ExternalApprovalService::class)
             ->addArguments([
                 InvoiceApprovalStrategy::class,
                 NoveltyApprovalStrategy::class,
@@ -305,16 +336,19 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 LegalizadaState::class,
             ]);
 
-        // === Document type policies (Plan 4 W10) — registrados pero aún no consumidos ===
+        // === Document type policies ===
         $container->addShared(StandardDocumentTypePolicy::class);
         $container->addShared(AnticipoDocumentTypePolicy::class)
             ->addArgument(AdvanceLegalizationService::class);
         $container->addShared(LegalizacionDocumentTypePolicy::class);
+        $container->addShared(ReciboCajaDocumentTypePolicy::class)
+            ->addArgument(LegalizacionDocumentTypePolicy::class);
         $container->addShared(DocumentTypePolicyFactory::class)
             ->addArguments([
                 StandardDocumentTypePolicy::class,
                 AnticipoDocumentTypePolicy::class,
                 LegalizacionDocumentTypePolicy::class,
+                ReciboCajaDocumentTypePolicy::class,
             ]);
 
         // === Plan 5: Domain events — services + subscribers ===
@@ -351,6 +385,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(NoveltyHistoryService::class);
         $container->addShared(NoveltyObservationService::class);
         $container->addShared(NoveltyDocumentService::class);
+        $container->addShared(NoveltyApprovalService::class)
+            ->addArgument(NotificationService::class);
         $container->addShared(NoveltyFieldAccessPolicy::class)
             ->addArgument(AuthorizationFacade::class);
         $container->addShared(NoveltyPipelineStateRegistry::class);
@@ -391,6 +427,16 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 AuthorizationFacade::class,
                 RefundHistoryService::class,
                 RefundPipelineStateRegistry::class,
+            ]);
+        $container->addShared(RefundApprovalService::class)
+            ->addArguments([
+                NotificationService::class,
+                RefundHistoryService::class,
+            ]);
+        $container->addShared(AdvanceLegalizationApprovalService::class)
+            ->addArguments([
+                NotificationService::class,
+                AdvanceLegalizationHistoryService::class,
             ]);
         $container->addShared(RefundPaymentService::class)
             ->addArgument(AuthorizationFacade::class);
@@ -439,11 +485,27 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
                 NoveltyPipelineService::class,
                 PettyCashPipelineService::class,
                 RefundPipelineService::class,
+                AdvanceLegalizationActionPolicy::class,
+                PaymentSchedulingPipelineService::class,
             ]);
         $container->addShared(PendingNotificationsService::class)
             ->addArguments([
                 SidebarCounterService::class,
                 PaymentSchedulingPipelineService::class,
+            ]);
+
+        // === Approval inbox ===
+        $container->addShared(ApprovalInboxService::class);
+
+        // === Mis Pendientes ===
+        $container->addShared(MyPendingService::class)
+            ->addArguments([
+                InvoicePipelineService::class,
+                NoveltyPipelineService::class,
+                PettyCashPipelineService::class,
+                RefundPipelineService::class,
+                PaymentSchedulingPipelineService::class,
+                AdvanceLegalizationActionPolicy::class,
             ]);
 
         // === Plan 6: Health checks ===
@@ -453,6 +515,12 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         $container->addShared(EmailLogHealthCheck::class);
     }
 
+    /**
+     * Register the application's global event subscribers.
+     *
+     * @param \Cake\Event\EventManagerInterface $eventManager The global event manager to update.
+     * @return \Cake\Event\EventManagerInterface The updated event manager.
+     */
     public function events(EventManagerInterface $eventManager): EventManagerInterface
     {
         $container = $this->getContainer();

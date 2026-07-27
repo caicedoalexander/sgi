@@ -30,16 +30,16 @@ $noveltyCount  = $viewModel->noveltyCount;
 ?>
 
 <!-- Page header -->
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Liquidaciones', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span class="current"><?= h($doc->liquidation_number) ?></span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Ver Liquidación</span>
-            <span class="sgi-edit-id-chip"><?= h($doc->liquidation_number) ?></span>
+            <span class="spi-page-title">Ver Liquidación</span>
+            <span class="spi-edit-id-chip"><?= h($doc->liquidation_number) ?></span>
             <?php if ($isRejected): ?>
                 <span class="pill pill-danger-soft">Rechazada</span>
             <?php else: ?>
@@ -63,10 +63,10 @@ $noveltyCount  = $viewModel->noveltyCount;
     </div>
 </div>
 
-<div class="sgi-invoice-view-grid view-anim">
+<div class="spi-invoice-view-grid view-anim">
 
     <!-- ═════════════════════ SIDEBAR ═════════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <aside class="spi-invoice-view-left">
         <?php
         $registryLines = $viewModel->registryLines;
         $extraPillHtml = $viewModel->extraPillHtml;
@@ -96,13 +96,13 @@ $noveltyCount  = $viewModel->noveltyCount;
     </aside>
 
     <!-- ═════════════════════ CONTENIDO ═════════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <main class="spi-invoice-view-right">
 
         <!-- Información + Novedades -->
-        <div class="sgi-card">
+        <div class="spi-card">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
                 <div>
-                    <div class="sgi-label" style="margin-bottom:6px;">Información del Documento</div>
+                    <div class="spi-label" style="margin-bottom:6px;">Información del Documento</div>
                     <div class="field-row">
                         <span class="k">No. Liquidación</span>
                         <span class="v mono"><?= h($doc->liquidation_number) ?></span>
@@ -146,9 +146,9 @@ $noveltyCount  = $viewModel->noveltyCount;
                 </div>
 
                 <div>
-                    <div class="sgi-label d-inline-flex align-items-center gap-2" style="margin-bottom:6px;">
+                    <div class="spi-label d-inline-flex align-items-center gap-2" style="margin-bottom:6px;">
                         Novedades Asociadas
-                        <span class="sgi-folder-count"><?= $noveltyCount ?></span>
+                        <span class="spi-folder-count"><?= $noveltyCount ?></span>
                     </div>
                     <?php if ($noveltyCount > 0): ?>
                     <?php $nvGrid = 'display:grid;grid-template-columns:1.5fr 1fr;gap:10px;align-items:center;'; ?>
@@ -184,8 +184,8 @@ $noveltyCount  = $viewModel->noveltyCount;
         <!-- Firmas (read-only) -->
         <?php if (!empty($doc->novelty_liquidation_signatures)): ?>
         <div class="card" style="padding:18px 20px;">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+            <div class="spi-section-head" style="margin-bottom:12px;">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-pen" aria-hidden="true"></i>Firmas
                 </span>
             </div>
@@ -193,7 +193,7 @@ $noveltyCount  = $viewModel->noveltyCount;
                 <?php foreach ($doc->novelty_liquidation_signatures as $sig): ?>
                 <div class="col-md-6 col-lg-3">
                     <div style="background:var(--bg-subtle);padding:14px;text-align:center;height:100%;">
-                        <div class="sgi-label" style="margin-bottom:6px;"><?= $signerLabels[$sig->signer_type] ?? h($sig->signer_type) ?></div>
+                        <div class="spi-label" style="margin-bottom:6px;"><?= $signerLabels[$sig->signer_type] ?? h($sig->signer_type) ?></div>
                         <?php if ($sig->signature_path): ?>
                             <span class="pill pill-primary-soft"><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Firmado</span>
                             <div class="mt-2" style="font-size:var(--fs-body-sm);color:var(--text-muted);line-height:1.4;">
@@ -216,12 +216,12 @@ $noveltyCount  = $viewModel->noveltyCount;
         <?php if (!empty($doc->liquidation_doc_payments)): ?>
         <?php $payGrid = 'display:grid;grid-template-columns:1.4fr 1fr 0.9fr 1.5fr 1.2fr;gap:12px;align-items:center;'; ?>
         <div class="card" style="padding:18px 20px;">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+            <div class="spi-section-head" style="margin-bottom:12px;">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-bank" aria-hidden="true"></i>Pagos Registrados
                 </span>
             </div>
-            <div class="sgi-card" style="padding:0;">
+            <div class="spi-card" style="padding:0;">
                 <div style="<?= $payGrid ?>padding:9px 14px;background:var(--bg-subtle);font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:0.6px;text-transform:uppercase;" role="row">
                     <span>Entidad Bancaria</span>
                     <span style="text-align:right;">Monto</span>
@@ -271,9 +271,9 @@ $noveltyCount  = $viewModel->noveltyCount;
         <?php endif; ?>
 
         <!-- Documento de Liquidación (destacado) -->
-        <div class="sgi-card d-flex flex-column">
+        <div class="spi-card d-flex flex-column">
             <div class="d-flex align-items-center" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
                     Documento de Liquidación
                 </span>
@@ -289,7 +289,7 @@ $noveltyCount  = $viewModel->noveltyCount;
                          style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                         <?= h($liquidationDocument->file_name) ?>
                     </div>
-                    <div class="row-flex gap-6 mono sgi-body-faint" style="margin-top:2px;">
+                    <div class="row-flex gap-6 mono spi-body-faint" style="margin-top:2px;">
                         <span><?= $liquidationDocument->created?->format('d/m/Y H:i') ?></span>
                         <?php if ($liquidationDocument->file_size): ?>
                         <span>· <?= $this->Number->toReadableSize($liquidationDocument->file_size) ?></span>
@@ -354,7 +354,7 @@ $noveltyCount  = $viewModel->noveltyCount;
         ]) ?>
 
     </main>
-</div><!-- /sgi-invoice-view-grid -->
+</div><!-- /spi-invoice-view-grid -->
 <?= $this->element('observations/drawer', [
     'observations'    => $doc->novelty_observations ?? [],
     'count'           => count($doc->novelty_observations ?? []),

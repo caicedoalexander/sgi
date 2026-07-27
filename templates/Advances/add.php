@@ -14,15 +14,15 @@ $this->assign('title', 'Nuevo Anticipo');
 <?= $this->element('cdn_select2') ?>
 
 <!-- Encabezado de página -->
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Anticipos', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span class="current">Nuevo</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Nuevo Anticipo</span>
+            <span class="spi-page-title">Nuevo Anticipo</span>
         </div>
     </div>
     <div class="d-flex gap-2 flex-shrink-0">
@@ -34,9 +34,9 @@ $this->assign('title', 'Nuevo Anticipo');
     </div>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <div class="d-flex align-items-center gap-3" style="margin-bottom:20px;">
-        <div class="sgi-icon-chip" style="font-size:.95rem;">
+        <div class="spi-icon-chip" style="font-size:.95rem;">
             <i class="bi bi-cash-coin" aria-hidden="true"></i>
         </div>
         <span style="font-size:var(--fs-title-card);font-weight:600;color:var(--text-default);">Información del Anticipo</span>
@@ -170,7 +170,7 @@ $this->assign('title', 'Nuevo Anticipo');
     <?= $this->Form->end() ?>
 </div>
 
-<?php $this->start('script'); ?>
+<?php $this->append('script'); ?>
 <script>
 (function () {
     const typeSelect = document.getElementById('beneficiary-type');
@@ -210,6 +210,14 @@ $this->assign('title', 'Nuevo Anticipo');
             employeeSelect.disabled = true;
             providerSelect.required = false;
             employeeSelect.required = false;
+        }
+
+        // select2 no observa la asignación directa `.disabled = ...`; sí responde
+        // a jQuery `.prop('disabled', ...)`. Sin esto, el widget queda deshabilitado
+        // tras mostrar el beneficiario (empleado/proveedor).
+        if (window.jQuery && window.jQuery.fn.select2) {
+            window.jQuery(providerSelect).prop('disabled', providerSelect.disabled);
+            window.jQuery(employeeSelect).prop('disabled', employeeSelect.disabled);
         }
     }
 

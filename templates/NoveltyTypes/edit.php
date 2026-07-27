@@ -10,8 +10,8 @@
 $this->assign('title', 'Editar Tipo de Novedad');
 ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Editar Tipo de Novedad</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Editar Tipo de Novedad</span>
     <?= $this->Html->link(
         '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
@@ -19,7 +19,7 @@ $this->assign('title', 'Editar Tipo de Novedad');
     ) ?>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <?= $this->Form->create($noveltyType) ?>
     <div class="row g-3">
         <div class="col-md-8">
@@ -39,7 +39,7 @@ $this->assign('title', 'Editar Tipo de Novedad');
 
     <!-- Pipeline Configuration -->
     <div class="mt-4 pt-3" style="border-top:1px solid var(--border-color);">
-        <label class="sgi-section-label">Configuración del Pipeline</label>
+        <label class="spi-section-label">Configuración del Pipeline</label>
         <div class="row g-3 mt-1">
             <div class="col-md-6">
                 <p class="text-muted small mb-2">Configuración de aprobación y firmas</p>
@@ -84,7 +84,7 @@ $this->assign('title', 'Editar Tipo de Novedad');
 
     <!-- Contract Template Assignments (only for parent types) -->
     <div class="mt-4 pt-3" style="border-top:1px solid var(--border-color);" id="contract-templates-section">
-        <label class="sgi-section-label">Asignación de plantillas por tipo de contrato</label>
+        <label class="spi-section-label">Asignación de plantillas por tipo de contrato</label>
         <p class="text-muted small mb-2" id="subtype-templates-notice" style="display:none;">
             <i class="bi bi-info-circle me-1" aria-hidden="true"></i>Los subtipos heredan las plantillas asignadas al tipo padre.
         </p>

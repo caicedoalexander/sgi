@@ -13,6 +13,10 @@ namespace App\ValueObject;
  */
 final readonly class UserContext
 {
+    /**
+     * @param int $roleId ID del rol del actor.
+     * @param string $roleName Nombre del rol; solo se usa para el admin bypass.
+     */
     public function __construct(
         public int $roleId,
         public string $roleName = '',

@@ -29,16 +29,16 @@ $badgeColors = NoveltyPresentation::STATUS_BADGES;
 <?php
 $novViewId = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Novedades', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span class="current"><?= h($novViewId) ?></span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Ver Novedad</span>
-            <span class="sgi-edit-id-chip">#<?= h((string)$novelty->id) ?></span>
+            <span class="spi-page-title">Ver Novedad</span>
+            <span class="spi-edit-id-chip">#<?= h((string)$novelty->id) ?></span>
             <?php if ($isRejected): ?>
                 <span class="pill pill-danger-soft">Rechazada</span>
             <?php else: ?>
@@ -51,7 +51,7 @@ $novViewId = $novelty->employee->full_name ?? ('Novedad #' . $novelty->id);
         <?= $this->Html->link(
             '<i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>Exportar PDF',
             ['action' => 'exportPdf', $novelty->id],
-            ['class' => 'btn btn-default sgi-fg-danger', 'escape' => false, 'target' => '_blank']
+            ['class' => 'btn btn-default spi-fg-danger', 'escape' => false, 'target' => '_blank']
         ) ?>
         <?php endif; ?>
         <?= $this->Html->link(
@@ -75,10 +75,10 @@ $pipelineStepsToShow = $noveltyStatuses ?? $effectiveStatuses;
 $isNovTerminal = $viewModel->isTerminal;
 $noveltyName = $viewModel->noveltyName;
 ?>
-<div class="sgi-invoice-view-grid view-anim">
+<div class="spi-invoice-view-grid view-anim">
 
     <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <aside class="spi-invoice-view-left">
         <?php
         $registryLines = $viewModel->registryLines;
 
@@ -106,13 +106,13 @@ $noveltyName = $viewModel->noveltyName;
     </aside>
 
     <!-- ═══════════════════ CONTENIDO ═══════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <main class="spi-invoice-view-right">
 
     <!-- Información + Gestión -->
-    <div class="sgi-card">
+    <div class="spi-card">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
         <div>
-            <div class="sgi-label" style="margin-bottom:6px;">Información de la Novedad</div>
+            <div class="spi-label" style="margin-bottom:6px;">Información de la Novedad</div>
             <?php if ($novelty->employee): ?>
             <div class="field-row">
                 <span class="k">Empleado</span>
@@ -187,7 +187,7 @@ $noveltyName = $viewModel->noveltyName;
         </div>
 
         <div>
-            <div class="sgi-label" style="margin-bottom:6px;">Gestión</div>
+            <div class="spi-label" style="margin-bottom:6px;">Gestión</div>
             <div class="field-row">
                 <span class="k">Registrado por</span>
                 <span class="v"><?= h($novelty->registered_by_user->full_name ?? '—') ?></span>
@@ -240,7 +240,7 @@ $noveltyName = $viewModel->noveltyName;
     <!-- Signatures -->
     <?php if ($novelty->employee_signature): ?>
     <div class="hr"></div>
-    <div class="sgi-label" style="margin-bottom:8px;">Firma del Funcionario</div>
+    <div class="spi-label" style="margin-bottom:8px;">Firma del Funcionario</div>
     <div>
         <img src="<?= $this->Url->build('/' . $novelty->employee_signature) ?>" alt="Firma Funcionario"
              style="max-width:400px;max-height:150px;background:var(--bg-subtle);padding:6px;">
@@ -250,7 +250,7 @@ $noveltyName = $viewModel->noveltyName;
     <!-- General observations (legacy field) -->
     <?php if ($novelty->observations): ?>
     <div class="hr"></div>
-    <div class="sgi-label" style="margin-bottom:8px;">Observaciones de Rechazo</div>
+    <div class="spi-label" style="margin-bottom:8px;">Observaciones de Rechazo</div>
     <div style="font-size:var(--fs-body);color:var(--text-muted);line-height:1.55;">
         <?= nl2br(h($novelty->observations)) ?>
     </div>
@@ -295,7 +295,7 @@ foreach ($documentsByStatus as $status => $docs) {
 ]) ?>
 
     </main>
-</div><!-- /sgi-invoice-view-grid -->
+</div><!-- /spi-invoice-view-grid -->
 <?= $this->element('observations/drawer', [
     'observations'    => $novelty->novelty_observations ?? [],
     'count'           => count($novelty->novelty_observations ?? []),

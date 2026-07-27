@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Constants\Domain\PettyCash;
 
 use App\Constants\Domain\PettyCash\PipelineStatus;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class PipelineStatusTest extends TestCase
@@ -18,7 +19,7 @@ final class PipelineStatusTest extends TestCase
             'verificacion_pago',
             'pagada',
         ];
-        $actual = array_map(fn (PipelineStatus $s) => $s->value, PipelineStatus::cases());
+        $actual = array_map(fn(PipelineStatus $s) => $s->value, PipelineStatus::cases());
         $this->assertSame($expected, $actual);
     }
 
@@ -42,14 +43,25 @@ final class PipelineStatusTest extends TestCase
         $this->assertSame(PipelineStatus::AUTORIZACION_PAGO, PipelineStatus::VERIFICACION_PAGO->previous());
     }
 
-    public function testIsTerminal(): void
+    #[DataProvider('isTerminalCases')]
+    public function testIsTerminal(PipelineStatus $status, bool $expected): void
     {
-        $this->assertTrue(PipelineStatus::PAGADA->isTerminal());
-        foreach (PipelineStatus::cases() as $case) {
-            if ($case !== PipelineStatus::PAGADA) {
-                $this->assertFalse($case->isTerminal(), "{$case->value}");
-            }
-        }
+        $this->assertSame($expected, $status->isTerminal(), $status->value);
+    }
+
+    /**
+     * @return array<string, array{PipelineStatus, bool}>
+     */
+    public static function isTerminalCases(): array
+    {
+        return [
+            'agrupacion' => [PipelineStatus::AGRUPACION, false],
+            'contabilidad' => [PipelineStatus::CONTABILIDAD, false],
+            'tesoreria' => [PipelineStatus::TESORERIA, false],
+            'autorizacion_pago' => [PipelineStatus::AUTORIZACION_PAGO, false],
+            'verificacion_pago' => [PipelineStatus::VERIFICACION_PAGO, false],
+            'pagada' => [PipelineStatus::PAGADA, true],
+        ];
     }
 
     public function testLabels(): void

@@ -8,18 +8,15 @@ use App\Attribute\PipelineAction;
 use App\Constants\EmployeeStatusConstants;
 use App\Constants\InvoiceConstants;
 use App\Constants\PipelineStepConstants;
-use App\View\Presentation\InvoicePresentation;
-use App\Model\Entity\Invoice;
-use App\ViewModel\Invoice\InvoiceApprovalState;
-use App\ViewModel\Invoice\InvoiceEditPermissions;
-use App\ViewModel\Invoice\InvoiceFormDropdowns;
-use App\ViewModel\InvoiceAddViewModel;
-use App\ViewModel\InvoiceEditViewModel;
-use App\ViewModel\InvoiceViewViewModel;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ExcelWizardTrait;
 use App\Controller\Trait\ObservationControllerTrait;
+use App\Model\Entity\Invoice;
+use App\Service\AdvanceLegalizationApprovalGuard;
+use App\Service\AdvanceLegalizationService;
+use App\Service\Approval\ApprovalUrlBuilder;
 use App\Service\AuthorizationService;
+use App\Service\Dto\GroupReadinessReport;
 use App\Service\EmailLogService;
 use App\Service\InvoiceApprovalService;
 use App\Service\InvoiceDocumentService;
@@ -27,8 +24,19 @@ use App\Service\InvoiceFilterService;
 use App\Service\InvoiceHistoryService;
 use App\Service\InvoicePaymentService;
 use App\Service\InvoicePipelineService;
+use App\Service\Pipeline\Invoice\DocumentTypePolicyFactory;
 use App\Service\Pipeline\Invoice\Policy\InvoiceActionPolicy;
+use App\Service\Pipeline\PettyCash\Guard\PettyCashGuard;
+use App\Service\RefundApprovalGuard;
 use App\Service\StructuredLogger;
+use App\View\Presentation\InvoicePresentation;
+use App\ViewModel\Invoice\InvoiceApprovalState;
+use App\ViewModel\Invoice\InvoiceEditPermissions;
+use App\ViewModel\Invoice\InvoiceFormDropdowns;
+use App\ViewModel\InvoiceAddViewModel;
+use App\ViewModel\InvoiceEditViewModel;
+use App\ViewModel\InvoiceViewViewModel;
+use Cake\Http\Response;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
@@ -55,6 +63,11 @@ class InvoicesController extends AppController
 
     private InvoiceHistoryService $historyService;
 
+    /**
+     * Resuelve los servicios del contenedor de dependencias.
+     *
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
@@ -68,16 +81,31 @@ class InvoicesController extends AppController
         $this->historyService = $container->get(InvoiceHistoryService::class);
     }
 
+    /**
+     * Usuario autenticado actual.
+     *
+     * @return object
+     */
     private function _getCurrentUser(): object
     {
         return $this->Authentication->getIdentity()->getOriginalData();
     }
 
+    /**
+     * Nombre del rol del usuario autenticado.
+     *
+     * @return string
+     */
     private function _getRoleName(): string
     {
         return $this->_getUserRoleName($this->_getCurrentUser());
     }
 
+    /**
+     * Bandeja de facturas operables por el rol.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -87,25 +115,19 @@ class InvoicesController extends AppController
         $userId = (int)$user->id;
         $visibleStatuses = $this->pipeline->getVisibleStatuses($roleId);
 
-        $conditions = $this->_visibleStatusConditions('Invoices.pipeline_status', $visibleStatuses);
-        $conditions['Invoices.document_type !='] = InvoiceConstants::DOCTYPE_ANTICIPO;
-
-        // Excluir facturas de Caja Menor que ya están en contabilidad o posterior
-        $conditions[] = [
-            'OR' => [
-                'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_CAJA_MENOR,
-                'Invoices.pipeline_status' => InvoiceConstants::STATUS_APROBACION,
-            ],
-        ];
-
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $invoices = $this->paginate($this->_buildInvoiceQuery($conditions, $userId));
+        $invoices = $this->paginate($this->_buildInboxQuery([], $userId, $roleId));
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
         $this->set('approvalSummaries', $this->_getApprovalSummaries($invoices));
         $this->set($this->_getFilterDropdowns());
     }
 
+    /**
+     * Listado de todas las facturas (sin filtro de bandeja por rol).
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function all()
     {
@@ -113,9 +135,35 @@ class InvoicesController extends AppController
         $userId = (int)$this->_getCurrentUser()->id;
 
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $invoices = $this->paginate($this->_buildInvoiceQuery(
-            ['Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO],
+        $query = $this->_buildInvoiceQuery([], $userId)
+            ->contain(['PettyCashRecords', 'Refunds', 'Advance']);
+        $invoices = $this->paginate($query);
+        $visibleStatuses = [];
+
+        $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
+        $this->set('approvalSummaries', $this->_getApprovalSummaries($invoices));
+        $this->set($this->_getFilterDropdowns());
+        $this->render('index');
+    }
+
+    /**
+     * Listado de facturas rechazadas en aprobación de área.
+     *
+     * @return void
+     */
+    #[Permission(action: 'view')]
+    public function rejected(): void
+    {
+        $roleName = $this->_getRoleName();
+        $user = $this->_getCurrentUser();
+        $roleId = (int)$user->role_id;
+        $userId = (int)$user->id;
+
+        $this->paginate = ['limit' => 15, 'maxLimit' => 15];
+        $invoices = $this->paginate($this->_buildInboxQuery(
+            ['Invoices.area_approval' => InvoiceConstants::APPROVAL_REJECTED],
             $userId,
+            $roleId,
         ));
         $visibleStatuses = [];
 
@@ -125,40 +173,28 @@ class InvoicesController extends AppController
         $this->render('index');
     }
 
-    #[Permission(action: 'view')]
-    public function rejected(): void
-    {
-        $roleName = $this->_getRoleName();
-        $userId = (int)$this->_getCurrentUser()->id;
-
-        $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $invoices = $this->paginate($this->_buildInvoiceQuery([
-            'Invoices.area_approval' => InvoiceConstants::APPROVAL_REJECTED,
-            'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
-        ], $userId));
-        $visibleStatuses = [];
-
-        $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
-        $this->set('approvalSummaries', $this->_getApprovalSummaries($invoices));
-        $this->set($this->_getFilterDropdowns());
-        $this->render('index');
-    }
-
+    /**
+     * Listado de facturas vencidas aún no pagadas ni legalizadas.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function overdue(): void
     {
         $roleName = $this->_getRoleName();
-        $userId = (int)$this->_getCurrentUser()->id;
+        $user = $this->_getCurrentUser();
+        $roleId = (int)$user->role_id;
+        $userId = (int)$user->id;
 
         $this->paginate = ['limit' => 15, 'maxLimit' => 15];
-        $invoices = $this->paginate($this->_buildInvoiceQuery([
+        $invoices = $this->paginate($this->_buildInboxQuery([
             'Invoices.due_date <' => date('Y-m-d'),
+            'Invoices.document_type IN' => InvoiceConstants::DOCTYPES_WITH_DUE_DATE,
             'Invoices.pipeline_status NOT IN' => [
                 InvoiceConstants::STATUS_PAGADA,
                 InvoiceConstants::STATUS_LEGALIZADA,
             ],
-            'Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO,
-        ], $userId));
+        ], $userId, $roleId));
         $visibleStatuses = [];
 
         $this->set(compact('invoices', 'visibleStatuses', 'roleName'));
@@ -167,8 +203,14 @@ class InvoicesController extends AppController
         $this->render('index');
     }
 
+    /**
+     * Detalle de una factura.
+     *
+     * @param string|null $id Factura id.
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $this->fetchTable('InvoiceReads')->markAsRead((int)$id, (int)$this->_getCurrentUser()->id);
 
@@ -182,6 +224,8 @@ class InvoicesController extends AppController
             'RegisteredByUsers',
             'ApproverUsers',
             'PettyCashRecords',
+            'Refunds',
+            'Advance',
             'InvoiceHistories' => ['Users'],
             'InvoiceObservations' => [
                 'Users',
@@ -211,7 +255,7 @@ class InvoicesController extends AppController
         $isLockedByPettyCash = $this->pipeline->isLockedByPettyCash($invoice);
         $isLockedByScheduling = $this->pipeline->isLockedByPaidScheduling((int)$id);
         $isLocked = $isLockedByPettyCash || $isLockedByScheduling;
-        $pipelineStatuses = $this->pipeline->getPipelineStatusesFor($invoice->document_type);
+        $pipelineStatuses = $this->pipeline->getPipelineStatusesFor($invoice->document_type, $invoice);
         $pipelineLabels = InvoiceConstants::STATUS_LABELS;
 
         // Bypass de Admin sobre locks de integridad (no es un permiso de pipeline,
@@ -232,6 +276,11 @@ class InvoicesController extends AppController
         $this->set(compact('viewModel', 'roleName', 'isRejected', 'isApproved', 'isLockedByPettyCash', 'isLockedByScheduling', 'isLocked', 'canShowEdit', 'showPettyCashLock', 'showSchedulingLock', 'pipelineStatuses', 'pipelineLabels', 'documentsByStatus', 'fieldLabels'));
     }
 
+    /**
+     * Crea una factura (opcionalmente vinculada a una legalización de anticipo).
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -245,6 +294,29 @@ class InvoicesController extends AppController
             if (empty($data['due_date']) && !empty($data['issue_date'])) {
                 $data['due_date'] = $data['issue_date'];
             }
+
+            // F3: creación vinculada — re-validar el advance_id del cliente.
+            $advanceId = (int)($data['advance_id'] ?? 0);
+            $leg = null;
+            if ($advanceId > 0) {
+                $service = $this->getContainer()->get(AdvanceLegalizationService::class);
+                $leg = $service->legalizationInValidacion($advanceId);
+                $linkable = in_array(
+                    $data['document_type'] ?? '',
+                    InvoiceConstants::ADVANCE_LINKABLE_DOCTYPES,
+                    true,
+                );
+                if ($leg === null || !$linkable) {
+                    $this->Flash->error(__('No se puede crear un comprobante vinculado a esta legalización.'));
+                    $vm = new InvoiceAddViewModel($this->Invoices->patchEntity($this->Invoices->newEmptyEntity(), $data));
+                    $this->set('invoice', $vm->invoice);
+                    $this->set('advance', $leg !== null ? $this->Invoices->get($advanceId) : null);
+                    $this->set($this->_getFormDropdowns());
+
+                    return;
+                }
+            }
+
             $vm = new InvoiceAddViewModel($this->Invoices->patchEntity($this->Invoices->newEmptyEntity(), $data));
 
             if ($this->Invoices->save($vm->invoice)) {
@@ -254,24 +326,62 @@ class InvoicesController extends AppController
                     (string)$vm->invoice->pipeline_status,
                     (int)$this->_getCurrentUser()->id,
                 );
+                if ($leg !== null) {
+                    $this->getContainer()->get(AdvanceLegalizationService::class)
+                        ->recordDirectLink($leg, $vm->invoice, (int)$this->_getCurrentUser()->id);
+                    $this->Flash->success(__('El comprobante ha sido creado y vinculado.'));
+
+                    // El destino depende del permiso: `legalization` exige
+                    // `advances.can_edit`. Sin él, el usuario iría a un 403 justo
+                    // después de guardar con éxito.
+                    return $this->redirect([
+                        'controller' => 'Advances',
+                        'action' => $this->_checkPermission('advances', 'edit')
+                            ? 'legalization'
+                            : 'view',
+                        $advanceId,
+                    ]);
+                }
                 $this->Flash->success(__('La factura ha sido guardada.'));
 
                 return $this->_redirectForInvoice($vm->invoice, 'index');
             }
             $this->Flash->error(__('No se pudo guardar la factura. Intente de nuevo.'));
             $this->set('invoice', $vm->invoice);
+            $this->set('advance', $advanceId > 0 ? $this->Invoices->get($advanceId) : null);
             $this->set($this->_getFormDropdowns());
 
             return;
         }
 
-        $vm = new InvoiceAddViewModel($this->Invoices->newEmptyEntity());
+        $advanceId = (int)$this->request->getQuery('advance_id');
+        $advance = null;
+        $entity = $this->Invoices->newEmptyEntity();
+        if (
+            $advanceId > 0
+            && $this->getContainer()->get(AdvanceLegalizationService::class)
+                ->legalizationInValidacion($advanceId) !== null
+        ) {
+            $advance = $this->Invoices->get($advanceId);
+            $entity = $this->Invoices->patchEntity($entity, [
+                'advance_id' => $advanceId,
+                'operation_center_id' => $advance->operation_center_id,
+            ]);
+        }
+        $vm = new InvoiceAddViewModel($entity);
         $this->set('invoice', $vm->invoice);
+        $this->set('advance', $advance);
         $this->set($this->_getFormDropdowns());
     }
 
+    /**
+     * Edición y avance de una factura según el paso del pipeline.
+     *
+     * @param string|null $id Factura id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $this->fetchTable('InvoiceReads')->markAsRead((int)$id, (int)$this->_getCurrentUser()->id);
 
@@ -337,9 +447,10 @@ class InvoicesController extends AppController
                     $this->Flash->success(sprintf('Factura guardada y avanzada a: %s', $nextLabel));
                 } else {
                     $this->Flash->success('La factura ha sido actualizada.');
-                    $rules = $this->pipeline->getTransitionRules($currentStatus);
                     $filteredErrors = $this->pipeline->filterAdvanceErrorsForRole(
-                        $advanceErrors, $rules, $roleId, $currentStatus,
+                        $advanceErrors,
+                        $roleId,
+                        $currentStatus,
                     );
                     foreach ($filteredErrors as $err) {
                         $this->Flash->warning($err);
@@ -358,6 +469,14 @@ class InvoicesController extends AppController
         $this->set('viewModel', $vm);
     }
 
+    /**
+     * Construye el view-model de la vista de edición.
+     *
+     * @param \App\Model\Entity\Invoice $invoice Factura cargada.
+     * @param int $roleId Rol del usuario actual.
+     * @param string $roleName Nombre del rol del usuario actual.
+     * @return \App\ViewModel\InvoiceEditViewModel
+     */
     private function _buildEditViewModel(Invoice $invoice, int $roleId, string $roleName): InvoiceEditViewModel
     {
         $currentStatus = $invoice->pipeline_status;
@@ -370,10 +489,13 @@ class InvoicesController extends AppController
         $nextStatus = null;
         if ($canAdvance) {
             $rawErrors = $this->pipeline->validateTransitionRequirements($invoice, $currentStatus);
-            $rules = $this->pipeline->getTransitionRules($currentStatus);
-            $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $rules, $roleId, $currentStatus);
+            $advanceErrors = $this->pipeline->filterAdvanceErrorsForRole($rawErrors, $roleId, $currentStatus);
             if (empty($rawErrors)) {
-                $nextStatus = $this->pipeline->getNextStatus($currentStatus, $invoice->document_type);
+                $nextStatus = $this->pipeline->getNextStatus(
+                    $currentStatus,
+                    $invoice->document_type,
+                    $invoice->advance_id,
+                );
             }
         }
 
@@ -388,7 +510,7 @@ class InvoicesController extends AppController
 
         $permissions = new InvoiceEditPermissions(
             canAdvance: $canAdvance,
-            canDeleteDocuments: $this->_checkPermission('invoices', 'delete'),
+            canDeleteDocuments: !$invoice->isInFinalState(),
             canRegress: $canRegress,
             canConfirmPayment: $canConfirmPayment,
             canRegisterPayment: $canRegisterPayment,
@@ -420,12 +542,12 @@ class InvoicesController extends AppController
             currentStatus: $currentStatus,
             roleName: $roleName,
             editableFields: $editableFields,
-            visibleSections: $this->pipeline->getVisibleSections($roleId, $currentStatus, $invoice->document_type),
+            visibleSections: $this->pipeline->getVisibleSections($roleId, $currentStatus, $invoice->document_type, $invoice),
             advanceErrors: $advanceErrors,
             nextStatus: $nextStatus,
             previousStatus: $this->pipeline->getPreviousStatus($currentStatus),
             regressLockMessage: $canRegress ? $this->pipeline->getRegressionLockMessage($invoice) : null,
-            pipelineStatuses: $this->pipeline->getPipelineStatusesFor($invoice->document_type),
+            pipelineStatuses: $this->pipeline->getPipelineStatusesFor($invoice->document_type, $invoice),
             pipelineLabels: InvoiceConstants::STATUS_LABELS,
             paymentsTotal: array_sum(array_map(fn($p) => (float)$p->amount, $invoice->invoice_payments ?? [])),
             emailLogs: $emailLogService->forEntity('invoice', (int)$invoice->id),
@@ -435,8 +557,14 @@ class InvoicesController extends AppController
         );
     }
 
+    /**
+     * Regresa la factura al paso anterior del pipeline.
+     *
+     * @param string|null $id Factura id.
+     * @return \Cake\Http\Response|null
+     */
     #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES)]
-    public function regressStatus($id = null)
+    public function regressStatus(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->Invoices->get($id);
@@ -468,15 +596,24 @@ class InvoicesController extends AppController
         return $this->_redirectForInvoice($invoice, 'edit', $id);
     }
 
+    /**
+     * URL base para construir enlaces de aprobación.
+     *
+     * @return string
+     */
     private function _getBaseUrl(): string
     {
-        $scheme = $this->request->getHeaderLine('X-Forwarded-Proto') ?: $this->request->scheme();
-
-        return $scheme . '://' . $this->request->host();
+        return ApprovalUrlBuilder::baseFromRequest($this->request);
     }
 
+    /**
+     * Agrega una observación a la factura.
+     *
+     * @param string|null $id Factura id.
+     * @return \Cake\Http\Response
+     */
     #[Permission(action: 'edit')]
-    public function addObservation($id = null)
+    public function addObservation(?string $id = null)
     {
         return $this->_handleAddObservation(
             'InvoiceObservations',
@@ -487,8 +624,14 @@ class InvoicesController extends AppController
         );
     }
 
+    /**
+     * Elimina una factura en estado Aprobación sin pagos registrados.
+     *
+     * @param string|null $id Factura id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $invoice = $this->Invoices->get($id, contain: ['InvoicePayments']);
@@ -520,10 +663,31 @@ class InvoicesController extends AppController
         return $this->_redirectForInvoice($invoice, 'index');
     }
 
+    /**
+     * Construye el query base de facturas (excluye Anticipos).
+     *
+     * @param array<string|int, mixed> $conditions Condiciones extra.
+     * @param int $userId Usuario para el conteo de observaciones sin leer.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
     private function _buildInvoiceQuery(array $conditions = [], int $userId = 0): SelectQuery
     {
         $query = $this->Invoices->find()
-            ->contain(['Providers', 'OperationCenters', 'ExpenseTypes', 'CostCenters', 'RegisteredByUsers'])
+            ->contain([
+                'Providers',
+                'Employees',
+                'OperationCenters',
+                'ExpenseTypes',
+                'CostCenters',
+                'RegisteredByUsers',
+                // Referencia (no contención): la factura sigue siendo del módulo
+                // de Facturas; la programación solo agenda su pago.
+                'PaymentSchedulingItems' => [
+                    'PaymentSchedulings',
+                    'sort' => ['PaymentSchedulingItems.id' => 'DESC'],
+                ],
+            ])
+            // El Anticipo es el registro padre y vive en /advances.
             ->where(['Invoices.document_type !=' => InvoiceConstants::DOCTYPE_ANTICIPO]);
 
         if (!empty($conditions)) {
@@ -552,7 +716,30 @@ class InvoicesController extends AppController
         return $query;
     }
 
-    private function _getApprovalSummaries($invoices): array
+    /**
+     * Query de bandeja: lo que el rol puede operar y no pertenece a otro módulo.
+     * Base común de index(), rejected() y overdue().
+     *
+     * @param array<string|int, mixed> $conditions Condiciones extra de la vista.
+     */
+    private function _buildInboxQuery(array $conditions, int $userId, int $roleId): SelectQuery
+    {
+        $visibleStatuses = $this->pipeline->getVisibleStatuses($roleId);
+        $conditions = array_merge(
+            $conditions,
+            $this->_visibleStatusConditions('Invoices.pipeline_status', $visibleStatuses),
+        );
+
+        return $this->_buildInvoiceQuery($conditions, $userId)->find('withoutParent');
+    }
+
+    /**
+     * Resúmenes de aprobación de las facturas en estado Aprobación.
+     *
+     * @param iterable $invoices Facturas del listado.
+     * @return array
+     */
+    private function _getApprovalSummaries(iterable $invoices): array
     {
         $ids = [];
         foreach ($invoices as $inv) {
@@ -564,6 +751,11 @@ class InvoicesController extends AppController
         return $this->approvalService->getApprovalSummariesBatch($ids);
     }
 
+    /**
+     * Dropdowns para los filtros del listado.
+     *
+     * @return array
+     */
     private function _getFilterDropdowns(): array
     {
         return [
@@ -573,6 +765,11 @@ class InvoicesController extends AppController
         ];
     }
 
+    /**
+     * Dropdowns para el formulario de factura.
+     *
+     * @return array
+     */
     private function _getFormDropdowns(): array
     {
         $activeApproverIds = $this->fetchTable('Approvers')
@@ -604,11 +801,22 @@ class InvoicesController extends AppController
         ];
     }
 
-    #[Permission(action: 'add')]
-    public function uploadDocument($invoiceId = null)
+    /**
+     * Sube un soporte a la factura.
+     *
+     * @param string|null $invoiceId Factura id.
+     * @return \Cake\Http\Response|null
+     */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES)]
+    public function uploadDocument(?string $invoiceId = null)
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->Invoices->get($invoiceId);
+
+        $gate = $this->_documentGate($invoice, 'subir');
+        if ($gate !== null) {
+            return $gate;
+        }
 
         $file = $this->request->getUploadedFile('file');
         if (!$file) {
@@ -644,7 +852,7 @@ class InvoicesController extends AppController
                 return $this->_jsonResponse(['success' => false, 'error' => $result]);
             }
 
-            $canDelete = $this->_checkPermission('invoices', 'delete')
+            $canDelete = !$invoice->isInFinalState()
                 && $this->documentService->canDeleteDocument($result, $invoice->pipeline_status);
             $badgeColors = InvoicePresentation::STATUS_BADGES;
             $statusLabels = InvoiceConstants::STATUS_LABELS;
@@ -673,11 +881,23 @@ class InvoicesController extends AppController
         return $this->_redirectForInvoice($invoice, 'edit', $invoiceId);
     }
 
-    #[Permission(action: 'delete')]
-    public function deleteDocument($invoiceId = null, $documentId = null)
+    /**
+     * Elimina un soporte de la factura.
+     *
+     * @param string|null $invoiceId Factura id.
+     * @param string|null $documentId Soporte id.
+     * @return \Cake\Http\Response|null
+     */
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_INVOICES)]
+    public function deleteDocument(?string $invoiceId = null, ?string $documentId = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $invoice = $this->Invoices->get($invoiceId);
+
+        $gate = $this->_documentGate($invoice, 'eliminar');
+        if ($gate !== null) {
+            return $gate;
+        }
 
         $documentsTable = TableRegistry::getTableLocator()->get('InvoiceDocuments');
         $document = $documentsTable->find()
@@ -733,11 +953,180 @@ class InvoicesController extends AppController
     }
 
     /**
-     * Sends approval links to the selected approvers. Fails if there are
-     * pending approvals already active.
+     * Gate compartido de soportes: bloquea si la factura está en estado terminal
+     * (409) o si el rol no puede operar el paso actual del pipeline (403).
+     */
+    private function _documentGate(Invoice $invoice, string $blockedActionLabel): ?Response
+    {
+        if ($invoice->isInFinalState()) {
+            return $this->_documentGateError(
+                $invoice,
+                sprintf('No se puede %s un soporte de una factura en estado final.', $blockedActionLabel),
+                409,
+            );
+        }
+
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        if (!$this->actionPolicy->canOperateStep($roleId, (string)$invoice->pipeline_status)) {
+            return $this->_documentGateError(
+                $invoice,
+                'No tiene permisos para gestionar soportes en este paso.',
+                403,
+            );
+        }
+
+        return null;
+    }
+
+    /**
+     * Construye la respuesta de error del gate de documentos. JSON con status
+     * HTTP apropiado para AJAX, redirect con flash para POST tradicional.
+     */
+    private function _documentGateError(Invoice $invoice, string $message, int $statusCode): Response
+    {
+        if ($this->_isJsonRequest()) {
+            return $this->_jsonResponse(['success' => false, 'error' => $message], $statusCode);
+        }
+
+        $this->Flash->error($message);
+
+        return $this->_redirectForInvoice($invoice, 'edit', $invoice->id);
+    }
+
+    /**
+     * Edición inline de `dian_validation` desde la tabla de hijas de un registro
+     * padre — Reintegro / Caja Menor / Anticipo (spec 2026-07-14 §3.4). Evita
+     * salir de la vista del padre para resolver el DIAN de una hija.
+     *
+     * Endpoint de mutación por AJAX: mismo gate que la edición directa
+     * (can_edit del módulo + canOperate del paso + FieldAccessPolicy), más la
+     * verificación de pertenencia al padre indicado (anti-IDOR) y el rechazo
+     * explícito si la tabla del navegador está desactualizada (409).
+     *
+     * @param string|null $id ID de la factura hija.
+     * @return \Cake\Http\Response JSON con el nuevo valor y el readiness del grupo.
      */
     #[Permission(action: 'edit')]
-    public function sendApprovalLinks($id = null)
+    public function updateDianInline(?string $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+        $invoice = $this->Invoices->get($id);
+
+        // 1. RBAC: el rol debe poder operar `aprobacion` y tener `dian_validation`
+        // entre sus campos editables. Solo depende del rol, así que va primero:
+        // un rol sin permiso no puede usar el endpoint como oráculo de estado.
+        $roleId = (int)$this->_getCurrentUser()->role_id;
+        $editableFields = $this->pipeline->getEditableFields($roleId, InvoiceConstants::STATUS_APROBACION);
+        if (
+            !$this->actionPolicy->canOperateStep($roleId, InvoiceConstants::STATUS_APROBACION)
+            || !in_array('dian_validation', $editableFields, true)
+        ) {
+            return $this->_jsonResponse(
+                ['success' => false, 'error' => 'No tiene permisos para validar DIAN.'],
+                403,
+            );
+        }
+
+        // 2. Anti-IDOR: la factura debe pertenecer al padre indicado. `parent_field`
+        // se valida contra la whitelist PARENT_FOREIGN_KEYS — nunca se interpola crudo.
+        $parentField = $this->request->getData('parent_field');
+        $parentId = $this->request->getData('parent_id');
+        if (
+            !is_string($parentField)
+            || !in_array($parentField, InvoiceConstants::PARENT_FOREIGN_KEYS, true)
+            || !is_numeric($parentId)
+            || (int)$parentId <= 0
+            || (int)($invoice->{$parentField} ?? 0) !== (int)$parentId
+        ) {
+            return $this->_jsonResponse(
+                ['success' => false, 'error' => 'La factura no pertenece al registro indicado.'],
+                404,
+            );
+        }
+        $parentId = (int)$parentId;
+
+        // 3. Solo se resuelve el DIAN en `aprobacion` (tabla stale → error
+        // explícito, nunca una escritura silenciosa sobre un estado avanzado).
+        if ($invoice->pipeline_status !== InvoiceConstants::STATUS_APROBACION) {
+            return $this->_jsonResponse(
+                ['success' => false, 'error' => 'La factura ya no está en Aprobación. Refresque la página.'],
+                409,
+            );
+        }
+
+        // 4. Valor válido y doctype con DIAN (el Recibo de Caja está exento).
+        $newValue = $this->request->getData('dian_validation');
+        if (!is_string($newValue) || !in_array($newValue, InvoiceConstants::DIAN_STATUSES, true)) {
+            return $this->_jsonResponse(
+                ['success' => false, 'error' => 'Valor de validación DIAN inválido.'],
+                422,
+            );
+        }
+        if (!DocumentTypePolicyFactory::requiresDianFor($invoice->document_type)) {
+            return $this->_jsonResponse(
+                ['success' => false, 'error' => 'Este tipo de documento no requiere validación DIAN.'],
+                422,
+            );
+        }
+
+        $oldValue = $invoice->dian_validation;
+        $invoice->dian_validation = $newValue;
+        if (!$this->Invoices->save($invoice)) {
+            return $this->_jsonResponse(
+                ['success' => false, 'error' => 'No se pudo guardar el cambio.'],
+                500,
+            );
+        }
+
+        if ($oldValue !== $newValue) {
+            $this->historyService->recordFieldChange(
+                (int)$invoice->id,
+                'dian_validation',
+                $oldValue,
+                $newValue,
+                (int)$this->_getCurrentUser()->id,
+            );
+        }
+
+        $readiness = $this->_readinessForParent($parentField, $parentId);
+
+        return $this->_jsonResponse([
+            'success' => true,
+            'dian_validation' => $newValue,
+            'readiness' => $readiness === null ? null : [
+                'dian_pending' => count($readiness->dianPending),
+                'support_missing' => count($readiness->supportMissing),
+                'blocked' => $readiness->isBlocked(),
+            ],
+        ]);
+    }
+
+    /**
+     * Requisitos pendientes de las hijas del padre, para que el JS refresque el
+     * checklist sin recargar. Misma fuente que el gate de avance del padre.
+     *
+     * @param string $parentField FK del padre (ya validada contra PARENT_FOREIGN_KEYS).
+     * @param int $parentId ID del padre.
+     * @return \App\Service\Dto\GroupReadinessReport|null Null si la FK no tiene guard asociado.
+     */
+    private function _readinessForParent(string $parentField, int $parentId): ?GroupReadinessReport
+    {
+        return match ($parentField) {
+            'refund_id' => (new RefundApprovalGuard())->childRequirements($parentId),
+            'petty_cash_record_id' => (new PettyCashGuard())->childRequirements($parentId),
+            'advance_id' => (new AdvanceLegalizationApprovalGuard())->childRequirements($parentId),
+            default => null,
+        };
+    }
+
+    /**
+     * Sends approval links to the selected approvers. Fails if there are
+     * pending approvals already active.
+     *
+     * @return \Cake\Http\Response|null
+     */
+    #[Permission(action: 'edit')]
+    public function sendApprovalLinks(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->Invoices->get($id, contain: ['Providers']);
@@ -765,9 +1154,11 @@ class InvoicesController extends AppController
     /**
      * Replaces the current approver set. Requires a reason and invalidates
      * any active tokens.
+     *
+     * @return \Cake\Http\Response|null
      */
     #[Permission(action: 'edit')]
-    public function modifyApprovers($id = null)
+    public function modifyApprovers(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->Invoices->get($id, contain: ['Providers']);
@@ -796,9 +1187,11 @@ class InvoicesController extends AppController
 
     /**
      * Resets a rejected approval flow back to pending.
+     *
+     * @return \Cake\Http\Response|null
      */
     #[Permission(action: 'edit')]
-    public function resetFlow($id = null)
+    public function resetFlow(?string $id = null)
     {
         $this->request->allowMethod(['post']);
         $invoice = $this->Invoices->get($id);

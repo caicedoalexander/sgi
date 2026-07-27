@@ -29,7 +29,7 @@ Mismas convenciones que el tracker estructural: lo único que se migra es la **d
 - **C1/C2 (Ola 2) — piloto antes de replicar.** Se implementó primero en **Refund** (`ViewViewModelInterface` + `RefundViewViewModel` + `RefundRowView` + `forRow()`), se validó, y recién entonces se replicó a los otros 5 con un workflow multi-agente. Verificación central post-workflow: `php -l`, cross-check de que cada `$viewModel->X`/`$row->X` existe como propiedad, y que ningún `view()` deja variables sueltas sin setear (Invoice/EN/NLD conservan su `compact()` y solo añaden el VM; los demás asignan todo desde el VM).
 - **C2 — caveat P9 atendido.** Tener `RowView` no basta: el propio `Invoices/index` re-derivaba variantes pese a usar `forRow()`. Al generalizar se movió esa lógica (`pipelineVariant`/`stageIdx`/`pillClass`) **dentro** de `forRow()`/`InvoiceRowView` (ampliado a 13 campos).
 - **A3 reclasificado a no-deriva.** La premisa del audit ("`statusBadgeMap` es alias muerto de `badgeColors`") es **falsa**: el código muestra dos roles distintos — `statusBadgeMap` = pill del estado del header; `badgeColors` = pills de estado de **documentos** (pasado a `document_row`). Coincidir en la misma const no los hace alias. No se tocó.
-- **A9 reclasificado a (B) esencial — la validación visual refutó el audit.** El audit marcó `Invoices/edit` (que usa `sgi-edit-shell`) como deriva ("template viejo sin migrar"). El navegador mostró lo contrario: `sgi-edit-shell` es un **app-shell de altura completa** (header **fijo** + body con scroll interno + footer sticky) **más sofisticado** que el grid canónico para el form más pesado. Migrarlo perdería el header fijo (regresión UX). Diferencia esencial, no deriva.
+- **A9 reclasificado a (B) esencial — la validación visual refutó el audit.** El audit marcó `Invoices/edit` (que usa `spi-edit-shell`) como deriva ("template viejo sin migrar"). El navegador mostró lo contrario: `spi-edit-shell` es un **app-shell de altura completa** (header **fijo** + body con scroll interno + footer sticky) **más sofisticado** que el grid canónico para el form más pesado. Migrarlo perdería el header fijo (regresión UX). Diferencia esencial, no deriva.
 - **A6 skip recomendado.** Unificar el método de entrada en `add` (`get_object_vars`/props sueltas → `set('viewModel')`) es churn sobre forms `add` **legacy** (canon B), e Invoice exigiría rediseñar `InvoiceAddViewModel` para cargar dropdowns. Bajo valor; se perdería al reescribir esos `add`.
 
 ---
@@ -48,8 +48,8 @@ Leyenda: ✅ ejecutado · 🔄 reclasificado · ⏸ diferido · ◻ decisión pe
 | **A6** | Unificar método de entrada en `add` | ❎ skip recomendado | churn en forms legacy; Invoice exigiría rediseñar el AddVM |
 | **A7** | `view` re-pinta docs/pagos a mano teniendo elements | ✅ ejecutado (docs) | Ola 4 — `PettyCash/view` + `PaymentScheduling/view` migrados a `documents_section` read-only (VMs exponen `documentRows`). Toda `view` (salvo Invoice, outlier propio) delega ya en el element. Pagos a mano = fuera de alcance (otra sub-tabla) |
 | **A8** | Extraer element `change_history` (historial duplicado en EN/NLD) | ✅ ejecutado | `88aeb00` — `templates/element/change_history.php` (param `title`/`showNoveltyLink`) |
-| **A9** | `Invoices/edit` `sgi-edit-shell` → `sgi-invoice-view-grid` | 🔄 reclasificado a (B) | `656be1e` — `sgi-edit-shell` es superior (header fijo); NO migrar |
-| **A10** | `Invoices/view` + `PettyCash/view` grid inline → `sgi-invoice-view-grid` | ✅ ejecutado | `f0a6911` — validado visualmente (render idéntico) |
+| **A9** | `Invoices/edit` `spi-edit-shell` → `spi-invoice-view-grid` | 🔄 reclasificado a (B) | `656be1e` — `spi-edit-shell` es superior (header fijo); NO migrar |
+| **A10** | `Invoices/view` + `PettyCash/view` grid inline → `spi-invoice-view-grid` | ✅ ejecutado | `f0a6911` — validado visualmente (render idéntico) |
 | **A11** | Over-fetch `operationCenters` en `PaymentSchedulingAddViewModel` | ✅ ejecutado | `44acb33` — fetch + prop + paso eliminados |
 | **A12** | Sets muertos `linkedInvoices`/`linkedTotal` en `Advances::view` | ✅ ejecutado | `44acb33` |
 | **A13** | Filas de `index` con `onmouseenter/leave` inline | ✅ ejecutado | Ola 4 — las 6 filas `<a role="row">` adoptan el componente canónico `.row-fact` (bg/hover/transition/cursor/separador `+`-sibling); se eliminan 12 handlers JS inline + props redundantes. `padding:14px 18px` preservado inline (idéntico por construcción). El `.clickable-row` del audit no aplicaba: son `<a>`, no `<tr data-href>` |
@@ -89,7 +89,7 @@ Hallazgo durante la validación visual: 404 `/marked_as_signed` en `NoveltyLiqui
 
 - **Fase A — fix + vestigial:** `NLD/view` ya no renderiza el sentinel `signature_path='marked_as_signed'` como `<img>` (404 eliminado, badge "Firmado"); quitados los `script()` vestigiales de `NLD/edit`.
 - **Fase B — quitar captura:** eliminado el campo de firma (imagen + canvas) en `EmployeeNovelties/add` y su manejo en `EmployeeNoveltiesController::add()`. La columna `employee_signature` se **conserva** (sin migración): datos históricos siguen renderizando; solo se deja de poblar.
-- **Fase C — código muerto:** borrados `sgi-signature.js`, `sgi-epadlink.js`, `NoveltySignatureService`, `LeaveSignatureService`; quitadas inyecciones DI en 2 controllers + `Application.php`; docs actualizados.
+- **Fase C — código muerto:** borrados `spi-signature.js`, `spi-epadlink.js`, `NoveltySignatureService`, `LeaveSignatureService`; quitadas inyecciones DI en 2 controllers + `Application.php`; docs actualizados.
 - Commit: `2f2c00a` · 219/219 tests · 404 confirmado eliminado en navegador.
 - **Cabo suelto (✅ resuelto, Ola 4):** el checkbox `requires_employee_signature_creation` quedó **inerte** en el admin de `NoveltyTypes` (su única UI consumidora se eliminó). Retirado: 2 casillas UI (`add.php`/`edit.php`) + clave muerta del JSON de `getFlags()` + `$_accessible`/`validator->boolean`. La **columna de BD se conserva** (sin migración, igual que `employee_signature`); solo se retira la superficie editable/expuesta.
 
@@ -110,4 +110,4 @@ Hallazgo durante la validación visual: 404 `/marked_as_signed` en `NoveltyLiqui
 
 **Bajo retorno / opcional:** ~~A13~~ ✅, ~~C8~~ ✅, ~~C4~~ ✅ (B, no extender), ~~C7~~ ✅. Resta solo **C9** (element de sub-tablas, ganancia marginal + riesgo visual) — único pendiente de toda la auditoría de vista.
 
-**NO tocar (B, esenciales de dominio):** dualidad VM/Presentation, soportes bespoke con firmas, `add` legacy, side-rail de Novelty, Advance vía Invoices, forms-por-estado, naming `AdvanceLegalization*`, y `sgi-edit-shell` de Invoice/edit (A9 reclasificado).
+**NO tocar (B, esenciales de dominio):** dualidad VM/Presentation, soportes bespoke con firmas, `add` legacy, side-rail de Novelty, Advance vía Invoices, forms-por-estado, naming `AdvanceLegalization*`, y `spi-edit-shell` de Invoice/edit (A9 reclasificado).

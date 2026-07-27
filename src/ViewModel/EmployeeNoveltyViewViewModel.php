@@ -19,18 +19,27 @@ use App\View\Presentation\NoveltyPresentation;
 final readonly class EmployeeNoveltyViewViewModel implements ViewViewModelInterface
 {
     public string $pageTitle;
-    /** @var array{0:string,1:string} */
+    /**
+     * @var array{0:string,1:string}
+     */
     public array $currentStatusBadge;
     public string $currentStatus;
 
-    public bool   $isRejected;
-    public bool   $isTerminal;
+    public bool $isRejected;
+    public bool $isTerminal;
     public string $noveltyName;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $pipelineLabels;
-    /** @var array<int,array{icon:string,html:string}> */
+    /**
+     * @var array<int,array{icon:string,html:string}>
+     */
     public array $registryLines;
 
+    /**
+     * @param \App\Model\Entity\EmployeeNovelty $record Novedad a presentar.
+     */
     public function __construct(public EmployeeNovelty $record)
     {
         $status = (string)$record->pipeline_status;
@@ -41,7 +50,7 @@ final readonly class EmployeeNoveltyViewViewModel implements ViewViewModelInterf
         $this->isRejected    = $record->isRejected();
         $this->isTerminal    = $status === NoveltyConstants::STATUS_PAGADA;
         $this->noveltyName   = $record->custom_name
-            ?: ($record->employee->full_name ?? ('Novedad #' . $record->id));
+            ?: ($record->employee->full_name ?? 'Novedad #' . $record->id);
 
         $this->currentStatusBadge = $this->isRejected
             ? ['Rechazada', 'pill-danger-soft']

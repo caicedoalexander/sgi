@@ -30,6 +30,12 @@ class RefundPaymentService
     private HistoryServiceInterface $invoiceHistory;
     private ?EventManagerInterface $events;
 
+    /**
+     * @param \App\Authorization\AuthorizationFacade $auth Fachada de autorización de pasos de pipeline.
+     * @param \App\Service\RefundHistoryService|null $refundHistory Servicio de auditoría de reintegros.
+     * @param \App\Service\Interface\HistoryServiceInterface|null $invoiceHistory Servicio de auditoría de facturas.
+     * @param \Cake\Event\EventManagerInterface|null $events Event manager para publicar eventos.
+     */
     public function __construct(
         AuthorizationFacade $auth,
         ?RefundHistoryService $refundHistory = null,

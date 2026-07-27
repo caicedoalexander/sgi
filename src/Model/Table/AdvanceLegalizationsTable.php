@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use App\Constants\AdvanceConstants;
+use App\Constants\InvoiceConstants;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -23,6 +24,7 @@ class AdvanceLegalizationsTable extends Table
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+        $this->addBehavior('SidebarCache');
 
         $this->belongsTo('AdvanceInvoices', [
             'className' => 'Invoices',
@@ -45,6 +47,11 @@ class AdvanceLegalizationsTable extends Table
             'joinType' => 'LEFT',
         ]);
         $this->hasMany('AdvanceLegalizationSignatures', [
+            'foreignKey' => 'legalization_id',
+            'dependent' => true,
+            'cascadeCallbacks' => true,
+        ]);
+        $this->hasMany('AdvanceLegalizationDocuments', [
             'foreignKey' => 'legalization_id',
             'dependent' => true,
             'cascadeCallbacks' => true,
@@ -86,6 +93,19 @@ class AdvanceLegalizationsTable extends Table
             ->allowEmptyString('surplus_amount');
 
         $validator
+            ->boolean('accrued')
+            ->allowEmptyString('accrued');
+
+        $validator
+            ->date('accrual_date')
+            ->allowEmptyDate('accrual_date');
+
+        $validator
+            ->scalar('ready_for_payment')
+            ->inList('ready_for_payment', InvoiceConstants::READY_FOR_PAYMENT_OPTIONS)
+            ->allowEmptyString('ready_for_payment');
+
+        $validator
             ->dateTime('shortage_received_at')
             ->allowEmptyDateTime('shortage_received_at');
 
@@ -93,11 +113,6 @@ class AdvanceLegalizationsTable extends Table
             ->scalar('shortage_receipt_number')
             ->maxLength('shortage_receipt_number', 100)
             ->allowEmptyString('shortage_receipt_number');
-
-        $validator
-            ->scalar('shortage_receipt_path')
-            ->maxLength('shortage_receipt_path', 500)
-            ->allowEmptyString('shortage_receipt_path');
 
         $validator
             ->dateTime('legalized_at')

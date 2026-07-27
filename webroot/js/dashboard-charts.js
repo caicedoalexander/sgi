@@ -1,7 +1,7 @@
 /**
- * SGI Dashboard Charts
+ * SPI Dashboard Charts
  * ApexCharts initialization from data-* attributes on div elements.
- * Styled to match the SGI design system: no border-radius, border-based hierarchy,
+ * Styled to match the SPI design system: no border-radius, border-based hierarchy,
  * Inter font, micro-caps labels, muted grid, corporate color palette.
  */
 (function () {
@@ -77,10 +77,10 @@
         return '$' + v;
     }
 
-    /* ── Shared SGI base configs ─────────────────────────────── */
+    /* ── Shared SPI base configs ─────────────────────────────── */
     var fontFamily = "'Inter', system-ui, sans-serif";
 
-    // SGI micro-caps style for axis labels
+    // SPI micro-caps style for axis labels
     var axisLabelStyle = {
         fontSize: '10px',
         fontWeight: 600,

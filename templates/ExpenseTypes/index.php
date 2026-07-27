@@ -9,8 +9,8 @@ $canEdit   = !empty($userPermissions['expense_types']['can_edit']);
 $canDelete = !empty($userPermissions['expense_types']['can_delete']);
 $gridCols  = '80px 1fr 200px 96px';
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Tipos de Gasto</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Tipos de Gasto</span>
     <?php if (!empty($userPermissions['expense_types']['can_create'])): ?>
     <?= $this->Html->link(
         '<i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nuevo Tipo',
@@ -20,7 +20,7 @@ $gridCols  = '80px 1fr 200px 96px';
     <?php endif; ?>
 </div>
 
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div class="row-fact head" style="grid-template-columns:<?= $gridCols ?>;" role="row">
         <span><?= $this->Paginator->sort('id', '#') ?></span>
         <span><?= $this->Paginator->sort('name', 'Nombre') ?></span>

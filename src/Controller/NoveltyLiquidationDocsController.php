@@ -4,7 +4,10 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Attribute\PipelineAction;
+use App\Constants\Domain\Pipeline\DenialReason;
 use App\Constants\NoveltyConstants;
+use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\DocumentJsonPayloadTrait;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\NoveltyLiquidationDoc;
@@ -356,11 +359,17 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
-    #[Permission(action: 'add')]
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS)]
     public function uploadDocument(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
+
+        $gate = $this->_documentGate($doc, 'subir');
+        if ($gate !== null) {
+            return $gate;
+        }
+
         $user = $this->Authentication->getIdentity()->getOriginalData();
         $file = $this->request->getUploadedFile('file');
 
@@ -417,11 +426,17 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
-    #[Permission(action: 'add')]
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS)]
     public function uploadLiquidationDocument(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
+
+        $gate = $this->_documentGate($doc, 'subir');
+        if ($gate !== null) {
+            return $gate;
+        }
+
         $user = $this->Authentication->getIdentity()->getOriginalData();
         $file = $this->request->getUploadedFile('liquidation_file');
 
@@ -463,11 +478,17 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $id Document ID.
      * @return \Cake\Http\Response|null
      */
-    #[Permission(action: 'edit')]
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS)]
     public function updateLiquidationDocument(?string $id = null): ?Response
     {
         $this->request->allowMethod(['post']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
+
+        $gate = $this->_documentGate($doc, 'actualizar');
+        if ($gate !== null) {
+            return $gate;
+        }
+
         $user = $this->Authentication->getIdentity()->getOriginalData();
 
         $allowedStatuses = [
@@ -528,11 +549,16 @@ class NoveltyLiquidationDocsController extends AppController
      * @param string|null $documentId Document attachment ID.
      * @return \Cake\Http\Response|null
      */
-    #[Permission(action: 'delete')]
+    #[PipelineAction(pipeline: PipelineStepConstants::PIPELINE_LIQUIDATION_DOCS)]
     public function deleteDocument(?string $id = null, ?string $documentId = null): ?Response
     {
         $this->request->allowMethod(['post', 'delete']);
         $doc = $this->NoveltyLiquidationDocs->get($id);
+
+        $gate = $this->_documentGate($doc, 'eliminar');
+        if ($gate !== null) {
+            return $gate;
+        }
 
         $documentsTable = $this->fetchTable('NoveltyDocuments');
         $document = $documentsTable->get($documentId);
@@ -569,6 +595,49 @@ class NoveltyLiquidationDocsController extends AppController
         }
 
         return $this->redirect(['action' => 'edit', $id]);
+    }
+
+    /**
+     * Gate compartido de soportes para documentos de liquidación. Delega en el
+     * coordinador, que autoriza contra el pipeline `liquidation_docs` (NO
+     * `novelties`): terminal → 409, sin permiso del paso → 403.
+     */
+    private function _documentGate(NoveltyLiquidationDoc $doc, string $blockedActionLabel): ?Response
+    {
+        $roleId = (int)$this->Authentication->getIdentity()->getOriginalData()->role_id;
+        $denial = $this->pipelineService->denialReasonForAdvanceGroup($doc, $roleId);
+        if ($denial === null) {
+            return null;
+        }
+
+        if ($denial === DenialReason::TERMINAL_STATE) {
+            return $this->_documentGateError(
+                sprintf('No se puede %s un soporte de un documento de liquidación cerrado.', $blockedActionLabel),
+                (int)$doc->id,
+                409,
+            );
+        }
+
+        return $this->_documentGateError(
+            'No tiene permisos para gestionar soportes en este paso.',
+            (int)$doc->id,
+            403,
+        );
+    }
+
+    /**
+     * Construye la respuesta de error del gate de documentos. JSON con status
+     * HTTP apropiado para AJAX, redirect con flash para POST tradicional.
+     */
+    private function _documentGateError(string $message, int $docId, int $statusCode): Response
+    {
+        if ($this->_isJsonRequest()) {
+            return $this->_jsonResponse(['success' => false, 'error' => $message], $statusCode);
+        }
+
+        $this->Flash->error($message);
+
+        return $this->redirect(['action' => 'edit', $docId]);
     }
 
     /**

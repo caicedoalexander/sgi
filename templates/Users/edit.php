@@ -6,8 +6,8 @@
  */
 $this->assign('title', 'Editar Usuario');
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Editar Usuario</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Editar Usuario</span>
     <?= $this->Html->link(
         '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
@@ -15,7 +15,7 @@ $this->assign('title', 'Editar Usuario');
     ) ?>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <?= $this->Form->create($user) ?>
     <div class="row">
         <div class="col-md-6 mb-3">

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Attribute\Permission;
+use App\Authorization\PipelineViewCoercion;
 use App\Constants\PipelineStepConstants;
 use App\Constants\RoleConstants;
 use App\Service\AuthorizationService;
@@ -85,7 +86,7 @@ class RolesController extends AppController
      * @return void
      */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $role = $this->Roles->get($id, contain: ['Users', 'Permissions']);
         $pipelineMatrix = $this->pipelineAuth->getPermissionsMatrix((int)$id);
@@ -103,7 +104,7 @@ class RolesController extends AppController
     {
         $role = $this->Roles->newEmptyEntity();
         if ($this->request->is('post')) {
-            $data = $this->request->getData();
+            $data = PipelineViewCoercion::apply($this->request->getData());
             $role = $this->Roles->patchEntity($role, $data);
             if ($this->Roles->save($role)) {
                 $connection = $this->Roles->getConnection();
@@ -148,11 +149,11 @@ class RolesController extends AppController
      * @return \Cake\Http\Response|null
      */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $role = $this->Roles->get($id, contain: ['Permissions']);
         if ($this->request->is(['patch', 'post', 'put'])) {
-            $data = $this->request->getData();
+            $data = PipelineViewCoercion::apply($this->request->getData());
             $role = $this->Roles->patchEntity($role, $data);
             if ($this->Roles->save($role)) {
                 $connection = $this->Roles->getConnection();
@@ -195,7 +196,7 @@ class RolesController extends AppController
      * @return \Cake\Http\Response|null
      */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $role = $this->Roles->get($id);

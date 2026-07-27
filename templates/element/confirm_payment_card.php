@@ -19,9 +19,9 @@ if (!($canConfirm ?? false) || !($isVerificacionPago ?? false)) {
     return;
 }
 ?>
-<div class="sgi-action-card">
-    <div class="sgi-action-card-label">Cierre de flujo</div>
-    <p class="sgi-action-card-message"><?= h($message) ?></p>
+<div class="spi-action-card">
+    <div class="spi-action-card-label">Cierre de flujo</div>
+    <p class="spi-action-card-message"><?= h($message) ?></p>
     <?= $this->Form->postLink(
         '<i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Cerrar flujo',
         $confirmUrl,

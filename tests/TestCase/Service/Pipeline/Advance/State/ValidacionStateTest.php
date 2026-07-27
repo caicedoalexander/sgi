@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * A8 — ValidacionState es puro: delega el IO al AdvanceLegalizationGuard
- * inyectado. Verifica las transiciones y los 3 mensajes de validateAdvance
+ * inyectado. Verifica las transiciones y los 2 mensajes de validateAdvance
  * (sin BD; el Guard se mockea).
  */
 final class ValidacionStateTest extends TestCase
@@ -23,7 +23,7 @@ final class ValidacionStateTest extends TestCase
         $state = new ValidacionState($this->createStub(AdvanceLegalizationGuard::class));
 
         $this->assertSame(PipelineStatus::VALIDACION, $state->getStatus());
-        $this->assertSame(PipelineStatus::REVISION_FIRMAS, $state->getNextStatus());
+        $this->assertSame(PipelineStatus::APROBACION, $state->getNextStatus());
         $this->assertNull($state->getPreviousStatus());
     }
 
@@ -41,33 +41,14 @@ final class ValidacionStateTest extends TestCase
         $this->assertCount(2, $errors);
     }
 
-    public function testFlagsFirstInvoiceNotInContabilidadAndBreaks(): void
-    {
-        $guard = $this->createMock(AdvanceLegalizationGuard::class);
-        $guard->method('linkedLegalizationInvoices')->willReturn([
-            new Invoice(['id' => 11, 'invoice_number' => 'F-1', 'pipeline_status' => InvoiceConstants::STATUS_TESORERIA]),
-            new Invoice(['id' => 12, 'invoice_number' => 'F-2', 'pipeline_status' => InvoiceConstants::STATUS_TESORERIA]),
-        ]);
-        $guard->method('hasPendingRelationDocument')->willReturn(true);
-
-        $state = new ValidacionState($guard);
-        $errors = $state->validateAdvance(new AdvanceLegalization(['id' => 1, 'advance_invoice_id' => 5]));
-
-        // break tras la primera factura fuera de Contabilidad: un solo mensaje de ese tipo.
-        $this->assertSame(
-            ['Todas las facturas vinculadas deben estar en Contabilidad. Falta: factura F-1'],
-            $errors,
-        );
-    }
-
-    public function testPassesWhenInvoicesInContabilidadAndDocumentPresent(): void
+    public function testPassesWhenInvoicesLinkedAndDocumentPresent(): void
     {
         $guard = $this->createMock(AdvanceLegalizationGuard::class);
         $guard->expects($this->once())
             ->method('linkedLegalizationInvoices')
             ->with(5)
             ->willReturn([
-                new Invoice(['id' => 11, 'invoice_number' => 'F-1', 'pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD]),
+                new Invoice(['id' => 11, 'invoice_number' => 'F-1', 'pipeline_status' => InvoiceConstants::STATUS_APROBACION]),
             ]);
         $guard->expects($this->once())
             ->method('hasPendingRelationDocument')

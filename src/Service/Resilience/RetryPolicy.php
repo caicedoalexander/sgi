@@ -24,11 +24,21 @@ final class RetryPolicy
     ) {
     }
 
+    /**
+     * Crea una política de reintentos con los valores por defecto.
+     *
+     * @return self
+     */
     public static function default(): self
     {
         return new self();
     }
 
+    /**
+     * Crea una política que no reintenta (un solo intento).
+     *
+     * @return self
+     */
     public static function noRetry(): self
     {
         return new self(maxAttempts: 0);

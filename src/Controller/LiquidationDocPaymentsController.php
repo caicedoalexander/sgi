@@ -26,6 +26,11 @@ class LiquidationDocPaymentsController extends AppController
         $this->actionPolicy = $container->get(NoveltyActionPolicy::class);
     }
 
+    /**
+     * Obtiene el ID del rol del usuario autenticado.
+     *
+     * @return int
+     */
     private function _getRoleId(): int
     {
         return (int)$this->_getCurrentUser()->role_id;

@@ -6,6 +6,8 @@
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Employee $employee
  * @var iterable $folders
+ * @var string|null $selectedFolderId
+ * @var string $selectedFolderName
  * @var \App\Model\Entity\Employee|null $currentNovelty
  * @var array<\App\Model\Entity\Employee> $navEmployees
  * @var string $navStatus
@@ -28,22 +30,27 @@ $initials = mb_strtoupper(
 );
 
 // ─── Conteo de documentos + lista plana para el navegador docs ──────
-// $allDocs aplana carpetas y subcarpetas en filas {doc, folderId, folderName}
-// para renderizar una única lista filtrable del lado del cliente.
+// $allDocs aplana carpetas y subcarpetas en filas {doc, folderId} para renderizar
+// una única lista filtrable del lado del cliente. $selectedDocCount es cuántos
+// documentos tiene la carpeta activa (decide el empty-state inicial, server-side).
 $totalDocs = 0;
 $allDocs = [];
 foreach ($folders as $folder) {
     foreach ($folder->employee_documents as $doc) {
-        $allDocs[] = ['doc' => $doc, 'folderId' => $folder->id, 'folderName' => $folder->name];
+        $allDocs[] = ['doc' => $doc, 'folderId' => (string)$folder->id];
     }
     $totalDocs += count($folder->employee_documents);
     foreach ($folder->child_folders as $sf) {
         foreach ($sf->employee_documents as $doc) {
-            $allDocs[] = ['doc' => $doc, 'folderId' => $sf->id, 'folderName' => $sf->name];
+            $allDocs[] = ['doc' => $doc, 'folderId' => (string)$sf->id];
         }
         $totalDocs += count($sf->employee_documents);
     }
 }
+$selectedDocCount = count(array_filter(
+    $allDocs,
+    fn(array $row) => $row['folderId'] === $selectedFolderId,
+));
 
 $novedades = $employee->employee_novelties ?? [];
 $noveltyCount = count($novedades);
@@ -155,6 +162,7 @@ $navTabColor = fn(string $status) => match ($status) {
             </a>
             <?php endif; ?>
             <input type="hidden" name="status" value="<?= h($navStatus) ?>">
+            <input type="hidden" name="folder" value="<?= h((string)$selectedFolderId) ?>">
         </form>
     </div>
 
@@ -183,6 +191,7 @@ $navTabColor = fn(string $status) => match ($status) {
         <form method="get">
             <input type="hidden" name="search" value="<?= h($navSearch) ?>">
             <input type="hidden" name="status" value="<?= h($navStatus) ?>">
+            <input type="hidden" name="folder" value="<?= h((string)$selectedFolderId) ?>">
 
             <button type="button"
                     class="btn btn-default btn-sm w-100 d-flex justify-content-between align-items-center"
@@ -193,7 +202,7 @@ $navTabColor = fn(string $status) => match ($status) {
                 <span>
                     <i class="bi bi-funnel me-1" aria-hidden="true"></i>Filtros
                     <?php if ($navAdvancedFilterCount > 0): ?>
-                        · <span class="sgi-fg-primary"><?= $navAdvancedFilterCount ?></span>
+                        · <span class="spi-fg-primary"><?= $navAdvancedFilterCount ?></span>
                     <?php endif; ?>
                 </span>
                 <i class="bi bi-chevron-down" aria-hidden="true"></i>
@@ -201,7 +210,7 @@ $navTabColor = fn(string $status) => match ($status) {
 
             <div class="collapse <?= $navAdvancedFiltersOpen ? 'show' : '' ?> mt-2" id="empNavFilters">
                 <div class="mb-2">
-                    <label class="sgi-label" for="emp-nav-position">Cargo</label>
+                    <label class="spi-label" for="emp-nav-position">Cargo</label>
                     <?= $this->Form->select('position_id', $positions, [
                         'empty' => 'Todos',
                         'class' => 'form-select form-select-sm select2-enable',
@@ -210,7 +219,7 @@ $navTabColor = fn(string $status) => match ($status) {
                     ]) ?>
                 </div>
                 <div class="mb-1">
-                    <label class="sgi-label" for="emp-nav-opcenter">Centro de Operación</label>
+                    <label class="spi-label" for="emp-nav-opcenter">Centro de Operación</label>
                     <?= $this->Form->select('operation_center_id', $operationCenters, [
                         'empty' => 'Todos',
                         'class' => 'form-select form-select-sm select2-enable',
@@ -318,7 +327,7 @@ $navTabColor = fn(string $status) => match ($status) {
                 display:flex;flex-direction:column;gap:14px;">
 
     <!-- Header card -->
-    <div class="sgi-card" style="display:flex;align-items:center;gap:16px;">
+    <div class="spi-card" style="display:flex;align-items:center;gap:16px;">
         <?php if ($employee->profile_image): ?>
             <img src="<?= $this->Url->build('/' . $employee->profile_image) ?>" alt=""
                  class="av av-xl is-circle" style="object-fit:cover;">
@@ -435,7 +444,7 @@ $navTabColor = fn(string $status) => match ($status) {
         <!-- ───── Tab: Documentos ───── -->
         <div class="tab-pane fade show active" id="tab-docs" role="tabpanel">
             <?php if (($folders instanceof \Cake\Datasource\ResultSetInterface ? $folders->isEmpty() : count($folders) === 0)): ?>
-                <div class="sgi-card">
+                <div class="spi-card">
                     <div class="empty-state" style="padding:60px 20px;">
                         <div class="es-icon es-icon-neutral">
                             <i class="bi bi-folder" aria-hidden="true"></i>
@@ -446,41 +455,8 @@ $navTabColor = fn(string $status) => match ($status) {
                 </div>
             <?php else: ?>
 
-                <!-- Card de completitud documental -->
-                <div class="sgi-card" style="margin-bottom:14px;">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap"
-                         style="gap:16px;margin-bottom:12px;">
-                        <div>
-                            <div class="sgi-label" style="margin-bottom:4px;">Completitud Documental</div>
-                            <div style="display:flex;align-items:baseline;gap:6px;">
-                                <span class="mono" style="font-size:28px;font-weight:800;color:var(--primary-color);letter-spacing:-0.7px;">
-                                    <?= $totalDocs ?><span style="color:var(--text-faint);font-weight:500;">/<?= $totalDocs ?></span>
-                                </span>
-                                <span style="font-size:13px;color:var(--text-muted);font-weight:600;">· <?= $totalDocs > 0 ? 100 : 0 ?>%</span>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:18px;font-size:11.5px;color:var(--text-default);">
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <span style="width:10px;height:10px;background:var(--primary-color);border-radius:2px;"></span>
-                                <span><strong><?= $totalDocs ?></strong> cargados</span>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <span style="width:10px;height:10px;background:var(--warning-color);border-radius:2px;"></span>
-                                <span><strong>0</strong> por vencer</span>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <span style="width:10px;height:10px;background:var(--danger-color);border-radius:2px;"></span>
-                                <span><strong>0</strong> faltantes</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display:flex;height:8px;gap:2px;background:var(--bg-subtle);">
-                        <div style="flex:1;background:var(--primary-color);"></div>
-                    </div>
-                </div>
-
                 <!-- Card árbol + archivos -->
-                <div class="sgi-card" style="padding:0;overflow:hidden;">
+                <div class="spi-card" style="padding:0;overflow:hidden;">
                     <!-- Toolbar -->
                     <div style="padding:14px 18px;display:flex;justify-content:space-between;
                                 align-items:center;gap:12px;border-bottom:1px solid var(--rule);">
@@ -488,7 +464,7 @@ $navTabColor = fn(string $status) => match ($status) {
                             <div style="font-size:13px;font-weight:700;color:var(--text-strong);">Documentos</div>
                             <span style="color:var(--text-disabled);">·</span>
                             <div class="mono" style="font-size:11.5px;color:var(--text-faint);">
-                                / <?= h($employee->first_name) ?>
+                                / <span id="docCrumb"><?= h($selectedFolderName) ?></span>
                             </div>
                         </div>
                         <?php if (!empty($userPermissions['employees']['can_create'])): ?>
@@ -501,10 +477,12 @@ $navTabColor = fn(string $status) => match ($status) {
 
                     <div style="display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 410px);">
                         <style>
-                            .doc-tree-item { transition: background var(--t-fast) ease; }
+                            .doc-tree-item { transition: background var(--t-fast) ease; text-decoration: none;
+                                             color: var(--text-default); font-weight: 500; }
+                            .doc-tree-item.is-child { color: var(--text-muted); }
                             .doc-tree-item:hover { background: var(--bg-muted); }
                             .doc-tree-item.is-active { background: var(--primary-soft); color: var(--primary-color); font-weight: 700; }
-                            .doc-row { display: grid; grid-template-columns: 2fr 1fr 0.8fr 1fr 96px; gap: 12px;
+                            .doc-row { display: grid; grid-template-columns: 2fr 0.8fr 1fr 96px; gap: 12px;
                                        align-items: center; padding: 11px 18px; border-bottom: 1px solid var(--rule);
                                        font-size: 12px; transition: background var(--t-fast) ease; }
                             .doc-row:hover { background: var(--bg-subtle); }
@@ -513,38 +491,28 @@ $navTabColor = fn(string $status) => match ($status) {
                         <!-- ── Árbol de carpetas (izquierda) ── -->
                         <div id="docTree" style="background:var(--bg-subtle);padding:12px 0;
                                     border-right:1px solid var(--rule);font-size:12px;">
-                            <!-- Nodo raíz -->
-                            <div class="doc-tree-item is-active" data-folder-id="all"
-                                 style="display:flex;align-items:center;gap:8px;padding:7px 14px;
-                                        cursor:pointer;font-weight:700;">
-                                <i class="bi bi-folder2-open" style="font-size:13px;" aria-hidden="true"></i>
-                                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                                    <?= h($employee->first_name . ' ' . ($employee->last_name1 ?? '')) ?>
-                                </span>
-                                <span class="mono" style="font-size:9.5px;color:var(--text-faint);font-weight:600;">
-                                    <?= $totalDocs ?>
-                                </span>
-                            </div>
-
-                            <!-- Carpetas + subcarpetas anidadas -->
-                            <?php foreach ($folders as $folder):
-                                $folderDocCount = count($folder->employee_documents);
-                            ?>
-                            <div class="doc-tree-item" data-folder-id="<?= $folder->id ?>"
-                                 style="display:flex;align-items:center;gap:8px;padding:7px 14px 7px 24px;
-                                        cursor:pointer;color:var(--text-default);font-weight:500;">
+                            <?php foreach ($folders as $folder): ?>
+                            <a class="doc-tree-item<?= (string)$folder->id === $selectedFolderId ? ' is-active' : '' ?>"
+                               href="<?= $this->Url->build(['action' => 'view', $employee->id, '?' => $navBaseQuery + ['status' => $navStatus, 'folder' => $folder->id]]) ?>"
+                               data-folder-id="<?= $folder->id ?>"
+                               data-folder-name="<?= h($folder->name) ?>"
+                               <?= (string)$folder->id === $selectedFolderId ? 'aria-current="true"' : '' ?>
+                               style="display:flex;align-items:center;gap:8px;padding:7px 14px 7px 24px;">
                                 <i class="bi bi-folder" style="font-size:13px;color:var(--secondary-color);flex-shrink:0;" aria-hidden="true"></i>
                                 <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                     <?= h($folder->name) ?>
                                 </span>
                                 <span class="mono" style="font-size:9.5px;color:var(--text-faint);font-weight:600;flex-shrink:0;">
-                                    <?= $folderDocCount ?>
+                                    <?= count($folder->employee_documents) ?>
                                 </span>
-                            </div>
+                            </a>
                             <?php foreach ($folder->child_folders as $subfolder): ?>
-                            <div class="doc-tree-item" data-folder-id="<?= $subfolder->id ?>"
-                                 style="display:flex;align-items:center;gap:8px;padding:6px 14px 6px 38px;
-                                        cursor:pointer;color:var(--text-muted);font-weight:500;">
+                            <a class="doc-tree-item is-child<?= (string)$subfolder->id === $selectedFolderId ? ' is-active' : '' ?>"
+                               href="<?= $this->Url->build(['action' => 'view', $employee->id, '?' => $navBaseQuery + ['status' => $navStatus, 'folder' => $subfolder->id]]) ?>"
+                               data-folder-id="<?= $subfolder->id ?>"
+                               data-folder-name="<?= h($subfolder->name) ?>"
+                               <?= (string)$subfolder->id === $selectedFolderId ? 'aria-current="true"' : '' ?>
+                               style="display:flex;align-items:center;gap:8px;padding:6px 14px 6px 38px;">
                                 <i class="bi bi-folder" style="font-size:12px;color:var(--secondary-color);flex-shrink:0;" aria-hidden="true"></i>
                                 <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                     <?= h($subfolder->name) ?>
@@ -552,7 +520,7 @@ $navTabColor = fn(string $status) => match ($status) {
                                 <span class="mono" style="font-size:9.5px;color:var(--text-faint);font-weight:600;flex-shrink:0;">
                                     <?= count($subfolder->employee_documents) ?>
                                 </span>
-                            </div>
+                            </a>
                             <?php endforeach; ?>
                             <?php endforeach; ?>
                         </div>
@@ -560,12 +528,11 @@ $navTabColor = fn(string $status) => match ($status) {
                         <!-- ── Lista de archivos (derecha) ── -->
                         <div style="min-width:0;display:flex;flex-direction:column;">
                             <!-- Header de columnas -->
-                            <div style="display:grid;grid-template-columns:2fr 1fr 0.8fr 1fr 96px;padding:10px 18px;
+                            <div style="display:grid;grid-template-columns:2fr 0.8fr 1fr 96px;padding:10px 18px;
                                         background:var(--bg-muted);font-size:9.5px;font-weight:700;
                                         color:var(--text-faint);letter-spacing:0.7px;text-transform:uppercase;
                                         gap:12px;align-items:center;border-bottom:1px solid var(--rule);">
                                 <span>Documento</span>
-                                <span>Carpeta</span>
                                 <span>Tamaño</span>
                                 <span>Cargado</span>
                                 <span style="text-align:right;">Acciones</span>
@@ -574,8 +541,9 @@ $navTabColor = fn(string $status) => match ($status) {
                             <div id="docList" style="flex:1;overflow:auto;">
                                 <?php foreach ($allDocs as $row):
                                     $doc = $row['doc'];
+                                    $isVisible = $row['folderId'] === $selectedFolderId;
                                 ?>
-                                <div class="doc-row" data-folder-id="<?= $row['folderId'] ?>">
+                                <div class="doc-row<?= $isVisible ? '' : ' is-hidden' ?>" data-folder-id="<?= h($row['folderId']) ?>">
                                     <span style="min-width:0;display:flex;align-items:center;gap:7px;overflow:hidden;">
                                         <i class="bi <?= h($this->DocumentIcon->iconClass($doc->mime_type)) ?>"
                                            style="color:<?= h($this->DocumentIcon->iconColor($doc->mime_type)) ?>;font-size:1.15rem;flex-shrink:0;"></i>
@@ -584,10 +552,6 @@ $navTabColor = fn(string $status) => match ($status) {
                                             ['action' => 'downloadDocument', $employee->id, $doc->id],
                                             ['target' => '_blank', 'class' => 'text-decoration-none text-truncate']
                                         ) ?>
-                                    </span>
-                                    <span style="color:var(--text-muted);display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;">
-                                        <i class="bi bi-folder" style="color:var(--secondary-color);flex-shrink:0;" aria-hidden="true"></i>
-                                        <span class="text-truncate"><?= h($row['folderName']) ?></span>
                                     </span>
                                     <span style="color:var(--text-faint);font-size:.8rem;">
                                         <?= $doc->file_size ? $this->Number->toReadableSize($doc->file_size) : '—' ?>
@@ -613,8 +577,8 @@ $navTabColor = fn(string $status) => match ($status) {
                                 </div>
                                 <?php endforeach; ?>
 
-                                <!-- Empty-state (lo muestra el JS cuando la carpeta no tiene docs) -->
-                                <div id="docEmpty" style="display:none;padding:28px 18px;text-align:center;
+                                <!-- Empty-state de carpeta vacía (el JS lo alterna al cambiar de carpeta) -->
+                                <div id="docEmpty" style="display:<?= $selectedDocCount === 0 ? 'block' : 'none' ?>;padding:28px 18px;text-align:center;
                                             font-size:12px;color:var(--text-faint);font-style:italic;">
                                     <i class="bi bi-folder2-open d-block" style="font-size:22px;margin-bottom:6px;" aria-hidden="true"></i>
                                     Esta carpeta no tiene documentos.
@@ -638,27 +602,68 @@ $navTabColor = fn(string $status) => match ($status) {
                     if (!tree) { return; }
                     var rows = Array.prototype.slice.call(document.querySelectorAll('#docList .doc-row'));
                     var empty = document.getElementById('docEmpty');
+                    var crumb = document.getElementById('docCrumb');
 
+                    // El estado inicial (is-active, filas ocultas, breadcrumb, empty-state)
+                    // ya viene renderizado del servidor: aqui NO se llama a selectFolder()
+                    // al arrancar, para no repintar ni provocar parpadeo.
                     function selectFolder(id) {
-                        tree.querySelectorAll('.doc-tree-item').forEach(function (el) {
-                            el.classList.toggle('is-active', el.getAttribute('data-folder-id') === id);
+                        var items = Array.prototype.slice.call(tree.querySelectorAll('.doc-tree-item'));
+                        var active = null;
+                        items.forEach(function (el) {
+                            if (el.getAttribute('data-folder-id') === id) { active = el; }
                         });
+                        // Id desconocido (?folder= manipulado, o un popstate a una URL vieja):
+                        // caer a la primera carpeta, igual que hace el servidor.
+                        if (!active) { active = items[0]; }
+                        if (!active) { return; }
+                        var activeId = active.getAttribute('data-folder-id');
+
+                        items.forEach(function (el) {
+                            var match = el === active;
+                            el.classList.toggle('is-active', match);
+                            if (match) {
+                                el.setAttribute('aria-current', 'true');
+                            } else {
+                                el.removeAttribute('aria-current');
+                            }
+                        });
+
                         var visible = 0;
                         rows.forEach(function (row) {
-                            var show = (id === 'all') || (row.getAttribute('data-folder-id') === id);
+                            var show = row.getAttribute('data-folder-id') === activeId;
                             row.classList.toggle('is-hidden', !show);
                             if (show) { visible++; }
                         });
-                        if (empty) { empty.style.display = visible === 0 ? '' : 'none'; }
+                        if (empty) { empty.style.display = visible === 0 ? 'block' : 'none'; }
+                        if (crumb) { crumb.textContent = active.getAttribute('data-folder-name') || ''; }
+
+                        // OJO: el modal #uploadDocModal vive MAS ABAJO en el DOM que este
+                        // script, asi que al arrancar el IIFE todavia no existe. Hay que
+                        // resolverlo en cada llamada, no cachearlo arriba.
+                        var uploadSelect = document.getElementById('upload-folder-select');
+                        if (uploadSelect) { uploadSelect.value = activeId; }
+
+                        // Los filtros del directorio (buscador con auto-submit) deben
+                        // reenviar la carpeta ABIERTA, no la que trajo el render inicial.
+                        document.querySelectorAll('form input[name="folder"]').forEach(function (input) {
+                            input.value = activeId;
+                        });
                     }
 
                     tree.addEventListener('click', function (e) {
                         var item = e.target.closest('.doc-tree-item');
                         if (!item) { return; }
-                        selectFolder(item.getAttribute('data-folder-id'));
+                        e.preventDefault();
+                        var id = item.getAttribute('data-folder-id');
+                        selectFolder(id);
+                        // El href del ancla ya trae los filtros del directorio + ?folder=.
+                        window.history.pushState({ folder: id }, '', item.getAttribute('href'));
                     });
 
-                    selectFolder('all');
+                    window.addEventListener('popstate', function () {
+                        selectFolder(new URLSearchParams(window.location.search).get('folder') || '');
+                    });
                 })();
                 </script>
 
@@ -667,14 +672,14 @@ $navTabColor = fn(string $status) => match ($status) {
 
         <!-- ───── Tab: Perfil ───── -->
         <div class="tab-pane fade" id="tab-perfil" role="tabpanel">
-            <div class="sgi-card">
+            <div class="spi-card">
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <div class="sgi-label" style="margin-bottom:8px;">Datos personales</div>
+                        <div class="spi-label" style="margin-bottom:8px;">Datos personales</div>
                         <?php if ($employee->birth_date): ?>
                         <div class="field-row">
                             <span class="k">Fecha Nacimiento</span>
-                            <span class="v mono"><?= $employee->birth_date->format('d/m/Y') ?><?php if ($employee->age !== null): ?> <span class="sgi-fg-faint">(<?= $employee->age ?> años)</span><?php endif; ?></span>
+                            <span class="v mono"><?= $employee->birth_date->format('d/m/Y') ?><?php if ($employee->age !== null): ?> <span class="spi-fg-faint">(<?= $employee->age ?> años)</span><?php endif; ?></span>
                         </div>
                         <?php endif; ?>
                         <?php if ($employee->gender): ?>
@@ -698,7 +703,7 @@ $navTabColor = fn(string $status) => match ($status) {
                     </div>
 
                     <div class="col-md-6">
-                        <div class="sgi-label" style="margin-bottom:8px;">Contacto</div>
+                        <div class="spi-label" style="margin-bottom:8px;">Contacto</div>
                         <?php if ($employee->email): ?>
                         <div class="field-row">
                             <span class="k">Correo</span>
@@ -730,10 +735,10 @@ $navTabColor = fn(string $status) => match ($status) {
 
         <!-- ───── Tab: Contrato ───── -->
         <div class="tab-pane fade" id="tab-contrato" role="tabpanel">
-            <div class="sgi-card">
+            <div class="spi-card">
                 <div class="row g-4">
                     <div class="col-md-6">
-                        <div class="sgi-label" style="margin-bottom:8px;">Datos Laborales</div>
+                        <div class="spi-label" style="margin-bottom:8px;">Datos Laborales</div>
                         <?php if ($employee->has('position') && $employee->position): ?>
                         <div class="field-row">
                             <span class="k">Cargo</span>
@@ -767,7 +772,7 @@ $navTabColor = fn(string $status) => match ($status) {
                     </div>
 
                     <div class="col-md-6">
-                        <div class="sgi-label" style="margin-bottom:8px;">Vinculación</div>
+                        <div class="spi-label" style="margin-bottom:8px;">Vinculación</div>
                         <?php if ($employee->contract_type): ?>
                         <div class="field-row">
                             <span class="k">Tipo de Contrato</span>
@@ -799,7 +804,7 @@ $navTabColor = fn(string $status) => match ($status) {
 
         <!-- ───── Tab: Novedades ───── -->
         <div class="tab-pane fade" id="tab-novedades" role="tabpanel">
-            <div class="sgi-card" style="padding:0;overflow:hidden;">
+            <div class="spi-card" style="padding:0;overflow:hidden;">
                 <div style="padding:14px 18px;display:flex;justify-content:space-between;
                             align-items:center;gap:12px;border-bottom:1px solid var(--rule);">
                     <div>
@@ -846,7 +851,7 @@ $navTabColor = fn(string $status) => match ($status) {
                                     <?php endif; ?>
                                 </td>
                                 <td><span class="pill <?= h($pillClass) ?>"><?= h(strtoupper($nov->status)) ?></span></td>
-                                <td class="sgi-fg-muted"><?= h($nov->registered_by_user->full_name ?? '—') ?></td>
+                                <td class="spi-fg-muted"><?= h($nov->registered_by_user->full_name ?? '—') ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -866,7 +871,7 @@ $navTabColor = fn(string $status) => match ($status) {
 
         <!-- ───── Tab: Historial ───── -->
         <div class="tab-pane fade" id="tab-historial" role="tabpanel">
-            <div class="sgi-card" style="padding:0;overflow:hidden;">
+            <div class="spi-card" style="padding:0;overflow:hidden;">
                 <div style="padding:14px 18px;border-bottom:1px solid var(--rule);">
                     <div style="font-size:13px;font-weight:700;color:var(--text-strong);">Historial de Cambios</div>
                     <div style="font-size:10.5px;color:var(--text-faint);margin-top:2px;">
@@ -888,10 +893,10 @@ $navTabColor = fn(string $status) => match ($status) {
                         <tbody>
                             <?php foreach ($employee->employee_histories as $history): ?>
                             <tr>
-                                <td class="mono sgi-fg-muted" style="white-space:nowrap;"><?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?></td>
-                                <td class="sgi-fg-muted"><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
+                                <td class="mono spi-fg-muted" style="white-space:nowrap;"><?= $history->created ? $history->created->format('d/m/Y H:i') : '' ?></td>
+                                <td class="spi-fg-muted"><?= $history->hasValue('user') ? h($history->user->full_name) : '' ?></td>
                                 <td><?= h($fieldLabels[$history->field_changed] ?? $history->field_changed) ?></td>
-                                <td class="sgi-fg-faint"><?= h($history->old_value) ?: '—' ?></td>
+                                <td class="spi-fg-faint"><?= h($history->old_value) ?: '—' ?></td>
                                 <td class="fw-semibold"><?= h($history->new_value) ?: '—' ?></td>
                             </tr>
                             <?php endforeach; ?>
@@ -968,11 +973,13 @@ $navTabColor = fn(string $status) => match ($status) {
                         }
                     }
                     ?>
-                    <?= $this->Form->control('employee_folder_id', ['class' => 'form-select', 'label' => ['text' => 'Carpeta de Destino', 'class' => 'form-label'], 'options' => $allFolderOptions, 'required' => true, 'id' => 'upload-folder-select']) ?>
+                    <?= $this->Form->control('employee_folder_id', ['class' => 'form-select', 'label' => ['text' => 'Carpeta de Destino', 'class' => 'form-label'], 'options' => $allFolderOptions, 'default' => $selectedFolderId, 'required' => true, 'id' => 'upload-folder-select']) ?>
                 </div>
                 <div class="mb-3">
-                    <?= $this->Form->control('file', ['type' => 'file', 'class' => 'form-control', 'label' => ['text' => 'Archivo', 'class' => 'form-label'], 'required' => true, 'accept' => '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx,.txt']) ?>
-                    <div class="form-text">Máximo <?= h(\App\Constants\UploadConstants::MAX_BYTES_LABEL) ?> — PDF, imágenes, Word, Excel o texto.</div>
+                    <label class="form-label" for="upload-files">Archivos</label>
+                    <input type="file" name="file[]" id="upload-files" class="form-control" required multiple
+                           accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx,.txt">
+                    <div class="form-text">Puedes seleccionar varios archivos. Máximo <?= h(\App\Constants\UploadConstants::MAX_BYTES_LABEL) ?> por archivo — PDF, imágenes, Word, Excel o texto.</div>
                 </div>
             </div>
             <div class="modal-footer">

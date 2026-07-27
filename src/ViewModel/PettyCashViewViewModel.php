@@ -5,6 +5,8 @@ namespace App\ViewModel;
 
 use App\Constants\PettyCashConstants;
 use App\Model\Entity\PettyCashRecord;
+use App\Service\Dto\GroupReadinessReport;
+use App\View\Presentation\InvoicePresentation;
 use App\View\Presentation\PettyCashPresentation;
 
 /**
@@ -18,26 +20,46 @@ use App\View\Presentation\PettyCashPresentation;
 final readonly class PettyCashViewViewModel implements ViewViewModelInterface
 {
     public string $pageTitle;
-    /** @var array{0:string,1:string} */
+    /**
+     * @var array{0:string,1:string}
+     */
     public array $currentStatusBadge;
     public string $currentStatus;
 
-    public bool   $isTerminal;
-    public int    $invoiceCount;
-    /** @var list<array{doc:mixed,canDelete:bool,deleteUrl:?string,showBadge:bool}> */
-    public array  $documentRows;
-    public int    $totalDocs;
-    public int    $obsCount;
-    public float  $totalAmount;
-    public bool   $showPaymentCard;
+    public bool $isTerminal;
+    public int $invoiceCount;
+    /**
+     * @var list<array{doc:mixed,canDelete:bool,deleteUrl:?string,showBadge:bool}>
+     */
+    public array $documentRows;
+    public int $totalDocs;
+    public int $obsCount;
+    public float $totalAmount;
+    public bool $showPaymentCard;
     public string $amountExtraHtml;
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     public array $pipelineSteps;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $pipelineLabels;
+    /**
+     * @var list<\App\View\Presentation\GroupedInvoiceRowView>
+     */
+    public array $groupedRows;
 
-    public function __construct(public PettyCashRecord $record)
-    {
+    /**
+     * @param \App\Model\Entity\PettyCashRecord $record Caja menor a presentar.
+     * @param \App\Service\Dto\GroupReadinessReport|null $readiness Requisitos DIAN/soporte pendientes de las hijas.
+     * @param bool $canUploadSupport Puede subir soporte a las facturas hijas.
+     */
+    public function __construct(
+        public PettyCashRecord $record,
+        public ?GroupReadinessReport $readiness = null,
+        public bool $canUploadSupport = false,
+    ) {
         $status = $record->status ?? '';
         $labels = PettyCashConstants::STATUS_LABELS;
 
@@ -64,9 +86,15 @@ final readonly class PettyCashViewViewModel implements ViewViewModelInterface
         $extra = '';
         if ($this->isTerminal && $record->payment_date) {
             $extra = '<div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">'
-                . '<i class="bi bi-check-circle sgi-fg-primary" aria-hidden="true" style="font-size:11px;"></i>'
+                . '<i class="bi bi-check-circle spi-fg-primary" aria-hidden="true" style="font-size:11px;"></i>'
                 . '<span>Pagado · <span class="mono">' . h($record->payment_date->format('d/m/Y')) . '</span></span></div>';
         }
         $this->amountExtraHtml = $extra;
+
+        $groupedRows = [];
+        foreach ($record->invoices ?? [] as $inv) {
+            $groupedRows[] = InvoicePresentation::forGroupedRow($inv, canResolveDian: false);
+        }
+        $this->groupedRows = $groupedRows;
     }
 }

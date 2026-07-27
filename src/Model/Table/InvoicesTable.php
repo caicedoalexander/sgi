@@ -6,9 +6,11 @@ namespace App\Model\Table;
 use App\Constants\InvoiceConstants;
 use App\Model\Excel\ExcelExportableInterface;
 use App\Model\Excel\ExcelExportableTrait;
+use App\Service\CodeGeneratorService;
 use ArrayObject;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\EventInterface;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -17,6 +19,12 @@ class InvoicesTable extends Table implements ExcelExportableInterface
 {
     use ExcelExportableTrait;
 
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -26,6 +34,7 @@ class InvoicesTable extends Table implements ExcelExportableInterface
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');
+        $this->addBehavior('SidebarCache');
 
         $this->belongsTo('Providers', [
             'foreignKey' => 'provider_id',
@@ -106,6 +115,32 @@ class InvoicesTable extends Table implements ExcelExportableInterface
         ]);
     }
 
+    /**
+     * Excluye las facturas contenidas en un registro padre (caja menor,
+     * reintegro, anticipo). Su pipeline_status lo escribe el padre, así que no
+     * se operan desde el módulo de Facturas y no deben aparecer en la bandeja.
+     *
+     * NO excluye las facturas agendadas en una programación de pagos: eso es
+     * una referencia (solo agenda el pago), no una contención.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query Query base.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
+    public function findWithoutParent(SelectQuery $query): SelectQuery
+    {
+        foreach (InvoiceConstants::PARENT_FOREIGN_KEYS as $fk) {
+            $query->where(["Invoices.{$fk} IS" => null]);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -248,6 +283,13 @@ class InvoicesTable extends Table implements ExcelExportableInterface
         return $validator;
     }
 
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->isUnique(['invoice_number'], message: 'El número de factura ya existe.'), [
@@ -308,7 +350,7 @@ class InvoicesTable extends Table implements ExcelExportableInterface
             }
 
             if (empty($entity->invoice_number) && !empty($entity->operation_center_id)) {
-                $generator = new \App\Service\CodeGeneratorService();
+                $generator = new CodeGeneratorService();
                 $entity->invoice_number = $generator->generateAdvanceInvoiceNumber((int)$entity->operation_center_id);
             }
         }

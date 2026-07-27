@@ -11,15 +11,15 @@ $this->assign('title', 'Nuevo Reintegro');
 ?>
 <?= $this->element('cdn_select2') ?>
 
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Reintegros', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span class="current">Nuevo Reintegro</span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Nuevo Reintegro</span>
+            <span class="spi-page-title">Nuevo Reintegro</span>
         </div>
     </div>
     <div class="d-flex gap-2 flex-shrink-0">
@@ -31,13 +31,13 @@ $this->assign('title', 'Nuevo Reintegro');
     </div>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <div class="d-flex align-items-center gap-3" style="margin-bottom:20px;">
-        <div class="sgi-icon-chip">
+        <div class="spi-icon-chip">
             <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
         </div>
         <div>
-            <div class="sgi-card-title">Crear Reintegro</div>
+            <div class="spi-card-title">Crear Reintegro</div>
             <div style="font-size:.72rem;color:var(--text-disabled);">Seleccione el beneficiario del reintegro</div>
         </div>
     </div>
@@ -69,7 +69,7 @@ $this->assign('title', 'Nuevo Reintegro');
         </div>
     </div>
 
-    <div class="mb-4 sgi-beneficiary-employee" style="display:none;">
+    <div class="mb-4 spi-beneficiary-employee" style="display:none;">
         <label class="input-label">Empleado</label>
         <select name="beneficiary_employee_id" class="form-select select2-enable">
             <option value="">Seleccione un empleado</option>
@@ -79,7 +79,7 @@ $this->assign('title', 'Nuevo Reintegro');
         </select>
     </div>
 
-    <div class="mb-4 sgi-beneficiary-provider" style="display:none;">
+    <div class="mb-4 spi-beneficiary-provider" style="display:none;">
         <label class="input-label">Proveedor</label>
         <select name="beneficiary_provider_id" class="form-select select2-enable">
             <option value="">Seleccione un proveedor</option>
@@ -102,8 +102,8 @@ $this->assign('title', 'Nuevo Reintegro');
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var radios = document.querySelectorAll('input[name="beneficiary_type"]');
-    var empBlock = document.querySelector('.sgi-beneficiary-employee');
-    var provBlock = document.querySelector('.sgi-beneficiary-provider');
+    var empBlock = document.querySelector('.spi-beneficiary-employee');
+    var provBlock = document.querySelector('.spi-beneficiary-provider');
     var empSelect = empBlock.querySelector('select');
     var provSelect = provBlock.querySelector('select');
 

@@ -23,6 +23,14 @@ final class PettyCashPipelineStateRegistry
      */
     private array $states;
 
+    /**
+     * @param \App\Service\Pipeline\PettyCash\State\AgrupacionState|null $agrupacion State.
+     * @param \App\Service\Pipeline\PettyCash\State\ContabilidadState|null $contabilidad State.
+     * @param \App\Service\Pipeline\PettyCash\State\TesoreriaState|null $tesoreria State.
+     * @param \App\Service\Pipeline\PettyCash\State\AutorizacionPagoState|null $autorizacionPago State.
+     * @param \App\Service\Pipeline\PettyCash\State\VerificacionPagoState|null $verificacionPago State.
+     * @param \App\Service\Pipeline\PettyCash\State\PagadaState|null $pagada State.
+     */
     public function __construct(
         ?AgrupacionState $agrupacion = null,
         ?ContabilidadState $contabilidad = null,
@@ -45,6 +53,12 @@ final class PettyCashPipelineStateRegistry
         }
     }
 
+    /**
+     * Resuelve el enum de estado a su State concreto.
+     *
+     * @param \App\Constants\Domain\PettyCash\PipelineStatus $status Estado tipado.
+     * @return \App\Service\Pipeline\PettyCash\PettyCashPipelineState
+     */
     public function get(PipelineStatus $status): PettyCashPipelineState
     {
         return $this->states[$status->value];

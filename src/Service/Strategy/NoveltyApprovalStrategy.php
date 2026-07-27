@@ -99,7 +99,7 @@ class NoveltyApprovalStrategy implements ApprovalStrategyInterface
         $table = TableRegistry::getTableLocator()->get('EmployeeNovelties');
 
         try {
-            return $table->get($entityId, contain: ['Employees', 'NoveltyTypes', 'Approvers']);
+            return $table->get($entityId, contain: ['Employees', 'NoveltyTypes', 'ApproverUsers']);
         } catch (RecordNotFoundException $e) {
             // Finder nullable: la novedad puede no existir si fue eliminada después de emitir el token.
             $this->logger->warning('entity_not_found', [

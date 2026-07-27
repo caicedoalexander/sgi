@@ -14,6 +14,11 @@ class CostCentersController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista los centros de costos.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -22,14 +27,25 @@ class CostCentersController extends AppController
         $this->set(compact('costCenters'));
     }
 
+    /**
+     * Muestra un centro de costos.
+     *
+     * @param string|null $id Cost center id.
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $costCenter = $this->CostCenters->get($id, contain: ['Invoices']);
 
         $this->set(compact('costCenter'));
     }
 
+    /**
+     * Crea un centro de costos.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -47,8 +63,14 @@ class CostCentersController extends AppController
         $this->set(compact('costCenter'));
     }
 
+    /**
+     * Edita un centro de costos.
+     *
+     * @param string|null $id Cost center id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $costCenter = $this->CostCenters->get($id);
         $result = $this->_catalogSave(
@@ -64,8 +86,14 @@ class CostCentersController extends AppController
         $this->set(compact('costCenter'));
     }
 
+    /**
+     * Elimina un centro de costos.
+     *
+     * @param string|null $id Cost center id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $costCenter = $this->CostCenters->get($id);

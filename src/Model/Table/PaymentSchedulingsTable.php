@@ -14,6 +14,12 @@ use Cake\Validation\Validator;
 
 class PaymentSchedulingsTable extends Table
 {
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -57,6 +63,14 @@ class PaymentSchedulingsTable extends Table
         ]);
     }
 
+    /**
+     * Genera el código secuencial de la entidad antes de crearla.
+     *
+     * @param \Cake\Event\EventInterface $event The event that was fired.
+     * @param \Cake\Datasource\EntityInterface $entity The entity being saved.
+     * @param \ArrayObject $options The options passed to the save operation.
+     * @return void
+     */
     public function beforeSave(EventInterface $event, EntityInterface $entity, ArrayObject $options): void
     {
         if (!$entity->isNew() || !empty($entity->code)) {
@@ -70,6 +84,12 @@ class PaymentSchedulingsTable extends Table
         $entity->code = $generator->generatePaymentSchedulingCode((int)$entity->operation_center_id);
     }
 
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -100,6 +120,13 @@ class PaymentSchedulingsTable extends Table
         return $validator;
     }
 
+    /**
+     * Returns a rules checker object that will be used for validating
+     * application integrity.
+     *
+     * @param \Cake\ORM\RulesChecker $rules The rules object to be modified.
+     * @return \Cake\ORM\RulesChecker
+     */
     public function buildRules(RulesChecker $rules): RulesChecker
     {
         $rules->add($rules->isUnique(['code']), ['errorField' => 'code']);

@@ -1,1 +1,1 @@
-<p>Este es un correo de prueba del SGI.</p>
+<p style="margin:0;">Prueba de configuraci&oacute;n SMTP completada correctamente.</p>

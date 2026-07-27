@@ -14,6 +14,11 @@ class PositionsController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista los cargos.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -22,14 +27,25 @@ class PositionsController extends AppController
         $this->set(compact('positions'));
     }
 
+    /**
+     * Muestra un cargo.
+     *
+     * @param string|null $id Position id.
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $position = $this->Positions->get($id);
 
         $this->set(compact('position'));
     }
 
+    /**
+     * Crea un cargo.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -47,8 +63,14 @@ class PositionsController extends AppController
         $this->set(compact('position'));
     }
 
+    /**
+     * Edita un cargo.
+     *
+     * @param string|null $id Position id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $position = $this->Positions->get($id);
         $result = $this->_catalogSave(
@@ -64,8 +86,14 @@ class PositionsController extends AppController
         $this->set(compact('position'));
     }
 
+    /**
+     * Elimina un cargo.
+     *
+     * @param string|null $id Position id.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $position = $this->Positions->get($id);

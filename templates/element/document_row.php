@@ -3,7 +3,7 @@
  * Document row partial — used by Invoices, PettyCashRecords, EmployeeNovelties,
  * NoveltyLiquidationDocs for both initial server render and as the structural
  * twin of `templates/element/document_row_template.php` (consumed by
- * `webroot/js/sgi-document-uploader.js`).
+ * `webroot/js/spi-document-uploader.js`).
  *
  * Visual pattern (docs/design/documental-vacios.md §15 · Gestión documental — "Fila de documento"):
  *   icono bi-file-earmark-* + nombre/archivo + pill de estado + btn-icon (28×28).
@@ -14,7 +14,7 @@
  * keys in sync between:
  *   - templates/element/document_row.php           (this file, server render)
  *   - templates/element/document_row_template.php  (<template> for JS clone)
- *   - webroot/js/sgi-document-uploader.js          (slot consumer)
+ *   - webroot/js/spi-document-uploader.js          (slot consumer)
  * The JS reads slots: label, filename, badge, created, size, open-link,
  * delete-btn — and selectors `.doc-row`, `.doc-icon i`, `.doc-delete-btn`.
  *
@@ -56,7 +56,7 @@ $badgeLabel = $statusLabels[$doc->pipeline_status ?? ''] ?? ($doc->pipeline_stat
     <div class="grow">
         <div data-slot="label" title="<?= h($label) ?>"
              style="font-size:var(--fs-body);font-weight:600;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= h($label) ?></div>
-        <div class="row-flex gap-6 mono sgi-body-faint" style="margin-top:2px;">
+        <div class="row-flex gap-6 mono spi-body-faint" style="margin-top:2px;">
             <?php if ($doc->document_type): ?>
             <span data-slot="filename" title="<?= h($doc->file_name) ?>"
                   style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= h($doc->file_name) ?></span>
@@ -71,7 +71,7 @@ $badgeLabel = $statusLabels[$doc->pipeline_status ?? ''] ?? ($doc->pipeline_stat
         </div>
     </div>
     <div class="col-flex gap-2" style="flex-shrink:0;text-align:right;">
-        <span class="sgi-label">Cargado</span>
+        <span class="spi-label">Cargado</span>
         <span class="mono" style="font-size:var(--fs-body-sm);" data-slot="created"><?= h($doc->created?->format('d/m/Y H:i')) ?></span>
     </div>
     <?php if ($showBadge): ?>

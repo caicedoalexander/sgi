@@ -1,7 +1,7 @@
 <?php
 /**
  * Modal "Subir Soporte" del Invoices/edit. El form lo consume
- * SgiDocumentUploader desde scripts.php.
+ * SpiDocumentUploader desde scripts.php.
  *
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Invoice $invoice
@@ -28,7 +28,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" id="upload-doc-btn" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>Subir</button>
             </div>
             </form>

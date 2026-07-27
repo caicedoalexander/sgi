@@ -14,6 +14,11 @@ class ProvidersController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista los proveedores.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -22,14 +27,25 @@ class ProvidersController extends AppController
         $this->set(compact('providers'));
     }
 
+    /**
+     * Muestra un proveedor.
+     *
+     * @param string|null $id ID del proveedor.
+     * @return void
+     */
     #[Permission(action: 'view')]
-    public function view($id = null)
+    public function view(?string $id = null)
     {
         $provider = $this->Providers->get($id, contain: ['Invoices']);
 
         $this->set(compact('provider'));
     }
 
+    /**
+     * Crea un proveedor.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -47,8 +63,14 @@ class ProvidersController extends AppController
         $this->set(compact('provider'));
     }
 
+    /**
+     * Edita un proveedor.
+     *
+     * @param string|null $id ID del proveedor.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $provider = $this->Providers->get($id);
         $result = $this->_catalogSave(
@@ -64,8 +86,14 @@ class ProvidersController extends AppController
         $this->set(compact('provider'));
     }
 
+    /**
+     * Elimina un proveedor.
+     *
+     * @param string|null $id ID del proveedor.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $provider = $this->Providers->get($id);

@@ -10,9 +10,9 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
 ?>
 <?= $this->element('cdn_autonumeric') ?>
 <?= $this->element('cdn_select2') ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Editar Empleado: <?= h($employee->full_name) ?></span>
-    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'view', $employee->id], ['class' => 'btn btn-outline-dark btn-sm', 'escape' => false]) ?>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Editar Empleado: <?= h($employee->full_name) ?></span>
+    <?= $this->Html->link('<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver', ['action' => 'view', $employee->id], ['class' => 'btn btn-ghost-card btn-sm', 'escape' => false]) ?>
 </div>
 
 <?= $this->Form->create($employee, ['type' => 'file']) ?>
@@ -20,19 +20,17 @@ $this->assign('title', 'Editar Empleado: ' . $employee->full_name);
 <?= $this->element('Employees/form', ['mode' => 'edit']) ?>
 
 <!-- Imagen de Perfil -->
-<div class="card card-primary mb-4">
-    <div class="card-body">
-        <div class="col-md-3 mb-3">
-            <label class="form-label">Imagen de Perfil</label>
-            <?php if ($employee->profile_image): ?>
-                <div class="mb-2">
-                    <img src="<?= $this->Url->build('/' . $employee->profile_image) ?>"
-                         alt="Perfil" style="width:80px;height:80px;object-fit:cover;">
-                </div>
-            <?php endif; ?>
-            <input type="file" name="profile_image_file" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp">
-            <small class="text-muted">Max 2MB. JPEG, PNG, GIF o WebP</small>
-        </div>
+<div class="spi-card mb-3">
+    <div class="spi-label" style="margin-bottom:12px;">IMAGEN DE PERFIL</div>
+    <div class="col-md-3 mb-3">
+        <?php if ($employee->profile_image): ?>
+            <div class="mb-2">
+                <img src="<?= $this->Url->build('/' . $employee->profile_image) ?>"
+                     alt="Perfil" style="width:80px;height:80px;object-fit:cover;">
+            </div>
+        <?php endif; ?>
+        <input type="file" name="profile_image_file" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp">
+        <small class="text-muted">Max 2MB. JPEG, PNG, GIF o WebP</small>
     </div>
 </div>
 

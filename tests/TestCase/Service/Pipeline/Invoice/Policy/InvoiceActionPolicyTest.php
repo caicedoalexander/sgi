@@ -26,7 +26,7 @@ final class InvoiceActionPolicyTest extends TestCase
         $auth->expects($this->once())
             ->method('canOperate')
             ->with(
-                $this->callback(fn (UserContext $u) => $u->roleId === self::ROLE_TESORERIA),
+                $this->callback(fn(UserContext $u) => $u->roleId === self::ROLE_TESORERIA),
                 PipelineStepConstants::PIPELINE_INVOICES,
                 InvoiceConstants::STATUS_TESORERIA,
             )
@@ -148,5 +148,22 @@ final class InvoiceActionPolicyTest extends TestCase
         $policy = new InvoiceActionPolicy($auth);
         $this->assertTrue($policy->canAddPayment($invoice, self::ROLE_TESORERIA));
         $this->assertTrue($policy->canDeletePayment($invoice, self::ROLE_TESORERIA));
+    }
+
+    public function testCanOperateStepDelegatesToFacadeWithInvoicesPipeline(): void
+    {
+        $facade = $this->createMock(AuthorizationFacade::class);
+        $facade->expects($this->once())
+            ->method('canOperate')
+            ->with(
+                $this->callback(fn(UserContext $c) => $c->roleId === 7),
+                PipelineStepConstants::PIPELINE_INVOICES,
+                InvoiceConstants::STATUS_CONTABILIDAD,
+            )
+            ->willReturn(true);
+
+        $policy = new InvoiceActionPolicy($facade);
+
+        $this->assertTrue($policy->canOperateStep(7, InvoiceConstants::STATUS_CONTABILIDAD));
     }
 }

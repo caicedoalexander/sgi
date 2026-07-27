@@ -33,12 +33,12 @@ $initialsOf = static function (?string $name): string {
     return $ini ?: mb_strtoupper(mb_substr($name, 0, 2));
 };
 ?>
-<div class="sgi-card">
+<div class="spi-card">
     <div class="d-flex justify-content-between align-items-center" style="margin-bottom:14px;">
-        <span class="sgi-label d-inline-flex align-items-center gap-2">
+        <span class="spi-label d-inline-flex align-items-center gap-2">
             <i class="bi bi-clock-history" aria-hidden="true"></i>
             <?= h($title) ?>
-            <span class="sgi-folder-count"><?= $histCount ?></span>
+            <span class="spi-folder-count"><?= $histCount ?></span>
         </span>
     </div>
     <div class="col-flex">

@@ -57,11 +57,24 @@ class LeaveDocumentService
 
     private StructuredLogger $logger;
 
+    /**
+     * Initialize the structured logger for leave-document operations.
+     */
     public function __construct()
     {
         $this->logger = new StructuredLogger('LeaveDocument');
     }
 
+    /**
+     * Resolve the leave-document template for a novelty type, falling back to the
+     * parent type for subtypes and matching by contract type (plus temporary org
+     * for OBRA O LABOR DETERMINADA).
+     *
+     * @param int $noveltyTypeId Novelty type id (subtypes resolve via their parent).
+     * @param string|null $contractType Employee contract type to match.
+     * @param int|null $temporaryOrgId Temporary services organization id (only for obra o labor).
+     * @return object|null The matching leave document template, or null when none applies.
+     */
     public function resolveTemplate(int $noveltyTypeId, ?string $contractType, ?int $temporaryOrgId): ?object
     {
         // If this is a subtype, resolve using the parent's templates
@@ -106,6 +119,13 @@ class LeaveDocumentService
         return null;
     }
 
+    /**
+     * Validate and store an uploaded template file, returning its metadata and
+     * detected page dimensions, or an error message.
+     *
+     * @param \Laminas\Diactoros\UploadedFile $file Uploaded template file (PNG/JPEG/PDF, max 5MB).
+     * @return array Metadata (file_path, mime_type, page_width, page_height) or ['error' => string].
+     */
     public function uploadTemplate(UploadedFile $file): array
     {
         if ($file->getError() !== UPLOAD_ERR_OK) {
@@ -143,6 +163,12 @@ class LeaveDocumentService
         ];
     }
 
+    /**
+     * Delete a stored template file from the webroot when it exists.
+     *
+     * @param string $filePath Webroot-relative path to the template file.
+     * @return void
+     */
     public function deleteTemplateFile(string $filePath): void
     {
         $fullPath = WWW_ROOT . $filePath;
@@ -151,6 +177,15 @@ class LeaveDocumentService
         }
     }
 
+    /**
+     * Resolve and format a single template field value from a leave entity.
+     *
+     * @param object $leave Leave/novelty entity supplying the data.
+     * @param string $fieldKey Dot-notation field key (e.g. employee.full_name).
+     * @param string $fieldType Field type (text|date|time|boolean|image|check).
+     * @param string|null $format Optional format (date/time pattern or boolean labels).
+     * @return string Formatted value, or empty string when absent.
+     */
     public function resolveFieldValue(object $leave, string $fieldKey, string $fieldType, ?string $format): string
     {
         // Handle virtual check fields
@@ -192,6 +227,14 @@ class LeaveDocumentService
         }
     }
 
+    /**
+     * Resolve a virtual paid/unpaid checkbox field to its mark or empty string.
+     *
+     * @param object $leave Leave entity carrying the is_paid flag.
+     * @param string $fieldKey Virtual field key (paid_yes|paid_no).
+     * @param string|null $format Optional mark character (defaults to X).
+     * @return string The mark when the box applies, otherwise empty string.
+     */
     private function resolveCheckField(object $leave, string $fieldKey, ?string $format): string
     {
         $mark = $format ?: 'X';
@@ -206,6 +249,14 @@ class LeaveDocumentService
         }
     }
 
+    /**
+     * Render the leave-document PDF for a novelty by stamping template fields
+     * (text and signature images) onto the template background.
+     *
+     * @param int $noveltyId Employee novelty id to render.
+     * @param int $templateId Leave document template id to apply.
+     * @return string Raw PDF binary string.
+     */
     public function generatePdf(int $noveltyId, int $templateId): string
     {
         $noveltiesTable = TableRegistry::getTableLocator()->get('EmployeeNovelties');
@@ -256,6 +307,12 @@ class LeaveDocumentService
         return $pdf->Output('', 'S');
     }
 
+    /**
+     * Render a preview PDF of a template using sample data and signature placeholders.
+     *
+     * @param int $templateId Leave document template id to preview.
+     * @return string Raw PDF binary string.
+     */
     public function generatePreviewPdf(int $templateId): string
     {
         $templatesTable = TableRegistry::getTableLocator()->get('LeaveDocumentTemplates');
@@ -319,6 +376,13 @@ class LeaveDocumentService
         return $pdf->Output('', 'S');
     }
 
+    /**
+     * Build an FPDI document sized to the template, using its file as the page
+     * background (imported PDF page or drawn image).
+     *
+     * @param object $template Leave document template with page/background metadata.
+     * @return \setasign\Fpdi\Tcpdf\Fpdi Prepared PDF instance with one page added.
+     */
     private function createPdfWithBackground(object $template): Fpdi
     {
         $pageW = (float)$template->page_width;
@@ -396,6 +460,14 @@ class LeaveDocumentService
         return ['width' => $defaultW, 'height' => $defaultH];
     }
 
+    /**
+     * Traverse a dot-notation key on an entity, resolving computed properties
+     * (position/operation-center names, identification number).
+     *
+     * @param object $entity Root entity to read from.
+     * @param string $key Dot-notation property path.
+     * @return mixed The resolved value, or null when any segment is missing.
+     */
     private function getNestedValue(object $entity, string $key): mixed
     {
         $parts = explode('.', $key);

@@ -13,9 +13,15 @@ namespace App\View\Presentation;
  */
 final readonly class EmployeeNoveltyRowView
 {
+    /**
+     * @param bool $isRejected La novedad está rechazada.
+     * @param bool $isPaid La novedad está pagada.
+     * @param string $statusLabel Etiqueta ES del estado.
+     * @param string $statusBadgeClass Clase de badge del estado.
+     */
     public function __construct(
-        public bool   $isRejected,
-        public bool   $isPaid,
+        public bool $isRejected,
+        public bool $isPaid,
         public string $statusLabel,
         public string $statusBadgeClass,
     ) {

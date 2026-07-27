@@ -2,10 +2,10 @@
 /**
  * Un `.chat-item` del timeline de observaciones (drawer compartido).
  *
- * Gemelo estructural del <template id="sgi-obs-chat-item"> en
+ * Gemelo estructural del <template id="spi-obs-chat-item"> en
  * observations/drawer.php — los `data-slot` (user_name, message, created) y las
  * clases deben mantenerse sincronizados con ese template y con el contrato de
- * webroot/js/sgi-observation-chat.js.
+ * webroot/js/spi-observation-chat.js.
  *
  * @var \App\View\AppView $this
  * @var \Cake\Datasource\EntityInterface $observation Entidad con id, message,

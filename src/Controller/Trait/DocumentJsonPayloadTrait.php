@@ -7,7 +7,7 @@ use Cake\Datasource\EntityInterface;
 
 /**
  * Builds the uniform JSON payload returned by AJAX document uploaders
- * (see webroot/js/sgi-document-uploader.js for the consumer contract).
+ * (see webroot/js/spi-document-uploader.js for the consumer contract).
  *
  * Used by Invoices, PettyCashRecords, NoveltyDocuments and NoveltyLiquidationDocs
  * controllers — keeps the JSON shape consistent across modules.

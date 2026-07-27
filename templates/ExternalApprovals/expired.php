@@ -3,20 +3,16 @@ $unauthorized = $unauthorized ?? false;
 $this->assign('title', $unauthorized ? 'Sin Autorización' : 'Enlace Expirado');
 ?>
 
-<div class="card card-primary">
-    <div class="card-body text-center p-5">
-        <?php if ($unauthorized): ?>
-            <i class="bi bi-shield-x" style="font-size:3rem;color:var(--danger-color);" aria-hidden="true"></i>
-            <h4 class="mt-3" style="font-weight:700;color:var(--text-default);">Sin autorización</h4>
-            <p style="color:var(--text-faint);font-size:.9rem;">
-                No tiene autorización para aprobar esta factura. Solo el aprobador asignado puede hacerlo.
-            </p>
-        <?php else: ?>
-            <i class="bi bi-clock-history" style="font-size:3rem;color:var(--danger-color);" aria-hidden="true"></i>
-            <h4 class="mt-3" style="font-weight:700;color:var(--text-default);">Enlace no válido</h4>
-            <p style="color:var(--text-faint);font-size:.9rem;">
-                Este enlace de aprobación ha expirado, ya fue utilizado o no es válido.
-            </p>
-        <?php endif; ?>
-    </div>
+<?php if ($unauthorized): ?>
+<div class="empty-state">
+    <div class="es-icon es-icon-danger"><i class="bi bi-shield-x" aria-hidden="true"></i></div>
+    <div class="es-title">Sin autorización</div>
+    <div class="es-msg">No tiene autorización para aprobar esta factura. Solo el aprobador asignado puede hacerlo.</div>
 </div>
+<?php else: ?>
+<div class="empty-state">
+    <div class="es-icon es-icon-warning"><i class="bi bi-clock-history" aria-hidden="true"></i></div>
+    <div class="es-title">Enlace no válido</div>
+    <div class="es-msg">Este enlace de aprobación ha expirado, ya fue utilizado o no es válido.</div>
+</div>
+<?php endif; ?>

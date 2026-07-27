@@ -14,6 +14,11 @@ class SystemSettingsController extends AppController
 
     private NotificationService $notificationService;
 
+    /**
+     * Configura componentes y servicios del controlador.
+     *
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
@@ -22,6 +27,11 @@ class SystemSettingsController extends AppController
         $this->notificationService = $container->get(NotificationService::class);
     }
 
+    /**
+     * Muestra y actualiza la configuración del sistema.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -111,6 +121,11 @@ class SystemSettingsController extends AppController
         return true;
     }
 
+    /**
+     * Regenera la clave de API del sistema.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
     public function regenerateApiKey()
     {
@@ -124,6 +139,11 @@ class SystemSettingsController extends AppController
         return $this->redirect(['action' => 'index']);
     }
 
+    /**
+     * Envía un correo de prueba SMTP.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
     public function testSmtp()
     {

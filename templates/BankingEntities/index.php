@@ -9,8 +9,8 @@ $canEdit   = !empty($userPermissions['banking_entities']['can_edit']);
 $canDelete = !empty($userPermissions['banking_entities']['can_delete']);
 $gridCols  = '80px 120px 1fr 130px 200px 96px';
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Entidades Bancarias</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Entidades Bancarias</span>
     <div class="d-flex gap-2">
         <?php if (!empty($userPermissions['banking_entities']['can_create'])): ?>
         <?= $this->Html->link(
@@ -22,7 +22,7 @@ $gridCols  = '80px 120px 1fr 130px 200px 96px';
     </div>
 </div>
 
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div class="row-fact head" style="grid-template-columns:<?= $gridCols ?>;" role="row">
         <span><?= $this->Paginator->sort('id', '#') ?></span>
         <span><?= $this->Paginator->sort('code', 'Código') ?></span>

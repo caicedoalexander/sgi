@@ -15,6 +15,10 @@ use App\Model\Entity\Invoice;
  */
 final readonly class InvoicePaidEvent
 {
+    /**
+     * @param \App\Model\Entity\Invoice $invoice Factura que alcanzó el estado pagada.
+     * @param int $actorUserId ID del usuario que disparó la transición.
+     */
     public function __construct(
         public Invoice $invoice,
         public int $actorUserId,

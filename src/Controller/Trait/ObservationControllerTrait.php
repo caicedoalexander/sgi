@@ -13,7 +13,7 @@ use Cake\Http\Response;
  * Consumido por los 6 controllers con chat de observaciones
  * (Invoices, PaymentSchedulings, EmployeeNovelties — vía constants only —,
  * Employees, PettyCashRecords, Refunds). El contrato JSON debe mantenerse
- * sincronizado con `webroot/js/sgi-observation-chat.js`.
+ * sincronizado con `webroot/js/spi-observation-chat.js`.
  */
 trait ObservationControllerTrait
 {
@@ -25,7 +25,7 @@ trait ObservationControllerTrait
      * @param string $fkField Nombre de la FK al record padre (ej. 'invoice_id').
      * @param mixed $recordId Identificador del record padre.
      * @param object $user Usuario actual (debe exponer `id` y `full_name`).
-     * @param callable():Response $redirectFallback Closure que produce el redirect HTML.
+     * @param callable():\Cake\Http\Response $redirectFallback Closure que produce el redirect HTML.
      * @return \Cake\Http\Response
      */
     protected function _handleAddObservation(

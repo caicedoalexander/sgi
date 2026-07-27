@@ -8,10 +8,10 @@ $this->assign('title', 'Iniciar Sesión');
 <?= $this->Form->create(null, ['url' => ['action' => 'login', '?' => ['redirect' => $this->request->getQuery('redirect')]]]) ?>
 
 <!-- Usuario -->
-<div class="sgi-login-fieldset">
-    <label class="sgi-label" for="username">Usuario</label>
-    <div class="sgi-login-input">
-        <i class="bi bi-person sgi-login-input-icon" aria-hidden="true"></i>
+<div class="spi-login-fieldset">
+    <label class="spi-label" for="username">Usuario</label>
+    <div class="spi-login-input">
+        <i class="bi bi-person spi-login-input-icon" aria-hidden="true"></i>
         <?= $this->Form->control('username', [
             'label'       => false,
             'class'       => 'form-control',
@@ -25,13 +25,13 @@ $this->assign('title', 'Iniciar Sesión');
 </div>
 
 <!-- Contraseña -->
-<div class="sgi-login-fieldset">
-    <div class="sgi-login-field-head">
-        <label class="sgi-label" for="password">Contraseña</label>
-        <a href="#" class="sgi-login-forgot">¿Olvidaste?</a>
+<div class="spi-login-fieldset">
+    <div class="spi-login-field-head">
+        <label class="spi-label" for="password">Contraseña</label>
+        <a href="#" class="spi-login-forgot">¿Olvidaste?</a>
     </div>
-    <div class="sgi-login-input">
-        <i class="bi bi-shield-lock sgi-login-input-icon" aria-hidden="true"></i>
+    <div class="spi-login-input">
+        <i class="bi bi-shield-lock spi-login-input-icon" aria-hidden="true"></i>
         <?= $this->Form->control('password', [
             'label'       => false,
             'type'        => 'password',
@@ -41,14 +41,14 @@ $this->assign('title', 'Iniciar Sesión');
             'autocomplete' => 'current-password',
             'templates'   => ['inputContainer' => '{{content}}'],
         ]) ?>
-        <button type="button" id="sgi-login-toggle" class="sgi-login-toggle" aria-label="Mostrar contraseña">
+        <button type="button" id="spi-login-toggle" class="spi-login-toggle" aria-label="Mostrar contraseña">
             <i class="bi bi-eye" aria-hidden="true"></i>
         </button>
     </div>
 </div>
 
 <!-- Mantener sesión -->
-<label class="form-check sgi-login-remember">
+<label class="form-check spi-login-remember">
     <input type="checkbox" class="form-check-input" name="remember" checked>
     <span class="form-check-label">Mantener sesión iniciada</span>
 </label>

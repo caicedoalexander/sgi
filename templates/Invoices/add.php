@@ -2,6 +2,7 @@
 /**
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\Invoice $invoice
+ * @var array<string, array<string, bool>> $userPermissions
  */
 use App\Constants\InvoiceConstants;
 
@@ -13,24 +14,42 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
 <?= $this->element('cdn_select2') ?>
 
 <!-- Encabezado de página -->
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Nueva Factura</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Nueva Factura</span>
     <?= $this->Html->link(
         '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
-        ['class' => 'btn btn-ghost-card', 'escape' => false]
+        ['class' => 'btn btn-ghost-card', 'escape' => false],
     ) ?>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <div class="d-flex align-items-center gap-3" style="margin-bottom:20px;">
-        <div class="sgi-icon-chip" style="font-size:.95rem;">
+        <div class="spi-icon-chip" style="font-size:.95rem;">
             <i class="bi bi-receipt" aria-hidden="true"></i>
         </div>
         <span style="font-size:var(--fs-title-card);font-weight:600;color:var(--text-default);">Información de la Factura</span>
     </div>
 
     <?= $this->Form->create($invoice) ?>
+
+    <?php if (!empty($advance)) : ?>
+        <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-link-45deg" aria-hidden="true"></i>
+            <span>Comprobante para el
+                <?php $advanceLabel = 'Anticipo #' . ($advance->invoice_number ?: $advance->id); ?>
+                <?php if (!empty($userPermissions['advances']['can_edit'])): ?>
+                <?= $this->Html->link(
+                    $advanceLabel,
+                    ['controller' => 'Advances', 'action' => 'legalization', $advance->id],
+                ) ?>.
+                <?php else: ?>
+                <strong><?= h($advanceLabel) ?></strong>.
+                <?php endif; ?>
+            </span>
+        </div>
+        <?= $this->Form->control('advance_id', ['type' => 'hidden']) ?>
+    <?php endif; ?>
 
     <!-- Sección: Documento -->
     <div class="mb-4">
@@ -51,7 +70,9 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
                 <?= $this->Form->control('document_type', [
                     'class'   => 'form-select',
                     'label'   => ['text' => 'Tipo de Documento', 'class' => 'input-label'],
-                    'options' => $documentTypes,
+                    'options' => !empty($advance)
+                        ? array_intersect_key($documentTypes, array_flip(InvoiceConstants::ADVANCE_LINKABLE_DOCTYPES))
+                        : $documentTypes,
                     'empty'   => '-- Seleccione --',
                 ]) ?>
             </div>
@@ -143,7 +164,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
             </div>
             <div class="col-md-3">
                 <?= $this->Form->control('expense_type_id', [
-                    'class'   => 'form-select',
+                    'class'   => 'form-select select2-enable',
                     'label'   => ['text' => 'Tipo de Gasto', 'class' => 'input-label'],
                     'options' => $expenseTypes,
                     'empty'   => '-- Seleccione --',
@@ -191,7 +212,7 @@ $documentTypes = array_combine(InvoiceConstants::DOCUMENT_TYPES, InvoiceConstant
         <?= $this->Html->link(
             'Cancelar',
             ['action' => 'index'],
-            ['class' => 'btn btn-default']
+            ['class' => 'btn btn-default'],
         ) ?>
     </div>
 

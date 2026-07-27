@@ -15,17 +15,29 @@ final readonly class EmployeeNoveltyEditViewModel implements EditViewModelInterf
 {
     // ── Propiedades derivadas (calculadas en el constructor) ────────────
     public string $pageTitle;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $statusLabels;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $scheduleLabels;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $statusBadgeMap;
-    /** @var array{0:string,1:string} */
+    /**
+     * @var array{0:string,1:string}
+     */
     public array $currentStatusBadge;
-    /** @var array<string,string> Badge colors del módulo, expuestos al template. */
+    /**
+     * @var array<string,string> Badge colors del módulo, expuestos al template.
+     */
     public array $badgeColors;
-    /** @var array<string> Secciones del formulario a renderizar. */
+    /**
+     * @var array<string> Secciones del formulario a renderizar.
+     */
     public array $sections;
     public bool $isRejected;
     public string $currentStatus;

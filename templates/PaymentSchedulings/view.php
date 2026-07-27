@@ -14,16 +14,16 @@ $total      = $viewModel->total;
 ?>
 
 <!-- Page header -->
-<div class="sgi-page-header d-flex justify-content-between align-items-start">
+<div class="spi-page-header d-flex justify-content-between align-items-start">
     <div style="min-width:0;">
-        <div class="sgi-breadcrumb">
+        <div class="spi-breadcrumb">
             <?= $this->Html->link('Programación de Pagos', ['action' => 'index']) ?>
             <i class="bi bi-chevron-right" aria-hidden="true" style="font-size:var(--fs-meta);"></i>
             <span class="current"><?= h($record->code) ?></span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <span class="sgi-page-title">Ver Programación</span>
-            <span class="sgi-edit-id-chip"><?= h($record->code) ?></span>
+            <span class="spi-page-title">Ver Programación</span>
+            <span class="spi-edit-id-chip"><?= h($record->code) ?></span>
             <span class="pill <?= $psStatusPill ?>"><?= h($psStatusLabel) ?></span>
         </div>
     </div>
@@ -43,10 +43,10 @@ $total      = $viewModel->total;
     </div>
 </div>
 
-<div class="sgi-invoice-view-grid view-anim">
+<div class="spi-invoice-view-grid view-anim">
 
     <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <aside class="spi-invoice-view-left">
         <?php
         echo $this->element('pipeline_sidebar', [
             'icon'           => 'calendar2-check',
@@ -71,13 +71,13 @@ $total      = $viewModel->total;
     </aside>
 
     <!-- ═══════════════════ CONTENIDO ═══════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <main class="spi-invoice-view-right">
 
         <!-- Información general -->
-        <div class="sgi-card">
+        <div class="spi-card">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
                 <div>
-                    <div class="sgi-label" style="margin-bottom:6px;">Información</div>
+                    <div class="spi-label" style="margin-bottom:6px;">Información</div>
                     <div class="field-row">
                         <span class="k">Código</span>
                         <span class="v mono"><?= h($record->code) ?></span>
@@ -94,7 +94,7 @@ $total      = $viewModel->total;
                     </div>
                 </div>
                 <div>
-                    <div class="sgi-label" style="margin-bottom:6px;">Detalles</div>
+                    <div class="spi-label" style="margin-bottom:6px;">Detalles</div>
                     <div class="field-row">
                         <span class="k">Creado por</span>
                         <span class="v"><?= h($record->created_by_user->full_name ?? '—') ?></span>
@@ -114,11 +114,11 @@ $total      = $viewModel->total;
         <!-- Facturas Vinculadas -->
         <?php if ($itemCount > 0): ?>
         <div class="card" style="padding:18px 20px;">
-            <div class="sgi-section-head" style="margin-bottom:12px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+            <div class="spi-section-head" style="margin-bottom:12px;">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-receipt" aria-hidden="true"></i>
                     Facturas Vinculadas
-                    <span class="sgi-folder-count"><?= $itemCount ?></span>
+                    <span class="spi-folder-count"><?= $itemCount ?></span>
                 </span>
             </div>
             <div class="table-responsive">

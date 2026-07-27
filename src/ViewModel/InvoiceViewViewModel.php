@@ -19,32 +19,38 @@ use App\View\Presentation\InvoicePresentation;
 final readonly class InvoiceViewViewModel implements ViewViewModelInterface
 {
     public string $pageTitle;
-    /** @var array{0:string,1:string} */
+    /**
+     * @var array{0:string,1:string}
+     */
     public array $currentStatusBadge;
     public string $currentStatus;
 
     public string $statusLabel;
     public string $statusPill;
-    public bool   $isTerminal;
+    public bool $isTerminal;
 
-    /** Pill/label del hero: resuelve la variante "Aprobada" cuando aplica. */
+    /**
+     * Pill/label del hero: resuelve la variante "Aprobada" cuando aplica.
+     */
     public string $heroStatusPill;
     public string $heroStatusLabel;
     public ?string $heroExtraPill;
 
-    public float  $amount;
+    public float $amount;
     public ?string $amountExtraHtml;
 
     public string $providerName;
-    public bool   $isReciboDeCaja;
+    public bool $isReciboDeCaja;
 
-    /** @var list<string> */
-    public array  $approvedNames;
+    /**
+     * @var list<string>
+     */
+    public array $approvedNames;
 
-    public int    $pagosCount;
-    public float  $pagosTotal;
-    public int    $totalDocs;
-    public bool   $isLinkedLegalization;
+    public int $pagosCount;
+    public float $pagosTotal;
+    public int $totalDocs;
+    public bool $isLinkedLegalization;
 
     /**
      * @param array<string,\App\Model\Entity\InvoiceDocument[]> $documentsByStatus
@@ -84,7 +90,7 @@ final readonly class InvoiceViewViewModel implements ViewViewModelInterface
         $approvedNames = [];
         foreach ($invoice->invoice_approvals ?? [] as $a) {
             if ($a->status === InvoiceConstants::APPROVER_STATUS_APPROVED && $a->hasValue('user')) {
-                $approvedNames[] = $a->user->full_name ?? $a->user->username ?? ('Usuario #' . $a->user_id);
+                $approvedNames[] = $a->user->full_name ?? $a->user->username ?? 'Usuario #' . $a->user_id;
             }
         }
         $this->approvedNames = $approvedNames;
@@ -105,19 +111,21 @@ final readonly class InvoiceViewViewModel implements ViewViewModelInterface
         $amountExtraHtml = null;
         if ($status === InvoiceConstants::STATUS_PAGADA && $invoice->full_payment_date) {
             $amountExtraHtml = '<div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">'
-                . '<i class="bi bi-check-circle sgi-fg-primary" aria-hidden="true" style="font-size:11px;"></i>'
+                . '<i class="bi bi-check-circle spi-fg-primary" aria-hidden="true" style="font-size:11px;"></i>'
                 . '<span>Pagado · <span class="mono">' . h($invoice->full_payment_date->format('d/m/Y')) . '</span></span></div>';
         } elseif ($invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL && $this->pagosCount > 0) {
             $amountExtraHtml = '<div class="d-flex align-items-center gap-1" style="font-size:11px;color:var(--text-muted);margin-top:6px;">'
-                . '<i class="bi bi-clock sgi-fg-warning" aria-hidden="true" style="font-size:11px;"></i>'
+                . '<i class="bi bi-clock spi-fg-warning" aria-hidden="true" style="font-size:11px;"></i>'
                 . '<span>Pago parcial · <span class="mono">$ ' . number_format($pagosTotal, 0, ',', '.') . '</span></span></div>';
         }
         $this->amountExtraHtml = $amountExtraHtml;
 
         // Pill extra del hero (Pago Parcial).
         $heroExtraPill = null;
-        if ($status === InvoiceConstants::STATUS_TESORERIA
-            && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL) {
+        if (
+            $status === InvoiceConstants::STATUS_TESORERIA
+            && $invoice->payment_status === InvoiceConstants::PAYMENT_PARTIAL
+        ) {
             $heroExtraPill = '<span class="pill pill-warning-soft">Pago Parcial</span>';
         }
         $this->heroExtraPill = $heroExtraPill;
@@ -132,7 +140,7 @@ final readonly class InvoiceViewViewModel implements ViewViewModelInterface
         $this->heroStatusPill  = $heroStatusPill;
         $this->heroStatusLabel = $heroStatusLabel;
 
-        $this->isLinkedLegalization = ($invoice->document_type ?? null) === InvoiceConstants::DOCTYPE_LEGALIZACION
-            && !empty($invoice->advance_id);
+        $this->isLinkedLegalization = !empty($invoice->advance_id)
+            && $invoice->usesLegalizationView();
     }
 }

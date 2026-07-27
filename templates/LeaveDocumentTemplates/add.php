@@ -5,8 +5,8 @@
  */
 $this->assign('title', 'Nueva Plantilla de Documento');
 ?>
-<div class="sgi-page-header d-flex justify-content-between align-items-center">
-    <span class="sgi-page-title">Nueva Plantilla de Documento</span>
+<div class="spi-page-header d-flex justify-content-between align-items-center">
+    <span class="spi-page-title">Nueva Plantilla de Documento</span>
     <?= $this->Html->link(
         '<i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver',
         ['action' => 'index'],
@@ -14,7 +14,7 @@ $this->assign('title', 'Nueva Plantilla de Documento');
     ) ?>
 </div>
 
-<div class="sgi-card">
+<div class="spi-card">
     <?= $this->Form->create($template, ['type' => 'file']) ?>
 
     <div class="row g-3">

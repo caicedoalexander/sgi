@@ -21,21 +21,42 @@ final class ContabilidadState implements NoveltyPipelineState
         $this->guard = $guard ?? new NoveltyLiquidationGuard();
     }
 
+    /**
+     * Estado canónico `contabilidad` de este State.
+     *
+     * @return \App\Constants\Domain\Novelty\PipelineStatus
+     */
     public function getStatus(): PipelineStatus
     {
         return PipelineStatus::CONTABILIDAD;
     }
 
+    /**
+     * Estado siguiente base del pipeline (sin saltos condicionales); delega en el enum. Null si es terminal.
+     *
+     * @return \App\Constants\Domain\Novelty\PipelineStatus|null
+     */
     public function getNextStatus(): ?PipelineStatus
     {
         return $this->getStatus()->next();
     }
 
+    /**
+     * Estado anterior del pipeline; delega en el enum. Null si es el primero.
+     *
+     * @return \App\Constants\Domain\Novelty\PipelineStatus|null
+     */
     public function getPreviousStatus(): ?PipelineStatus
     {
         return $this->getStatus()->previous();
     }
 
+    /**
+     * Para avanzar en Contabilidad la novedad individual debe estar asignada a un documento de liquidación.
+     *
+     * @param \App\Model\Entity\EmployeeNovelty $novelty Novedad individual.
+     * @return array<string>
+     */
     public function validateAdvanceIndividual(EmployeeNovelty $novelty): array
     {
         if (empty($novelty->liquidation_doc_id)) {
@@ -45,6 +66,12 @@ final class ContabilidadState implements NoveltyPipelineState
         return [];
     }
 
+    /**
+     * En Contabilidad el documento de liquidación debe estar subido antes de avanzar (verificado por el guard).
+     *
+     * @param \App\Model\Entity\NoveltyLiquidationDoc $doc Documento de liquidación grupal.
+     * @return array<string>
+     */
     public function validateAdvanceGroup(NoveltyLiquidationDoc $doc): array
     {
         if (!$this->guard->hasLiquidationDocument((int)$doc->id)) {

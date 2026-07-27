@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace App\ViewModel;
 
 use App\Constants\InvoiceConstants;
+use App\Model\Entity\AdvanceLegalization;
 use App\Model\Entity\Invoice;
 use App\View\Presentation\InvoicePresentation;
+use App\ViewModel\Support\LegalizationSummary;
 
 /**
  * Datos inmutables de presentación para AdvancesController::view().
@@ -17,7 +19,9 @@ use App\View\Presentation\InvoicePresentation;
 final readonly class AdvanceViewViewModel implements ViewViewModelInterface
 {
     public string $pageTitle;
-    /** @var array{0:string,1:string} */
+    /**
+     * @var array{0:string,1:string}
+     */
     public array $currentStatusBadge;
     public string $currentStatus;
 
@@ -26,20 +30,41 @@ final readonly class AdvanceViewViewModel implements ViewViewModelInterface
     public string $beneficiary;
     public string $beneficiaryType;
     public float $amount;
-    /** @var array<int,array{icon:string,html:string}> */
+    /**
+     * @var array<int,array{icon:string,html:string}>
+     */
     public array $registryLines;
-    /** @var array<string,string> */
+    /**
+     * @var array<string,string>
+     */
     public array $pipelineLabels;
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     public array $pipelineSteps;
+    public bool $hasLegalization;
+    public ?LegalizationSummary $legalizationSummary;
+    /**
+     * @var list<array{doc:mixed,canDelete:bool,showBadge:bool,badgeColors:array<string,string>,statusLabels:array<string,string>}>
+     */
+    public array $documentRows;
+    public int $totalDocs;
 
-    public function __construct(public Invoice $record)
-    {
+    /**
+     * @param \App\Model\Entity\Invoice $record Anticipo (factura tipo Anticipo).
+     * @param \App\Model\Entity\AdvanceLegalization|null $legalization Legalización asociada si existe.
+     * @param iterable $linkedInvoices Facturas de legalización vinculadas al anticipo.
+     */
+    public function __construct(
+        public Invoice $record,
+        public ?AdvanceLegalization $legalization = null,
+        public iterable $linkedInvoices = [],
+    ) {
         $status = $record->pipeline_status;
         $labels = InvoiceConstants::STATUS_LABELS;
 
         $this->currentStatus = $status;
-        $this->idLabel       = $record->invoice_number ?? ('#' . $record->id);
+        $this->idLabel       = $record->invoice_number ?? '#' . $record->id;
         $this->pageTitle     = $this->idLabel;
         $this->currentStatusBadge = [
             $labels[$status] ?? $status,
@@ -63,5 +88,23 @@ final readonly class AdvanceViewViewModel implements ViewViewModelInterface
             $registry[] = ['icon' => 'bi-pencil-square', 'html' => 'Modificado · <span class="mono">' . $record->modified->format('d/m/Y') . '</span>'];
         }
         $this->registryLines = $registry;
+
+        $this->hasLegalization = $this->legalization !== null;
+        $this->legalizationSummary = $this->legalization !== null
+            ? new LegalizationSummary($this->legalization, (float)$record->amount, $this->linkedInvoices)
+            : null;
+
+        $docRows = [];
+        foreach ($record->invoice_documents ?? [] as $doc) {
+            $docRows[] = [
+                'doc' => $doc,
+                'canDelete' => false,
+                'showBadge' => true,
+                'badgeColors' => InvoicePresentation::STATUS_BADGES,
+                'statusLabels' => InvoiceConstants::STATUS_LABELS,
+            ];
+        }
+        $this->documentRows = $docRows;
+        $this->totalDocs = count($docRows);
     }
 }

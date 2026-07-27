@@ -9,10 +9,10 @@ use App\Constants\NoveltyConstants;
 use App\Constants\PipelineStepConstants;
 use App\Controller\Trait\ObservationControllerTrait;
 use App\Model\Entity\EmployeeNovelty;
-use App\Service\ApprovalTokenService;
+use App\Service\Approval\ApprovalUrlBuilder;
 use App\Service\EmailLogService;
 use App\Service\LeaveDocumentService;
-use App\Service\NotificationService;
+use App\Service\NoveltyApprovalService;
 use App\Service\NoveltyDocumentService;
 use App\Service\NoveltyHistoryService;
 use App\Service\NoveltyObservationService;
@@ -26,7 +26,6 @@ use Cake\I18n\Date;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\TableRegistry;
 use Cake\Routing\Router;
-use Exception;
 
 class EmployeeNoveltiesController extends AppController
 {
@@ -44,10 +43,13 @@ class EmployeeNoveltiesController extends AppController
 
     private LeaveDocumentService $leaveDocumentService;
 
-    private ApprovalTokenService $tokenService;
+    private NoveltyApprovalService $approvalService;
 
-    private NotificationService $notificationService;
-
+    /**
+     * Configura componentes y servicios del controlador.
+     *
+     * @return void
+     */
     public function initialize(): void
     {
         parent::initialize();
@@ -57,8 +59,7 @@ class EmployeeNoveltiesController extends AppController
         $this->observationService = $container->get(NoveltyObservationService::class);
         $this->historyService = $container->get(NoveltyHistoryService::class);
         $this->leaveDocumentService = $container->get(LeaveDocumentService::class);
-        $this->tokenService = $container->get(ApprovalTokenService::class);
-        $this->notificationService = $container->get(NotificationService::class);
+        $this->approvalService = $container->get(NoveltyApprovalService::class);
     }
 
     /**
@@ -148,10 +149,8 @@ class EmployeeNoveltiesController extends AppController
      */
     private function _employeeFilterList(): array
     {
-        return $this->EmployeeNovelties->Employees->find('list', [
-            'keyField' => 'id',
-            'valueField' => 'full_name',
-        ])->orderBy(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
+        return $this->EmployeeNovelties->Employees->find('list', keyField: 'id', valueField: 'full_name')
+            ->orderBy(['first_name' => 'ASC', 'last_name1' => 'ASC'])->toArray();
     }
 
     /**
@@ -366,10 +365,7 @@ class EmployeeNoveltiesController extends AppController
     #[Permission(action: 'view')]
     public function active()
     {
-        $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list', [
-            'keyField' => 'id',
-            'valueField' => 'name',
-        ])->toArray();
+        $noveltyTypes = $this->EmployeeNovelties->NoveltyTypes->find('list', keyField: 'id', valueField: 'name')->toArray();
 
         $employees = $this->_employeeFilterList();
 
@@ -656,10 +652,8 @@ class EmployeeNoveltiesController extends AppController
             && !$novelty->isGrouped()
         ) {
             $liquidationDocsTable = TableRegistry::getTableLocator()->get('NoveltyLiquidationDocs');
-            $liquidationDocs = $liquidationDocsTable->find('list', [
-                'keyField' => 'id',
-                'valueField' => 'liquidation_number',
-            ])->where(['pipeline_status' => NoveltyConstants::STATUS_CONTABILIDAD])->toArray();
+            $liquidationDocs = $liquidationDocsTable->find('list', keyField: 'id', valueField: 'liquidation_number')
+                ->where(['pipeline_status' => NoveltyConstants::STATUS_CONTABILIDAD])->toArray();
         }
 
         $emailLogService = $this->getContainer()->get(EmailLogService::class);
@@ -835,32 +829,15 @@ class EmployeeNoveltiesController extends AppController
                     }
                 }
 
-                // Generate approval token if type requires boss approval
+                // Solicitar aprobación del jefe si el tipo lo requiere
                 if ($noveltyType && $noveltyType->requires_boss_approval && !empty($novelty->approver_id)) {
-                    $token = $this->tokenService->generateToken('employee_novelties', $novelty->id, $user->id);
-                    $baseUrl = $this->request->scheme() . '://' . $this->request->host();
-                    $approvalUrl = $baseUrl . '/approve/' . $token;
-
-                    // Reload novelty with associations for email
-                    $noveltyForEmail = $this->EmployeeNovelties->get($novelty->id, contain: ['Employees', 'NoveltyTypes']);
-
-                    // Send notification email to approver
-                    $approversTable = TableRegistry::getTableLocator()->get('Users');
-                    $approver = $approversTable->get($novelty->approver_id);
-                    if ($approver && !empty($approver->email)) {
-                        try {
-                            $this->notificationService->sendNoveltyApprovalEmail(
-                                $approver,
-                                $noveltyForEmail,
-                                $approvalUrl,
-                                (int)$user->id,
-                            );
-                        } catch (Exception $e) {
-                            $this->Flash->warning(__(
-                                'Novedad creada, pero el correo de aprobación falló: {0}. Puede reintentar desde la página de la novedad.',
-                                $e->getMessage(),
-                            ));
-                        }
+                    $baseUrl = ApprovalUrlBuilder::baseFromRequest($this->request);
+                    $result = $this->approvalService->sendApprovalLink($novelty, (int)$user->id, $baseUrl);
+                    if (!$result->success) {
+                        $this->Flash->warning(__(
+                            'Novedad creada, pero el correo de aprobación falló: {0}. Puede reintentar desde la página de la novedad.',
+                            $result->firstError(),
+                        ));
                     }
                 }
 
@@ -871,10 +848,7 @@ class EmployeeNoveltiesController extends AppController
             $this->Flash->error(__('No se pudo registrar la novedad. Intente de nuevo.'));
         }
 
-        $employees = $this->EmployeeNovelties->Employees->find('list', [
-            'keyField' => 'id',
-            'valueField' => 'full_name',
-        ])->all();
+        $employees = $this->EmployeeNovelties->Employees->find('list', keyField: 'id', valueField: 'full_name')->all();
 
         $noveltyTypes = $this->_getNoveltyTypesGrouped();
 
@@ -936,15 +910,20 @@ class EmployeeNoveltiesController extends AppController
                 $this->Flash->success(
                     'Novedad avanzada a: ' . (NoveltyConstants::STATUS_LABELS[$nextStatus] ?? $nextStatus),
                 );
-            } else {
-                $this->Flash->success('La novedad ha sido actualizada.');
-                foreach ($result->data['advanceErrors'] ?? [] as $err) {
-                    $this->Flash->warning($err);
-                }
+
+                // Avance de estado → index (alineado con advanceGroup grupal).
+                return $this->redirect(['action' => 'index']);
             }
-        } else {
-            $this->Flash->error($result->firstError() ?? 'No se pudo avanzar la novedad.');
+
+            $this->Flash->success('La novedad ha sido actualizada.');
+            foreach ($result->data['advanceErrors'] ?? [] as $err) {
+                $this->Flash->warning($err);
+            }
+
+            return $this->redirect(['action' => 'edit', $id]);
         }
+
+        $this->Flash->error($result->firstError() ?? 'No se pudo avanzar la novedad.');
 
         return $this->redirect(['action' => 'edit', $id]);
     }
@@ -1034,31 +1013,16 @@ class EmployeeNoveltiesController extends AppController
             );
         }
 
-        // Generate new token
-        $token = $this->tokenService->generateToken('employee_novelties', $novelty->id, $user->id);
-        $baseUrl = $this->request->scheme() . '://' . $this->request->host();
-        $approvalUrl = $baseUrl . '/approve/' . $token;
-
-        // Send notification email
-        $approversTable = TableRegistry::getTableLocator()->get('Users');
-        $approver = $approversTable->get($novelty->approver_id);
-        if ($approver && !empty($approver->email)) {
-            try {
-                $this->notificationService->sendNoveltyApprovalEmail(
-                    $approver,
-                    $novelty,
-                    $approvalUrl,
-                    (int)$user->id,
-                );
-                $this->Flash->success('Enlace de aprobación reenviado al aprobador (válido por 48h).');
-            } catch (Exception $e) {
-                $this->Flash->error(__(
-                    'No se pudo reenviar el correo de aprobación: {0}. Puede reintentar desde la página de la novedad.',
-                    $e->getMessage(),
-                ));
-            }
+        // Reenviar enlace de aprobación
+        $baseUrl = ApprovalUrlBuilder::baseFromRequest($this->request);
+        $result = $this->approvalService->sendApprovalLink($novelty, (int)$user->id, $baseUrl);
+        if ($result->success) {
+            $this->Flash->success('Enlace de aprobación reenviado al aprobador (válido por 48h).');
         } else {
-            $this->Flash->warning('El aprobador asignado no tiene correo electrónico configurado.');
+            $this->Flash->error(__(
+                'No se pudo reenviar el correo de aprobación: {0}. Puede reintentar desde la página de la novedad.',
+                $result->firstError(),
+            ));
         }
 
         return $this->redirect(['action' => 'edit', $id]);

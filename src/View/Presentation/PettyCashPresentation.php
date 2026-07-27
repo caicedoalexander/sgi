@@ -12,12 +12,14 @@ use App\Model\Entity\PettyCashRecord;
  */
 final class PettyCashPresentation
 {
+    // Pills unificados vía PipelineColorMap (un color por tipo de estado en
+    // todos los módulos). Test guard: PipelineColorConsistencyTest.
     public const STATUS_BADGES = [
         PettyCashConstants::STATUS_AGRUPACION        => 'pill-info-soft',
-        PettyCashConstants::STATUS_CONTABILIDAD      => 'pill-primary-soft',
-        PettyCashConstants::STATUS_TESORERIA         => 'pill-warning-soft',
-        PettyCashConstants::STATUS_AUTORIZACION_PAGO => 'pill-info-soft',
-        PettyCashConstants::STATUS_VERIFICACION_PAGO => 'pill-warning-soft',
+        PettyCashConstants::STATUS_CONTABILIDAD      => 'pill-orange-soft',
+        PettyCashConstants::STATUS_TESORERIA         => 'pill-info-soft',
+        PettyCashConstants::STATUS_AUTORIZACION_PAGO => 'pill-warning-soft',
+        PettyCashConstants::STATUS_VERIFICACION_PAGO => 'pill-accent-soft',
         PettyCashConstants::STATUS_PAGADA            => 'pill-primary-soft',
     ];
 
@@ -26,13 +28,7 @@ final class PettyCashPresentation
      */
     public static function pipelineVariant(string $status): string
     {
-        return match ($status) {
-            PettyCashConstants::STATUS_TESORERIA,
-            PettyCashConstants::STATUS_VERIFICACION_PAGO => 'is-warning',
-            PettyCashConstants::STATUS_AGRUPACION,
-            PettyCashConstants::STATUS_AUTORIZACION_PAGO => 'is-orange',
-            default                                      => '', // primary
-        };
+        return PipelineColorMap::variant($status);
     }
 
     /**
@@ -46,13 +42,13 @@ final class PettyCashPresentation
         $stageIdx = array_search($status, PettyCashConstants::STATUSES, true);
 
         return new PettyCashRowView(
-            statusLabel:      PettyCashConstants::STATUS_LABELS[$status] ?? $status,
+            statusLabel: PettyCashConstants::STATUS_LABELS[$status] ?? $status,
             statusBadgeClass: self::STATUS_BADGES[$status] ?? 'pill-muted',
-            pipelineVariant:  self::pipelineVariant($status),
-            stageIdx:         $stageIdx === false ? -1 : $stageIdx,
-            pipelineLength:   count(PettyCashConstants::STATUSES),
-            isPaid:           $status === PettyCashConstants::STATUS_PAGADA,
-            invoiceCount:     count($record->invoices ?? []),
+            pipelineVariant: self::pipelineVariant($status),
+            stageIdx: $stageIdx === false ? -1 : $stageIdx,
+            pipelineLength: count(PettyCashConstants::STATUSES),
+            isPaid: $status === PettyCashConstants::STATUS_PAGADA,
+            invoiceCount: count($record->invoices ?? []),
         );
     }
 }

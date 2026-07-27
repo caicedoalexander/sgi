@@ -14,19 +14,33 @@ use Cake\ORM\TableRegistry;
 class GroupedInvoiceService
 {
     /**
-     * @param string $documentType Invoice document_type value to filter by.
+     * @var list<string>
+     */
+    private readonly array $documentTypes;
+
+    /**
+     * @var list<string>
+     */
+    private readonly array $linkableStatuses;
+
+    /**
+     * @param array|string $documentType Invoice document_type value(s) to filter by.
      * @param string $fkField FK column name on the invoices table.
      * @param string $recordTableName CakePHP table name for the parent record.
      * @param string $fkLabel Human-readable label for the FK (error messages).
      * @param \App\Service\Interface\HistoryServiceInterface $historyService History service.
+     * @param array|string $linkableStatus Invoice pipeline_status(es) required to be linkable.
      */
     public function __construct(
-        private readonly string $documentType,
+        string|array $documentType,
         private readonly string $fkField,
         private readonly string $recordTableName,
         private readonly string $fkLabel,
         private readonly HistoryServiceInterface $historyService,
+        string|array $linkableStatus = InvoiceConstants::STATUS_CONTABILIDAD,
     ) {
+        $this->documentTypes = array_values((array)$documentType);
+        $this->linkableStatuses = array_values((array)$linkableStatus);
     }
 
     /**
@@ -67,17 +81,29 @@ class GroupedInvoiceService
         foreach ($invoices as $invoice) {
             $foundIds[] = $invoice->id;
 
-            if ($invoice->document_type !== $this->documentType) {
+            if (!in_array($invoice->document_type, $this->documentTypes, true)) {
                 $errors[] = sprintf(
-                    'La factura #%s no es de tipo "%s".',
+                    'La factura #%s no es un tipo vinculable a %s (%s).',
                     $invoice->invoice_number ?? $invoice->id,
                     $this->fkLabel,
+                    implode(' o ', $this->documentTypes),
                 );
             }
-            if ($invoice->pipeline_status !== InvoiceConstants::STATUS_CONTABILIDAD) {
+            if (!empty($invoice->advance_id)) {
                 $errors[] = sprintf(
-                    'La factura #%s no está en estado "contabilidad".',
+                    'La factura #%s ya está vinculada a un anticipo.',
                     $invoice->invoice_number ?? $invoice->id,
+                );
+            }
+            if (!in_array($invoice->pipeline_status, $this->linkableStatuses, true)) {
+                $labels = array_map(
+                    static fn(string $s): string => InvoiceConstants::STATUS_LABELS[$s] ?? $s,
+                    $this->linkableStatuses,
+                );
+                $errors[] = sprintf(
+                    'La factura #%s no está en un estado vinculable (%s).',
+                    $invoice->invoice_number ?? $invoice->id,
+                    implode(' o ', $labels),
                 );
             }
             if (!empty($invoice->{$this->fkField})) {
@@ -106,17 +132,30 @@ class GroupedInvoiceService
      */
     public function addInvoices(object $record, array $invoiceIds): array
     {
+        // Deduplicar: el compare-and-set compara filas afectadas contra count($invoiceIds);
+        // sin esto, ids repetidos (POST malformado) darían un falso "no disponible".
+        $invoiceIds = array_values(array_unique(array_map('intval', $invoiceIds)));
+
         $errors = $this->validateGrouping($invoiceIds);
         if (!empty($errors)) {
             return $errors;
         }
 
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
-        foreach ($invoiceIds as $invoiceId) {
-            $invoicesTable->updateAll(
-                [$this->fkField => $record->id],
-                ['id' => $invoiceId],
-            );
+        // Compare-and-set atómico: solo vincula filas que SIGUEN libres de ambos FKs.
+        // Garantía de exclusividad D1 bajo concurrencia — NO borrar la cláusula
+        // `advance_id IS null` creyéndola redundante con validateGrouping: ese check es
+        // read-then-write; esta es la escritura condicional que cierra la carrera.
+        $affected = $invoicesTable->updateAll(
+            [$this->fkField => $record->id],
+            [
+                'id IN' => $invoiceIds,
+                $this->fkField . ' IS' => null,
+                'advance_id IS' => null,
+            ],
+        );
+        if ($affected !== count($invoiceIds)) {
+            return ['Una o más facturas ya no están disponibles para vincular. Refresque e intente de nuevo.'];
         }
 
         $this->calculateAndSaveTotal($record);
@@ -185,11 +224,12 @@ class GroupedInvoiceService
         $invoicesTable = TableRegistry::getTableLocator()->get('Invoices');
 
         $query = $invoicesTable->find()
-            ->contain(['Providers', 'OperationCenters'])
+            ->contain(['Providers', 'OperationCenters', 'Employees'])
             ->where([
-                'Invoices.document_type' => $this->documentType,
-                'Invoices.pipeline_status' => InvoiceConstants::STATUS_CONTABILIDAD,
+                'Invoices.document_type IN' => $this->documentTypes,
+                'Invoices.pipeline_status IN' => $this->linkableStatuses,
                 "Invoices.{$this->fkField} IS" => null,
+                'Invoices.advance_id IS' => null,
             ])
             ->orderBy(['Invoices.issue_date' => 'ASC']);
 

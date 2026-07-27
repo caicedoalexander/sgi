@@ -118,51 +118,38 @@ $tabs = [
     </label>
 
     <button type="button" class="btn btn-default"
-            data-bs-toggle="collapse" data-bs-target="#refundFilters"
-            aria-expanded="<?= $filterCount > 0 ? 'true' : 'false' ?>"
+            data-filter-drawer-open
             aria-label="Filtros avanzados">
         <i class="bi bi-funnel" aria-hidden="true"></i>
         <span>Filtros<?php if ($filterCount > 0): ?> · <span style="color:var(--primary-color);font-weight:700;"><?= $filterCount ?></span><?php endif; ?></span>
     </button>
-
-    <?php if ($filterCount > 0): ?>
-        <?= $this->Html->link(
-            '<i class="bi bi-x-lg" aria-hidden="true"></i><span>Limpiar</span>',
-            ['action' => $action ?: 'index'],
-            ['class' => 'btn btn-ghost', 'escape' => false, 'style' => 'color:var(--danger-color);']
-        ) ?>
-    <?php endif; ?>
 </div>
 
-<div class="collapse <?= $filterCount > 0 ? 'show' : '' ?>" id="refundFilters" style="margin-bottom:14px;">
-    <div class="sgi-card compact">
-        <div class="row g-2">
-            <div class="col-md-3">
-                <label class="input-label" for="filter-status">Estado</label>
-                <?= $this->Form->select('status', $statusLabels, [
-                    'empty' => 'Todos',
-                    'class' => 'form-select form-select-sm',
-                    'value' => $activeStatus,
-                    'id'    => 'filter-status',
-                ]) ?>
-            </div>
-            <div class="col-md-3">
-                <label class="input-label" for="ref-range">Período</label>
-                <?= $this->element('date_range_filter', [
-                    'id' => 'ref-range',
-                    'from' => $this->request->getQuery('date_from', ''),
-                    'to' => $this->request->getQuery('date_to', ''),
-                    'inputStyle' => 'width:100%;',
-                ]) ?>
-            </div>
-            <div class="col-md-3 d-flex align-items-end justify-content-end">
-                <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="bi bi-check2" aria-hidden="true"></i><span>Aplicar filtros</span>
-                </button>
-            </div>
-        </div>
+<?php ob_start(); ?>
+    <div class="filter-field">
+        <label class="input-label" for="filter-status">Estado</label>
+        <?= $this->Form->select('status', $statusLabels, [
+            'empty' => 'Todos',
+            'class' => 'form-select form-select-sm',
+            'value' => $activeStatus,
+            'id'    => 'filter-status',
+        ]) ?>
     </div>
-</div>
+    <div class="filter-field">
+        <label class="input-label" for="ref-range">Período</label>
+        <?= $this->element('date_range_filter', [
+            'id' => 'ref-range',
+            'from' => $this->request->getQuery('date_from', ''),
+            'to' => $this->request->getQuery('date_to', ''),
+            'inputStyle' => 'width:100%;',
+        ]) ?>
+    </div>
+<?php $filterFields = ob_get_clean(); ?>
+<?= $this->element('filter_drawer', [
+    'body' => $filterFields,
+    'count' => $filterCount,
+    'clearUrl' => ['action' => $action ?: 'index'],
+]) ?>
 <?= $this->Form->end() ?>
 
 <?php /* ════════════════════════ CHIPS POR ESTADO ════════════════════════ */ ?>
@@ -189,7 +176,7 @@ $tabs = [
 /* Grid 7-col compartido entre header y filas. */
 $gridStyle = 'display:grid;grid-template-columns:1.3fr 2fr 1.1fr 0.8fr 1fr 1.7fr 36px;gap:14px;align-items:center;';
 ?>
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div style="<?= $gridStyle ?>padding:12px 18px;background:var(--bg-subtle);font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:0.8px;text-transform:uppercase;" role="row">
         <span>Código</span>
         <span>Beneficiario</span>
@@ -253,7 +240,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 2fr 1.1fr 0.8fr 1fr 1.7fr
             <?php /* 6. Estado · Pipeline */ ?>
             <div style="min-width:0;">
                 <?php if ($row->stageIdx >= 0): ?>
-                    <div class="pipeline-mini" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
+                    <div class="pipeline-mini <?= h($row->pipelineVariant) ?>" aria-hidden="true" style="margin-bottom:5px;max-width:100%;">
                         <?php for ($s = 0; $s < $row->pipelineLength; $s++): ?>
                             <div class="<?= $s <= $row->stageIdx ? 'on' : '' ?>"></div>
                         <?php endfor; ?>

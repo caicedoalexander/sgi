@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# Pre-commit — freno anti-regresión de phpcs (solo gate, NO modifica archivos).
+#
+#   Bloquea el commit si se introducen violaciones NUEVAS en líneas tocadas
+#   (gate por líneas — bin/cs-diff.php). La deuda pre-existente no bloquea.
+#
+#   NO auto-formatea: el auto-fix se hace deliberadamente con `composer cs-fix`,
+#   nunca en silencio al commitear — así phpcbf no adelanta cambios de firma
+#   (p. ej. type-hints native) sin verificación. El hook solo lee, no escribe.
+#
+# Activar una sola vez por clon:  composer hooks:install
+#   (equivale a: git config core.hooksPath hooks)
+
+set -uo pipefail
+
+# .php staged, añadidos/copiados/modificados, dentro del scope de phpcs.
+staged=$(git diff --cached --name-only --diff-filter=ACM -- 'src/**/*.php' 'tests/**/*.php' 'src/*.php' 'tests/*.php')
+[ -z "$staged" ] && exit 0
+
+# Gate por líneas nuevas (staged vs HEAD).
+php bin/cs-diff.php

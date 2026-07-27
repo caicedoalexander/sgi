@@ -130,7 +130,7 @@ $gridStyle = 'display:grid;grid-template-columns:1.3fr 1.1fr 1.4fr 0.8fr 1.6fr 1
 <?php endif; ?>
 
 <?php /* ════════════════════════ TABLA DE DOCUMENTOS ════════════════════════ */ ?>
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div style="<?= $gridStyle ?>padding:12px 18px;background:var(--bg-subtle);font-size:10px;font-weight:700;color:var(--text-faint);letter-spacing:0.8px;text-transform:uppercase;" role="row">
         <span>No. Liquidación</span>
         <span>Período</span>

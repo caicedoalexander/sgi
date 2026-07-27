@@ -15,6 +15,11 @@ final class CircuitBreakerHealthCheck implements HealthCheckInterface
 {
     private const CB_NAMES = ['webhook', 'smtp'];
 
+    /**
+     * Reporta el estado de los circuit breakers leídos del cache.
+     *
+     * @return \App\Service\HealthCheck\HealthCheckResult
+     */
     public function check(): HealthCheckResult
     {
         $states = [];

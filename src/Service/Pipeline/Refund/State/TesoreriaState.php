@@ -9,16 +9,31 @@ use App\Service\Pipeline\Refund\RefundPipelineState;
 
 final class TesoreriaState implements RefundPipelineState
 {
+    /**
+     * Estado canónico `tesoreria` de este State.
+     *
+     * @return \App\Constants\Domain\Refund\PipelineStatus
+     */
     public function getStatus(): PipelineStatus
     {
         return PipelineStatus::TESORERIA;
     }
 
+    /**
+     * Estado siguiente del pipeline; delega en el enum. Null si es terminal.
+     *
+     * @return \App\Constants\Domain\Refund\PipelineStatus|null
+     */
     public function getNextStatus(): ?PipelineStatus
     {
         return $this->getStatus()->next();
     }
 
+    /**
+     * Estado anterior del pipeline; delega en el enum. Null si es el primero o la regresión está bloqueada.
+     *
+     * @return \App\Constants\Domain\Refund\PipelineStatus|null
+     */
     public function getPreviousStatus(): ?PipelineStatus
     {
         return $this->getStatus()->previous();

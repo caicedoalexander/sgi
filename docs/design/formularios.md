@@ -1,4 +1,4 @@
-# Sistema de Diseño SGI · COPCSA — Formularios
+# Sistema de Diseño SPI · COPCSA — Formularios
 
 Inputs y formularios, tabs y filtros, date & time pickers.
 
@@ -198,7 +198,7 @@ Trigger discreto tipo input (mismo alto 36px). Calendario popover de 270px, grid
 
 ```html
 <div class="input" style="width:200px">
-  <i class="bi bi-calendar3 sgi-fg-primary"></i>
+  <i class="bi bi-calendar3 spi-fg-primary"></i>
   <span class="grow">18 mayo 2026</span>
   <i class="bi bi-chevron-down" style="color: var(--text-faint)"></i>
 </div>
@@ -207,7 +207,7 @@ Trigger discreto tipo input (mismo alto 36px). Calendario popover de 270px, grid
 Range trigger:
 ```html
 <div class="input" style="width:240px">
-  <i class="bi bi-calendar3 sgi-fg-primary"></i>
+  <i class="bi bi-calendar3 spi-fg-primary"></i>
   <span class="grow">14 may → 18 may</span>
   <i class="bi bi-chevron-down"></i>
 </div>
@@ -274,9 +274,9 @@ Lista vertical scrollable de horas en pasos de 30 min, valor activo con fondo ve
 
 ```html
 <div style="background: var(--primary-soft); padding: 14px 16px">
-  <div class="sgi-label sgi-fg-primary">RANGO SELECCIONADO</div>
+  <div class="spi-label spi-fg-primary">RANGO SELECCIONADO</div>
   <div style="font-size:16px;font-weight:700;margin-top:6px">14 may — 18 may 2026</div>
-  <div class="sgi-body-faint" style="margin-top:3px">5 días</div>
+  <div class="spi-body-faint" style="margin-top:3px">5 días</div>
 </div>
 ```
 
@@ -376,8 +376,8 @@ Para alternar entre 2–4 opciones cortas mutuamente excluyentes, usar el compon
 
 El proyecto inicializa Select2 con dos clases distintas, según quién dispara el init:
 
-- **`.select2-enable`** — auto-inicializada globalmente por `webroot/js/sgi-common.js` (función `sgiInit`, en `DOMContentLoaded` y tras inyecciones AJAX). Es la convención por defecto para cualquier `<select>` que deba tener búsqueda. Config: `width:100%`, locale `es`, `minimumResultsForSearch:7`.
-- **`.select2`** (sin `-enable`) — usada por los filtros del calendario de Novedades; la inicializa `webroot/js/sgi-calendar.js` con su propia configuración.
+- **`.select2-enable`** — auto-inicializada globalmente por `webroot/js/spi-common.js` (función `spiInit`, en `DOMContentLoaded` y tras inyecciones AJAX). Es la convención por defecto para cualquier `<select>` que deba tener búsqueda. Config: `width:100%`, locale `es`, `minimumResultsForSearch:7`.
+- **`.select2`** (sin `-enable`) — usada por los filtros del calendario de Novedades; la inicializa `webroot/js/spi-calendar.js` con su propia configuración.
 
 Para un select nuevo, usar **`.select2-enable`**. Opciones por select vía atributos del `<select>`: `data-placeholder`, `data-allow-clear`. No re-inicializar Select2 manualmente con `.select2()` — la convivencia de inits causa doble inicialización.
 

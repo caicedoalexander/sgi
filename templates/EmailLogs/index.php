@@ -24,9 +24,9 @@ $gridCols = '140px 1.6fr 1.7fr 1.1fr 70px 70px';
 <!-- ═══ Header ═══ -->
 <div class="d-flex justify-content-between align-items-start" style="margin-bottom:18px;">
     <div>
-        <span class="sgi-page-title">Logs de correo</span>
-        <div class="sgi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
-            <span class="sgi-fg-muted"><?= $this->Paginator->counter('{{count}} correos') ?></span>
+        <span class="spi-page-title">Logs de correo</span>
+        <div class="spi-body-faint mt-1" style="font-size:var(--fs-body-sm);">
+            <span class="spi-fg-muted"><?= $this->Paginator->counter('{{count}} correos') ?></span>
         </div>
     </div>
     <?= $this->Form->postLink(
@@ -61,64 +61,51 @@ $gridCols = '140px 1.6fr 1.7fr 1.1fr 70px 70px';
     </label>
 
     <button type="button" class="btn btn-default"
-            data-bs-toggle="collapse" data-bs-target="#emailLogFilters"
-            aria-expanded="<?= $hasFilters ? 'true' : 'false' ?>" aria-label="Filtros avanzados">
+            data-filter-drawer-open aria-label="Filtros avanzados">
         <i class="bi bi-funnel" aria-hidden="true"></i><span>Filtros</span>
     </button>
-
-    <?php if ($hasFilters): ?>
-    <?= $this->Html->link(
-        '<i class="bi bi-x-lg" aria-hidden="true"></i><span>Limpiar</span>',
-        ['action' => 'index'],
-        ['class' => 'btn btn-ghost', 'escape' => false, 'style' => 'color:var(--danger-color);']
-    ) ?>
-    <?php endif; ?>
 </div>
 
-<div class="collapse <?= $hasFilters ? 'show' : '' ?>" id="emailLogFilters" style="margin-bottom:14px;">
-    <div class="sgi-card compact">
-        <div class="row g-2">
-            <div class="col-md-3">
-                <label class="input-label" for="filter-status">Estado</label>
-                <?= $this->Form->select('status', $statusOptions, [
-                    'empty' => 'Todos',
-                    'class' => 'form-select form-select-sm',
-                    'value' => $status,
-                    'id'    => 'filter-status',
-                ]) ?>
-            </div>
-            <div class="col-md-4">
-                <label class="input-label" for="filter-event">Tipo de evento</label>
-                <?= $this->Form->select('event_type', $eventOptions, [
-                    'empty' => 'Todos',
-                    'class' => 'form-select form-select-sm',
-                    'value' => $eventType,
-                    'id'    => 'filter-event',
-                ]) ?>
-            </div>
-            <div class="col-md-3">
-                <label class="input-label" for="el-range">Período</label>
-                <?= $this->element('date_range_filter', [
-                    'id' => 'el-range',
-                    'fromName' => 'from',
-                    'toName' => 'to',
-                    'from' => $from,
-                    'to' => $to,
-                    'inputStyle' => 'width:100%;',
-                ]) ?>
-            </div>
-            <div class="col-12 d-flex justify-content-end" style="margin-top:6px;">
-                <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="bi bi-funnel me-1" aria-hidden="true"></i>Aplicar filtros
-                </button>
-            </div>
-        </div>
+<?php ob_start(); ?>
+    <div class="filter-field">
+        <label class="input-label" for="filter-status">Estado</label>
+        <?= $this->Form->select('status', $statusOptions, [
+            'empty' => 'Todos',
+            'class' => 'form-select form-select-sm',
+            'value' => $status,
+            'id'    => 'filter-status',
+        ]) ?>
     </div>
-</div>
+    <div class="filter-field">
+        <label class="input-label" for="filter-event">Tipo de evento</label>
+        <?= $this->Form->select('event_type', $eventOptions, [
+            'empty' => 'Todos',
+            'class' => 'form-select form-select-sm',
+            'value' => $eventType,
+            'id'    => 'filter-event',
+        ]) ?>
+    </div>
+    <div class="filter-field">
+        <label class="input-label" for="el-range">Período</label>
+        <?= $this->element('date_range_filter', [
+            'id' => 'el-range',
+            'fromName' => 'from',
+            'toName' => 'to',
+            'from' => $from,
+            'to' => $to,
+            'inputStyle' => 'width:100%;',
+        ]) ?>
+    </div>
+<?php $filterFields = ob_get_clean(); ?>
+<?= $this->element('filter_drawer', [
+    'body' => $filterFields,
+    'count' => $hasFilters ? 1 : 0,
+    'clearUrl' => ['action' => 'index'],
+]) ?>
 <?= $this->Form->end() ?>
 
 <!-- ═══ Tabla ═══ -->
-<div class="sgi-card" style="padding:0;">
+<div class="spi-card" style="padding:0;">
     <div class="row-fact head" style="grid-template-columns:<?= $gridCols ?>;" role="row">
         <span>Fecha</span>
         <span>Tipo · Destinatario</span>

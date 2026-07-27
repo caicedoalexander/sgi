@@ -8,6 +8,12 @@ use Cake\Validation\Validator;
 
 class InvoiceApprovalsTable extends Table
 {
+    /**
+     * Initialize method
+     *
+     * @param array<string, mixed> $config The configuration for the Table.
+     * @return void
+     */
     public function initialize(array $config): void
     {
         parent::initialize($config);
@@ -29,6 +35,12 @@ class InvoiceApprovalsTable extends Table
         ]);
     }
 
+    /**
+     * Default validation rules.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
     public function validationDefault(Validator $validator): Validator
     {
         $validator
@@ -47,9 +59,9 @@ class InvoiceApprovalsTable extends Table
             ->notEmptyString('status');
 
         $validator
-            ->scalar('token')
-            ->maxLength('token', 64)
-            ->allowEmptyString('token');
+            ->scalar('token_hash')
+            ->maxLength('token_hash', 64)
+            ->allowEmptyString('token_hash');
 
         return $validator;
     }

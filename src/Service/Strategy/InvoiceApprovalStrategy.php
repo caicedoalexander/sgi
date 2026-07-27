@@ -54,7 +54,6 @@ class InvoiceApprovalStrategy implements ApprovalStrategyInterface
                     'area_approval_date' => $parsedDate,
                 ],
                 $this->_getAdminRoleId(),
-                RoleConstants::ADMIN,
                 $userId,
             );
 

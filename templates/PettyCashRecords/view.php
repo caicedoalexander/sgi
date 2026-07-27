@@ -11,9 +11,6 @@
  * @var \App\ViewModel\PettyCashViewViewModel $viewModel
  */
 
-use App\Constants\InvoiceConstants;
-use App\View\Presentation\InvoicePresentation;
-
 $record = $viewModel->record;
 
 $this->assign('title', $viewModel->pageTitle);
@@ -59,7 +56,7 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
             <span style="color:var(--text-default);"><?= h($record->code) ?></span>
         </div>
         <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
-            <h1 class="sgi-page-title">Ver Caja Menor</h1>
+            <h1 class="spi-page-title">Ver Caja Menor</h1>
             <span class="mono" style="font-size:var(--fs-body-lg);color:var(--text-muted);padding:3px 8px;background:var(--bg-subtle);border-radius:var(--radius-sm);">
                 <?= h($record->code) ?>
             </span>
@@ -83,10 +80,10 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
 </div>
 
 <!-- ─── Grid principal (340px + 1fr) ──────────────────────────────── -->
-<div class="sgi-invoice-view-grid view-anim">
+<div class="spi-invoice-view-grid view-anim">
 
     <!-- ═════════════════════════ COLUMNA IZQUIERDA ═════════════════════════ -->
-    <aside class="sgi-invoice-view-left">
+    <aside class="spi-invoice-view-left">
 
     <?php
     // Acciones rápidas (Editar registro / Volver).
@@ -138,23 +135,23 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
              tal cual a continuación de esta llamada. */ ?>
 
         <!-- Registro / auditoría -->
-        <div class="sgi-card compact">
-            <div class="sgi-label" style="margin-bottom:10px;">Registro</div>
+        <div class="spi-card compact">
+            <div class="spi-label" style="margin-bottom:10px;">Registro</div>
             <?php if ($record->hasValue('created_by_user')): ?>
             <div class="d-flex align-items-center gap-2 mb-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-                <i class="bi bi-person sgi-fg-faint" aria-hidden="true"></i>
+                <i class="bi bi-person spi-fg-faint" aria-hidden="true"></i>
                 <span>Creado por <strong style="color:var(--text-default);"><?= h($record->created_by_user->full_name) ?></strong></span>
             </div>
             <?php endif; ?>
             <?php if ($record->created): ?>
             <div class="d-flex align-items-center gap-2 mb-1" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-                <i class="bi bi-calendar3 sgi-fg-faint" aria-hidden="true"></i>
+                <i class="bi bi-calendar3 spi-fg-faint" aria-hidden="true"></i>
                 <span>Creado · <span class="mono"><?= $record->created->format('d/m/Y H:i') ?></span></span>
             </div>
             <?php endif; ?>
             <?php if ($record->modified): ?>
             <div class="d-flex align-items-center gap-2" style="font-size:var(--fs-body-sm);color:var(--text-muted);">
-                <i class="bi bi-pencil sgi-fg-faint" aria-hidden="true"></i>
+                <i class="bi bi-pencil spi-fg-faint" aria-hidden="true"></i>
                 <span>Modificado · <span class="mono"><?= $record->modified->format('d/m/Y') ?></span></span>
             </div>
             <?php endif; ?>
@@ -163,13 +160,13 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
     </aside>
 
     <!-- ═════════════════════════ COLUMNA DERECHA ═════════════════════════ -->
-    <main class="sgi-invoice-view-right">
+    <main class="spi-invoice-view-right">
 
         <!-- Información + Notas -->
-        <div class="sgi-card">
+        <div class="spi-card">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
                 <div>
-                    <div class="sgi-label" style="margin-bottom:6px;">Información</div>
+                    <div class="spi-label" style="margin-bottom:6px;">Información</div>
                     <div class="field-row">
                         <span class="k">Código</span>
                         <span class="v mono"><?= h($record->code) ?></span>
@@ -194,7 +191,7 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
                     </div>
                 </div>
                 <div>
-                    <div class="sgi-label" style="margin-bottom:6px;">Notas</div>
+                    <div class="spi-label" style="margin-bottom:6px;">Notas</div>
                     <div style="font-size:var(--fs-body-lg);color:var(--text-default);line-height:1.55;padding-top:9px;">
                         <?= $record->notes
                             ? nl2br(h($record->notes))
@@ -206,8 +203,8 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
 
         <?php if ($showPaymentCard): ?>
         <!-- Datos de pago -->
-        <div class="sgi-card">
-            <div class="sgi-label d-inline-flex align-items-center gap-2" style="margin-bottom:14px;">
+        <div class="spi-card">
+            <div class="spi-label d-inline-flex align-items-center gap-2" style="margin-bottom:14px;">
                 <i class="bi bi-bank" aria-hidden="true"></i>Pago
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;">
@@ -275,62 +272,24 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
         </div>
         <?php endif; ?>
 
-        <!-- Facturas agrupadas -->
-        <div class="sgi-card">
-            <div class="d-flex justify-content-between align-items-center" style="margin-bottom:14px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
-                    <i class="bi bi-receipt" aria-hidden="true"></i>
-                    Facturas Agrupadas
-                    <span class="sgi-folder-count"><?= $invoiceCount ?></span>
-                </span>
-            </div>
-
-            <?php if (empty($record->invoices)): ?>
-                <div class="empty-state">
-                    <div class="es-icon es-icon-neutral"><i class="bi bi-inbox" aria-hidden="true"></i></div>
-                    <div class="es-title">No hay facturas agrupadas</div>
-                    <div class="es-msg">Este registro no tiene facturas vinculadas.</div>
-                </div>
-            <?php else: ?>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th># Factura</th>
-                                <th>Proveedor</th>
-                                <th style="text-align:right;">Monto</th>
-                                <th>Fecha Emisión</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($record->invoices as $inv): ?>
-                            <tr class="clickable-row" data-href="<?= $this->Url->build(['controller' => 'Invoices', 'action' => 'view', $inv->id]) ?>">
-                                <td class="mono" style="font-weight:600;"><?= h($inv->invoice_number ?? '#' . $inv->id) ?></td>
-                                <td><?= $inv->hasValue('provider') ? h($inv->provider->name) : '—' ?></td>
-                                <td class="mono" style="text-align:right;">$ <?= number_format((float)$inv->amount, 0, ',', '.') ?></td>
-                                <td class="mono"><?= $inv->issue_date?->format('d/m/Y') ?? '—' ?></td>
-                                <td>
-                                    <?php $pBadge = InvoicePresentation::STATUS_BADGES[$inv->pipeline_status] ?? 'pill-muted'; ?>
-                                    <span class="pill pill-sm <?= h($pBadge) ?>">
-                                        <?= h(InvoiceConstants::STATUS_LABELS[$inv->pipeline_status] ?? $inv->pipeline_status) ?>
-                                    </span>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </div>
+        <!-- Facturas agrupadas (con resolución inline de soporte; sin DIAN — las
+             hijas de caja menor saltan Aprobación por diseño) -->
+        <?= $this->element('grouped_invoices_table', [
+            'rows' => $viewModel->groupedRows,
+            'readiness' => $viewModel->readiness,
+            'parentField' => 'petty_cash_record_id',
+            'parentId' => (int)$record->id,
+            'canUploadSupport' => $viewModel->canUploadSupport,
+            'uploadModalId' => $viewModel->canUploadSupport ? 'groupedUploadModal' : null,
+        ]) ?>
 
         <!-- Observaciones -->
-        <div class="sgi-card">
+        <div class="spi-card">
             <div class="d-flex justify-content-between align-items-center" style="margin-bottom:14px;">
-                <span class="sgi-label d-inline-flex align-items-center gap-2">
+                <span class="spi-label d-inline-flex align-items-center gap-2">
                     <i class="bi bi-chat-square-text" aria-hidden="true"></i>
                     Observaciones
-                    <span class="sgi-folder-count"><?= $obsCount ?></span>
+                    <span class="spi-folder-count"><?= $obsCount ?></span>
                 </span>
             </div>
 
@@ -374,3 +333,13 @@ $canEdit = !empty($userPermissions['petty_cash']['can_edit']) && !$record->isPag
 
     </main>
 </div>
+
+<?php // Modal compartido para subir soporte a una hija; el JS fija su URL por fila. ?>
+<?php if ($viewModel->canUploadSupport): ?>
+<?= $this->element('upload_doc_modal', [
+    'modalId' => 'groupedUploadModal',
+    'uploadUrl' => '', // la fija SpiGroupedInvoices por fila (data-url del form)
+    'formId' => 'grouped-upload-form',
+    'showDocumentType' => true,
+]) ?>
+<?php endif; ?>

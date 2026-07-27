@@ -24,7 +24,7 @@ $periods = [
         <?php foreach ($periods as $key => $label): ?>
             <?php if ($key === 'custom') continue; ?>
             <a href="<?= $this->Url->build(['?' => ['period' => $key]]) ?>"
-               class="btn <?= $currentPeriod === $key ? 'btn-dark' : 'btn-outline-secondary' ?>"
+               class="btn <?= $currentPeriod === $key ? 'btn-default' : 'btn-ghost' ?>"
                style="font-size:var(--fs-body-sm);font-weight:500;">
                 <?= $label ?>
             </a>
@@ -40,7 +40,7 @@ $periods = [
             'placeholder' => 'Rango personalizado',
             'inputStyle' => 'width:210px;font-size:var(--fs-body-sm);',
         ]) ?>
-        <button type="button" class="btn btn-sm btn-outline-dark" id="period-custom-btn"
+        <button type="button" class="btn btn-sm btn-default" id="period-custom-btn"
                 style="font-size:var(--fs-body-sm);font-weight:500;">
             <i class="bi bi-funnel" aria-hidden="true"></i>
         </button>

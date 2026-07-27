@@ -5,6 +5,7 @@ namespace App\Test\TestCase\View\Presentation;
 
 use App\Constants\RefundConstants;
 use App\Model\Entity\Refund;
+use App\View\Presentation\PipelineColorMap;
 use App\View\Presentation\RefundPresentation;
 use PHPUnit\Framework\TestCase;
 use stdClass;
@@ -19,7 +20,7 @@ final class RefundPresentationTest extends TestCase
     {
         $row = RefundPresentation::forRow(new Refund(['status' => RefundConstants::STATUS_CONTABILIDAD]));
 
-        $this->assertSame('pill-primary-soft', $row->statusBadgeClass);
+        $this->assertSame('pill-orange-soft', $row->statusBadgeClass);
         $this->assertSame(
             RefundConstants::STATUS_LABELS[RefundConstants::STATUS_CONTABILIDAD],
             $row->statusLabel,
@@ -38,11 +39,12 @@ final class RefundPresentationTest extends TestCase
     {
         $row = RefundPresentation::forRow(new Refund(['status' => RefundConstants::STATUS_TESORERIA]));
 
-        $this->assertSame(
-            array_search(RefundConstants::STATUS_TESORERIA, RefundConstants::STATUSES, true),
-            $row->stageIdx,
-        );
-        $this->assertSame(count(RefundConstants::STATUSES), $row->pipelineLength);
+        // Tesorería es el índice 3 del pipeline de reintegros de 7 estados
+        // (agrupacion=0, aprobacion=1, contabilidad=2, tesoreria=3, ...). Literales
+        // a propósito: si el orden o el largo del pipeline cambian, este test debe
+        // fallar (anti-drift).
+        $this->assertSame(3, $row->stageIdx);
+        $this->assertSame(7, $row->pipelineLength);
     }
 
     public function testForRowUnknownStatusFallsBack(): void
@@ -62,5 +64,17 @@ final class RefundPresentationTest extends TestCase
         ]);
 
         $this->assertSame(2, RefundPresentation::forRow($record)->invoiceCount);
+    }
+
+    public function testAprobacionBadgeMatchesColorMap(): void
+    {
+        $this->assertArrayHasKey(
+            RefundConstants::STATUS_APROBACION,
+            RefundPresentation::STATUS_BADGES,
+        );
+        $this->assertSame(
+            PipelineColorMap::pill(RefundConstants::STATUS_APROBACION),
+            RefundPresentation::STATUS_BADGES[RefundConstants::STATUS_APROBACION],
+        );
     }
 }

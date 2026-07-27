@@ -12,6 +12,11 @@ class ApproversController extends AppController
 
     public array $paginate = ['limit' => 15, 'maxLimit' => 15];
 
+    /**
+     * Lista los aprobadores.
+     *
+     * @return void
+     */
     #[Permission(action: 'view')]
     public function index()
     {
@@ -21,6 +26,11 @@ class ApproversController extends AppController
         $this->set(compact('approvers'));
     }
 
+    /**
+     * Crea un aprobador.
+     *
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'add')]
     public function add()
     {
@@ -42,8 +52,14 @@ class ApproversController extends AppController
         $this->set(compact('approver', 'users', 'operationCenters'));
     }
 
+    /**
+     * Edita un aprobador.
+     *
+     * @param string|null $id ID del aprobador.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'edit')]
-    public function edit($id = null)
+    public function edit(?string $id = null)
     {
         $approver = $this->Approvers->get($id, contain: ['Users', 'OperationCenters']);
         $result = $this->_catalogSave(
@@ -62,8 +78,14 @@ class ApproversController extends AppController
         $this->set(compact('approver', 'users', 'operationCenters'));
     }
 
+    /**
+     * Elimina un aprobador.
+     *
+     * @param string|null $id ID del aprobador.
+     * @return \Cake\Http\Response|null
+     */
     #[Permission(action: 'delete')]
-    public function delete($id = null)
+    public function delete(?string $id = null)
     {
         $this->request->allowMethod(['post', 'delete']);
         $approver = $this->Approvers->get($id);

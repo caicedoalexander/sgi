@@ -5,6 +5,7 @@ namespace App\Test\TestCase\Service;
 
 use App\Service\ServiceResult;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 final class ServiceResultTest extends TestCase
 {
@@ -55,7 +56,7 @@ final class ServiceResultTest extends TestCase
     public function testReadOnlyFields(): void
     {
         $result = ServiceResult::ok('x');
-        $ref = new \ReflectionClass($result);
+        $ref = new ReflectionClass($result);
         foreach (['success', 'data', 'errors'] as $prop) {
             $this->assertTrue($ref->getProperty($prop)->isReadOnly(), "Property {$prop} should be readonly");
         }

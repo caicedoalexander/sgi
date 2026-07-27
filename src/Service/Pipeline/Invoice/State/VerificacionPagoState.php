@@ -8,38 +8,46 @@ use App\Service\Pipeline\Invoice\InvoicePipelineState;
 
 final class VerificacionPagoState implements InvoicePipelineState
 {
+    /**
+     * Estado canónico tipado de este State.
+     *
+     * @return \App\Constants\Domain\Invoice\PipelineStatus
+     */
     public function getStatus(): PipelineStatus
     {
         return PipelineStatus::VERIFICACION_PAGO;
     }
 
+    /**
+     * Estado siguiente natural; null si es terminal.
+     *
+     * @return \App\Constants\Domain\Invoice\PipelineStatus|null
+     */
     public function getNextStatus(): ?PipelineStatus
     {
         return $this->getStatus()->next();
     }
 
+    /**
+     * Estado anterior; null si es el primero.
+     *
+     * @return \App\Constants\Domain\Invoice\PipelineStatus|null
+     */
     public function getPreviousStatus(): ?PipelineStatus
     {
         return $this->getStatus()->previous();
     }
 
-    public function validateAdvance(object $invoice): array
-    {
-        return ['La confirmación de pago se gestiona desde la sección de pagos.'];
-    }
-
     /**
-     * `_payment_executed` es un pseudo-field (no existe en la entidad Invoice),
+     * `_payment_executed` es un pseudo-requisito (no existe en la entidad Invoice),
      * usado solo para que el `TransitionValidator` siempre rechace el avance
      * automático desde este estado. La transición real
      * `verificacion_pago → pagada` se hace exclusivamente vía
      * `InvoicePaymentService::confirmPayment()`, invocado por la acción
      * `InvoicePaymentsController::confirmPayment` (botón "Pasar a Pagada").
      */
-    public function getTransitionRules(): array
+    public function validateAdvance(object $invoice): array
     {
-        return [
-            ['field' => '_payment_executed', 'label' => 'Tesorería debe confirmar que el pago se ejecutó'],
-        ];
+        return ['_payment_executed' => 'La confirmación de pago se gestiona desde la sección de pagos.'];
     }
 }

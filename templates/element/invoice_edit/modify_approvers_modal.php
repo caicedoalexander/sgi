@@ -35,7 +35,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-warning">
                         <i class="bi bi-send me-1" aria-hidden="true"></i>Guardar y reenviar enlaces
                     </button>

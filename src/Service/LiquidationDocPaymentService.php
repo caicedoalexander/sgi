@@ -11,6 +11,9 @@ class LiquidationDocPaymentService
 {
     private NoveltyHistoryService $noveltyHistory;
 
+    /**
+     * @param \App\Service\NoveltyHistoryService|null $noveltyHistory Servicio de auditoría de novedades.
+     */
     public function __construct(?NoveltyHistoryService $noveltyHistory = null)
     {
         $this->noveltyHistory = $noveltyHistory ?? new NoveltyHistoryService();

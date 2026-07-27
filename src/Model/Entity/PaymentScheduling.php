@@ -16,6 +16,7 @@ class PaymentScheduling extends Entity
         'created_by' => true,
     ];
 
+    /** @return bool true si la programación de pago está en estado pagada. */
     public function isPagada(): bool
     {
         return ($this->pipeline_status ?? '') === PaymentSchedulingConstants::STATUS_PAGADA;

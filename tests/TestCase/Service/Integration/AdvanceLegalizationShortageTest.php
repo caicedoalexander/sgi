@@ -33,6 +33,13 @@ use Cake\TestSuite\TestCase;
  */
 final class AdvanceLegalizationShortageTest extends TestCase
 {
+    /** Payload de causación válido para las salidas del paso Contabilidad. */
+    private const ACCOUNTING = [
+        'accrued' => true,
+        'accrual_date' => '2026-06-23',
+        'ready_for_payment' => 'Si',
+    ];
+
     /**
      * Construye el servicio con un EventManager aislado y los history/document
      * services reales. El stateRegistry queda en su default.
@@ -63,7 +70,7 @@ final class AdvanceLegalizationShortageTest extends TestCase
             ->withStatus(AdvanceConstants::STATUS_CONTABILIDAD)->save();
         $user = UserFactory::new()->save();
 
-        $result = $this->buildService()->registerShortage($leg, 250.0, $user->id);
+        $result = $this->buildService()->registerShortage($leg, 250.0, self::ACCOUNTING, $user->id);
 
         $this->assertTrue($result->success);
 
@@ -87,7 +94,7 @@ final class AdvanceLegalizationShortageTest extends TestCase
             ->withStatus(AdvanceConstants::STATUS_CONTABILIDAD)->save();
         $user = UserFactory::new()->save();
 
-        $result = $this->buildService()->registerShortage($leg, 0.0, $user->id);
+        $result = $this->buildService()->registerShortage($leg, 0.0, self::ACCOUNTING, $user->id);
 
         $this->assertFalse($result->success);
 
@@ -111,12 +118,35 @@ final class AdvanceLegalizationShortageTest extends TestCase
             ->withStatus(AdvanceConstants::STATUS_VALIDACION)->save();
         $user = UserFactory::new()->save();
 
-        $result = $this->buildService()->registerShortage($leg, 250.0, $user->id);
+        $result = $this->buildService()->registerShortage($leg, 250.0, self::ACCOUNTING, $user->id);
 
         $this->assertFalse($result->success);
 
         $persisted = $this->fetchTable('AdvanceLegalizations')->get($leg->id);
         $this->assertSame(AdvanceConstants::STATUS_VALIDACION, $persisted->status);
+        $this->assertNull($persisted->case_type);
+    }
+
+    /**
+     * registerShortage con causación incompleta falla contra el gate del
+     * ContabilidadState y la legalización no se mueve.
+     */
+    public function testRegisterShortageFailsWhenAccountingIsIncomplete(): void
+    {
+        $anticipo = InvoiceFactory::new()->anticipo()
+            ->withAmount(1000.0)->withStatus(InvoiceConstants::STATUS_PAGADA)->save();
+        $leg = AdvanceLegalizationFactory::new()->forAdvance($anticipo)
+            ->withStatus(AdvanceConstants::STATUS_CONTABILIDAD)->save();
+        $user = UserFactory::new()->save();
+
+        $incomplete = ['accrued' => false, 'accrual_date' => '2026-06-23', 'ready_for_payment' => 'Si'];
+        $result = $this->buildService()->registerShortage($leg, 250.0, $incomplete, $user->id);
+
+        $this->assertFalse($result->success);
+        $this->assertSame('La legalización debe estar marcada como Causada', $result->firstError());
+
+        $persisted = $this->fetchTable('AdvanceLegalizations')->get($leg->id);
+        $this->assertSame(AdvanceConstants::STATUS_CONTABILIDAD, $persisted->status);
         $this->assertNull($persisted->case_type);
     }
 
@@ -178,5 +208,66 @@ final class AdvanceLegalizationShortageTest extends TestCase
 
         $persisted = $this->fetchTable('AdvanceLegalizations')->get($leg->id);
         $this->assertSame(AdvanceConstants::STATUS_TESORERIA, $persisted->status);
+    }
+
+    /**
+     * confirmShortageReceipt (happy path): una fecha válida en formato Y-m-d se
+     * persiste tal cual. Guarda del camino de parseo.
+     *
+     * @return void
+     */
+    public function testConfirmShortageReceiptPersistsProvidedDate(): void
+    {
+        $anticipo = InvoiceFactory::new()->anticipo()
+            ->withAmount(1000.0)->withStatus(InvoiceConstants::STATUS_PAGADA)->save();
+        $leg = AdvanceLegalizationFactory::new()->forAdvance($anticipo)
+            ->withStatus(AdvanceConstants::STATUS_TESORERIA)
+            ->withCaseType(AdvanceConstants::CASE_FALTANTE)
+            ->withShortageAmount(250.0)->save();
+        $user = UserFactory::new()->save();
+
+        $result = $this->buildService()->confirmShortageReceipt(
+            $leg,
+            ['receipt_number' => 'REC-123', 'received_at' => '2026-06-23'],
+            $user->id,
+        );
+
+        $this->assertTrue($result->success);
+
+        $persisted = $this->fetchTable('AdvanceLegalizations')->get($leg->id);
+        $this->assertSame('2026-06-23', $persisted->shortage_received_at->format('Y-m-d'));
+    }
+
+    /**
+     * confirmShortageReceipt (error): una fecha no vacía pero no parseable por
+     * strtotime (p. ej. el `d/m/Y` que tipea el usuario si flatpickr no carga)
+     * debe fallar, NO persistirse como el epoch 1970-01-01. La legalización
+     * permanece en Tesorería sin fecha de consignación.
+     *
+     * @return void
+     */
+    public function testConfirmShortageReceiptRejectsUnparseableDate(): void
+    {
+        $anticipo = InvoiceFactory::new()->anticipo()
+            ->withAmount(1000.0)->withStatus(InvoiceConstants::STATUS_PAGADA)->save();
+        $leg = AdvanceLegalizationFactory::new()->forAdvance($anticipo)
+            ->withStatus(AdvanceConstants::STATUS_TESORERIA)
+            ->withCaseType(AdvanceConstants::CASE_FALTANTE)
+            ->withShortageAmount(250.0)->save();
+        $user = UserFactory::new()->save();
+
+        $result = $this->buildService()->confirmShortageReceipt(
+            $leg,
+            ['receipt_number' => 'REC-123', 'received_at' => '23/06/2026'],
+            $user->id,
+        );
+
+        $this->assertFalse($result->success);
+        $this->assertSame('La fecha de consignación no es válida.', $result->firstError());
+
+        $persisted = $this->fetchTable('AdvanceLegalizations')->get($leg->id);
+        $this->assertSame(AdvanceConstants::STATUS_TESORERIA, $persisted->status);
+        $this->assertNull($persisted->shortage_received_at);
+        $this->assertNull($persisted->shortage_receipt_number);
     }
 }

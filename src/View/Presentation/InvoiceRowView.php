@@ -15,17 +15,18 @@ final readonly class InvoiceRowView
     public function __construct(
         public string $statusLabel,
         public string $statusBadgeClass,
-        public bool   $isRejected,
-        public bool   $isApproved,
-        public bool   $isPartialPay,
-        public bool   $isPaid,
-        public bool   $isReadyForPay,
-        public bool   $isOverdue,
-        public bool   $isLegalization,
-        public array  $pipelineSteps,
-        public int    $stageIdx,
+        public bool $isRejected,
+        public bool $isApproved,
+        public bool $isPartialPay,
+        public bool $isPaid,
+        public bool $isReadyForPay,
+        public bool $isOverdue,
+        public bool $isLegalization,
+        public array $pipelineSteps,
+        public int $stageIdx,
         public string $pipelineVariant,
         public string $pillClass,
+        public ?InvoiceLinkBadge $linkBadge = null,
     ) {
     }
 }

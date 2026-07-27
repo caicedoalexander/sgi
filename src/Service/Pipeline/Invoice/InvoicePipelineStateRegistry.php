@@ -23,6 +23,15 @@ final class InvoicePipelineStateRegistry
      */
     private array $states;
 
+    /**
+     * @param \App\Service\Pipeline\Invoice\State\AprobacionState $aprobacion Estado aprobación.
+     * @param \App\Service\Pipeline\Invoice\State\ContabilidadState $contabilidad Estado contabilidad.
+     * @param \App\Service\Pipeline\Invoice\State\TesoreriaState $tesoreria Estado tesorería.
+     * @param \App\Service\Pipeline\Invoice\State\AutorizacionPagoState $autorizacionPago Estado autorización de pago.
+     * @param \App\Service\Pipeline\Invoice\State\VerificacionPagoState $verificacionPago Estado verificación de pago.
+     * @param \App\Service\Pipeline\Invoice\State\PagadaState $pagada Estado pagada.
+     * @param \App\Service\Pipeline\Invoice\State\LegalizadaState $legalizada Estado legalizada (terminal).
+     */
     public function __construct(
         AprobacionState $aprobacion,
         ContabilidadState $contabilidad,
@@ -37,6 +46,12 @@ final class InvoicePipelineStateRegistry
         }
     }
 
+    /**
+     * Resuelve el enum de estado a su instancia concreta de State.
+     *
+     * @param \App\Constants\Domain\Invoice\PipelineStatus $status Estado del pipeline.
+     * @return \App\Service\Pipeline\Invoice\InvoicePipelineState
+     */
     public function get(PipelineStatus $status): InvoicePipelineState
     {
         return $this->states[$status->value];

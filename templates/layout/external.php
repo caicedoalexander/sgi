@@ -8,7 +8,7 @@
 <head>
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= $this->fetch('title') ?> | SGI · COPCSA</title>
+    <title><?= $this->fetch('title') ?> | SPI · COPCSA</title>
     <link rel="icon" type="image/png" href="<?= $this->Url->build('/img/copcsa.png') ?>">
     <link href="<?= $this->Url->build('/vendor/bootstrap/bootstrap.min.css') ?>" rel="stylesheet">
     <link href="<?= $this->Url->build('/vendor/bootstrap-icons/bootstrap-icons.min.css') ?>" rel="stylesheet">
@@ -32,7 +32,7 @@
             </div>
             <div style="width:2px;height:22px;background-color:var(--primary-color);flex-shrink:0;margin:0 10px;"></div>
             <div>
-                <div class="fw-bold text-white" style="font-size:.95rem;letter-spacing:-.02em;">SGI · COPCSA</div>
+                <div class="fw-bold text-white" style="font-size:.95rem;letter-spacing:-.02em;">SPI · COPCSA</div>
                 <div style="font-size:.5rem;letter-spacing:.1em;color:rgba(255,255,255,.3);text-transform:uppercase;">Aprobación Externa</div>
             </div>
         </div>
@@ -46,7 +46,7 @@
     </main>
 
     <!-- Flash -->
-    <div id="sgi-flash-container">
+    <div id="spi-flash-container">
         <?= $this->Flash->render() ?>
     </div>
 

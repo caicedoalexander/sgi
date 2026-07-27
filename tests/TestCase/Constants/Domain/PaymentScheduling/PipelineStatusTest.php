@@ -11,7 +11,7 @@ final class PipelineStatusTest extends TestCase
     public function testFiveCases(): void
     {
         $this->assertCount(5, PipelineStatus::cases());
-        $values = array_map(fn (PipelineStatus $s) => $s->value, PipelineStatus::cases());
+        $values = array_map(fn(PipelineStatus $s) => $s->value, PipelineStatus::cases());
         $this->assertSame([
             'borrador',
             'tesoreria',
@@ -42,12 +42,14 @@ final class PipelineStatusTest extends TestCase
     public function testIsTerminalOnlyPagada(): void
     {
         $this->assertTrue(PipelineStatus::PAGADA->isTerminal());
-        foreach ([
+        foreach (
+            [
             PipelineStatus::BORRADOR,
             PipelineStatus::TESORERIA,
             PipelineStatus::AUTORIZACION_PAGO,
             PipelineStatus::VERIFICACION_PAGO,
-        ] as $case) {
+            ] as $case
+        ) {
             $this->assertFalse($case->isTerminal(), $case->value);
         }
     }

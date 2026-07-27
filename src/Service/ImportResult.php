@@ -11,6 +11,11 @@ class ImportResult
     public int $skipped = 0;
     public array $errors = [];
 
+    /**
+     * Construye un resumen legible del resultado de importación.
+     *
+     * @return string
+     */
     public function getSummary(): string
     {
         $parts = [];
